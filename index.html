@@ -877,6 +877,41 @@
                 // For 3D scenes: ensure aspectmode allows filling
                 if (figDict.layout.scene) {
                     figDict.layout.scene.bgcolor = 'rgba(0,0,0,0)';
+                    // On mobile, use 'cube' aspectmode so the scene fills
+                    // the available space instead of preserving desktop ratios
+                    if (window.innerWidth < 1024) {
+                        figDict.layout.scene.aspectmode = 'cube';
+                    }
+                }
+
+                // On mobile: reposition legend to not consume vertical space
+                if (window.innerWidth < 1024) {
+                    if (figDict.layout.showlegend !== false) {
+                        figDict.layout.legend = Object.assign(figDict.layout.legend || {}, {
+                            orientation: 'h',
+                            x: 0.5,
+                            xanchor: 'center',
+                            y: 1.02,
+                            yanchor: 'bottom',
+                            font: { size: 10, color: '#9a9a9a' }
+                        });
+                    }
+                    // Reduce margins further on mobile
+                    figDict.layout.margin = { l: 2, r: 2, t: 30, b: 2 };
+                }
+
+                // Reposition updatemenus (hover toggle buttons) to not overlap title
+                if (figDict.layout.updatemenus) {
+                    figDict.layout.updatemenus.forEach(function(menu) {
+                        // Push below the Plotly title area
+                        if (menu.y === undefined || menu.y > 0.9) {
+                            menu.y = 0.95;
+                            menu.yanchor = 'top';
+                        }
+                        if (window.innerWidth < 1024) {
+                            menu.font = Object.assign(menu.font || {}, { size: 10 });
+                        }
+                    });
                 }
 
                 // Scale down annotation font sizes for mobile
