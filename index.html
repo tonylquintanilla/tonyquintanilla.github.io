@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Paloma's Orrery - Interactive Astronomical Visualizations</title>
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:title" content="Paloma's Orrery">
+    <meta property="og:description" content="Interactive astronomical visualizations - explore the solar system, stellar neighborhoods, and beyond.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tonyquintanilla.github.io/">
+    <!-- <meta property="og:image" content="https://tonyquintanilla.github.io/preview.png"> -->
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Paloma's Orrery">
+    <meta name="twitter:description" content="Interactive astronomical visualizations">
+
+    <!-- Plotly.js from CDN -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ================================================================
+           CSS VARIABLES - matching dash_gallery.py color palette
+           ================================================================ */
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a2e;
+            --accent: #c9a84c;
+            --accent-dim: #8a7535;
+            --accent-glow: rgba(201, 168, 76, 0.15);
+            --text-primary: #e8e6e3;
+            --text-secondary: #9a9a9a;
+            --text-dim: #5a5a6a;
+            --border: #2a2a3a;
+
+            /* Category colors - matching dash_gallery.py */
+            --cat-solar: #f4a261;
+            --cat-inner: #e76f51;
+            --cat-outer: #2a9d8f;
+            --cat-missions: #4a7c8f;
+            --cat-sgr: #9b59b6;
+            --cat-stellar: #3498db;
+            --cat-exo: #1abc9c;
+            --cat-climate: #27ae60;
+            --cat-other: #7f8c8d;
+
+            --sidebar-width: 320px;
+            --header-height: 56px;
+        }
+
+        /* ================================================================
+           RESET & BASE
+           ================================================================ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'DM Sans', 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ================================================================
+           SCROLLBAR
+           ================================================================ */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-dim);
+        }
+
+        /* ================================================================
+           LAYOUT - DESKTOP
+           ================================================================ */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* ================================================================
+           SIDEBAR
+           ================================================================ */
+        .sidebar {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.02em;
+            line-height: 1.2;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            letter-spacing: 0.03em;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px 20px;
+        }
+
+        /* Category headers */
+        .category-header {
+            padding: 18px 0 6px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid transparent;
+        }
+
+        .category-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        /* Visualization cards */
+        .viz-card {
+            padding: 10px 14px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+
+        .viz-card:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border);
+        }
+
+        .viz-card.active {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-dim);
+        }
+
+        .viz-card-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .viz-card-desc {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-top: 2px;
+        }
+
+        .viz-card-size {
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            margin-top: 3px;
+        }
+
+        /* Sidebar footer */
+        .sidebar-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.72rem;
+            transition: color 0.2s;
+        }
+
+        .sidebar-footer a:hover {
+            color: var(--accent);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .footer-sep {
+            color: var(--border);
+            font-size: 0.6rem;
+        }
+
+        /* ================================================================
+           MAIN CONTENT
+           ================================================================ */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--bg-primary);
+            min-width: 0;
+        }
+
+        /* Viz header bar */
+        .viz-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            min-height: var(--header-height);
+            gap: 12px;
+        }
+
+        .viz-header-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .viz-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .viz-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Share button */
+        .share-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .share-btn:hover {
+            border-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .share-btn.copied {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Plotly container */
+        .viz-container {
+            flex: 1;
+            padding: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #plotly-graph {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Welcome state */
+        .welcome-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .welcome-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .welcome-text {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .welcome-hint {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 24px;
+        }
+
+        /* Loading state */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .loading-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .loading-dot {
+            display: inline-block;
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes pulse {
+            0%, 80%, 100% { opacity: 0.3; }
+            40% { opacity: 1; }
+        }
+
+        /* Error state */
+        .error-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .error-text {
+            color: var(--cat-inner);
+            font-size: 0.9rem;
+        }
+
+        /* Plotly modebar overrides */
+        .modebar { background: transparent !important; }
+        .modebar-btn path { fill: var(--text-dim) !important; }
+        .modebar-btn:hover path { fill: var(--accent) !important; }
+        .js-plotly-plot .plotly .modebar-group:last-child { display: none; }
+
+        /* ================================================================
+           MOBILE HAMBURGER BUTTON
+           ================================================================ */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 200;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .hamburger:hover {
+            border-color: var(--accent-dim);
+        }
+
+        .hamburger-icon {
+            width: 20px;
+            height: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hamburger-icon span {
+            display: block;
+            height: 2px;
+            background: var(--text-secondary);
+            border-radius: 1px;
+            transition: all 0.3s;
+        }
+
+        .hamburger.open .hamburger-icon span:nth-child(1) {
+            transform: translateY(6px) rotate(45deg);
+        }
+        .hamburger.open .hamburger-icon span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.open .hamburger-icon span:nth-child(3) {
+            transform: translateY(-6px) rotate(-45deg);
+        }
+
+        /* Mobile overlay backdrop */
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 90;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar-backdrop.visible {
+            opacity: 1;
+        }
+
+        /* ================================================================
+           MOBILE SHARE BUTTON (floating)
+           ================================================================ */
+        .mobile-share {
+            display: none;
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 200;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .mobile-share:hover,
+        .mobile-share.copied {
+            border-color: var(--accent);
+        }
+
+        .mobile-share svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-secondary);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .mobile-share.copied svg {
+            stroke: var(--accent);
+        }
+
+        /* ================================================================
+           RESPONSIVE - MOBILE (< 768px)
+           ================================================================ */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .mobile-share {
+                display: flex;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                box-shadow: none;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+            }
+
+            .sidebar-backdrop.active {
+                display: block;
+            }
+
+            .main-content {
+                width: 100vw;
+            }
+
+            .viz-header {
+                padding: 12px 64px;
+            }
+
+            .viz-title {
+                font-size: 1rem;
+                text-align: center;
+            }
+
+            .viz-subtitle {
+                text-align: center;
+            }
+
+            /* Hide desktop share button on mobile */
+            .share-btn {
+                display: none;
+            }
+
+            .viz-container {
+                padding: 0;
+            }
+
+            .welcome-title {
+                font-size: 1.6rem;
+            }
+
+            .welcome-text {
+                font-size: 0.85rem;
+                padding: 0 20px;
+            }
+        }
+
+        /* ================================================================
+           TOAST NOTIFICATION
+           ================================================================ */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--accent-dim);
+            color: var(--accent);
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            z-index: 500;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .toast.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hamburger menu button (mobile) -->
+    <button class="hamburger" id="hamburger" aria-label="Open navigation">
+        <div class="hamburger-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </button>
+
+    <!-- Mobile share button -->
+    <button class="mobile-share" id="mobileShare" aria-label="Share link">
+        <svg viewBox="0 0 24 24">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+            <polyline points="16 6 12 2 8 6"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>
+    </button>
+
+    <!-- Sidebar backdrop (mobile) -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <div class="app-container">
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Paloma's Orrery</div>
+                <div class="sidebar-subtitle">Interactive Astronomical Visualizations</div>
+            </div>
+
+            <nav class="sidebar-nav" id="sidebarNav">
+                <!-- Populated by JS from gallery_metadata.json -->
+                <div class="loading-text" style="padding: 20px 8px; color: var(--text-dim);">
+                    Loading gallery<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="footer-links">
+                    <a href="https://github.com/tonyquintanilla/palomas-orrery" target="_blank" rel="noopener">GitHub</a>
+                    <span class="footer-sep">|</span>
+                    <a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener">Instagram</a>
+                    <span class="footer-sep">|</span>
+                    <a href="https://github.com/tonyquintanilla/palomas-orrery/releases" target="_blank" rel="noopener">Download</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main content area -->
+        <main class="main-content">
+            <div class="viz-header" id="vizHeader">
+                <div class="viz-header-left">
+                    <div class="viz-title" id="vizTitle">Welcome</div>
+                    <div class="viz-subtitle" id="vizSubtitle"></div>
+                </div>
+                <button class="share-btn" id="shareBtn" title="Copy link to clipboard">
+                    Share Link
+                </button>
+            </div>
+
+            <div class="viz-container" id="vizContainer">
+                <!-- Loading overlay -->
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="loading-text">
+                        Loading visualization<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
+                    </div>
+                </div>
+
+                <!-- Welcome state (shown initially) -->
+                <div class="welcome-state" id="welcomeState">
+                    <div class="welcome-title">Paloma's Orrery</div>
+                    <div class="welcome-text">
+                        Explore interactive visualizations of the solar system,
+                        stellar neighborhoods, exoplanets, and more.
+                    </div>
+                    <div class="welcome-hint">
+                        Select a visualization from the gallery to begin.
+                    </div>
+                </div>
+
+                <!-- Plotly graph target -->
+                <div id="plotly-graph" style="display: none;"></div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+    /* ====================================================================
+       Paloma's Orrery - Gallery Viewer
+       Pure client-side: loads JSON via fetch, renders with Plotly.js
+
+       Author: Tony Quintanilla / Paloma's Orrery
+       ==================================================================== */
+
+    (function() {
+        'use strict';
+
+        // ---- Configuration ----
+        const DATA_PATH = 'data';
+        const METADATA_FILE = 'gallery_metadata.json';
+
+        // Category colors (matching dash_gallery.py / CSS variables)
+        const CATEGORY_COLORS = {
+            solar_system: '#f4a261',
+            inner_planets: '#e76f51',
+            outer_planets: '#2a9d8f',
+            missions:      '#4a7c8f',
+            sgr_a:         '#9b59b6',
+            stellar:       '#3498db',
+            exoplanets:    '#1abc9c',
+            climate:       '#27ae60',
+            other:         '#7f8c8d'
+        };
+
+        // ---- State ----
+        let metadata = null;
+        let vizLookup = {};
+        let currentVizId = null;
+        let activeCard = null;
+
+        // ---- DOM refs ----
+        const sidebarNav     = document.getElementById('sidebarNav');
+        const sidebar        = document.getElementById('sidebar');
+        const hamburger      = document.getElementById('hamburger');
+        const backdrop       = document.getElementById('sidebarBackdrop');
+        const vizTitle       = document.getElementById('vizTitle');
+        const vizSubtitle    = document.getElementById('vizSubtitle');
+        const plotlyGraph    = document.getElementById('plotly-graph');
+        const welcomeState   = document.getElementById('welcomeState');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const shareBtn       = document.getElementById('shareBtn');
+        const mobileShare    = document.getElementById('mobileShare');
+        const toast          = document.getElementById('toast');
+
+        // ---- Initialize ----
+        async function init() {
+            try {
+                const resp = await fetch(DATA_PATH + '/' + METADATA_FILE);
+                if (!resp.ok) throw new Error('Could not load gallery metadata');
+                metadata = await resp.json();
+            } catch (err) {
+                sidebarNav.innerHTML =
+                    '<div style="padding: 20px 8px; color: var(--cat-inner); font-size: 0.8rem;">' +
+                    'Could not load gallery data.<br><br>' +
+                    '<span style="color: var(--text-dim);">Ensure ' + DATA_PATH + '/' + METADATA_FILE + ' exists.</span></div>';
+                return;
+            }
+
+            // Build lookup
+            const vizs = metadata.visualizations || [];
+            for (const v of vizs) {
+                vizLookup[v.id] = v;
+            }
+
+            // Render sidebar
+            renderSidebar(vizs);
+
+            // Setup event listeners
+            setupEvents();
+
+            // Check URL hash for deep link
+            handleHash();
+        }
+
+        // ---- Render sidebar navigation ----
+        function renderSidebar(vizs) {
+            // Group by category
+            const categories = {};
+            for (const v of vizs) {
+                const cat = v.category || 'other';
+                if (!categories[cat]) {
+                    categories[cat] = {
+                        label: v.category_label || 'Other',
+                        items: []
+                    };
+                }
+                categories[cat].items.push(v);
+            }
+
+            let html = '';
+            for (const [catKey, catData] of Object.entries(categories)) {
+                const color = CATEGORY_COLORS[catKey] || CATEGORY_COLORS.other;
+
+                // Category header
+                html += '<div class="category-header" style="border-bottom-color: ' + color + '33;">';
+                html += '<span class="category-label" style="color: ' + color + ';">' +
+                        escapeHtml(catData.label) + '</span>';
+                html += '</div>';
+
+                // Cards
+                for (const v of catData.items) {
+                    html += '<div class="viz-card" data-viz-id="' + escapeHtml(v.id) + '">';
+                    html += '<div class="viz-card-title">' + escapeHtml(v.title || 'Untitled') + '</div>';
+                    if (v.description) {
+                        html += '<div class="viz-card-desc">' + escapeHtml(v.description) + '</div>';
+                    }
+                    if (v.size_kb) {
+                        html += '<div class="viz-card-size">' + Math.round(v.size_kb) + ' KB</div>';
+                    }
+                    html += '</div>';
+                }
+            }
+
+            if (!vizs.length) {
+                html = '<div style="padding: 20px 8px; color: var(--text-dim); font-size: 0.8rem;">' +
+                       'No visualizations found.<br><br>Run json_converter.py to create gallery data.</div>';
+            }
+
+            sidebarNav.innerHTML = html;
+        }
+
+        // ---- Load and display a visualization ----
+        async function loadVisualization(vizId) {
+            const viz = vizLookup[vizId];
+            if (!viz) return;
+
+            // Update state
+            currentVizId = vizId;
+
+            // Update URL hash (without triggering hashchange)
+            history.replaceState(null, '', '#' + vizId);
+
+            // Update header
+            vizTitle.textContent = viz.title || 'Untitled';
+            const catLabel = viz.category_label || '';
+            const desc = viz.description || '';
+            vizSubtitle.textContent = catLabel && desc ? catLabel + ' - ' + desc :
+                                      catLabel || desc;
+
+            // Update active card
+            if (activeCard) activeCard.classList.remove('active');
+            activeCard = sidebarNav.querySelector('[data-viz-id="' + vizId + '"]');
+            if (activeCard) activeCard.classList.add('active');
+
+            // Show loading
+            welcomeState.style.display = 'none';
+            plotlyGraph.style.display = 'none';
+            loadingOverlay.classList.add('visible');
+
+            // Close mobile sidebar
+            closeMobileSidebar();
+
+            try {
+                const resp = await fetch(DATA_PATH + '/' + viz.filename);
+                if (!resp.ok) throw new Error('Failed to load ' + viz.filename);
+                const figDict = await resp.json();
+
+                // Strip embedded template (same as dash_gallery.py)
+                if (figDict.layout && figDict.layout.template) {
+                    delete figDict.layout.template;
+                }
+
+                // Apply dark theme overrides
+                figDict.layout = figDict.layout || {};
+                Object.assign(figDict.layout, {
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: Object.assign(figDict.layout.font || {}, {
+                        color: '#e8e6e3'
+                    }),
+                    margin: Object.assign(figDict.layout.margin || {}, {
+                        l: 10, r: 10, t: 40, b: 10
+                    })
+                });
+
+                // Show graph container
+                plotlyGraph.style.display = 'block';
+                loadingOverlay.classList.remove('visible');
+
+                // Render with Plotly
+                const config = {
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+                    responsive: true
+                };
+
+                await Plotly.react('plotly-graph', figDict.data || [], figDict.layout, config);
+
+            } catch (err) {
+                loadingOverlay.classList.remove('visible');
+                plotlyGraph.style.display = 'none';
+                welcomeState.innerHTML =
+                    '<div class="error-state">' +
+                    '<div class="error-text">Could not load visualization</div>' +
+                    '<div style="color: var(--text-dim); font-size: 0.75rem; margin-top: 8px;">' +
+                    escapeHtml(err.message) + '</div></div>';
+                welcomeState.style.display = 'flex';
+            }
+        }
+
+        // ---- Event setup ----
+        function setupEvents() {
+            // Card clicks (event delegation)
+            sidebarNav.addEventListener('click', function(e) {
+                const card = e.target.closest('.viz-card');
+                if (!card) return;
+                const vizId = card.getAttribute('data-viz-id');
+                if (vizId) loadVisualization(vizId);
+            });
+
+            // Hamburger toggle
+            hamburger.addEventListener('click', toggleMobileSidebar);
+
+            // Backdrop click closes sidebar
+            backdrop.addEventListener('click', closeMobileSidebar);
+
+            // Share buttons
+            shareBtn.addEventListener('click', shareLink);
+            mobileShare.addEventListener('click', shareLink);
+
+            // Hash changes (browser back/forward)
+            window.addEventListener('hashchange', handleHash);
+
+            // Window resize -> Plotly resize
+            window.addEventListener('resize', function() {
+                if (plotlyGraph.style.display !== 'none') {
+                    Plotly.Plots.resize('plotly-graph');
+                }
+            });
+
+            // Keyboard: Escape closes mobile sidebar
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeMobileSidebar();
+            });
+        }
+
+        // ---- Mobile sidebar ----
+        function toggleMobileSidebar() {
+            const isOpen = sidebar.classList.contains('open');
+            if (isOpen) {
+                closeMobileSidebar();
+            } else {
+                sidebar.classList.add('open');
+                hamburger.classList.add('open');
+                backdrop.classList.add('active');
+                // Small delay so display:block is applied before opacity transition
+                requestAnimationFrame(function() {
+                    backdrop.classList.add('visible');
+                });
+            }
+        }
+
+        function closeMobileSidebar() {
+            sidebar.classList.remove('open');
+            hamburger.classList.remove('open');
+            backdrop.classList.remove('visible');
+            setTimeout(function() {
+                backdrop.classList.remove('active');
+            }, 300);
+        }
+
+        // ---- Share link ----
+        function shareLink() {
+            if (!currentVizId) {
+                showToast('Select a visualization first');
+                return;
+            }
+
+            const url = window.location.origin + window.location.pathname + '#' + currentVizId;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(function() {
+                    showCopiedFeedback();
+                    showToast('Link copied to clipboard');
+                }).catch(function() {
+                    fallbackCopy(url);
+                });
+            } else {
+                fallbackCopy(url);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                showCopiedFeedback();
+                showToast('Link copied to clipboard');
+            } catch (e) {
+                showToast('Could not copy link');
+            }
+            document.body.removeChild(ta);
+        }
+
+        function showCopiedFeedback() {
+            shareBtn.classList.add('copied');
+            shareBtn.textContent = 'Copied!';
+            mobileShare.classList.add('copied');
+            setTimeout(function() {
+                shareBtn.classList.remove('copied');
+                shareBtn.textContent = 'Share Link';
+                mobileShare.classList.remove('copied');
+            }, 2000);
+        }
+
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('visible');
+            setTimeout(function() {
+                toast.classList.remove('visible');
+            }, 2500);
+        }
+
+        // ---- URL hash routing ----
+        function handleHash() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && vizLookup[hash]) {
+                loadVisualization(hash);
+            }
+        }
+
+        // ---- Utility ----
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;');
+        }
+
+        // ---- Go ----
+        init();
+
+    })();
+    </script>
+
+</body>
+</html>
