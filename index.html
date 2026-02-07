@@ -404,7 +404,91 @@
         .modebar { background: transparent !important; }
         .modebar-btn path { fill: var(--text-dim) !important; }
         .modebar-btn:hover path { fill: var(--accent) !important; }
-        .js-plotly-plot .plotly .modebar-group:last-child { display: none; }
+
+        /* ================================================================
+           FULLSCREEN TOGGLE
+           ================================================================ */
+        .fullscreen-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .fullscreen-btn:hover {
+            border-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .fullscreen-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Fullscreen state: hide sidebar and header */
+        .app-container.fullscreen .sidebar {
+            display: none;
+        }
+
+        .app-container.fullscreen .viz-header {
+            display: none;
+        }
+
+        /* Floating exit button when in fullscreen */
+        .fullscreen-exit {
+            display: none;
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 300;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+            align-items: center;
+            gap: 6px;
+            opacity: 0.7;
+        }
+
+        .fullscreen-exit:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            opacity: 1;
+        }
+
+        .app-container.fullscreen ~ .fullscreen-exit {
+            display: flex;
+        }
+
+        .fullscreen-exit svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
 
         /* ================================================================
            MOBILE HAMBURGER BUTTON
@@ -661,6 +745,15 @@
                     <div class="viz-title" id="vizTitle">Welcome</div>
                     <div class="viz-subtitle" id="vizSubtitle"></div>
                 </div>
+                <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle full screen view">
+                    <svg viewBox="0 0 24 24" id="fullscreenIcon">
+                        <polyline points="15 3 21 3 21 9"/>
+                        <polyline points="9 21 3 21 3 15"/>
+                        <line x1="21" y1="3" x2="14" y2="10"/>
+                        <line x1="3" y1="21" x2="10" y2="14"/>
+                    </svg>
+                    Expand
+                </button>
                 <button class="share-btn" id="shareBtn" title="Copy link to clipboard">
                     Share Link
                 </button>
@@ -692,6 +785,17 @@
         </main>
 
     </div>
+
+    <!-- Floating exit fullscreen button -->
+    <button class="fullscreen-exit" id="fullscreenExit" title="Exit full screen (Esc)">
+        <svg viewBox="0 0 24 24">
+            <polyline points="4 14 10 14 10 20"/>
+            <polyline points="20 10 14 10 14 4"/>
+            <line x1="14" y1="10" x2="21" y2="3"/>
+            <line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+        Exit
+    </button>
 
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>
@@ -743,6 +847,9 @@
         const shareBtn       = document.getElementById('shareBtn');
         const mobileShare    = document.getElementById('mobileShare');
         const toast          = document.getElementById('toast');
+        const fullscreenBtn  = document.getElementById('fullscreenBtn');
+        const fullscreenExit = document.getElementById('fullscreenExit');
+        const appContainer   = document.querySelector('.app-container');
 
         // ---- Initialize ----
         async function init() {
@@ -988,6 +1095,10 @@
             shareBtn.addEventListener('click', shareLink);
             mobileShare.addEventListener('click', shareLink);
 
+            // Fullscreen toggle
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            fullscreenExit.addEventListener('click', toggleFullscreen);
+
             // Hash changes (browser back/forward)
             window.addEventListener('hashchange', handleHash);
 
@@ -998,9 +1109,15 @@
                 }
             });
 
-            // Keyboard: Escape closes mobile sidebar
+            // Keyboard: Escape closes mobile sidebar or exits fullscreen
             document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') closeMobileSidebar();
+                if (e.key === 'Escape') {
+                    if (appContainer.classList.contains('fullscreen')) {
+                        toggleFullscreen();
+                    } else {
+                        closeMobileSidebar();
+                    }
+                }
             });
         }
 
@@ -1103,8 +1220,23 @@
                       .replace(/"/g, '&quot;');
         }
 
+        // ---- Fullscreen toggle ----
+        function toggleFullscreen() {
+            appContainer.classList.toggle('fullscreen');
+
+            // Trigger Plotly resize after layout settles
+            if (plotlyGraph.style.display !== 'none') {
+                setTimeout(function() {
+                    Plotly.Plots.resize('plotly-graph');
+                }, 50);
+            }
+        }
+
         // ---- Home navigation ----
         function goHome() {
+            // Exit fullscreen if active
+            appContainer.classList.remove('fullscreen');
+
             // Clear hash without triggering hashchange reload
             history.pushState(null, '', window.location.pathname);
             currentVizId = null;
