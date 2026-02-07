@@ -19,8 +19,18 @@
       "description": "Plot of Earth-Moon system with barycenter. Shows Earth's geological, atmospheric and magnetic structure.",
       "size_kb": 9304.9,
       "converted": "2026-02-07 16:41"
+    },
+    {
+      "id": "inner_planets_comets_solar_corona_20260207_1748",
+      "title": "Inner Planets Comets Solar Corona 20260207 1748",
+      "filename": "inner_planets_comets_solar_corona_20260207_1748.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Solar photosphere, corona, current comets and inner planets. Static plot.",
+      "size_kb": 31364.8,
+      "converted": "2026-02-07 17:53"
     }
   ],
-  "last_updated": "2026-02-07 16:41",
-  "total_count": 2
+  "last_updated": "2026-02-07 17:53",
+  "total_count": 3
 }
