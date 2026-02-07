@@ -9,8 +9,18 @@
       "description": "Static plot of Earth's heliocentric orbit.",
       "size_kb": 146.6,
       "converted": "2026-02-07 07:08"
+    },
+    {
+      "id": "earth_barycenter_shells_20260207_1635",
+      "title": "Earth Barycenter Shells 20260207 1635",
+      "filename": "earth_barycenter_shells_20260207_1635.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Plot of Earth-Moon system with barycenter. Shows Earth's geological, atmospheric and magnetic structure.",
+      "size_kb": 9304.9,
+      "converted": "2026-02-07 16:41"
     }
   ],
-  "last_updated": "2026-02-07 07:08",
-  "total_count": 1
+  "last_updated": "2026-02-07 16:41",
+  "total_count": 2
 }
