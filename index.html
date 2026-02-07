@@ -506,9 +506,9 @@
         }
 
         /* ================================================================
-           RESPONSIVE - MOBILE (< 768px)
+           RESPONSIVE - MOBILE & TABLET (< 1024px)
            ================================================================ */
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             .hamburger {
                 display: flex;
             }
@@ -540,16 +540,18 @@
             }
 
             .viz-header {
-                padding: 12px 64px;
+                padding: 8px 56px;
+                min-height: 44px;
             }
 
             .viz-title {
-                font-size: 1rem;
+                font-size: 0.9rem;
                 text-align: center;
             }
 
             .viz-subtitle {
                 text-align: center;
+                font-size: 0.65rem;
             }
 
             /* Hide desktop share button on mobile */
@@ -855,18 +857,44 @@
                     delete figDict.layout.template;
                 }
 
-                // Apply dark theme overrides
+                // Apply dark theme overrides and responsive sizing
                 figDict.layout = figDict.layout || {};
+
+                // Remove fixed dimensions from original export - let Plotly fill container
+                delete figDict.layout.width;
+                delete figDict.layout.height;
+
                 Object.assign(figDict.layout, {
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
+                    autosize: true,
                     font: Object.assign(figDict.layout.font || {}, {
                         color: '#e8e6e3'
                     }),
-                    margin: Object.assign(figDict.layout.margin || {}, {
-                        l: 10, r: 10, t: 40, b: 10
-                    })
+                    margin: { l: 10, r: 10, t: 40, b: 10 }
                 });
+
+                // For 3D scenes: ensure aspectmode allows filling
+                if (figDict.layout.scene) {
+                    figDict.layout.scene.bgcolor = 'rgba(0,0,0,0)';
+                }
+
+                // Scale down annotation font sizes for mobile
+                if (window.innerWidth < 900 && figDict.layout.annotations) {
+                    figDict.layout.annotations.forEach(function(ann) {
+                        if (ann.font && ann.font.size && ann.font.size > 12) {
+                            ann.font.size = Math.max(10, ann.font.size * 0.7);
+                        }
+                    });
+                }
+
+                // Scale down title font for mobile
+                if (window.innerWidth < 900 && figDict.layout.title && figDict.layout.title.font) {
+                    var titleSize = figDict.layout.title.font.size;
+                    if (titleSize && titleSize > 14) {
+                        figDict.layout.title.font.size = Math.max(12, titleSize * 0.7);
+                    }
+                }
 
                 // Show graph container
                 plotlyGraph.style.display = 'block';
@@ -881,6 +909,12 @@
                 };
 
                 await Plotly.react('plotly-graph', figDict.data || [], figDict.layout, config);
+
+                // Force resize after render to fill container
+                // (small delay ensures container dimensions are settled)
+                setTimeout(function() {
+                    Plotly.Plots.resize('plotly-graph');
+                }, 100);
 
             } catch (err) {
                 loadingOverlay.classList.remove('visible');
