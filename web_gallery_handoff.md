@@ -269,6 +269,7 @@ issue, not a layout issue missed on desktop.
 | # | Visualization | Type | What it tests | Status |
 |---|---|---|---|---|
 | 1 | Earth orbit (static) | 3D planetary | Baseline | Desktop OK |
+   - Earth-moon-barycenter plot with all Earth shells. 9.3 mb json file.  -- testing
 | 2 | Earth + Moon | 3D planetary, more traces | Legend, scale | Pending |
 | 3 | Inner planets | 3D planetary, multiple orbits | Density | Pending |
 | 4 | Stellar neighborhood | 3D stellar pipeline | Different data source, annotations | Pending |
