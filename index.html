@@ -454,7 +454,7 @@
             display: none;
             position: fixed;
             top: 12px;
-            right: 12px;
+            left: 12px;
             z-index: 300;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
@@ -982,8 +982,8 @@
                     autosize: true,
                     font: Object.assign(figDict.layout.font || {}, {
                         color: '#e8e6e3'
-                    }),
-                    margin: { l: 10, r: 10, t: 40, b: 10 }
+                    })
+                    // Margins: preserve original export values for proper element placement
                 });
 
                 // For 3D scenes: ensure aspectmode allows filling
@@ -1008,23 +1008,11 @@
                             font: { size: 10, color: '#9a9a9a' }
                         });
                     }
-                    // Reduce margins further on mobile
-                    figDict.layout.margin = { l: 2, r: 2, t: 30, b: 2 };
+                    // Preserve original margins on mobile too
                 }
 
-                // Reposition updatemenus (hover toggle buttons) to not overlap title
-                if (figDict.layout.updatemenus) {
-                    figDict.layout.updatemenus.forEach(function(menu) {
-                        // Push below the Plotly title area
-                        if (menu.y === undefined || menu.y > 0.9) {
-                            menu.y = 0.95;
-                            menu.yanchor = 'top';
-                        }
-                        if (window.innerWidth < 1024) {
-                            menu.font = Object.assign(menu.font || {}, { size: 10 });
-                        }
-                    });
-                }
+                // Updatemenus: preserve original positions from export
+                // (repositioning causes stacking/overlap issues)
 
                 // Scale down annotation font sizes for mobile
                 if (window.innerWidth < 900 && figDict.layout.annotations) {
@@ -1050,7 +1038,7 @@
                 // Render with Plotly
                 const config = {
                     displayModeBar: true,
-                    displaylogo: false,
+                    displaylogo: true,
                     modeBarButtonsToRemove: ['lasso2d', 'select2d'],
                     responsive: true
                 };
