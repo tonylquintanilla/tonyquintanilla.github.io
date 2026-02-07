@@ -1,22 +1,22 @@
-# dash_gallery.py
+# json_gallery.py
 
 """
-Paloma's Orrery - Dash Web Gallery
+Paloma's Orrery - Local Gallery Preview
 
 A lightweight Dash web application that serves interactive Plotly
-visualizations from a local folder or Google Drive. Designed to be
-embedded in or linked from Tony's Google Sites page.
+visualizations from the gallery folder for local development and preview.
+The production gallery runs as static HTML on GitHub Pages (index.html).
 
 Usage:
-    python dash_gallery.py                    # Run locally on port 8050
-    python dash_gallery.py --port 8080        # Custom port
-    python dash_gallery.py --folder ./dash    # Custom data folder
+    python json_gallery.py                       # Run locally on port 8050
+    python json_gallery.py --port 8080           # Custom port
+    python json_gallery.py --folder ./gallery    # Custom data folder
 
 Dependencies:
     pip install dash plotly
 
 The app reads gallery_metadata.json and figure JSON files from the
-data folder. These are produced by dash_converter.py.
+gallery folder. These are produced by json_converter.py.
 
 Author: Tony Quintanilla / Paloma's Orrery
 """
@@ -34,7 +34,7 @@ import plotly.io as pio
 # CONFIGURATION
 # ============================================================================
 
-DEFAULT_DATA_FOLDER = "dash"
+DEFAULT_DATA_FOLDER = "gallery"
 METADATA_FILE = "gallery_metadata.json"
 APP_TITLE = "Paloma's Orrery"
 APP_SUBTITLE = "Interactive Astronomical Visualizations"
@@ -230,7 +230,7 @@ def create_layout(metadata):
                         "marginBottom": "8px",
                     }),
                     html.Div(
-                        "Run dash_converter.py to convert HTML files",
+                        "Run json_converter.py to convert HTML files",
                         style={
                             "color": COLORS["text_dim"],
                             "fontSize": "0.75rem",
@@ -547,7 +547,7 @@ def create_app(data_folder):
 # ============================================================================
 
 def main():
-    parser = argparse.ArgumentParser(description="Paloma's Orrery - Dash Gallery")
+    parser = argparse.ArgumentParser(description="Paloma's Orrery - Gallery Preview")
     parser.add_argument("--folder", default=DEFAULT_DATA_FOLDER,
                        help="Data folder containing JSON files and metadata")
     parser.add_argument("--port", type=int, default=8050,
@@ -563,20 +563,20 @@ def main():
     data_folder = os.path.abspath(args.folder)
     if not os.path.isdir(data_folder):
         print(f"Data folder not found: {data_folder}")
-        print(f"Run dash_converter.py first to create visualization data.")
+        print(f"Run json_converter.py first to create visualization data.")
         sys.exit(1)
 
     metadata_path = os.path.join(data_folder, METADATA_FILE)
     if not os.path.exists(metadata_path):
         print(f"No {METADATA_FILE} found in {data_folder}")
-        print(f"Run dash_converter.py first to convert HTML files.")
+        print(f"Run json_converter.py first to convert HTML files.")
         sys.exit(1)
 
     metadata = load_metadata(data_folder)
     count = metadata.get("total_count", 0)
 
     print(f"{'=' * 50}")
-    print(f"  Paloma's Orrery - Dash Gallery")
+    print(f"  Paloma's Orrery - Gallery Preview")
     print(f"  Data folder: {data_folder}")
     print(f"  Visualizations: {count}")
     print(f"  URL: http://{args.host}:{args.port}/")

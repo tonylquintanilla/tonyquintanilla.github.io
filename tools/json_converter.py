@@ -1,25 +1,25 @@
-# dash_converter.py
+# json_converter.py
 
 """
-Dash Gallery Converter - Extract Plotly figures from HTML and save as JSON.
+Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON.
 
 Converts existing Paloma's Orrery HTML visualizations into lightweight JSON
-files suitable for serving via a Dash web gallery. Also supports direct
-conversion of Plotly figure objects.
+files suitable for the web gallery (GitHub Pages) and local preview
+(json_gallery.py). Also supports direct conversion of Plotly figure objects.
 
 The JSON files contain only the Plotly figure data and layout specification
 (typically 100KB-2MB) versus the full HTML files (5-50MB with embedded JS).
 
 Usage:
     Run directly for interactive file selection:
-        python dash_converter.py
+        python json_converter.py
 
     Or import for programmatic use:
-        from dash_converter import convert_html_to_dash_json, save_figure_for_dash
+        from json_converter import convert_html_to_gallery_json, save_figure_json
 
 Output:
-    JSON files in a /dash subfolder (created automatically), with a
-    gallery_metadata.json index file for the Dash app to consume.
+    JSON files in the gallery/ subfolder of the website repo, with a
+    gallery_metadata.json index file for the gallery viewer to consume.
 
 Author: Tony Quintanilla / Paloma's Orrery
 """
@@ -39,7 +39,7 @@ from datetime import datetime
 
 # Default input/output folders (relative to script location)
 DEFAULT_INPUT_FOLDER = "images"
-DEFAULT_OUTPUT_FOLDER = "dash"
+DEFAULT_OUTPUT_FOLDER = "gallery"
 METADATA_FILE = "gallery_metadata.json"
 
 # Categories for gallery organization
@@ -266,18 +266,18 @@ def _extract_via_variables(html_content):
 # FIGURE OBJECT -> JSON (for new figures)
 # ============================================================================
 
-def save_figure_for_dash(fig, name, output_folder=None, category="other",
-                         description="", auto_metadata=True):
+def save_figure_json(fig, name, output_folder=None, category="other",
+                     description="", auto_metadata=True):
     """
-    Save a Plotly figure object directly as Dash-ready JSON.
+    Save a Plotly figure object directly as gallery-ready JSON.
 
     Call this from your visualization code alongside the normal save flow
-    to automatically populate the Dash gallery.
+    to automatically populate the web gallery.
 
     Parameters:
         fig: Plotly figure object
         name: Filename (without extension) - also used as gallery title
-        output_folder: Output folder path (default: ./dash)
+        output_folder: Output folder path (default: ./gallery)
         category: Gallery category key (see CATEGORIES dict)
         description: Description for the gallery metadata
         auto_metadata: If True, update gallery_metadata.json automatically
@@ -303,7 +303,7 @@ def save_figure_for_dash(fig, name, output_folder=None, category="other",
             json.dump(fig_dict, f)
 
         size_kb = os.path.getsize(json_path) / 1024
-        print(f"  Saved Dash JSON: {json_path} ({size_kb:.0f} KB)")
+        print(f"  Saved gallery JSON: {json_path} ({size_kb:.0f} KB)")
 
         if auto_metadata:
             _update_metadata(output_folder, safe_name, name, category,
@@ -312,7 +312,7 @@ def save_figure_for_dash(fig, name, output_folder=None, category="other",
         return json_path
 
     except Exception as e:
-        print(f"  ERROR saving Dash JSON: {e}")
+        print(f"  ERROR saving gallery JSON: {e}")
         return None
 
 
@@ -320,14 +320,14 @@ def save_figure_for_dash(fig, name, output_folder=None, category="other",
 # BATCH CONVERTER (HTML -> JSON)
 # ============================================================================
 
-def convert_html_to_dash_json(html_path, output_folder=None, category="other",
-                               description=""):
+def convert_html_to_gallery_json(html_path, output_folder=None, category="other",
+                                  description=""):
     """
-    Convert a single HTML visualization to Dash-ready JSON.
+    Convert a single HTML visualization to gallery-ready JSON.
 
     Parameters:
         html_path: Path to the HTML file
-        output_folder: Output folder (default: ./dash)
+        output_folder: Output folder (default: ./gallery)
         category: Gallery category
         description: Description for metadata
 
@@ -358,8 +358,8 @@ def convert_html_to_dash_json(html_path, output_folder=None, category="other",
     trace_count = len(fig_dict["data"])
 
     # Strip the Plotly template to reduce file size and avoid version
-    # mismatches (e.g., heatmapgl in newer Plotly). The Dash app applies
-    # its own theme anyway.
+    # mismatches (e.g., heatmapgl in newer Plotly). The gallery viewer
+    # applies its own theme anyway.
     if "layout" in fig_dict and "template" in fig_dict.get("layout", {}):
         del fig_dict["layout"]["template"]
 
@@ -454,10 +454,10 @@ def run_interactive():
     Run the interactive converter with file selection dialog.
 
     Lets you browse to your images folder, select one or more HTML files,
-    assign categories, and convert them to Dash-ready JSON.
+    assign categories, and convert them to gallery-ready JSON.
     """
     print("=" * 60)
-    print("Paloma's Orrery - Dash Gallery Converter")
+    print("Paloma's Orrery - Gallery JSON Converter")
     print("=" * 60)
     print()
 
@@ -484,7 +484,7 @@ def run_interactive():
     # Ask for output folder
     output_folder = filedialog.askdirectory(
         parent=root,
-        title="Select output folder for Dash JSON files",
+        title="Select output folder for gallery JSON files",
         initialdir=DEFAULT_OUTPUT_FOLDER if os.path.isdir(DEFAULT_OUTPUT_FOLDER) else "."
     )
 
@@ -535,7 +535,7 @@ def run_interactive():
             description = ""
 
         # Convert
-        result = convert_html_to_dash_json(
+        result = convert_html_to_gallery_json(
             html_path, output_folder, category, description
         )
 
@@ -560,11 +560,11 @@ def run_interactive():
 
 def convert_folder(input_folder=None, output_folder=None, category="other"):
     """
-    Convert all HTML files in a folder to Dash JSON.
+    Convert all HTML files in a folder to gallery JSON.
 
     Parameters:
         input_folder: Folder containing HTML files (default: ./images)
-        output_folder: Output folder (default: ./dash)
+        output_folder: Output folder (default: ./gallery)
         category: Default category for all files
 
     Returns:
@@ -593,7 +593,7 @@ def convert_folder(input_folder=None, output_folder=None, category="other"):
 
     for filename in sorted(html_files):
         html_path = os.path.join(input_folder, filename)
-        result = convert_html_to_dash_json(
+        result = convert_html_to_gallery_json(
             html_path, output_folder, category
         )
         if result:
@@ -616,11 +616,11 @@ if __name__ == "__main__":
         if os.path.isdir(arg):
             convert_folder(input_folder=arg)
         elif os.path.isfile(arg):
-            convert_html_to_dash_json(arg)
+            convert_html_to_gallery_json(arg)
         else:
             print(f"Not found: {arg}")
-            print("Usage: python dash_converter.py [folder_or_file]")
-            print("       python dash_converter.py              (interactive)")
+            print("Usage: python json_converter.py [folder_or_file]")
+            print("       python json_converter.py              (interactive)")
     else:
         # Interactive mode
         run_interactive()
