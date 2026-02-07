@@ -27,7 +27,7 @@
 
     <style>
         /* ================================================================
-           CSS VARIABLES - matching dash_gallery.py color palette
+           CSS VARIABLES - matching json_gallery.py color palette
            ================================================================ */
         :root {
             --bg-primary: #0a0a0f;
@@ -41,7 +41,7 @@
             --text-dim: #5a5a6a;
             --border: #2a2a3a;
 
-            /* Category colors - matching dash_gallery.py */
+            /* Category colors - matching json_gallery.py */
             --cat-solar: #f4a261;
             --cat-inner: #e76f51;
             --cat-outer: #2a9d8f;
@@ -116,6 +116,11 @@
             padding: 24px 20px 16px;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .sidebar-header:hover {
+            background: var(--bg-tertiary);
         }
 
         .sidebar-title {
@@ -626,7 +631,7 @@
 
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
+            <div class="sidebar-header" onclick="goHome()" style="cursor: pointer;" title="Return to gallery home">
                 <div class="sidebar-title">Paloma's Orrery</div>
                 <div class="sidebar-subtitle">Interactive Astronomical Visualizations</div>
             </div>
@@ -706,7 +711,7 @@
         const DATA_PATH = 'gallery';
         const METADATA_FILE = 'gallery_metadata.json';
 
-        // Category colors (matching dash_gallery.py / CSS variables)
+        // Category colors (matching json_gallery.py / CSS variables)
         const CATEGORY_COLORS = {
             solar_system: '#f4a261',
             inner_planets: '#e76f51',
@@ -852,7 +857,7 @@
                 if (!resp.ok) throw new Error('Failed to load ' + viz.filename);
                 const figDict = await resp.json();
 
-                // Strip embedded template (same as dash_gallery.py)
+                // Strip embedded template (same as json_gallery.py)
                 if (figDict.layout && figDict.layout.template) {
                     delete figDict.layout.template;
                 }
@@ -1097,6 +1102,40 @@
                       .replace(/>/g, '&gt;')
                       .replace(/"/g, '&quot;');
         }
+
+        // ---- Home navigation ----
+        function goHome() {
+            // Clear hash without triggering hashchange reload
+            history.pushState(null, '', window.location.pathname);
+            currentVizId = null;
+
+            // Reset header
+            vizTitle.textContent = 'Welcome';
+            vizSubtitle.textContent = '';
+
+            // Hide plot, show welcome
+            plotlyGraph.style.display = 'none';
+            welcomeState.innerHTML =
+                '<div class="welcome-title">Paloma\'s Orrery</div>' +
+                '<div class="welcome-text">' +
+                'Explore interactive visualizations of the solar system, ' +
+                'stellar neighborhoods, exoplanets, and more.</div>' +
+                '<div class="welcome-hint">' +
+                'Select a visualization from the gallery to begin.</div>';
+            welcomeState.style.display = 'flex';
+
+            // Deselect active card
+            if (activeCard) {
+                activeCard.classList.remove('active');
+                activeCard = null;
+            }
+
+            // Close mobile sidebar if open
+            closeMobileSidebar();
+        }
+
+        // Expose goHome globally for onclick
+        window.goHome = goHome;
 
         // ---- Go ----
         init();
