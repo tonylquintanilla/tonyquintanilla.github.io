@@ -39,8 +39,18 @@
       "description": "3d plot of our stellar neighborhood to 20 LY.",
       "size_kb": 77.2,
       "converted": "2026-02-07 20:14"
+    },
+    {
+      "id": "paleoclimate_human_origins",
+      "title": "Paleoclimate Human Origins",
+      "filename": "paleoclimate_human_origins.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "540 MY paleoclimate chart with human origins markers.",
+      "size_kb": 116.3,
+      "converted": "2026-02-07 21:07"
     }
   ],
-  "last_updated": "2026-02-07 20:14",
-  "total_count": 4
+  "last_updated": "2026-02-07 21:07",
+  "total_count": 5
 }
