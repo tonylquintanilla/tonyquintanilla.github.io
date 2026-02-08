@@ -969,26 +969,41 @@
                     delete figDict.layout.template;
                 }
 
-                // Apply dark theme overrides and responsive sizing
+                // Apply responsive sizing and conditional dark theme
                 figDict.layout = figDict.layout || {};
 
                 // Remove fixed dimensions from original export - let Plotly fill container
                 delete figDict.layout.width;
                 delete figDict.layout.height;
+                figDict.layout.autosize = true;
 
-                Object.assign(figDict.layout, {
-                    paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)',
-                    autosize: true,
-                    font: Object.assign(figDict.layout.font || {}, {
-                        color: '#e8e6e3'
-                    })
-                    // Margins: preserve original export values for proper element placement
-                });
+                // Auto-detect theme: check if the original plot was designed for
+                // a light background. If so, preserve its colors entirely.
+                var origBg = (figDict.layout.paper_bgcolor || '').toLowerCase();
+                var isLightTheme = (origBg === 'white' || origBg === '#ffffff' ||
+                    origBg === '#fff' || origBg.indexOf('rgb(255') === 0 ||
+                    origBg === '#e5ecf6');
 
-                // For 3D scenes: ensure aspectmode allows filling
+                if (isLightTheme) {
+                    // Light-themed plot: preserve all original colors, just
+                    // ensure it fills its container with a visible background
+                    // (no dark overrides)
+                } else {
+                    // Dark-themed plot (3D space scenes, etc.): apply dark overrides
+                    Object.assign(figDict.layout, {
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        font: Object.assign(figDict.layout.font || {}, {
+                            color: '#e8e6e3'
+                        })
+                    });
+                }
+
+                // For 3D scenes: dark theme and aspect mode
                 if (figDict.layout.scene) {
-                    figDict.layout.scene.bgcolor = 'rgba(0,0,0,0)';
+                    if (!isLightTheme) {
+                        figDict.layout.scene.bgcolor = 'rgba(0,0,0,0)';
+                    }
                     // On mobile, use 'cube' aspectmode so the scene fills
                     // the available space instead of preserving desktop ratios
                     if (window.innerWidth < 1024) {
@@ -996,8 +1011,9 @@
                     }
                 }
 
-                // On mobile: reposition legend to not consume vertical space
-                if (window.innerWidth < 1024) {
+                // On mobile: reposition legend for dark-themed plots only
+                // Light-themed plots preserve their own legend placement
+                if (window.innerWidth < 1024 && !isLightTheme) {
                     if (figDict.layout.showlegend !== false) {
                         figDict.layout.legend = Object.assign(figDict.layout.legend || {}, {
                             orientation: 'h',
