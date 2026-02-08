@@ -1035,6 +1035,9 @@
                 plotlyGraph.style.display = 'block';
                 loadingOverlay.classList.remove('visible');
 
+                // Purge previous figure state (prevents updatemenus/sliders persisting)
+                Plotly.purge('plotly-graph');
+
                 // Render with Plotly
                 const config = {
                     displayModeBar: true,
@@ -1043,7 +1046,7 @@
                     responsive: true
                 };
 
-                await Plotly.react('plotly-graph', figDict.data || [], figDict.layout, config);
+                await Plotly.newPlot('plotly-graph', figDict.data || [], figDict.layout, config);
 
                 // Force resize after render to fill container
                 // (small delay ensures container dimensions are settled)

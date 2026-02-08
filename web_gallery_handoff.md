@@ -279,6 +279,7 @@ issue, not a layout issue missed on desktop.
 python -m http.server 8080
    - after handoff update, the plot was added to the gallery in github successfully. 
 | 4 | Stellar neighborhood | 3D stellar pipeline | Different data source, annotations | Pending |
+   - plotting 3d stellar neighborhood to 20 ly committed successfully. 
 | 5 | Paleoclimate | 2D chart | Completely different plot type | Pending |
 | 6 | Social view (any) | 2D portrait-optimized | Portrait layout on desktop | Pending |
 
