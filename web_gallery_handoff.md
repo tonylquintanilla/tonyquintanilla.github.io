@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-7, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-8, 2026 | Claude Opus 4.6
 
 ---
 
@@ -182,6 +182,71 @@ export. Compared gallery rendering against original HTML side by side.
 rendering closely. Gallery view is compressed by the sidebar but the
 Expand button gives users an immediate path to the full experience.
 
+### Session 3 continued (Feb 7-8): Desktop Validation Sweep
+
+Completed full desktop 16:9 validation of all visualization types.
+
+**Bugs fixed in index.html** (1,305 lines, ASCII clean, LF):
+
+1. **Persistent dropdown menus** - When switching between visualizations,
+   updatemenus from the previous plot (e.g., inner planets dropdowns)
+   persisted and could affect the new plot. Fixed by changing from
+   `Plotly.react()` to `Plotly.purge()` + `Plotly.newPlot()`. Purge
+   clears all previous figure state including menus, sliders, and
+   event listeners before rendering the new figure.
+
+2. **Auto-detect light vs dark theme** - The paleoclimate chart (white
+   background, colored annotations) was rendered with dark theme overrides,
+   making text boxes blank and colors wrong. Added auto-detection that
+   checks `paper_bgcolor` and `plot_bgcolor` at the top level AND inside
+   the template object (before template stripping) to determine if a plot
+   was designed for a light background. Light-themed plots skip all dark
+   overrides (transparent bg, light font color, scene bgcolor). Detection
+   checks for: 'white', '#ffffff', '#fff', 'rgb(255...', '#e5ecf6'.
+
+   **Debugging note**: First attempt checked only `paper_bgcolor` after
+   template stripping -- failed because json_converter already strips
+   templates during conversion, so `paper_bgcolor` was gone. Second
+   attempt checked template before stripping -- failed because the JSON
+   had no template at all. Final fix: check `plot_bgcolor` at top level
+   (which survived conversion as `"white"`). The detection cascade is:
+   `layout.paper_bgcolor` -> `layout.plot_bgcolor` -> `template.layout.*`.
+
+3. **Title rescue for zero-margin plots** - Social view exports have all
+   margins set to 0 (designed for their own HTML wrapper). The Plotly
+   title was clipped. Added detection: if all margins are 0 and a title
+   exists, inject `margin.t: 40` so the title renders.
+
+4. **json_gallery.py path fix** - Gallery data folder resolved relative
+   to cwd, broke when running from tools/ subfolder. Fixed to resolve
+   relative to script location using `os.path.dirname(os.path.abspath())`.
+
+**Desktop validation results** (all 7 visualizations tested):
+
+| # | Visualization | Size | Type | Status |
+|---|---|---|---|---|
+| 1 | Earth Heliocentric | 147 KB | 3D planetary | Desktop OK |
+| 2 | Earth Barycenter Shells | 9.3 MB | 3D planetary + shells | Desktop OK |
+| 3 | Inner Planets + Comets + Solar Corona | 31.4 MB | 3D complex | Desktop OK |
+| 4 | 3D Stars Distance 20Ly | 77 KB | 3D stellar | Desktop OK |
+| 5 | Paleoclimate Human Origins | 116 KB | 2D light-themed chart | Desktop OK |
+| 6 | Near Earth Asteroids | 1.9 MB | 3D planetary | Desktop OK |
+| 7 | Orbital Transformation Mercury | 70 KB | 3D orbital elements | Desktop OK |
+
+**Social view decision**: Near Earth Asteroids social view was tested and
+renders correctly, but removed from gallery -- too thin on information
+without the HTML wrapper's hover-driven info panel. The full view has all
+the same orbits plus dropdowns, annotations, and legend. Social views may
+return when the gallery can replicate the info panel.
+
+**Local testing workflow established**:
+```
+cd C:\Users\tonyq\OneDrive\Desktop\python_work\tonyquintanilla.github.io
+python -m http.server 8080
+```
+Opens http://localhost:8080 -- serves the real gallery viewer (not Dash),
+reads from gallery/ folder, enables testing all features before pushing.
+
 ### Known Issues & Lessons
 
 1. **3D plots in gallery view**: The 320px sidebar compresses the plot
@@ -201,7 +266,7 @@ Expand button gives users an immediate path to the full experience.
 
 4. **Animation not yet supported**: json_converter.py extracts only `data`
    and `layout`. Plotly animated figures also have `frames` (injected via
-   `Plotly.addFrames()` in the HTML). The gallery viewer's `Plotly.react()`
+   `Plotly.addFrames()` in the HTML). The gallery viewer's `Plotly.newPlot()`
    call does not pass frames. Both need targeted additions -- a few lines
    each. Deferred until static plots are solid.
 
@@ -214,6 +279,26 @@ Expand button gives users an immediate path to the full experience.
    positions, and title alignment. The gallery viewer should apply minimal
    overrides (dark theme, autosize, template strip) and preserve everything
    else. Every forced layout change is a potential visual regression.
+
+7. **Theme detection order matters** (Session 3 cont.) -- json_converter
+   strips templates during conversion. Any detection that relies on template
+   contents must either (a) check before stripping, or (b) check what
+   survives at the top level. The `plot_bgcolor` field survived conversion
+   and became the reliable theme indicator.
+
+8. **GitHub Pages deployment pattern** (Session 3 cont.) -- First deploy
+   after adding a large file sometimes fails with "multiple artifacts"
+   error. Re-running the failed workflow doesn't help (stale artifacts
+   collide). Pushing a new commit creates a clean workflow run that
+   succeeds. Rule: if deploy fails, don't re-run -- push a new commit.
+   The handoff update serves as a natural second push.
+
+9. **Social views lose context in gallery** (Session 3 cont.) -- Social
+   HTML wraps the Plotly figure with a hover-driven info panel and
+   branding. json_converter extracts only the figure. Without the wrapper,
+   the plot has no title, no legend, no annotations. Title rescue (margin
+   fix) helps minimally. Decision: keep social views out of gallery until
+   info panel can be replicated.
 
 ## File Renaming Summary
 
@@ -258,34 +343,10 @@ Switch between them to commit/push independently.
 
 ## What's Next
 
-### Immediate: Desktop 16:9 Static Testing
+### Immediate: Mobile Testing (9:16)
 
-Complete the systematic rebuild on laptop first. Nail one variable at a
-time -- if something looks wrong on mobile later, we'll know it's a mobile
-issue, not a layout issue missed on desktop.
-
-**Order** (simple to complex, by pipeline):
-
-| # | Visualization | Type | What it tests | Status |
-|---|---|---|---|---|
-| 1 | Earth orbit (static) | 3D planetary | Baseline | Desktop OK |
-   - Earth-moon-barycenter plot with all Earth shells. 9.3 mb json file.  -- testing
-| 2 | Earth + Moon | 3D planetary, more traces | Legend, scale | Pending |
-| 3 | Inner planets | 3D planetary, multiple orbits | Density | Pending |
-   - plotted sun photosphere, corona, current comets and inner planets
-   - update to GitHub is having problems
-   - tested in local host: perfect
-     - cd C:\Users\tonyq\OneDrive\Desktop\python_work\tonyquintanilla.github.io
-python -m http.server 8080
-   - after handoff update, the plot was added to the gallery in github successfully. 
-| 4 | Stellar neighborhood | 3D stellar pipeline | Different data source, annotations | Pending |
-   - plotting 3d stellar neighborhood to 20 ly committed successfully. 
-| 5 | Paleoclimate | 2D chart | Completely different plot type | Pending |
-| 6 | Social view (any) | 2D portrait-optimized | Portrait layout on desktop | Pending |
-
-### Then: Mobile Testing (9:16)
-
-Take the full set of validated desktop visualizations to mobile in one pass.
+Desktop sweep is COMPLETE (7 visualizations, all pass). Take the full set
+to mobile in one pass.
 
 **Test checklist (portrait 9:16)**:
 - Hamburger menu appears and works
@@ -295,6 +356,7 @@ Take the full set of validated desktop visualizations to mobile in one pass.
 - Dropdowns (Return to Full View, etc.) work with touch
 - Expand/Exit fullscreen works
 - Home navigation works (tap title)
+- Light-themed plots (paleoclimate) render correctly on mobile
 
 **Test checklist (landscape on phone)**:
 - Layout behavior (breakpoint is 1024px, most phones stay mobile)
@@ -302,16 +364,7 @@ Take the full set of validated desktop visualizations to mobile in one pass.
 
 Screenshot anything that looks off, fix in batch.
 
-**Workflow per visualization**:
-1. Export fresh HTML from current desktop app (Standard format)
-2. Run json_converter.py -> JSON
-3. Drop in gallery/ folder, update metadata
-4. Push to GitHub
-5. Test on laptop (16:9) in both gallery view and expanded view
-6. Fix before proceeding to next visualization
-7. After all static types pass desktop: mobile sweep (9:16)
-
-### Animation Support (after static plots pass desktop + mobile)
+### Then: Animation Support
 
 Two targeted additions needed:
 
@@ -325,7 +378,7 @@ Add bracket-matching extraction for the frames array, include in JSON output.
 
 **index.html** - Pass frames to Plotly after rendering:
 ```javascript
-await Plotly.react('plotly-graph', figDict.data, figDict.layout, config);
+await Plotly.newPlot('plotly-graph', figDict.data, figDict.layout, config);
 if (figDict.frames) {
     await Plotly.addFrames('plotly-graph', figDict.frames);
 }
@@ -381,28 +434,38 @@ Regex fails. The reliable method is bracket-matching: find opening [,
 count brackets accounting for strings/escapes, find matching ]. Same
 for layout object.
 
-### Minimal Override Principle (NEW - Session 3)
+### Minimal Override Principle (Session 3, refined Session 3 cont.)
 
 The gallery viewer should apply the minimum overrides needed for the dark
 theme and responsive sizing. The original Plotly exports contain carefully
 placed margins, dropdown positions, title alignment, and element spacing.
 Each forced layout change risks a visual regression.
 
-Current overrides (intentionally minimal):
+**Theme auto-detection**: Before applying overrides, the viewer checks
+whether the original plot was designed for a light background by examining
+`layout.paper_bgcolor`, `layout.plot_bgcolor`, and (if present)
+`template.layout.*` for light color values (white, #ffffff, #e5ecf6, etc.).
+Light-themed plots skip ALL dark overrides and render with original colors.
+
+Current overrides (dark-themed plots only):
 - paper_bgcolor / plot_bgcolor: transparent (dark theme)
 - font color: #e8e6e3 (light text for dark background)
+- scene.bgcolor: transparent (3D dark theme)
+
+Current overrides (all plots):
 - autosize: true (fill container instead of fixed desktop dimensions)
 - template: deleted (prevents version mismatch errors)
 - width/height: deleted (let container control size)
-- scene.bgcolor: transparent (3D dark theme)
 - scene.aspectmode: 'cube' on mobile <1024px (fill portrait screen)
-- legend: horizontal on mobile <1024px (save vertical space)
+- legend: horizontal on mobile <1024px (dark-themed only)
+- margin.t: 40 when all margins are 0 and title exists (title rescue)
 
 NOT overridden (preserve from export):
-- margins (export knows its element placement)
+- margins (export knows its element placement, except zero-margin rescue)
 - updatemenus positions (staggered by the app)
 - title alignment (left-justified by default)
 - annotation positions and sizes (except font scaling on mobile <900px)
+- light-themed plot colors (no dark overrides applied)
 
 ### Older HTML Files
 
@@ -436,6 +499,10 @@ re-export from the current app.
 | Squished gallery view | Fullscreen toggle, not hover-hide | Predictable UX, no accidental triggers |
 | Layout overrides | Minimal -- preserve export | Every override risks visual regression |
 | Static before animation | Yes | Stable baseline before adding complexity |
+| Theme detection | Auto-detect from bgcolor | No metadata flags needed; zero maintenance |
+| Social views in gallery | Removed for now | Info panel can't be replicated from JSON alone |
+| Failed deploy fix | Push new commit, not re-run | Re-run inherits stale artifacts; fresh push is clean |
+| Local testing | python -m http.server 8080 | Tests real viewer, not Dash; instant feedback |
 
 ---
 
