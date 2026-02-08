@@ -29,8 +29,18 @@
       "description": "Solar photosphere, corona, current comets and inner planets. Static plot.",
       "size_kb": 31364.8,
       "converted": "2026-02-07 17:53"
+    },
+    {
+      "id": "3d_stars_distance_20ly",
+      "title": "3D Stars Distance 20Ly",
+      "filename": "3d_stars_distance_20ly.json",
+      "category": "stellar",
+      "category_label": "Stellar Neighborhood",
+      "description": "3d plot of our stellar neighborhood to 20 LY.",
+      "size_kb": 77.2,
+      "converted": "2026-02-07 20:14"
     }
   ],
-  "last_updated": "2026-02-07 17:53",
-  "total_count": 3
+  "last_updated": "2026-02-07 20:14",
+  "total_count": 4
 }
