@@ -59,8 +59,18 @@
       "description": "Plot of near-Earth asteroids between Venus and Mars.",
       "size_kb": 1887.3,
       "converted": "2026-02-07 23:57"
+    },
+    {
+      "id": "orbital_transformation_mercury_20260208",
+      "title": "Orbital Transformation Mercury 20260208",
+      "filename": "orbital_transformation_mercury_20260208.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Mercury's orbital elements in the Ecliptic Frame",
+      "size_kb": 70.4,
+      "converted": "2026-02-08 01:01"
     }
   ],
-  "last_updated": "2026-02-07 23:57",
+  "last_updated": "2026-02-08 01:01",
   "total_count": 7
 }
