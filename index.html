@@ -994,6 +994,15 @@
                 delete figDict.layout.height;
                 figDict.layout.autosize = true;
 
+                // Title rescue: if margins are all zero but a title exists,
+                // add top margin so the title is visible (social views)
+                var m = figDict.layout.margin || {};
+                if (figDict.layout.title &&
+                    (m.t === 0 || m.t === undefined) &&
+                    (m.l === 0) && (m.r === 0) && (m.b === 0)) {
+                    figDict.layout.margin = Object.assign(m, { t: 40 });
+                }
+
                 if (isLightTheme) {
                     // Light-themed plot: preserve all original colors, just
                     // ensure it fills its container with a visible background
