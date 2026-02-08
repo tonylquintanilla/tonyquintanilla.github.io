@@ -967,14 +967,18 @@
                 figDict.layout = figDict.layout || {};
 
                 // Auto-detect theme BEFORE stripping template, because
-                // paper_bgcolor may only exist inside the template object
+                // paper_bgcolor may only exist inside the template object.
+                // Also check plot_bgcolor -- converter may strip template
+                // but preserve plot_bgcolor at top level.
                 var origBg = '';
                 if (figDict.layout.paper_bgcolor) {
                     origBg = figDict.layout.paper_bgcolor.toLowerCase();
+                } else if (figDict.layout.plot_bgcolor) {
+                    origBg = figDict.layout.plot_bgcolor.toLowerCase();
                 } else if (figDict.layout.template &&
-                           figDict.layout.template.layout &&
-                           figDict.layout.template.layout.paper_bgcolor) {
-                    origBg = figDict.layout.template.layout.paper_bgcolor.toLowerCase();
+                           figDict.layout.template.layout) {
+                    var tl = figDict.layout.template.layout;
+                    origBg = (tl.paper_bgcolor || tl.plot_bgcolor || '').toLowerCase();
                 }
                 var isLightTheme = (origBg === 'white' || origBg === '#ffffff' ||
                     origBg === '#fff' || origBg.indexOf('rgb(255') === 0 ||
