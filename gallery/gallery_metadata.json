@@ -49,8 +49,28 @@
       "description": "540 MY paleoclimate chart with human origins markers.",
       "size_kb": 116.3,
       "converted": "2026-02-07 21:07"
+    },
+    {
+      "id": "near_earth_asteroids_social_view_20260207_2352",
+      "title": "Near Earth Asteroids View 20260207 2352",
+      "filename": "near_earth_asteroids_social_view_20260207_2352.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Plot of near-Earth asteroids between Venus and Mars.",
+      "size_kb": 1978.1,
+      "converted": "2026-02-07 23:56"
+    },
+    {
+      "id": "near_earth_asteroids_20260207_2114",
+      "title": "Near Earth Asteroids 20260207 2114",
+      "filename": "near_earth_asteroids_20260207_2114.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Plot of near-Earth asteroids between Venus and Mars.",
+      "size_kb": 1887.3,
+      "converted": "2026-02-07 23:57"
     }
   ],
-  "last_updated": "2026-02-07 21:07",
-  "total_count": 5
+  "last_updated": "2026-02-07 23:57",
+  "total_count": 7
 }
