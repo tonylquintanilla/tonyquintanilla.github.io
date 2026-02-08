@@ -34,7 +34,10 @@ import plotly.io as pio
 # CONFIGURATION
 # ============================================================================
 
-DEFAULT_DATA_FOLDER = "gallery"
+# Resolve paths relative to the script's location (works from tools/ subfolder)
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.dirname(_SCRIPT_DIR)
+DEFAULT_DATA_FOLDER = os.path.join(_REPO_ROOT, "gallery")
 METADATA_FILE = "gallery_metadata.json"
 APP_TITLE = "Paloma's Orrery"
 APP_SUBTITLE = "Interactive Astronomical Visualizations"

@@ -272,6 +272,11 @@ issue, not a layout issue missed on desktop.
    - Earth-moon-barycenter plot with all Earth shells. 9.3 mb json file.  -- testing
 | 2 | Earth + Moon | 3D planetary, more traces | Legend, scale | Pending |
 | 3 | Inner planets | 3D planetary, multiple orbits | Density | Pending |
+   - plotted sun photosphere, corona, current comets and inner planets
+   - update to GitHub is having problems
+   - tested in local host: perfect
+     - cd C:\Users\tonyq\OneDrive\Desktop\python_work\tonyquintanilla.github.io
+python -m http.server 8080
 | 4 | Stellar neighborhood | 3D stellar pipeline | Different data source, annotations | Pending |
 | 5 | Paleoclimate | 2D chart | Completely different plot type | Pending |
 | 6 | Social view (any) | 2D portrait-optimized | Portrait layout on desktop | Pending |
