@@ -229,8 +229,19 @@
       "description": "Graphic showing atmospheric CO2 from 1958 to 2025.",
       "size_kb": 17.3,
       "converted": "2026-02-09 00:12"
+    },
+    {
+      "id": "earth_heliocentric_social_view_20260209_0130",
+      "title": "Earth Heliocentric View 20260209 0130",
+      "filename": "earth_heliocentric_social_view_20260209_0130.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Earth heliocentric orbit.",
+      "mode": "portrait",
+      "size_kb": 153.7,
+      "converted": "2026-02-09 01:32"
     }
   ],
-  "last_updated": "2026-02-09 00:12",
-  "total_count": 23
+  "last_updated": "2026-02-09 01:32",
+  "total_count": 24
 }
