@@ -533,6 +533,101 @@
         .modebar-btn:hover path { fill: var(--accent) !important; }
 
         /* ================================================================
+           FLOATING INFO CARD (portrait mode - slides up from bottom)
+           ================================================================ */
+        .info-card {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 400;
+            background: rgba(18, 18, 26, 0.92);
+            border-top: 1px solid var(--accent-dim);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            max-height: 45vh;
+            overflow-y: auto;
+            padding: 16px 20px 24px;
+        }
+
+        .info-card.visible {
+            transform: translateY(0);
+        }
+
+        /* Drag handle hint */
+        .info-card-handle {
+            width: 36px;
+            height: 4px;
+            background: var(--text-dim);
+            border-radius: 2px;
+            margin: 0 auto 12px;
+            opacity: 0.5;
+        }
+
+        .info-card-name {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent);
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .info-card-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .info-card-body {
+            font-size: 0.82rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Style <br>-separated lines in the body */
+        .info-card-body br {
+            display: block;
+            margin-bottom: 2px;
+            content: "";
+        }
+
+        /* Dismiss hint at bottom */
+        .info-card-dismiss {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 12px;
+            letter-spacing: 0.04em;
+        }
+
+        /* First-load hint overlay */
+        .tap-hint {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(18, 18, 26, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 20px;
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            z-index: 350;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        .tap-hint.visible {
+            opacity: 1;
+        }
+
+        /* ================================================================
            TOAST NOTIFICATION
            ================================================================ */
         .toast {
@@ -670,6 +765,18 @@
         </div>
     </div>
 
+    <!-- Floating info card (portrait mode) -->
+    <div class="info-card" id="infoCard">
+        <div class="info-card-handle"></div>
+        <div class="info-card-name" id="infoCardName"></div>
+        <div class="info-card-subtitle" id="infoCardSubtitle"></div>
+        <div class="info-card-body" id="infoCardBody"></div>
+        <div class="info-card-dismiss">tap anywhere to dismiss</div>
+    </div>
+
+    <!-- First-load tap hint (portrait mode) -->
+    <div class="tap-hint" id="tapHint">Tap any object for details</div>
+
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>
 
@@ -724,9 +831,16 @@
         var toast          = document.getElementById('toast');
         var modeLandscape  = document.getElementById('modeLandscape');
         var modePortrait   = document.getElementById('modePortrait');
+        var infoCard       = document.getElementById('infoCard');
+        var infoCardName   = document.getElementById('infoCardName');
+        var infoCardSubtitle = document.getElementById('infoCardSubtitle');
+        var infoCardBody   = document.getElementById('infoCardBody');
+        var tapHint        = document.getElementById('tapHint');
 
         // Track current plot's aspect ratio for resize handler
         var currentAspect = 0;
+        var infoCardShown = false;
+        var tapHintShown = false;
 
         // ---- Initialize ----
         async function init() {
@@ -855,6 +969,7 @@
 
             // Close overlay
             closeOverlay();
+            dismissInfoCard();
 
             try {
                 var resp = await fetch(DATA_PATH + '/' + viz.filename);
@@ -988,6 +1103,27 @@
                     Plotly.Plots.resize('plotly-graph');
                 }, 100);
 
+                // Portrait mode: wire click -> info card
+                if (currentMode === 'portrait') {
+                    plotlyGraph.on('plotly_click', function(data) {
+                        if (!data || !data.points || !data.points.length) return;
+                        var point = data.points[0];
+                        if (!point.customdata) return;
+                        showInfoCard(point.customdata);
+                    });
+
+                    // Show tap hint on first portrait load
+                    if (!tapHintShown) {
+                        tapHintShown = true;
+                        setTimeout(function() {
+                            tapHint.classList.add('visible');
+                            setTimeout(function() {
+                                tapHint.classList.remove('visible');
+                            }, 3000);
+                        }, 800);
+                    }
+                }
+
             } catch (err) {
                 loadingOverlay.classList.remove('visible');
                 plotlyGraph.style.display = 'none';
@@ -1040,10 +1176,21 @@
                 }
             });
 
-            // Keyboard: Escape closes overlay
+            // Keyboard: Escape closes overlay or info card
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
-                    closeOverlay();
+                    if (infoCardShown) {
+                        dismissInfoCard();
+                    } else {
+                        closeOverlay();
+                    }
+                }
+            });
+
+            // Click/tap anywhere dismisses info card (except on card itself)
+            document.addEventListener('click', function(e) {
+                if (infoCardShown && !infoCard.contains(e.target)) {
+                    dismissInfoCard();
                 }
             });
         }
@@ -1088,6 +1235,42 @@
             // Re-render nav list filtered by mode
             if (metadata) {
                 renderNavList(metadata.visualizations || []);
+            }
+        }
+
+        // ---- Info card (portrait mode) ----
+        function showInfoCard(customdata) {
+            try {
+                var parsed = (typeof customdata === 'string') ?
+                    JSON.parse(customdata) : customdata;
+
+                infoCardName.textContent = parsed.name || '';
+
+                if (parsed.subtitle) {
+                    infoCardSubtitle.textContent = parsed.subtitle;
+                    infoCardSubtitle.style.display = '';
+                } else {
+                    infoCardSubtitle.style.display = 'none';
+                }
+
+                if (parsed.body) {
+                    infoCardBody.innerHTML = parsed.body;
+                    infoCardBody.style.display = '';
+                } else {
+                    infoCardBody.style.display = 'none';
+                }
+
+                infoCard.classList.add('visible');
+                infoCardShown = true;
+            } catch (e) {
+                // Unparseable customdata -- ignore
+            }
+        }
+
+        function dismissInfoCard() {
+            if (infoCardShown) {
+                infoCard.classList.remove('visible');
+                infoCardShown = false;
             }
         }
 
@@ -1188,6 +1371,7 @@
 
             // Close overlay
             closeOverlay();
+            dismissInfoCard();
         }
 
         // ---- Utility ----
