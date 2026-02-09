@@ -447,6 +447,57 @@ plots designed tall or square get the min-height protection.
 - index.html (aspect ratio preservation + overflow fix)
 - 4 JSON files patched (keeling_curve, temperature, sea_level, ocean_ph)
 
+### Session 6 (Feb 9): Gallery v2 -- Non-Persistent Overlay Selector
+
+Implemented Step 2 of the Gallery v2 implementation sequence: replaced
+the permanent 320px sidebar with a non-persistent overlay selector.
+Everything is now full-screen, always. No more sidebar compression
+problem, no more fullscreen toggle needed.
+
+**Architecture change (index.html rewrite, 1,197 lines -> replaces 1,332)**:
+
+Removed:
+- Permanent sidebar (`.sidebar`, 320px fixed)
+- Fullscreen toggle / exit buttons (everything is fullscreen now)
+- Separate mobile hamburger + desktop sidebar logic
+- `.viz-header` bar (title moved to nav button)
+- Separate mobile share button element
+
+Added:
+- `.nav-btn` -- floating button (top-left) with hamburger icon + label
+  text showing current viz name or "Paloma's Orrery" on welcome
+- `.overlay-selector` -- slide-out panel with same content as old sidebar
+  (category-grouped cards, footer links, header -> home)
+- `.overlay-backdrop` -- click/tap to dismiss
+- Mode toggle buttons (Landscape / Portrait) in overlay header -- wired
+  to state but filtering deferred to Step 5
+- Auto-detect default mode from screen width (<1024px -> Portrait)
+- Floating share button (top-right at top:52px, below Plotly modebar,
+  appears only when a viz is loaded)
+
+Preserved unchanged:
+- All Plotly rendering logic (theme detection, template stripping,
+  aspect ratio, mobile overrides, title rescue, annotation scaling)
+- URL hash routing and deep links
+- Toast notifications
+- Category colors and typography
+- Share/copy link functionality
+- Error handling
+
+**Interaction model (same on all devices)**:
+1. Floating button (top-left) shows current context
+2. Tap button -> overlay slides in from left with backdrop
+3. Select visualization -> overlay closes, plot loads full-screen
+4. Tap button again to browse more
+5. Click header title in overlay -> return to welcome state
+6. Escape key closes overlay
+
+**Minor fix**: Share button moved from top:12px to top:52px to avoid
+overlapping Plotly modebar icons.
+
+**Files changed**:
+- index.html (full rewrite -- overlay architecture replaces sidebar)
+
 ## What's Next: Gallery Viewer v2 -- Landscape + Portrait
 
 ### Session 4 Design (Feb 8): Mobile Strategy
@@ -594,8 +645,8 @@ conversion. Either way, the gallery viewer always gets structured customdata.
 
 | Step | What | Notes |
 |------|------|-------|
-| 1 | Stellar converter testing | Export 2D distance, 3D magnitude, 2D magnitude; find converter bugs |
-| 2 | Non-persistent selector prototype | Floating button + overlay, Landscape/Portrait toggle |
+| 1 | Stellar converter testing | DONE (Session 5) - all stellar views pass |
+| 2 | Non-persistent selector prototype | DONE (Session 6) - overlay replaces sidebar |
 | 3 | Floating info card component | One component, works for all content types |
 | 4 | json_converter.py hover parsing | Pre-parse trace.text -> customdata for standard exports |
 | 5 | Portrait mode with pinch + tap-to-card | Wire together; pinch + tap also works for mobile landscape |
@@ -616,20 +667,22 @@ JSONs that already have customdata.
 - Website content pages (About, Downloads, Contact)
 - Version/update date in gallery footer
 
-### Immediate Next: Stellar Converter Testing
+### Immediate Next: Floating Info Card + Hover Parsing (Steps 3-4)
 
-Before building Gallery v2, validate the converter with untested content.
-Tony exports from the desktop app, runs through json_converter.py:
+Steps 3 and 4 can proceed in either order -- the card needs data, the
+converter provides data. Two approaches:
 
-**Test checklist**:
-- 2D Stellar Distance (HR diagram with extensive hover text)
-- 3D Stellar Magnitude
-- 2D Stellar Magnitude
-- Check hover text survives conversion
-- Check annotations, axes, formatting
-- Note any converter failures for targeted fixes
+**Option A: Card first** -- Prototype the floating info card using
+social-view JSONs that already have structured customdata. This lets us
+see the card working before touching the converter.
 
-This surfaces data bugs before building mobile UI on top of them.
+**Option B: Converter first** -- Add hover text parsing to
+json_converter.py for standard exports, then build the card knowing
+all content types will have customdata.
+
+Either way, both steps produce a card that reads customdata from any
+trace and displays name/subtitle/body on tap. The card appears on tap,
+dismisses on tap-away or swipe-down.
 
 ## Technical Notes
 
@@ -734,6 +787,11 @@ re-export from the current app.
 | Theme preservation | Promote bgcolor before template strip | Fix at source (converter), not destination (viewer) |
 | Tall plot handling | min-height from aspect ratio >= 0.8 | Landscape plots unaffected; square/tall get protection |
 | viz-container overflow | auto instead of hidden | Tall plots can scroll; landscape plots unchanged |
+| Sidebar removal | Non-persistent overlay replaces 320px sidebar | Full-screen always; no compression problem |
+| Fullscreen toggle | Removed (no longer needed) | Everything is fullscreen by default |
+| Nav button label | Shows current viz name or app title | Context always visible; replaces viz-header bar |
+| Share button position | top:52px to clear Plotly modebar | Avoids icon overlap |
+| One interaction model | Same overlay on phone + tablet + desktop | No device-specific code paths |
 
 ---
 
