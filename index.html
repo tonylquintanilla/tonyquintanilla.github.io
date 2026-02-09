@@ -307,7 +307,7 @@
         .viz-container {
             flex: 1;
             padding: 4px;
-            overflow: hidden;
+            overflow: auto;
             position: relative;
         }
 
@@ -851,6 +851,9 @@
         const fullscreenExit = document.getElementById('fullscreenExit');
         const appContainer   = document.querySelector('.app-container');
 
+        // Track current plot's aspect ratio for resize handler
+        var currentAspect = 0;
+
         // ---- Initialize ----
         async function init() {
             try {
@@ -989,7 +992,15 @@
                     delete figDict.layout.template;
                 }
 
-                // Remove fixed dimensions from original export - let Plotly fill container
+                // Capture original aspect ratio before removing fixed dimensions.
+                // Plots designed tall or square (like Planetary Boundaries at
+                // 1200x1100) get squished when the container is landscape-shaped.
+                // We preserve the ratio as a min-height constraint on the div.
+                var origWidth = figDict.layout.width;
+                var origHeight = figDict.layout.height;
+                var origAspect = (origWidth && origHeight) ? origHeight / origWidth : 0;
+
+                // Remove fixed dimensions - let Plotly fill container
                 delete figDict.layout.width;
                 delete figDict.layout.height;
                 figDict.layout.autosize = true;
@@ -1083,6 +1094,17 @@
 
                 await Plotly.newPlot('plotly-graph', figDict.data || [], figDict.layout, config);
 
+                // For tall/square plots (aspect >= 0.8), set min-height so
+                // the container doesn't squish them into a landscape shape.
+                // The min-height is based on the container width * original ratio.
+                currentAspect = origAspect;
+                if (origAspect >= 0.8) {
+                    var containerWidth = plotlyGraph.parentElement.clientWidth;
+                    plotlyGraph.style.minHeight = Math.round(containerWidth * origAspect) + 'px';
+                } else {
+                    plotlyGraph.style.minHeight = '';
+                }
+
                 // Force resize after render to fill container
                 // (small delay ensures container dimensions are settled)
                 setTimeout(function() {
@@ -1128,9 +1150,13 @@
             // Hash changes (browser back/forward)
             window.addEventListener('hashchange', handleHash);
 
-            // Window resize -> Plotly resize
+            // Window resize -> Plotly resize + recalculate min-height for tall plots
             window.addEventListener('resize', function() {
                 if (plotlyGraph.style.display !== 'none') {
+                    if (currentAspect >= 0.8) {
+                        var containerWidth = plotlyGraph.parentElement.clientWidth;
+                        plotlyGraph.style.minHeight = Math.round(containerWidth * currentAspect) + 'px';
+                    }
                     Plotly.Plots.resize('plotly-graph');
                 }
             });
