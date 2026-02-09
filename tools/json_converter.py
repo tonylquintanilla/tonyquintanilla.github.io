@@ -263,47 +263,11 @@ def _extract_via_variables(html_content):
 
 
 # ============================================================================
-# TEMPLATE STRIPPING WITH THEME PRESERVATION
-# ============================================================================
-
-def _strip_template_preserve_theme(fig_dict):
-    """
-    Strip Plotly template from a figure dict while preserving theme hints.
-
-    Plotly templates (e.g., plotly_white) embed paper_bgcolor and plot_bgcolor
-    inside the template object. When the template is stripped for size reduction
-    and version compatibility, these bgcolor values are lost. The gallery viewer
-    (index.html) uses bgcolor to detect light vs dark theme.
-
-    This function promotes bgcolor from the template to top-level layout before
-    deleting the template, so the gallery viewer can still detect the theme.
-    """
-    layout = fig_dict.get("layout", {})
-    template = layout.get("template", {})
-
-    if not template:
-        return
-
-    tl = template.get("layout", {})
-
-    # Promote paper_bgcolor from template if not already at top level
-    if not layout.get("paper_bgcolor") and tl.get("paper_bgcolor"):
-        layout["paper_bgcolor"] = tl["paper_bgcolor"]
-
-    # Promote plot_bgcolor from template if not already at top level
-    if not layout.get("plot_bgcolor") and tl.get("plot_bgcolor"):
-        layout["plot_bgcolor"] = tl["plot_bgcolor"]
-
-    # Now safe to delete the template
-    del layout["template"]
-
-
-# ============================================================================
 # FIGURE OBJECT -> JSON (for new figures)
 # ============================================================================
 
 def save_figure_json(fig, name, output_folder=None, category="other",
-                     description="", auto_metadata=True):
+                     description="", mode="landscape", auto_metadata=True):
     """
     Save a Plotly figure object directly as gallery-ready JSON.
 
@@ -316,6 +280,7 @@ def save_figure_json(fig, name, output_folder=None, category="other",
         output_folder: Output folder path (default: ./gallery)
         category: Gallery category key (see CATEGORIES dict)
         description: Description for the gallery metadata
+        mode: Gallery mode - "landscape", "portrait", or "both"
         auto_metadata: If True, update gallery_metadata.json automatically
 
     Returns:
@@ -335,10 +300,6 @@ def save_figure_json(fig, name, output_folder=None, category="other",
         fig_json = fig.to_json()
         fig_dict = json.loads(fig_json)
 
-        # Strip template (reduces size, avoids version mismatches)
-        # but preserve bgcolor hints for gallery theme detection
-        _strip_template_preserve_theme(fig_dict)
-
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(fig_dict, f)
 
@@ -347,7 +308,7 @@ def save_figure_json(fig, name, output_folder=None, category="other",
 
         if auto_metadata:
             _update_metadata(output_folder, safe_name, name, category,
-                           description, size_kb)
+                           description, size_kb, mode)
 
         return json_path
 
@@ -361,7 +322,7 @@ def save_figure_json(fig, name, output_folder=None, category="other",
 # ============================================================================
 
 def convert_html_to_gallery_json(html_path, output_folder=None, category="other",
-                                  description=""):
+                                  description="", mode="landscape"):
     """
     Convert a single HTML visualization to gallery-ready JSON.
 
@@ -370,6 +331,7 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
         output_folder: Output folder (default: ./gallery)
         category: Gallery category
         description: Description for metadata
+        mode: Gallery mode - "landscape", "portrait", or "both"
 
     Returns:
         str: Path to saved JSON, or None on failure
@@ -398,9 +360,10 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
     trace_count = len(fig_dict["data"])
 
     # Strip the Plotly template to reduce file size and avoid version
-    # mismatches (e.g., heatmapgl in newer Plotly). Preserve bgcolor
-    # hints so the gallery viewer can detect light vs dark theme.
-    _strip_template_preserve_theme(fig_dict)
+    # mismatches (e.g., heatmapgl in newer Plotly). The gallery viewer
+    # applies its own theme anyway.
+    if "layout" in fig_dict and "template" in fig_dict.get("layout", {}):
+        del fig_dict["layout"]["template"]
 
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(fig_dict, f)
@@ -409,7 +372,7 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
     print(f"  OK: {trace_count} traces, {size_kb:.0f} KB -> {safe_name}.json")
 
     _update_metadata(output_folder, safe_name, filename, category,
-                    description, size_kb)
+                    description, size_kb, mode)
 
     return json_path
 
@@ -419,7 +382,7 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
 # ============================================================================
 
 def _update_metadata(output_folder, safe_name, display_name, category,
-                    description, size_kb):
+                    description, size_kb, mode="landscape"):
     """Update the gallery metadata JSON file."""
     metadata_path = os.path.join(output_folder, METADATA_FILE)
 
@@ -440,6 +403,7 @@ def _update_metadata(output_folder, safe_name, display_name, category,
         "category": category,
         "category_label": CATEGORIES.get(category, "Other"),
         "description": description,
+        "mode": mode,
         "size_kb": round(size_kb, 1),
         "converted": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
@@ -567,6 +531,20 @@ def run_interactive():
 
         print(f"  Category: {CATEGORIES.get(category, category)}")
 
+        # Ask for mode
+        try:
+            mode_input = input(f"  Mode [L=landscape, P=portrait, B=both, Enter=landscape]: ").strip().lower()
+            if mode_input in ('p', 'portrait'):
+                mode = 'portrait'
+            elif mode_input in ('b', 'both'):
+                mode = 'both'
+            else:
+                mode = 'landscape'
+        except (EOFError, KeyboardInterrupt):
+            mode = 'landscape'
+
+        print(f"  Mode: {mode}")
+
         # Ask for description
         try:
             description = input(f"  Description [Enter=skip]: ").strip()
@@ -575,7 +553,7 @@ def run_interactive():
 
         # Convert
         result = convert_html_to_gallery_json(
-            html_path, output_folder, category, description
+            html_path, output_folder, category, description, mode
         )
 
         if result:
