@@ -1011,13 +1011,22 @@
                 delete figDict.layout.height;
                 figDict.layout.autosize = true;
 
-                // Title rescue: if margins are all zero but a title exists,
-                // add top margin so the title is visible (social views)
-                var m = figDict.layout.margin || {};
-                if (figDict.layout.title &&
-                    (m.t === 0 || m.t === undefined) &&
-                    (m.l === 0) && (m.r === 0) && (m.b === 0)) {
-                    figDict.layout.margin = Object.assign(m, { t: 40 });
+                // Title handling:
+                // On mobile/portrait, suppress the figure title -- the nav
+                // button label already shows the visualization name, and the
+                // Plotly title overlaps with browser chrome on small screens.
+                // On desktop, keep title rescue for social views with zero margins.
+                if (window.innerWidth < 1024) {
+                    delete figDict.layout.title;
+                } else {
+                    // Title rescue: if margins are all zero but a title exists,
+                    // add top margin so the title is visible (social views on desktop)
+                    var m = figDict.layout.margin || {};
+                    if (figDict.layout.title &&
+                        (m.t === 0 || m.t === undefined) &&
+                        (m.l === 0) && (m.r === 0) && (m.b === 0)) {
+                        figDict.layout.margin = Object.assign(m, { t: 40 });
+                    }
                 }
 
                 if (isLightTheme) {
