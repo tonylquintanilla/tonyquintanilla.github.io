@@ -69,8 +69,18 @@
       "description": "Mercury's orbital elements in the Ecliptic Frame",
       "size_kb": 70.4,
       "converted": "2026-02-08 01:01"
+    },
+    {
+      "id": "hr_diagram_distance_20_0ly",
+      "title": "HR Diagram Distance 20.0Ly",
+      "filename": "hr_diagram_distance_20_0ly.json",
+      "category": "stellar",
+      "category_label": "Stellar Neighborhood",
+      "description": "Hertzprung-Russell diagram of stars up to 20 LY distant.",
+      "size_kb": 74.2,
+      "converted": "2026-02-08 19:14"
     }
   ],
-  "last_updated": "2026-02-08 01:01",
-  "total_count": 7
+  "last_updated": "2026-02-08 19:14",
+  "total_count": 8
 }

@@ -341,83 +341,189 @@ C:\Users\tonyq\OneDrive\Desktop\python_work\
 Both repos appear side by side in GitHub Desktop's repo dropdown.
 Switch between them to commit/push independently.
 
-## What's Next
+## What's Next: Gallery Viewer v2 -- Landscape + Portrait
 
-### Immediate: Mobile Testing (9:16)
+### Session 4 Design (Feb 8): Mobile Strategy
 
-Desktop sweep is COMPLETE (7 visualizations, all pass). Take the full set
-to mobile in one pass.
+Desktop 16:9 gallery is unreadable on phones -- plots squished, text too
+small. Social view exports (9:16) are phone-native but lose their info
+panel in the JSON pipeline. After four rounds of open-ended design
+discussion, converged on a unified approach.
 
-**Test checklist (portrait 9:16)**:
-- Hamburger menu appears and works
-- Sidebar overlay opens/closes
-- Plot fills screen without sidebar eating space
-- Legend readable, not crushed
-- Dropdowns (Return to Full View, etc.) work with touch
-- Expand/Exit fullscreen works
-- Home navigation works (tap title)
-- Light-themed plots (paleoclimate) render correctly on mobile
+**Key insight**: The social view's hover data IS already in the JSON --
+`social_media_export.py` parses `trace.text` into structured `customdata`
+(name/subtitle/body) on each trace. `json_converter.py` captures this
+automatically since `customdata` is part of the Plotly figure data. What's
+missing is the JavaScript event handlers and UI to display it.
 
-**Test checklist (landscape on phone)**:
-- Layout behavior (breakpoint is 1024px, most phones stay mobile)
-- Plot usability in landscape mobile mode
+**Second insight**: One interaction pattern for everything. Instead of a
+persistent 60/40 info panel (stays in `social_media_export.py` for
+Instagram/YouTube production), the gallery uses a floating info card that
+appears on tap and dismisses on tap-away. Works for both 3D social-view
+content and 2D standard content. One component, all content types.
 
-Screenshot anything that looks off, fix in batch.
+### Architecture: Gallery v2
 
-### Then: Animation Support
-
-Two targeted additions needed:
-
-**json_converter.py** - Extract frames from `Plotly.addFrames()` call in HTML:
 ```
-Plotly.newPlot("id", [data], {layout}).then(function() {
-    Plotly.addFrames("id", [frames]);
-});
+Gallery Viewer v2 (index.html)
+|
++-- Mode toggle: [Landscape] [Portrait]
+|   (defaults based on screen width, user can switch)
+|
++-- Visualization selector (non-persistent overlay)
+|   +-- Landscape entries (standard 16:9 exports)
+|   +-- Portrait entries (social exports + pinch-friendly standards)
+|
++-- Full-screen plot area (ALWAYS full width, no sidebar)
+|   +-- Landscape: Plotly figure with standard hover tooltips
+|   +-- Portrait: Full-screen with floating info card on tap
+|
++-- Floating info card (appears on tap, dismisses on tap-away)
+    +-- 3D social content: reads pre-parsed customdata
+    +-- 2D/standard content: parses trace.text (pre-parsed by converter)
+    +-- Same component for all content types
 ```
-Add bracket-matching extraction for the frames array, include in JSON output.
 
-**index.html** - Pass frames to Plotly after rendering:
-```javascript
-await Plotly.newPlot('plotly-graph', figDict.data, figDict.layout, config);
-if (figDict.frames) {
-    await Plotly.addFrames('plotly-graph', figDict.frames);
+### Navigation: Non-Persistent Overlay Selector
+
+Replaces the current permanent 320px sidebar with a floating button +
+overlay. This is a significant simplification that benefits all devices.
+
+- Floating button (top-left) shows current visualization name
+- Tap button -> overlay appears with mode toggle + category-grouped list
+- Visualization lists differ between Landscape and Portrait modes
+- Select visualization -> overlay closes, plot loads full-screen
+- Same interaction on phone, tablet, and desktop
+- No expand/exit toggle needed -- everything is always full-screen
+- No sidebar compression problem -- plot always has full width
+
+**Mode toggle**: Landscape / Portrait
+- Defaults based on screen width (<1024px -> Portrait)
+- User can switch freely on any device
+- Some visualizations appear in both modes (e.g., paleoclimate)
+- Some only in one mode (complex orrery = landscape, social 3D = portrait)
+
+### Landscape Mode (current desktop experience, refined)
+
+- Full-screen Plotly figure (no sidebar)
+- Standard hover tooltips on desktop
+- Floating info card on tap (mobile landscape)
+- Pinch-zoom and pan via native Plotly touch
+- All current functionality preserved: dropdowns, legends, annotations
+
+### Portrait Mode (new)
+
+- ALL content renders full-screen (no 60/40 split in gallery)
+- Tap any object or data point -> floating info card slides up
+- Card shows name/subtitle/body parsed from customdata
+- Card dismisses on tap-away or swipe-down
+- Pinch-zoom and pan for all content (native Plotly.js touch)
+- Non-persistent hint on first load: "Pinch to zoom - Tap for details"
+- Gentle non-persistent hint for 2D content: "Rotate for landscape view"
+
+### Info Card vs. Persistent Panel
+
+| Context | UI | Why |
+|---------|-----|-----|
+| Gallery viewer (all modes) | Floating info card | Maximizes screen for plot; appears on demand |
+| social_media_export.py HTML | Persistent 60/40 panel | Designed for screen recording; stays visible in video |
+
+The gallery and social export serve different audiences. The gallery is
+for browsing; the social HTML is for Instagram/YouTube production. The
+persistent panel stays in social_media_export.py where it was designed.
+
+### Metadata: Mode Tagging
+
+```json
+{
+  "id": "earth_heliocentric",
+  "mode": "landscape",
+  "title": "Earth Heliocentric Orbit"
+}
+{
+  "id": "earth_heliocentric_portrait",
+  "mode": "portrait",
+  "title": "Earth Heliocentric (Portrait)"
+}
+{
+  "id": "paleoclimate_human_origins",
+  "mode": "both",
+  "title": "Paleoclimate Human Origins"
 }
 ```
-Layout sliders and play/pause buttons should work automatically since we
-stopped overriding updatemenus positions.
 
-### Navigation Improvements (next index.html update)
+Mode values:
+- `"landscape"` -- only in landscape list (complex desktop exports)
+- `"portrait"` -- only in portrait list (social-export JSONs)
+- `"both"` -- appears in both lists, same JSON file (2D charts, etc.)
 
-- ~~Home button: Click title to return to welcome state~~ DONE (Session 3)
-- **Version/update date**: Visible in footer so we know which build is deployed
-- **Better mobile header**: Test title/modebar overlap on phone
+Developer tags mode manually during conversion. No auto-detection needed.
 
-### Phase 2: Website Content
-
-Add sections to index.html or create additional pages:
-- About section / project description
-- Download links (point to GitHub releases)
-- Instagram / social links
-- Contact info
-
-### Phase 3: Publishing Workflow (steady state)
+### Data Pipeline (unchanged for developer)
 
 1. Create visualization in desktop app
-2. Run json_converter.py -> JSON file
-3. Edit gallery_metadata.json with proper title/description
-4. Drop JSON into repo's gallery/ folder
-5. Push with GitHub Desktop
-6. Live within minutes at the public URL
-7. Share link via text, Instagram, email
+2. Export HTML (standard or social view, as appropriate)
+3. Run json_converter.py -> JSON (now also parses trace.text to customdata)
+4. Tag mode in gallery_metadata.json (landscape / portrait / both)
+5. Drop JSON into website repo's gallery/ folder
+6. Push with GitHub Desktop
+7. Live at public URL within minutes
 
-### Phase 4: Refinements (future)
+### Hover Text Parsing: Python at Conversion Time
 
-- Animation frame extraction in converter (for play/pause visualizations)
+Decision: json_converter.py pre-parses trace.text into structured
+customdata during conversion, rather than parsing in JavaScript at runtime.
+
+Rationale:
+- _parse_hover_html() already works in Python (social_media_export.py)
+- Gallery viewer JavaScript stays simple -- just reads structured data
+- Runs once at conversion time, not every page load
+- If parsing logic changes, reconvert (would happen anyway)
+
+For social exports: customdata already pre-parsed by social_media_export.py.
+For standard exports: json_converter.py does the same parsing during
+conversion. Either way, the gallery viewer always gets structured customdata.
+
+### Implementation Sequence
+
+| Step | What | Notes |
+|------|------|-------|
+| 1 | Stellar converter testing | Export 2D distance, 3D magnitude, 2D magnitude; find converter bugs |
+| 2 | Non-persistent selector prototype | Floating button + overlay, Landscape/Portrait toggle |
+| 3 | Floating info card component | One component, works for all content types |
+| 4 | json_converter.py hover parsing | Pre-parse trace.text -> customdata for standard exports |
+| 5 | Portrait mode with pinch + tap-to-card | Wire together; pinch + tap also works for mobile landscape |
+| 6 | Content population + validation | Real phone testing with screencapture |
+| 7 | Polish | Version stamp, hints, landscape nudges |
+
+Steps 3 and 4 can proceed in either order -- the card needs data, the
+converter provides data, but we can prototype the card with social-view
+JSONs that already have customdata.
+
+### Deferred Items (future phases)
+
+- Animation frame extraction in converter (Plotly.addFrames support)
 - Legend handling for high-trace-count figures
 - Thumbnail generation for gallery cards
 - Link preview images for social sharing (og:image)
 - Custom domain (palomasorrery.com) if desired
-- Info panel for mobile (inspired by social_media_export.py's bottom panel)
+- Website content pages (About, Downloads, Contact)
+- Version/update date in gallery footer
+
+### Immediate Next: Stellar Converter Testing
+
+Before building Gallery v2, validate the converter with untested content.
+Tony exports from the desktop app, runs through json_converter.py:
+
+**Test checklist**:
+- 2D Stellar Distance (HR diagram with extensive hover text)
+- 3D Stellar Magnitude
+- 2D Stellar Magnitude
+- Check hover text survives conversion
+- Check annotations, axes, formatting
+- Note any converter failures for targeted fixes
+
+This surfaces data bugs before building mobile UI on top of them.
 
 ## Technical Notes
 
@@ -503,6 +609,14 @@ re-export from the current app.
 | Social views in gallery | Removed for now | Info panel can't be replicated from JSON alone |
 | Failed deploy fix | Push new commit, not re-run | Re-run inherits stale artifacts; fresh push is clean |
 | Local testing | python -m http.server 8080 | Tests real viewer, not Dash; instant feedback |
+| Mobile strategy | Landscape/Portrait modes | One gallery, two modes, user-selectable |
+| Info panel in gallery | Floating card, not persistent panel | Maximizes screen; panel stays in social_media_export.py |
+| Navigation | Non-persistent overlay selector | Full-screen always; no sidebar compression |
+| Mode naming | Landscape / Portrait | Cross-platform intuitive; not device-specific |
+| Mode default | Auto-detect from screen width | <1024px defaults Portrait; user can switch |
+| Hover parsing location | Python at conversion time | Proven code; gallery JS stays simple |
+| Social view pipeline | Same JSON pipeline, tagged | social_media_export.py stays for video production |
+| Pinch/zoom on mobile | Native Plotly.js touch | Works for 2D and 3D; no custom code needed |
 
 ---
 
@@ -512,5 +626,8 @@ moment."* -- Tony, February 6, 2026
 *"Exciting prospects!"* -- Tony, on the road ahead
 
 *"We'll get there. We always do."* -- Tony, February 7, 2026
+
+*"One gallery, two modes, one interaction pattern."* -- Design Session 4,
+February 8, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*
