@@ -667,10 +667,9 @@ conversion. Either way, the gallery viewer always gets structured customdata.
 | 2 | Non-persistent selector prototype | DONE (Session 6) - overlay replaces sidebar |
 | 3 | Floating info card component | DONE (Session 6) - portrait mode, peek/pin interaction |
 | -- | Mode filtering + converter tagging | DONE (Session 6) - pulled forward from Step 5 |
-| 4 | json_converter.py hover parsing | Pre-parse trace.text -> customdata for standard exports |
-| 5 | Portrait mode with pinch + tap-to-card | Touch testing; pinch + tap on real devices |
-| 6 | Content population + validation | Real phone testing with screencapture |
-| 7 | Polish | Version stamp, hints, landscape nudges |
+| 4 | ~~json_converter.py hover parsing~~ | DROPPED - landscape uses native hover; portrait uses social customdata |
+| 5 | Content population + validation | Real phone testing with screencapture |
+| 6 | Polish | Version stamp, hints, landscape nudges |
 
 Steps 3 and 4 can proceed in either order -- the card needs data, the
 converter provides data, but we can prototype the card with social-view
@@ -686,20 +685,20 @@ JSONs that already have customdata.
 - Website content pages (About, Downloads, Contact)
 - Version/update date in gallery footer
 
-### Immediate Next: Hover Parsing in Converter (Step 4)
+### Immediate Next: Content Population + Phone Testing (Step 5)
 
-The info card works for portrait social-view exports (which already have
-structured customdata from social_media_export.py). Standard landscape
-exports store hover text as HTML in `trace.text`, not in customdata.
+Steps 1-3 are done. Step 4 (converter hover parsing) was dropped --
+landscape uses native Plotly hover tooltips, portrait uses social-export
+customdata. Clean separation: developer tags mode during conversion,
+user sees the right interaction automatically.
 
-Step 4 adds `_parse_hover_html()` to json_converter.py so standard
-exports also get structured customdata during conversion. This enables
-the info card for ALL content, not just social views. The parsing logic
-already exists in social_media_export.py -- it just needs to be applied
-in the converter's HTML extraction path.
-
-After Step 4, the card works everywhere. Steps 5-7 are testing, content,
-and polish.
+Remaining work:
+- Export more social views for portrait mode content
+- Export key landscape views to fill out the gallery
+- Real phone testing (iOS Safari, Android Chrome) -- verify touch
+  behavior: tap-to-card, pinch-zoom, overlay navigation
+- Screenshot validation of both modes on real devices
+- Polish: version stamp, first-visit hints, orientation nudges
 
 ## Technical Notes
 
@@ -813,6 +812,7 @@ re-export from the current app.
 | Info card scope | Portrait mode only (for now) | Landscape uses standard Plotly hover tooltips |
 | Mode filtering | Filter nav list by metadata mode field | Items without mode default to landscape |
 | Converter mode prompt | L/P/B during interactive conversion | Defaults to landscape; backward compatible |
+| Converter hover parsing | Dropped (Step 4) | Landscape = native hover; portrait = social customdata; no conflict |
 
 ---
 
