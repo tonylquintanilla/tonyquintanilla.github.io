@@ -151,26 +151,6 @@
       "converted": "2026-02-08 23:37"
     },
     {
-      "id": "ocean_acidification_ph_trend",
-      "title": "Ocean Acidification Ph Trend",
-      "filename": "ocean_acidification_ph_trend.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing ocean surface pH trend.",
-      "size_kb": 16.8,
-      "converted": "2026-02-08 23:38"
-    },
-    {
-      "id": "sea_level_rise",
-      "title": "Sea Level Rise",
-      "filename": "sea_level_rise.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing mean sea level trend.",
-      "size_kb": 92.4,
-      "converted": "2026-02-08 23:38"
-    },
-    {
       "id": "arctic_ice_extent",
       "title": "Arctic Ice Extent",
       "filename": "arctic_ice_extent.json",
@@ -211,14 +191,34 @@
       "converted": "2026-02-08 23:43"
     },
     {
+      "id": "ocean_acidification_ph_trend",
+      "title": "Ocean Acidification Ph Trend",
+      "filename": "ocean_acidification_ph_trend.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing ocean surface pH from 1988 to 2023.",
+      "size_kb": 16.9,
+      "converted": "2026-02-09 00:09"
+    },
+    {
+      "id": "sea_level_rise",
+      "title": "Sea Level Rise",
+      "filename": "sea_level_rise.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing mean sea level rise from 1993 to 2025.",
+      "size_kb": 92.5,
+      "converted": "2026-02-09 00:10"
+    },
+    {
       "id": "global_temperature_anomalies",
       "title": "Globalerature Anomalies",
       "filename": "global_temperature_anomalies.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing mean surface temperature anomaly from 1880 to the present.",
+      "description": "Graphic showing surface mean temperature anomalies from 1880 to 2025.",
       "size_kb": 43.0,
-      "converted": "2026-02-08 23:44"
+      "converted": "2026-02-09 00:11"
     },
     {
       "id": "keeling_curve_co2_concentration",
@@ -226,11 +226,11 @@
       "filename": "keeling_curve_co2_concentration.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing atmospheric CO2 concentration from 1958 to the present.",
-      "size_kb": 17.2,
-      "converted": "2026-02-08 23:44"
+      "description": "Graphic showing atmospheric CO2 from 1958 to 2025.",
+      "size_kb": 17.3,
+      "converted": "2026-02-09 00:12"
     }
   ],
-  "last_updated": "2026-02-08 23:44",
+  "last_updated": "2026-02-09 00:12",
   "total_count": 23
 }

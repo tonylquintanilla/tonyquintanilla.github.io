@@ -263,6 +263,42 @@ def _extract_via_variables(html_content):
 
 
 # ============================================================================
+# TEMPLATE STRIPPING WITH THEME PRESERVATION
+# ============================================================================
+
+def _strip_template_preserve_theme(fig_dict):
+    """
+    Strip Plotly template from a figure dict while preserving theme hints.
+
+    Plotly templates (e.g., plotly_white) embed paper_bgcolor and plot_bgcolor
+    inside the template object. When the template is stripped for size reduction
+    and version compatibility, these bgcolor values are lost. The gallery viewer
+    (index.html) uses bgcolor to detect light vs dark theme.
+
+    This function promotes bgcolor from the template to top-level layout before
+    deleting the template, so the gallery viewer can still detect the theme.
+    """
+    layout = fig_dict.get("layout", {})
+    template = layout.get("template", {})
+
+    if not template:
+        return
+
+    tl = template.get("layout", {})
+
+    # Promote paper_bgcolor from template if not already at top level
+    if not layout.get("paper_bgcolor") and tl.get("paper_bgcolor"):
+        layout["paper_bgcolor"] = tl["paper_bgcolor"]
+
+    # Promote plot_bgcolor from template if not already at top level
+    if not layout.get("plot_bgcolor") and tl.get("plot_bgcolor"):
+        layout["plot_bgcolor"] = tl["plot_bgcolor"]
+
+    # Now safe to delete the template
+    del layout["template"]
+
+
+# ============================================================================
 # FIGURE OBJECT -> JSON (for new figures)
 # ============================================================================
 
@@ -298,6 +334,10 @@ def save_figure_json(fig, name, output_folder=None, category="other",
         # Use Plotly's built-in JSON serialization
         fig_json = fig.to_json()
         fig_dict = json.loads(fig_json)
+
+        # Strip template (reduces size, avoids version mismatches)
+        # but preserve bgcolor hints for gallery theme detection
+        _strip_template_preserve_theme(fig_dict)
 
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(fig_dict, f)
@@ -358,10 +398,9 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
     trace_count = len(fig_dict["data"])
 
     # Strip the Plotly template to reduce file size and avoid version
-    # mismatches (e.g., heatmapgl in newer Plotly). The gallery viewer
-    # applies its own theme anyway.
-    if "layout" in fig_dict and "template" in fig_dict.get("layout", {}):
-        del fig_dict["layout"]["template"]
+    # mismatches (e.g., heatmapgl in newer Plotly). Preserve bgcolor
+    # hints so the gallery viewer can detect light vs dark theme.
+    _strip_template_preserve_theme(fig_dict)
 
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(fig_dict, f)
