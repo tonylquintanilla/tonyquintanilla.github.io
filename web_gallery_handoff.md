@@ -360,6 +360,11 @@ Switch between them to commit/push independently.
 
 ### Session 5 (Feb 9): Earth System Save Pipeline + Theme/Aspect Fixes
 
+Gallery content validation completed for stellar visualizations -- all
+stellar views (HR diagrams, 3D star maps by distance and magnitude)
+render correctly in the gallery. This clears the stellar converter
+testing item from the Session 4 implementation sequence.
+
 Systematic review of the Earth System Visualization GUI's save pipeline
 and gallery rendering fidelity. Three issues identified and resolved.
 

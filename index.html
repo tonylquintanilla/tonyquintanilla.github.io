@@ -27,7 +27,7 @@
 
     <style>
         /* ================================================================
-           CSS VARIABLES - matching json_gallery.py color palette
+           CSS VARIABLES
            ================================================================ */
         :root {
             --bg-primary: #0a0a0f;
@@ -41,7 +41,7 @@
             --text-dim: #5a5a6a;
             --border: #2a2a3a;
 
-            /* Category colors - matching json_gallery.py */
+            /* Category colors */
             --cat-solar: #f4a261;
             --cat-inner: #e76f51;
             --cat-outer: #2a9d8f;
@@ -51,9 +51,6 @@
             --cat-exo: #1abc9c;
             --cat-climate: #27ae60;
             --cat-other: #7f8c8d;
-
-            --sidebar-width: 320px;
-            --header-height: 56px;
         }
 
         /* ================================================================
@@ -88,42 +85,201 @@
         }
 
         /* ================================================================
-           LAYOUT - DESKTOP
+           FULL-SCREEN LAYOUT (always full-width, no sidebar)
            ================================================================ */
         .app-container {
-            display: flex;
-            height: 100vh;
             width: 100vw;
+            height: 100vh;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
         }
 
         /* ================================================================
-           SIDEBAR
+           FLOATING NAV BUTTON (top-left)
+           Shows current viz name or "Gallery" when on welcome
            ================================================================ */
-        .sidebar {
-            width: var(--sidebar-width);
-            min-width: var(--sidebar-width);
+        .nav-btn {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 200;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            max-width: calc(100vw - 80px);
+            /* Prevent clashing with share button */
+        }
+
+        .nav-btn:hover {
+            border-color: var(--accent-dim);
+        }
+
+        .nav-btn-icon {
+            width: 18px;
+            height: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .nav-btn-icon span {
+            display: block;
+            height: 2px;
+            width: 18px;
+            background: var(--text-secondary);
+            border-radius: 1px;
+            transition: all 0.3s;
+        }
+
+        .nav-btn.open .nav-btn-icon span:nth-child(1) {
+            transform: translateY(6px) rotate(45deg);
+        }
+        .nav-btn.open .nav-btn-icon span:nth-child(2) {
+            opacity: 0;
+        }
+        .nav-btn.open .nav-btn-icon span:nth-child(3) {
+            transform: translateY(-6px) rotate(-45deg);
+        }
+
+        .nav-btn-label {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+
+        .nav-btn-label .nav-label-title {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .nav-btn-label .nav-label-home {
+            color: var(--accent);
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        /* ================================================================
+           FLOATING SHARE BUTTON (top-right)
+           ================================================================ */
+        .share-btn {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 200;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            display: none;
+            /* Hidden until a viz is loaded */
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .share-btn.visible {
+            display: flex;
+        }
+
+        .share-btn:hover {
+            border-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .share-btn.copied {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .share-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ================================================================
+           OVERLAY BACKDROP
+           ================================================================ */
+        .overlay-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 250;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .overlay-backdrop.active {
+            display: block;
+        }
+
+        .overlay-backdrop.visible {
+            opacity: 1;
+        }
+
+        /* ================================================================
+           OVERLAY SELECTOR (the navigation panel)
+           ================================================================ */
+        .overlay-selector {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 300;
+            width: 360px;
+            max-width: 90vw;
             height: 100vh;
             background: var(--bg-secondary);
             border-right: 1px solid var(--border);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            z-index: 100;
         }
 
-        .sidebar-header {
+        .overlay-selector.open {
+            transform: translateX(0);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Selector header */
+        .selector-header {
             padding: 24px 20px 16px;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
+            cursor: pointer;
             transition: background 0.2s;
         }
 
-        .sidebar-header:hover {
+        .selector-header:hover {
             background: var(--bg-tertiary);
         }
 
-        .sidebar-title {
+        .selector-title {
             font-family: 'Cormorant Garamond', Georgia, serif;
             font-size: 1.5rem;
             font-weight: 600;
@@ -132,14 +288,58 @@
             line-height: 1.2;
         }
 
-        .sidebar-subtitle {
+        .selector-subtitle {
             font-size: 0.75rem;
             color: var(--text-secondary);
             margin-top: 4px;
             letter-spacing: 0.03em;
         }
 
-        .sidebar-nav {
+        /* Mode toggle (Landscape / Portrait) - placeholder for Step 5 */
+        .mode-toggle {
+            display: flex;
+            padding: 12px 20px;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:first-child {
+            border-radius: 6px 0 0 6px;
+            border-right: none;
+        }
+
+        .mode-btn:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+
+        .mode-btn.active {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .mode-btn:hover:not(.active) {
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Scrollable nav list */
+        .selector-nav {
             flex: 1;
             overflow-y: auto;
             padding: 8px 12px 20px;
@@ -200,21 +400,21 @@
             margin-top: 3px;
         }
 
-        /* Sidebar footer */
-        .sidebar-footer {
+        /* Selector footer */
+        .selector-footer {
             padding: 12px 20px;
             border-top: 1px solid var(--border);
             flex-shrink: 0;
         }
 
-        .sidebar-footer a {
+        .selector-footer a {
             color: var(--text-dim);
             text-decoration: none;
             font-size: 0.72rem;
             transition: color 0.2s;
         }
 
-        .sidebar-footer a:hover {
+        .selector-footer a:hover {
             color: var(--accent);
         }
 
@@ -230,83 +430,10 @@
         }
 
         /* ================================================================
-           MAIN CONTENT
+           VISUALIZATION AREA (always full screen)
            ================================================================ */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-            background: var(--bg-primary);
-            min-width: 0;
-        }
-
-        /* Viz header bar */
-        .viz-header {
-            padding: 12px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-            min-height: var(--header-height);
-            gap: 12px;
-        }
-
-        .viz-header-left {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .viz-title {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .viz-subtitle {
-            font-size: 0.72rem;
-            color: var(--text-secondary);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Share button */
-        .share-btn {
-            background: none;
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            padding: 6px 14px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-family: 'DM Sans', sans-serif;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .share-btn:hover {
-            border-color: var(--accent-dim);
-            color: var(--accent);
-        }
-
-        .share-btn.copied {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        /* Plotly container */
         .viz-container {
             flex: 1;
-            padding: 4px;
             overflow: auto;
             position: relative;
         }
@@ -406,263 +533,6 @@
         .modebar-btn:hover path { fill: var(--accent) !important; }
 
         /* ================================================================
-           FULLSCREEN TOGGLE
-           ================================================================ */
-        .fullscreen-btn {
-            background: none;
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-family: 'DM Sans', sans-serif;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .fullscreen-btn:hover {
-            border-color: var(--accent-dim);
-            color: var(--accent);
-        }
-
-        .fullscreen-btn svg {
-            width: 14px;
-            height: 14px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* Fullscreen state: hide sidebar and header */
-        .app-container.fullscreen .sidebar {
-            display: none;
-        }
-
-        .app-container.fullscreen .viz-header {
-            display: none;
-        }
-
-        /* Floating exit button when in fullscreen */
-        .fullscreen-exit {
-            display: none;
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            z-index: 300;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 14px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.75rem;
-            transition: all 0.2s;
-            align-items: center;
-            gap: 6px;
-            opacity: 0.7;
-        }
-
-        .fullscreen-exit:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            opacity: 1;
-        }
-
-        .app-container.fullscreen ~ .fullscreen-exit {
-            display: flex;
-        }
-
-        .fullscreen-exit svg {
-            width: 14px;
-            height: 14px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* ================================================================
-           MOBILE HAMBURGER BUTTON
-           ================================================================ */
-        .hamburger {
-            display: none;
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            z-index: 200;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            width: 44px;
-            height: 44px;
-            cursor: pointer;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .hamburger:hover {
-            border-color: var(--accent-dim);
-        }
-
-        .hamburger-icon {
-            width: 20px;
-            height: 14px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .hamburger-icon span {
-            display: block;
-            height: 2px;
-            background: var(--text-secondary);
-            border-radius: 1px;
-            transition: all 0.3s;
-        }
-
-        .hamburger.open .hamburger-icon span:nth-child(1) {
-            transform: translateY(6px) rotate(45deg);
-        }
-        .hamburger.open .hamburger-icon span:nth-child(2) {
-            opacity: 0;
-        }
-        .hamburger.open .hamburger-icon span:nth-child(3) {
-            transform: translateY(-6px) rotate(-45deg);
-        }
-
-        /* Mobile overlay backdrop */
-        .sidebar-backdrop {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 90;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .sidebar-backdrop.visible {
-            opacity: 1;
-        }
-
-        /* ================================================================
-           MOBILE SHARE BUTTON (floating)
-           ================================================================ */
-        .mobile-share {
-            display: none;
-            position: fixed;
-            top: 12px;
-            right: 12px;
-            z-index: 200;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            width: 44px;
-            height: 44px;
-            cursor: pointer;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .mobile-share:hover,
-        .mobile-share.copied {
-            border-color: var(--accent);
-        }
-
-        .mobile-share svg {
-            width: 18px;
-            height: 18px;
-            stroke: var(--text-secondary);
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .mobile-share.copied svg {
-            stroke: var(--accent);
-        }
-
-        /* ================================================================
-           RESPONSIVE - MOBILE & TABLET (< 1024px)
-           ================================================================ */
-        @media (max-width: 1024px) {
-            .hamburger {
-                display: flex;
-            }
-
-            .mobile-share {
-                display: flex;
-            }
-
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                box-shadow: none;
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
-            }
-
-            .sidebar-backdrop.active {
-                display: block;
-            }
-
-            .main-content {
-                width: 100vw;
-            }
-
-            .viz-header {
-                padding: 8px 56px;
-                min-height: 44px;
-            }
-
-            .viz-title {
-                font-size: 0.9rem;
-                text-align: center;
-            }
-
-            .viz-subtitle {
-                text-align: center;
-                font-size: 0.65rem;
-            }
-
-            /* Hide desktop share button on mobile */
-            .share-btn {
-                display: none;
-            }
-
-            .viz-container {
-                padding: 0;
-            }
-
-            .welcome-title {
-                font-size: 1.6rem;
-            }
-
-            .welcome-text {
-                font-size: 0.85rem;
-                padding: 0 20px;
-            }
-        }
-
-        /* ================================================================
            TOAST NOTIFICATION
            ================================================================ */
         .toast {
@@ -686,138 +556,142 @@
             transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
+
+        /* ================================================================
+           RESPONSIVE
+           ================================================================ */
+        @media (max-width: 600px) {
+            .welcome-title {
+                font-size: 1.6rem;
+            }
+
+            .welcome-text {
+                font-size: 0.85rem;
+                padding: 0 20px;
+            }
+
+            .nav-btn-label {
+                font-size: 0.72rem;
+            }
+
+            /* On very small screens, hide share text, show icon only */
+            .share-btn .share-text {
+                display: none;
+            }
+
+            .share-btn {
+                padding: 8px 10px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Hamburger menu button (mobile) -->
-    <button class="hamburger" id="hamburger" aria-label="Open navigation">
-        <div class="hamburger-icon">
+    <!-- Floating nav button -->
+    <button class="nav-btn" id="navBtn" aria-label="Open gallery navigation">
+        <div class="nav-btn-icon">
             <span></span>
             <span></span>
             <span></span>
         </div>
+        <div class="nav-btn-label" id="navBtnLabel">
+            <span class="nav-label-home">Paloma's Orrery</span>
+        </div>
     </button>
 
-    <!-- Mobile share button -->
-    <button class="mobile-share" id="mobileShare" aria-label="Share link">
+    <!-- Floating share button -->
+    <button class="share-btn" id="shareBtn" aria-label="Share link">
         <svg viewBox="0 0 24 24">
             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
             <polyline points="16 6 12 2 8 6"/>
             <line x1="12" y1="2" x2="12" y2="15"/>
         </svg>
+        <span class="share-text">Share</span>
     </button>
 
-    <!-- Sidebar backdrop (mobile) -->
-    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+    <!-- Overlay backdrop -->
+    <div class="overlay-backdrop" id="overlayBackdrop"></div>
 
+    <!-- Overlay selector panel -->
+    <aside class="overlay-selector" id="overlaySelector">
+        <div class="selector-header" id="selectorHeader" title="Return to gallery home">
+            <div class="selector-title">Paloma's Orrery</div>
+            <div class="selector-subtitle">Interactive Astronomical Visualizations</div>
+        </div>
+
+        <!-- Mode toggle: Landscape / Portrait (Step 5 will wire this) -->
+        <div class="mode-toggle">
+            <button class="mode-btn active" id="modeLandscape" data-mode="landscape">Landscape</button>
+            <button class="mode-btn" id="modePortrait" data-mode="portrait">Portrait</button>
+        </div>
+
+        <nav class="selector-nav" id="selectorNav">
+            <!-- Populated by JS from gallery_metadata.json -->
+            <div class="loading-text" style="padding: 20px 8px; color: var(--text-dim);">
+                Loading gallery<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
+            </div>
+        </nav>
+
+        <div class="selector-footer">
+            <div class="footer-links">
+                <a href="https://github.com/tonyquintanilla/palomas-orrery" target="_blank" rel="noopener">GitHub</a>
+                <span class="footer-sep">|</span>
+                <a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener">Instagram</a>
+                <span class="footer-sep">|</span>
+                <a href="https://github.com/tonyquintanilla/palomas-orrery/releases" target="_blank" rel="noopener">Download</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main app container (always full-screen) -->
     <div class="app-container">
-
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header" onclick="goHome()" style="cursor: pointer;" title="Return to gallery home">
-                <div class="sidebar-title">Paloma's Orrery</div>
-                <div class="sidebar-subtitle">Interactive Astronomical Visualizations</div>
-            </div>
-
-            <nav class="sidebar-nav" id="sidebarNav">
-                <!-- Populated by JS from gallery_metadata.json -->
-                <div class="loading-text" style="padding: 20px 8px; color: var(--text-dim);">
-                    Loading gallery<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
-                </div>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div class="footer-links">
-                    <a href="https://github.com/tonyquintanilla/palomas-orrery" target="_blank" rel="noopener">GitHub</a>
-                    <span class="footer-sep">|</span>
-                    <a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener">Instagram</a>
-                    <span class="footer-sep">|</span>
-                    <a href="https://github.com/tonyquintanilla/palomas-orrery/releases" target="_blank" rel="noopener">Download</a>
+        <div class="viz-container" id="vizContainer">
+            <!-- Loading overlay -->
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-text">
+                    Loading visualization<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
                 </div>
             </div>
-        </aside>
 
-        <!-- Main content area -->
-        <main class="main-content">
-            <div class="viz-header" id="vizHeader">
-                <div class="viz-header-left">
-                    <div class="viz-title" id="vizTitle">Welcome</div>
-                    <div class="viz-subtitle" id="vizSubtitle"></div>
+            <!-- Welcome state -->
+            <div class="welcome-state" id="welcomeState">
+                <div class="welcome-title">Paloma's Orrery</div>
+                <div class="welcome-text">
+                    Explore interactive visualizations of the solar system,
+                    stellar neighborhoods, exoplanets, and more.
                 </div>
-                <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle full screen view">
-                    <svg viewBox="0 0 24 24" id="fullscreenIcon">
-                        <polyline points="15 3 21 3 21 9"/>
-                        <polyline points="9 21 3 21 3 15"/>
-                        <line x1="21" y1="3" x2="14" y2="10"/>
-                        <line x1="3" y1="21" x2="10" y2="14"/>
-                    </svg>
-                    Expand
-                </button>
-                <button class="share-btn" id="shareBtn" title="Copy link to clipboard">
-                    Share Link
-                </button>
+                <div class="welcome-hint">
+                    Tap the menu to select a visualization.
+                </div>
             </div>
 
-            <div class="viz-container" id="vizContainer">
-                <!-- Loading overlay -->
-                <div class="loading-overlay" id="loadingOverlay">
-                    <div class="loading-text">
-                        Loading visualization<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
-                    </div>
-                </div>
-
-                <!-- Welcome state (shown initially) -->
-                <div class="welcome-state" id="welcomeState">
-                    <div class="welcome-title">Paloma's Orrery</div>
-                    <div class="welcome-text">
-                        Explore interactive visualizations of the solar system,
-                        stellar neighborhoods, exoplanets, and more.
-                    </div>
-                    <div class="welcome-hint">
-                        Select a visualization from the gallery to begin.
-                    </div>
-                </div>
-
-                <!-- Plotly graph target -->
-                <div id="plotly-graph" style="display: none;"></div>
-            </div>
-        </main>
-
+            <!-- Plotly graph target -->
+            <div id="plotly-graph" style="display: none;"></div>
+        </div>
     </div>
-
-    <!-- Floating exit fullscreen button -->
-    <button class="fullscreen-exit" id="fullscreenExit" title="Exit full screen (Esc)">
-        <svg viewBox="0 0 24 24">
-            <polyline points="4 14 10 14 10 20"/>
-            <polyline points="20 10 14 10 14 4"/>
-            <line x1="14" y1="10" x2="21" y2="3"/>
-            <line x1="3" y1="21" x2="10" y2="14"/>
-        </svg>
-        Exit
-    </button>
 
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>
 
     <script>
     /* ====================================================================
-       Paloma's Orrery - Gallery Viewer
-       Pure client-side: loads JSON via fetch, renders with Plotly.js
+       Paloma's Orrery - Gallery Viewer v2
+       Non-persistent overlay selector, full-screen plots always.
 
        Author: Tony Quintanilla / Paloma's Orrery
+       Gallery v2 - February 2026
        ==================================================================== */
 
     (function() {
         'use strict';
 
         // ---- Configuration ----
-        const DATA_PATH = 'gallery';
-        const METADATA_FILE = 'gallery_metadata.json';
+        var DATA_PATH = 'gallery';
+        var METADATA_FILE = 'gallery_metadata.json';
 
-        // Category colors (matching json_gallery.py / CSS variables)
-        const CATEGORY_COLORS = {
-            solar_system: '#f4a261',
+        // Category colors (matching CSS variables)
+        var CATEGORY_COLORS = {
+            solar_system:  '#f4a261',
             inner_planets: '#e76f51',
             outer_planets: '#2a9d8f',
             missions:      '#4a7c8f',
@@ -829,27 +703,27 @@
         };
 
         // ---- State ----
-        let metadata = null;
-        let vizLookup = {};
-        let currentVizId = null;
-        let activeCard = null;
+        var metadata = null;
+        var vizLookup = {};
+        var currentVizId = null;
+        var activeCard = null;
+        var currentMode = 'landscape';
+        // Mode filtering deferred to Step 5 -- currently shows all
 
         // ---- DOM refs ----
-        const sidebarNav     = document.getElementById('sidebarNav');
-        const sidebar        = document.getElementById('sidebar');
-        const hamburger      = document.getElementById('hamburger');
-        const backdrop       = document.getElementById('sidebarBackdrop');
-        const vizTitle       = document.getElementById('vizTitle');
-        const vizSubtitle    = document.getElementById('vizSubtitle');
-        const plotlyGraph    = document.getElementById('plotly-graph');
-        const welcomeState   = document.getElementById('welcomeState');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const shareBtn       = document.getElementById('shareBtn');
-        const mobileShare    = document.getElementById('mobileShare');
-        const toast          = document.getElementById('toast');
-        const fullscreenBtn  = document.getElementById('fullscreenBtn');
-        const fullscreenExit = document.getElementById('fullscreenExit');
-        const appContainer   = document.querySelector('.app-container');
+        var navBtn         = document.getElementById('navBtn');
+        var navBtnLabel    = document.getElementById('navBtnLabel');
+        var shareBtn       = document.getElementById('shareBtn');
+        var overlayBackdrop = document.getElementById('overlayBackdrop');
+        var overlaySelector = document.getElementById('overlaySelector');
+        var selectorHeader = document.getElementById('selectorHeader');
+        var selectorNav    = document.getElementById('selectorNav');
+        var plotlyGraph    = document.getElementById('plotly-graph');
+        var welcomeState   = document.getElementById('welcomeState');
+        var loadingOverlay = document.getElementById('loadingOverlay');
+        var toast          = document.getElementById('toast');
+        var modeLandscape  = document.getElementById('modeLandscape');
+        var modePortrait   = document.getElementById('modePortrait');
 
         // Track current plot's aspect ratio for resize handler
         var currentAspect = 0;
@@ -857,11 +731,11 @@
         // ---- Initialize ----
         async function init() {
             try {
-                const resp = await fetch(DATA_PATH + '/' + METADATA_FILE);
+                var resp = await fetch(DATA_PATH + '/' + METADATA_FILE);
                 if (!resp.ok) throw new Error('Could not load gallery metadata');
                 metadata = await resp.json();
             } catch (err) {
-                sidebarNav.innerHTML =
+                selectorNav.innerHTML =
                     '<div style="padding: 20px 8px; color: var(--cat-inner); font-size: 0.8rem;">' +
                     'Could not load gallery data.<br><br>' +
                     '<span style="color: var(--text-dim);">Ensure ' + DATA_PATH + '/' + METADATA_FILE + ' exists.</span></div>';
@@ -869,27 +743,33 @@
             }
 
             // Build lookup
-            const vizs = metadata.visualizations || [];
-            for (const v of vizs) {
-                vizLookup[v.id] = v;
+            var vizs = metadata.visualizations || [];
+            for (var i = 0; i < vizs.length; i++) {
+                vizLookup[vizs[i].id] = vizs[i];
             }
 
-            // Render sidebar
-            renderSidebar(vizs);
+            // Render nav list
+            renderNavList(vizs);
 
             // Setup event listeners
             setupEvents();
+
+            // Auto-detect default mode from screen width
+            if (window.innerWidth < 1024) {
+                setMode('portrait');
+            }
 
             // Check URL hash for deep link
             handleHash();
         }
 
-        // ---- Render sidebar navigation ----
-        function renderSidebar(vizs) {
+        // ---- Render navigation list ----
+        function renderNavList(vizs) {
             // Group by category
-            const categories = {};
-            for (const v of vizs) {
-                const cat = v.category || 'other';
+            var categories = {};
+            for (var i = 0; i < vizs.length; i++) {
+                var v = vizs[i];
+                var cat = v.category || 'other';
                 if (!categories[cat]) {
                     categories[cat] = {
                         label: v.category_label || 'Other',
@@ -899,9 +779,12 @@
                 categories[cat].items.push(v);
             }
 
-            let html = '';
-            for (const [catKey, catData] of Object.entries(categories)) {
-                const color = CATEGORY_COLORS[catKey] || CATEGORY_COLORS.other;
+            var html = '';
+            var catKeys = Object.keys(categories);
+            for (var c = 0; c < catKeys.length; c++) {
+                var catKey = catKeys[c];
+                var catData = categories[catKey];
+                var color = CATEGORY_COLORS[catKey] || CATEGORY_COLORS.other;
 
                 // Category header
                 html += '<div class="category-header" style="border-bottom-color: ' + color + '33;">';
@@ -910,14 +793,15 @@
                 html += '</div>';
 
                 // Cards
-                for (const v of catData.items) {
-                    html += '<div class="viz-card" data-viz-id="' + escapeHtml(v.id) + '">';
-                    html += '<div class="viz-card-title">' + escapeHtml(v.title || 'Untitled') + '</div>';
-                    if (v.description) {
-                        html += '<div class="viz-card-desc">' + escapeHtml(v.description) + '</div>';
+                for (var j = 0; j < catData.items.length; j++) {
+                    var item = catData.items[j];
+                    html += '<div class="viz-card" data-viz-id="' + escapeHtml(item.id) + '">';
+                    html += '<div class="viz-card-title">' + escapeHtml(item.title || 'Untitled') + '</div>';
+                    if (item.description) {
+                        html += '<div class="viz-card-desc">' + escapeHtml(item.description) + '</div>';
                     }
-                    if (v.size_kb) {
-                        html += '<div class="viz-card-size">' + Math.round(v.size_kb) + ' KB</div>';
+                    if (item.size_kb) {
+                        html += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
                     }
                     html += '</div>';
                 }
@@ -928,12 +812,12 @@
                        'No visualizations found.<br><br>Run json_converter.py to create gallery data.</div>';
             }
 
-            sidebarNav.innerHTML = html;
+            selectorNav.innerHTML = html;
         }
 
         // ---- Load and display a visualization ----
         async function loadVisualization(vizId) {
-            const viz = vizLookup[vizId];
+            var viz = vizLookup[vizId];
             if (!viz) return;
 
             // Update state
@@ -942,16 +826,16 @@
             // Update URL hash (without triggering hashchange)
             history.replaceState(null, '', '#' + vizId);
 
-            // Update header
-            vizTitle.textContent = viz.title || 'Untitled';
-            const catLabel = viz.category_label || '';
-            const desc = viz.description || '';
-            vizSubtitle.textContent = catLabel && desc ? catLabel + ' - ' + desc :
-                                      catLabel || desc;
+            // Update nav button label to show current viz title
+            navBtnLabel.innerHTML = '<span class="nav-label-title">' +
+                escapeHtml(viz.title || 'Untitled') + '</span>';
+
+            // Show share button
+            shareBtn.classList.add('visible');
 
             // Update active card
             if (activeCard) activeCard.classList.remove('active');
-            activeCard = sidebarNav.querySelector('[data-viz-id="' + vizId + '"]');
+            activeCard = selectorNav.querySelector('[data-viz-id="' + vizId + '"]');
             if (activeCard) activeCard.classList.add('active');
 
             // Show loading
@@ -959,20 +843,17 @@
             plotlyGraph.style.display = 'none';
             loadingOverlay.classList.add('visible');
 
-            // Close mobile sidebar
-            closeMobileSidebar();
+            // Close overlay
+            closeOverlay();
 
             try {
-                const resp = await fetch(DATA_PATH + '/' + viz.filename);
+                var resp = await fetch(DATA_PATH + '/' + viz.filename);
                 if (!resp.ok) throw new Error('Failed to load ' + viz.filename);
-                const figDict = await resp.json();
+                var figDict = await resp.json();
 
                 figDict.layout = figDict.layout || {};
 
-                // Auto-detect theme BEFORE stripping template, because
-                // paper_bgcolor may only exist inside the template object.
-                // Also check plot_bgcolor -- converter may strip template
-                // but preserve plot_bgcolor at top level.
+                // Auto-detect theme BEFORE stripping template
                 var origBg = '';
                 if (figDict.layout.paper_bgcolor) {
                     origBg = figDict.layout.paper_bgcolor.toLowerCase();
@@ -987,15 +868,12 @@
                     origBg === '#fff' || origBg.indexOf('rgb(255') === 0 ||
                     origBg === '#e5ecf6');
 
-                // Strip embedded template (same as json_gallery.py)
+                // Strip embedded template
                 if (figDict.layout.template) {
                     delete figDict.layout.template;
                 }
 
-                // Capture original aspect ratio before removing fixed dimensions.
-                // Plots designed tall or square (like Planetary Boundaries at
-                // 1200x1100) get squished when the container is landscape-shaped.
-                // We preserve the ratio as a min-height constraint on the div.
+                // Capture original aspect ratio before removing fixed dimensions
                 var origWidth = figDict.layout.width;
                 var origHeight = figDict.layout.height;
                 var origAspect = (origWidth && origHeight) ? origHeight / origWidth : 0;
@@ -1015,11 +893,9 @@
                 }
 
                 if (isLightTheme) {
-                    // Light-themed plot: preserve all original colors, just
-                    // ensure it fills its container with a visible background
-                    // (no dark overrides)
+                    // Light-themed plot: preserve original colors
                 } else {
-                    // Dark-themed plot (3D space scenes, etc.): apply dark overrides
+                    // Dark-themed plot: apply dark overrides
                     Object.assign(figDict.layout, {
                         paper_bgcolor: 'rgba(0,0,0,0)',
                         plot_bgcolor: 'rgba(0,0,0,0)',
@@ -1034,15 +910,13 @@
                     if (!isLightTheme) {
                         figDict.layout.scene.bgcolor = 'rgba(0,0,0,0)';
                     }
-                    // On mobile, use 'cube' aspectmode so the scene fills
-                    // the available space instead of preserving desktop ratios
+                    // On mobile, use 'cube' aspectmode
                     if (window.innerWidth < 1024) {
                         figDict.layout.scene.aspectmode = 'cube';
                     }
                 }
 
                 // On mobile: reposition legend for dark-themed plots only
-                // Light-themed plots preserve their own legend placement
                 if (window.innerWidth < 1024 && !isLightTheme) {
                     if (figDict.layout.showlegend !== false) {
                         figDict.layout.legend = Object.assign(figDict.layout.legend || {}, {
@@ -1054,13 +928,9 @@
                             font: { size: 10, color: '#9a9a9a' }
                         });
                     }
-                    // Preserve original margins on mobile too
                 }
 
-                // Updatemenus: preserve original positions from export
-                // (repositioning causes stacking/overlap issues)
-
-                // Scale down annotation font sizes for mobile
+                // Scale down annotation font sizes for small screens
                 if (window.innerWidth < 900 && figDict.layout.annotations) {
                     figDict.layout.annotations.forEach(function(ann) {
                         if (ann.font && ann.font.size && ann.font.size > 12) {
@@ -1069,7 +939,7 @@
                     });
                 }
 
-                // Scale down title font for mobile
+                // Scale down title font for small screens
                 if (window.innerWidth < 900 && figDict.layout.title && figDict.layout.title.font) {
                     var titleSize = figDict.layout.title.font.size;
                     if (titleSize && titleSize > 14) {
@@ -1081,11 +951,11 @@
                 plotlyGraph.style.display = 'block';
                 loadingOverlay.classList.remove('visible');
 
-                // Purge previous figure state (prevents updatemenus/sliders persisting)
+                // Purge previous figure state
                 Plotly.purge('plotly-graph');
 
                 // Render with Plotly
-                const config = {
+                var config = {
                     displayModeBar: true,
                     displaylogo: true,
                     modeBarButtonsToRemove: ['lasso2d', 'select2d'],
@@ -1094,9 +964,7 @@
 
                 await Plotly.newPlot('plotly-graph', figDict.data || [], figDict.layout, config);
 
-                // For tall/square plots (aspect >= 0.8), set min-height so
-                // the container doesn't squish them into a landscape shape.
-                // The min-height is based on the container width * original ratio.
+                // For tall/square plots (aspect >= 0.8), set min-height
                 currentAspect = origAspect;
                 if (origAspect >= 0.8) {
                     var containerWidth = plotlyGraph.parentElement.clientWidth;
@@ -1105,8 +973,7 @@
                     plotlyGraph.style.minHeight = '';
                 }
 
-                // Force resize after render to fill container
-                // (small delay ensures container dimensions are settled)
+                // Force resize after render
                 setTimeout(function() {
                     Plotly.Plots.resize('plotly-graph');
                 }, 100);
@@ -1125,32 +992,34 @@
 
         // ---- Event setup ----
         function setupEvents() {
+            // Nav button toggles overlay
+            navBtn.addEventListener('click', toggleOverlay);
+
+            // Backdrop click closes overlay
+            overlayBackdrop.addEventListener('click', closeOverlay);
+
             // Card clicks (event delegation)
-            sidebarNav.addEventListener('click', function(e) {
-                const card = e.target.closest('.viz-card');
+            selectorNav.addEventListener('click', function(e) {
+                var card = e.target.closest('.viz-card');
                 if (!card) return;
-                const vizId = card.getAttribute('data-viz-id');
+                var vizId = card.getAttribute('data-viz-id');
                 if (vizId) loadVisualization(vizId);
             });
 
-            // Hamburger toggle
-            hamburger.addEventListener('click', toggleMobileSidebar);
+            // Selector header -> home
+            selectorHeader.addEventListener('click', goHome);
 
-            // Backdrop click closes sidebar
-            backdrop.addEventListener('click', closeMobileSidebar);
-
-            // Share buttons
+            // Share button
             shareBtn.addEventListener('click', shareLink);
-            mobileShare.addEventListener('click', shareLink);
 
-            // Fullscreen toggle
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
-            fullscreenExit.addEventListener('click', toggleFullscreen);
+            // Mode toggle buttons
+            modeLandscape.addEventListener('click', function() { setMode('landscape'); });
+            modePortrait.addEventListener('click', function() { setMode('portrait'); });
 
             // Hash changes (browser back/forward)
             window.addEventListener('hashchange', handleHash);
 
-            // Window resize -> Plotly resize + recalculate min-height for tall plots
+            // Window resize -> Plotly resize + recalculate min-height
             window.addEventListener('resize', function() {
                 if (plotlyGraph.style.display !== 'none') {
                     if (currentAspect >= 0.8) {
@@ -1161,41 +1030,53 @@
                 }
             });
 
-            // Keyboard: Escape closes mobile sidebar or exits fullscreen
+            // Keyboard: Escape closes overlay
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
-                    if (appContainer.classList.contains('fullscreen')) {
-                        toggleFullscreen();
-                    } else {
-                        closeMobileSidebar();
-                    }
+                    closeOverlay();
                 }
             });
         }
 
-        // ---- Mobile sidebar ----
-        function toggleMobileSidebar() {
-            const isOpen = sidebar.classList.contains('open');
-            if (isOpen) {
-                closeMobileSidebar();
+        // ---- Overlay open/close ----
+        function toggleOverlay() {
+            if (overlaySelector.classList.contains('open')) {
+                closeOverlay();
             } else {
-                sidebar.classList.add('open');
-                hamburger.classList.add('open');
-                backdrop.classList.add('active');
-                // Small delay so display:block is applied before opacity transition
-                requestAnimationFrame(function() {
-                    backdrop.classList.add('visible');
-                });
+                openOverlay();
             }
         }
 
-        function closeMobileSidebar() {
-            sidebar.classList.remove('open');
-            hamburger.classList.remove('open');
-            backdrop.classList.remove('visible');
+        function openOverlay() {
+            overlaySelector.classList.add('open');
+            navBtn.classList.add('open');
+            overlayBackdrop.classList.add('active');
+            requestAnimationFrame(function() {
+                overlayBackdrop.classList.add('visible');
+            });
+        }
+
+        function closeOverlay() {
+            overlaySelector.classList.remove('open');
+            navBtn.classList.remove('open');
+            overlayBackdrop.classList.remove('visible');
             setTimeout(function() {
-                backdrop.classList.remove('active');
+                overlayBackdrop.classList.remove('active');
             }, 300);
+        }
+
+        // ---- Mode toggle ----
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'landscape') {
+                modeLandscape.classList.add('active');
+                modePortrait.classList.remove('active');
+            } else {
+                modePortrait.classList.add('active');
+                modeLandscape.classList.remove('active');
+            }
+            // Step 5 will filter the nav list by mode here.
+            // For now, all visualizations show in both modes.
         }
 
         // ---- Share link ----
@@ -1205,7 +1086,7 @@
                 return;
             }
 
-            const url = window.location.origin + window.location.pathname + '#' + currentVizId;
+            var url = window.location.origin + window.location.pathname + '#' + currentVizId;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(function() {
@@ -1220,7 +1101,7 @@
         }
 
         function fallbackCopy(text) {
-            const ta = document.createElement('textarea');
+            var ta = document.createElement('textarea');
             ta.value = text;
             ta.style.position = 'fixed';
             ta.style.left = '-9999px';
@@ -1238,12 +1119,11 @@
 
         function showCopiedFeedback() {
             shareBtn.classList.add('copied');
-            shareBtn.textContent = 'Copied!';
-            mobileShare.classList.add('copied');
+            var textEl = shareBtn.querySelector('.share-text');
+            if (textEl) textEl.textContent = 'Copied!';
             setTimeout(function() {
                 shareBtn.classList.remove('copied');
-                shareBtn.textContent = 'Share Link';
-                mobileShare.classList.remove('copied');
+                if (textEl) textEl.textContent = 'Share';
             }, 2000);
         }
 
@@ -1257,10 +1137,45 @@
 
         // ---- URL hash routing ----
         function handleHash() {
-            const hash = window.location.hash.replace('#', '');
+            var hash = window.location.hash.replace('#', '');
             if (hash && vizLookup[hash]) {
                 loadVisualization(hash);
             }
+        }
+
+        // ---- Home navigation ----
+        function goHome() {
+            // Clear hash
+            history.pushState(null, '', window.location.pathname);
+            currentVizId = null;
+
+            // Reset nav button label
+            navBtnLabel.innerHTML = '<span class="nav-label-home">Paloma\'s Orrery</span>';
+
+            // Hide share button
+            shareBtn.classList.remove('visible');
+
+            // Hide plot, show welcome
+            plotlyGraph.style.display = 'none';
+            plotlyGraph.style.minHeight = '';
+            currentAspect = 0;
+            welcomeState.innerHTML =
+                '<div class="welcome-title">Paloma\'s Orrery</div>' +
+                '<div class="welcome-text">' +
+                'Explore interactive visualizations of the solar system, ' +
+                'stellar neighborhoods, exoplanets, and more.</div>' +
+                '<div class="welcome-hint">' +
+                'Tap the menu to select a visualization.</div>';
+            welcomeState.style.display = 'flex';
+
+            // Deselect active card
+            if (activeCard) {
+                activeCard.classList.remove('active');
+                activeCard = null;
+            }
+
+            // Close overlay
+            closeOverlay();
         }
 
         // ---- Utility ----
@@ -1271,55 +1186,6 @@
                       .replace(/>/g, '&gt;')
                       .replace(/"/g, '&quot;');
         }
-
-        // ---- Fullscreen toggle ----
-        function toggleFullscreen() {
-            appContainer.classList.toggle('fullscreen');
-
-            // Trigger Plotly resize after layout settles
-            if (plotlyGraph.style.display !== 'none') {
-                setTimeout(function() {
-                    Plotly.Plots.resize('plotly-graph');
-                }, 50);
-            }
-        }
-
-        // ---- Home navigation ----
-        function goHome() {
-            // Exit fullscreen if active
-            appContainer.classList.remove('fullscreen');
-
-            // Clear hash without triggering hashchange reload
-            history.pushState(null, '', window.location.pathname);
-            currentVizId = null;
-
-            // Reset header
-            vizTitle.textContent = 'Welcome';
-            vizSubtitle.textContent = '';
-
-            // Hide plot, show welcome
-            plotlyGraph.style.display = 'none';
-            welcomeState.innerHTML =
-                '<div class="welcome-title">Paloma\'s Orrery</div>' +
-                '<div class="welcome-text">' +
-                'Explore interactive visualizations of the solar system, ' +
-                'stellar neighborhoods, exoplanets, and more.</div>' +
-                '<div class="welcome-hint">' +
-                'Select a visualization from the gallery to begin.</div>';
-            welcomeState.style.display = 'flex';
-
-            // Deselect active card
-            if (activeCard) {
-                activeCard.classList.remove('active');
-                activeCard = null;
-            }
-
-            // Close mobile sidebar if open
-            closeMobileSidebar();
-        }
-
-        // Expose goHome globally for onclick
-        window.goHome = goHome;
 
         // ---- Go ----
         init();
