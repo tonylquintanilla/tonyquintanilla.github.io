@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-8, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-9, 2026 | Claude Opus 4.6
 
 ---
 
@@ -280,11 +280,14 @@ reads from gallery/ folder, enables testing all features before pushing.
    overrides (dark theme, autosize, template strip) and preserve everything
    else. Every forced layout change is a potential visual regression.
 
-7. **Theme detection order matters** (Session 3 cont.) -- json_converter
-   strips templates during conversion. Any detection that relies on template
-   contents must either (a) check before stripping, or (b) check what
-   survives at the top level. The `plot_bgcolor` field survived conversion
-   and became the reliable theme indicator.
+7. **Theme detection order matters** (Session 3 cont., resolved Session 5)
+   -- json_converter strips templates during conversion. Any detection that
+   relies on template contents must either (a) check before stripping, or
+   (b) check what survives at the top level. **Session 5 fix**: the
+   converter now promotes `paper_bgcolor` / `plot_bgcolor` from the template
+   to top-level layout before stripping. This is the correct fix -- the
+   theme signal is preserved at the source rather than requiring the viewer
+   to guess.
 
 8. **GitHub Pages deployment pattern** (Session 3 cont.) -- First deploy
    after adding a large file sometimes fails with "multiple artifacts"
@@ -299,6 +302,20 @@ reads from gallery/ folder, enables testing all features before pushing.
    the plot has no title, no legend, no annotations. Title rescue (margin
    fix) helps minimally. Decision: keep social views out of gallery until
    info panel can be replicated.
+
+10. **Aspect ratio preservation for non-landscape plots** (Session 5) --
+   Deleting `width` and `height` and setting `autosize: true` works for
+   landscape plots but squishes tall/square ones (e.g., Planetary
+   Boundaries at 1200x1100). The fix captures the original aspect ratio
+   before deleting dimensions and applies a `min-height` constraint for
+   plots with ratio >= 0.8. The container uses `overflow: auto` so tall
+   plots can scroll.
+
+11. **PNG cannot feed the gallery pipeline** (Session 5) -- Plotly's
+   modebar "Download plot as PNG" produces a raster image with no figure
+   data. json_converter.py requires HTML with embedded `Plotly.newPlot()`
+   calls to extract traces and layout. Every visualization must go through
+   `save_plot()` to produce HTML for the converter. No PNG shortcut exists.
 
 ## File Renaming Summary
 
@@ -340,6 +357,90 @@ C:\Users\tonyq\OneDrive\Desktop\python_work\
 
 Both repos appear side by side in GitHub Desktop's repo dropdown.
 Switch between them to commit/push independently.
+
+### Session 5 (Feb 9): Earth System Save Pipeline + Theme/Aspect Fixes
+
+Systematic review of the Earth System Visualization GUI's save pipeline
+and gallery rendering fidelity. Three issues identified and resolved.
+
+**Problem 1: Missing save dialogs in Earth System visualizations**
+
+Only 5 of 14 Earth System visualizations had `save_plot()` calls after
+`fig.show()`. The other 9 opened in the browser but offered no save
+dialog -- the only way to capture them was Plotly's modebar "Download
+plot as PNG" button. PNG images cannot be converted by json_converter.py
+(it extracts Plotly figure data from HTML, not pixels), so these 9
+visualizations had no path to the web gallery.
+
+**Fix**: Added `save_plot(fig, "descriptive_name")` to all 9 missing
+`open_*` functions in earth_system_visualization_gui.py. Pattern matches
+the existing 5 functions exactly: `fig.show()` then `save_plot()`.
+
+| Function | Default filename |
+|---|---|
+| open_monthly_temp_lines | monthly_temperature_year_over_year |
+| open_warming_stripes | warming_stripes_hawkins |
+| open_ph_viz | ocean_acidification_ph |
+| open_planetary_boundaries | planetary_boundaries_src |
+| open_sea_level_viz | global_sea_level_rise |
+| open_keeling_curve | keeling_curve_co2 |
+| open_temperature_viz | global_temperature_anomalies |
+| open_ice_viz | arctic_sea_ice_extent |
+| open_energy_imbalance | energy_imbalance_climate_mechanism |
+
+All 14 Earth System visualizations now go through the save dialog,
+producing HTML files that feed into json_converter.py for the gallery.
+
+**Problem 2: Light-themed plots rendered with dark theme in gallery**
+
+Four climate visualizations (Keeling Curve, Temperature Anomalies, Sea
+Level Rise, Ocean Acidification) appeared with dark overrides in the
+gallery -- transparent backgrounds and light text on the dark gallery
+page. These plots use `template="plotly_white"` which sets
+`paper_bgcolor: white` inside the template object, not at the top level.
+
+Root cause chain:
+1. Plotly `write_html()` embeds bgcolor only inside the template object
+2. `json_converter.py` strips the template (for size + version compat)
+3. bgcolor is lost -- no `paper_bgcolor` at top level
+4. Gallery viewer's theme detector sees empty bgcolor, concludes "dark"
+5. Dark overrides applied: transparent bg + light text = unreadable
+
+**Fix (json_converter.py)**: New `_strip_template_preserve_theme()`
+helper. Before deleting the template, promotes `paper_bgcolor` and
+`plot_bgcolor` from `template.layout` to top-level `layout` if not
+already set there. Applied to both conversion paths:
+`convert_html_to_gallery_json()` and `save_figure_json()`.
+
+**Fix (existing JSONs)**: Patched the 4 affected JSON files by adding
+`"paper_bgcolor": "white"` to their layout. Future conversions handled
+automatically by the converter fix.
+
+**Problem 3: Planetary Boundaries chart squished in gallery**
+
+The Planetary Boundaries polar chart (1200x1100, aspect ratio 0.917) was
+compressed into a wide landscape container, making wedge labels overlap
+and the chart unreadable. The gallery viewer deletes `width` and `height`
+from all figures and sets `autosize: true`, which works for landscape
+plots but squishes tall/square ones.
+
+**Fix (index.html)**:
+1. Capture original aspect ratio (`height / width`) before deleting dims
+2. After rendering, if ratio >= 0.8 (tall or square), set `min-height`
+   on the plotly-graph div based on container width times original ratio
+3. Clear `min-height` for landscape plots (ratio < 0.8) -- no change
+4. Recalculate on window resize so the constraint adapts
+5. Changed viz-container `overflow: hidden` to `overflow: auto` so tall
+   plots can scroll if they exceed viewport height
+
+Most plots (landscape, ratio ~0.58) are completely unaffected. Only
+plots designed tall or square get the min-height protection.
+
+**Files changed**:
+- earth_system_visualization_gui.py (9 save_plot additions)
+- json_converter.py (new _strip_template_preserve_theme function)
+- index.html (aspect ratio preservation + overflow fix)
+- 4 JSON files patched (keeling_curve, temperature, sea_level, ocean_ph)
 
 ## What's Next: Gallery Viewer v2 -- Landscape + Portrait
 
@@ -533,6 +634,12 @@ Both json_gallery.py (local) and index.html (GitHub Pages) strip the
 embedded Plotly template on load. This prevents ValueError from version
 mismatches (e.g., heatmapgl in newer Plotly) and reduces rendered size.
 
+**Session 5 addition**: json_converter.py now promotes `paper_bgcolor`
+and `plot_bgcolor` from the template to top-level layout before stripping.
+This preserves the theme signal for the gallery viewer's light/dark
+auto-detection. Without this, plots using `template="plotly_white"` lose
+their bgcolor and get dark overrides applied incorrectly.
+
 ### HTML Extraction Method (json_converter.py)
 
 Plotly.newPlot() calls in write_html output use heavy whitespace padding.
@@ -562,6 +669,7 @@ Current overrides (all plots):
 - autosize: true (fill container instead of fixed desktop dimensions)
 - template: deleted (prevents version mismatch errors)
 - width/height: deleted (let container control size)
+- min-height: set for tall/square plots with aspect ratio >= 0.8 (Session 5)
 - scene.aspectmode: 'cube' on mobile <1024px (fill portrait screen)
 - legend: horizontal on mobile <1024px (dark-themed only)
 - margin.t: 40 when all margins are 0 and title exists (title rescue)
@@ -617,6 +725,10 @@ re-export from the current app.
 | Hover parsing location | Python at conversion time | Proven code; gallery JS stays simple |
 | Social view pipeline | Same JSON pipeline, tagged | social_media_export.py stays for video production |
 | Pinch/zoom on mobile | Native Plotly.js touch | Works for 2D and 3D; no custom code needed |
+| Save dialog for all plots | Add save_plot to all open_ functions | Every viz needs HTML path for gallery pipeline |
+| Theme preservation | Promote bgcolor before template strip | Fix at source (converter), not destination (viewer) |
+| Tall plot handling | min-height from aspect ratio >= 0.8 | Landscape plots unaffected; square/tall get protection |
+| viz-container overflow | auto instead of hidden | Tall plots can scroll; landscape plots unchanged |
 
 ---
 
