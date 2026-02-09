@@ -765,10 +765,20 @@
 
         // ---- Render navigation list ----
         function renderNavList(vizs) {
-            // Group by category
-            var categories = {};
+            // Filter by current mode: show items matching mode or "both"
+            var filtered = [];
             for (var i = 0; i < vizs.length; i++) {
                 var v = vizs[i];
+                var vMode = v.mode || 'landscape';
+                if (vMode === currentMode || vMode === 'both') {
+                    filtered.push(v);
+                }
+            }
+
+            // Group by category
+            var categories = {};
+            for (var i = 0; i < filtered.length; i++) {
+                var v = filtered[i];
                 var cat = v.category || 'other';
                 if (!categories[cat]) {
                     categories[cat] = {
@@ -807,9 +817,9 @@
                 }
             }
 
-            if (!vizs.length) {
+            if (!filtered.length) {
                 html = '<div style="padding: 20px 8px; color: var(--text-dim); font-size: 0.8rem;">' +
-                       'No visualizations found.<br><br>Run json_converter.py to create gallery data.</div>';
+                       'No ' + currentMode + ' visualizations found.</div>';
             }
 
             selectorNav.innerHTML = html;
@@ -1075,8 +1085,10 @@
                 modePortrait.classList.add('active');
                 modeLandscape.classList.remove('active');
             }
-            // Step 5 will filter the nav list by mode here.
-            // For now, all visualizations show in both modes.
+            // Re-render nav list filtered by mode
+            if (metadata) {
+                renderNavList(metadata.visualizations || []);
+            }
         }
 
         // ---- Share link ----
