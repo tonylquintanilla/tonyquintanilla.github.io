@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paloma's Orrery - Interactive Astronomical Visualizations</title>
 
     <!-- Open Graph / Social Sharing -->
@@ -27,7 +27,7 @@
 
     <style>
         /* ================================================================
-           CSS VARIABLES
+           CSS VARIABLES - matching json_gallery.py color palette
            ================================================================ */
         :root {
             --bg-primary: #0a0a0f;
@@ -41,7 +41,7 @@
             --text-dim: #5a5a6a;
             --border: #2a2a3a;
 
-            /* Category colors */
+            /* Category colors - matching json_gallery.py */
             --cat-solar: #f4a261;
             --cat-inner: #e76f51;
             --cat-outer: #2a9d8f;
@@ -51,6 +51,9 @@
             --cat-exo: #1abc9c;
             --cat-climate: #27ae60;
             --cat-other: #7f8c8d;
+
+            --sidebar-width: 320px;
+            --header-height: 56px;
         }
 
         /* ================================================================
@@ -85,201 +88,42 @@
         }
 
         /* ================================================================
-           FULL-SCREEN LAYOUT (always full-width, no sidebar)
+           LAYOUT - DESKTOP
            ================================================================ */
         .app-container {
-            width: 100vw;
+            display: flex;
             height: 100vh;
+            width: 100vw;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-primary);
         }
 
         /* ================================================================
-           FLOATING NAV BUTTON (top-left)
-           Shows current viz name or "Gallery" when on welcome
+           SIDEBAR
            ================================================================ */
-        .nav-btn {
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            z-index: 200;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.2s;
-            max-width: calc(100vw - 80px);
-            /* Prevent clashing with share button */
-        }
-
-        .nav-btn:hover {
-            border-color: var(--accent-dim);
-        }
-
-        .nav-btn-icon {
-            width: 18px;
-            height: 14px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            flex-shrink: 0;
-        }
-
-        .nav-btn-icon span {
-            display: block;
-            height: 2px;
-            width: 18px;
-            background: var(--text-secondary);
-            border-radius: 1px;
-            transition: all 0.3s;
-        }
-
-        .nav-btn.open .nav-btn-icon span:nth-child(1) {
-            transform: translateY(6px) rotate(45deg);
-        }
-        .nav-btn.open .nav-btn-icon span:nth-child(2) {
-            opacity: 0;
-        }
-        .nav-btn.open .nav-btn-icon span:nth-child(3) {
-            transform: translateY(-6px) rotate(-45deg);
-        }
-
-        .nav-btn-label {
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            line-height: 1.2;
-        }
-
-        .nav-btn-label .nav-label-title {
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        .nav-btn-label .nav-label-home {
-            color: var(--accent);
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 0.95rem;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-
-        /* ================================================================
-           FLOATING SHARE BUTTON (top-right)
-           ================================================================ */
-        .share-btn {
-            position: fixed;
-            top: 52px;
-            right: 12px;
-            z-index: 200;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 14px;
-            cursor: pointer;
-            display: none;
-            /* Hidden until a viz is loaded */
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        .share-btn.visible {
-            display: flex;
-        }
-
-        .share-btn:hover {
-            border-color: var(--accent-dim);
-            color: var(--accent);
-        }
-
-        .share-btn.copied {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .share-btn svg {
-            width: 14px;
-            height: 14px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* ================================================================
-           OVERLAY BACKDROP
-           ================================================================ */
-        .overlay-backdrop {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 250;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .overlay-backdrop.active {
-            display: block;
-        }
-
-        .overlay-backdrop.visible {
-            opacity: 1;
-        }
-
-        /* ================================================================
-           OVERLAY SELECTOR (the navigation panel)
-           ================================================================ */
-        .overlay-selector {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 300;
-            width: 360px;
-            max-width: 90vw;
+        .sidebar {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
             height: 100vh;
             background: var(--bg-secondary);
             border-right: 1px solid var(--border);
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            z-index: 100;
         }
 
-        .overlay-selector.open {
-            transform: translateX(0);
-            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Selector header */
-        .selector-header {
+        .sidebar-header {
             padding: 24px 20px 16px;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
-            cursor: pointer;
             transition: background 0.2s;
         }
 
-        .selector-header:hover {
+        .sidebar-header:hover {
             background: var(--bg-tertiary);
         }
 
-        .selector-title {
+        .sidebar-title {
             font-family: 'Cormorant Garamond', Georgia, serif;
             font-size: 1.5rem;
             font-weight: 600;
@@ -288,58 +132,14 @@
             line-height: 1.2;
         }
 
-        .selector-subtitle {
+        .sidebar-subtitle {
             font-size: 0.75rem;
             color: var(--text-secondary);
             margin-top: 4px;
             letter-spacing: 0.03em;
         }
 
-        /* Mode toggle (Landscape / Portrait) - placeholder for Step 5 */
-        .mode-toggle {
-            display: flex;
-            padding: 12px 20px;
-            gap: 0;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-
-        .mode-btn {
-            flex: 1;
-            padding: 8px 12px;
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-dim);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.75rem;
-            font-weight: 500;
-            letter-spacing: 0.04em;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .mode-btn:first-child {
-            border-radius: 6px 0 0 6px;
-            border-right: none;
-        }
-
-        .mode-btn:last-child {
-            border-radius: 0 6px 6px 0;
-        }
-
-        .mode-btn.active {
-            background: var(--bg-tertiary);
-            border-color: var(--accent-dim);
-            color: var(--accent);
-        }
-
-        .mode-btn:hover:not(.active) {
-            color: var(--text-secondary);
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        /* Scrollable nav list */
-        .selector-nav {
+        .sidebar-nav {
             flex: 1;
             overflow-y: auto;
             padding: 8px 12px 20px;
@@ -400,21 +200,21 @@
             margin-top: 3px;
         }
 
-        /* Selector footer */
-        .selector-footer {
+        /* Sidebar footer */
+        .sidebar-footer {
             padding: 12px 20px;
             border-top: 1px solid var(--border);
             flex-shrink: 0;
         }
 
-        .selector-footer a {
+        .sidebar-footer a {
             color: var(--text-dim);
             text-decoration: none;
             font-size: 0.72rem;
             transition: color 0.2s;
         }
 
-        .selector-footer a:hover {
+        .sidebar-footer a:hover {
             color: var(--accent);
         }
 
@@ -430,10 +230,83 @@
         }
 
         /* ================================================================
-           VISUALIZATION AREA (always full screen)
+           MAIN CONTENT
            ================================================================ */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--bg-primary);
+            min-width: 0;
+        }
+
+        /* Viz header bar */
+        .viz-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            min-height: var(--header-height);
+            gap: 12px;
+        }
+
+        .viz-header-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .viz-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .viz-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Share button */
+        .share-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .share-btn:hover {
+            border-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .share-btn.copied {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Plotly container */
         .viz-container {
             flex: 1;
+            padding: 4px;
             overflow: auto;
             position: relative;
         }
@@ -533,98 +406,283 @@
         .modebar-btn:hover path { fill: var(--accent) !important; }
 
         /* ================================================================
-           FLOATING INFO CARD (portrait mode - slides up from bottom)
+           FULLSCREEN TOGGLE
            ================================================================ */
-        .info-card {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 400;
-            background: rgba(18, 18, 26, 0.92);
-            border-top: 1px solid var(--accent-dim);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-            max-height: 45vh;
-            overflow-y: auto;
-            padding: 16px 20px 24px;
-        }
-
-        .info-card.visible {
-            transform: translateY(0);
-        }
-
-        /* Drag handle hint */
-        .info-card-handle {
-            width: 36px;
-            height: 4px;
-            background: var(--text-dim);
-            border-radius: 2px;
-            margin: 0 auto 12px;
-            opacity: 0.5;
-        }
-
-        .info-card-name {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: var(--accent);
-            line-height: 1.2;
-            margin-bottom: 4px;
-        }
-
-        .info-card-subtitle {
-            font-size: 0.78rem;
+        .fullscreen-btn {
+            background: none;
+            border: 1px solid var(--border);
             color: var(--text-secondary);
-            margin-bottom: 10px;
-            line-height: 1.3;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .info-card-body {
-            font-size: 0.82rem;
-            color: var(--text-primary);
-            line-height: 1.5;
+        .fullscreen-btn:hover {
+            border-color: var(--accent-dim);
+            color: var(--accent);
         }
 
-        /* Style <br>-separated lines in the body */
-        .info-card-body br {
-            display: block;
-            margin-bottom: 2px;
-            content: "";
+        .fullscreen-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
-        /* Dismiss hint at bottom */
-        .info-card-dismiss {
-            font-size: 0.65rem;
-            color: var(--text-dim);
-            text-align: center;
-            margin-top: 12px;
-            letter-spacing: 0.04em;
+        /* Fullscreen state: hide sidebar and header */
+        .app-container.fullscreen .sidebar {
+            display: none;
         }
 
-        /* First-load hint overlay */
-        .tap-hint {
+        .app-container.fullscreen .viz-header {
+            display: none;
+        }
+
+        /* Floating exit button when in fullscreen */
+        .fullscreen-exit {
+            display: none;
             position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(18, 18, 26, 0.85);
+            top: 12px;
+            left: 12px;
+            z-index: 300;
+            background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 10px 20px;
+            padding: 8px 14px;
+            cursor: pointer;
             color: var(--text-secondary);
-            font-size: 0.78rem;
-            z-index: 350;
-            opacity: 0;
-            transition: opacity 0.5s;
-            pointer-events: none;
-            text-align: center;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+            align-items: center;
+            gap: 6px;
+            opacity: 0.7;
         }
 
-        .tap-hint.visible {
+        .fullscreen-exit:hover {
+            border-color: var(--accent);
+            color: var(--accent);
             opacity: 1;
+        }
+
+        .app-container.fullscreen ~ .fullscreen-exit {
+            display: flex;
+        }
+
+        .fullscreen-exit svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ================================================================
+           MOBILE HAMBURGER BUTTON
+           ================================================================ */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 200;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .hamburger:hover {
+            border-color: var(--accent-dim);
+        }
+
+        .hamburger-icon {
+            width: 20px;
+            height: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hamburger-icon span {
+            display: block;
+            height: 2px;
+            background: var(--text-secondary);
+            border-radius: 1px;
+            transition: all 0.3s;
+        }
+
+        .hamburger.open .hamburger-icon span:nth-child(1) {
+            transform: translateY(6px) rotate(45deg);
+        }
+        .hamburger.open .hamburger-icon span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.open .hamburger-icon span:nth-child(3) {
+            transform: translateY(-6px) rotate(-45deg);
+        }
+
+        /* Mobile overlay backdrop */
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 90;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar-backdrop.visible {
+            opacity: 1;
+        }
+
+        /* ================================================================
+           MOBILE SHARE BUTTON (floating)
+           ================================================================ */
+        .mobile-share {
+            display: none;
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 200;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .mobile-share:hover,
+        .mobile-share.copied {
+            border-color: var(--accent);
+        }
+
+        .mobile-share svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-secondary);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .mobile-share.copied svg {
+            stroke: var(--accent);
+        }
+
+        /* ================================================================
+           RESPONSIVE - MOBILE & TABLET (< 1024px)
+           ================================================================ */
+        @media (max-width: 1024px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .mobile-share {
+                display: flex;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                box-shadow: none;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+            }
+
+            .sidebar-backdrop.active {
+                display: block;
+            }
+
+            .main-content {
+                width: 100vw;
+                position: relative;
+            }
+
+            /* Float header over the plot so it doesn't steal space */
+            .viz-header {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 50;
+                padding: 8px 56px;
+                min-height: 44px;
+                background: linear-gradient(to bottom,
+                    rgba(10, 10, 15, 0.85) 0%,
+                    rgba(10, 10, 15, 0.6) 70%,
+                    transparent 100%);
+                border-bottom: none;
+                pointer-events: none;
+            }
+
+            /* Keep buttons clickable within the floating header */
+            .viz-header .fullscreen-btn {
+                pointer-events: auto;
+                display: none;  /* Not useful on mobile - plot is already full-screen */
+            }
+
+            .viz-title {
+                font-size: 0.9rem;
+                text-align: center;
+                text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+            }
+
+            .viz-subtitle {
+                text-align: center;
+                font-size: 0.65rem;
+                text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+            }
+
+            /* Plot container fills full height under the floating header */
+            .viz-container {
+                padding: 0;
+                position: relative;
+            }
+
+            /* Hide desktop share button on mobile */
+            .share-btn {
+                display: none;
+            }
+
+            .welcome-title {
+                font-size: 1.6rem;
+            }
+
+            .welcome-text {
+                font-size: 0.85rem;
+                padding: 0 20px;
+            }
         }
 
         /* ================================================================
@@ -651,154 +709,211 @@
             transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
-
         /* ================================================================
-           RESPONSIVE
+           FLOATING INFO CARD (mobile tap-to-inspect)
            ================================================================ */
-        @media (max-width: 600px) {
-            .welcome-title {
-                font-size: 1.6rem;
-            }
+        .info-card {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 400;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--accent-dim);
+            border-radius: 16px 16px 0 0;
+            padding: 16px 20px 24px;
+            max-height: 45vh;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+        }
 
-            .welcome-text {
-                font-size: 0.85rem;
-                padding: 0 20px;
-            }
+        .info-card.visible {
+            display: block;
+            transform: translateY(0);
+        }
 
-            .nav-btn-label {
-                font-size: 0.72rem;
-            }
+        .info-card-handle {
+            width: 36px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin: 0 auto 12px;
+        }
 
-            /* On very small screens, hide share text, show icon only */
-            .share-btn .share-text {
-                display: none;
-            }
+        .info-card-name {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent);
+            line-height: 1.2;
+        }
 
-            .share-btn {
-                padding: 8px 10px;
-            }
+        .info-card-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .info-card-body {
+            font-size: 0.82rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+
+        .info-card-body br {
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Only show info card interaction on touch devices */
+        @media (hover: hover) and (pointer: fine) {
+            /* Desktop with mouse: rely on native Plotly hover */
+            .info-card { display: none !important; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Floating nav button -->
-    <button class="nav-btn" id="navBtn" aria-label="Open gallery navigation">
-        <div class="nav-btn-icon">
+    <!-- Hamburger menu button (mobile) -->
+    <button class="hamburger" id="hamburger" aria-label="Open navigation">
+        <div class="hamburger-icon">
             <span></span>
             <span></span>
             <span></span>
-        </div>
-        <div class="nav-btn-label" id="navBtnLabel">
-            <span class="nav-label-home">Paloma's Orrery</span>
         </div>
     </button>
 
-    <!-- Floating share button -->
-    <button class="share-btn" id="shareBtn" aria-label="Share link">
+    <!-- Mobile share button -->
+    <button class="mobile-share" id="mobileShare" aria-label="Share link">
         <svg viewBox="0 0 24 24">
             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
             <polyline points="16 6 12 2 8 6"/>
             <line x1="12" y1="2" x2="12" y2="15"/>
         </svg>
-        <span class="share-text">Share</span>
     </button>
 
-    <!-- Overlay backdrop -->
-    <div class="overlay-backdrop" id="overlayBackdrop"></div>
+    <!-- Sidebar backdrop (mobile) -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
-    <!-- Overlay selector panel -->
-    <aside class="overlay-selector" id="overlaySelector">
-        <div class="selector-header" id="selectorHeader" title="Return to gallery home">
-            <div class="selector-title">Paloma's Orrery</div>
-            <div class="selector-subtitle">Interactive Astronomical Visualizations</div>
-        </div>
-
-        <!-- Mode toggle: Landscape / Portrait (Step 5 will wire this) -->
-        <div class="mode-toggle">
-            <button class="mode-btn active" id="modeLandscape" data-mode="landscape">Landscape</button>
-            <button class="mode-btn" id="modePortrait" data-mode="portrait">Portrait</button>
-        </div>
-
-        <nav class="selector-nav" id="selectorNav">
-            <!-- Populated by JS from gallery_metadata.json -->
-            <div class="loading-text" style="padding: 20px 8px; color: var(--text-dim);">
-                Loading gallery<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
-            </div>
-        </nav>
-
-        <div class="selector-footer">
-            <div class="footer-links">
-                <a href="https://github.com/tonyquintanilla/palomas-orrery" target="_blank" rel="noopener">GitHub</a>
-                <span class="footer-sep">|</span>
-                <a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener">Instagram</a>
-                <span class="footer-sep">|</span>
-                <a href="https://github.com/tonyquintanilla/palomas-orrery/releases" target="_blank" rel="noopener">Download</a>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Main app container (always full-screen) -->
     <div class="app-container">
-        <div class="viz-container" id="vizContainer">
-            <!-- Loading overlay -->
-            <div class="loading-overlay" id="loadingOverlay">
-                <div class="loading-text">
-                    Loading visualization<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
-                </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header" onclick="goHome()" style="cursor: pointer;" title="Return to gallery home">
+                <div class="sidebar-title">Paloma's Orrery</div>
+                <div class="sidebar-subtitle">Interactive Astronomical Visualizations</div>
             </div>
 
-            <!-- Welcome state -->
-            <div class="welcome-state" id="welcomeState">
-                <div class="welcome-title">Paloma's Orrery</div>
-                <div class="welcome-text">
-                    Explore interactive visualizations of the solar system,
-                    stellar neighborhoods, exoplanets, and more.
+            <nav class="sidebar-nav" id="sidebarNav">
+                <!-- Populated by JS from gallery_metadata.json -->
+                <div class="loading-text" style="padding: 20px 8px; color: var(--text-dim);">
+                    Loading gallery<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
                 </div>
-                <div class="welcome-hint">
-                    Tap the menu to select a visualization.
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="footer-links">
+                    <a href="https://github.com/tonyquintanilla/palomas-orrery" target="_blank" rel="noopener">GitHub</a>
+                    <span class="footer-sep">|</span>
+                    <a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener">Instagram</a>
+                    <span class="footer-sep">|</span>
+                    <a href="https://github.com/tonyquintanilla/palomas-orrery/releases" target="_blank" rel="noopener">Download</a>
                 </div>
             </div>
+        </aside>
 
-            <!-- Plotly graph target -->
-            <div id="plotly-graph" style="display: none;"></div>
-        </div>
+        <!-- Main content area -->
+        <main class="main-content">
+            <div class="viz-header" id="vizHeader">
+                <div class="viz-header-left">
+                    <div class="viz-title" id="vizTitle">Welcome</div>
+                    <div class="viz-subtitle" id="vizSubtitle"></div>
+                </div>
+                <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle full screen view">
+                    <svg viewBox="0 0 24 24" id="fullscreenIcon">
+                        <polyline points="15 3 21 3 21 9"/>
+                        <polyline points="9 21 3 21 3 15"/>
+                        <line x1="21" y1="3" x2="14" y2="10"/>
+                        <line x1="3" y1="21" x2="10" y2="14"/>
+                    </svg>
+                    Expand
+                </button>
+                <button class="share-btn" id="shareBtn" title="Copy link to clipboard">
+                    Share Link
+                </button>
+            </div>
+
+            <div class="viz-container" id="vizContainer">
+                <!-- Loading overlay -->
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="loading-text">
+                        Loading visualization<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
+                    </div>
+                </div>
+
+                <!-- Welcome state (shown initially) -->
+                <div class="welcome-state" id="welcomeState">
+                    <div class="welcome-title">Paloma's Orrery</div>
+                    <div class="welcome-text">
+                        Explore interactive visualizations of the solar system,
+                        stellar neighborhoods, exoplanets, and more.
+                    </div>
+                    <div class="welcome-hint">
+                        Select a visualization from the gallery to begin.
+                    </div>
+                </div>
+
+                <!-- Plotly graph target -->
+                <div id="plotly-graph" style="display: none;"></div>
+            </div>
+        </main>
+
     </div>
 
-    <!-- Floating info card (portrait mode) -->
+    <!-- Floating exit fullscreen button -->
+    <button class="fullscreen-exit" id="fullscreenExit" title="Exit full screen (Esc)">
+        <svg viewBox="0 0 24 24">
+            <polyline points="4 14 10 14 10 20"/>
+            <polyline points="20 10 14 10 14 4"/>
+            <line x1="14" y1="10" x2="21" y2="3"/>
+            <line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+        Exit
+    </button>
+
+    <!-- Floating info card (mobile tap-to-inspect) -->
     <div class="info-card" id="infoCard">
         <div class="info-card-handle"></div>
         <div class="info-card-name" id="infoCardName"></div>
         <div class="info-card-subtitle" id="infoCardSubtitle"></div>
         <div class="info-card-body" id="infoCardBody"></div>
-        <div class="info-card-dismiss">left-click to peek -- right-click to pin -- left-click to dismiss</div>
     </div>
-
-    <!-- First-load tap hint (portrait mode) -->
-    <div class="tap-hint" id="tapHint">Tap any object for details</div>
 
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>
 
     <script>
     /* ====================================================================
-       Paloma's Orrery - Gallery Viewer v2
-       Non-persistent overlay selector, full-screen plots always.
+       Paloma's Orrery - Gallery Viewer
+       Pure client-side: loads JSON via fetch, renders with Plotly.js
 
        Author: Tony Quintanilla / Paloma's Orrery
-       Gallery v2 - February 2026
        ==================================================================== */
 
     (function() {
         'use strict';
 
         // ---- Configuration ----
-        var DATA_PATH = 'gallery';
-        var METADATA_FILE = 'gallery_metadata.json';
+        const DATA_PATH = 'gallery';
+        const METADATA_FILE = 'gallery_metadata.json';
 
-        // Category colors (matching CSS variables)
-        var CATEGORY_COLORS = {
-            solar_system:  '#f4a261',
+        // Category colors (matching json_gallery.py / CSS variables)
+        const CATEGORY_COLORS = {
+            solar_system: '#f4a261',
             inner_planets: '#e76f51',
             outer_planets: '#2a9d8f',
             missions:      '#4a7c8f',
@@ -810,46 +925,43 @@
         };
 
         // ---- State ----
-        var metadata = null;
-        var vizLookup = {};
-        var currentVizId = null;
-        var activeCard = null;
-        var currentMode = 'landscape';
-        // Mode filtering deferred to Step 5 -- currently shows all
+        let metadata = null;
+        let vizLookup = {};
+        let currentVizId = null;
+        let activeCard = null;
 
         // ---- DOM refs ----
-        var navBtn         = document.getElementById('navBtn');
-        var navBtnLabel    = document.getElementById('navBtnLabel');
-        var shareBtn       = document.getElementById('shareBtn');
-        var overlayBackdrop = document.getElementById('overlayBackdrop');
-        var overlaySelector = document.getElementById('overlaySelector');
-        var selectorHeader = document.getElementById('selectorHeader');
-        var selectorNav    = document.getElementById('selectorNav');
-        var plotlyGraph    = document.getElementById('plotly-graph');
-        var welcomeState   = document.getElementById('welcomeState');
-        var loadingOverlay = document.getElementById('loadingOverlay');
-        var toast          = document.getElementById('toast');
-        var modeLandscape  = document.getElementById('modeLandscape');
-        var modePortrait   = document.getElementById('modePortrait');
-        var infoCard       = document.getElementById('infoCard');
-        var infoCardName   = document.getElementById('infoCardName');
-        var infoCardSubtitle = document.getElementById('infoCardSubtitle');
-        var infoCardBody   = document.getElementById('infoCardBody');
-        var tapHint        = document.getElementById('tapHint');
+        const sidebarNav     = document.getElementById('sidebarNav');
+        const sidebar        = document.getElementById('sidebar');
+        const hamburger      = document.getElementById('hamburger');
+        const backdrop       = document.getElementById('sidebarBackdrop');
+        const vizTitle       = document.getElementById('vizTitle');
+        const vizSubtitle    = document.getElementById('vizSubtitle');
+        const plotlyGraph    = document.getElementById('plotly-graph');
+        const welcomeState   = document.getElementById('welcomeState');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const shareBtn       = document.getElementById('shareBtn');
+        const mobileShare    = document.getElementById('mobileShare');
+        const toast          = document.getElementById('toast');
+        const fullscreenBtn  = document.getElementById('fullscreenBtn');
+        const fullscreenExit = document.getElementById('fullscreenExit');
+        const appContainer   = document.querySelector('.app-container');
+        const infoCard       = document.getElementById('infoCard');
+        const infoCardName   = document.getElementById('infoCardName');
+        const infoCardSub    = document.getElementById('infoCardSubtitle');
+        const infoCardBody   = document.getElementById('infoCardBody');
 
         // Track current plot's aspect ratio for resize handler
         var currentAspect = 0;
-        var infoCardShown = false;
-        var tapHintShown = false;
 
         // ---- Initialize ----
         async function init() {
             try {
-                var resp = await fetch(DATA_PATH + '/' + METADATA_FILE);
+                const resp = await fetch(DATA_PATH + '/' + METADATA_FILE);
                 if (!resp.ok) throw new Error('Could not load gallery metadata');
                 metadata = await resp.json();
             } catch (err) {
-                selectorNav.innerHTML =
+                sidebarNav.innerHTML =
                     '<div style="padding: 20px 8px; color: var(--cat-inner); font-size: 0.8rem;">' +
                     'Could not load gallery data.<br><br>' +
                     '<span style="color: var(--text-dim);">Ensure ' + DATA_PATH + '/' + METADATA_FILE + ' exists.</span></div>';
@@ -857,43 +969,27 @@
             }
 
             // Build lookup
-            var vizs = metadata.visualizations || [];
-            for (var i = 0; i < vizs.length; i++) {
-                vizLookup[vizs[i].id] = vizs[i];
+            const vizs = metadata.visualizations || [];
+            for (const v of vizs) {
+                vizLookup[v.id] = v;
             }
 
-            // Render nav list
-            renderNavList(vizs);
+            // Render sidebar
+            renderSidebar(vizs);
 
             // Setup event listeners
             setupEvents();
-
-            // Auto-detect default mode from screen width
-            if (window.innerWidth < 1024) {
-                setMode('portrait');
-            }
 
             // Check URL hash for deep link
             handleHash();
         }
 
-        // ---- Render navigation list ----
-        function renderNavList(vizs) {
-            // Filter by current mode: show items matching mode or "both"
-            var filtered = [];
-            for (var i = 0; i < vizs.length; i++) {
-                var v = vizs[i];
-                var vMode = v.mode || 'landscape';
-                if (vMode === currentMode || vMode === 'both') {
-                    filtered.push(v);
-                }
-            }
-
+        // ---- Render sidebar navigation ----
+        function renderSidebar(vizs) {
             // Group by category
-            var categories = {};
-            for (var i = 0; i < filtered.length; i++) {
-                var v = filtered[i];
-                var cat = v.category || 'other';
+            const categories = {};
+            for (const v of vizs) {
+                const cat = v.category || 'other';
                 if (!categories[cat]) {
                     categories[cat] = {
                         label: v.category_label || 'Other',
@@ -903,12 +999,9 @@
                 categories[cat].items.push(v);
             }
 
-            var html = '';
-            var catKeys = Object.keys(categories);
-            for (var c = 0; c < catKeys.length; c++) {
-                var catKey = catKeys[c];
-                var catData = categories[catKey];
-                var color = CATEGORY_COLORS[catKey] || CATEGORY_COLORS.other;
+            let html = '';
+            for (const [catKey, catData] of Object.entries(categories)) {
+                const color = CATEGORY_COLORS[catKey] || CATEGORY_COLORS.other;
 
                 // Category header
                 html += '<div class="category-header" style="border-bottom-color: ' + color + '33;">';
@@ -917,49 +1010,51 @@
                 html += '</div>';
 
                 // Cards
-                for (var j = 0; j < catData.items.length; j++) {
-                    var item = catData.items[j];
-                    html += '<div class="viz-card" data-viz-id="' + escapeHtml(item.id) + '">';
-                    html += '<div class="viz-card-title">' + escapeHtml(item.title || 'Untitled') + '</div>';
-                    if (item.description) {
-                        html += '<div class="viz-card-desc">' + escapeHtml(item.description) + '</div>';
+                for (const v of catData.items) {
+                    html += '<div class="viz-card" data-viz-id="' + escapeHtml(v.id) + '">';
+                    html += '<div class="viz-card-title">' + escapeHtml(v.title || 'Untitled') + '</div>';
+                    if (v.description) {
+                        html += '<div class="viz-card-desc">' + escapeHtml(v.description) + '</div>';
                     }
-                    if (item.size_kb) {
-                        html += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
+                    if (v.size_kb) {
+                        html += '<div class="viz-card-size">' + Math.round(v.size_kb) + ' KB</div>';
                     }
                     html += '</div>';
                 }
             }
 
-            if (!filtered.length) {
+            if (!vizs.length) {
                 html = '<div style="padding: 20px 8px; color: var(--text-dim); font-size: 0.8rem;">' +
-                       'No ' + currentMode + ' visualizations found.</div>';
+                       'No visualizations found.<br><br>Run json_converter.py to create gallery data.</div>';
             }
 
-            selectorNav.innerHTML = html;
+            sidebarNav.innerHTML = html;
         }
 
         // ---- Load and display a visualization ----
         async function loadVisualization(vizId) {
-            var viz = vizLookup[vizId];
+            const viz = vizLookup[vizId];
             if (!viz) return;
 
             // Update state
             currentVizId = vizId;
 
+            // Dismiss any open info card
+            hideInfoCard();
+
             // Update URL hash (without triggering hashchange)
             history.replaceState(null, '', '#' + vizId);
 
-            // Update nav button label to show current viz title
-            navBtnLabel.innerHTML = '<span class="nav-label-title">' +
-                escapeHtml(viz.title || 'Untitled') + '</span>';
-
-            // Show share button
-            shareBtn.classList.add('visible');
+            // Update header
+            vizTitle.textContent = viz.title || 'Untitled';
+            const catLabel = viz.category_label || '';
+            const desc = viz.description || '';
+            vizSubtitle.textContent = catLabel && desc ? catLabel + ' - ' + desc :
+                                      catLabel || desc;
 
             // Update active card
             if (activeCard) activeCard.classList.remove('active');
-            activeCard = selectorNav.querySelector('[data-viz-id="' + vizId + '"]');
+            activeCard = sidebarNav.querySelector('[data-viz-id="' + vizId + '"]');
             if (activeCard) activeCard.classList.add('active');
 
             // Show loading
@@ -967,18 +1062,20 @@
             plotlyGraph.style.display = 'none';
             loadingOverlay.classList.add('visible');
 
-            // Close overlay
-            closeOverlay();
-            dismissInfoCard();
+            // Close mobile sidebar
+            closeMobileSidebar();
 
             try {
-                var resp = await fetch(DATA_PATH + '/' + viz.filename);
+                const resp = await fetch(DATA_PATH + '/' + viz.filename);
                 if (!resp.ok) throw new Error('Failed to load ' + viz.filename);
-                var figDict = await resp.json();
+                const figDict = await resp.json();
 
                 figDict.layout = figDict.layout || {};
 
-                // Auto-detect theme BEFORE stripping template
+                // Auto-detect theme BEFORE stripping template, because
+                // paper_bgcolor may only exist inside the template object.
+                // Also check plot_bgcolor -- converter may strip template
+                // but preserve plot_bgcolor at top level.
                 var origBg = '';
                 if (figDict.layout.paper_bgcolor) {
                     origBg = figDict.layout.paper_bgcolor.toLowerCase();
@@ -993,12 +1090,15 @@
                     origBg === '#fff' || origBg.indexOf('rgb(255') === 0 ||
                     origBg === '#e5ecf6');
 
-                // Strip embedded template
+                // Strip embedded template (same as json_gallery.py)
                 if (figDict.layout.template) {
                     delete figDict.layout.template;
                 }
 
-                // Capture original aspect ratio before removing fixed dimensions
+                // Capture original aspect ratio before removing fixed dimensions.
+                // Plots designed tall or square (like Planetary Boundaries at
+                // 1200x1100) get squished when the container is landscape-shaped.
+                // We preserve the ratio as a min-height constraint on the div.
                 var origWidth = figDict.layout.width;
                 var origHeight = figDict.layout.height;
                 var origAspect = (origWidth && origHeight) ? origHeight / origWidth : 0;
@@ -1018,9 +1118,11 @@
                 }
 
                 if (isLightTheme) {
-                    // Light-themed plot: preserve original colors
+                    // Light-themed plot: preserve all original colors, just
+                    // ensure it fills its container with a visible background
+                    // (no dark overrides)
                 } else {
-                    // Dark-themed plot: apply dark overrides
+                    // Dark-themed plot (3D space scenes, etc.): apply dark overrides
                     Object.assign(figDict.layout, {
                         paper_bgcolor: 'rgba(0,0,0,0)',
                         plot_bgcolor: 'rgba(0,0,0,0)',
@@ -1035,13 +1137,15 @@
                     if (!isLightTheme) {
                         figDict.layout.scene.bgcolor = 'rgba(0,0,0,0)';
                     }
-                    // On mobile, use 'cube' aspectmode
+                    // On mobile, use 'cube' aspectmode so the scene fills
+                    // the available space instead of preserving desktop ratios
                     if (window.innerWidth < 1024) {
                         figDict.layout.scene.aspectmode = 'cube';
                     }
                 }
 
                 // On mobile: reposition legend for dark-themed plots only
+                // Light-themed plots preserve their own legend placement
                 if (window.innerWidth < 1024 && !isLightTheme) {
                     if (figDict.layout.showlegend !== false) {
                         figDict.layout.legend = Object.assign(figDict.layout.legend || {}, {
@@ -1053,9 +1157,13 @@
                             font: { size: 10, color: '#9a9a9a' }
                         });
                     }
+                    // Preserve original margins on mobile too
                 }
 
-                // Scale down annotation font sizes for small screens
+                // Updatemenus: preserve original positions from export
+                // (repositioning causes stacking/overlap issues)
+
+                // Scale down annotation font sizes for mobile
                 if (window.innerWidth < 900 && figDict.layout.annotations) {
                     figDict.layout.annotations.forEach(function(ann) {
                         if (ann.font && ann.font.size && ann.font.size > 12) {
@@ -1064,7 +1172,7 @@
                     });
                 }
 
-                // Scale down title font for small screens
+                // Scale down title font for mobile
                 if (window.innerWidth < 900 && figDict.layout.title && figDict.layout.title.font) {
                     var titleSize = figDict.layout.title.font.size;
                     if (titleSize && titleSize > 14) {
@@ -1076,20 +1184,27 @@
                 plotlyGraph.style.display = 'block';
                 loadingOverlay.classList.remove('visible');
 
-                // Purge previous figure state
+                // Purge previous figure state (prevents updatemenus/sliders persisting)
                 Plotly.purge('plotly-graph');
 
                 // Render with Plotly
-                var config = {
+                const config = {
                     displayModeBar: true,
                     displaylogo: true,
                     modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-                    responsive: true
+                    responsive: true,
+                    scrollZoom: true,
+                    doubleClick: false
                 };
 
                 await Plotly.newPlot('plotly-graph', figDict.data || [], figDict.layout, config);
 
-                // For tall/square plots (aspect >= 0.8), set min-height
+                // Wire up tap-to-inspect for touch devices
+                setupInfoCardHandler();
+
+                // For tall/square plots (aspect >= 0.8), set min-height so
+                // the container doesn't squish them into a landscape shape.
+                // The min-height is based on the container width * original ratio.
                 currentAspect = origAspect;
                 if (origAspect >= 0.8) {
                     var containerWidth = plotlyGraph.parentElement.clientWidth;
@@ -1098,31 +1213,11 @@
                     plotlyGraph.style.minHeight = '';
                 }
 
-                // Force resize after render
+                // Force resize after render to fill container
+                // (small delay ensures container dimensions are settled)
                 setTimeout(function() {
                     Plotly.Plots.resize('plotly-graph');
                 }, 100);
-
-                // Portrait mode: wire click -> info card
-                if (currentMode === 'portrait') {
-                    plotlyGraph.on('plotly_click', function(data) {
-                        if (!data || !data.points || !data.points.length) return;
-                        var point = data.points[0];
-                        if (!point.customdata) return;
-                        showInfoCard(point.customdata);
-                    });
-
-                    // Show tap hint on first portrait load
-                    if (!tapHintShown) {
-                        tapHintShown = true;
-                        setTimeout(function() {
-                            tapHint.classList.add('visible');
-                            setTimeout(function() {
-                                tapHint.classList.remove('visible');
-                            }, 3000);
-                        }, 800);
-                    }
-                }
 
             } catch (err) {
                 loadingOverlay.classList.remove('visible');
@@ -1136,36 +1231,122 @@
             }
         }
 
+        // ---- Info card (mobile tap-to-inspect) ----
+        function setupInfoCardHandler() {
+            var graphDiv = document.getElementById('plotly-graph');
+
+            graphDiv.on('plotly_click', function(eventData) {
+                if (!eventData || !eventData.points || !eventData.points.length) return;
+
+                var pt = eventData.points[0];
+                var cardData = null;
+
+                // Try customdata first (social view exports have JSON strings)
+                if (pt.customdata) {
+                    try {
+                        var cd = pt.customdata;
+                        // customdata may be a JSON string or already parsed
+                        if (typeof cd === 'string') {
+                            cd = JSON.parse(cd);
+                        }
+                        if (cd && cd.name) {
+                            cardData = cd;
+                        }
+                    } catch (e) {
+                        // Not valid JSON, fall through
+                    }
+                }
+
+                // Fallback: parse trace.text HTML (standard exports)
+                if (!cardData && pt.data && pt.data.text) {
+                    var textVal = '';
+                    if (Array.isArray(pt.data.text) && pt.pointIndex !== undefined) {
+                        textVal = pt.data.text[pt.pointIndex] || '';
+                    } else if (typeof pt.data.text === 'string') {
+                        textVal = pt.data.text;
+                    }
+
+                    if (textVal) {
+                        // Simple parse: extract bold name, rest is body
+                        var nameMatch = textVal.match(/<b>([^<]+)<\/b>/);
+                        var name = nameMatch ? nameMatch[1] : (pt.data.name || 'Object');
+                        var body = textVal;
+                        if (nameMatch) {
+                            body = textVal.substring(textVal.indexOf('</b>') + 4);
+                        }
+                        // Clean leading <br> tags
+                        body = body.replace(/^(\s*<br\s*\/?>)+/gi, '');
+
+                        cardData = { name: name, subtitle: '', body: body };
+                    }
+                }
+
+                // Last resort: use trace name
+                if (!cardData) {
+                    var traceName = pt.data ? pt.data.name : '';
+                    if (traceName) {
+                        cardData = { name: traceName, subtitle: '', body: '' };
+                    }
+                }
+
+                if (cardData) {
+                    showInfoCard(cardData);
+                }
+            });
+        }
+
+        function showInfoCard(data) {
+            infoCardName.textContent = data.name || '';
+            infoCardSub.textContent = data.subtitle || '';
+            // Body may contain HTML (<br> tags), render it
+            infoCardBody.innerHTML = data.body || '';
+            infoCardSub.style.display = data.subtitle ? 'block' : 'none';
+            infoCardBody.style.display = data.body ? 'block' : 'none';
+
+            // Show with animation
+            infoCard.style.display = 'block';
+            // Force reflow before adding class for transition
+            infoCard.offsetHeight;
+            infoCard.classList.add('visible');
+        }
+
+        function hideInfoCard() {
+            infoCard.classList.remove('visible');
+            setTimeout(function() {
+                if (!infoCard.classList.contains('visible')) {
+                    infoCard.style.display = 'none';
+                }
+            }, 300);
+        }
+
         // ---- Event setup ----
         function setupEvents() {
-            // Nav button toggles overlay
-            navBtn.addEventListener('click', toggleOverlay);
-
-            // Backdrop click closes overlay
-            overlayBackdrop.addEventListener('click', closeOverlay);
-
             // Card clicks (event delegation)
-            selectorNav.addEventListener('click', function(e) {
-                var card = e.target.closest('.viz-card');
+            sidebarNav.addEventListener('click', function(e) {
+                const card = e.target.closest('.viz-card');
                 if (!card) return;
-                var vizId = card.getAttribute('data-viz-id');
+                const vizId = card.getAttribute('data-viz-id');
                 if (vizId) loadVisualization(vizId);
             });
 
-            // Selector header -> home
-            selectorHeader.addEventListener('click', goHome);
+            // Hamburger toggle
+            hamburger.addEventListener('click', toggleMobileSidebar);
 
-            // Share button
+            // Backdrop click closes sidebar
+            backdrop.addEventListener('click', closeMobileSidebar);
+
+            // Share buttons
             shareBtn.addEventListener('click', shareLink);
+            mobileShare.addEventListener('click', shareLink);
 
-            // Mode toggle buttons
-            modeLandscape.addEventListener('click', function() { setMode('landscape'); });
-            modePortrait.addEventListener('click', function() { setMode('portrait'); });
+            // Fullscreen toggle
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            fullscreenExit.addEventListener('click', toggleFullscreen);
 
             // Hash changes (browser back/forward)
             window.addEventListener('hashchange', handleHash);
 
-            // Window resize -> Plotly resize + recalculate min-height
+            // Window resize -> Plotly resize + recalculate min-height for tall plots
             window.addEventListener('resize', function() {
                 if (plotlyGraph.style.display !== 'none') {
                     if (currentAspect >= 0.8) {
@@ -1176,102 +1357,51 @@
                 }
             });
 
-            // Keyboard: Escape closes overlay or info card
+            // Keyboard: Escape closes mobile sidebar or exits fullscreen
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
-                    if (infoCardShown) {
-                        dismissInfoCard();
+                    if (infoCard.classList.contains('visible')) {
+                        hideInfoCard();
+                    } else if (appContainer.classList.contains('fullscreen')) {
+                        toggleFullscreen();
                     } else {
-                        closeOverlay();
+                        closeMobileSidebar();
                     }
                 }
             });
 
-            // Click/tap anywhere dismisses info card (except on card itself)
+            // Dismiss info card on tap-away (touch or click on plot background)
             document.addEventListener('click', function(e) {
-                if (infoCardShown && !infoCard.contains(e.target)) {
-                    dismissInfoCard();
+                if (infoCard.classList.contains('visible') &&
+                    !infoCard.contains(e.target)) {
+                    hideInfoCard();
                 }
             });
         }
 
-        // ---- Overlay open/close ----
-        function toggleOverlay() {
-            if (overlaySelector.classList.contains('open')) {
-                closeOverlay();
+        // ---- Mobile sidebar ----
+        function toggleMobileSidebar() {
+            const isOpen = sidebar.classList.contains('open');
+            if (isOpen) {
+                closeMobileSidebar();
             } else {
-                openOverlay();
+                sidebar.classList.add('open');
+                hamburger.classList.add('open');
+                backdrop.classList.add('active');
+                // Small delay so display:block is applied before opacity transition
+                requestAnimationFrame(function() {
+                    backdrop.classList.add('visible');
+                });
             }
         }
 
-        function openOverlay() {
-            overlaySelector.classList.add('open');
-            navBtn.classList.add('open');
-            overlayBackdrop.classList.add('active');
-            requestAnimationFrame(function() {
-                overlayBackdrop.classList.add('visible');
-            });
-        }
-
-        function closeOverlay() {
-            overlaySelector.classList.remove('open');
-            navBtn.classList.remove('open');
-            overlayBackdrop.classList.remove('visible');
+        function closeMobileSidebar() {
+            sidebar.classList.remove('open');
+            hamburger.classList.remove('open');
+            backdrop.classList.remove('visible');
             setTimeout(function() {
-                overlayBackdrop.classList.remove('active');
+                backdrop.classList.remove('active');
             }, 300);
-        }
-
-        // ---- Mode toggle ----
-        function setMode(mode) {
-            currentMode = mode;
-            if (mode === 'landscape') {
-                modeLandscape.classList.add('active');
-                modePortrait.classList.remove('active');
-            } else {
-                modePortrait.classList.add('active');
-                modeLandscape.classList.remove('active');
-            }
-            // Re-render nav list filtered by mode
-            if (metadata) {
-                renderNavList(metadata.visualizations || []);
-            }
-        }
-
-        // ---- Info card (portrait mode) ----
-        function showInfoCard(customdata) {
-            try {
-                var parsed = (typeof customdata === 'string') ?
-                    JSON.parse(customdata) : customdata;
-
-                infoCardName.textContent = parsed.name || '';
-
-                if (parsed.subtitle) {
-                    infoCardSubtitle.textContent = parsed.subtitle;
-                    infoCardSubtitle.style.display = '';
-                } else {
-                    infoCardSubtitle.style.display = 'none';
-                }
-
-                if (parsed.body) {
-                    infoCardBody.innerHTML = parsed.body;
-                    infoCardBody.style.display = '';
-                } else {
-                    infoCardBody.style.display = 'none';
-                }
-
-                infoCard.classList.add('visible');
-                infoCardShown = true;
-            } catch (e) {
-                // Unparseable customdata -- ignore
-            }
-        }
-
-        function dismissInfoCard() {
-            if (infoCardShown) {
-                infoCard.classList.remove('visible');
-                infoCardShown = false;
-            }
         }
 
         // ---- Share link ----
@@ -1281,7 +1411,7 @@
                 return;
             }
 
-            var url = window.location.origin + window.location.pathname + '#' + currentVizId;
+            const url = window.location.origin + window.location.pathname + '#' + currentVizId;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(function() {
@@ -1296,7 +1426,7 @@
         }
 
         function fallbackCopy(text) {
-            var ta = document.createElement('textarea');
+            const ta = document.createElement('textarea');
             ta.value = text;
             ta.style.position = 'fixed';
             ta.style.left = '-9999px';
@@ -1314,11 +1444,12 @@
 
         function showCopiedFeedback() {
             shareBtn.classList.add('copied');
-            var textEl = shareBtn.querySelector('.share-text');
-            if (textEl) textEl.textContent = 'Copied!';
+            shareBtn.textContent = 'Copied!';
+            mobileShare.classList.add('copied');
             setTimeout(function() {
                 shareBtn.classList.remove('copied');
-                if (textEl) textEl.textContent = 'Share';
+                shareBtn.textContent = 'Share Link';
+                mobileShare.classList.remove('copied');
             }, 2000);
         }
 
@@ -1332,46 +1463,10 @@
 
         // ---- URL hash routing ----
         function handleHash() {
-            var hash = window.location.hash.replace('#', '');
+            const hash = window.location.hash.replace('#', '');
             if (hash && vizLookup[hash]) {
                 loadVisualization(hash);
             }
-        }
-
-        // ---- Home navigation ----
-        function goHome() {
-            // Clear hash
-            history.pushState(null, '', window.location.pathname);
-            currentVizId = null;
-
-            // Reset nav button label
-            navBtnLabel.innerHTML = '<span class="nav-label-home">Paloma\'s Orrery</span>';
-
-            // Hide share button
-            shareBtn.classList.remove('visible');
-
-            // Hide plot, show welcome
-            plotlyGraph.style.display = 'none';
-            plotlyGraph.style.minHeight = '';
-            currentAspect = 0;
-            welcomeState.innerHTML =
-                '<div class="welcome-title">Paloma\'s Orrery</div>' +
-                '<div class="welcome-text">' +
-                'Explore interactive visualizations of the solar system, ' +
-                'stellar neighborhoods, exoplanets, and more.</div>' +
-                '<div class="welcome-hint">' +
-                'Tap the menu to select a visualization.</div>';
-            welcomeState.style.display = 'flex';
-
-            // Deselect active card
-            if (activeCard) {
-                activeCard.classList.remove('active');
-                activeCard = null;
-            }
-
-            // Close overlay
-            closeOverlay();
-            dismissInfoCard();
         }
 
         // ---- Utility ----
@@ -1382,6 +1477,55 @@
                       .replace(/>/g, '&gt;')
                       .replace(/"/g, '&quot;');
         }
+
+        // ---- Fullscreen toggle ----
+        function toggleFullscreen() {
+            appContainer.classList.toggle('fullscreen');
+
+            // Trigger Plotly resize after layout settles
+            if (plotlyGraph.style.display !== 'none') {
+                setTimeout(function() {
+                    Plotly.Plots.resize('plotly-graph');
+                }, 50);
+            }
+        }
+
+        // ---- Home navigation ----
+        function goHome() {
+            // Exit fullscreen if active
+            appContainer.classList.remove('fullscreen');
+
+            // Clear hash without triggering hashchange reload
+            history.pushState(null, '', window.location.pathname);
+            currentVizId = null;
+
+            // Reset header
+            vizTitle.textContent = 'Welcome';
+            vizSubtitle.textContent = '';
+
+            // Hide plot, show welcome
+            plotlyGraph.style.display = 'none';
+            welcomeState.innerHTML =
+                '<div class="welcome-title">Paloma\'s Orrery</div>' +
+                '<div class="welcome-text">' +
+                'Explore interactive visualizations of the solar system, ' +
+                'stellar neighborhoods, exoplanets, and more.</div>' +
+                '<div class="welcome-hint">' +
+                'Select a visualization from the gallery to begin.</div>';
+            welcomeState.style.display = 'flex';
+
+            // Deselect active card
+            if (activeCard) {
+                activeCard.classList.remove('active');
+                activeCard = null;
+            }
+
+            // Close mobile sidebar if open
+            closeMobileSidebar();
+        }
+
+        // Expose goHome globally for onclick
+        window.goHome = goHome;
 
         // ---- Go ----
         init();
