@@ -79,8 +79,38 @@
       "description": "Hertzprung-Russell diagram of stars up to 20 LY distant.",
       "size_kb": 74.2,
       "converted": "2026-02-08 19:14"
+    },
+    {
+      "id": "hr_diagram_magnitude_4_0",
+      "title": "HR Diagram Magnitude 4.0",
+      "filename": "hr_diagram_magnitude_4_0.json",
+      "category": "stellar",
+      "category_label": "Stellar Neighborhood",
+      "description": "Hertzprung-Russell diagram of stars up to visual magnitude 4.0.",
+      "size_kb": 347.3,
+      "converted": "2026-02-08 19:49"
+    },
+    {
+      "id": "3d_stars_magnitude_4_0_1400ly",
+      "title": "3D Stars Magnitude 4.0 1400Ly",
+      "filename": "3d_stars_magnitude_4_0_1400ly.json",
+      "category": "stellar",
+      "category_label": "Stellar Neighborhood",
+      "description": "3D diagram of stars up to visual magnitude 4.0 and up to 1400 LY distant.",
+      "size_kb": 421.4,
+      "converted": "2026-02-08 19:50"
+    },
+    {
+      "id": "3d_stars_magnitude_4_0",
+      "title": "3D Stars Magnitude 4.0",
+      "filename": "3d_stars_magnitude_4_0.json",
+      "category": "stellar",
+      "category_label": "Stellar Neighborhood",
+      "description": "3D diagram of stars up to visual magnitude 4.0.",
+      "size_kb": 423.8,
+      "converted": "2026-02-08 19:51"
     }
   ],
-  "last_updated": "2026-02-08 19:14",
-  "total_count": 8
+  "last_updated": "2026-02-08 19:51",
+  "total_count": 11
 }
