@@ -469,11 +469,15 @@ Added:
 - `.overlay-selector` -- slide-out panel with same content as old sidebar
   (category-grouped cards, footer links, header -> home)
 - `.overlay-backdrop` -- click/tap to dismiss
-- Mode toggle buttons (Landscape / Portrait) in overlay header -- wired
-  to state but filtering deferred to Step 5
+- Mode toggle buttons (Landscape / Portrait) with list filtering --
+  entries show based on metadata `mode` field (landscape/portrait/both)
 - Auto-detect default mode from screen width (<1024px -> Portrait)
 - Floating share button (top-right at top:52px, below Plotly modebar,
   appears only when a viz is loaded)
+- Floating info card (portrait mode) -- slides up from bottom on
+  plotly_click, shows name/subtitle/body from customdata JSON
+- "Tap any object for details" hint on first portrait load (3s fade)
+- `json_converter.py` mode tagging (L/P/B prompt during conversion)
 
 Preserved unchanged:
 - All Plotly rendering logic (theme detection, template stripping,
@@ -495,8 +499,22 @@ Preserved unchanged:
 **Minor fix**: Share button moved from top:12px to top:52px to avoid
 overlapping Plotly modebar icons.
 
+**Info card interaction model** (discovered, not designed):
+- Left-click + hold: card appears while button held, drops on release
+- Right-click: card pins, persists until left-click release
+- Right-click another object: card updates, stays pinned
+- Escape key: dismisses card
+- On touch devices: tap = peek (like left-click release)
+
+The peek/pin split is an emergent behavior from event propagation:
+`plotly_click` fires on mousedown (shows card), document `click` fires
+on mouseup (dismisses). Right-click triggers `plotly_click` but not
+document `click` (contextmenu instead), so the card persists. No
+custom code needed -- the browser event model produces the interaction.
+
 **Files changed**:
-- index.html (full rewrite -- overlay architecture replaces sidebar)
+- index.html (full rewrite -- overlay architecture replaces sidebar,
+  mode filtering added, floating info card for portrait mode)
 
 ## What's Next: Gallery Viewer v2 -- Landscape + Portrait
 
@@ -647,9 +665,10 @@ conversion. Either way, the gallery viewer always gets structured customdata.
 |------|------|-------|
 | 1 | Stellar converter testing | DONE (Session 5) - all stellar views pass |
 | 2 | Non-persistent selector prototype | DONE (Session 6) - overlay replaces sidebar |
-| 3 | Floating info card component | One component, works for all content types |
+| 3 | Floating info card component | DONE (Session 6) - portrait mode, peek/pin interaction |
+| -- | Mode filtering + converter tagging | DONE (Session 6) - pulled forward from Step 5 |
 | 4 | json_converter.py hover parsing | Pre-parse trace.text -> customdata for standard exports |
-| 5 | Portrait mode with pinch + tap-to-card | Wire together; pinch + tap also works for mobile landscape |
+| 5 | Portrait mode with pinch + tap-to-card | Touch testing; pinch + tap on real devices |
 | 6 | Content population + validation | Real phone testing with screencapture |
 | 7 | Polish | Version stamp, hints, landscape nudges |
 
@@ -667,22 +686,20 @@ JSONs that already have customdata.
 - Website content pages (About, Downloads, Contact)
 - Version/update date in gallery footer
 
-### Immediate Next: Floating Info Card + Hover Parsing (Steps 3-4)
+### Immediate Next: Hover Parsing in Converter (Step 4)
 
-Steps 3 and 4 can proceed in either order -- the card needs data, the
-converter provides data. Two approaches:
+The info card works for portrait social-view exports (which already have
+structured customdata from social_media_export.py). Standard landscape
+exports store hover text as HTML in `trace.text`, not in customdata.
 
-**Option A: Card first** -- Prototype the floating info card using
-social-view JSONs that already have structured customdata. This lets us
-see the card working before touching the converter.
+Step 4 adds `_parse_hover_html()` to json_converter.py so standard
+exports also get structured customdata during conversion. This enables
+the info card for ALL content, not just social views. The parsing logic
+already exists in social_media_export.py -- it just needs to be applied
+in the converter's HTML extraction path.
 
-**Option B: Converter first** -- Add hover text parsing to
-json_converter.py for standard exports, then build the card knowing
-all content types will have customdata.
-
-Either way, both steps produce a card that reads customdata from any
-trace and displays name/subtitle/body on tap. The card appears on tap,
-dismisses on tap-away or swipe-down.
+After Step 4, the card works everywhere. Steps 5-7 are testing, content,
+and polish.
 
 ## Technical Notes
 
@@ -792,6 +809,10 @@ re-export from the current app.
 | Nav button label | Shows current viz name or app title | Context always visible; replaces viz-header bar |
 | Share button position | top:52px to clear Plotly modebar | Avoids icon overlap |
 | One interaction model | Same overlay on phone + tablet + desktop | No device-specific code paths |
+| Info card interaction | Peek (left-click) + Pin (right-click) | Emergent from event propagation; no custom code |
+| Info card scope | Portrait mode only (for now) | Landscape uses standard Plotly hover tooltips |
+| Mode filtering | Filter nav list by metadata mode field | Items without mode default to landscape |
+| Converter mode prompt | L/P/B during interactive conversion | Defaults to landscape; backward compatible |
 
 ---
 
