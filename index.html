@@ -1260,47 +1260,41 @@
         // ---- 3D Zoom (mobile) ----
         function zoom3D(factor) {
             var graphDiv = document.getElementById('plotly-graph');
-            if (!graphDiv) return;
+            if (!graphDiv || !graphDiv._fullLayout) return;
 
-            // Try to get the live camera from Plotly's internal scene object
             var fl = graphDiv._fullLayout;
-            if (!fl) return;
 
-            var eye = null;
-            var sceneId = 'scene';
-
-            // Find the scene key
+            // Find the gl-plot3d scene object
             for (var key in fl) {
-                if (key.indexOf('scene') === 0 && fl[key]) {
-                    sceneId = key;
-                    // Method 1: internal _scene.getCamera() (live after orbit drag)
-                    try {
-                        if (fl[key]._scene) {
-                            var cam = fl[key]._scene.getCamera();
-                            if (cam && cam.eye) {
-                                eye = cam.eye;
-                                break;
-                            }
-                        }
-                    } catch (e) {}
-                    // Method 2: layout camera (initial or last relayout)
-                    if (fl[key].camera && fl[key].camera.eye) {
-                        eye = fl[key].camera.eye;
-                        break;
-                    }
+                if (key.indexOf('scene') !== 0 || !fl[key]) continue;
+
+                var sceneObj = fl[key]._scene;
+                if (!sceneObj) continue;
+
+                // Access the gl-plot3d glplot camera
+                var glplot = sceneObj.glplot;
+                if (!glplot || !glplot.camera || !glplot.camera.params) continue;
+
+                var params = glplot.camera.params;
+                // gl-plot3d uses 'distance' for zoom level
+                if (params.distance !== undefined) {
+                    params.distance = params.distance * factor;
+                    glplot.redraw();
+                    return;
                 }
             }
 
-            // Method 3: fallback default
-            if (!eye) eye = { x: 1.25, y: 1.25, z: 1.25 };
-
-            var update = {};
-            update[sceneId + '.camera.eye'] = {
-                x: eye.x * factor,
-                y: eye.y * factor,
-                z: eye.z * factor
-            };
-            Plotly.relayout(graphDiv, update);
+            // Fallback: try relayout with camera eye
+            var scene = graphDiv.layout && graphDiv.layout.scene;
+            var eye = (scene && scene.camera && scene.camera.eye) ||
+                      { x: 1.25, y: 1.25, z: 1.25 };
+            Plotly.relayout(graphDiv, {
+                'scene.camera.eye': {
+                    x: eye.x * factor,
+                    y: eye.y * factor,
+                    z: eye.z * factor
+                }
+            });
         }
 
         // ---- Event setup ----
