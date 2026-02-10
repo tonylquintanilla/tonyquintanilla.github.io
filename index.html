@@ -1010,6 +1010,11 @@
             // Dismiss any open info card
             dismissInfoCard();
 
+            // Reset zoom state
+            zoomLevel = 1.0;
+            var gd = document.getElementById('plotly-graph');
+            if (gd) delete gd._zoomOrigRanges;
+
             // Update URL hash (without triggering hashchange)
             history.replaceState(null, '', '#' + vizId);
 
@@ -1258,43 +1263,62 @@
         }
 
         // ---- 3D Zoom (mobile) ----
+        // Scale axis ranges to zoom in/out. Moving the camera clips
+        // traces in cube/data aspectmode, so we shrink/expand the
+        // visible range instead.
+        var zoomLevel = 1.0;
+
         function zoom3D(factor) {
             var graphDiv = document.getElementById('plotly-graph');
             if (!graphDiv || !graphDiv._fullLayout) return;
 
             var fl = graphDiv._fullLayout;
 
-            // Find the gl-plot3d scene object
+            // Find the scene
+            var sceneKey = null;
             for (var key in fl) {
-                if (key.indexOf('scene') !== 0 || !fl[key]) continue;
-
-                var sceneObj = fl[key]._scene;
-                if (!sceneObj) continue;
-
-                // Access the gl-plot3d glplot camera
-                var glplot = sceneObj.glplot;
-                if (!glplot || !glplot.camera || !glplot.camera.params) continue;
-
-                var params = glplot.camera.params;
-                // gl-plot3d uses 'distance' for zoom level
-                if (params.distance !== undefined) {
-                    params.distance = params.distance * factor;
-                    glplot.redraw();
-                    return;
+                if (key.indexOf('scene') === 0 && fl[key] && fl[key].xaxis) {
+                    sceneKey = key;
+                    break;
                 }
             }
+            if (!sceneKey) return;
 
-            // Fallback: try relayout with camera eye
-            var scene = graphDiv.layout && graphDiv.layout.scene;
-            var eye = (scene && scene.camera && scene.camera.eye) ||
-                      { x: 1.25, y: 1.25, z: 1.25 };
-            Plotly.relayout(graphDiv, {
-                'scene.camera.eye': {
-                    x: eye.x * factor,
-                    y: eye.y * factor,
-                    z: eye.z * factor
-                }
-            });
+            var scene = fl[sceneKey];
+
+            // Store original ranges on first zoom
+            if (!graphDiv._zoomOrigRanges) {
+                graphDiv._zoomOrigRanges = {
+                    x: scene.xaxis.range.slice(),
+                    y: scene.yaxis.range.slice(),
+                    z: scene.zaxis.range.slice()
+                };
+            }
+
+            var orig = graphDiv._zoomOrigRanges;
+            zoomLevel = zoomLevel * factor;
+
+            // Clamp zoom level
+            if (zoomLevel < 0.05) zoomLevel = 0.05;
+            if (zoomLevel > 5.0) zoomLevel = 5.0;
+
+            // Scale ranges around their center
+            function scaleRange(range, level) {
+                var center = (range[0] + range[1]) / 2;
+                var halfSpan = (range[1] - range[0]) / 2 * level;
+                return [center - halfSpan, center + halfSpan];
+            }
+
+            var newX = scaleRange(orig.x, zoomLevel);
+            var newY = scaleRange(orig.y, zoomLevel);
+            var newZ = scaleRange(orig.z, zoomLevel);
+
+            var update = {};
+            update[sceneKey + '.xaxis.range'] = newX;
+            update[sceneKey + '.yaxis.range'] = newY;
+            update[sceneKey + '.zaxis.range'] = newZ;
+
+            Plotly.relayout(graphDiv, update);
         }
 
         // ---- Event setup ----
