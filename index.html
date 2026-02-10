@@ -1297,13 +1297,25 @@
             modePortrait.addEventListener('click', function() { setMode('portrait'); });
 
             // Zoom buttons (mobile 3D)
-            zoomInBtn.addEventListener('click', function(e) {
+            // Use touchstart instead of click -- Plotly's WebGL canvas
+            // can swallow click events on iOS even with higher z-index
+            zoomInBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
                 e.stopPropagation();
-                zoom3D(0.8);  // closer
+                zoom3D(0.8);
+            }, { passive: false });
+            zoomInBtn.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                zoom3D(0.8);
             });
-            zoomOutBtn.addEventListener('click', function(e) {
+            zoomOutBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
                 e.stopPropagation();
-                zoom3D(1.25);  // farther
+                zoom3D(1.25);
+            }, { passive: false });
+            zoomOutBtn.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                zoom3D(1.25);
             });
 
             // Hash changes (browser back/forward)
