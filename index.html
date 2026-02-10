@@ -533,6 +533,50 @@
         .modebar-btn:hover path { fill: var(--accent) !important; }
 
         /* ================================================================
+           ZOOM BUTTONS (mobile 3D scenes - Plotly lacks pinch-zoom)
+           ================================================================ */
+        .zoom-controls {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 16px;
+            z-index: 350;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .zoom-controls.visible {
+            display: flex;
+        }
+
+        .zoom-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(18, 18, 26, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: var(--text-secondary);
+            font-size: 1.4rem;
+            font-weight: 300;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .zoom-btn:active {
+            background: rgba(18, 18, 26, 0.95);
+            border-color: var(--accent-dim);
+            color: var(--accent);
+            transform: scale(0.93);
+        }
+
+        /* ================================================================
            FLOATING INFO CARD (portrait mode - slides up from bottom)
            ================================================================ */
         .info-card {
@@ -765,6 +809,12 @@
         </div>
     </div>
 
+    <!-- Zoom controls (mobile 3D scenes) -->
+    <div class="zoom-controls" id="zoomControls">
+        <button class="zoom-btn" id="zoomIn" aria-label="Zoom in">+</button>
+        <button class="zoom-btn" id="zoomOut" aria-label="Zoom out">&minus;</button>
+    </div>
+
     <!-- Floating info card (portrait mode) -->
     <div class="info-card" id="infoCard">
         <div class="info-card-handle"></div>
@@ -836,6 +886,9 @@
         var infoCardSubtitle = document.getElementById('infoCardSubtitle');
         var infoCardBody   = document.getElementById('infoCardBody');
         var tapHint        = document.getElementById('tapHint');
+        var zoomControls   = document.getElementById('zoomControls');
+        var zoomInBtn      = document.getElementById('zoomIn');
+        var zoomOutBtn     = document.getElementById('zoomOut');
 
         // Track current plot's aspect ratio for resize handler
         var currentAspect = 0;
@@ -1178,6 +1231,13 @@
                     }
                 }
 
+                // Show zoom buttons for 3D scenes on mobile
+                if (figDict.layout.scene && window.innerWidth < 1024) {
+                    zoomControls.classList.add('visible');
+                } else {
+                    zoomControls.classList.remove('visible');
+                }
+
             } catch (err) {
                 loadingOverlay.classList.remove('visible');
                 plotlyGraph.style.display = 'none';
@@ -1188,6 +1248,26 @@
                     escapeHtml(err.message) + '</div></div>';
                 welcomeState.style.display = 'flex';
             }
+        }
+
+        // ---- 3D Zoom (mobile) ----
+        function zoom3D(factor) {
+            var graphDiv = document.getElementById('plotly-graph');
+            if (!graphDiv || !graphDiv._fullLayout || !graphDiv._fullLayout.scene) return;
+
+            var camera = graphDiv._fullLayout.scene._scene.getCamera();
+            if (!camera || !camera.eye) return;
+
+            // Move eye closer (zoom in) or farther (zoom out)
+            var newEye = {
+                x: camera.eye.x * factor,
+                y: camera.eye.y * factor,
+                z: camera.eye.z * factor
+            };
+
+            Plotly.relayout(graphDiv, {
+                'scene.camera.eye': newEye
+            });
         }
 
         // ---- Event setup ----
@@ -1215,6 +1295,16 @@
             // Mode toggle buttons
             modeLandscape.addEventListener('click', function() { setMode('landscape'); });
             modePortrait.addEventListener('click', function() { setMode('portrait'); });
+
+            // Zoom buttons (mobile 3D)
+            zoomInBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                zoom3D(0.8);  // closer
+            });
+            zoomOutBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                zoom3D(1.25);  // farther
+            });
 
             // Hash changes (browser back/forward)
             window.addEventListener('hashchange', handleHash);
@@ -1428,6 +1518,7 @@
             // Close overlay
             closeOverlay();
             dismissInfoCard();
+            zoomControls.classList.remove('visible');
         }
 
         // ---- Utility ----
