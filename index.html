@@ -1010,11 +1010,6 @@
             // Dismiss any open info card
             dismissInfoCard();
 
-            // Reset zoom state
-            zoomLevel = 1.0;
-            var gd = document.getElementById('plotly-graph');
-            if (gd) delete gd._zoomOrigRanges;
-
             // Update URL hash (without triggering hashchange)
             history.replaceState(null, '', '#' + vizId);
 
@@ -1243,8 +1238,8 @@
                     }
                 }
 
-                // Show zoom buttons for 3D scenes on mobile
-                if (figDict.layout.scene && window.innerWidth < 1024) {
+                // Show zoom buttons for 3D scenes in mobile mode
+                if (figDict.layout.scene && currentMode === 'portrait') {
                     zoomControls.classList.add('visible');
                 } else {
                     zoomControls.classList.remove('visible');
@@ -1263,62 +1258,33 @@
         }
 
         // ---- 3D Zoom (mobile) ----
-        // Scale axis ranges to zoom in/out. Moving the camera clips
-        // traces in cube/data aspectmode, so we shrink/expand the
-        // visible range instead.
-        var zoomLevel = 1.0;
-
-        function zoom3D(factor) {
+        // Dispatch synthetic wheel events to piggyback on Plotly's
+        // internal zoom handler, which works for both perspective
+        // and orthographic projections.
+        function zoom3D(direction) {
             var graphDiv = document.getElementById('plotly-graph');
-            if (!graphDiv || !graphDiv._fullLayout) return;
+            if (!graphDiv) return;
 
-            var fl = graphDiv._fullLayout;
+            // Find the WebGL canvas inside the plotly graph
+            var canvas = graphDiv.querySelector('.gl-canvas-focus') ||
+                         graphDiv.querySelector('canvas');
+            if (!canvas) return;
 
-            // Find the scene
-            var sceneKey = null;
-            for (var key in fl) {
-                if (key.indexOf('scene') === 0 && fl[key] && fl[key].xaxis) {
-                    sceneKey = key;
-                    break;
-                }
-            }
-            if (!sceneKey) return;
+            // Get center of the canvas for the event position
+            var rect = canvas.getBoundingClientRect();
+            var cx = rect.left + rect.width / 2;
+            var cy = rect.top + rect.height / 2;
 
-            var scene = fl[sceneKey];
-
-            // Store original ranges on first zoom
-            if (!graphDiv._zoomOrigRanges) {
-                graphDiv._zoomOrigRanges = {
-                    x: scene.xaxis.range.slice(),
-                    y: scene.yaxis.range.slice(),
-                    z: scene.zaxis.range.slice()
-                };
-            }
-
-            var orig = graphDiv._zoomOrigRanges;
-            zoomLevel = zoomLevel * factor;
-
-            // Clamp zoom level
-            if (zoomLevel < 0.05) zoomLevel = 0.05;
-            if (zoomLevel > 5.0) zoomLevel = 5.0;
-
-            // Scale ranges around their center
-            function scaleRange(range, level) {
-                var center = (range[0] + range[1]) / 2;
-                var halfSpan = (range[1] - range[0]) / 2 * level;
-                return [center - halfSpan, center + halfSpan];
-            }
-
-            var newX = scaleRange(orig.x, zoomLevel);
-            var newY = scaleRange(orig.y, zoomLevel);
-            var newZ = scaleRange(orig.z, zoomLevel);
-
-            var update = {};
-            update[sceneKey + '.xaxis.range'] = newX;
-            update[sceneKey + '.yaxis.range'] = newY;
-            update[sceneKey + '.zaxis.range'] = newZ;
-
-            Plotly.relayout(graphDiv, update);
+            // direction: -1 = zoom in, 1 = zoom out
+            // deltaY negative = scroll up = zoom in (Plotly convention)
+            var evt = new WheelEvent('wheel', {
+                deltaY: direction * 100,
+                clientX: cx,
+                clientY: cy,
+                bubbles: true,
+                cancelable: true
+            });
+            canvas.dispatchEvent(evt);
         }
 
         // ---- Event setup ----
@@ -1353,20 +1319,20 @@
             zoomInBtn.addEventListener('touchstart', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                zoom3D(0.8);
+                zoom3D(-1);
             }, { passive: false });
             zoomInBtn.addEventListener('mousedown', function(e) {
                 e.stopPropagation();
-                zoom3D(0.8);
+                zoom3D(-1);
             });
             zoomOutBtn.addEventListener('touchstart', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                zoom3D(1.25);
+                zoom3D(1);
             }, { passive: false });
             zoomOutBtn.addEventListener('mousedown', function(e) {
                 e.stopPropagation();
-                zoom3D(1.25);
+                zoom3D(1);
             });
 
             // Hash changes (browser back/forward)
