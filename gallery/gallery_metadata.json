@@ -273,8 +273,19 @@
       "mode": "portrait",
       "size_kb": 1326.2,
       "converted": "2026-02-10 01:52"
+    },
+    {
+      "id": "earth_moon_shells_social_view_20260210_1643",
+      "title": "Earth Moon Shells View 20260210 1643",
+      "filename": "earth_moon_shells_social_view_20260210_1643.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Earth-Moon system with crust, atmosphere, magenetosphere and gravitational shells.",
+      "mode": "portrait",
+      "size_kb": 4036.5,
+      "converted": "2026-02-10 16:46"
     }
   ],
-  "last_updated": "2026-02-10 01:52",
-  "total_count": 27
+  "last_updated": "2026-02-10 16:46",
+  "total_count": 28
 }

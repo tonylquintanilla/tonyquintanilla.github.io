@@ -679,6 +679,10 @@ Session 7 resolved the major mobile blockers. Remaining work:
 - Verify tap-to-card reliability with more visualizations
 - Test zoom buttons on crowded 3D scenes (the original motivation)
 - Polish: version stamp, first-visit hints
+- **Earth Moon Shells view**: Earth is off-center (shifted right in frame),
+  clipping left-side magnetosphere shells. Source fix needed -- adjust
+  camera or scene center in shell visualization Python code. Not a gallery
+  viewer issue. (Noted Feb 10, phone testing)
 
 ## Known Issues & Lessons
 
