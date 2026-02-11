@@ -273,8 +273,52 @@
       "mode": "portrait",
       "size_kb": 1346.3,
       "converted": "2026-02-10 23:40"
+    },
+    {
+      "id": "jupiter_system_social_view_20260211_0035",
+      "title": "Jupiter System View 20260211 0035",
+      "filename": "jupiter_system_social_view_20260211_0035.json",
+      "category": "outer_planets",
+      "category_label": "Outer Planets",
+      "description": "Jupiter system.",
+      "mode": "portrait",
+      "size_kb": 22690.9,
+      "converted": "2026-02-11 00:37"
+    },
+    {
+      "id": "pluto_barycenter_social_view_20260211_0031",
+      "title": "Pluto Barycenter View 20260211 0031",
+      "filename": "pluto_barycenter_social_view_20260211_0031.json",
+      "category": "outer_planets",
+      "category_label": "Outer Planets",
+      "description": "Pluto barycenter system.",
+      "mode": "portrait",
+      "size_kb": 25846.9,
+      "converted": "2026-02-11 00:38"
+    },
+    {
+      "id": "paloma_social_view_2005_02_04",
+      "title": "Paloma View 2005 02 04",
+      "filename": "paloma_social_view_2005_02_04.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Inner planets on February 4, 2005.",
+      "mode": "portrait",
+      "size_kb": 622.8,
+      "converted": "2026-02-11 00:38"
+    },
+    {
+      "id": "near_earth_asteroids_social_view_20260211_0024",
+      "title": "Near Earth Asteroids View 20260211 0024",
+      "filename": "near_earth_asteroids_social_view_20260211_0024.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Near-Earth asteroids.",
+      "mode": "portrait",
+      "size_kb": 2001.0,
+      "converted": "2026-02-11 00:39"
     }
   ],
-  "last_updated": "2026-02-10 23:40",
-  "total_count": 27
+  "last_updated": "2026-02-11 00:39",
+  "total_count": 31
 }
