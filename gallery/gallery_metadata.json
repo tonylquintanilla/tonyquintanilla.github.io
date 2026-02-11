@@ -240,8 +240,41 @@
       "mode": "portrait",
       "size_kb": 4036.5,
       "converted": "2026-02-10 16:46"
+    },
+    {
+      "id": "voyager1_2_social_view_20260210_2337",
+      "title": "Voyager1 2 View 20260210 2337",
+      "filename": "voyager1_2_social_view_20260210_2337.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Voyager 1 and 2 mission from launch through the present.",
+      "mode": "portrait",
+      "size_kb": 1469.3,
+      "converted": "2026-02-10 23:40"
+    },
+    {
+      "id": "current_comets_social_view_20260210_2331",
+      "title": "Current Comets View 20260210 2331",
+      "filename": "current_comets_social_view_20260210_2331.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Current comets and the inner solar system.",
+      "mode": "portrait",
+      "size_kb": 33130.3,
+      "converted": "2026-02-10 23:40"
+    },
+    {
+      "id": "planets_social_view_20260210_2327",
+      "title": "Planets View 20260210 2327",
+      "filename": "planets_social_view_20260210_2327.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Major planets.",
+      "mode": "portrait",
+      "size_kb": 1346.3,
+      "converted": "2026-02-10 23:40"
     }
   ],
-  "last_updated": "2026-02-10 16:46",
-  "total_count": 28
+  "last_updated": "2026-02-10 23:40",
+  "total_count": 27
 }
