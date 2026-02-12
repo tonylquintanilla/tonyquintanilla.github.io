@@ -1,0 +1,49 @@
+{
+  "categories": [
+    {
+      "key": "solar_system",
+      "label": "Solar System",
+      "color": "#f4a261"
+    },
+    {
+      "key": "inner_planets",
+      "label": "Inner Planets",
+      "color": "#e76f51"
+    },
+    {
+      "key": "outer_planets",
+      "label": "Outer Planets",
+      "color": "#2a9d8f"
+    },
+    {
+      "key": "missions",
+      "label": "Missions",
+      "color": "#4a7c8f"
+    },
+    {
+      "key": "sgr_a",
+      "label": "Sgr A*",
+      "color": "#9b59b6"
+    },
+    {
+      "key": "stellar",
+      "label": "Stellar Neighborhood",
+      "color": "#3498db"
+    },
+    {
+      "key": "exoplanets",
+      "label": "Exoplanets",
+      "color": "#1abc9c"
+    },
+    {
+      "key": "climate",
+      "label": "Earth System",
+      "color": "#27ae60"
+    },
+    {
+      "key": "other",
+      "label": "Other",
+      "color": "#7f8c8d"
+    }
+  ]
+}

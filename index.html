@@ -102,7 +102,7 @@
            ================================================================ */
         .nav-btn {
             position: fixed;
-            top: 44px;
+            top: 12px;
             left: 12px;
             z-index: 200;
             background: var(--bg-secondary);
@@ -852,8 +852,9 @@
         // ---- Configuration ----
         var DATA_PATH = 'gallery';
         var METADATA_FILE = 'gallery_metadata.json';
+        var CONFIG_FILE = 'gallery_config.json';
 
-        // Category colors (matching CSS variables)
+        // Default category colors (fallback if config not loaded)
         var CATEGORY_COLORS = {
             solar_system:  '#f4a261',
             inner_planets: '#e76f51',
@@ -904,6 +905,22 @@
 
         // ---- Initialize ----
         async function init() {
+            // Load category config (colors) -- falls back to defaults above
+            try {
+                var cfgResp = await fetch(DATA_PATH + '/' + CONFIG_FILE);
+                if (cfgResp.ok) {
+                    var cfg = await cfgResp.json();
+                    var cats = cfg.categories || [];
+                    for (var ci = 0; ci < cats.length; ci++) {
+                        if (cats[ci].key && cats[ci].color) {
+                            CATEGORY_COLORS[cats[ci].key] = cats[ci].color;
+                        }
+                    }
+                }
+            } catch (e) {
+                // Config load failed -- use defaults, no problem
+            }
+
             try {
                 var resp = await fetch(DATA_PATH + '/' + METADATA_FILE);
                 if (!resp.ok) throw new Error('Could not load gallery metadata');

@@ -41,9 +41,10 @@ from datetime import datetime
 DEFAULT_INPUT_FOLDER = "images"
 DEFAULT_OUTPUT_FOLDER = "gallery"
 METADATA_FILE = "gallery_metadata.json"
+CONFIG_FILE = "gallery_config.json"
 
-# Categories for gallery organization
-CATEGORIES = {
+# Fallback categories (used if gallery_config.json not found)
+_FALLBACK_CATEGORIES = {
     "solar_system": "Solar System",
     "inner_planets": "Inner Planets",
     "outer_planets": "Outer Planets",
@@ -54,6 +55,37 @@ CATEGORIES = {
     "climate": "Earth System",
     "other": "Other"
 }
+
+
+def _load_categories(output_folder=None):
+    """Load categories from gallery_config.json, with fallback.
+
+    Checks output_folder first, then current directory.
+    Returns dict of key -> label.
+    """
+    candidates = []
+    if output_folder:
+        candidates.append(os.path.join(output_folder, CONFIG_FILE))
+    candidates.append(os.path.join('..', 'gallery', CONFIG_FILE))
+    candidates.append(os.path.join(DEFAULT_OUTPUT_FOLDER, CONFIG_FILE))
+    candidates.append(CONFIG_FILE)
+
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                cats = data.get('categories', [])
+                if cats:
+                    return {c['key']: c['label'] for c in cats}
+            except (json.JSONDecodeError, IOError, KeyError):
+                pass
+
+    return _FALLBACK_CATEGORIES.copy()
+
+
+# Module-level category dict (loaded lazily)
+CATEGORIES = _load_categories()
 
 
 # ============================================================================
@@ -267,7 +299,7 @@ def _extract_via_variables(html_content):
 # ============================================================================
 
 def save_figure_json(fig, name, output_folder=None, category="other",
-                     description="", mode="landscape", auto_metadata=True):
+                     description="", auto_metadata=True):
     """
     Save a Plotly figure object directly as gallery-ready JSON.
 
@@ -280,7 +312,6 @@ def save_figure_json(fig, name, output_folder=None, category="other",
         output_folder: Output folder path (default: ./gallery)
         category: Gallery category key (see CATEGORIES dict)
         description: Description for the gallery metadata
-        mode: Gallery mode - "landscape", "portrait", or "both"
         auto_metadata: If True, update gallery_metadata.json automatically
 
     Returns:
@@ -308,7 +339,7 @@ def save_figure_json(fig, name, output_folder=None, category="other",
 
         if auto_metadata:
             _update_metadata(output_folder, safe_name, name, category,
-                           description, size_kb, mode)
+                           description, size_kb)
 
         return json_path
 
@@ -322,7 +353,7 @@ def save_figure_json(fig, name, output_folder=None, category="other",
 # ============================================================================
 
 def convert_html_to_gallery_json(html_path, output_folder=None, category="other",
-                                  description="", mode="landscape"):
+                                  description=""):
     """
     Convert a single HTML visualization to gallery-ready JSON.
 
@@ -331,7 +362,6 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
         output_folder: Output folder (default: ./gallery)
         category: Gallery category
         description: Description for metadata
-        mode: Gallery mode - "landscape", "portrait", or "both"
 
     Returns:
         str: Path to saved JSON, or None on failure
@@ -372,7 +402,7 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
     print(f"  OK: {trace_count} traces, {size_kb:.0f} KB -> {safe_name}.json")
 
     _update_metadata(output_folder, safe_name, filename, category,
-                    description, size_kb, mode)
+                    description, size_kb)
 
     return json_path
 
@@ -382,7 +412,7 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
 # ============================================================================
 
 def _update_metadata(output_folder, safe_name, display_name, category,
-                    description, size_kb, mode="landscape"):
+                    description, size_kb):
     """Update the gallery metadata JSON file."""
     metadata_path = os.path.join(output_folder, METADATA_FILE)
 
@@ -403,7 +433,6 @@ def _update_metadata(output_folder, safe_name, display_name, category,
         "category": category,
         "category_label": CATEGORIES.get(category, "Other"),
         "description": description,
-        "mode": mode,
         "size_kb": round(size_kb, 1),
         "converted": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
@@ -531,20 +560,6 @@ def run_interactive():
 
         print(f"  Category: {CATEGORIES.get(category, category)}")
 
-        # Ask for mode
-        try:
-            mode_input = input(f"  Mode [L=landscape, P=portrait, B=both, Enter=landscape]: ").strip().lower()
-            if mode_input in ('p', 'portrait'):
-                mode = 'portrait'
-            elif mode_input in ('b', 'both'):
-                mode = 'both'
-            else:
-                mode = 'landscape'
-        except (EOFError, KeyboardInterrupt):
-            mode = 'landscape'
-
-        print(f"  Mode: {mode}")
-
         # Ask for description
         try:
             description = input(f"  Description [Enter=skip]: ").strip()
@@ -553,7 +568,7 @@ def run_interactive():
 
         # Convert
         result = convert_html_to_gallery_json(
-            html_path, output_folder, category, description, mode
+            html_path, output_folder, category, description
         )
 
         if result:
