@@ -541,10 +541,6 @@
         .modebar-btn path { fill: var(--text-dim) !important; }
         .modebar-btn:hover path { fill: var(--accent) !important; }
 
-        @media (max-width: 1024px) {
-            .modebar { margin-top: 44px !important; }
-        }
-
         /* ================================================================
            ZOOM BUTTONS (mobile 3D scenes - Plotly lacks pinch-zoom)
            ================================================================ */
@@ -715,6 +711,16 @@
         /* ================================================================
            RESPONSIVE
            ================================================================ */
+        @media (max-width: 1024px) {
+            .nav-btn {
+                top: 42px;
+            }
+
+            .share-btn {
+                top: 82px;
+            }
+        }
+
         @media (max-width: 600px) {
             .welcome-title {
                 font-size: 1.6rem;
