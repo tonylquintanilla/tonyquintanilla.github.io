@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-12, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-13, 2026 | Claude Opus 4.6
 
 ---
 
@@ -58,7 +58,7 @@ Gallery management:
    Inspired by social_media_export.py's portrait-first approach.
 
 4. **Shareable URLs per visualization** - Each visualization gets a direct
-   link (e.g., tonyquintanilla.github.io/#earth-birthday-2025).
+   link (e.g., palomasorrery.com/#earth-birthday-2025).
    Links unfurl with preview thumbnail in iMessage/WhatsApp. Every
    visualization becomes a shareable moment.
 
@@ -146,7 +146,7 @@ Features implemented:
 - Scaled annotations and title fonts for small screens
 - Post-render resize to ensure container fill
 
-**Deployed live** at https://tonyquintanilla.github.io/
+**Deployed live** at https://palomasorrery.com/
 
 ### Session 3 (Feb 7): Gallery UX Refinements
 
@@ -745,6 +745,27 @@ gallery_config.json (shared category definitions)
 - tools/json_converter.py (reads categories from config with fallback)
 - index.html (loads config at init for category colors)
 
+### Session 9 (Feb 13): Custom Domain + Branding
+
+**Custom domain**: Registered palomasorrery.com and configured for GitHub
+Pages. DNS A records point to GitHub's IPs (185.199.108-111.153), CNAME
+record points www to tonylquintanilla.github.io. GitHub Pages custom
+domain set, HTTPS enforced via Let's Encrypt certificate.
+
+Domain choice rationale: .com over .org (matches personal/educational
+project, not nonprofit); no hyphen (easier to type, say aloud, and
+remember); matches Instagram handle @palomas_orrery closely.
+
+**index.html changes**:
+1. Favicon added (`<link rel="icon" type="image/x-icon" href="favicon.ico">`)
+2. Open Graph URL updated to `https://palomasorrery.com/`
+
+**GitHub 2FA**: Enabled Google Authenticator for GitHub account security.
+
+**Files changed**:
+- index.html (favicon, og:url)
+- favicon.ico (added to repo root)
+
 ### Implementation Sequence
 
 | Step | What | Notes |
@@ -764,7 +785,7 @@ gallery_config.json (shared category definitions)
 - Legend handling for high-trace-count figures
 - Thumbnail generation for gallery cards
 - Link preview images for social sharing (og:image)
-- Custom domain (palomasorrery.com) if desired
+- Custom domain (palomasorrery.com) -- DONE (Session 9)
 - Website content pages (About, Downloads, Contact)
 - Version/update date in gallery footer
 - Custom pinch-to-zoom handler for 3D (option 1 from Session 7 -- would
@@ -775,14 +796,8 @@ gallery_config.json (shared category definitions)
 Gallery infrastructure is complete (viewer, converter, editor, config).
 Remaining work:
 - Continue populating gallery with landscape and portrait content
-- Use gallery_editor.py to curate titles, descriptions, ordering
-- Test on additional devices (Android Chrome, iPad Safari)
-- Test zoom buttons on crowded 3D scenes
+- Test on additional devices (Android Chrome, iPad Safari) -- ongoing
 - Polish: version stamp, first-visit hints
-- **Earth Moon Shells view**: Earth is off-center (shifted right in frame),
-  clipping left-side magnetosphere shells. Source fix needed -- adjust
-  camera or scene center in shell visualization Python code. Not a gallery
-  viewer issue. (Noted Feb 10, phone testing)
 
 ## Known Issues & Lessons
 
@@ -1048,8 +1063,8 @@ re-export from the current app.
 | Mobile approach | Responsive breakpoints (<1024px) | One page adapts; Plotly handles resize |
 | Plotly.js source | CDN | Keeps HTML small, always current |
 | Gallery content | Rebuild systematically | Old exports caused false-positive bugs |
-| Custom domain | Future (Phase 4) | Get gallery working first |
-| URL rename | Keep as-is (tonyquintanilla.github.io) | Save branding for custom domain later |
+| Custom domain | palomasorrery.com (Session 9) | .com, no hyphen, matches Instagram handle |
+| URL rename | palomasorrery.com via GitHub Pages custom domain | GitHub handles redirect from old URL |
 | Save format | Standard HTML (~10 KB) | Smaller source; converter strips JS anyway |
 | Squished gallery view | Fullscreen toggle, not hover-hide | Predictable UX, no accidental triggers |
 | Layout overrides | Minimal -- preserve export | Every override risks visual regression |
@@ -1112,5 +1127,7 @@ WheelEvent solution, February 10, 2026
 
 *"One config to rule them all."* -- On gallery_config.json unifying
 categories across converter, editor, and viewer, February 12, 2026
+
+*"palomasorrery.com is live!"* -- Tony, February 13, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*

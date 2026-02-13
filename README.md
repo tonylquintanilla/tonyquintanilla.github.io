@@ -1,4 +1,4 @@
-# Last updated: February 4, 2026
+# Last updated: February 13, 2026
 
 # Paloma's Orrery
 
@@ -19,11 +19,12 @@ Created by Tony Quintanilla with assistance from Claude, ChatGPT, Gemini, and De
 7. [Earth System Visualization](#earth-system-visualization)
 8. [Galactic Center Visualization](#galactic-center-visualization)
 9. [Social Media Export](#social-media-export)
-10. [Module Reference](#module-reference)
-11. [Data Files](#data-files)
-12. [Contributing](#contributing)
-13. [License](#license)
-14. [Contact](#contact)
+10. [Web Gallery](#web-gallery)
+11. [Module Reference](#module-reference)
+12. [Data Files](#data-files)
+13. [Contributing](#contributing)
+14. [License](#license)
+15. [Contact](#contact)
 
 ## Overview
 
@@ -47,12 +48,13 @@ Paloma's Orrery combines scientific accuracy with visual beauty, making astronom
 - Forensic Heat Wave Analysis: 3D KML generator for wet-bulb temperature extremes
 - Unified save system with CDN/offline HTML options
 - Social media export: 9:16 portrait HTML for Instagram Reels and YouTube Shorts
+- Web gallery at [palomasorrery.com](https://palomasorrery.com/) -- shareable interactive visualizations, no install required
 - Resizable GUI columns with persistent window layout
 
 **Resources:**
 
 - [GitHub Repository](https://github.com/tonylquintanilla/palomas_orrery)
-- [Project Website](https://tonylquintanilla.github.io/palomas_orrery/)
+- [Web Gallery](https://palomasorrery.com/) -- interactive visualizations in your browser
 - [Instagram: @palomas_orrery](https://www.instagram.com/palomas_orrery/)
 - [Video Tutorials](https://www.youtube.com/@tony_quintanilla/featured)
 - Contact: <tonyquintanilla@gmail.com>
@@ -584,6 +586,7 @@ The save dialog remembers your last save location within each session.
 3. **Processing:** Coordinate transforms, orbital calculations
 4. **Visualization:** Interactive HTML with Plotly
 5. **Export:** CDN or offline HTML, PNG images
+6. **Gallery:** JSON extraction, GitHub Pages deployment at palomasorrery.com
 
 ## Earth System Visualization
 
@@ -672,6 +675,42 @@ Export any orrery visualization as a 9:16 portrait HTML file for Instagram Reels
 - CDN (~10 KB) or offline (~5 MB) Plotly.js options
 
 See [social_media_readme.md](social_media_readme.md) for full documentation.
+
+## Web Gallery
+
+Browse interactive visualizations online at [palomasorrery.com](https://palomasorrery.com/) -- no download, no install, no Python required. Tap a link and explore.
+
+**How it works:** The desktop app exports visualizations as HTML. A converter extracts the Plotly figure data into lightweight JSON files. The gallery viewer (a single-page HTML/CSS/JS app hosted on GitHub Pages) loads them with Plotly.js from CDN. The result is a shareable web gallery where every visualization has its own direct link.
+
+**Features:**
+
+- Dark space theme with gold accent matching the desktop app aesthetic
+- Two modes: Desktop (landscape) and Mobile (portrait) with auto-detection
+- Category-grouped navigation (Solar System, Inner Planets, Stellar, Climate, etc.)
+- Shareable deep links per visualization (e.g., palomasorrery.com/#earth-birthday-2025)
+- Floating info cards on mobile (tap objects for details)
+- 3D zoom buttons on mobile (synthetic wheel events for Plotly.js 3D scenes)
+- Light/dark theme auto-detection preserves original plot colors
+- Custom domain with HTTPS (palomasorrery.com)
+
+**Gallery pipeline:**
+
+```
+Desktop App -> save_plot() -> HTML export
+    -> json_converter.py -> JSON + gallery_metadata.json
+    -> gallery_editor.py -> curate titles, categories, ordering
+    -> GitHub Pages (index.html) -> palomasorrery.com
+```
+
+**Gallery management tools** (in website repo `tools/` folder):
+
+| Tool | Purpose |
+|------|---------|
+| `json_converter.py` | Extracts Plotly figure data from HTML exports to JSON |
+| `gallery_editor.py` | Tkinter GUI for editing metadata, categories, and ordering |
+| `gallery_config.json` | Single source of truth for category definitions (shared by all tools) |
+
+See [web_gallery_handoff.md](web_gallery_handoff.md) for full technical documentation.
 
 ## Module Reference
 
@@ -908,11 +947,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 **Author:** Tony Quintanilla
 **Email:** <tonyquintanilla@gmail.com>
 **GitHub:** [github.com/tonylquintanilla/palomas_orrery](https://github.com/tonylquintanilla/palomas_orrery)
-**Website:** [tonylquintanilla.github.io/palomas_orrery](https://tonylquintanilla.github.io/palomas_orrery/)
+**Website:** [palomasorrery.com](https://palomasorrery.com/)
 **Instagram:** [@palomas_orrery](https://www.instagram.com/palomas_orrery/)
 **YouTube:** [Paloma's Orrery](https://www.youtube.com/@tony_quintanilla/featured)
 
-**Last Updated:** February 2026 (v2.4.0 - Social Media Export, Galactic Center, Unified Save System & Resizable GUI)
+**Last Updated:** February 2026 (v2.4.0 - Web Gallery, Social Media Export, Galactic Center, Unified Save System & Resizable GUI)
 
 ---
 
