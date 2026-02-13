@@ -72,7 +72,7 @@
     },
     {
       "id": "hr_diagram_distance_20_0ly",
-      "title": "HR Diagram Distance 20.0Ly (use landcape)",
+      "title": "HR Diagram Distance 20.0Ly",
       "filename": "hr_diagram_distance_20_0ly.json",
       "category": "stellar",
       "category_label": "Stellar Neighborhood",
@@ -82,7 +82,7 @@
     },
     {
       "id": "hr_diagram_magnitude_4_0",
-      "title": "HR Diagram Magnitude 4.0 (use landscape)",
+      "title": "HR Diagram Magnitude 4.0",
       "filename": "hr_diagram_magnitude_4_0.json",
       "category": "stellar",
       "category_label": "Stellar Neighborhood",
@@ -328,30 +328,8 @@
       "mode": "portrait",
       "size_kb": 1469.3,
       "converted": "2026-02-10 23:40"
-    },
-    {
-      "id": "hr_diagram_distance_20_0ly_copy",
-      "title": "HR Diagram Distance 20.0Ly (use landcape)",
-      "filename": "hr_diagram_distance_20_0ly.json",
-      "category": "stellar",
-      "category_label": "Stellar Neighborhood",
-      "description": "Hertzprung-Russell diagram of stars up to 20 LY distant.",
-      "size_kb": 74.2,
-      "converted": "2026-02-08 19:14",
-      "mode": "portrait"
-    },
-    {
-      "id": "hr_diagram_magnitude_4_0_copy",
-      "title": "HR Diagram Magnitude 4.0 (use landscape)",
-      "filename": "hr_diagram_magnitude_4_0.json",
-      "category": "stellar",
-      "category_label": "Stellar Neighborhood",
-      "description": "Hertzprung-Russell diagram of stars up to visual magnitude 4.0.",
-      "size_kb": 347.3,
-      "converted": "2026-02-08 19:49",
-      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-13 14:11",
-  "total_count": 34
+  "last_updated": "2026-02-12 23:03",
+  "total_count": 32
 }
