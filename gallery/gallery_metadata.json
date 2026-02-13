@@ -350,8 +350,28 @@
       "size_kb": 347.3,
       "converted": "2026-02-08 19:49",
       "mode": "portrait"
+    },
+    {
+      "id": "3d_stars_magnitude_4_0_social",
+      "title": "3D Stars Magnitude 4.0",
+      "filename": "3d_stars_magnitude_4_0_social.json",
+      "category": "stellar",
+      "category_label": "Stellar Neighborhood",
+      "description": "3D plot of stars up to visual magnitude 4.0",
+      "size_kb": 366.2,
+      "converted": "2026-02-13 14:38"
+    },
+    {
+      "id": "3d_stars_distance_20ly_social",
+      "title": "3D Stars Distance 20Ly",
+      "filename": "3d_stars_distance_20ly_social.json",
+      "category": "stellar",
+      "category_label": "Stellar Neighborhood",
+      "description": "3d plot of stars to 20 LY distant.",
+      "size_kb": 71.1,
+      "converted": "2026-02-13 14:38"
     }
   ],
-  "last_updated": "2026-02-13 14:11",
-  "total_count": 34
+  "last_updated": "2026-02-13 14:38",
+  "total_count": 36
 }
