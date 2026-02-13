@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-10, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-12, 2026 | Claude Opus 4.6
 
 ---
 
@@ -22,7 +22,7 @@ alive. No download, no install, no "is this safe?"
 Desktop App (Python/Plotly)
     |
     v
-json_converter.py (HTML -> JSON extraction)
+json_converter.py (HTML -> JSON extraction, reads gallery_config.json)
     |
     v
 JSON files + gallery_metadata.json
@@ -31,10 +31,14 @@ JSON files + gallery_metadata.json
 GitHub Repository (tonyquintanilla.github.io)
     |
     v
-index.html Gallery Viewer (Plotly.js, no server needed)
+index.html Gallery Viewer (Plotly.js, reads gallery_config.json for colors)
     |
     v
 Anyone with a browser, any device
+
+Gallery management:
+    gallery_config.json  <-- single source of truth for categories
+    gallery_editor.py    <-- GUI for editing metadata, categories, ordering
 ```
 
 ### Key Design Decisions
@@ -646,6 +650,101 @@ multiple mobile-specific issues through iterative testing and debugging.
   enhanced click handler, mode label rename, zoom buttons with
   synthetic wheel events)
 
+### Session 8 (Feb 12): Gallery Management Tooling
+
+Late-night session focused on gallery curation infrastructure. Editing
+gallery_metadata.json by hand was the only way to change titles, reorder
+visualizations, or reorganize categories. Built a GUI editor and unified
+category definitions across all gallery components.
+
+**Problem**: Three independent category definitions existed:
+1. `json_converter.py` -- hardcoded `CATEGORIES` dict (used during conversion)
+2. `gallery_editor.py` -- hardcoded `KNOWN_CATEGORIES` (used in editor UI)
+3. `index.html` -- hardcoded `CATEGORY_COLORS` JS object + CSS variables
+
+Adding or renaming a category meant editing all three files. Colors could
+drift between them. New categories had no path to the gallery viewer's
+color scheme.
+
+**Solution**: `gallery/gallery_config.json` -- single source of truth.
+
+```json
+{
+  "categories": [
+    { "key": "solar_system", "label": "Solar System", "color": "#f4a261" },
+    { "key": "inner_planets", "label": "Inner Planets", "color": "#e76f51" },
+    ...
+  ]
+}
+```
+
+All three consumers read from it:
+- **json_converter.py**: loads config for category labels during conversion,
+  falls back to hardcoded dict if config missing
+- **gallery_editor.py**: reads config for category list, writes config
+  when categories are added/renamed/recolored
+- **index.html**: fetches config at init, merges into `CATEGORY_COLORS` JS
+  object. Falls back to hardcoded defaults if fetch fails.
+
+**gallery_editor.py** -- new tkinter GUI (run from `tools/`):
+
+Visualization editing:
+- Edit Title (double-click or button)
+- Edit Description (multi-line dialog)
+- Change Category (from config-driven list)
+- Move Up / Move Down (within mode+category group)
+- Copy To... (duplicate viz to another category/mode with `_copy` ID)
+- Delete (removes from metadata; JSON data file not touched)
+
+Category management (Categories menu):
+- New Category -- prompts for label + color, generates snake_case key
+- Rename Category -- changes key + label, updates all vizs with old key
+- Edit Category Color -- updates config
+
+Tree display:
+- Mode -> Category -> Visualization hierarchy
+- Category order derived from JSON sequence (matches gallery exactly)
+- Empty categories from config shown at bottom (e.g., Missions in
+  landscape when no mission landscape exports exist yet)
+- Move Up/Down works on both individual vizs AND entire categories
+  (swaps category blocks within a mode)
+- Unsaved changes tracked (`*` in title bar), Ctrl+S saves both files
+- Auto-backup with timestamp before every metadata save
+
+**Category reorder algorithm**: Non-contiguous category blocks (vizs from
+the same category scattered across the JSON array) are handled by
+extracting all vizs for the mode, regrouping by category, swapping the
+two adjacent groups, and reinserting. This also normalizes scattered
+entries as a side effect.
+
+**Data pipeline updated**:
+
+```
+Desktop App (Python/Plotly)
+    |
+    v
+json_converter.py (HTML -> JSON, reads gallery_config.json)
+    |
+    v
+JSON files + gallery_metadata.json
+    |                |
+    v                v
+gallery_editor.py   index.html
+(edits metadata     (reads config for
+ + config)           category colors)
+    |
+    v
+gallery_config.json (shared category definitions)
+```
+
+**Files created**:
+- gallery/gallery_config.json (category definitions: key, label, color)
+- tools/gallery_editor.py (metadata + config editor GUI)
+
+**Files changed**:
+- tools/json_converter.py (reads categories from config with fallback)
+- index.html (loads config at init for category colors)
+
 ### Implementation Sequence
 
 | Step | What | Notes |
@@ -655,8 +754,9 @@ multiple mobile-specific issues through iterative testing and debugging.
 | 3 | Floating info card component | DONE (Session 6) - mobile mode, peek/pin interaction |
 | -- | Mode filtering + converter tagging | DONE (Session 6) - pulled forward from Step 5 |
 | 4 | ~~json_converter.py hover parsing~~ | DROPPED - desktop uses native hover; mobile uses social customdata |
-| 5 | Content population + validation | IN PROGRESS - first iPhone test complete (Session 7) |
-| 6 | Polish | Version stamp, hints, nudges |
+| 5 | Content population + validation | IN PROGRESS - 31 vizs (23 landscape, 8 portrait) |
+| 6 | Gallery management tooling | DONE (Session 8) - editor GUI + shared config |
+| 7 | Polish | Version stamp, hints, nudges |
 
 ### Deferred Items (future phases)
 
@@ -670,14 +770,14 @@ multiple mobile-specific issues through iterative testing and debugging.
 - Custom pinch-to-zoom handler for 3D (option 1 from Session 7 -- would
   replace zoom buttons with native gesture, but complex to implement)
 
-### Immediate Next: Continue Content Population + Phone Testing
+### Immediate Next: Content + Polish
 
-Session 7 resolved the major mobile blockers. Remaining work:
-- Export more social views for mobile mode content
-- Export key desktop views to fill out the gallery
+Gallery infrastructure is complete (viewer, converter, editor, config).
+Remaining work:
+- Continue populating gallery with landscape and portrait content
+- Use gallery_editor.py to curate titles, descriptions, ordering
 - Test on additional devices (Android Chrome, iPad Safari)
-- Verify tap-to-card reliability with more visualizations
-- Test zoom buttons on crowded 3D scenes (the original motivation)
+- Test zoom buttons on crowded 3D scenes
 - Polish: version stamp, first-visit hints
 - **Earth Moon Shells view**: Earth is off-center (shifted right in frame),
   clipping left-side magnetosphere shells. Source fix needed -- adjust
@@ -775,6 +875,27 @@ Session 7 resolved the major mobile blockers. Remaining work:
     visible on desktop. Work around by testing on phone, downloading on
     desktop.
 
+15. **Category definitions must be centralized** (Session 8) -- Three
+    independent category lists (converter, editor, viewer) drifted. The
+    converter had "Galactic Center" for sgr_a while the config had "Sgr A*".
+    `gallery_config.json` is the single source of truth. All consumers
+    read from it with hardcoded fallbacks for robustness.
+
+16. **Non-contiguous category blocks in JSON** (Session 8) -- When vizs
+    from the same category are scattered in gallery_metadata.json (e.g.,
+    solar_system at indices 25, 26, and 29 with other categories between),
+    simple block-swap reordering fails. The editor extracts all vizs for
+    the mode, regroups by category, and reinserts -- also normalizing
+    scattered entries as a side effect.
+
+17. **Renaming categories changes keys too** (Session 8) -- Initially
+    considered label-only rename, but Tony caught that misaligned keys
+    and labels would be confusing. Rename now updates both `category`
+    (key) and `category_label` on all affected vizs, plus the config
+    entry. CSS color mapping in the gallery uses keys, so renamed
+    categories fall back to the default color until the config color
+    propagates on next page load.
+
 ## File Renaming Summary
 
 | Old Name | New Name | Reason |
@@ -801,15 +922,17 @@ C:\Users\tonyq\OneDrive\Desktop\python_work\
 
     tonyquintanilla.github.io\          (NEW website repo)
         index.html                      Gallery viewer (IS the homepage)
-        gallery/                        JSON files + metadata
-            gallery_metadata.json
+        gallery/                        JSON files + metadata + config
+            gallery_metadata.json       Visualization index
+            gallery_config.json         Category definitions (shared)
             earth_birthday_2025.json
             inner_planets_2025.json
             voyager_trajectories.json
             ...
         tools/                          Publishing infrastructure
-            json_converter.py
-            json_gallery.py
+            json_converter.py           HTML -> JSON converter
+            json_gallery.py             Local Dash preview
+            gallery_editor.py           Metadata + config editor GUI
 ```
 
 Both repos appear side by side in GitHub Desktop's repo dropdown.
@@ -962,6 +1085,15 @@ re-export from the current app.
 | Mobile title suppression | Delete layout.title on <1024px | Nav button already shows name; avoids overlap |
 | Plotly config scoping | scrollZoom/doubleClick mobile only | Desktop behavior completely unchanged |
 | Click handler scoping | Mobile mode only | Desktop uses standard Plotly hover tooltips |
+| Category definitions | gallery_config.json | One source of truth for converter, editor, and viewer |
+| Config fallback | Hardcoded dict in each consumer | gallery_config.json not found = still works |
+| Category colors at runtime | JS loads from config, falls back to defaults | New categories get colors without editing HTML |
+| Gallery editor | Tkinter GUI in tools/ | Consistent with orrery's GUI style; no new deps |
+| Category order in editor | Derived from JSON sequence | Matches gallery rendering exactly; no hardcoded order |
+| Category reorder mechanism | Extract mode vizs, regroup, reinsert | Handles non-contiguous category blocks correctly |
+| Copy visualization | Deep copy with _copy ID suffix | Same viz can appear in multiple categories/modes |
+| Rename category | Changes both key and label | Keys aligned with labels; no confusion |
+| Empty categories in editor | Shown from config, even with no vizs | Can see all available categories per mode |
 
 ---
 
@@ -977,5 +1109,8 @@ February 8, 2026
 
 *"If scroll wheel works, just fake a scroll wheel."* -- The synthetic
 WheelEvent solution, February 10, 2026
+
+*"One config to rule them all."* -- On gallery_config.json unifying
+categories across converter, editor, and viewer, February 12, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*
