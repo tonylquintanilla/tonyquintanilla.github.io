@@ -1236,13 +1236,18 @@
                     }
 
                     // Adjust margins: top reduced (title removed);
-                    // bottom keeps room for x-axis title;
                     // left keeps room for y-axis title
                     var m = figDict.layout.margin || {};
-                    if (m.b > 120) m.b = 120;
+                    if (m.b > 80) m.b = 80;
                     if (m.t > 10) m.t = 10;
-                    if (m.l > 70) m.l = 70;
+                    if (m.l > 80) m.l = 80;
                     figDict.layout.margin = m;
+
+                    // Strip x-axis title on mobile (spectral type labels
+                    // + temperature numbers are self-explanatory)
+                    if (figDict.layout.xaxis && figDict.layout.xaxis.title) {
+                        delete figDict.layout.xaxis.title;
+                    }
 
                     // Strip hover toggle buttons, default to names-only
                     if (figDict.layout.updatemenus) {
