@@ -452,6 +452,10 @@
             position: relative;
         }
 
+        .viz-toolbar {
+            display: none; /* Hidden on desktop - nav button floats independently */
+        }
+
         #plotly-graph {
             width: 100%;
             height: 100%;
@@ -717,12 +721,28 @@
            RESPONSIVE
            ================================================================ */
         @media (max-width: 1024px) {
+            .viz-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 4px 8px;
+                background: var(--bg-primary);
+                flex-shrink: 0;
+                z-index: 200;
+            }
+
             .nav-btn {
-                top: 42px;
+                position: relative;
+                top: auto;
+                left: auto;
+                z-index: auto;
             }
 
             .share-btn {
-                top: 82px;
+                position: relative;
+                top: auto;
+                right: auto;
+                z-index: auto;
             }
         }
 
@@ -811,6 +831,7 @@
 
     <!-- Main app container (always full-screen) -->
     <div class="app-container">
+        <div class="viz-toolbar" id="vizToolbar"></div>
         <div class="viz-container" id="vizContainer">
             <!-- Loading overlay -->
             <div class="loading-overlay" id="loadingOverlay">
@@ -968,6 +989,16 @@
 
             // Setup event listeners
             setupEvents();
+
+            // On mobile: move nav and share buttons into the toolbar
+            // so they sit above the chart instead of floating over it
+            if (window.innerWidth < 1024) {
+                var toolbar = document.getElementById('vizToolbar');
+                if (toolbar) {
+                    toolbar.appendChild(navBtn);
+                    toolbar.appendChild(shareBtn);
+                }
+            }
 
             // Auto-detect default mode from screen width
             // Phones (<768px): force portrait, no toggle visible
@@ -1197,13 +1228,13 @@
                         );
                     }
 
-                    // Reduce bottom margin (footer removed) but keep space
-                    // for x-axis labels; reduce top margin (title removed);
-                    // tighten left margin
+                    // Adjust margins: top reduced (title removed, modebar
+                    // moved to toolbar); bottom keeps room for x-axis labels;
+                    // left keeps room for y-axis title
                     var m = figDict.layout.margin || {};
-                    if (m.b > 80) m.b = 80;
-                    if (m.t > 40) m.t = 40;
-                    if (m.l > 60) m.l = 60;
+                    if (m.b > 100) m.b = 100;
+                    if (m.t > 10) m.t = 10;
+                    if (m.l > 70) m.l = 70;
                     figDict.layout.margin = m;
 
                     // Strip hover toggle buttons, default to names-only
@@ -1232,6 +1263,58 @@
                     figDict.layout.annotations.forEach(function(ann) {
                         if (ann.font && ann.font.size && ann.font.size > 12) {
                             ann.font.size = Math.max(10, ann.font.size * 0.7);
+                        }
+                    });
+                }
+
+                // ---- Mobile overrides (<1024px) ----
+                if (window.innerWidth < 1024) {
+                    // Hide colorbars (reclaim screen width)
+                    (figDict.data || []).forEach(function(trace) {
+                        if (trace.marker && trace.marker.colorbar) {
+                            trace.marker.showscale = false;
+                        }
+                        if (trace.showscale !== undefined) {
+                            trace.showscale = false;
+                        }
+                    });
+                    var layoutKeys = Object.keys(figDict.layout || {});
+                    layoutKeys.forEach(function(k) {
+                        if (k.indexOf('coloraxis') === 0 && figDict.layout[k]) {
+                            figDict.layout[k].showscale = false;
+                        }
+                    });
+
+                    // Strip footer annotations (below plot area)
+                    if (figDict.layout.annotations) {
+                        figDict.layout.annotations = figDict.layout.annotations.filter(
+                            function(ann) {
+                                return !(ann.yref === 'paper' && ann.y < 0);
+                            }
+                        );
+                    }
+
+                    // Tighten margins (title removed, footer removed)
+                    var m = figDict.layout.margin || {};
+                    if (m.t > 10) m.t = 10;
+                    if (m.b > 100) m.b = 100;
+                    if (m.l > 80) m.l = 80;
+                    figDict.layout.margin = m;
+
+                    // Strip hover toggle buttons, default to names-only
+                    if (figDict.layout.updatemenus) {
+                        figDict.layout.updatemenus = figDict.layout.updatemenus.filter(
+                            function(menu) {
+                                var buttons = menu.buttons || [];
+                                return buttons.some(function(b) {
+                                    return b.method === 'animate';
+                                });
+                            }
+                        );
+                    }
+                    (figDict.data || []).forEach(function(trace) {
+                        if (trace.customdata && trace.hovertemplate) {
+                            trace.hovertemplate = '%{customdata}<extra></extra>';
                         }
                     });
                 }
@@ -1279,6 +1362,19 @@
                 // Force resize after render
                 setTimeout(function() {
                     Plotly.Plots.resize('plotly-graph');
+
+                    // On mobile: move Plotly modebar into toolbar row
+                    // so the title (nav button) and icons share one line
+                    if (window.innerWidth < 1024) {
+                        var mbar = document.querySelector('#plotly-graph .modebar-container');
+                        var toolbar = document.getElementById('vizToolbar');
+                        if (mbar && toolbar) {
+                            mbar.style.position = 'relative';
+                            mbar.style.top = 'auto';
+                            mbar.style.right = 'auto';
+                            toolbar.appendChild(mbar);
+                        }
+                    }
                 }, 100);
 
                 // Portrait mode: wire click -> info card
@@ -1338,14 +1434,9 @@
                     }
                 }
 
-                // Show zoom buttons on mobile for all plot types
-                if (currentMode === 'portrait') {
-                    zoomControls.classList.add('visible');
-                    // Track scene type for zoom button dispatch
-                    zoomControls.setAttribute('data-scene', figDict.layout.scene ? '3d' : '2d');
-                } else {
-                    zoomControls.classList.remove('visible');
-                }
+                // Show zoom buttons for all plot types on all devices
+                zoomControls.classList.add('visible');
+                zoomControls.setAttribute('data-scene', figDict.layout.scene ? '3d' : '2d');
 
             } catch (err) {
                 loadingOverlay.classList.remove('visible');
