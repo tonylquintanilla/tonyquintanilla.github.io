@@ -102,7 +102,7 @@
            ================================================================ */
         .nav-btn {
             position: fixed;
-            top: 80px;
+            top: 12px;
             left: 12px;
             z-index: 200;
             background: var(--bg-secondary);
@@ -160,6 +160,13 @@
             line-height: 1.2;
         }
 
+        /* On desktop, show only hamburger icon to avoid overlapping
+           Plotly title and updatemenus. Full label shows on mobile. */
+        @media (min-width: 1025px) {
+            .nav-btn-label { display: none; }
+            .nav-btn { padding: 10px; border-radius: 8px; }
+        }
+
         .nav-btn-label .nav-label-title {
             color: var(--text-primary);
             font-weight: 500;
@@ -178,7 +185,7 @@
            ================================================================ */
         .share-btn {
             position: fixed;
-            top: 80px;
+            top: 52px;
             right: 12px;
             z-index: 200;
             background: var(--bg-secondary);
@@ -1160,21 +1167,6 @@
                         (m.t === 0 || m.t === undefined) &&
                         (m.l === 0) && (m.r === 0) && (m.b === 0)) {
                         figDict.layout.margin = Object.assign(m, { t: 40 });
-                    }
-                    // Shift title right to avoid overlap with nav button
-                    if (figDict.layout.title) {
-                        var t = figDict.layout.title;
-                        if (typeof t === 'string') {
-                            figDict.layout.title = { text: t };
-                            t = figDict.layout.title;
-                        }
-                        t.x = 0.5;
-                        t.xanchor = 'center';
-                        // Pad left so centered title clears the nav button
-                        figDict.layout.margin = Object.assign(
-                            figDict.layout.margin || {},
-                            { l: Math.max((figDict.layout.margin || {}).l || 0, 80) }
-                        );
                     }
                 }
 
