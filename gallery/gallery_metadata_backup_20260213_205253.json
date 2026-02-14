@@ -353,7 +353,7 @@
     },
     {
       "id": "3d_stars_magnitude_4_0_social",
-      "title": "3D Stars to Magnitude 4.0",
+      "title": "3D Stars Magnitude 4.0",
       "filename": "3d_stars_magnitude_4_0_social.json",
       "category": "stellar",
       "category_label": "Stellar Neighborhood",
@@ -364,7 +364,7 @@
     },
     {
       "id": "3d_stars_distance_20ly_social",
-      "title": "3D Stars to Distance 20Ly",
+      "title": "3D Stars Distance 20Ly",
       "filename": "3d_stars_distance_20ly_social.json",
       "category": "stellar",
       "category_label": "Stellar Neighborhood",
@@ -374,6 +374,6 @@
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-13 20:52",
+  "last_updated": "2026-02-13 20:39",
   "total_count": 36
 }
