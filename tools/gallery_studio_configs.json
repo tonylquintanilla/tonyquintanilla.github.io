@@ -1,0 +1,33 @@
+{
+  "planetary_boundaries.html": {
+    "bg_color": "#000000",
+    "transparent_bg": false,
+    "show_title": false,
+    "custom_title": "",
+    "title_font_size": 18,
+    "title_color": "#f8fafc",
+    "margin_top": 40,
+    "margin_bottom": 20,
+    "margin_left": 20,
+    "margin_right": 20,
+    "show_axes": false,
+    "show_grid": false,
+    "scene_bgcolor": "#000000",
+    "show_legend": false,
+    "legend_orientation": "h",
+    "legend_font_size": 9,
+    "legend_bgcolor": "rgba(0,0,0,0)",
+    "show_annotations": false,
+    "strip_footer_annotations": false,
+    "annotation_bg_transparent": false,
+    "marker_size_boost": 0,
+    "line_width_min": 2,
+    "show_modebar": false,
+    "show_colorbar": false,
+    "strip_template": false,
+    "strip_updatemenus": false,
+    "keep_animation_controls": false,
+    "hover_mode": "default",
+    "plotly_js_source": "cdn"
+  }
+}

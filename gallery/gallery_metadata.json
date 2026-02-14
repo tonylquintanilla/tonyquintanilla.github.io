@@ -449,8 +449,19 @@
       "size_kb": 13.4,
       "converted": "2026-02-08 23:37",
       "mode": "portrait"
+    },
+    {
+      "id": "planetary_boundaries_gallery",
+      "title": "Planetary Boundaries Gallery",
+      "filename": "planetary_boundaries_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Planetary boundaries",
+      "size_kb": 10.9,
+      "converted": "2026-02-14 16:20",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-14 06:48",
-  "total_count": 43
+  "last_updated": "2026-02-14 16:20",
+  "total_count": 44
 }
