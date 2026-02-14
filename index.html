@@ -502,6 +502,25 @@
             margin-top: 24px;
         }
 
+        /* Device-aware hint: phones see desktop upsell,
+           desktop sees mobile option */
+        .welcome-device-hint {
+            font-size: 0.72rem;
+            color: var(--accent-dim);
+            margin-top: 16px;
+            font-style: italic;
+        }
+        @media (max-width: 767px) {
+            .welcome-device-hint::after {
+                content: 'More visualizations with full interactive controls available on tablet or desktop.';
+            }
+        }
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .welcome-device-hint::after {
+                content: 'Switch between Desktop and Mobile modes for different experiences.';
+            }
+        }
+
         /* Loading state */
         .loading-overlay {
             position: absolute;
@@ -859,6 +878,7 @@
                 <div class="welcome-hint">
                     Tap the menu to select a visualization.
                 </div>
+                <div class="welcome-device-hint"></div>
             </div>
 
             <!-- Plotly graph target -->
@@ -1744,7 +1764,8 @@
                 'Explore interactive visualizations of the solar system, ' +
                 'stellar neighborhoods, exoplanets, and more.</div>' +
                 '<div class="welcome-hint">' +
-                'Tap the menu to select a visualization.</div>';
+                'Tap the menu to select a visualization.</div>' +
+                '<div class="welcome-device-hint"></div>';
             welcomeState.style.display = 'flex';
 
             // Deselect active card

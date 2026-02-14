@@ -41,14 +41,14 @@
       "converted": "2026-02-07 20:14"
     },
     {
-      "id": "keeling_curve_co2_concentration",
-      "title": "Keeling Curve Co2 Concentration",
-      "filename": "keeling_curve_co2_concentration.json",
+      "id": "paleoclimate_human_origins",
+      "title": "Paleoclimate Human Origins",
+      "filename": "paleoclimate_human_origins.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing atmospheric CO2 from 1958 to 2025.",
-      "size_kb": 17.3,
-      "converted": "2026-02-09 00:12"
+      "description": "540 MY paleoclimate chart with human origins markers.",
+      "size_kb": 116.3,
+      "converted": "2026-02-07 21:07"
     },
     {
       "id": "near_earth_asteroids_20260207_2114",
@@ -131,56 +131,6 @@
       "converted": "2026-02-08 20:08"
     },
     {
-      "id": "energy_imbalance",
-      "title": "Energy Imbalance",
-      "filename": "energy_imbalance.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing energy imbalance, temperature anomaly and ocean heat content from 2005 to the present.",
-      "size_kb": 31.1,
-      "converted": "2026-02-08 23:43"
-    },
-    {
-      "id": "global_temperature_anomalies",
-      "title": "Globalerature Anomalies",
-      "filename": "global_temperature_anomalies.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing surface mean temperature anomalies from 1880 to 2025.",
-      "size_kb": 43.0,
-      "converted": "2026-02-09 00:11"
-    },
-    {
-      "id": "sea_level_rise",
-      "title": "Sea Level Rise",
-      "filename": "sea_level_rise.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing mean sea level rise from 1993 to 2025.",
-      "size_kb": 92.5,
-      "converted": "2026-02-09 00:10"
-    },
-    {
-      "id": "ocean_acidification_ph_trend",
-      "title": "Ocean Acidification Ph Trend",
-      "filename": "ocean_acidification_ph_trend.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing ocean surface pH from 1988 to 2023.",
-      "size_kb": 16.9,
-      "converted": "2026-02-09 00:09"
-    },
-    {
-      "id": "arctic_ice_extent",
-      "title": "Arctic Ice Extent",
-      "filename": "arctic_ice_extent.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing Arctic sea ice extent in September, minimum.",
-      "size_kb": 5.2,
-      "converted": "2026-02-08 23:40"
-    },
-    {
       "id": "paleoclimate_wet_bulb",
       "title": "Paleoclimate Wet Bulb",
       "filename": "paleoclimate_wet_bulb.json",
@@ -201,18 +151,18 @@
       "converted": "2026-02-08 23:37"
     },
     {
-      "id": "paleoclimate_cenozoic_66ma",
-      "title": "Paleoclimate Cenozoic (66 Ma)",
-      "filename": "paleoclimate_cenozoic_66ma.json",
+      "id": "arctic_ice_extent",
+      "title": "Arctic Ice Extent",
+      "filename": "arctic_ice_extent.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
-      "size_kb": 66.7,
-      "converted": "2026-02-08 23:41"
+      "description": "Graphic showing Arctic sea ice extent in September, minimum.",
+      "size_kb": 5.2,
+      "converted": "2026-02-08 23:40"
     },
     {
       "id": "paleoclimate_540ma_to_present",
-      "title": "Paleoclimate 540 Ma to Present",
+      "title": "Paleoclimate 540Ma To Present",
       "filename": "paleoclimate_540ma_to_present.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -221,14 +171,64 @@
       "converted": "2026-02-08 23:40"
     },
     {
-      "id": "paleoclimate_human_origins",
-      "title": "Paleoclimate Human Origins",
-      "filename": "paleoclimate_human_origins.json",
+      "id": "paleoclimate_cenozoic_66ma",
+      "title": "Paleoclimate Cenozoic 66Ma",
+      "filename": "paleoclimate_cenozoic_66ma.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "540 MY paleoclimate chart with human origins markers.",
-      "size_kb": 116.3,
-      "converted": "2026-02-07 21:07"
+      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
+      "size_kb": 66.7,
+      "converted": "2026-02-08 23:41"
+    },
+    {
+      "id": "energy_imbalance",
+      "title": "Energy Imbalance",
+      "filename": "energy_imbalance.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing energy imbalance, temperature anomaly and ocean heat content from 2005 to the present.",
+      "size_kb": 31.1,
+      "converted": "2026-02-08 23:43"
+    },
+    {
+      "id": "ocean_acidification_ph_trend",
+      "title": "Ocean Acidification Ph Trend",
+      "filename": "ocean_acidification_ph_trend.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing ocean surface pH from 1988 to 2023.",
+      "size_kb": 16.9,
+      "converted": "2026-02-09 00:09"
+    },
+    {
+      "id": "sea_level_rise",
+      "title": "Sea Level Rise",
+      "filename": "sea_level_rise.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing mean sea level rise from 1993 to 2025.",
+      "size_kb": 92.5,
+      "converted": "2026-02-09 00:10"
+    },
+    {
+      "id": "global_temperature_anomalies",
+      "title": "Globalerature Anomalies",
+      "filename": "global_temperature_anomalies.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing surface mean temperature anomalies from 1880 to 2025.",
+      "size_kb": 43.0,
+      "converted": "2026-02-09 00:11"
+    },
+    {
+      "id": "keeling_curve_co2_concentration",
+      "title": "Keeling Curve Co2 Concentration",
+      "filename": "keeling_curve_co2_concentration.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing atmospheric CO2 from 1958 to 2025.",
+      "size_kb": 17.3,
+      "converted": "2026-02-09 00:12"
     },
     {
       "id": "paloma_social_view_2005_02_04",
@@ -451,6 +451,6 @@
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-14 06:48",
+  "last_updated": "2026-02-14 06:38",
   "total_count": 43
 }

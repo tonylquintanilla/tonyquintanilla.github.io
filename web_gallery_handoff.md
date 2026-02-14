@@ -841,8 +841,81 @@ strip, margin clamp) make them excellent on phones. Mode field = "both".
   margin clamping, modebar hiding, nav label hiding, phone mode lock,
   Safari dvh fix)
 
-### Implementation Sequence
-|------|------|-------|
+### Session 9 continued (Feb 14): Generic Mobile Overrides + Welcome Hints
+
+Extended mobile optimization to handle Earth System climate visualizations
+(Keeling Curve, Temperature Anomalies, Sea Level, Energy Imbalance,
+Planetary Boundaries). Three generic problems identified and solved.
+
+**Problem 1: Annotation boxes block data on small screens**
+
+Desktop exports use bordered, semi-opaque annotation boxes (bgcolor +
+bordercolor) for info callouts. On mobile these become opaque blocks
+covering the data. Removing annotations entirely loses useful info.
+
+**Fix**: On mobile, make annotation boxes transparent -- strip `bgcolor`,
+`bordercolor`, `borderwidth`, and `borderpad` from all annotations but
+keep the text. The text scales down via existing font reduction, and
+without the opaque background it floats over the data unobtrusively.
+Generic: works for any visualization without per-chart logic.
+
+**Problem 2: Legend boxes obstruct data**
+
+Some visualizations have legends with `bgcolor` and `bordercolor`
+creating opaque containers. On mobile these block data.
+
+**Fix**: On mobile, set `legend.bgcolor` to transparent and delete
+`bordercolor` / `borderwidth`. Legend markers and labels remain visible;
+only the opaque container is removed.
+
+**Problem 3: Axis title fonts don't scale**
+
+Axis titles (xaxis.title, yaxis.title) use fixed font sizes from
+desktop exports that are too large on mobile. Unlike annotations, these
+weren't covered by the existing font scaling.
+
+**Fix**: On mobile, iterate all xaxis*/yaxis* entries. If title font
+size > 12, scale to 75% (minimum 10). Same pattern as annotation scaling.
+
+**Also fixed: Duplicate mobile override block** -- Two separate
+`<1024px` blocks had accumulated from iterative edits with slightly
+different margin values (95 vs 100 for bottom). Consolidated into one
+clean block.
+
+**Also fixed: X-axis title deletion reverted** -- The blanket deletion
+of `xaxis.title` on mobile was too aggressive. HR diagrams don't need
+it (spectral types are self-explanatory), but climate charts need "Year"
+and other axis labels. Replaced with font scaling instead.
+
+**Content curation pattern emerged**:
+
+| Content Type | Mode | Why |
+|---|---|---|
+| 2D line/scatter (Keeling, HR) | both | Adapts well to any aspect ratio |
+| Complex charts (Planetary Boundaries, paleoclimate) | landscape | Too busy/square for portrait |
+| 3D plots (orrery, stellar) | landscape for desktop exports, portrait for social views |
+
+Landscape-only charts that need scrolling can use title hints like
+"(swipe to explore)" set via gallery_editor.py.
+
+**Welcome screen device hints** -- Phone users only see Mobile content
+and don't know Desktop mode exists on larger screens. Added CSS-only
+device-aware hints to the welcome screen:
+
+- Phones (<768px): "More visualizations with full interactive controls
+  available on tablet or desktop."
+- Tablets (768-1024px): "Switch between Desktop and Mobile modes for
+  different experiences."
+- Desktop (>1024px): nothing shown (toggle is visible)
+
+Implementation uses CSS `::after` content with media queries -- no
+JavaScript needed. Styled in accent color, italic, smaller font.
+Present in both the static HTML and the goHome() JS rebuild.
+
+**Files changed**:
+- index.html (consolidated mobile block, transparent annotation/legend
+  boxes, axis title scaling, welcome device hints)
+
 ### Implementation Sequence
 
 | Step | What | Notes |
@@ -867,22 +940,14 @@ strip, margin clamp) make them excellent on phones. Mode field = "both".
 - Version/update date in gallery footer
 - Custom pinch-to-zoom handler for 3D (option 1 from Session 7 -- would
   replace zoom buttons with native gesture, but complex to implement)
-- Safari iPhone left-edge clipping (margin.l=80 clips ~2px on Safari
-  only; increasing wastes space on 4 other browsers)
 
 ### Immediate Next: Content + Polish
 
 Gallery infrastructure is complete (viewer, converter, editor, config).
 Remaining work:
 - Continue populating gallery with landscape and portrait content
-- Use gallery_editor.py to curate titles, descriptions, ordering
-- Test on additional devices (Android Chrome, iPad Safari)
-- Test zoom buttons on crowded 3D scenes
+- Test on additional devices -- ongoing (5 iOS browsers tested Session 9)
 - Polish: version stamp, first-visit hints
-- **Earth Moon Shells view**: Earth is off-center (shifted right in frame),
-  clipping left-side magnetosphere shells. Source fix needed -- adjust
-  camera or scene center in shell visualization Python code. Not a gallery
-  viewer issue. (Noted Feb 10, phone testing)
 
 ## Known Issues & Lessons
 
@@ -1039,6 +1104,27 @@ Remaining work:
     silently ignore it and use vh. This is the proper fix for Safari
     bottom clipping on the app container.
 
+24. **Annotation boxes need transparency, not removal** (Session 9 cont.)
+    -- First instinct was to strip bordered annotations in the upper plot
+    area. Too aggressive -- unknowable what future visualizations put
+    there. Instead, make ALL annotation boxes transparent on mobile (strip
+    bgcolor/bordercolor) but keep the text. The text scales via existing
+    font reduction, and without the opaque background it doesn't block
+    data. Generic solution that works for any content.
+
+25. **Polar/radial charts are landscape-only** (Session 9 cont.) --
+    Planetary Boundaries (1200x1100) needs width for wedge labels.
+    Portrait mode crushes labels into overlapping mess. The min-height
+    fix makes landscape scrollable (swipe to see full chart), but
+    portrait is fundamentally unusable. Content curation (mode tagging)
+    is the right tool, not code.
+
+26. **Duplicate code blocks accumulate in iterative sessions** (Session 9
+    cont.) -- Two mobile override blocks with slightly different margin
+    values (95 vs 100) existed from separate edit sessions. Consolidated.
+    Lesson: when editing index.html across multiple sessions, grep for
+    existing blocks before adding new ones.
+
 ## File Renaming Summary
 
 | Old Name | New Name | Reason |
@@ -1134,9 +1220,11 @@ Current overrides (mobile only, Session 7, expanded Session 9):
 - doubleClick: false (prevents accidental double-tap reset)
 - displayModeBar: false (zoom buttons + touch sufficient)
 - Annotations with yref='paper' and y<0: removed (footer text)
+- Annotation bgcolor/bordercolor/borderwidth/borderpad: stripped (transparent boxes, text kept)
+- Legend bgcolor/bordercolor/borderwidth: stripped (transparent, markers kept)
 - Non-animation updatemenus: removed (hover toggle buttons)
 - Traces with customdata: default to names-only hovertemplate
-- xaxis.title: deleted (spectral types + numbers self-explanatory)
+- Axis title fonts >12: scaled to 75% (minimum 10)
 - margin.t: clamped to 10 (title removed, modebar hidden)
 - margin.b: clamped to 95 (room for x-axis tick labels)
 - margin.l: clamped to 80 (room for y-axis title)
@@ -1279,6 +1367,13 @@ re-export from the current app.
 | Phone mode lock | Hide mode toggle <768px | Desktop viz distorted on phones; no benefit |
 | Safari dvh fix | 100vh fallback + 100dvh override | CSS cascade; dvh-capable browsers use it, others ignore |
 | HR diagrams mode | "both" (works landscape + portrait) | 2D plots adapt well to any aspect ratio |
+| Annotation boxes on mobile | Strip bgcolor/border, keep text | Text scales; opaque boxes block data |
+| Legend boxes on mobile | Make transparent, keep markers | Markers readable; boxes obstruct |
+| Axis title scaling | Font 75% on mobile (min 10) | Same pattern as annotation scaling |
+| X-axis title deletion | Reverted (too aggressive) | HR diagrams ok without; climate charts need "Year" |
+| Complex chart mode | Landscape with title hint | Polar/busy charts need width; "(swipe to explore)" |
+| Welcome device hints | CSS-only per breakpoint | Phone users learn about desktop; no JS needed |
+| Paleoclimate charts | Removed from gallery | Too busy for any mobile view; revisit later |
 
 ---
 
