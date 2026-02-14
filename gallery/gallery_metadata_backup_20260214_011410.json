@@ -372,19 +372,8 @@
       "size_kb": 71.1,
       "converted": "2026-02-13 21:00",
       "mode": "portrait"
-    },
-    {
-      "id": "keeling_curve_co2_concentration_copy",
-      "title": "Keeling Curve of CO2 Concentration",
-      "filename": "keeling_curve_co2_concentration.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing atmospheric CO2 from 1958 to 2025.",
-      "size_kb": 17.3,
-      "converted": "2026-02-09 00:12",
-      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-14 01:14",
-  "total_count": 37
+  "last_updated": "2026-02-13 21:00",
+  "total_count": 36
 }
