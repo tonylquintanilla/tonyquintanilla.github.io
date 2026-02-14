@@ -1161,6 +1161,21 @@
                         (m.l === 0) && (m.r === 0) && (m.b === 0)) {
                         figDict.layout.margin = Object.assign(m, { t: 40 });
                     }
+                    // Shift title right to avoid overlap with nav button
+                    if (figDict.layout.title) {
+                        var t = figDict.layout.title;
+                        if (typeof t === 'string') {
+                            figDict.layout.title = { text: t };
+                            t = figDict.layout.title;
+                        }
+                        t.x = 0.5;
+                        t.xanchor = 'center';
+                        // Pad left so centered title clears the nav button
+                        figDict.layout.margin = Object.assign(
+                            figDict.layout.margin || {},
+                            { l: Math.max((figDict.layout.margin || {}).l || 0, 80) }
+                        );
+                    }
                 }
 
                 if (isLightTheme) {
@@ -1228,11 +1243,11 @@
                         );
                     }
 
-                    // Adjust margins: top reduced (title removed, modebar
-                    // moved to toolbar); bottom keeps room for x-axis labels;
+                    // Adjust margins: top reduced (title removed);
+                    // bottom keeps room for x-axis title;
                     // left keeps room for y-axis title
                     var m = figDict.layout.margin || {};
-                    if (m.b > 100) m.b = 100;
+                    if (m.b > 120) m.b = 120;
                     if (m.t > 10) m.t = 10;
                     if (m.l > 70) m.l = 70;
                     figDict.layout.margin = m;
@@ -1346,6 +1361,7 @@
                 if ('ontouchstart' in window || window.innerWidth < 1024) {
                     config.scrollZoom = true;
                     config.doubleClick = false;
+                    config.displayModeBar = false;  // zoom buttons + touch are sufficient
                 }
 
                 await Plotly.newPlot('plotly-graph', figDict.data || [], figDict.layout, config);
@@ -1362,19 +1378,6 @@
                 // Force resize after render
                 setTimeout(function() {
                     Plotly.Plots.resize('plotly-graph');
-
-                    // On mobile: move Plotly modebar into toolbar row
-                    // so the title (nav button) and icons share one line
-                    if (window.innerWidth < 1024) {
-                        var mbar = document.querySelector('#plotly-graph .modebar-container');
-                        var toolbar = document.getElementById('vizToolbar');
-                        if (mbar && toolbar) {
-                            mbar.style.position = 'relative';
-                            mbar.style.top = 'auto';
-                            mbar.style.right = 'auto';
-                            toolbar.appendChild(mbar);
-                        }
-                    }
                 }, 100);
 
                 // Portrait mode: wire click -> info card
