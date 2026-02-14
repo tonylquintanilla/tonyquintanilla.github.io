@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-12, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-14, 2026 | Claude Opus 4.6
 
 ---
 
@@ -746,6 +746,103 @@ gallery_config.json (shared category definitions)
 - index.html (loads config at init for category colors; mobile bottom
   toolbar fix: 100dvh, viewport-fit=cover, 80px nav padding)
 
+### Session 9 (Feb 14): 2D Mobile Optimization + Cross-Browser Testing
+
+Valentine's Day session focused on making complex 2D visualizations
+(HR diagrams) work well on mobile, and cross-browser testing across
+five iOS browsers. Also added zoom buttons to desktop mode and refined
+desktop overlay behavior.
+
+**Testing devices**: iPad landscape (Safari), iPhone (Safari, Chrome,
+DuckDuckGo, Arc), Android (Samsung Internet)
+
+**Changes made to index.html**:
+
+1. **Footer annotation stripping on mobile** -- HR diagrams include a
+   lengthy text footer (description + star counts) positioned below the
+   plot area at `yref: 'paper', y < 0`. This consumed 15-20% of vertical
+   space on mobile. Fix: filter out annotations with `yref === 'paper'`
+   and `y < 0` on screens <1024px. Desktop unchanged.
+
+2. **Hover toggle buttons stripped on mobile** -- "Full Object Info" /
+   "Object Names Only" updatemenus overlapped axis labels on small screens.
+   Fix: remove non-animation updatemenus on mobile and default all traces
+   with `customdata` to names-only hover (`%{customdata}<extra></extra>`).
+   Animation play/pause controls preserved (filtered by `method === 'animate'`).
+
+3. **X-axis title stripped on mobile** -- For HR diagrams, the spectral
+   type labels (O, B, A, F, G, K, M, L) across the top plus temperature
+   numbers at the bottom are self-explanatory. Deleting `xaxis.title` on
+   mobile saves vertical space without losing information.
+
+4. **Mobile margin overrides** -- Desktop exports use generous margins
+   (t:125, b:155) for title and footer. With those elements removed on
+   mobile, margins are clamped: `t` to 10px, `b` to 95px (room for
+   x-axis tick labels), `l` to 80px (room for y-axis title).
+
+5. **Modebar hidden on mobile** -- Instead of the earlier attempt to move
+   the modebar into the toolbar (which caused vertical icon stacking),
+   modebar is now hidden entirely via `config.displayModeBar = false` on
+   touch/mobile devices. Zoom buttons + pinch/pan + tap-for-info cover
+   all needed interactions.
+
+6. **2D zoom buttons** -- New `zoom2D()` function scales axis ranges
+   around their center point using `Plotly.relayout()`. Same styled +/-
+   buttons as 3D scenes. Button handler dispatches to `zoom2D` or `zoom3D`
+   based on a `data-scene` attribute set when the visualization loads.
+
+7. **Zoom buttons on all devices** -- Previously only shown in mobile
+   mode for 3D scenes. Now visible for both 2D and 3D, on both desktop
+   and mobile. Especially useful for trackpad users on desktop who find
+   Plotly's scroll-zoom awkward.
+
+8. **Desktop nav button label hidden** -- On screens >1024px, the nav
+   button label (visualization title text) is hidden via CSS, leaving
+   only the compact hamburger icon. This prevents the wide nav button
+   from overlapping Plotly's title, updatemenus dropdowns, and hover
+   toggle buttons in the top-left of the figure.
+
+9. **Phone-only forced portrait mode** -- CSS `@media (max-width: 767px)`
+   hides the Desktop/Mobile mode toggle entirely. Phones only see Mobile
+   (portrait) content. Tablets (768-1023px) retain the toggle. Rationale:
+   Desktop mode visualizations cannot reproduce the desktop experience
+   on phone screens -- they're distorted and the controls are too small.
+
+10. **Safari viewport height fix** -- `100vh` on iOS Safari includes the
+    area behind the bottom toolbar, clipping content. Changed
+    `.app-container` from `height: 100vh` to `height: 100vh` (fallback)
+    then `height: 100dvh` (dynamic viewport height, excludes toolbar).
+    CSS cascade means browsers supporting `dvh` use it; others fall back
+    to `vh`. Also added `padding-bottom: env(safe-area-inset-bottom)` to
+    `.viz-container` as belt-and-suspenders for safe area insets.
+
+**Cross-browser testing results** (HR Diagram Distance 20Ly):
+
+| Browser | Device | Result |
+|---------|--------|--------|
+| Safari | iPad landscape | Full labels visible, clean layout |
+| Chrome | iPad landscape | Full labels visible, slightly more compact |
+| Safari | iPhone landscape | "Luminosit..." left-clipped (Safari-specific) |
+| DuckDuckGo | iPhone landscape | Full labels, clean |
+| Arc | iPhone landscape | Full labels, clean |
+| Samsung Internet | Android | Compact but complete, even with bottom nav bar |
+
+Safari iPhone clipping is a known Safari rendering quirk where a few
+pixels are lost on the left edge. Increasing `margin.l` beyond 80 would
+fix it but waste space on all other browsers. Acceptable tradeoff.
+
+**Key insight: "both" mode for 2D plots** -- HR diagrams work in both
+Desktop and Mobile modes because they're 2D scatter plots that render
+well at any aspect ratio. The mobile overrides (footer strip, button
+strip, margin clamp) make them excellent on phones. Mode field = "both".
+
+**Files changed**:
+- index.html (all 10 changes above -- footer/button stripping, 2D zoom,
+  margin clamping, modebar hiding, nav label hiding, phone mode lock,
+  Safari dvh fix)
+
+### Implementation Sequence
+|------|------|-------|
 ### Implementation Sequence
 
 | Step | What | Notes |
@@ -757,7 +854,8 @@ gallery_config.json (shared category definitions)
 | 4 | ~~json_converter.py hover parsing~~ | DROPPED - desktop uses native hover; mobile uses social customdata |
 | 5 | Content population + validation | IN PROGRESS - 31 vizs (23 landscape, 8 portrait) |
 | 6 | Gallery management tooling | DONE (Session 8) - editor GUI + shared config |
-| 7 | Polish | Version stamp, hints, nudges |
+| 7 | 2D mobile optimization + cross-browser | DONE (Session 9) - HR diagrams on 5 iOS browsers |
+| 8 | Polish | Version stamp, hints, nudges |
 
 ### Deferred Items (future phases)
 
@@ -765,11 +863,12 @@ gallery_config.json (shared category definitions)
 - Legend handling for high-trace-count figures
 - Thumbnail generation for gallery cards
 - Link preview images for social sharing (og:image)
-- Custom domain (palomasorrery.com) if desired
 - Website content pages (About, Downloads, Contact)
 - Version/update date in gallery footer
 - Custom pinch-to-zoom handler for 3D (option 1 from Session 7 -- would
   replace zoom buttons with native gesture, but complex to implement)
+- Safari iPhone left-edge clipping (margin.l=80 clips ~2px on Safari
+  only; increasing wastes space on 4 other browsers)
 
 ### Immediate Next: Content + Polish
 
@@ -908,6 +1007,38 @@ Remaining work:
     all clear after hard refresh. Chrome was initially cached and
     appeared unchanged until manually reloaded.
 
+19. **2D plots need different zoom than 3D** (Session 9) -- 3D zoom
+    dispatches synthetic `WheelEvent` to Plotly's WebGL canvas. 2D plots
+    have no canvas; zoom is via `xaxis.range` / `yaxis.range` manipulation
+    through `Plotly.relayout()`. Same UI buttons, different backend
+    function, selected by a `data-scene` attribute on the button container.
+
+20. **Plotly modebar is a problem on mobile** (Session 9) -- Moving the
+    modebar DOM element to the toolbar row caused vertical icon stacking
+    (icons designed to be horizontal in the chart corner). Hiding it
+    entirely is cleaner -- mobile users have zoom buttons, pinch/pan,
+    and tap-for-info which cover all needed interactions.
+
+21. **Desktop nav button width causes overlap** (Session 9) -- The nav
+    button shows the full visualization title, making it 200-400px wide.
+    This overlaps Plotly's title, dropdown filters, and hover toggle
+    buttons in the top-left. Hiding the label on desktop (CSS media query)
+    reduces it to a ~40px hamburger icon. Full label shows on mobile
+    where it's in the toolbar above the chart.
+
+22. **Phone vs tablet breakpoint** (Session 9) -- 768px separates phones
+    from tablets. Phones in landscape are typically 700-850px; tablets
+    start at 768px. Below 768px, hide the Desktop/Mobile toggle and
+    force portrait mode. Tablets (768-1023px) keep the toggle. Desktop
+    mode on phones provides no value -- visualizations are distorted.
+
+23. **dvh vs vh for Safari** (Session 9) -- `100vh` includes Safari's
+    bottom toolbar area; `100dvh` (dynamic viewport height) excludes it.
+    Use both: `height: 100vh` first (fallback), then `height: 100dvh`
+    (override). CSS cascade means browsers supporting dvh use it; others
+    silently ignore it and use vh. This is the proper fix for Safari
+    bottom clipping on the app container.
+
 ## File Renaming Summary
 
 | Old Name | New Name | Reason |
@@ -997,16 +1128,26 @@ Current overrides (all plots):
 - scene.aspectmode: 'cube' on mobile <1024px (fill portrait screen)
 - legend: horizontal on mobile <1024px (dark-themed only)
 
-Current overrides (mobile only, Session 7):
+Current overrides (mobile only, Session 7, expanded Session 9):
 - layout.title: deleted (nav button shows viz name instead)
 - scrollZoom: true (enables scroll/pinch zoom)
 - doubleClick: false (prevents accidental double-tap reset)
+- displayModeBar: false (zoom buttons + touch sufficient)
+- Annotations with yref='paper' and y<0: removed (footer text)
+- Non-animation updatemenus: removed (hover toggle buttons)
+- Traces with customdata: default to names-only hovertemplate
+- xaxis.title: deleted (spectral types + numbers self-explanatory)
+- margin.t: clamped to 10 (title removed, modebar hidden)
+- margin.b: clamped to 95 (room for x-axis tick labels)
+- margin.l: clamped to 80 (room for y-axis title)
+- colorbar/showscale: hidden (reclaim screen width)
 
 NOT overridden (preserve from export):
-- margins (export knows its element placement)
-- updatemenus positions (staggered by the app)
+- margins on desktop (export knows its element placement)
+- updatemenus positions on desktop (staggered by the app)
 - title alignment (left-justified by default)
-- annotation positions and sizes (except font scaling on mobile <900px)
+- annotation positions and sizes (except font scaling on mobile <900px,
+  and footer removal on mobile <1024px)
 - light-themed plot colors (no dark overrides applied)
 
 ### 3D Zoom via Synthetic Wheel Events (Session 7)
@@ -1033,6 +1174,27 @@ canvas.dispatchEvent(evt);
 This works because Plotly's internal wheel listener on the canvas does
 whatever internal state manipulation is needed -- we don't need to know
 the mechanism, just trigger it.
+
+### 2D Zoom via Axis Range Scaling (Session 9)
+
+2D plots have no WebGL canvas, so synthetic wheel events don't apply.
+Instead, zoom scales axis ranges around their center point:
+```javascript
+function zoom2D(direction) {
+    var factor = (direction > 0) ? 1.3 : 1 / 1.3;
+    var update = {};
+    // For each xaxis/yaxis in the layout:
+    var center = (lo + hi) / 2;
+    var half = (hi - lo) / 2 * factor;
+    update[axisName + '.range'] = [center - half, center + half];
+    Plotly.relayout(graphDiv, update);
+}
+```
+
+The same +/- buttons dispatch to `zoom3D` or `zoom2D` based on a
+`data-scene` attribute set when the visualization loads (`'3d'` if
+`layout.scene` exists, `'2d'` otherwise). Buttons are now visible on
+all devices and plot types (Session 9).
 
 ### Older HTML Files
 
@@ -1107,6 +1269,16 @@ re-export from the current app.
 | Rename category | Changes both key and label | Keys aligned with labels; no confusion |
 | Empty categories in editor | Shown from config, even with no vizs | Can see all available categories per mode |
 | Mobile bottom toolbar fix | 100dvh + 80px padding + viewport-fit=cover | Tested on Safari, Chrome, Bing, home screen |
+| Footer strip on mobile | Remove annotations below plot (y<0) | Reclaims 15-20% vertical space |
+| Hover toggle strip on mobile | Remove non-animate updatemenus | Default names-only; full hover unreadable on touch |
+| X-axis title strip on mobile | Delete xaxis.title | Spectral types + numbers self-explanatory |
+| Modebar on mobile | Hide entirely (displayModeBar: false) | Zoom buttons + touch gestures are sufficient |
+| 2D zoom buttons | Scale axis ranges via Plotly.relayout | Same UI as 3D; consistent interaction model |
+| Zoom buttons on desktop | Show for all modes and plot types | Useful for trackpad users |
+| Desktop nav button label | CSS hide >1024px (icon only) | Prevents overlap with Plotly title + updatemenus |
+| Phone mode lock | Hide mode toggle <768px | Desktop viz distorted on phones; no benefit |
+| Safari dvh fix | 100vh fallback + 100dvh override | CSS cascade; dvh-capable browsers use it, others ignore |
+| HR diagrams mode | "both" (works landscape + portrait) | 2D plots adapt well to any aspect ratio |
 
 ---
 
@@ -1125,5 +1297,8 @@ WheelEvent solution, February 10, 2026
 
 *"One config to rule them all."* -- On gallery_config.json unifying
 categories across converter, editor, and viewer, February 12, 2026
+
+*"The bottom axis is almost self-explanatory."* -- On stripping axis
+titles for mobile, February 14, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*
