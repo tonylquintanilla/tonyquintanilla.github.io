@@ -1220,7 +1220,6 @@
                             trace.showscale = false;
                         }
                     });
-                    // Also hide layout-level coloraxis scales
                     var keys = Object.keys(figDict.layout || {});
                     keys.forEach(function(k) {
                         if (k.indexOf('coloraxis') === 0 && figDict.layout[k]) {
@@ -1228,7 +1227,7 @@
                         }
                     });
 
-                    // Strip footer annotations (below plot area) on mobile
+                    // Strip footer annotations (below plot area)
                     if (figDict.layout.annotations) {
                         figDict.layout.annotations = figDict.layout.annotations.filter(
                             function(ann) {
@@ -1237,30 +1236,55 @@
                         );
                     }
 
-                    // Adjust margins: top reduced (title removed);
-                    // left keeps room for y-axis title
+                    // Make annotation boxes transparent (keep text, remove
+                    // opaque backgrounds that block data on small screens)
+                    if (figDict.layout.annotations) {
+                        figDict.layout.annotations.forEach(function(ann) {
+                            if (ann.bgcolor) ann.bgcolor = 'rgba(0,0,0,0)';
+                            if (ann.bordercolor) {
+                                delete ann.bordercolor;
+                                delete ann.borderwidth;
+                                delete ann.borderpad;
+                            }
+                        });
+                    }
+
+                    // Make legend background transparent (remove box,
+                    // keep markers and labels)
+                    if (figDict.layout.legend) {
+                        figDict.layout.legend.bgcolor = 'rgba(0,0,0,0)';
+                        delete figDict.layout.legend.bordercolor;
+                        delete figDict.layout.legend.borderwidth;
+                    }
+
+                    // Scale down axis title fonts for small screens
+                    var axisKeys = Object.keys(figDict.layout || {});
+                    axisKeys.forEach(function(k) {
+                        if ((k.indexOf('xaxis') === 0 || k.indexOf('yaxis') === 0) &&
+                            figDict.layout[k] && figDict.layout[k].title) {
+                            var axTitle = figDict.layout[k].title;
+                            if (typeof axTitle === 'object' && axTitle.font &&
+                                axTitle.font.size && axTitle.font.size > 12) {
+                                axTitle.font.size = Math.max(10, axTitle.font.size * 0.75);
+                            }
+                        }
+                    });
+
+                    // Adjust margins (title removed, footer removed)
                     var m = figDict.layout.margin || {};
                     if (m.b > 95) m.b = 95;
                     if (m.t > 10) m.t = 10;
                     if (m.l > 80) m.l = 80;
                     figDict.layout.margin = m;
 
-                    // Strip x-axis title on mobile (spectral type labels
-                    // + temperature numbers are self-explanatory)
-                    if (figDict.layout.xaxis && figDict.layout.xaxis.title) {
-                        delete figDict.layout.xaxis.title;
-                    }
-
                     // Strip hover toggle buttons, default to names-only
                     if (figDict.layout.updatemenus) {
                         figDict.layout.updatemenus = figDict.layout.updatemenus.filter(
                             function(menu) {
-                                // Keep animation controls (play/pause)
                                 var buttons = menu.buttons || [];
-                                var hasAnimate = buttons.some(function(b) {
+                                return buttons.some(function(b) {
                                     return b.method === 'animate';
                                 });
-                                return hasAnimate;
                             }
                         );
                     }
@@ -1277,58 +1301,6 @@
                     figDict.layout.annotations.forEach(function(ann) {
                         if (ann.font && ann.font.size && ann.font.size > 12) {
                             ann.font.size = Math.max(10, ann.font.size * 0.7);
-                        }
-                    });
-                }
-
-                // ---- Mobile overrides (<1024px) ----
-                if (window.innerWidth < 1024) {
-                    // Hide colorbars (reclaim screen width)
-                    (figDict.data || []).forEach(function(trace) {
-                        if (trace.marker && trace.marker.colorbar) {
-                            trace.marker.showscale = false;
-                        }
-                        if (trace.showscale !== undefined) {
-                            trace.showscale = false;
-                        }
-                    });
-                    var layoutKeys = Object.keys(figDict.layout || {});
-                    layoutKeys.forEach(function(k) {
-                        if (k.indexOf('coloraxis') === 0 && figDict.layout[k]) {
-                            figDict.layout[k].showscale = false;
-                        }
-                    });
-
-                    // Strip footer annotations (below plot area)
-                    if (figDict.layout.annotations) {
-                        figDict.layout.annotations = figDict.layout.annotations.filter(
-                            function(ann) {
-                                return !(ann.yref === 'paper' && ann.y < 0);
-                            }
-                        );
-                    }
-
-                    // Tighten margins (title removed, footer removed)
-                    var m = figDict.layout.margin || {};
-                    if (m.t > 10) m.t = 10;
-                    if (m.b > 100) m.b = 100;
-                    if (m.l > 80) m.l = 80;
-                    figDict.layout.margin = m;
-
-                    // Strip hover toggle buttons, default to names-only
-                    if (figDict.layout.updatemenus) {
-                        figDict.layout.updatemenus = figDict.layout.updatemenus.filter(
-                            function(menu) {
-                                var buttons = menu.buttons || [];
-                                return buttons.some(function(b) {
-                                    return b.method === 'animate';
-                                });
-                            }
-                        );
-                    }
-                    (figDict.data || []).forEach(function(trace) {
-                        if (trace.customdata && trace.hovertemplate) {
-                            trace.hovertemplate = '%{customdata}<extra></extra>';
                         }
                     });
                 }
