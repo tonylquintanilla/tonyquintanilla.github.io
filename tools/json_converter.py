@@ -299,7 +299,7 @@ def _extract_via_variables(html_content):
 # ============================================================================
 
 def save_figure_json(fig, name, output_folder=None, category="other",
-                     description="", auto_metadata=True):
+                     description="", auto_metadata=True, mode="both"):
     """
     Save a Plotly figure object directly as gallery-ready JSON.
 
@@ -339,7 +339,7 @@ def save_figure_json(fig, name, output_folder=None, category="other",
 
         if auto_metadata:
             _update_metadata(output_folder, safe_name, name, category,
-                           description, size_kb)
+                           description, size_kb, mode)
 
         return json_path
 
@@ -353,7 +353,7 @@ def save_figure_json(fig, name, output_folder=None, category="other",
 # ============================================================================
 
 def convert_html_to_gallery_json(html_path, output_folder=None, category="other",
-                                  description=""):
+                                  description="", mode="both"):
     """
     Convert a single HTML visualization to gallery-ready JSON.
 
@@ -402,7 +402,7 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
     print(f"  OK: {trace_count} traces, {size_kb:.0f} KB -> {safe_name}.json")
 
     _update_metadata(output_folder, safe_name, filename, category,
-                    description, size_kb)
+                    description, size_kb, mode)
 
     return json_path
 
@@ -412,7 +412,7 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
 # ============================================================================
 
 def _update_metadata(output_folder, safe_name, display_name, category,
-                    description, size_kb):
+                    description, size_kb, mode="both"):
     """Update the gallery metadata JSON file."""
     metadata_path = os.path.join(output_folder, METADATA_FILE)
 
@@ -435,6 +435,7 @@ def _update_metadata(output_folder, safe_name, display_name, category,
         "description": description,
         "size_kb": round(size_kb, 1),
         "converted": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "mode": mode,
     }
 
     # Replace existing entry or append
@@ -566,9 +567,23 @@ def run_interactive():
         except (EOFError, KeyboardInterrupt):
             description = ""
 
+        # Ask for mode (L=landscape/desktop, P=portrait/mobile, B=both)
+        try:
+            mode_input = input(f"  Mode - L(andscape)/P(ortrait)/B(oth) [Enter=B]: ").strip().upper()
+            if mode_input == 'L':
+                mode = 'landscape'
+            elif mode_input == 'P':
+                mode = 'portrait'
+            else:
+                mode = 'both'
+        except (EOFError, KeyboardInterrupt):
+            mode = 'both'
+
+        print(f"  Mode: {mode}")
+
         # Convert
         result = convert_html_to_gallery_json(
-            html_path, output_folder, category, description
+            html_path, output_folder, category, description, mode
         )
 
         if result:
