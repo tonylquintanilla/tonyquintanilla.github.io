@@ -1163,6 +1163,25 @@
                     }
                 }
 
+                // Hide colorbars on mobile (reclaim screen width)
+                if (window.innerWidth < 1024) {
+                    (figDict.data || []).forEach(function(trace) {
+                        if (trace.marker && trace.marker.colorbar) {
+                            trace.marker.showscale = false;
+                        }
+                        if (trace.showscale !== undefined) {
+                            trace.showscale = false;
+                        }
+                    });
+                    // Also hide layout-level coloraxis scales
+                    var keys = Object.keys(figDict.layout || {});
+                    keys.forEach(function(k) {
+                        if (k.indexOf('coloraxis') === 0 && figDict.layout[k]) {
+                            figDict.layout[k].showscale = false;
+                        }
+                    });
+                }
+
                 // Scale down annotation font sizes for small screens
                 if (window.innerWidth < 900 && figDict.layout.annotations) {
                     figDict.layout.annotations.forEach(function(ann) {
