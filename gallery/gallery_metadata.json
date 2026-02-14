@@ -353,27 +353,27 @@
     },
     {
       "id": "3d_stars_magnitude_4_0_social",
-      "title": "3D Stars to Magnitude 4.0",
+      "title": "3D Stars Magnitude 4.0",
       "filename": "3d_stars_magnitude_4_0_social.json",
       "category": "stellar",
       "category_label": "Stellar Neighborhood",
-      "description": "3D plot of stars up to visual magnitude 4.0",
+      "description": "3D plot of stars to visual magnitude 4.0",
       "size_kb": 366.2,
-      "converted": "2026-02-13 20:38",
+      "converted": "2026-02-13 20:59",
       "mode": "portrait"
     },
     {
       "id": "3d_stars_distance_20ly_social",
-      "title": "3D Stars to Distance 20Ly",
+      "title": "3D Stars Distance 20Ly",
       "filename": "3d_stars_distance_20ly_social.json",
       "category": "stellar",
       "category_label": "Stellar Neighborhood",
-      "description": "3D plot of stars up to 20 LY distant.",
+      "description": "3D plot of stars to distance of 20 LY.",
       "size_kb": 71.1,
-      "converted": "2026-02-13 20:39",
+      "converted": "2026-02-13 21:00",
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-13 20:52",
+  "last_updated": "2026-02-13 21:00",
   "total_count": 36
 }
