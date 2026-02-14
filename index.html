@@ -345,6 +345,11 @@
             background: rgba(255, 255, 255, 0.02);
         }
 
+        /* Hide mode toggle on phones - only portrait mode is useful */
+        @media (max-width: 767px) {
+            .mode-toggle { display: none; }
+        }
+
         /* Scrollable nav list */
         .selector-nav {
             flex: 1;
@@ -965,6 +970,8 @@
             setupEvents();
 
             // Auto-detect default mode from screen width
+            // Phones (<768px): force portrait, no toggle visible
+            // Tablets (768-1023px): default portrait, toggle available
             if (window.innerWidth < 1024) {
                 setMode('portrait');
             }
@@ -1190,10 +1197,14 @@
                         );
                     }
 
-                    // Reduce bottom margin (footer removed)
-                    if (figDict.layout.margin && figDict.layout.margin.b > 40) {
-                        figDict.layout.margin.b = 40;
-                    }
+                    // Reduce bottom margin (footer removed) but keep space
+                    // for x-axis labels; reduce top margin (title removed);
+                    // tighten left margin
+                    var m = figDict.layout.margin || {};
+                    if (m.b > 80) m.b = 80;
+                    if (m.t > 40) m.t = 40;
+                    if (m.l > 60) m.l = 60;
+                    figDict.layout.margin = m;
 
                     // Strip hover toggle buttons, default to names-only
                     if (figDict.layout.updatemenus) {
