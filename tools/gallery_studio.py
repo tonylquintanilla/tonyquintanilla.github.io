@@ -638,10 +638,14 @@ def apply_config(fig_dict, config):
         except ValueError:
             pass
 
-    # ---- Studio marker ----
+    # ---- Studio markers ----
     # Tells downstream consumers (index.html) that this figure was
     # curated by the studio and should not be re-processed.
     layout['_studio'] = True
+
+    # Pass nav arrow preference through the pipeline
+    if config.get('show_nav_arrows', False):
+        layout['_studio_nav'] = True
 
     fig['layout'] = layout
     return fig

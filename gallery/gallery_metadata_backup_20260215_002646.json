@@ -440,8 +440,19 @@
       "mode": "portrait"
     },
     {
+      "id": "planetary_boundaries_copy",
+      "title": "Planetary Boundaries (use landscape and swipe)",
+      "filename": "planetary_boundaries.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic after the Stockholm Resilience Centre's Planetary Boundaries, showing processes that regulate planetary stability.",
+      "size_kb": 13.4,
+      "converted": "2026-02-08 23:37",
+      "mode": "portrait"
+    },
+    {
       "id": "planetary_boundaries_gallery",
-      "title": "Planetary Boundaries",
+      "title": "Planetary Boundaries Gallery",
       "filename": "planetary_boundaries_gallery.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -452,7 +463,7 @@
     },
     {
       "id": "paleoclimate_wet_bulb_gallery",
-      "title": "Paleoclimate Wet Bulb (use landscape)",
+      "title": "Paleoclimate Wet Bulb Gallery",
       "filename": "paleoclimate_wet_bulb_gallery.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -462,6 +473,6 @@
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-15 00:26",
-  "total_count": 44
+  "last_updated": "2026-02-15 00:19",
+  "total_count": 45
 }
