@@ -90,6 +90,13 @@ DEFAULT_CONFIG = {
     # Hover
     "hover_mode": "default",  # default, names_only, none
 
+    # 2D Axes
+    "axis_title_font_size": 0,  # 0 = keep original
+    "axis_tick_font_size": 0,   # 0 = keep original
+
+    # Navigation controls (embedded in exported HTML)
+    "show_nav_arrows": False,
+
     # Export
     "plotly_js_source": "cdn",
     "output_mode": "both",  # landscape, portrait, both
@@ -590,6 +597,29 @@ def apply_config(fig_dict, config):
     layout.pop('height', None)
     layout['autosize'] = True
 
+    # ---- 2D Axis font sizing ----
+    axis_title_size = config.get('axis_title_font_size', 0)
+    axis_tick_size = config.get('axis_tick_font_size', 0)
+    if axis_title_size > 0 or axis_tick_size > 0:
+        for key in list(layout.keys()):
+            if key.startswith('xaxis') or key.startswith('yaxis'):
+                axis = layout[key]
+                if not isinstance(axis, dict):
+                    continue
+                # Axis title font
+                if axis_title_size > 0 and axis.get('title'):
+                    title_obj = axis['title']
+                    if isinstance(title_obj, str):
+                        axis['title'] = {'text': title_obj}
+                        title_obj = axis['title']
+                    if isinstance(title_obj, dict):
+                        title_obj['font'] = title_obj.get('font', {})
+                        title_obj['font']['size'] = axis_title_size
+                # Tick label font
+                if axis_tick_size > 0:
+                    axis['tickfont'] = axis.get('tickfont', {})
+                    axis['tickfont']['size'] = axis_tick_size
+
     # ---- Font color based on background brightness ----
     bg = config.get('bg_color', '#000000')
     if not config.get('transparent_bg', False) and bg.startswith('#') and len(bg) == 7:
@@ -635,11 +665,216 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     has_frames = len(frames) > 0
 
     show_modebar = 'true' if config.get('show_modebar', False) else 'false'
+    show_nav = config.get('show_nav_arrows', False)
+    has_scene = 'scene' in fig_dict.get('layout', {})
 
     # Determine display title
     display_title = config.get('custom_title', '').strip()
     if not display_title:
         display_title = title
+
+    bg_color = config.get('bg_color', '#000000')
+
+    # Detect if light or dark theme for button styling
+    btn_bg = '#1e293b'
+    btn_border = '#334155'
+    btn_color = '#e8e6e3'
+    if bg_color.startswith('#') and len(bg_color) == 7:
+        try:
+            r = int(bg_color[1:3], 16)
+            g = int(bg_color[3:5], 16)
+            b = int(bg_color[5:7], 16)
+            brightness = (r * 299 + g * 587 + b * 114) / 1000
+            if brightness > 128:
+                btn_bg = '#e2e8f0'
+                btn_border = '#94a3b8'
+                btn_color = '#1e293b'
+        except ValueError:
+            pass
+
+    # Navigation controls CSS and HTML
+    nav_css = ""
+    nav_html = ""
+    nav_js = ""
+
+    if show_nav:
+        nav_css = f"""
+  /* Navigation controls */
+  .nav-controls {{
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    user-select: none;
+    -webkit-user-select: none;
+  }}
+  .nav-row {{
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }}
+  .nav-btn {{
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid {btn_border};
+    background: {btn_bg};
+    color: {btn_color};
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s;
+    line-height: 1;
+    padding: 0;
+  }}
+  .nav-btn:hover {{ opacity: 0.8; }}
+  .nav-btn:active {{ opacity: 0.6; }}
+  .nav-zoom {{
+    margin-top: 6px;
+  }}
+  .nav-spacer {{
+    width: 36px;
+    height: 36px;
+  }}
+"""
+        # Use simple ASCII arrows that render everywhere
+        nav_html = """
+<div class="nav-controls">
+  <div class="nav-row">
+    <div class="nav-spacer"></div>
+    <button class="nav-btn" onclick="panPlot('up')" title="Pan up">&#9650;</button>
+    <div class="nav-spacer"></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn" onclick="panPlot('left')" title="Pan left">&#9664;</button>
+    <button class="nav-btn" onclick="panPlot('reset')" title="Reset view">&#8226;</button>
+    <button class="nav-btn" onclick="panPlot('right')" title="Pan right">&#9654;</button>
+  </div>
+  <div class="nav-row">
+    <div class="nav-spacer"></div>
+    <button class="nav-btn" onclick="panPlot('down')" title="Pan down">&#9660;</button>
+    <div class="nav-spacer"></div>
+  </div>
+  <div class="nav-row nav-zoom">
+    <button class="nav-btn" onclick="zoomPlot('in')" title="Zoom in">+</button>
+    <div style="width:2px"></div>
+    <button class="nav-btn" onclick="zoomPlot('out')" title="Zoom out">&minus;</button>
+  </div>
+</div>
+"""
+
+        if has_scene:
+            # 3D pan/zoom uses synthetic wheel events and camera manipulation
+            nav_js = """
+function panPlot(dir) {
+  var gd = document.getElementById('plotly-graph');
+  if (!gd || !gd._fullLayout || !gd._fullLayout.scene) return;
+  if (dir === 'reset') {
+    Plotly.relayout(gd, {'scene.camera': null});
+    return;
+  }
+  // 3D: use relayout to shift camera eye position
+  try {
+    var scene = gd._fullLayout.scene._scene;
+    var cam = scene.getCamera();
+    var step = 0.15;
+    if (dir === 'up') { cam.eye.z += step; cam.center.z += step; }
+    if (dir === 'down') { cam.eye.z -= step; cam.center.z -= step; }
+    if (dir === 'left') { cam.eye.x -= step; cam.center.x -= step; }
+    if (dir === 'right') { cam.eye.x += step; cam.center.x += step; }
+    scene.setCamera(cam);
+  } catch(e) {}
+}
+function zoomPlot(dir) {
+  var gd = document.getElementById('plotly-graph');
+  var canvas = gd ? (gd.querySelector('.gl-canvas-focus') || gd.querySelector('canvas')) : null;
+  if (!canvas) return;
+  var rect = canvas.getBoundingClientRect();
+  var evt = new WheelEvent('wheel', {
+    deltaY: (dir === 'in' ? -1 : 1) * 100,
+    clientX: rect.left + rect.width / 2,
+    clientY: rect.top + rect.height / 2,
+    bubbles: true, cancelable: true
+  });
+  canvas.dispatchEvent(evt);
+}
+"""
+        else:
+            # 2D pan/zoom uses Plotly.relayout on axis ranges
+            nav_js = """
+var _origRanges = null;
+function _captureOriginal() {
+  if (_origRanges) return;
+  var gd = document.getElementById('plotly-graph');
+  if (!gd || !gd.layout) return;
+  _origRanges = {};
+  var keys = Object.keys(gd.layout);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if ((k.indexOf('xaxis') === 0 || k.indexOf('yaxis') === 0) && gd.layout[k] && gd.layout[k].range) {
+      _origRanges[k] = gd.layout[k].range.slice();
+    }
+  }
+}
+function panPlot(dir) {
+  var gd = document.getElementById('plotly-graph');
+  if (!gd || !gd.layout) return;
+  _captureOriginal();
+  if (dir === 'reset' && _origRanges) {
+    var update = {};
+    var keys = Object.keys(_origRanges);
+    for (var i = 0; i < keys.length; i++) {
+      update[keys[i] + '.range'] = _origRanges[keys[i]].slice();
+    }
+    Plotly.relayout(gd, update);
+    return;
+  }
+  var update = {};
+  var axKeys = Object.keys(gd.layout);
+  for (var i = 0; i < axKeys.length; i++) {
+    var k = axKeys[i];
+    var isX = k.indexOf('xaxis') === 0;
+    var isY = k.indexOf('yaxis') === 0;
+    if (!isX && !isY) continue;
+    var ax = gd.layout[k];
+    if (!ax || !ax.range || ax.range.length < 2) continue;
+    var lo = ax.range[0], hi = ax.range[1];
+    var span = hi - lo;
+    var shift = span * 0.15;
+    if (isX && dir === 'left')  { update[k+'.range'] = [lo - shift, hi - shift]; }
+    if (isX && dir === 'right') { update[k+'.range'] = [lo + shift, hi + shift]; }
+    if (isY && dir === 'up')    { update[k+'.range'] = [lo + shift, hi + shift]; }
+    if (isY && dir === 'down')  { update[k+'.range'] = [lo - shift, hi - shift]; }
+  }
+  if (Object.keys(update).length > 0) Plotly.relayout(gd, update);
+}
+function zoomPlot(dir) {
+  var gd = document.getElementById('plotly-graph');
+  if (!gd || !gd.layout) return;
+  _captureOriginal();
+  var factor = (dir === 'out') ? 1.3 : 1 / 1.3;
+  var update = {};
+  var axKeys = Object.keys(gd.layout);
+  for (var i = 0; i < axKeys.length; i++) {
+    var k = axKeys[i];
+    if (k.indexOf('xaxis') !== 0 && k.indexOf('yaxis') !== 0) continue;
+    var ax = gd.layout[k];
+    if (!ax || !ax.range || ax.range.length < 2) continue;
+    var lo = ax.range[0], hi = ax.range[1];
+    var center = (lo + hi) / 2;
+    var half = (hi - lo) / 2 * factor;
+    update[k+'.range'] = [center - half, center + half];
+  }
+  if (Object.keys(update).length > 0) Plotly.relayout(gd, update);
+}
+"""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -653,17 +888,20 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
   html, body {{
     width: 100%; height: 100%;
     overflow: hidden;
-    background: {config.get('bg_color', '#000000')};
+    background: {bg_color};
   }}
   #plotly-graph {{
     width: 100%;
     height: 100%;
   }}
+{nav_css}
 </style>
 </head>
 <body>
 <div id="plotly-graph"></div>
+{nav_html}
 <script>
+{nav_js}
 document.addEventListener('DOMContentLoaded', function() {{
   var data = {data_json};
   var layout = {layout_json};
@@ -1220,6 +1458,63 @@ class GalleryStudio:
                 "gallery pieces where interaction is not needed -- "
                 "presentation screenshots, static views, etc.")
 
+        # ---- 2D Axes ----
+        sec = tk.LabelFrame(parent, text="2D Axes", padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Font controls for 2D chart axes (climate charts, "
+                "HR diagrams, paleoclimate plots). Ignored for 3D scenes. "
+                "Set to 0 to keep the original sizes from the source plot.")
+
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Axis title size:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_axis_title_size = tk.IntVar(
+            value=self.config['axis_title_font_size'])
+        sp = tk.Spinbox(row, from_=0, to=24,
+                        textvariable=self.var_axis_title_size, width=5)
+        sp.pack(side='left')
+        tk.Label(row, text="(0=keep)", fg='gray').pack(side='left', padx=4)
+        ToolTip(sp, "Font size for axis titles ('Temperature Anomaly', "
+                "'Year', etc.). The source plots often use 14-16 which "
+                "can overflow on mobile. Try 10-12 for gallery. "
+                "Set to 0 to keep the original size unchanged.")
+
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Tick label size:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_axis_tick_size = tk.IntVar(
+            value=self.config['axis_tick_font_size'])
+        sp = tk.Spinbox(row, from_=0, to=20,
+                        textvariable=self.var_axis_tick_size, width=5)
+        sp.pack(side='left')
+        tk.Label(row, text="(0=keep)", fg='gray').pack(side='left', padx=4)
+        ToolTip(sp, "Font size for axis tick labels (years, values, etc.). "
+                "Smaller ticks free up plot area. Try 9-10 for mobile "
+                "gallery views. Set to 0 to keep original sizes.")
+
+        # ---- Navigation ----
+        sec = tk.LabelFrame(parent, text="Navigation Controls", padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Embed navigation controls in the exported HTML. "
+                "These appear as floating buttons in the gallery view, "
+                "enabling panning and zooming without Plotly's mode bar.")
+
+        self.var_show_nav = tk.BooleanVar(
+            value=self.config['show_nav_arrows'])
+        cb = tk.Checkbutton(sec, text="Show pan/zoom arrows",
+                            variable=self.var_show_nav)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Add directional arrow buttons (up/down/left/right) "
+                "and zoom (+/-) to the exported HTML. Essential for 2D "
+                "charts on touch devices where you need to pan to specific "
+                "data points -- e.g., navigating to a particular year on "
+                "a paleoclimate chart to read its hover text. The arrows "
+                "shift the visible axis range in that direction. Also "
+                "useful for dense plots where pinch-zoom isn't precise "
+                "enough.")
+
     def _update_bg_swatch(self):
         """Update the color swatch to show current BG color."""
         try:
@@ -1276,6 +1571,9 @@ class GalleryStudio:
             'strip_updatemenus': self.var_strip_updatemenus.get(),
             'keep_animation_controls': self.var_keep_animation.get(),
             'hover_mode': self.var_hover_mode.get(),
+            'axis_title_font_size': self.var_axis_title_size.get(),
+            'axis_tick_font_size': self.var_axis_tick_size.get(),
+            'show_nav_arrows': self.var_show_nav.get(),
             'plotly_js_source': 'cdn',
         }
 
@@ -1307,6 +1605,9 @@ class GalleryStudio:
         self.var_strip_updatemenus.set(c.get('strip_updatemenus', False))
         self.var_keep_animation.set(c.get('keep_animation_controls', True))
         self.var_hover_mode.set(c.get('hover_mode', 'default'))
+        self.var_axis_title_size.set(c.get('axis_title_font_size', 0))
+        self.var_axis_tick_size.set(c.get('axis_tick_font_size', 0))
+        self.var_show_nav.set(c.get('show_nav_arrows', False))
 
     # ---- Actions ----
 
