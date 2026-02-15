@@ -1144,6 +1144,13 @@
 
                 figDict.layout = figDict.layout || {};
 
+                // Detect studio-curated plots: skip all generic cleanup
+                // if the studio has already tailored this figure.
+                var isStudio = figDict.layout._studio === true;
+                if (isStudio) {
+                    delete figDict.layout._studio; // Clean up marker
+                }
+
                 // Auto-detect theme BEFORE stripping template
                 var origBg = '';
                 if (figDict.layout.paper_bgcolor) {
@@ -1159,7 +1166,7 @@
                     origBg === '#fff' || origBg.indexOf('rgb(255') === 0 ||
                     origBg === '#e5ecf6');
 
-                // Strip embedded template
+                // Strip embedded template (always - prevents version mismatch)
                 if (figDict.layout.template) {
                     delete figDict.layout.template;
                 }
@@ -1173,6 +1180,9 @@
                 delete figDict.layout.width;
                 delete figDict.layout.height;
                 figDict.layout.autosize = true;
+
+                // ---- Studio-curated: skip all generic overrides ----
+                if (!isStudio) {
 
                 // Title handling:
                 // On mobile/portrait, suppress the figure title -- the nav
@@ -1332,6 +1342,8 @@
                         figDict.layout.title.font.size = Math.max(12, titleSize * 0.7);
                     }
                 }
+
+                } // end !isStudio
 
                 // Show graph container
                 plotlyGraph.style.display = 'block';
