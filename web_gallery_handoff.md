@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-14, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-15, 2026 | Claude Opus 4.6
 
 ---
 
@@ -928,25 +928,129 @@ Present in both the static HTML and the goHome() JS rebuild.
 | 5 | Content population + validation | IN PROGRESS - 31 vizs (23 landscape, 8 portrait) |
 | 6 | Gallery management tooling | DONE (Session 8) - editor GUI + shared config |
 | 7 | 2D mobile optimization + cross-browser | DONE (Session 9) - HR diagrams on 5 iOS browsers |
-| 8 | Polish | Version stamp, hints, nudges |
+| 8 | Gallery Studio | DONE (Session 10) - per-plot curation tool |
+| 9 | Studio/index integration | DONE (Session 10) - _studio flag, pan arrows |
+| 10 | Polish | Version stamp, hints, nudges |
+
+### Session 10 (Feb 15): Gallery Export Studio
+
+Built gallery_studio.py -- a Tkinter GUI tool for per-plot configuration
+of Plotly HTML transformations before the gallery pipeline. Solves the
+fundamental problem that index.html's generic cleanup can't make good
+per-plot decisions (legend font size for 9-entry paleoclimate chart vs
+3D planet view with no legend).
+
+**gallery_studio.py** (1,835 lines, ASCII clean, LF)
+
+The studio sits between source HTML and the gallery pipeline:
+
+```
+Source GUI -> raw Plotly HTML -> Gallery Studio -> tailored HTML
+    -> json_converter -> index.html
+```
+
+Studio does:
+- Load any Plotly HTML (raw exports, social views, prior studio exports)
+- Configure transformations via GUI (title, background, margins, 3D scene,
+  legend, annotations, traces, chrome/controls, hover, 2D axes, navigation)
+- Preview in browser via temp file (iterate until right)
+- Export tailored HTML with per-plot settings
+- Auto-save/restore configs per source filename (gallery_studio_configs.json)
+
+Studio does NOT:
+- Replace json_converter or index.html
+- Modify source plots
+- Create new visualizations
+- Handle animation creation
+
+**Key features**:
+
+1. **Tooltip documentation** -- Every control has a hover tooltip explaining
+   what it does, when to use it, and practical examples from the project.
+   Self-documenting GUI.
+
+2. **Background presets** -- Dark/Light/Plotly one-click buttons plus a
+   color spectrum picker (tkinter.colorchooser). Live color swatch previews
+   the selected color. Auto-detects text color based on background brightness
+   (ITU-R BT.601 formula).
+
+3. **2D axis font controls** -- Axis title font size and tick label font
+   size. Essential for paleoclimate charts where desktop-sized axis titles
+   overflow on mobile. Set to 0 to keep original sizes.
+
+4. **Pan/zoom navigation arrows** -- Embeds a D-pad (up/down/left/right)
+   plus zoom (+/-) and reset button in the exported HTML. Essential for
+   2D charts on touch devices where you need to navigate to specific data
+   points (e.g., finding a particular year on a paleoclimate chart to
+   read its hover text).
+
+5. **_studio flag** -- The studio marks its exports with `_studio: true`
+   in the Plotly layout. This flag survives json_converter extraction.
+   index.html detects it and skips ALL generic cleanup (legend overrides,
+   margin capping, font scaling, colorbar hiding, annotation stripping,
+   title removal, hover mode changes). The studio's settings pass through
+   untouched.
+
+6. **_studio_nav flag** -- When pan arrows are enabled, `_studio_nav: true`
+   is added to the layout. index.html reads this and shows the full D-pad
+   control panel instead of the basic zoom-only buttons.
+
+**index.html changes** (1,080 lines -> ~2,080 lines):
+
+- Studio detection: reads `_studio` flag, skips generic overrides
+- Pan controls: full D-pad HTML/CSS/JS alongside existing zoom controls
+- `_studio_nav` switches between D-pad (studio) and zoom-only (non-studio)
+- Pan functions for 2D (axis range shifting) and 3D (camera manipulation)
+- Reset button captures original ranges on first interaction
+- Pan controls hidden when returning to welcome/home state
+
+**Testing validated**:
+- Paleoclimate Wet Bulb chart: legend font 9, axis title 9, pan arrows
+- Planetary Boundaries: studio export with light background, clean rendering
+- Cross-browser: Home Screen, Chrome, Safari on iPhone landscape
+- _studio flag survives full round-trip (studio -> HTML -> json_converter
+  -> JSON -> index.html)
+- Pan arrows work correctly for 2D chart navigation
+
+**Architecture insight**: The studio handles author-side curation (per-plot
+decisions at export time). The index handles viewer-side adaptation (device
+detection, responsive layout, portrait info card). These are complementary,
+not competing. The _studio flag is the contract between them: "this plot
+was curated, trust it."
+
+**Paleoclimate charts reinstated**: Previously removed from gallery as
+"too busy for mobile view." The studio's per-plot font sizing and pan
+arrows make them viable gallery content again.
+
+**Social view relationship clarified**: Social views (9:16 portrait with
+info panel) remain their own output for Instagram/YouTube. The studio can
+load a social view HTML as input and further tailor it for gallery. The
+studio doesn't replace social_media_export.py -- it's a different tool
+for a different purpose. The gallery can also reload its own prior exports
+for iterative refinement.
 
 ### Deferred Items (future phases)
 
 - Animation frame extraction in converter (Plotly.addFrames support)
-- Legend handling for high-trace-count figures
+- ~~Legend handling for high-trace-count figures~~ SOLVED (Session 10 - studio per-plot font sizing)
 - Thumbnail generation for gallery cards
 - Link preview images for social sharing (og:image)
 - Website content pages (About, Downloads, Contact)
 - Version/update date in gallery footer
 - Custom pinch-to-zoom handler for 3D (option 1 from Session 7 -- would
   replace zoom buttons with native gesture, but complex to implement)
+- Studio social/portrait preset (absorb social_media_export.py's 9:16
+  layout into studio as a one-click preset -- would make GUI social
+  view buttons obsolete)
 
 ### Immediate Next: Content + Polish
 
-Gallery infrastructure is complete (viewer, converter, editor, config).
-Remaining work:
-- Continue populating gallery with landscape and portrait content
-- Test on additional devices -- ongoing (5 iOS browsers tested Session 9)
+Gallery infrastructure is complete (viewer, converter, editor, config,
+studio). Remaining work:
+- Continue populating gallery with studio-curated landscape and portrait content
+- Re-export existing gallery content through studio for _studio flag benefits
+- Test on additional devices -- ongoing (5 iOS browsers tested Session 9,
+  3 browsers validated Session 10)
 - Polish: version stamp, first-visit hints
 
 ## Known Issues & Lessons
@@ -1374,6 +1478,14 @@ re-export from the current app.
 | Complex chart mode | Landscape with title hint | Polar/busy charts need width; "(swipe to explore)" |
 | Welcome device hints | CSS-only per breakpoint | Phone users learn about desktop; no JS needed |
 | Paleoclimate charts | Removed from gallery | Too busy for any mobile view; revisit later |
+| Per-plot curation | Gallery Studio (gallery_studio.py) | Generic cleanup can't make per-plot decisions |
+| Studio override mechanism | _studio flag in layout | Survives JSON extraction; index skips overrides |
+| Pan arrows in gallery | _studio_nav flag + D-pad in index | Arrows embedded in studio HTML lost by json_converter |
+| Background presets | Dark/Light/Plotly buttons + color picker | Typing hex codes is error-prone |
+| Auto text color | ITU-R BT.601 brightness detection | Dark bg = light text, light bg = dark text |
+| Paleoclimate charts | Reinstated via studio | Per-plot font sizing + pan arrows make them viable |
+| Social view relationship | Studio complements, not replaces | Social = 9:16 Instagram; Studio = gallery curation |
+| Studio re-export | Studio can reload its own output | Iterative refinement without re-exporting from source |
 
 ---
 
@@ -1395,5 +1507,15 @@ categories across converter, editor, and viewer, February 12, 2026
 
 *"The bottom axis is almost self-explanatory."* -- On stripping axis
 titles for mobile, February 14, 2026
+
+*"Compare the before and after! What we did with the index vs the
+studio."* -- Tony, on the Planetary Boundaries transformation,
+February 15, 2026
+
+*"We should always override index when studio has created a setting."*
+-- Tony, on the _studio flag design, February 15, 2026
+
+*"Pan and zoom work perfectly."* -- Tony, validating D-pad on iPhone,
+February 15, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*
