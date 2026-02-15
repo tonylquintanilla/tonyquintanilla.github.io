@@ -100,6 +100,84 @@ PLOTLY_CDN = "https://cdn.plot.ly/plotly-2.35.2.min.js"
 
 
 # ============================================================================
+# TOOLTIP HELPER
+# ============================================================================
+
+class ToolTip:
+    """
+    Hover tooltip for Tkinter widgets.
+
+    Shows a small popup with explanatory text when the user hovers
+    over a widget. Disappears when the mouse leaves.
+
+    Usage:
+        ToolTip(widget, "This is what this control does.")
+    """
+
+    def __init__(self, widget, text, delay=400, wraplength=300):
+        self.widget = widget
+        self.text = text
+        self.delay = delay
+        self.wraplength = wraplength
+        self.tip_window = None
+        self.after_id = None
+
+        widget.bind('<Enter>', self._schedule)
+        widget.bind('<Leave>', self._cancel)
+        widget.bind('<ButtonPress>', self._cancel)
+
+    def _schedule(self, event=None):
+        self._cancel()
+        self.after_id = self.widget.after(self.delay, self._show)
+
+    def _cancel(self, event=None):
+        if self.after_id:
+            self.widget.after_cancel(self.after_id)
+            self.after_id = None
+        self._hide()
+
+    def _show(self):
+        if self.tip_window:
+            return
+
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 4
+
+        self.tip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+
+        # Keep on screen
+        screen_w = tw.winfo_screenwidth()
+        screen_h = tw.winfo_screenheight()
+
+        label = tk.Label(
+            tw, text=self.text, justify='left',
+            background='#ffffdd', foreground='#333333',
+            relief='solid', borderwidth=1,
+            wraplength=self.wraplength,
+            font=('TkDefaultFont', 9),
+            padx=6, pady=4
+        )
+        label.pack()
+
+        tw.update_idletasks()
+        tip_w = tw.winfo_width()
+        tip_h = tw.winfo_height()
+
+        if x + tip_w > screen_w:
+            x = screen_w - tip_w - 4
+        if y + tip_h > screen_h:
+            y = self.widget.winfo_rooty() - tip_h - 4
+
+        tw.wm_geometry(f"+{x}+{y}")
+
+    def _hide(self):
+        if self.tip_window:
+            self.tip_window.destroy()
+            self.tip_window = None
+
+
+# ============================================================================
 # HTML EXTRACTION (reuse json_converter's bracket-matching approach)
 # ============================================================================
 
@@ -664,8 +742,11 @@ class GalleryStudio:
 
         tk.Button(btn_row, text="Load HTML...", command=self._load_file,
                   width=14).pack(side='left', padx=2)
-        tk.Button(btn_row, text="Reload", command=self._reload_file,
-                  width=8).pack(side='left', padx=2)
+        reload_btn = tk.Button(btn_row, text="Reload", command=self._reload_file,
+                               width=8)
+        reload_btn.pack(side='left', padx=2)
+        ToolTip(reload_btn, "Re-read the source HTML from disk. Useful after "
+                "regenerating the plot in the orrery or star visualization.")
 
         # ---- Scrollable config area ----
         config_container = tk.Frame(self.root)
@@ -703,12 +784,30 @@ class GalleryStudio:
         action_frame = tk.Frame(self.root)
         action_frame.pack(fill='x', padx=10, pady=(5, 10))
 
-        tk.Button(action_frame, text="Preview", command=self._preview,
-                  width=12, bg='SystemButtonFace').pack(side='left', padx=3)
-        tk.Button(action_frame, text="Export HTML...", command=self._export,
-                  width=14, bg='SystemButtonFace', fg='blue').pack(side='left', padx=3)
-        tk.Button(action_frame, text="Reset Defaults",
-                  command=self._reset_defaults, width=14).pack(side='right', padx=3)
+        preview_btn = tk.Button(action_frame, text="Preview",
+                               command=self._preview, width=12,
+                               bg='SystemButtonFace')
+        preview_btn.pack(side='left', padx=3)
+        ToolTip(preview_btn, "Apply current settings and open the result in "
+                "your default browser as a temp file. Tweak settings and "
+                "preview again until it looks right. Temp files are cleaned "
+                "up when the studio closes.")
+
+        export_btn = tk.Button(action_frame, text="Export HTML...",
+                               command=self._export, width=14,
+                               bg='SystemButtonFace', fg='blue')
+        export_btn.pack(side='left', padx=3)
+        ToolTip(export_btn, "Save the tailored HTML to a location you choose. "
+                "This is the file you feed into json_converter.py for the "
+                "gallery pipeline. Your settings are automatically saved "
+                "for this source file so you can re-export later.")
+
+        reset_btn = tk.Button(action_frame, text="Reset Defaults",
+                              command=self._reset_defaults, width=14)
+        reset_btn.pack(side='right', padx=3)
+        ToolTip(reset_btn, "Reset all settings to the built-in defaults. "
+                "Does not affect saved per-file configs -- those are only "
+                "overwritten when you Export.")
 
         # Status bar
         self.status_var = tk.StringVar(value="Ready")
@@ -725,22 +824,35 @@ class GalleryStudio:
         sec.pack(fill='x', pady=3, padx=2)
 
         self.var_show_title = tk.BooleanVar(value=self.config['show_title'])
-        tk.Checkbutton(sec, text="Show title",
-                       variable=self.var_show_title).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Show title",
+                            variable=self.var_show_title)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Display the plot title in the exported HTML. "
+                "Uncheck for clean full-screen views where the gallery "
+                "nav already shows the name. Good to uncheck for "
+                "social/portrait views.")
 
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
         tk.Label(row, text="Custom title:", width=14, anchor='w').pack(side='left')
         self.var_custom_title = tk.StringVar(value=self.config['custom_title'])
-        tk.Entry(row, textvariable=self.var_custom_title, width=30).pack(
-            side='left', fill='x', expand=True)
+        ent = tk.Entry(row, textvariable=self.var_custom_title, width=30)
+        ent.pack(side='left', fill='x', expand=True)
+        ToolTip(ent, "Override the plot's built-in title with your own text. "
+                "Leave blank to keep the original title from the source HTML. "
+                "Useful for cleaning up auto-generated names like "
+                "'earth_heliocentric_20260207' into 'Earth Orbit'.")
 
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
         tk.Label(row, text="Title font size:", width=14, anchor='w').pack(side='left')
         self.var_title_size = tk.IntVar(value=self.config['title_font_size'])
-        tk.Spinbox(row, from_=10, to=36, textvariable=self.var_title_size,
-                   width=5).pack(side='left')
+        sp = tk.Spinbox(row, from_=10, to=36, textvariable=self.var_title_size,
+                        width=5)
+        sp.pack(side='left')
+        ToolTip(sp, "Font size in pixels for the title. "
+                "18 is good for gallery views. Use 14 for smaller/denser "
+                "plots, 24+ for presentation-style displays.")
 
         # ---- Background ----
         sec = tk.LabelFrame(parent, text="Background", padx=6, pady=4)
@@ -748,19 +860,34 @@ class GalleryStudio:
 
         self.var_transparent_bg = tk.BooleanVar(
             value=self.config['transparent_bg'])
-        tk.Checkbutton(sec, text="Transparent background",
-                       variable=self.var_transparent_bg).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Transparent background",
+                            variable=self.var_transparent_bg)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Make the plot background fully transparent (rgba 0,0,0,0). "
+                "Use this when the gallery viewer provides its own dark "
+                "background, so the plot blends seamlessly. Overrides "
+                "the BG color below when checked.")
 
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
         tk.Label(row, text="BG color:", width=14, anchor='w').pack(side='left')
         self.var_bg_color = tk.StringVar(value=self.config['bg_color'])
-        tk.Entry(row, textvariable=self.var_bg_color, width=12).pack(side='left')
+        ent = tk.Entry(row, textvariable=self.var_bg_color, width=12)
+        ent.pack(side='left')
         tk.Label(row, text="(hex)", fg='gray').pack(side='left', padx=4)
+        ToolTip(ent, "Background color as a hex code. #000000 (black) is the "
+                "default and works well with the dark gallery theme. "
+                "Use #ffffff for light-themed plots like climate charts "
+                "that were designed with white backgrounds.")
 
         # ---- Margins ----
         sec = tk.LabelFrame(parent, text="Margins", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Pixel margins around the plot area. "
+                "Top: space for title (40 if title shown, 0 if hidden). "
+                "Bottom: space for axis labels or sliders. "
+                "Left/Right: usually minimal (10-20) for gallery. "
+                "Social views typically use 0 everywhere.")
 
         margin_frame = tk.Frame(sec)
         margin_frame.pack(fill='x')
@@ -770,135 +897,246 @@ class GalleryStudio:
         self.var_margin_l = tk.IntVar(value=self.config['margin_left'])
         self.var_margin_r = tk.IntVar(value=self.config['margin_right'])
 
+        margin_tips = {
+            "Top:": "Space above the plot. Set to 40+ if title is "
+                    "visible, 0-10 if title is hidden.",
+            "Bottom:": "Space below the plot. Increase to 40+ if the "
+                       "plot has an animation slider or x-axis labels.",
+            "Left:": "Space on the left. Increase if y-axis labels "
+                     "are being clipped.",
+            "Right:": "Space on the right. Increase if colorbar or "
+                      "legend is being clipped.",
+        }
         for label, var in [("Top:", self.var_margin_t),
                            ("Bottom:", self.var_margin_b),
                            ("Left:", self.var_margin_l),
                            ("Right:", self.var_margin_r)]:
             f = tk.Frame(margin_frame)
             f.pack(side='left', padx=4)
-            tk.Label(f, text=label, font=('TkDefaultFont', 8)).pack()
-            tk.Spinbox(f, from_=0, to=200, textvariable=var,
-                       width=4).pack()
+            lbl = tk.Label(f, text=label, font=('TkDefaultFont', 8))
+            lbl.pack()
+            sp = tk.Spinbox(f, from_=0, to=200, textvariable=var, width=4)
+            sp.pack()
+            ToolTip(sp, margin_tips[label])
 
         # ---- Scene (3D) ----
         sec = tk.LabelFrame(parent, text="3D Scene", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Settings for 3D plots (solar system, stellar maps, "
+                "planet shells). Ignored for 2D plots like climate charts "
+                "and HR diagrams.")
 
         self.var_show_axes = tk.BooleanVar(value=self.config['show_axes'])
-        tk.Checkbutton(sec, text="Show axes",
-                       variable=self.var_show_axes).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Show axes",
+                            variable=self.var_show_axes)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Show the x/y/z axis lines, labels, and tick marks. "
+                "OFF (default) gives a clean space view -- just objects "
+                "floating in the void. Turn ON for scientific plots where "
+                "coordinate reference matters (e.g., AU distances).")
 
         self.var_show_grid = tk.BooleanVar(value=self.config['show_grid'])
-        tk.Checkbutton(sec, text="Show grid",
-                       variable=self.var_show_grid).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Show grid",
+                            variable=self.var_show_grid)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Show the 3D grid planes behind the plot. Only has "
+                "effect if axes are also shown. Useful for plots where "
+                "spatial relationships need a visual reference frame.")
 
         # ---- Legend ----
         sec = tk.LabelFrame(parent, text="Legend", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
 
         self.var_show_legend = tk.BooleanVar(value=self.config['show_legend'])
-        tk.Checkbutton(sec, text="Show legend",
-                       variable=self.var_show_legend).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Show legend",
+                            variable=self.var_show_legend)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Display the trace legend. Essential for multi-object "
+                "plots (planets, star types, climate datasets). Turn OFF "
+                "for single-object views or when the plot is self-evident "
+                "(e.g., a single planet with shells).")
 
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
         tk.Label(row, text="Orientation:", width=14, anchor='w').pack(side='left')
         self.var_legend_orient = tk.StringVar(
             value=self.config['legend_orientation'])
-        tk.Radiobutton(row, text="Vertical", variable=self.var_legend_orient,
-                       value='v').pack(side='left')
-        tk.Radiobutton(row, text="Horizontal", variable=self.var_legend_orient,
-                       value='h').pack(side='left')
+        rb1 = tk.Radiobutton(row, text="Vertical",
+                             variable=self.var_legend_orient, value='v')
+        rb1.pack(side='left')
+        ToolTip(rb1, "Standard side legend. Good for desktop/landscape "
+                "views with many traces.")
+        rb2 = tk.Radiobutton(row, text="Horizontal",
+                             variable=self.var_legend_orient, value='h')
+        rb2.pack(side='left')
+        ToolTip(rb2, "Horizontal legend above the plot. Better for "
+                "mobile/portrait views -- saves horizontal space. "
+                "Works well with a small number of traces.")
 
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
         tk.Label(row, text="Font size:", width=14, anchor='w').pack(side='left')
         self.var_legend_size = tk.IntVar(
             value=self.config['legend_font_size'])
-        tk.Spinbox(row, from_=8, to=20, textvariable=self.var_legend_size,
-                   width=5).pack(side='left')
+        sp = tk.Spinbox(row, from_=8, to=20,
+                        textvariable=self.var_legend_size, width=5)
+        sp.pack(side='left')
+        ToolTip(sp, "Legend text size. 11 is default. Use 9-10 for "
+                "crowded plots with many traces, 13+ for presentation.")
 
         # ---- Annotations ----
         sec = tk.LabelFrame(parent, text="Annotations", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Control text annotations overlaid on the plot -- "
+                "coordinate system labels, data source attributions, "
+                "footnotes, etc.")
 
         self.var_show_annotations = tk.BooleanVar(
             value=self.config['show_annotations'])
-        tk.Checkbutton(sec, text="Show annotations",
-                       variable=self.var_show_annotations).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Show annotations",
+                            variable=self.var_show_annotations)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Master switch for all annotations. Uncheck to "
+                "remove everything -- coordinate system boxes, source "
+                "attributions, all text overlays. Use for clean views.")
 
         self.var_strip_footer = tk.BooleanVar(
             value=self.config['strip_footer_annotations'])
-        tk.Checkbutton(sec, text="Strip footer annotations",
-                       variable=self.var_strip_footer).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Strip footer annotations",
+                            variable=self.var_strip_footer)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Remove annotations positioned below the plot area "
+                "(y < 0 in paper coordinates). These are typically data "
+                "source attributions and footnotes that can crowd the "
+                "bottom on small screens.")
 
         self.var_ann_transparent = tk.BooleanVar(
             value=self.config['annotation_bg_transparent'])
-        tk.Checkbutton(sec, text="Transparent annotation backgrounds",
-                       variable=self.var_ann_transparent).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Transparent annotation backgrounds",
+                            variable=self.var_ann_transparent)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Make annotation background boxes transparent while "
+                "keeping the text visible. The orrery uses opaque boxes "
+                "for coordinate labels -- these can obscure data on "
+                "small screens. This strips the box, keeps the text.")
 
         # ---- Traces ----
         sec = tk.LabelFrame(parent, text="Traces", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Adjust how data traces (points, lines, markers) "
+                "appear in the exported HTML.")
 
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
         tk.Label(row, text="Marker size +:", width=14, anchor='w').pack(side='left')
         self.var_marker_boost = tk.IntVar(
             value=self.config['marker_size_boost'])
-        tk.Spinbox(row, from_=0, to=20, textvariable=self.var_marker_boost,
-                   width=5).pack(side='left')
+        sp = tk.Spinbox(row, from_=0, to=20,
+                        textvariable=self.var_marker_boost, width=5)
+        sp.pack(side='left')
+        ToolTip(sp, "Add pixels to all marker sizes. 0 keeps original "
+                "sizes. Use +2 to +4 for social media views where small "
+                "markers become invisible on phone screens. The social "
+                "media export uses +4 by default.")
 
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
         tk.Label(row, text="Min line width:", width=14, anchor='w').pack(side='left')
         self.var_line_min = tk.IntVar(value=self.config['line_width_min'])
-        tk.Spinbox(row, from_=1, to=10, textvariable=self.var_line_min,
-                   width=5).pack(side='left')
+        sp = tk.Spinbox(row, from_=1, to=10,
+                        textvariable=self.var_line_min, width=5)
+        sp.pack(side='left')
+        ToolTip(sp, "Minimum width for orbit/trajectory lines. Lines "
+                "thinner than this will be thickened. 2 is good for "
+                "desktop, 3-4 for mobile/social where thin orbits "
+                "disappear on small screens.")
 
         # ---- Chrome ----
         sec = tk.LabelFrame(parent, text="Chrome & Controls", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Plotly UI elements -- toolbars, colorbars, and "
+                "internal templates that affect rendering.")
 
         self.var_show_modebar = tk.BooleanVar(
             value=self.config['show_modebar'])
-        tk.Checkbutton(sec, text="Show mode bar",
-                       variable=self.var_show_modebar).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Show mode bar",
+                            variable=self.var_show_modebar)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Plotly's toolbar with zoom, pan, rotate, screenshot "
+                "buttons. OFF gives a cleaner look for gallery. Turn ON "
+                "if viewers need orbit/reset/download tools.")
 
         self.var_show_colorbar = tk.BooleanVar(
             value=self.config['show_colorbar'])
-        tk.Checkbutton(sec, text="Show color bar",
-                       variable=self.var_show_colorbar).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Show color bar",
+                            variable=self.var_show_colorbar)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Show color scale bars on traces that use color "
+                "mapping (temperature, velocity, etc.). Turn OFF for "
+                "mobile views to reclaim screen width. Essential for "
+                "scientific plots like HR diagrams.")
 
         self.var_strip_template = tk.BooleanVar(
             value=self.config['strip_template'])
-        tk.Checkbutton(sec, text="Strip Plotly template",
-                       variable=self.var_strip_template).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Strip Plotly template",
+                            variable=self.var_strip_template)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Remove the embedded Plotly template object from the "
+                "layout. RECOMMENDED: templates can cause version mismatch "
+                "errors (e.g., heatmapgl) when the gallery viewer uses a "
+                "different Plotly.js version than the source app. Stripping "
+                "is safe -- the plot keeps its explicit styles.")
 
         self.var_strip_updatemenus = tk.BooleanVar(
             value=self.config['strip_updatemenus'])
-        tk.Checkbutton(sec, text="Strip update menus",
-                       variable=self.var_strip_updatemenus).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Strip update menus",
+                            variable=self.var_strip_updatemenus)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Remove Plotly updatemenus (dropdown buttons). The "
+                "orrery adds hover-toggle buttons and camera presets -- "
+                "these are useful in the app but clutter the gallery view. "
+                "Check 'Keep animation controls' below to preserve "
+                "play/pause buttons while stripping the rest.")
 
         self.var_keep_animation = tk.BooleanVar(
             value=self.config['keep_animation_controls'])
-        tk.Checkbutton(sec, text="Keep animation controls",
-                       variable=self.var_keep_animation).pack(anchor='w')
+        cb = tk.Checkbutton(sec, text="Keep animation controls",
+                            variable=self.var_keep_animation)
+        cb.pack(anchor='w')
+        ToolTip(cb, "When stripping update menus, preserve play/pause "
+                "buttons and date sliders for animated plots. Only relevant "
+                "if 'Strip update menus' is checked. Animation controls "
+                "are identified by having buttons with method='animate'.")
 
         # ---- Hover ----
         sec = tk.LabelFrame(parent, text="Hover", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "How hover tooltips behave when the viewer mouses "
+                "over data points in the gallery.")
 
         self.var_hover_mode = tk.StringVar(value=self.config['hover_mode'])
-        tk.Radiobutton(sec, text="Default hover",
-                       variable=self.var_hover_mode,
-                       value='default').pack(anchor='w')
-        tk.Radiobutton(sec, text="Names only",
-                       variable=self.var_hover_mode,
-                       value='names_only').pack(anchor='w')
-        tk.Radiobutton(sec, text="No hover",
-                       variable=self.var_hover_mode,
-                       value='none').pack(anchor='w')
+        rb = tk.Radiobutton(sec, text="Default hover",
+                            variable=self.var_hover_mode, value='default')
+        rb.pack(anchor='w')
+        ToolTip(rb, "Keep the original hover behavior from the source "
+                "plot. Desktop plots show full hovertext with distance, "
+                "velocity, coordinates, etc. Best for landscape/desktop "
+                "gallery viewing.")
+
+        rb = tk.Radiobutton(sec, text="Names only",
+                            variable=self.var_hover_mode, value='names_only')
+        rb.pack(anchor='w')
+        ToolTip(rb, "Show only the object name on hover -- no detailed "
+                "data. Cleaner for mobile views where full hovertext is "
+                "too large. The gallery viewer's info card (portrait mode) "
+                "can show details on tap instead.")
+
+        rb = tk.Radiobutton(sec, text="No hover",
+                            variable=self.var_hover_mode, value='none')
+        rb.pack(anchor='w')
+        ToolTip(rb, "Disable all hover tooltips. Use for purely visual "
+                "gallery pieces where interaction is not needed -- "
+                "presentation screenshots, static views, etc.")
 
     def _collect_config(self):
         """Read all GUI values into the config dict."""
