@@ -62,7 +62,7 @@
     "plotly_js_source": "cdn"
   },
   "paleoclimate_wet_bulb_gallery.html": {
-    "bg_color": "#e5ecf6",
+    "bg_color": "#ffffff",
     "transparent_bg": false,
     "show_title": false,
     "custom_title": "",
@@ -74,7 +74,7 @@
     "margin_right": 20,
     "show_axes": false,
     "show_grid": false,
-    "scene_bgcolor": "#e5ecf6",
+    "scene_bgcolor": "#ffffff",
     "show_legend": true,
     "legend_orientation": "h",
     "legend_font_size": 9,
