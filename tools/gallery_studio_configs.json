@@ -75,7 +75,7 @@
     "show_axes": false,
     "show_grid": false,
     "scene_bgcolor": "#ffffff",
-    "show_legend": true,
+    "show_legend": false,
     "legend_orientation": "h",
     "legend_font_size": 9,
     "legend_bgcolor": "rgba(0,0,0,0)",
