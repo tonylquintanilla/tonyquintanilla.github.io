@@ -35,7 +35,7 @@ import tempfile
 import webbrowser
 import platform
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox, ttk, colorchooser
 from datetime import datetime
 
 
@@ -590,11 +590,23 @@ def apply_config(fig_dict, config):
     layout.pop('height', None)
     layout['autosize'] = True
 
-    # ---- Font color for dark backgrounds ----
+    # ---- Font color based on background brightness ----
     bg = config.get('bg_color', '#000000')
-    if not config.get('transparent_bg', False) and bg in ('#000000', '#000', 'black'):
-        layout['font'] = layout.get('font', {})
-        layout['font']['color'] = layout['font'].get('color', '#e8e6e3')
+    if not config.get('transparent_bg', False) and bg.startswith('#') and len(bg) == 7:
+        try:
+            r = int(bg[1:3], 16)
+            g = int(bg[3:5], 16)
+            b = int(bg[5:7], 16)
+            brightness = (r * 299 + g * 587 + b * 114) / 1000
+            layout['font'] = layout.get('font', {})
+            if brightness <= 128:
+                # Dark background -> light text
+                layout['font']['color'] = layout['font'].get('color', '#e8e6e3')
+            else:
+                # Light background -> dark text
+                layout['font']['color'] = layout['font'].get('color', '#333333')
+        except ValueError:
+            pass
 
     fig['layout'] = layout
     return fig
@@ -868,17 +880,87 @@ class GalleryStudio:
                 "background, so the plot blends seamlessly. Overrides "
                 "the BG color below when checked.")
 
-        row = tk.Frame(sec)
-        row.pack(fill='x', pady=2)
-        tk.Label(row, text="BG color:", width=14, anchor='w').pack(side='left')
+        # Preset buttons row
+        preset_row = tk.Frame(sec)
+        preset_row.pack(fill='x', pady=(4, 2))
+        tk.Label(preset_row, text="Presets:", width=14, anchor='w').pack(side='left')
+
+        def set_bg_preset(color, title_color):
+            self.var_bg_color.set(color)
+            self.var_transparent_bg.set(False)
+            self._update_bg_swatch()
+            # Also update title color to match theme
+            self.config['title_color'] = title_color
+
+        dark_btn = tk.Button(preset_row, text="Dark", width=6,
+                             bg='#222222', fg='white',
+                             command=lambda: set_bg_preset('#000000', '#f8fafc'))
+        dark_btn.pack(side='left', padx=2)
+        ToolTip(dark_btn, "Black background (#000000) with light text. "
+                "Use for 3D space plots, stellar maps, solar system "
+                "views -- anything that looks natural against the void.")
+
+        light_btn = tk.Button(preset_row, text="Light", width=6,
+                              bg='#f0f0f0', fg='black',
+                              command=lambda: set_bg_preset('#ffffff', '#333333'))
+        light_btn.pack(side='left', padx=2)
+        ToolTip(light_btn, "White background (#ffffff) with dark text. "
+                "Use for climate charts, paleoclimate plots, HR diagrams, "
+                "planetary boundaries -- plots originally designed on white.")
+
+        plotly_btn = tk.Button(preset_row, text="Plotly", width=6,
+                               bg='#e5ecf6', fg='#333333',
+                               command=lambda: set_bg_preset('#e5ecf6', '#333333'))
+        plotly_btn.pack(side='left', padx=2)
+        ToolTip(plotly_btn, "Plotly's default light blue-gray (#e5ecf6). "
+                "Matches the standard Plotly template look. Use for plots "
+                "that were created without explicit background settings.")
+
+        # Color entry + picker + swatch row
+        color_row = tk.Frame(sec)
+        color_row.pack(fill='x', pady=2)
+        tk.Label(color_row, text="BG color:", width=14, anchor='w').pack(side='left')
         self.var_bg_color = tk.StringVar(value=self.config['bg_color'])
-        ent = tk.Entry(row, textvariable=self.var_bg_color, width=12)
+        ent = tk.Entry(color_row, textvariable=self.var_bg_color, width=10)
         ent.pack(side='left')
-        tk.Label(row, text="(hex)", fg='gray').pack(side='left', padx=4)
-        ToolTip(ent, "Background color as a hex code. #000000 (black) is the "
-                "default and works well with the dark gallery theme. "
-                "Use #ffffff for light-themed plots like climate charts "
-                "that were designed with white backgrounds.")
+        ToolTip(ent, "Background color as a hex code. Type directly or "
+                "use the presets/picker. Common values:\n"
+                "  #000000 = black (space plots)\n"
+                "  #ffffff = white (climate/science)\n"
+                "  #e5ecf6 = Plotly default gray-blue\n"
+                "  #0a0a0f = gallery dark theme")
+
+        # Color picker button
+        def pick_color():
+            current = self.var_bg_color.get()
+            try:
+                result = colorchooser.askcolor(
+                    color=current,
+                    parent=self.root,
+                    title="Choose Background Color"
+                )
+                if result and result[1]:
+                    self.var_bg_color.set(result[1])
+                    self._update_bg_swatch()
+            except Exception:
+                pass
+
+        picker_btn = tk.Button(color_row, text="...", width=3,
+                               command=pick_color)
+        picker_btn.pack(side='left', padx=2)
+        ToolTip(picker_btn, "Open the color spectrum picker. "
+                "Choose any color visually and the hex code "
+                "will be filled in automatically.")
+
+        # Color swatch (live preview of selected color)
+        self.bg_swatch = tk.Label(color_row, text="  ", width=3,
+                                  relief='solid', borderwidth=1)
+        self.bg_swatch.pack(side='left', padx=4)
+        ToolTip(self.bg_swatch, "Preview of the current background color.")
+        self._update_bg_swatch()
+
+        # Update swatch when entry changes
+        self.var_bg_color.trace_add('write', lambda *a: self._update_bg_swatch())
 
         # ---- Margins ----
         sec = tk.LabelFrame(parent, text="Margins", padx=6, pady=4)
@@ -1138,15 +1220,40 @@ class GalleryStudio:
                 "gallery pieces where interaction is not needed -- "
                 "presentation screenshots, static views, etc.")
 
+    def _update_bg_swatch(self):
+        """Update the color swatch to show current BG color."""
+        try:
+            color = self.var_bg_color.get().strip()
+            if color and color.startswith('#') and len(color) in (4, 7):
+                self.bg_swatch.configure(bg=color)
+            else:
+                self.bg_swatch.configure(bg='SystemButtonFace')
+        except Exception:
+            pass
+
     def _collect_config(self):
         """Read all GUI values into the config dict."""
+        # Auto-detect title color based on background brightness
+        bg = self.var_bg_color.get().strip()
+        title_color = self.config.get('title_color', '#f8fafc')
+        if bg.startswith('#') and len(bg) == 7:
+            try:
+                r = int(bg[1:3], 16)
+                g = int(bg[3:5], 16)
+                b = int(bg[5:7], 16)
+                # Perceived brightness (ITU-R BT.601)
+                brightness = (r * 299 + g * 587 + b * 114) / 1000
+                title_color = '#333333' if brightness > 128 else '#f8fafc'
+            except ValueError:
+                pass
+
         self.config = {
             'bg_color': self.var_bg_color.get(),
             'transparent_bg': self.var_transparent_bg.get(),
             'show_title': self.var_show_title.get(),
             'custom_title': self.var_custom_title.get(),
             'title_font_size': self.var_title_size.get(),
-            'title_color': '#f8fafc',
+            'title_color': title_color,
             'margin_top': self.var_margin_t.get(),
             'margin_bottom': self.var_margin_b.get(),
             'margin_left': self.var_margin_l.get(),
