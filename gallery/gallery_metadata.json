@@ -452,16 +452,16 @@
     },
     {
       "id": "paleoclimate_wet_bulb_gallery",
-      "title": "Paleoclimate Wet Bulb (use landscape)",
+      "title": "Paleoclimate Wet Bulb Gallery",
       "filename": "paleoclimate_wet_bulb_gallery.json",
       "category": "climate",
       "category_label": "Earth System",
       "description": "Paleoclimate history",
       "size_kb": 101.8,
-      "converted": "2026-02-15 00:19",
+      "converted": "2026-02-15 00:51",
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-15 00:26",
+  "last_updated": "2026-02-15 00:51",
   "total_count": 44
 }
