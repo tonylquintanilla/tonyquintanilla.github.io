@@ -471,8 +471,19 @@
       "size_kb": 48.7,
       "converted": "2026-02-16 02:23",
       "mode": "portrait"
+    },
+    {
+      "id": "solar_system_20260216_0921_test_original_plot_studio_portrait_export",
+      "title": "Solar System 20260216 0921 Test Original Plot Studio Portrait Export",
+      "filename": "solar_system_20260216_0921_test_original_plot_studio_portrait_export.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "test plot",
+      "size_kb": 153.8,
+      "converted": "2026-02-16 09:26",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-16 02:24",
-  "total_count": 45
+  "last_updated": "2026-02-16 09:26",
+  "total_count": 46
 }
