@@ -1029,19 +1029,71 @@ studio doesn't replace social_media_export.py -- it's a different tool
 for a different purpose. The gallery can also reload its own prior exports
 for iterative refinement.
 
+### Session 11 (Feb 16): Portrait Preset -- Click-to-Panel + Encyclopedia
+
+Added portrait preset to Gallery Studio, bringing social_media_export.py's
+9:16 info panel directly into the studio as a one-click configuration.
+Users can now load any Plotly HTML, select "Portrait (9:16 social)", and
+get the full social media view with click-to-panel and encyclopedia cards.
+
+**Portrait preset features**:
+- 60/40 layout (scene top, info panel bottom)
+- Hover routing: trace.text parsed into structured customdata (name/subtitle/body)
+- Click-to-panel: tapping a planet updates the info panel immediately
+- Hover-to-panel: hovering updates with 800ms delay (desktop)
+- Encyclopedia card overlay: "i" button shows extended object info from
+  constants_new.py INFO dict, with dismiss via X, Escape, or click-outside
+- Font auto-sizing in panel body text
+- Branding watermark in bottom-right
+- All standard studio controls still available for fine-tuning
+
+**Bugs found and fixed (stacked -- both had to be solved)**:
+
+1. **Import path resolution** -- gallery_studio.py lives in
+   `tonyquintanilla.github.io/tools/` but social_media_export.py and
+   constants_new.py live in `orrery/` (a sibling directory two levels up).
+   The `from social_media_export import _parse_hover_html` failed silently
+   because the try/except caught ImportError and disabled routing entirely.
+   Fixed by walking up the directory tree and checking candidate paths
+   (parent, grandparent, grandparent/orrery/).
+
+2. **JS crash in debug logging killed event handlers** -- Debug code
+   `JSON.stringify(t.text).substring(0, 60)` crashed when orbit traces
+   had `text: undefined` (not null, not empty array -- undefined). The
+   TypeError aborted `initEventListeners()` before it could wire up the
+   plotly_click and plotly_hover handlers. Events never registered, so
+   clicking planets did nothing. The panel code itself was fine.
+
+**Debugging methodology**: Console logging at every stage of the pipeline:
+- Python routing log: confirmed import success/failure, which traces routed
+- JS trace inspection: confirmed customdata presence/absence per trace
+- JS event logging: confirmed click events fire but find no customdata
+- The stacked nature meant fixing bug 1 (import) revealed bug 2 (JS crash)
+  which had been invisible because there was no data to crash on before
+
+**Key architectural insight**: The portrait preset reuses
+social_media_export.py's `_parse_hover_html()` function rather than
+reimplementing parsing. This keeps one parser for hover text decomposition.
+The studio imports it at apply_config() time, not at module load, so the
+import path resolution only runs when the portrait preset is active.
+
+**gallery_studio.py** (2,972 lines, up from 1,835 in Session 10)
+
+Growth reflects: portrait HTML builder (build_social_html), encyclopedia
+overlay system, hover routing engine, cross-directory import resolution,
+three-column GUI layout for portrait-specific controls.
+
 ### Deferred Items (future phases)
 
 - Animation frame extraction in converter (Plotly.addFrames support)
 - ~~Legend handling for high-trace-count figures~~ SOLVED (Session 10 - studio per-plot font sizing)
+- ~~Studio social/portrait preset~~ SOLVED (Session 11 - portrait preset with info panel + encyclopedia)
 - Thumbnail generation for gallery cards
 - Link preview images for social sharing (og:image)
 - Website content pages (About, Downloads, Contact)
 - Version/update date in gallery footer
 - Custom pinch-to-zoom handler for 3D (option 1 from Session 7 -- would
   replace zoom buttons with native gesture, but complex to implement)
-- Studio social/portrait preset (absorb social_media_export.py's 9:16
-  layout into studio as a one-click preset -- would make GUI social
-  view buttons obsolete)
 
 ### Immediate Next: Content + Polish
 
@@ -1486,6 +1538,10 @@ re-export from the current app.
 | Paleoclimate charts | Reinstated via studio | Per-plot font sizing + pan arrows make them viable |
 | Social view relationship | Studio complements, not replaces | Social = 9:16 Instagram; Studio = gallery curation |
 | Studio re-export | Studio can reload its own output | Iterative refinement without re-exporting from source |
+| Portrait preset | One-click 9:16 with info panel | Absorbs social_media_export.py layout into studio workflow |
+| Cross-dir import | Walk up tree, check candidates | gallery_studio in tools/ needs orrery/ modules two levels up |
+| Reuse _parse_hover_html | Import, don't reimplement | One parser for hover decomposition; tested pattern |
+| Debug logging in HTML | Console.log routing + trace state | Stacked bugs need pipeline-wide visibility |
 
 ---
 
@@ -1517,5 +1573,8 @@ February 15, 2026
 
 *"Pan and zoom work perfectly."* -- Tony, validating D-pad on iPhone,
 February 15, 2026
+
+*"What a session."* -- Tony, after two stacked bugs fell to systematic
+console logging, February 16, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*

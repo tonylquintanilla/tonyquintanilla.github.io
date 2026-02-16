@@ -463,7 +463,7 @@
     },
     {
       "id": "exo_planet_system_toi_20260216_0016_social",
-      "title": "Exo-Planet System TOI 1338",
+      "title": "Exo Planet System Toi 20260216 0016",
       "filename": "exo_planet_system_toi_20260216_0016_social.json",
       "category": "exoplanets",
       "category_label": "Exoplanets",
@@ -473,6 +473,6 @@
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-16 02:24",
+  "last_updated": "2026-02-16 02:23",
   "total_count": 45
 }

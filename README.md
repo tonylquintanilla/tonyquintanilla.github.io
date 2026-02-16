@@ -1,4 +1,4 @@
-# Last updated: February 13, 2026
+# Last updated: February 16, 2026
 
 # Paloma's Orrery
 
@@ -697,6 +697,7 @@ Browse interactive visualizations online at [palomasorrery.com](https://palomaso
 
 ```
 Desktop App -> save_plot() -> HTML export
+    -> gallery_studio.py -> per-plot curation (optional)
     -> json_converter.py -> JSON + gallery_metadata.json
     -> gallery_editor.py -> curate titles, categories, ordering
     -> GitHub Pages (index.html) -> palomasorrery.com
@@ -706,6 +707,7 @@ Desktop App -> save_plot() -> HTML export
 
 | Tool | Purpose |
 |------|---------|
+| `gallery_studio.py` | Per-plot curation GUI -- background, fonts, margins, portrait preset with info panel |
 | `json_converter.py` | Extracts Plotly figure data from HTML exports to JSON |
 | `gallery_editor.py` | Tkinter GUI for editing metadata, categories, and ordering |
 | `gallery_config.json` | Single source of truth for category definitions (shared by all tools) |
@@ -813,48 +815,79 @@ The following sections highlight the primary modules organized by function. Use 
 
 ### Project Directory Structure
 
+The project spans two repositories on disk. They are **siblings** in the
+same parent folder (not nested). The orrery repo holds the desktop app;
+the website repo holds the web gallery and its tooling.
+
 ```
-palomas_orrery/
-|- *.py                    # Python source code
-|- README/                 # Documentation
-|   |- README.md
-|   |- social_media_readme.md
-|   |- paleoclimate_readme.md
-|   |- climate_readme.md
-|- data/                   # All program data files
-|   |- orbit_paths.json (~94 MB)
-|   |- orbit_paths_backup.json
-|   |- Climate monitoring (automated)
-|   |   |- co2_mauna_loa_monthly.json
-|   |   |- temperature_giss_monthly.json
-|   |   |- arctic_ice_extent_monthly.json
-|   |   |- sea_level_gmsl_monthly.json
-|   |- Climate monitoring (manual)
-|   |   |- ocean_ph_hot_monthly.json
-|   |   |- 3773_v3_niskin_hot001_yr01_to_hot348_yr35.csv
-|   |- Paleoclimate data
-|       |- epica_co2_800kyr.json
-|       |- lr04_benthic_stack.json
-|       |- temp12k_allmethods_percentiles.csv
-|       |- 8c__Phanerozoic_Pole_to_Equator_Temperatures.csv
-|   |- Heat Wave Analysis
-|       |- weather_cache_*.json       # Cached ERA5 data
-|       |- *_spikes_*.kml             # Generated risk layers
-|       |- *_impact_*.kml             # Generated population layers
-|       |- *_heatmap_*.kml            # Generated thermal layers
-|- star_data/              # Protected stellar cache
-|   |- star_properties_distance.pkl (2.6 MB)
-|   |- star_properties_magnitude.pkl (31.8 MB)
-|   |- hipparcos_data_distance.vot (899 KB)
-|   |- hipparcos_data_magnitude.vot (193 KB)
-|   |- gaia_data_distance.vot (9.8 MB)
-|   |- gaia_data_magnitude.vot (291 MB)
-|   |- *_metadata.json files
-|- reports/                # Generated analysis reports
-    |- last_plot_report.json
-    |- last_plot_data.json
-    |- report_*.json (archived with timestamps)
+python_work/                     # Parent folder (your workspace)
+|
+|- orrery/                       # Desktop app repo (palomas_orrery on GitHub)
+|  |- *.py                       # Python source code (75+ modules)
+|  |- README/                    # Documentation
+|  |   |- README.md
+|  |   |- social_media_readme.md
+|  |   |- paleoclimate_readme.md
+|  |   |- climate_readme.md
+|  |- data/                      # All program data files
+|  |   |- orbit_paths.json (~94 MB)
+|  |   |- orbit_paths_backup.json
+|  |   |- Climate monitoring (automated)
+|  |   |   |- co2_mauna_loa_monthly.json
+|  |   |   |- temperature_giss_monthly.json
+|  |   |   |- arctic_ice_extent_monthly.json
+|  |   |   |- sea_level_gmsl_monthly.json
+|  |   |- Climate monitoring (manual)
+|  |   |   |- ocean_ph_hot_monthly.json
+|  |   |   |- 3773_v3_niskin_hot001_yr01_to_hot348_yr35.csv
+|  |   |- Paleoclimate data
+|  |       |- epica_co2_800kyr.json
+|  |       |- lr04_benthic_stack.json
+|  |       |- temp12k_allmethods_percentiles.csv
+|  |       |- 8c__Phanerozoic_Pole_to_Equator_Temperatures.csv
+|  |   |- Heat Wave Analysis
+|  |       |- weather_cache_*.json       # Cached ERA5 data
+|  |       |- *_spikes_*.kml             # Generated risk layers
+|  |       |- *_impact_*.kml             # Generated population layers
+|  |       |- *_heatmap_*.kml            # Generated thermal layers
+|  |- star_data/                  # Protected stellar cache
+|  |   |- star_properties_distance.pkl (2.6 MB)
+|  |   |- star_properties_magnitude.pkl (31.8 MB)
+|  |   |- hipparcos_data_distance.vot (899 KB)
+|  |   |- hipparcos_data_magnitude.vot (193 KB)
+|  |   |- gaia_data_distance.vot (9.8 MB)
+|  |   |- gaia_data_magnitude.vot (291 MB)
+|  |   |- *_metadata.json files
+|  |- reports/                    # Generated analysis reports
+|      |- last_plot_report.json
+|      |- last_plot_data.json
+|      |- report_*.json (archived with timestamps)
+|
+|- tonyquintanilla.github.io/    # Website repo (GitHub Pages)
+   |- index.html                 # Gallery viewer (single-page app)
+   |- gallery/                   # JSON visualization data
+   |   |- *.json                 # Converted Plotly figures
+   |   |- gallery_metadata.json  # Titles, categories, ordering
+   |- tools/                     # Gallery management tools
+   |   |- gallery_studio.py      # Per-plot curation GUI
+   |   |- json_converter.py      # HTML-to-JSON converter
+   |   |- gallery_editor.py      # Metadata editor GUI
+   |   |- gallery_config.json    # Category definitions
+   |   |- gallery_studio_configs.json  # Saved per-plot settings
+   |- gallery_config.json        # Category definitions (root copy)
+   |- CNAME                      # Custom domain (palomasorrery.com)
+   |- web_gallery_handoff.md     # Technical documentation
+   |- README.md
 ```
+
+**Why two repos?** GitHub Pages requires its own repository. The app repo
+stays clean for users who download it. The website repo holds the gallery
+viewer and publishing tools. Both are public (required for free GitHub
+Pages).
+
+**Cross-repo imports:** gallery_studio.py (in `tools/`) imports
+`social_media_export.py` and `constants_new.py` from the `orrery/`
+directory. It resolves the path by walking up the directory tree.
 
 ### Cache Files (Included in Release)
 

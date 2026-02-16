@@ -97,9 +97,60 @@ DEFAULT_CONFIG = {
     # Navigation controls (embedded in exported HTML)
     "show_nav_arrows": False,
 
+    # Portrait / Social (9:16)
+    "output_format": "landscape",  # landscape or portrait
+    "route_hover_to_panel": False,
+    "marker_opacity_fix": False,
+    "restyle_animation_dark": False,
+    "info_panel_branding": "Paloma's Orrery",
+    "embed_encyclopedia": False,
+
     # Export
     "plotly_js_source": "cdn",
     "output_mode": "both",  # landscape, portrait, both
+}
+
+# Portrait preset - applies social-media-optimized settings
+PORTRAIT_CONFIG = {
+    "bg_color": "#000000",
+    "transparent_bg": False,
+    "show_title": False,
+    "custom_title": "",
+    "title_font_size": 18,
+    "title_color": "#f8fafc",
+    "margin_top": 0,
+    "margin_bottom": 0,
+    "margin_left": 0,
+    "margin_right": 0,
+    "show_axes": False,
+    "show_grid": False,
+    "scene_bgcolor": "#000000",
+    "show_legend": False,
+    "legend_orientation": "v",
+    "legend_font_size": 11,
+    "legend_bgcolor": "rgba(0,0,0,0)",
+    "show_annotations": False,
+    "strip_footer_annotations": True,
+    "annotation_bg_transparent": True,
+    "marker_size_boost": 4,
+    "line_width_min": 4,
+    "show_modebar": False,
+    "show_colorbar": False,
+    "strip_template": True,
+    "strip_updatemenus": True,
+    "keep_animation_controls": True,
+    "hover_mode": "none",
+    "axis_title_font_size": 0,
+    "axis_tick_font_size": 0,
+    "show_nav_arrows": False,
+    "output_format": "portrait",
+    "route_hover_to_panel": True,
+    "marker_opacity_fix": True,
+    "restyle_animation_dark": True,
+    "info_panel_branding": "Paloma's Orrery",
+    "embed_encyclopedia": True,
+    "plotly_js_source": "cdn",
+    "output_mode": "both",
 }
 
 # Plotly CDN URL
@@ -381,6 +432,96 @@ def _extract_react(html_content):
 
 
 # ============================================================================
+# ENCYCLOPEDIA EXTRACTION
+# ============================================================================
+
+def _strip_plotting_suggestions(text):
+    """
+    Remove ***ALL CAPS*** plotting suggestion lines from INFO text.
+
+    These lines follow the pattern:
+        ***SET MANUAL SCALE TO 170 AU TO PLOT THE COMPLETE TRAJECTORY.***
+
+    They are useful in the desktop app but not in exported HTML.
+
+    Parameters:
+        text: Raw INFO text string
+
+    Returns:
+        str: Text with plotting suggestions removed, leading whitespace cleaned
+    """
+    import re
+    lines = text.split('\n')
+    filtered = []
+    for line in lines:
+        stripped = line.strip()
+        # Match ***ALL CAPS + punctuation*** pattern
+        if re.match(r'^\*\*\*[^a-z]+\*\*\*$', stripped):
+            continue
+        filtered.append(line)
+
+    # Remove leading empty lines left after stripping
+    while filtered and not filtered[0].strip():
+        filtered.pop(0)
+
+    return '\n'.join(filtered)
+
+
+def extract_encyclopedia_for_figure(fig_dict):
+    """
+    Extract encyclopedia entries for objects present in a Plotly figure.
+
+    Scans trace names in the figure, matches against the INFO dict from
+    constants_new.py, strips plotting suggestions, and returns a dict
+    mapping object names to their encyclopedia text.
+
+    Parameters:
+        fig_dict: Plotly figure dict (with 'data' key)
+
+    Returns:
+        dict: {object_name: filtered_info_text} for objects found in INFO
+    """
+    try:
+        from constants_new import INFO
+    except ImportError:
+        try:
+            import sys as _sys
+            _here = os.path.dirname(os.path.abspath(__file__))
+            _candidates = [
+                os.path.join(_here, '..'),
+                os.path.join(_here, '..', '..'),
+                os.path.join(_here, '..', '..', 'orrery'),
+            ]
+            for _cand in _candidates:
+                _cand = os.path.normpath(_cand)
+                if os.path.isfile(os.path.join(_cand, 'constants_new.py')):
+                    if _cand not in _sys.path:
+                        _sys.path.insert(0, _cand)
+                    break
+            from constants_new import INFO
+        except ImportError:
+            return {}
+
+    # Collect all trace names from the figure
+    trace_names = set()
+    for trace in fig_dict.get('data', []):
+        name = trace.get('name', '')
+        if name:
+            trace_names.add(name)
+
+    # Match against INFO keys
+    encyclopedia = {}
+    for name in trace_names:
+        if name in INFO:
+            raw = INFO[name]
+            cleaned = _strip_plotting_suggestions(raw)
+            if cleaned.strip():
+                encyclopedia[name] = cleaned
+
+    return encyclopedia
+
+
+# ============================================================================
 # FIGURE TRANSFORMATION ENGINE
 # ============================================================================
 
@@ -405,6 +546,11 @@ def apply_config(fig_dict, config):
     if config.get('strip_template', True):
         if 'template' in layout:
             del layout['template']
+        # Plotly templates provide default hovermode ('closest').
+        # Without the template, hovermode=None disables event detection.
+        # Always ensure hovermode is set so click/hover events fire.
+        if layout.get('hovermode') is None:
+            layout['hovermode'] = 'closest'
 
     # ---- Background ----
     if config.get('transparent_bg', False):
@@ -578,16 +724,202 @@ def apply_config(fig_dict, config):
         else:
             layout['updatemenus'] = []
 
+    # ---- Route hover text to customdata (for portrait info panel) ----
+    # NOTE: Must run BEFORE hover_mode='none' so we can read original hoverinfo
+    if config.get('route_hover_to_panel', False):
+        try:
+            from social_media_export import _parse_hover_html
+            _routing_log = ['[ROUTING] _parse_hover_html imported OK']
+        except ImportError:
+            # gallery_studio.py lives in tools/ but social_media_export.py
+            # is in the orrery/ directory (sibling to the github.io repo).
+            # Walk up to find it.
+            try:
+                import sys
+                _here = os.path.dirname(os.path.abspath(__file__))
+                _candidates = [
+                    os.path.join(_here, '..'),          # parent
+                    os.path.join(_here, '..', '..'),    # grandparent
+                    os.path.join(_here, '..', '..', 'orrery'),  # sibling
+                ]
+                _found = False
+                for _cand in _candidates:
+                    _cand = os.path.normpath(_cand)
+                    if os.path.isfile(os.path.join(
+                            _cand, 'social_media_export.py')):
+                        if _cand not in sys.path:
+                            sys.path.insert(0, _cand)
+                        _found = True
+                        break
+                if not _found:
+                    raise ImportError("not in candidate paths")
+                from social_media_export import _parse_hover_html
+                _routing_log = [
+                    f'[ROUTING] _parse_hover_html imported from {_cand}']
+            except ImportError:
+                print("[STUDIO] WARNING: social_media_export.py not found. "
+                      "Hover routing disabled.")
+                _parse_hover_html = None
+                _routing_log = ['[ROUTING] IMPORT FAILED']
+
+        if _parse_hover_html is not None:
+            for trace in fig.get('data', []):
+                hoverinfo = trace.get('hoverinfo', '')
+                tname = trace.get('name', '?')
+                if hoverinfo in ('skip',):
+                    _routing_log.append(
+                        f'[ROUTING] {tname}: skip (hoverinfo={hoverinfo})')
+                    continue
+                text_data = trace.get('text')
+                if text_data is None:
+                    _routing_log.append(
+                        f'[ROUTING] {tname}: skip (no text)')
+                    continue
+                if isinstance(text_data, str):
+                    text_list = [text_data]
+                else:
+                    text_list = list(text_data)
+                _routing_log.append(
+                    f'[ROUTING] {tname}: hoverinfo={hoverinfo}, '
+                    f'text_items={len(text_list)}, '
+                    f'sample={str(text_list[0])[:60]}')
+                customdata_list = []
+                for hover_html in text_list:
+                    parsed = _parse_hover_html(hover_html)
+                    if parsed:
+                        customdata_list.append(json.dumps(parsed))
+                    else:
+                        fallback = (str(hover_html)[:80]
+                                    if hover_html else '')
+                        customdata_list.append(json.dumps({
+                            'name': fallback,
+                            'subtitle': '',
+                            'body': (str(hover_html)
+                                     if hover_html else '')
+                        }))
+                trace['customdata'] = customdata_list
+                trace['text'] = ['' for _ in text_list]
+                # Keep hoverinfo='text' so Plotly fires click/hover
+                # events. With text=[''] the tooltip appears empty.
+                # Setting hoverinfo='none' kills 3D event detection
+                # in some Plotly versions when loaded from extracted HTML.
+                trace['hoverinfo'] = 'text'
+                trace['hovertemplate'] = None
+                _routing_log.append(
+                    f'[ROUTING] {tname}: ROUTED ({len(customdata_list)} items)')
+
+            # Store routing log in layout for JS console output
+            layout['_routing_log'] = _routing_log
+            # Also print to Python stdout for debugging
+            for entry in _routing_log:
+                print(entry)
+
+            # Also route hover in animation frames
+            for frame in fig.get('frames', []):
+                for trace in frame.get('data', []):
+                    text_data = trace.get('text')
+                    if text_data is not None:
+                        if isinstance(text_data, str):
+                            text_list = [text_data]
+                        else:
+                            text_list = list(text_data)
+                        customdata_list = []
+                        for hover_html in text_list:
+                            parsed = _parse_hover_html(hover_html)
+                            if parsed:
+                                customdata_list.append(
+                                    json.dumps(parsed))
+                            else:
+                                fallback = (str(hover_html)[:80]
+                                            if hover_html else '')
+                                customdata_list.append(json.dumps({
+                                    'name': fallback,
+                                    'subtitle': '',
+                                    'body': (str(hover_html)
+                                             if hover_html else '')
+                                }))
+                        trace['customdata'] = customdata_list
+                        trace['text'] = ['' for _ in text_list]
+                        trace['hoverinfo'] = 'text'
+                        trace['hovertemplate'] = None
+
     # ---- Hover mode ----
     hover_mode = config.get('hover_mode', 'default')
     if hover_mode == 'none':
         for trace in fig.get('data', []):
+            # Skip traces that have been routed to the info panel -
+            # they need hoverinfo alive for Plotly click/hover event detection.
+            # Their text is already cleared, so no visible tooltip appears.
+            if trace.get('customdata'):
+                continue
             trace['hoverinfo'] = 'none'
             trace['hovertemplate'] = None
     elif hover_mode == 'names_only':
         for trace in fig.get('data', []):
             if trace.get('customdata') and trace.get('hovertemplate'):
                 trace['hovertemplate'] = '%{customdata}<extra></extra>'
+
+    # ---- Marker opacity fix (Plotly hover detection workaround) ----
+    if config.get('marker_opacity_fix', False):
+        for trace in fig.get('data', []):
+            marker = trace.get('marker', {})
+            if marker:
+                marker['opacity'] = 0.99
+                trace['marker'] = marker
+
+    # ---- Restyle animation controls for dark theme ----
+    if config.get('restyle_animation_dark', False):
+        existing_menus = layout.get('updatemenus', [])
+        for menu in existing_menus:
+            buttons = menu.get('buttons', [])
+            has_animate = any(
+                b.get('method') == 'animate' for b in buttons
+            )
+            if has_animate:
+                menu['font'] = {'color': '#f8fafc', 'size': 11}
+                menu['bgcolor'] = '#1e293b'
+                menu['bordercolor'] = '#334155'
+                menu['x'] = 0.02
+                menu['y'] = 0.98
+                menu['xanchor'] = 'left'
+                menu['yanchor'] = 'top'
+
+        # Restyle sliders for dark theme
+        existing_sliders = layout.get('sliders', [])
+        for slider in existing_sliders:
+            slider['font'] = {'color': 'rgba(0,0,0,0)', 'size': 1}
+            slider['tickcolor'] = 'rgba(0,0,0,0)'
+            slider['ticklen'] = 0
+            slider['bordercolor'] = '#334155'
+            slider['borderwidth'] = 1
+            slider['activebgcolor'] = '#475569'
+            slider['bgcolor'] = '#1e293b'
+            if 'currentvalue' not in slider:
+                slider['currentvalue'] = {}
+            slider['currentvalue']['visible'] = True
+            slider['currentvalue']['prefix'] = 'Date: '
+            slider['currentvalue']['font'] = {
+                'color': '#f8fafc', 'size': 12
+            }
+            slider['currentvalue']['xanchor'] = 'left'
+
+        # Adjust bottom margin for slider if present
+        if existing_sliders and layout.get('margin', {}).get('b', 0) < 40:
+            layout['margin'] = layout.get('margin', {})
+            layout['margin']['b'] = 40
+
+    # ---- Configure hoverlabel for portrait (minimal name-only tooltip) ----
+    if config.get('output_format') == 'portrait':
+        layout['hoverlabel'] = {
+            'bgcolor': '#0f172a',
+            'bordercolor': '#f8fafc',
+            'font': {
+                'family': 'Consolas, SF Mono, Fira Code, Courier New, monospace',
+                'size': 16,
+                'color': '#f8fafc'
+            },
+            'align': 'left'
+        }
 
     # ---- Modebar ----
     # (handled at render time via config, not in figure data)
@@ -638,17 +970,224 @@ def apply_config(fig_dict, config):
         except ValueError:
             pass
 
-    # ---- Studio markers ----
+    # ---- Embed encyclopedia data ----
+    if config.get('embed_encyclopedia', False):
+        encyclopedia = extract_encyclopedia_for_figure(fig)
+        if encyclopedia:
+            layout['_encyclopedia'] = encyclopedia
+
+    # ---- Studio marker ----
     # Tells downstream consumers (index.html) that this figure was
     # curated by the studio and should not be re-processed.
     layout['_studio'] = True
 
-    # Pass nav arrow preference through the pipeline
-    if config.get('show_nav_arrows', False):
-        layout['_studio_nav'] = True
-
     fig['layout'] = layout
     return fig
+
+
+# ============================================================================
+# ENCYCLOPEDIA CARD OVERLAY
+# ============================================================================
+
+def _build_encyclopedia_overlay(fig_dict):
+    """
+    Build HTML/CSS/JS for the encyclopedia card overlay.
+
+    If the figure has _encyclopedia data in its layout (embedded by
+    apply_config), this generates a floating card that shows object
+    reference information on demand.
+
+    Interaction model:
+      - An "i" button appears when an object is selected (click/hover)
+      - Clicking "i" opens a card overlay with encyclopedia content
+      - Clicking outside the card or the X button dismisses it
+      - Works in both landscape and portrait layouts
+
+    Parameters:
+        fig_dict: Transformed figure dict (may have layout._encyclopedia)
+
+    Returns:
+        tuple: (css_str, html_str, js_str) - empty strings if no data
+    """
+    encyclopedia = fig_dict.get('layout', {}).get('_encyclopedia', {})
+    if not encyclopedia:
+        return '', '', ''
+
+    # Serialize encyclopedia for embedding in JS
+    enc_json = json.dumps(encyclopedia, separators=(',', ':'))
+
+    css = """
+  /* ===== ENCYCLOPEDIA CARD ===== */
+  .enc-btn {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #475569;
+    background: rgba(15, 23, 42, 0.85);
+    color: #94a3b8;
+    font-size: 18px;
+    font-weight: 700;
+    font-style: italic;
+    font-family: Georgia, 'Times New Roman', serif;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    transition: all 0.2s ease;
+    line-height: 1;
+    padding: 0 0 2px 0;
+  }
+  .enc-btn:hover {
+    border-color: #c9a84c;
+    color: #c9a84c;
+    background: rgba(15, 23, 42, 0.95);
+  }
+  .enc-btn.visible { display: flex; }
+
+  .enc-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .enc-overlay.open { display: flex; }
+
+  .enc-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .enc-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 12px 20px;
+    border-bottom: 1px solid #1e293b;
+    flex-shrink: 0;
+  }
+
+  .enc-card-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: 0.5px;
+  }
+
+  .enc-card-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    background: transparent;
+    color: #64748b;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .enc-card-close:hover {
+    color: #f8fafc;
+    border-color: #64748b;
+  }
+
+  .enc-card-body {
+    padding: 16px 20px 20px 20px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #cbd5e1;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+  }
+  .enc-card-body::-webkit-scrollbar { width: 5px; }
+  .enc-card-body::-webkit-scrollbar-track { background: transparent; }
+  .enc-card-body::-webkit-scrollbar-thumb {
+    background: #334155; border-radius: 3px;
+  }
+"""
+
+    html = """
+<button class="enc-btn" id="enc-btn" title="Object encyclopedia">i</button>
+<div class="enc-overlay" id="enc-overlay">
+  <div class="enc-card">
+    <div class="enc-card-header">
+      <div class="enc-card-title" id="enc-title"></div>
+      <button class="enc-card-close" id="enc-close">&#10005;</button>
+    </div>
+    <div class="enc-card-body" id="enc-body"></div>
+  </div>
+</div>
+"""
+
+    js = f"""
+// ===== ENCYCLOPEDIA CARD =====
+var _encData = {enc_json};
+var _encCurrentName = null;
+
+function encShowButton(name) {{
+  var btn = document.getElementById('enc-btn');
+  if (!btn) return;
+  if (name && _encData[name]) {{
+    _encCurrentName = name;
+    btn.classList.add('visible');
+  }} else {{
+    btn.classList.remove('visible');
+  }}
+}}
+
+function encOpenCard() {{
+  if (!_encCurrentName || !_encData[_encCurrentName]) return;
+  document.getElementById('enc-title').textContent = _encCurrentName;
+  document.getElementById('enc-body').textContent = _encData[_encCurrentName];
+  document.getElementById('enc-overlay').classList.add('open');
+}}
+
+function encCloseCard() {{
+  document.getElementById('enc-overlay').classList.remove('open');
+}}
+
+// Wire up events
+document.addEventListener('DOMContentLoaded', function() {{
+  var btn = document.getElementById('enc-btn');
+  if (btn) btn.addEventListener('click', encOpenCard);
+
+  var closeBtn = document.getElementById('enc-close');
+  if (closeBtn) closeBtn.addEventListener('click', encCloseCard);
+
+  var overlay = document.getElementById('enc-overlay');
+  if (overlay) {{
+    overlay.addEventListener('click', function(e) {{
+      if (e.target === overlay) encCloseCard();
+    }});
+  }}
+
+  document.addEventListener('keydown', function(e) {{
+    if (e.key === 'Escape') encCloseCard();
+  }});
+}});
+"""
+
+    return css, html, js
 
 
 # ============================================================================
@@ -668,7 +1207,10 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
         str: Complete HTML document
     """
     data_json = json.dumps(fig_dict.get('data', []), separators=(',', ':'))
-    layout_json = json.dumps(fig_dict.get('layout', {}), separators=(',', ':'))
+    # Strip internal keys before serializing layout for Plotly
+    layout_for_json = {k: v for k, v in fig_dict.get('layout', {}).items()
+                       if not k.startswith('_')}
+    layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
     has_frames = len(frames) > 0
@@ -885,6 +1427,29 @@ function zoomPlot(dir) {
 }
 """
 
+    # Encyclopedia card overlay
+    enc_css, enc_html, enc_js = _build_encyclopedia_overlay(fig_dict)
+
+    # Encyclopedia event wiring for gallery (click to show "i" button)
+    enc_event_js = ""
+    if enc_js:
+        enc_event_js = """
+  // Wire encyclopedia button to Plotly click events
+  var plotG = document.getElementById('plotly-graph');
+  if (plotG) {
+    plotG.on('plotly_click', function(data) {
+      var pt = data.points[0];
+      var name = pt.data ? pt.data.name : '';
+      if (typeof encShowButton === 'function') encShowButton(name);
+    });
+    plotG.on('plotly_hover', function(data) {
+      var pt = data.points[0];
+      var name = pt.data ? pt.data.name : '';
+      if (typeof encShowButton === 'function') encShowButton(name);
+    });
+  }
+"""
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -904,13 +1469,16 @@ function zoomPlot(dir) {
     height: 100%;
   }}
 {nav_css}
+{enc_css}
 </style>
 </head>
 <body>
 <div id="plotly-graph"></div>
 {nav_html}
+{enc_html}
 <script>
 {nav_js}
+{enc_js}
 document.addEventListener('DOMContentLoaded', function() {{
   var data = {data_json};
   var layout = {layout_json};
@@ -926,11 +1494,387 @@ document.addEventListener('DOMContentLoaded', function() {{
     if (frames && frames.length > 0) {{
       Plotly.addFrames('plotly-graph', frames);
     }}
+{enc_event_js}
   }});
   window.addEventListener('resize', function() {{
     Plotly.Plots.resize('plotly-graph');
   }});
 }});
+</script>
+</body>
+</html>"""
+    return html
+
+
+def build_social_html(fig_dict, config, title="Paloma's Orrery"):
+    """
+    Build a 9:16 portrait HTML with info panel for social media.
+
+    Layout:
+      - Top 60%: Interactive 3D Plotly scene (stripped of UI chrome)
+      - Bottom 40%: Persistent info panel (displays customdata on click)
+      - Branding watermark in bottom-right
+
+    This is the portrait counterpart to build_gallery_html().
+    The figure dict should already have hover data routed to customdata
+    via apply_config() with route_hover_to_panel=True.
+
+    Parameters:
+        fig_dict: Transformed Plotly figure dict
+        config: Studio configuration dict
+        title: Page title
+
+    Returns:
+        str: Complete HTML document
+    """
+    data_json = json.dumps(fig_dict.get('data', []), separators=(',', ':'))
+    # Strip internal keys before serializing layout for Plotly
+    layout_for_json = {k: v for k, v in fig_dict.get('layout', {}).items()
+                       if not k.startswith('_')}
+    layout_json = json.dumps(layout_for_json, separators=(',', ':'))
+    frames = fig_dict.get('frames', [])
+    frames_json = json.dumps(frames, separators=(',', ':'))
+    has_frames = len(frames) > 0
+
+    branding = config.get('info_panel_branding', "Paloma's Orrery")
+    bg_color = config.get('bg_color', '#000000')
+
+    # Encyclopedia card overlay
+    enc_css, enc_html, enc_js = _build_encyclopedia_overlay(fig_dict)
+
+    # Extract routing log for JS debug output
+    routing_log = fig_dict.get('layout', {}).get('_routing_log', [])
+    routing_log_js = ''
+    if routing_log:
+        for entry in routing_log:
+            safe = entry.replace("'", "\\'").replace('\n', ' ')
+            routing_log_js += f"  console.log('{safe}');\n"
+
+    # In portrait, hook into the panel update to show/hide "i" button
+    enc_hook = ""
+    if enc_js:
+        enc_hook = """
+      if (typeof encShowButton === 'function') encShowButton(parsed.name);"""
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{title} - Social Media View</title>
+<script src="{PLOTLY_CDN}"></script>
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after {{ margin: 0; padding: 0; box-sizing: border-box; }}
+
+  html, body {{
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: {bg_color};
+    color: #f8fafc;
+    font-family: 'Consolas', 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    -webkit-font-smoothing: antialiased;
+  }}
+
+  /* ===== LAYOUT: 60/40 split, locked to 9:16 portrait ===== */
+  .container {{
+    height: 100vh;
+    width: min(100vw, calc(100vh * 9 / 16));
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    background: {bg_color};
+  }}
+
+  /* ===== 3D SCENE (top 60%) ===== */
+  .scene-area {{
+    flex: 6;
+    position: relative;
+    min-height: 0;
+  }}
+
+  #plotly-scene {{
+    width: 100%;
+    height: 100%;
+  }}
+
+  /* ===== DIVIDER ===== */
+  .divider {{
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      #334155 15%,
+      #64748b 50%,
+      #334155 85%,
+      transparent 100%
+    );
+    flex-shrink: 0;
+  }}
+
+  /* ===== INFO PANEL (bottom 40%) ===== */
+  .info-panel {{
+    flex: 4;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 40px 20px 40px;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }}
+
+  .panel-header {{
+    flex-shrink: 0;
+    margin-bottom: 16px;
+    min-height: 60px;
+  }}
+
+  .object-name {{
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: 1px;
+    line-height: 1.2;
+    transition: opacity 0.18s ease;
+  }}
+
+  .object-subtitle {{
+    font-size: clamp(16px, 2.2vw, 22px);
+    font-weight: 400;
+    color: #f8fafc;
+    margin-top: 4px;
+    font-style: italic;
+    line-height: 1.3;
+    transition: opacity 0.18s ease;
+  }}
+
+  .panel-body {{
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-size: clamp(16px, 2.4vw, 24px);
+    line-height: 1.5;
+    color: #f8fafc;
+    padding-right: 8px;
+    transition: opacity 0.18s ease;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+  }}
+
+  .panel-body::-webkit-scrollbar {{ width: 4px; }}
+  .panel-body::-webkit-scrollbar-track {{ background: transparent; }}
+  .panel-body::-webkit-scrollbar-thumb {{ background: #334155; border-radius: 2px; }}
+  .panel-body b {{ color: #f8fafc; font-weight: 600; }}
+  .panel-body i {{ color: #cbd5e1; }}
+  .panel-body br + br {{ display: block; content: ''; margin-top: 8px; }}
+
+  .branding {{
+    position: absolute;
+    bottom: 16px;
+    right: 40px;
+    font-size: 16px;
+    color: #334155;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }}
+
+  .panel-empty-state {{
+    color: #475569;
+    font-size: clamp(16px, 2.2vw, 22px);
+    font-style: italic;
+    margin-top: 40px;
+    text-align: center;
+  }}
+
+  .fading {{ opacity: 0.3; }}
+  .modebar-container {{ display: none !important; }}
+{enc_css}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="scene-area">
+    <div id="plotly-scene"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="info-panel">
+    <div class="panel-header">
+      <div class="object-name" id="obj-name">{branding}</div>
+      <div class="object-subtitle" id="obj-subtitle">Tap an object to explore</div>
+    </div>
+    <div class="panel-body" id="obj-body">
+      <div class="panel-empty-state">
+        Point at any planet, moon, or orbit to see its data here.
+      </div>
+    </div>
+    <div class="branding">{branding}</div>
+  </div>
+</div>
+{enc_html}
+<script>
+{enc_js}
+document.addEventListener('DOMContentLoaded', function() {{
+
+  var data = {data_json};
+  var layout = {layout_json};
+  var frames = {frames_json};
+
+  var config = {{
+    displayModeBar: false,
+    scrollZoom: true,
+    responsive: true,
+    doubleClick: false
+  }};
+
+  layout.autosize = true;
+
+  Plotly.newPlot('plotly-scene', data, layout, config).then(function() {{
+    if (frames && frames.length > 0) {{
+      Plotly.addFrames('plotly-scene', frames);
+
+      // Camera preservation for animations
+      var plotDiv = document.getElementById('plotly-scene');
+      var lastCamera = null;
+
+      setInterval(function() {{
+        try {{
+          var scene = plotDiv._fullLayout.scene._scene;
+          if (scene) {{ lastCamera = scene.getCamera(); }}
+        }} catch(e) {{}}
+      }}, 100);
+
+      plotDiv.on('plotly_animatingframe', function(eventData) {{
+        if (lastCamera) {{
+          try {{
+            plotDiv._fullLayout.scene.camera = lastCamera;
+            plotDiv.layout.scene.camera = lastCamera;
+          }} catch(e) {{}}
+        }}
+      }});
+
+      plotDiv.on('plotly_afterplot', function() {{
+        if (lastCamera) {{
+          try {{
+            var scene = plotDiv._fullLayout.scene._scene;
+            if (scene) {{ scene.setCamera(lastCamera); }}
+          }} catch(e) {{}}
+        }}
+      }});
+    }}
+    initEventListeners();
+{routing_log_js}
+  }});
+
+  // Resize handler
+  var resizeTimer = null;
+  window.addEventListener('resize', function() {{
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {{
+      var plotDiv = document.getElementById('plotly-scene');
+      try {{
+        Plotly.relayout(plotDiv, {{
+          'scene.camera': plotDiv._fullLayout.scene._scene.getCamera()
+        }});
+      }} catch(e) {{
+        Plotly.Plots.resize(plotDiv);
+      }}
+    }}, 250);
+  }});
+
+}});
+
+// ===== PANEL UPDATE LOGIC =====
+var hoverTimer = null;
+var currentObjectData = null;
+var HOVER_DELAY = 800;
+var nameEl, subtitleEl, bodyEl;
+
+function initEventListeners() {{
+  nameEl = document.getElementById('obj-name');
+  subtitleEl = document.getElementById('obj-subtitle');
+  bodyEl = document.getElementById('obj-body');
+
+  var plotlyDiv = document.getElementById('plotly-scene');
+
+  // Debug: verify events are wired and check trace customdata
+  console.log('[STUDIO v2] initEventListeners wired');
+  var traceCount = 0, cdCount = 0;
+  if (plotlyDiv.data) {{
+    traceCount = plotlyDiv.data.length;
+    plotlyDiv.data.forEach(function(t, i) {{
+      if (t.customdata && t.customdata.length > 0) cdCount++;
+    }});
+  }}
+  console.log('[STUDIO v2] Traces: ' + traceCount + ', with customdata: ' + cdCount);
+
+  // Hover: throttled panel update
+  plotlyDiv.on('plotly_hover', function(data) {{
+    var point = data.points[0];
+    if (!point.customdata) return;
+    var objectData = point.customdata;
+    if (objectData === currentObjectData) return;
+    if (hoverTimer) clearTimeout(hoverTimer);
+    hoverTimer = setTimeout(function() {{
+      currentObjectData = objectData;
+      updatePanel(objectData);
+    }}, HOVER_DELAY);
+  }});
+
+  plotlyDiv.on('plotly_unhover', function() {{
+    if (hoverTimer) {{ clearTimeout(hoverTimer); hoverTimer = null; }}
+  }});
+
+  // Click: immediate panel update
+  plotlyDiv.on('plotly_click', function(data) {{
+    var point = data.points[0];
+    if (!point.customdata) return;
+    if (hoverTimer) {{ clearTimeout(hoverTimer); hoverTimer = null; }}
+    var objectData = point.customdata;
+    currentObjectData = objectData;
+    updatePanel(objectData);
+  }});
+}}
+
+function updatePanel(data) {{
+  try {{
+    var parsed = (typeof data === 'string') ? JSON.parse(data) : data;
+
+    nameEl.classList.add('fading');
+    subtitleEl.classList.add('fading');
+    bodyEl.classList.add('fading');
+
+    setTimeout(function() {{
+      nameEl.textContent = parsed.name || '';
+      subtitleEl.textContent = parsed.subtitle || '';
+      bodyEl.innerHTML = parsed.body || '';
+      autoSizeFont();
+{enc_hook}
+      nameEl.classList.remove('fading');
+      subtitleEl.classList.remove('fading');
+      bodyEl.classList.remove('fading');
+    }}, 180);
+
+  }} catch(e) {{
+    bodyEl.innerHTML = String(data);
+  }}
+}}
+
+function autoSizeFont() {{
+  var baseFontSize = 24;
+  var minFontSize = 16;
+  var fontSize = baseFontSize;
+  bodyEl.style.fontSize = fontSize + 'px';
+  var panelEl = bodyEl.parentElement;
+  var headerEl = document.querySelector('.panel-header');
+  var maxHeight = panelEl.offsetHeight - headerEl.offsetHeight - 80;
+  while (bodyEl.scrollHeight > maxHeight && fontSize > minFontSize) {{
+    fontSize -= 1;
+    bodyEl.style.fontSize = fontSize + 'px';
+  }}
+}}
 </script>
 </body>
 </html>"""
@@ -949,8 +1893,8 @@ class GalleryStudio:
     def __init__(self, root):
         self.root = root
         self.root.title("Gallery Studio - Paloma's Orrery")
-        self.root.geometry("520x820")
-        self.root.minsize(480, 700)
+        self.root.geometry("960x720")
+        self.root.minsize(800, 500)
 
         # State
         self.source_path = None
@@ -986,14 +1930,14 @@ class GalleryStudio:
             print(f"[STUDIO] Could not save configs: {e}")
 
     def _build_ui(self):
-        """Build the studio interface."""
+        """Build the studio interface with two-column layout."""
 
         # ---- Top: File selection ----
         file_frame = tk.LabelFrame(self.root, text="Source File", padx=8, pady=6)
         file_frame.pack(fill='x', padx=10, pady=(10, 5))
 
         self.file_label = tk.Label(file_frame, text="No file loaded",
-                                   fg='gray', anchor='w', wraplength=460)
+                                   fg='gray', anchor='w', wraplength=680)
         self.file_label.pack(fill='x')
 
         btn_row = tk.Frame(file_frame)
@@ -1036,37 +1980,48 @@ class GalleryStudio:
         canvas.bind_all('<MouseWheel>', on_mousewheel)
         self._canvas = canvas
 
-        # Build config sections
+        # Three-column layout inside scroll frame
+        self.scroll_frame.columnconfigure(0, weight=1)
+        self.scroll_frame.columnconfigure(1, weight=1)
+        self.scroll_frame.columnconfigure(2, weight=1)
+
+        self.col_left = tk.Frame(self.scroll_frame)
+        self.col_left.grid(row=0, column=0, sticky='nsew', padx=(0, 4))
+
+        self.col_right = tk.Frame(self.scroll_frame)
+        self.col_right.grid(row=0, column=1, sticky='nsew', padx=(4, 4))
+
+        self.col_portrait = tk.Frame(self.scroll_frame)
+        self.col_portrait.grid(row=0, column=2, sticky='nsew', padx=(4, 0))
+
+        # Build config sections into the three columns
         self._build_config_sections()
 
-        # ---- Bottom: Action buttons ----
+        # ---- Action buttons (above status bar with room for tooltips) ----
         action_frame = tk.Frame(self.root)
-        action_frame.pack(fill='x', padx=10, pady=(5, 10))
+        action_frame.pack(fill='x', padx=10, pady=(5, 0))
 
         preview_btn = tk.Button(action_frame, text="Preview",
-                               command=self._preview, width=12,
-                               bg='SystemButtonFace')
+                               command=self._preview, width=12)
         preview_btn.pack(side='left', padx=3)
-        ToolTip(preview_btn, "Apply current settings and open the result in "
-                "your default browser as a temp file. Tweak settings and "
-                "preview again until it looks right. Temp files are cleaned "
-                "up when the studio closes.")
+        ToolTip(preview_btn, "Apply current settings and open in browser "
+                "as a temp file. Tweak and preview again until right.")
 
         export_btn = tk.Button(action_frame, text="Export HTML...",
                                command=self._export, width=14,
-                               bg='SystemButtonFace', fg='blue')
+                               fg='blue')
         export_btn.pack(side='left', padx=3)
-        ToolTip(export_btn, "Save the tailored HTML to a location you choose. "
-                "This is the file you feed into json_converter.py for the "
-                "gallery pipeline. Your settings are automatically saved "
-                "for this source file so you can re-export later.")
+        ToolTip(export_btn, "Save tailored HTML. Settings auto-saved "
+                "for this source file.")
 
         reset_btn = tk.Button(action_frame, text="Reset Defaults",
                               command=self._reset_defaults, width=14)
         reset_btn.pack(side='right', padx=3)
-        ToolTip(reset_btn, "Reset all settings to the built-in defaults. "
-                "Does not affect saved per-file configs -- those are only "
-                "overwritten when you Export.")
+        ToolTip(reset_btn, "Reset all settings to built-in defaults.")
+
+        # Spacer to push status bar down and give tooltip room
+        spacer = tk.Frame(self.root, height=40)
+        spacer.pack(fill='x')
 
         # Status bar
         self.status_var = tk.StringVar(value="Ready")
@@ -1075,11 +2030,25 @@ class GalleryStudio:
         status_bar.pack(fill='x', side='bottom')
 
     def _build_config_sections(self):
-        """Build all configuration sections in the scrollable area."""
-        parent = self.scroll_frame
+        """Build config sections in three columns.
+
+        Left column: Figure content (what you see)
+            Title, Background, Margins, 3D Scene, Legend, Annotations
+
+        Center column: Behavior (how it works)
+            Traces, Chrome & Controls, Hover, 2D Axes,
+            Navigation Controls
+
+        Right column: Portrait / Social (9:16)
+            Preset buttons, output format, hover routing,
+            opacity fix, animation restyle, branding
+        """
+        left = self.col_left
+        right = self.col_right
+        portrait = self.col_portrait
 
         # ---- Title ----
-        sec = tk.LabelFrame(parent, text="Title", padx=6, pady=4)
+        sec = tk.LabelFrame(left, text="Title", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
 
         self.var_show_title = tk.BooleanVar(value=self.config['show_title'])
@@ -1114,7 +2083,7 @@ class GalleryStudio:
                 "plots, 24+ for presentation-style displays.")
 
         # ---- Background ----
-        sec = tk.LabelFrame(parent, text="Background", padx=6, pady=4)
+        sec = tk.LabelFrame(left, text="Background", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
 
         self.var_transparent_bg = tk.BooleanVar(
@@ -1210,7 +2179,7 @@ class GalleryStudio:
         self.var_bg_color.trace_add('write', lambda *a: self._update_bg_swatch())
 
         # ---- Margins ----
-        sec = tk.LabelFrame(parent, text="Margins", padx=6, pady=4)
+        sec = tk.LabelFrame(left, text="Margins", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Pixel margins around the plot area. "
                 "Top: space for title (40 if title shown, 0 if hidden). "
@@ -1249,7 +2218,7 @@ class GalleryStudio:
             ToolTip(sp, margin_tips[label])
 
         # ---- Scene (3D) ----
-        sec = tk.LabelFrame(parent, text="3D Scene", padx=6, pady=4)
+        sec = tk.LabelFrame(left, text="3D Scene", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Settings for 3D plots (solar system, stellar maps, "
                 "planet shells). Ignored for 2D plots like climate charts "
@@ -1273,7 +2242,7 @@ class GalleryStudio:
                 "spatial relationships need a visual reference frame.")
 
         # ---- Legend ----
-        sec = tk.LabelFrame(parent, text="Legend", padx=6, pady=4)
+        sec = tk.LabelFrame(left, text="Legend", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
 
         self.var_show_legend = tk.BooleanVar(value=self.config['show_legend'])
@@ -1314,7 +2283,7 @@ class GalleryStudio:
                 "crowded plots with many traces, 13+ for presentation.")
 
         # ---- Annotations ----
-        sec = tk.LabelFrame(parent, text="Annotations", padx=6, pady=4)
+        sec = tk.LabelFrame(left, text="Annotations", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Control text annotations overlaid on the plot -- "
                 "coordinate system labels, data source attributions, "
@@ -1350,7 +2319,7 @@ class GalleryStudio:
                 "small screens. This strips the box, keeps the text.")
 
         # ---- Traces ----
-        sec = tk.LabelFrame(parent, text="Traces", padx=6, pady=4)
+        sec = tk.LabelFrame(right, text="Traces", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Adjust how data traces (points, lines, markers) "
                 "appear in the exported HTML.")
@@ -1381,7 +2350,7 @@ class GalleryStudio:
                 "disappear on small screens.")
 
         # ---- Chrome ----
-        sec = tk.LabelFrame(parent, text="Chrome & Controls", padx=6, pady=4)
+        sec = tk.LabelFrame(right, text="Chrome & Controls", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Plotly UI elements -- toolbars, colorbars, and "
                 "internal templates that affect rendering.")
@@ -1438,7 +2407,7 @@ class GalleryStudio:
                 "are identified by having buttons with method='animate'.")
 
         # ---- Hover ----
-        sec = tk.LabelFrame(parent, text="Hover", padx=6, pady=4)
+        sec = tk.LabelFrame(right, text="Hover", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "How hover tooltips behave when the viewer mouses "
                 "over data points in the gallery.")
@@ -1468,7 +2437,7 @@ class GalleryStudio:
                 "presentation screenshots, static views, etc.")
 
         # ---- 2D Axes ----
-        sec = tk.LabelFrame(parent, text="2D Axes", padx=6, pady=4)
+        sec = tk.LabelFrame(right, text="2D Axes", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Font controls for 2D chart axes (climate charts, "
                 "HR diagrams, paleoclimate plots). Ignored for 3D scenes. "
@@ -1504,7 +2473,7 @@ class GalleryStudio:
                 "gallery views. Set to 0 to keep original sizes.")
 
         # ---- Navigation ----
-        sec = tk.LabelFrame(parent, text="Navigation Controls", padx=6, pady=4)
+        sec = tk.LabelFrame(right, text="Navigation Controls", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Embed navigation controls in the exported HTML. "
                 "These appear as floating buttons in the gallery view, "
@@ -1524,6 +2493,126 @@ class GalleryStudio:
                 "useful for dense plots where pinch-zoom isn't precise "
                 "enough.")
 
+        # ---- Portrait / Social (9:16) ----
+        sec = tk.LabelFrame(portrait, text="Portrait / Social (9:16)",
+                            padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Settings for 9:16 portrait output optimized for "
+                "Instagram Reels, YouTube Shorts, and screen recordings. "
+                "The output HTML has a 60/40 split: 3D scene on top, "
+                "interactive info panel on bottom.")
+
+        # Preset button
+        preset_row = tk.Frame(sec)
+        preset_row.pack(fill='x', pady=(2, 6))
+        portrait_btn = tk.Button(
+            preset_row, text="Apply Portrait Preset",
+            command=self._apply_portrait_preset,
+            width=22, bg='#1e293b', fg='white')
+        portrait_btn.pack(side='left', padx=2)
+        ToolTip(portrait_btn,
+                "One-click preset: applies all recommended settings "
+                "for 9:16 social media output. Sets output format to "
+                "portrait, enables info panel hover routing, strips "
+                "legend/annotations/axes, boosts markers +4, etc. "
+                "You can adjust individual settings afterward.")
+
+        landscape_btn = tk.Button(
+            preset_row, text="Back to Landscape",
+            command=self._apply_landscape_preset,
+            width=18)
+        landscape_btn.pack(side='left', padx=2)
+        ToolTip(landscape_btn,
+                "Reset to landscape defaults. Restores standard "
+                "gallery settings -- legend, annotations, default "
+                "hover, no info panel.")
+
+        # Output format
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Output format:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_output_format = tk.StringVar(
+            value=self.config.get('output_format', 'landscape'))
+        rb1 = tk.Radiobutton(row, text="Landscape",
+                             variable=self.var_output_format,
+                             value='landscape')
+        rb1.pack(side='left')
+        ToolTip(rb1, "Standard full-screen Plotly HTML. Use for "
+                "desktop gallery views and web embedding.")
+        rb2 = tk.Radiobutton(row, text="Portrait (9:16)",
+                             variable=self.var_output_format,
+                             value='portrait')
+        rb2.pack(side='left')
+        ToolTip(rb2, "9:16 HTML with 60/40 scene/panel split. "
+                "Designed for screen recording Instagram Reels "
+                "and YouTube Shorts. Info panel shows object "
+                "data on click/hover.")
+
+        # Route hover to panel
+        self.var_route_hover = tk.BooleanVar(
+            value=self.config.get('route_hover_to_panel', False))
+        cb = tk.Checkbutton(sec, text="Route hover to info panel",
+                            variable=self.var_route_hover)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Parse trace hover text into structured data "
+                "(name, subtitle, body) and move it to customdata. "
+                "The portrait HTML info panel reads customdata on "
+                "click to display object information. Required for "
+                "the portrait info panel to work. Also useful for "
+                "landscape views that embed their own panel.")
+
+        # Marker opacity fix
+        self.var_opacity_fix = tk.BooleanVar(
+            value=self.config.get('marker_opacity_fix', False))
+        cb = tk.Checkbutton(sec, text="Marker opacity fix (0.99)",
+                            variable=self.var_opacity_fix)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Set marker opacity to 0.99 instead of 1.0. "
+                "Works around a Plotly bug where fully opaque markers "
+                "have unreliable hover detection in 3D scenes. "
+                "Recommended when using info panel hover routing.")
+
+        # Restyle animation dark
+        self.var_restyle_anim = tk.BooleanVar(
+            value=self.config.get('restyle_animation_dark', False))
+        cb = tk.Checkbutton(sec, text="Dark-theme animation controls",
+                            variable=self.var_restyle_anim)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Restyle play/pause buttons and date sliders "
+                "with dark theme colors (slate/gray). Makes animation "
+                "controls visible on black backgrounds without "
+                "being distracting. Also hides slider tick text "
+                "while keeping the current-value date display.")
+
+        # Branding text
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Branding:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_branding = tk.StringVar(
+            value=self.config.get('info_panel_branding',
+                                  "Paloma's Orrery"))
+        ent = tk.Entry(row, textvariable=self.var_branding, width=25)
+        ent.pack(side='left', fill='x', expand=True)
+        ToolTip(ent, "Text shown in the portrait info panel header "
+                "and as a watermark in the bottom-right corner. "
+                "Appears in the initial state before any object is "
+                "selected.")
+
+        # Embed encyclopedia
+        self.var_encyclopedia = tk.BooleanVar(
+            value=self.config.get('embed_encyclopedia', False))
+        cb = tk.Checkbutton(sec, text="Embed object encyclopedia",
+                            variable=self.var_encyclopedia)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Include reference information from constants_new.py "
+                "for objects in the plot. When enabled, an 'i' button "
+                "appears after clicking an object. Tap it to see a card "
+                "with the object's description, missions, and history. "
+                "Only entries matching trace names are included. "
+                "Plotting suggestions (***ALL CAPS***) are filtered out.")
+
     def _update_bg_swatch(self):
         """Update the color swatch to show current BG color."""
         try:
@@ -1531,7 +2620,7 @@ class GalleryStudio:
             if color and color.startswith('#') and len(color) in (4, 7):
                 self.bg_swatch.configure(bg=color)
             else:
-                self.bg_swatch.configure(bg='SystemButtonFace')
+                self.bg_swatch.configure(bg='#d9d9d9')
         except Exception:
             pass
 
@@ -1583,6 +2672,12 @@ class GalleryStudio:
             'axis_title_font_size': self.var_axis_title_size.get(),
             'axis_tick_font_size': self.var_axis_tick_size.get(),
             'show_nav_arrows': self.var_show_nav.get(),
+            'output_format': self.var_output_format.get(),
+            'route_hover_to_panel': self.var_route_hover.get(),
+            'marker_opacity_fix': self.var_opacity_fix.get(),
+            'restyle_animation_dark': self.var_restyle_anim.get(),
+            'info_panel_branding': self.var_branding.get(),
+            'embed_encyclopedia': self.var_encyclopedia.get(),
             'plotly_js_source': 'cdn',
         }
 
@@ -1617,6 +2712,25 @@ class GalleryStudio:
         self.var_axis_title_size.set(c.get('axis_title_font_size', 0))
         self.var_axis_tick_size.set(c.get('axis_tick_font_size', 0))
         self.var_show_nav.set(c.get('show_nav_arrows', False))
+        self.var_output_format.set(c.get('output_format', 'landscape'))
+        self.var_route_hover.set(c.get('route_hover_to_panel', False))
+        self.var_opacity_fix.set(c.get('marker_opacity_fix', False))
+        self.var_restyle_anim.set(c.get('restyle_animation_dark', False))
+        self.var_branding.set(c.get('info_panel_branding',
+                                     "Paloma's Orrery"))
+        self.var_encyclopedia.set(c.get('embed_encyclopedia', False))
+
+    # ---- Presets ----
+
+    def _apply_portrait_preset(self):
+        """Apply the portrait/social media preset."""
+        self._apply_config_to_gui(PORTRAIT_CONFIG)
+        self.status_var.set("Portrait preset applied - adjust as needed")
+
+    def _apply_landscape_preset(self):
+        """Reset to landscape defaults."""
+        self._apply_config_to_gui(DEFAULT_CONFIG)
+        self.status_var.set("Landscape defaults restored")
 
     # ---- Actions ----
 
@@ -1698,33 +2812,43 @@ class GalleryStudio:
             messagebox.showinfo("Preview", "Load an HTML file first.")
             return
 
-        self._collect_config()
-        transformed = apply_config(self.fig_dict, self.config)
-
-        title = self.config.get('custom_title', '').strip()
-        if not title:
-            title = os.path.splitext(
-                os.path.basename(self.source_path or 'preview')
-            )[0]
-
-        html = build_gallery_html(transformed, self.config, title)
-
-        # Write to temp file
         try:
-            if self.temp_file and os.path.exists(self.temp_file):
-                os.remove(self.temp_file)
-        except OSError:
-            pass
+            self._collect_config()
+            transformed = apply_config(self.fig_dict, self.config)
 
-        fd, self.temp_file = tempfile.mkstemp(
-            suffix='.html', prefix='gallery_studio_preview_')
-        os.close(fd)
+            title = self.config.get('custom_title', '').strip()
+            if not title:
+                title = os.path.splitext(
+                    os.path.basename(self.source_path or 'preview')
+                )[0]
 
-        with open(self.temp_file, 'w', encoding='utf-8', newline='\n') as f:
-            f.write(html)
+            if self.config.get('output_format') == 'portrait':
+                html = build_social_html(transformed, self.config, title)
+            else:
+                html = build_gallery_html(transformed, self.config, title)
 
-        webbrowser.open('file://' + os.path.abspath(self.temp_file))
-        self.status_var.set(f"Preview opened in browser")
+            # Write to temp file
+            try:
+                if self.temp_file and os.path.exists(self.temp_file):
+                    os.remove(self.temp_file)
+            except OSError:
+                pass
+
+            fd, self.temp_file = tempfile.mkstemp(
+                suffix='.html', prefix='gallery_studio_preview_')
+            os.close(fd)
+
+            with open(self.temp_file, 'w', encoding='utf-8',
+                      newline='\n') as f:
+                f.write(html)
+
+            webbrowser.open('file://' + os.path.abspath(self.temp_file))
+            self.status_var.set("Preview opened in browser")
+
+        except Exception as e:
+            self.status_var.set(f"Preview error: {e}")
+            messagebox.showerror("Preview Error",
+                                 f"Could not generate preview:\n\n{e}")
 
     def _export(self):
         """Export the tailored HTML to a user-chosen location."""
@@ -1732,16 +2856,26 @@ class GalleryStudio:
             messagebox.showinfo("Export", "Load an HTML file first.")
             return
 
-        self._collect_config()
-        transformed = apply_config(self.fig_dict, self.config)
+        try:
+            self._collect_config()
+            transformed = apply_config(self.fig_dict, self.config)
 
-        title = self.config.get('custom_title', '').strip()
-        if not title:
-            title = os.path.splitext(
-                os.path.basename(self.source_path or 'export')
-            )[0]
+            title = self.config.get('custom_title', '').strip()
+            if not title:
+                title = os.path.splitext(
+                    os.path.basename(self.source_path or 'export')
+                )[0]
 
-        html = build_gallery_html(transformed, self.config, title)
+            if self.config.get('output_format') == 'portrait':
+                html = build_social_html(transformed, self.config, title)
+            else:
+                html = build_gallery_html(transformed, self.config, title)
+
+        except Exception as e:
+            self.status_var.set(f"Export error: {e}")
+            messagebox.showerror("Export Error",
+                                 f"Could not transform figure:\n\n{e}")
+            return
 
         # Default filename
         base = os.path.splitext(
@@ -1750,7 +2884,10 @@ class GalleryStudio:
         # Strip _social, _temp suffixes for cleaner names
         for suffix in ['_social', '_temp', '_offline', '_cdn']:
             base = base.replace(suffix, '')
-        default_name = f"{base}_gallery.html"
+        if self.config.get('output_format') == 'portrait':
+            default_name = f"{base}_social.html"
+        else:
+            default_name = f"{base}_gallery.html"
 
         # Initial directory: same as source or images folder
         initial_dir = os.path.dirname(self.source_path or '.')
