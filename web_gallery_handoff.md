@@ -1160,7 +1160,7 @@ index as they're like CSS media queries. All CONTENT transforms moved
 to studio. Reduces hidden transforms from 16 to 0 content + ~3
 structural.
 
-**gallery_studio.py** (2,972 -> 3,408 lines, +436)
+**gallery_studio.py** (2,972 -> 3,418 lines, +446)
 
 New config keys (6):
 - `scene_aspectmode`: auto/cube/data/manual (was index's mobile cube)
@@ -1240,6 +1240,40 @@ repositioning. Those items need re-export through the studio with
 the landscape preset to get equivalent treatment. This is by design:
 the studio is now the authority, and the gallery should show exactly
 what the studio previewed.
+
+**Testing pass (Feb 16-17)**:
+
+Bug found and fixed: `_apply_config_to_gui` referenced 4 new GUI
+variables (`var_scene_aspect`, `var_legend_position`, `var_legend_color`,
+`var_legend_border`) that were never created in `_build_config_sections`.
+Root cause: agentic patch script matched tooltip strings that had
+different wording in the actual file -- insertions silently failed.
+Fixed by inserting controls with correct match targets.
+
+GUI layout refined per Tony's feedback: Annotations moved from left
+column to center; Hover, 2D Axes, Navigation Controls moved from
+center to right column (below Portrait). Final layout:
+- Left: Title, Background, Margins, 3D Scene, Legend
+- Center: Annotations, Trace Visibility, Trace Appearance, Chrome
+- Right: Portrait / Social, Hover, 2D Axes, Navigation Controls
+
+3D nav reset fix: original `Plotly.relayout(gd, {'scene.camera': null})`
+launched camera into void. Fixed to capture initial camera in
+`Plotly.newPlot().then()` callback and restore on reset. Pan step
+changed from absolute 0.15 to relative 8% of camera distance. Zoom
+reset not possible (WebGL limitation -- see Known Issues #29).
+
+Landscape preset margins: top 40->80, left 20->80 for better spacing.
+
+Nav arrows tooltip clarified as landscape-only (portrait uses touch).
+
+Encyclopedia matching explained: exact trace-name-to-INFO-key lookup.
+TOI-1338 A/B has no encyclopedia because INFO key is 'TOI-1338 Binary'
+(name mismatch). Fix is in constants_new.py, not the studio.
+
+All features confirmed working: encyclopedia "i" button (both modes),
+trace visibility panel, Gallery Preview button, all 5 new controls,
+saved config backward compatibility.
 
 ### Deferred Items (future phases)
 
@@ -1476,6 +1510,26 @@ live in the studio. Remaining work:
     a Plotly.js limitation, not a bug in the nav controls. Users can
     scroll/pinch to rezoom manually. Pan and rotation reset work
     correctly.
+
+30. **Agentic string matching can silently fail** (Session 12 testing)
+    -- When patching files programmatically via string replacement, if
+    the "old" string doesn't exactly match (e.g., tooltip text was
+    reworded in an earlier session), the replacement silently succeeds
+    with 0 matches. Variables get added to collection/application
+    functions but never created as GUI widgets. Always verify new
+    variables exist in the GUI builder, not just in the functions that
+    read them.
+
+31. **Encyclopedia matching is exact by trace name** (Session 12) --
+    `extract_encyclopedia_for_figure` does `if name in INFO` with no
+    fuzzy matching. Trace name must exactly match the INFO dict key.
+    Mismatches like 'TOI-1338 A/B' vs 'TOI-1338 Binary' produce no
+    entry. Fix in constants_new.py (add alias key), not in the studio.
+
+32. **Nav arrows are landscape-only by design** (Session 12) --
+    `build_social_html` (portrait) doesn't include nav controls.
+    Portrait mode is for touch interaction (pinch/swipe). The nav
+    checkbox tooltip now documents this.
 
 ## File Renaming Summary
 
