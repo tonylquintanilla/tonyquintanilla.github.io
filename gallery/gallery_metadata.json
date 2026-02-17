@@ -482,8 +482,30 @@
       "size_kb": 153.8,
       "converted": "2026-02-16 09:26",
       "mode": "portrait"
+    },
+    {
+      "id": "toi_binary_20260217_social",
+      "title": "Toi Binary 20260217",
+      "filename": "toi_binary_20260217_social.json",
+      "category": "exoplanets",
+      "category_label": "Exoplanets",
+      "description": "Exoplanet binary system TOI 1338",
+      "size_kb": 98.3,
+      "converted": "2026-02-17 01:48",
+      "mode": "portrait"
+    },
+    {
+      "id": "toi_binary_20260217_gallery_landscape",
+      "title": "Toi Binary 20260217 Gallery Landscape",
+      "filename": "toi_binary_20260217_gallery_landscape.json",
+      "category": "exoplanets",
+      "category_label": "Exoplanets",
+      "description": "Exoplanet binary system TOI 1338",
+      "size_kb": 103.2,
+      "converted": "2026-02-17 01:49",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-16 09:26",
-  "total_count": 46
+  "last_updated": "2026-02-17 01:49",
+  "total_count": 48
 }

@@ -55,9 +55,9 @@ DEFAULT_CONFIG = {
     "title_color": "#f8fafc",
 
     # Layout
-    "margin_top": 100,
+    "margin_top": 80,
     "margin_bottom": 20,
-    "margin_left": 60,
+    "margin_left": 80,
     "margin_right": 20,
 
     # Scene (3D plots)
@@ -2824,13 +2824,11 @@ class GalleryStudio:
                             variable=self.var_show_nav)
         cb.pack(anchor='w')
         ToolTip(cb, "Add directional arrow buttons (up/down/left/right) "
-                "and zoom (+/-) to the exported HTML. Essential for 2D "
-                "charts on touch devices where you need to pan to specific "
-                "data points -- e.g., navigating to a particular year on "
-                "a paleoclimate chart to read its hover text. The arrows "
-                "shift the visible axis range in that direction. Also "
-                "useful for dense plots where pinch-zoom isn't precise "
-                "enough.")
+                "and zoom (+/-) to the exported HTML. Landscape mode only "
+                "-- portrait/social uses touch gestures instead.\n\n"
+                "Essential for 2D charts on touch devices where you need "
+                "to pan to specific data points. Also useful for dense "
+                "plots where pinch-zoom isn't precise enough.")
 
 
     def _update_bg_swatch(self):
