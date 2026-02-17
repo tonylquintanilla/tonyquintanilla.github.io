@@ -462,6 +462,28 @@
       "mode": "portrait"
     },
     {
+      "id": "exo_planet_system_toi_20260216_0016_social",
+      "title": "Exo-Planet System TOI 1338",
+      "filename": "exo_planet_system_toi_20260216_0016_social.json",
+      "category": "exoplanets",
+      "category_label": "Exoplanets",
+      "description": "Exoplanet system TOI 1338.",
+      "size_kb": 48.7,
+      "converted": "2026-02-16 02:23",
+      "mode": "portrait"
+    },
+    {
+      "id": "solar_system_20260216_0921_test_original_plot_studio_portrait_export",
+      "title": "Solar System 20260216 0921 Test Original Plot Studio Portrait Export",
+      "filename": "solar_system_20260216_0921_test_original_plot_studio_portrait_export.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "test plot",
+      "size_kb": 153.8,
+      "converted": "2026-02-16 09:26",
+      "mode": "portrait"
+    },
+    {
       "id": "toi_binary_20260217_social",
       "title": "Toi Binary 20260217",
       "filename": "toi_binary_20260217_social.json",
@@ -484,6 +506,6 @@
       "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-17 02:00",
-  "total_count": 46
+  "last_updated": "2026-02-17 01:49",
+  "total_count": 48
 }
