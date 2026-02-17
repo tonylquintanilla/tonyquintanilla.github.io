@@ -1160,7 +1160,7 @@ index as they're like CSS media queries. All CONTENT transforms moved
 to studio. Reduces hidden transforms from 16 to 0 content + ~3
 structural.
 
-**gallery_studio.py** (2,972 -> 3,326 lines, +354)
+**gallery_studio.py** (2,972 -> 3,408 lines, +436)
 
 New config keys (6):
 - `scene_aspectmode`: auto/cube/data/manual (was index's mobile cube)
@@ -1178,6 +1178,16 @@ New GUI controls:
   Select All/None buttons, Strip Hidden on export checkbox
 - "Gallery Preview" button: renders through minimal viewer with NO
   content transforms, gold banner labels it as gallery preview
+
+GUI column layout (reorganized for visibility):
+- Left: Title, Background, Margins, 3D Scene, Legend
+- Center: Annotations, Trace Visibility, Trace Appearance, Chrome
+- Right: Portrait / Social, Hover, 2D Axes, Navigation Controls
+
+3D navigation fix: Reset button captures initial camera on first
+render (in Plotly.newPlot .then() callback) and restores via
+Plotly.relayout. Pan steps are relative to camera distance (8% of
+eye-to-center) instead of absolute. Prevents "launched into space".
 
 Preset updates:
 - PORTRAIT_CONFIG now includes scene_aspectmode='cube',
@@ -1458,6 +1468,15 @@ live in the studio. Remaining work:
     export functions can be retired. Keep _parse_hover_html() as shared
     utility.
 
+29. **3D zoom reset is not possible** (Session 12) -- Plotly's scroll
+    wheel zoom modifies the WebGL projection matrix directly, below the
+    level accessible via `getCamera()`/`setCamera()` or
+    `Plotly.relayout()`. The reset button successfully restores camera
+    orientation and pan position, but cannot restore zoom level. This is
+    a Plotly.js limitation, not a bug in the nav controls. Users can
+    scroll/pinch to rezoom manually. Pan and rotation reset work
+    correctly.
+
 ## File Renaming Summary
 
 | Old Name | New Name | Reason |
@@ -1596,6 +1615,13 @@ This works because Plotly's internal wheel listener on the canvas does
 whatever internal state manipulation is needed -- we don't need to know
 the mechanism, just trigger it.
 
+**Limitation discovered (Session 12)**: This same opacity -- the zoom
+operating at WebGL level below the Plotly API -- means we cannot
+programmatically read or restore the zoom level. `getCamera()` returns
+eye/center/up but not the projection zoom factor. The reset button
+restores orientation and pan but not zoom. Acceptable tradeoff: users
+scroll/pinch to rezoom.
+
 ### 2D Zoom via Axis Range Scaling (Session 9)
 
 2D plots have no WebGL canvas, so synthetic wheel events don't apply.
@@ -1733,6 +1759,10 @@ re-export from the current app.
 | Old gallery content | Must re-export through studio | Index no longer provides any content safety net |
 | Annotation font scale | Percentage-based (0=keep, 70=typical mobile) | More flexible than index's hardcoded 70% on <900px |
 | Scene aspectmode | Studio control, not device detection | Developer chooses cube/auto per plot, not per screen size |
+| GUI column reorg | Annotations->center, Hover/2D/Nav->right | Better visibility; left column was too long |
+| 3D nav reset | Capture camera on render, restore via relayout | setCamera alone doesn't reset zoom; relayout resets orientation+pan |
+| 3D zoom reset | Accept limitation | WebGL projection matrix below Plotly API reach; not worth chasing |
+| 3D pan step | Relative to camera distance (8%) | Prevents absolute step launching camera into space at close zoom |
 
 ---
 
