@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-15, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-16, 2026 | Claude Opus 4.6
 
 ---
 
@@ -18,8 +18,12 @@ alive. No download, no install, no "is this safe?"
 
 ## Architecture Decided
 
+Current pipeline (as of Session 11):
 ```
 Desktop App (Python/Plotly)
+    |
+    v
+Gallery Studio (per-plot curation, preview, presets)
     |
     v
 json_converter.py (HTML -> JSON extraction, reads gallery_config.json)
@@ -39,6 +43,28 @@ Anyone with a browser, any device
 Gallery management:
     gallery_config.json  <-- single source of truth for categories
     gallery_editor.py    <-- GUI for editing metadata, categories, ordering
+```
+
+Target pipeline (Session 12 refactor):
+```
+Desktop App (Python/Plotly)
+    |
+    v
+Gallery Studio (ALL curation decisions -- WYSIWYG authority)
+    |-- Preview as Studio (portrait/social output)
+    |-- Preview as Gallery (simulates index rendering)
+    |
+    v
+json_converter.py (HTML -> JSON extraction, no transforms)
+    |
+    v
+JSON files + gallery_metadata.json
+    |
+    v
+index.html (dumb renderer -- structural viewer only, no content opinions)
+    |
+    v
+Anyone with a browser, any device
 ```
 
 ### Key Design Decisions
@@ -375,15 +401,30 @@ Note: Internal JS variables still use `landscape`/`portrait` for mode
 values. The UI labels were renamed to Desktop/Mobile in Session 7 for
 clarity. The metadata `mode` field remains landscape/portrait/both.
 
-### Data Pipeline (unchanged for developer)
+### Data Pipeline (updated Session 12 planning)
 
+Current workflow:
 1. Create visualization in desktop app
 2. Export HTML (standard or social view, as appropriate)
-3. Run json_converter.py -> JSON (now also parses trace.text to customdata)
-4. Tag mode in gallery_metadata.json (landscape / portrait / both)
-5. Drop JSON into website repo's gallery/ folder
-6. Push with GitHub Desktop
-7. Live at public URL within minutes
+3. Open in Gallery Studio -- curate (presets, adjustments, preview)
+4. Export from studio
+5. Run json_converter.py -> JSON
+6. Tag mode in gallery_metadata.json (landscape / portrait / both)
+7. Drop JSON into website repo's gallery/ folder
+8. Push with GitHub Desktop
+9. Live at public URL within minutes
+
+Target workflow (after Session 12 refactor):
+1. Create visualization in desktop app
+2. Export HTML
+3. Open in Gallery Studio -- curate (presets, trace selection, preview)
+4. Preview as Studio (social/portrait output) AND Preview as Gallery
+   (what palomasorrery.com will show) -- iterate until both are right
+5. Export from studio
+6. Run json_converter.py -> JSON
+7. gallery_editor.py for metadata (category, mode, ordering)
+8. Push with GitHub Desktop
+9. Live at public URL -- matches gallery preview exactly
 
 ### Hover Text Parsing: Python at Conversion Time
 
@@ -930,7 +971,10 @@ Present in both the static HTML and the goHome() JS rebuild.
 | 7 | 2D mobile optimization + cross-browser | DONE (Session 9) - HR diagrams on 5 iOS browsers |
 | 8 | Gallery Studio | DONE (Session 10) - per-plot curation tool |
 | 9 | Studio/index integration | DONE (Session 10) - _studio flag, pan arrows |
-| 10 | Polish | Version stamp, hints, nudges |
+| 10 | Portrait preset | DONE (Session 11) - click-to-panel + encyclopedia |
+| 11 | Studio WYSIWYG refactor | DONE (Session 12) - studio sole authority, index dumb renderer, trace visibility, gallery preview |
+| 12 | Content re-population | NEXT - re-export all through studio, validate |
+| 13 | Polish | Version stamp, hints, nudges |
 
 ### Session 10 (Feb 15): Gallery Export Studio
 
@@ -958,10 +1002,14 @@ Studio does:
 - Auto-save/restore configs per source filename (gallery_studio_configs.json)
 
 Studio does NOT:
-- Replace json_converter or index.html
 - Modify source plots
 - Create new visualizations
 - Handle animation creation
+
+**Session 12 completed**: The studio is now the sole WYSIWYG authority
+for all content transforms. The index.html viewer was stripped of all
+16 content overrides and renders exactly what the studio exports.
+See Session 12 for the full implementation record.
 
 **Key features**:
 
@@ -1012,11 +1060,12 @@ Studio does NOT:
   -> JSON -> index.html)
 - Pan arrows work correctly for 2D chart navigation
 
-**Architecture insight**: The studio handles author-side curation (per-plot
-decisions at export time). The index handles viewer-side adaptation (device
-detection, responsive layout, portrait info card). These are complementary,
-not competing. The _studio flag is the contract between them: "this plot
-was curated, trust it."
+**Architecture (Session 10, completed Session 12)**: The studio is the
+sole WYSIWYG authority for all content curation. The index is a dumb
+renderer -- structural viewer only. What you preview in studio is what
+users see in the gallery. The _studio flag is no longer needed for
+branching; it's cleaned up on read but the index applies no content
+transforms regardless.
 
 **Paleoclimate charts reinstated**: Previously removed from gallery as
 "too busy for mobile view." The studio's per-plot font sizing and pan
@@ -1083,27 +1132,135 @@ Growth reflects: portrait HTML builder (build_social_html), encyclopedia
 overlay system, hover routing engine, cross-directory import resolution,
 three-column GUI layout for portrait-specific controls.
 
+### Session 12 (Feb 16): Studio WYSIWYG Refactor -- Implementation
+
+Refactored the gallery pipeline so the studio is the single source of
+truth for ALL content curation. The index becomes a dumb renderer with
+no content opinions. Follows the static site generator pattern.
+
+**Approach**: Audit first, build second. Cataloged all 16 content
+transforms in the index's `!isStudio` block, mapped each to existing
+or needed studio controls, then implemented in one agentic pass.
+
+**Index transform audit** (index_transform_audit.md):
+- Category A: 10 structural transforms that STAY in index (template
+  strip, autosize, min-height, resize, Plotly config, click handler,
+  tap hint, control panel selection)
+- Category B: 16 content transforms MOVED to studio (title handling,
+  dark theme, scene bgcolor, aspect mode, legend reposition, colorbar
+  hiding, footer stripping, annotation transparency, axis font scaling,
+  margin clamping, updatemenus stripping, names-only hover, annotation
+  font scaling, title font scaling)
+- Category C: Info card rendering stays in index (reads structured
+  data the studio prepared)
+
+**Design decision**: Option 3 from the audit -- structural device
+adaptations (mobile Plotly config: scrollZoom, no modebar) stay in
+index as they're like CSS media queries. All CONTENT transforms moved
+to studio. Reduces hidden transforms from 16 to 0 content + ~3
+structural.
+
+**gallery_studio.py** (2,972 -> 3,326 lines, +354)
+
+New config keys (6):
+- `scene_aspectmode`: auto/cube/data/manual (was index's mobile cube)
+- `legend_font_color`: explicit color (was index's #9a9a9a)
+- `legend_border_transparent`: checkbox (was index's bordercolor delete)
+- `legend_position`: original/top-center-h/bottom-h (was index's mobile)
+- `annotation_font_scale`: 0-100% (was index's 70% on <900px)
+- `trace_visibility` + `strip_hidden_traces`: non-destructive filtering
+
+New GUI controls:
+- 3D aspect mode dropdown (Scene section)
+- Legend position dropdown, font color entry, border checkbox (Legend)
+- Annotation font scale spinbox (Annotations)
+- Trace Visibility panel: scrollable checkboxes per trace on file load,
+  Select All/None buttons, Strip Hidden on export checkbox
+- "Gallery Preview" button: renders through minimal viewer with NO
+  content transforms, gold banner labels it as gallery preview
+
+Preset updates:
+- PORTRAIT_CONFIG now includes scene_aspectmode='cube',
+  legend_position='top-center-h', legend_font_color='#9a9a9a',
+  annotation_font_scale=70 -- all the mobile transforms that index
+  used to apply silently
+- DEFAULT_CONFIG has new keys with "keep original" defaults (auto,
+  empty color, original position, 0% scale)
+
+apply_config() additions:
+- Scene aspectmode application
+- Legend position presets (top-center-h, bottom-h)
+- Legend font color override
+- Legend border transparency
+- Annotation font scaling (percentage, min 10pt, only fonts >12pt)
+- Trace visibility (visible:false, non-destructive)
+- Strip hidden traces (optional, removes from data array on export)
+
+**index.html** (2,080 -> 1,898 lines, -182)
+
+Removed: The entire `if (!isStudio) { ... }` block (was lines
+1292-1454). This contained all 16 content transforms. Also removed
+isStudio variable, isLightTheme detection (no longer needed for
+branching), and the theme-dependent override cascade.
+
+Added: Comment block explaining the Session 12 refactor and the
+studio WYSIWYG authority principle.
+
+Kept (structural viewer, unchanged):
+- Template stripping (safety net for version mismatch)
+- Fixed dimension removal + autosize
+- Tall plot min-height (aspect >= 0.8)
+- Post-render resize
+- Mobile Plotly config (scrollZoom:true, doubleClick:false,
+  displayModeBar:false on touch/small screens)
+- Portrait click handler + info card parsing
+- Tap hint for first portrait load
+- D-pad / zoom control selection via _studio_nav flag
+- All gallery chrome (navigation, share, URL routing, categories)
+
+**json_converter.py**: No changes needed. The converter extracts
+the full figure dict via bracket-matching, including all `_` prefixed
+keys (_studio, _studio_nav, _encyclopedia, _routing_log). The index
+cleans up the markers on read.
+
+**Migration note**: Existing gallery content exported before this
+refactor (without studio curation) will now render "raw" in the
+gallery -- no dark theme overrides, no font scaling, no legend
+repositioning. Those items need re-export through the studio with
+the landscape preset to get equivalent treatment. This is by design:
+the studio is now the authority, and the gallery should show exactly
+what the studio previewed.
+
 ### Deferred Items (future phases)
 
 - Animation frame extraction in converter (Plotly.addFrames support)
-- ~~Legend handling for high-trace-count figures~~ SOLVED (Session 10 - studio per-plot font sizing)
-- ~~Studio social/portrait preset~~ SOLVED (Session 11 - portrait preset with info panel + encyclopedia)
+- ~~Legend handling for high-trace-count figures~~ SOLVED (Session 10)
+- ~~Studio social/portrait preset~~ SOLVED (Session 11)
+- ~~Studio WYSIWYG authority~~ DONE (Session 12)
+- ~~Trace visibility in studio~~ DONE (Session 12)
+- ~~Gallery preview button~~ DONE (Session 12)
+- Encyclopedia data in JSON pipeline (studio embeds, index displays)
+- Extract _parse_hover_html into shared hover_utils.py
+- Retire social_media_export.py export functions
 - Thumbnail generation for gallery cards
 - Link preview images for social sharing (og:image)
 - Website content pages (About, Downloads, Contact)
 - Version/update date in gallery footer
-- Custom pinch-to-zoom handler for 3D (option 1 from Session 7 -- would
-  replace zoom buttons with native gesture, but complex to implement)
+- Custom pinch-to-zoom handler for 3D
 
-### Immediate Next: Content + Polish
+### Immediate Next: Content Re-Population
 
-Gallery infrastructure is complete (viewer, converter, editor, config,
-studio). Remaining work:
-- Continue populating gallery with studio-curated landscape and portrait content
-- Re-export existing gallery content through studio for _studio flag benefits
-- Test on additional devices -- ongoing (5 iOS browsers tested Session 9,
-  3 browsers validated Session 10)
-- Polish: version stamp, first-visit hints
+The studio WYSIWYG refactor is complete. All content transforms now
+live in the studio. Remaining work:
+
+1. Re-export ALL existing gallery content through studio (landscape
+   preset for standard views, portrait preset for social views) --
+   required because the index no longer applies any content transforms
+2. Validate each re-exported item: studio preview vs gallery preview
+   vs live index (all three should match for Plotly content area)
+3. Continue populating gallery with new content
+4. Test on devices: iPhone Safari, Chrome, home screen bookmark
+5. Polish: version stamp, first-visit hints
 
 ## Known Issues & Lessons
 
@@ -1129,15 +1286,17 @@ studio). Remaining work:
    call does not pass frames. Both need targeted additions -- a few lines
    each. Deferred until static plots are solid.
 
-5. **Mobile legend repositioning**: The horizontal legend override
+5. **Mobile legend repositioning**: ~~The horizontal legend override
    (orientation: 'h', y: 1.02) on screens <1024px may conflict with titles
-   on some visualizations. Needs testing with real mobile screenshots.
+   on some visualizations.~~ **Session 12 resolved**: legend position is
+   now a studio control (legend_position preset), not a hidden index
+   override. Developer sees and adjusts per plot.
 
-6. **Don't override what the export got right**: Lesson from Session 3 --
-   the original Plotly exports have carefully placed margins, dropdown
-   positions, and title alignment. The gallery viewer should apply minimal
-   overrides (dark theme, autosize, template strip) and preserve everything
-   else. Every forced layout change is a potential visual regression.
+6. **Don't override what the export got right**: Lesson from Session 3,
+   now the core principle of Session 12 -- the gallery viewer should apply
+   NO content overrides. The studio makes all curation decisions. The
+   index is a dumb renderer. Every forced layout change that was hidden
+   from the developer has been moved to a visible studio control.
 
 7. **Theme detection order matters** (Session 3 cont., resolved Session 5)
    -- json_converter strips templates during conversion. Any detection that
@@ -1280,6 +1439,24 @@ studio). Remaining work:
     values (95 vs 100) existed from separate edit sessions. Consolidated.
     Lesson: when editing index.html across multiple sessions, grep for
     existing blocks before adding new ones.
+
+27. **Hidden transformations create developer-user gap** (Session 12
+    planning) -- The studio preview shows curated output, but the index
+    applies ~20 additional transforms the developer never sees (mobile
+    font scaling, margin clamping, annotation stripping, etc.). The
+    developer's last visual checkpoint before pushing doesn't match what
+    the public sees. Solution: move all content transforms to studio,
+    make index a dumb renderer. The _studio flag approach was a partial
+    fix; full WYSIWYG authority is the complete solution.
+
+28. **social_media_export.py is mostly superseded** (Session 12 planning)
+    -- Gallery Studio now does everything the social export module did
+    (hover routing, figure preparation, portrait HTML building) plus
+    more (encyclopedia, configurable controls, landscape mode). The
+    remaining unique value is the trace selection dialog. Plan: add
+    non-destructive trace visibility to studio, then social export's
+    export functions can be retired. Keep _parse_hover_html() as shared
+    utility.
 
 ## File Renaming Summary
 
@@ -1542,6 +1719,20 @@ re-export from the current app.
 | Cross-dir import | Walk up tree, check candidates | gallery_studio in tools/ needs orrery/ modules two levels up |
 | Reuse _parse_hover_html | Import, don't reimplement | One parser for hover decomposition; tested pattern |
 | Debug logging in HTML | Console.log routing + trace state | Stacked bugs need pipeline-wide visibility |
+| Studio as WYSIWYG authority | Studio makes ALL curation decisions; index is dumb renderer | Developer sees what user sees; no hidden transformations |
+| Index role after refactor | Structural viewer only (nav, container, share) | No content opinions; static site generator pattern |
+| Trace selection in studio | Non-destructive visibility toggles (visible:false) | Replaces social_media_export.py dependency; reversible |
+| Preview as Gallery | Simulates index rendering in studio | Closes developer visibility gap before GitHub push |
+| One pipeline for web + social | Gallery mobile view IS the Instagram reel source | No bifurcated workflows; one pipeline, one output |
+| Landscape default preset | Applies what index did silently, but visibly | Studio is non-burdensome; presets handle 90% of cases |
+| social_media_export.py future | Keep _parse_hover_html + trace selection; export functions superseded | Studio does everything the export module did, plus more |
+| Device adaptation in index | Mobile Plotly config stays (scrollZoom, no modebar) | Structural like CSS media queries, not content decisions |
+| Trace visibility mechanism | visible:false (non-destructive) | Data stays in file; can re-enable in studio |
+| Strip hidden traces | Optional checkbox on export | File size reduction when traces definitely unneeded |
+| Gallery Preview viewer | Minimal HTML with NO content transforms + gold banner | WYSIWYG verification before GitHub push |
+| Old gallery content | Must re-export through studio | Index no longer provides any content safety net |
+| Annotation font scale | Percentage-based (0=keep, 70=typical mobile) | More flexible than index's hardcoded 70% on <900px |
+| Scene aspectmode | Studio control, not device detection | Developer chooses cube/auto per plot, not per screen size |
 
 ---
 
@@ -1576,5 +1767,17 @@ February 15, 2026
 
 *"What a session."* -- Tony, after two stacked bugs fell to systematic
 console logging, February 16, 2026
+
+*"The discomfort is that the index is creating its own filters that are
+not visible to the developer in the studio GUI."* -- Tony, the insight
+that triggered the WYSIWYG refactor, February 16, 2026
+
+*"What you see is what you get logic."* -- Tony, on the studio becoming
+the single source of truth, February 16, 2026
+
+*"A dual pipeline is confusing."* -- Tony, February 16, 2026
+
+*"We did the hard work up front."* -- Tony, on the audit-first approach
+to the WYSIWYG refactor, February 16, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*

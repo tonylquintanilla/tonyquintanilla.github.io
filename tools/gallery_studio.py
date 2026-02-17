@@ -55,9 +55,9 @@ DEFAULT_CONFIG = {
     "title_color": "#f8fafc",
 
     # Layout
-    "margin_top": 40,
+    "margin_top": 100,
     "margin_bottom": 20,
-    "margin_left": 20,
+    "margin_left": 60,
     "margin_right": 20,
 
     # Scene (3D plots)
@@ -75,8 +75,19 @@ DEFAULT_CONFIG = {
     "show_annotations": True,
     "strip_footer_annotations": True,
     "annotation_bg_transparent": True,
+    "annotation_font_scale": 0,  # 0 = keep original, 50-100 = percentage
+
+    # Scene (3D) - additional
+    "scene_aspectmode": "auto",  # auto, cube, data, manual
+
+    # Legend - additional
+    "legend_font_color": "",  # empty = auto from bg brightness
+    "legend_border_transparent": True,
+    "legend_position": "original",  # original, top-center-h, bottom-h
 
     # Traces
+    "trace_visibility": {},  # {trace_name: True/False}, empty = all visible
+    "strip_hidden_traces": False,  # Remove invisible traces on export
     "marker_size_boost": 0,
     "line_width_min": 2,
 
@@ -125,13 +136,20 @@ PORTRAIT_CONFIG = {
     "show_axes": False,
     "show_grid": False,
     "scene_bgcolor": "#000000",
+    "scene_aspectmode": "cube",
     "show_legend": False,
-    "legend_orientation": "v",
-    "legend_font_size": 11,
+    "legend_orientation": "h",
+    "legend_font_size": 10,
     "legend_bgcolor": "rgba(0,0,0,0)",
+    "legend_font_color": "#9a9a9a",
+    "legend_border_transparent": True,
+    "legend_position": "top-center-h",
     "show_annotations": False,
     "strip_footer_annotations": True,
     "annotation_bg_transparent": True,
+    "annotation_font_scale": 70,
+    "trace_visibility": {},
+    "strip_hidden_traces": False,
     "marker_size_boost": 4,
     "line_width_min": 4,
     "show_modebar": False,
@@ -619,6 +637,11 @@ def apply_config(fig_dict, config):
             scene['bgcolor'] = 'rgba(0,0,0,0)'
         else:
             scene['bgcolor'] = scene_bg
+        # 3D aspect mode
+        aspect = config.get('scene_aspectmode', 'auto')
+        if aspect != 'auto':
+            scene['aspectmode'] = aspect
+
         layout['scene'] = scene
 
     # ---- Legend ----
@@ -641,9 +664,30 @@ def apply_config(fig_dict, config):
         else:
             legend['orientation'] = 'v'
 
-        # Remove border for clean look
-        legend.pop('bordercolor', None)
-        legend.pop('borderwidth', None)
+        # Legend position preset
+        pos = config.get('legend_position', 'original')
+        if pos == 'top-center-h':
+            legend['orientation'] = 'h'
+            legend['x'] = 0.5
+            legend['xanchor'] = 'center'
+            legend['y'] = 1.02
+            legend['yanchor'] = 'bottom'
+        elif pos == 'bottom-h':
+            legend['orientation'] = 'h'
+            legend['x'] = 0.5
+            legend['xanchor'] = 'center'
+            legend['y'] = -0.15
+            legend['yanchor'] = 'top'
+
+        # Legend font color
+        leg_color = config.get('legend_font_color', '')
+        if leg_color:
+            legend['font']['color'] = leg_color
+
+        # Legend border
+        if config.get('legend_border_transparent', True):
+            legend.pop('bordercolor', None)
+            legend.pop('borderwidth', None)
         layout['legend'] = legend
 
     # ---- Annotations ----
@@ -670,7 +714,32 @@ def apply_config(fig_dict, config):
                 ann.pop('borderwidth', None)
                 ann.pop('borderpad', None)
 
+        # Annotation font scaling
+        ann_scale = config.get('annotation_font_scale', 0)
+        if ann_scale > 0 and ann_scale < 100:
+            scale_factor = ann_scale / 100.0
+            for ann in annotations:
+                if ann.get('font') and ann['font'].get('size'):
+                    original = ann['font']['size']
+                    if original > 12:
+                        ann['font']['size'] = max(10, int(original * scale_factor))
+
         layout['annotations'] = annotations
+
+    # ---- Trace visibility ----
+    visibility = config.get('trace_visibility', {})
+    if visibility:
+        for trace in fig.get('data', []):
+            tname = trace.get('name', '')
+            if tname in visibility:
+                trace['visible'] = visibility[tname]
+
+    # Strip hidden traces if requested (reduces file size)
+    if config.get('strip_hidden_traces', False) and visibility:
+        fig['data'] = [
+            t for t in fig.get('data', [])
+            if visibility.get(t.get('name', ''), True) is not False
+        ]
 
     # ---- Trace modifications ----
     marker_boost = config.get('marker_size_boost', 0)
@@ -1322,20 +1391,37 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
 """
 
         if has_scene:
-            # 3D pan/zoom uses synthetic wheel events and camera manipulation
+            # 3D pan/zoom uses camera manipulation
             nav_js = """
+var _initCamera = null;
+var _initScene = null;
 function panPlot(dir) {
   var gd = document.getElementById('plotly-graph');
   if (!gd || !gd._fullLayout || !gd._fullLayout.scene) return;
   if (dir === 'reset') {
-    Plotly.relayout(gd, {'scene.camera': null});
+    if (_initCamera) {
+      // Full relayout resets both camera AND zoom/projection state
+      var update = {'scene.camera': JSON.parse(JSON.stringify(_initCamera))};
+      // Also restore axis ranges if captured
+      if (_initScene) {
+        ['xaxis', 'yaxis', 'zaxis'].forEach(function(ax) {
+          if (_initScene[ax] && _initScene[ax].range) {
+            update['scene.' + ax + '.range'] = _initScene[ax].range.slice();
+          }
+        });
+      }
+      Plotly.relayout(gd, update);
+    }
     return;
   }
-  // 3D: use relayout to shift camera eye position
   try {
     var scene = gd._fullLayout.scene._scene;
     var cam = scene.getCamera();
-    var step = 0.15;
+    var dx = cam.eye.x - cam.center.x;
+    var dy = cam.eye.y - cam.center.y;
+    var dz = cam.eye.z - cam.center.z;
+    var dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1;
+    var step = dist * 0.08;
     if (dir === 'up') { cam.eye.z += step; cam.center.z += step; }
     if (dir === 'down') { cam.eye.z -= step; cam.center.z -= step; }
     if (dir === 'left') { cam.eye.x -= step; cam.center.x -= step; }
@@ -1491,6 +1577,22 @@ document.addEventListener('DOMContentLoaded', function() {{
   }};
   layout.autosize = true;
   Plotly.newPlot('plotly-graph', data, layout, config).then(function() {{
+    // Capture initial 3D camera for reset button
+    var _gd = document.getElementById('plotly-graph');
+    if (_gd && _gd._fullLayout && _gd._fullLayout.scene) {{
+      try {{
+        var _sc = _gd._fullLayout.scene._scene;
+        _initCamera = JSON.parse(JSON.stringify(_sc.getCamera()));
+        // Also capture axis ranges for zoom reset
+        var _sl = _gd._fullLayout.scene;
+        _initScene = {{}};
+        ['xaxis', 'yaxis', 'zaxis'].forEach(function(ax) {{
+          if (_sl[ax] && _sl[ax].range) {{
+            _initScene[ax] = {{range: _sl[ax].range.slice()}};
+          }}
+        }});
+      }} catch(e) {{}}
+    }}
     if (frames && frames.length > 0) {{
       Plotly.addFrames('plotly-graph', frames);
     }}
@@ -2032,16 +2134,16 @@ class GalleryStudio:
     def _build_config_sections(self):
         """Build config sections in three columns.
 
-        Left column: Figure content (what you see)
-            Title, Background, Margins, 3D Scene, Legend, Annotations
+        Left column: Figure structure (spatial layout)
+            Title, Background, Margins, 3D Scene, Legend
 
-        Center column: Behavior (how it works)
-            Traces, Chrome & Controls, Hover, 2D Axes,
+        Center column: Content & traces
+            Trace Visibility, Trace Appearance, Chrome & Controls,
+            Annotations
+
+        Right column: Output & interaction
+            Portrait / Social (9:16), Hover, 2D Axes,
             Navigation Controls
-
-        Right column: Portrait / Social (9:16)
-            Preset buttons, output format, hover routing,
-            opacity fix, animation restyle, branding
         """
         left = self.col_left
         right = self.col_right
@@ -2241,6 +2343,24 @@ class GalleryStudio:
                 "effect if axes are also shown. Useful for plots where "
                 "spatial relationships need a visual reference frame.")
 
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Aspect mode:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_scene_aspect = tk.StringVar(
+            value=self.config.get('scene_aspectmode', 'auto'))
+        om = ttk.Combobox(row, textvariable=self.var_scene_aspect,
+                          values=['auto', 'cube', 'data', 'manual'],
+                          width=8, state='readonly')
+        om.pack(side='left')
+        ToolTip(om, "3D scene aspect ratio mode.\n"
+                "  auto: Plotly decides (default)\n"
+                "  cube: Equal axes, fills viewport (good for mobile)\n"
+                "  data: Proportional to data range\n"
+                "  manual: Use explicit aspectratio values\n"
+                "The gallery index used 'cube' on mobile. Now you "
+                "control it here.")
+
         # ---- Legend ----
         sec = tk.LabelFrame(left, text="Legend", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
@@ -2282,8 +2402,47 @@ class GalleryStudio:
         ToolTip(sp, "Legend text size. 11 is default. Use 9-10 for "
                 "crowded plots with many traces, 13+ for presentation.")
 
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Position:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_legend_position = tk.StringVar(
+            value=self.config.get('legend_position', 'original'))
+        om = ttk.Combobox(row, textvariable=self.var_legend_position,
+                          values=['original', 'top-center-h', 'bottom-h'],
+                          width=14, state='readonly')
+        om.pack(side='left')
+        ToolTip(om, "Legend placement preset.\n"
+                "  original: Keep position from source plot\n"
+                "  top-center-h: Horizontal, centered above plot\n"
+                "  bottom-h: Horizontal, centered below plot\n"
+                "The index used top-center-h on mobile for dark plots.")
+
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Font color:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_legend_color = tk.StringVar(
+            value=self.config.get('legend_font_color', ''))
+        ent = tk.Entry(row, textvariable=self.var_legend_color, width=10)
+        ent.pack(side='left')
+        tk.Label(row, text="(empty=auto)", fg='gray').pack(
+            side='left', padx=4)
+        ToolTip(ent, "Legend text color as hex code. Leave empty to "
+                "auto-detect from background brightness. The index "
+                "used #9a9a9a (gray) on mobile dark themes.")
+
+        self.var_legend_border = tk.BooleanVar(
+            value=self.config.get('legend_border_transparent', True))
+        cb = tk.Checkbutton(sec, text="Transparent legend border",
+                            variable=self.var_legend_border)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Remove the legend box border and background. "
+                "Keeps legend markers and labels visible but removes "
+                "the opaque box that can block data on small screens.")
+
         # ---- Annotations ----
-        sec = tk.LabelFrame(left, text="Annotations", padx=6, pady=4)
+        sec = tk.LabelFrame(right, text="Annotations", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Control text annotations overlaid on the plot -- "
                 "coordinate system labels, data source attributions, "
@@ -2318,8 +2477,68 @@ class GalleryStudio:
                 "for coordinate labels -- these can obscure data on "
                 "small screens. This strips the box, keeps the text.")
 
-        # ---- Traces ----
-        sec = tk.LabelFrame(right, text="Traces", padx=6, pady=4)
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Font scale %:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_ann_font_scale = tk.IntVar(
+            value=self.config.get('annotation_font_scale', 0))
+        sp = tk.Spinbox(row, from_=0, to=100,
+                        textvariable=self.var_ann_font_scale, width=5)
+        sp.pack(side='left')
+        tk.Label(row, text="(0=keep)", fg='gray').pack(side='left', padx=4)
+        ToolTip(sp, "Scale annotation font sizes by this percentage. "
+                "0 keeps originals. 70 scales fonts > 12pt to 70%% "
+                "(min 10pt). The index used 70%% on screens < 900px. "
+                "Now you control it explicitly per plot.")
+
+        # ---- Trace Visibility ----
+        sec = tk.LabelFrame(right, text="Trace Visibility", padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Toggle individual traces on/off. Uses Plotly "
+                "visible:false (non-destructive). The data stays in "
+                "the file but is hidden. Check 'Strip hidden' to "
+                "remove them on export for smaller file size.")
+
+        btn_row = tk.Frame(sec)
+        btn_row.pack(fill='x', pady=(0, 4))
+        sel_all_btn = tk.Button(btn_row, text="Select All", width=10,
+                                command=self._trace_select_all)
+        sel_all_btn.pack(side='left', padx=2)
+        sel_none_btn = tk.Button(btn_row, text="Select None", width=10,
+                                 command=self._trace_select_none)
+        sel_none_btn.pack(side='left', padx=2)
+        self.var_strip_hidden = tk.BooleanVar(
+            value=self.config.get('strip_hidden_traces', False))
+        cb = tk.Checkbutton(btn_row, text="Strip hidden",
+                            variable=self.var_strip_hidden)
+        cb.pack(side='left', padx=6)
+        ToolTip(cb, "Remove hidden traces from the exported file "
+                "entirely (reduces file size). If unchecked, hidden "
+                "traces stay in the data with visible:false -- they "
+                "can be re-enabled later by reloading in studio.")
+
+        # Scrollable trace list
+        trace_frame = tk.Frame(sec)
+        trace_frame.pack(fill='x')
+        self.trace_canvas = tk.Canvas(trace_frame, height=120,
+                                       highlightthickness=0)
+        trace_sb = tk.Scrollbar(trace_frame, orient='vertical',
+                                command=self.trace_canvas.yview)
+        self.trace_inner = tk.Frame(self.trace_canvas)
+        self.trace_inner.bind(
+            '<Configure>',
+            lambda e: self.trace_canvas.configure(
+                scrollregion=self.trace_canvas.bbox('all')))
+        self.trace_canvas.create_window((0, 0), window=self.trace_inner,
+                                         anchor='nw')
+        self.trace_canvas.configure(yscrollcommand=trace_sb.set)
+        self.trace_canvas.pack(side='left', fill='x', expand=True)
+        trace_sb.pack(side='right', fill='y')
+        self.trace_vars = {}  # Will be populated on file load
+
+        # ---- Trace Appearance ----
+        sec = tk.LabelFrame(right, text="Trace Appearance", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Adjust how data traces (points, lines, markers) "
                 "appear in the exported HTML.")
@@ -2405,93 +2624,6 @@ class GalleryStudio:
                 "buttons and date sliders for animated plots. Only relevant "
                 "if 'Strip update menus' is checked. Animation controls "
                 "are identified by having buttons with method='animate'.")
-
-        # ---- Hover ----
-        sec = tk.LabelFrame(right, text="Hover", padx=6, pady=4)
-        sec.pack(fill='x', pady=3, padx=2)
-        ToolTip(sec, "How hover tooltips behave when the viewer mouses "
-                "over data points in the gallery.")
-
-        self.var_hover_mode = tk.StringVar(value=self.config['hover_mode'])
-        rb = tk.Radiobutton(sec, text="Default hover",
-                            variable=self.var_hover_mode, value='default')
-        rb.pack(anchor='w')
-        ToolTip(rb, "Keep the original hover behavior from the source "
-                "plot. Desktop plots show full hovertext with distance, "
-                "velocity, coordinates, etc. Best for landscape/desktop "
-                "gallery viewing.")
-
-        rb = tk.Radiobutton(sec, text="Names only",
-                            variable=self.var_hover_mode, value='names_only')
-        rb.pack(anchor='w')
-        ToolTip(rb, "Show only the object name on hover -- no detailed "
-                "data. Cleaner for mobile views where full hovertext is "
-                "too large. The gallery viewer's info card (portrait mode) "
-                "can show details on tap instead.")
-
-        rb = tk.Radiobutton(sec, text="No hover",
-                            variable=self.var_hover_mode, value='none')
-        rb.pack(anchor='w')
-        ToolTip(rb, "Disable all hover tooltips. Use for purely visual "
-                "gallery pieces where interaction is not needed -- "
-                "presentation screenshots, static views, etc.")
-
-        # ---- 2D Axes ----
-        sec = tk.LabelFrame(right, text="2D Axes", padx=6, pady=4)
-        sec.pack(fill='x', pady=3, padx=2)
-        ToolTip(sec, "Font controls for 2D chart axes (climate charts, "
-                "HR diagrams, paleoclimate plots). Ignored for 3D scenes. "
-                "Set to 0 to keep the original sizes from the source plot.")
-
-        row = tk.Frame(sec)
-        row.pack(fill='x', pady=2)
-        tk.Label(row, text="Axis title size:", width=14,
-                 anchor='w').pack(side='left')
-        self.var_axis_title_size = tk.IntVar(
-            value=self.config['axis_title_font_size'])
-        sp = tk.Spinbox(row, from_=0, to=24,
-                        textvariable=self.var_axis_title_size, width=5)
-        sp.pack(side='left')
-        tk.Label(row, text="(0=keep)", fg='gray').pack(side='left', padx=4)
-        ToolTip(sp, "Font size for axis titles ('Temperature Anomaly', "
-                "'Year', etc.). The source plots often use 14-16 which "
-                "can overflow on mobile. Try 10-12 for gallery. "
-                "Set to 0 to keep the original size unchanged.")
-
-        row = tk.Frame(sec)
-        row.pack(fill='x', pady=2)
-        tk.Label(row, text="Tick label size:", width=14,
-                 anchor='w').pack(side='left')
-        self.var_axis_tick_size = tk.IntVar(
-            value=self.config['axis_tick_font_size'])
-        sp = tk.Spinbox(row, from_=0, to=20,
-                        textvariable=self.var_axis_tick_size, width=5)
-        sp.pack(side='left')
-        tk.Label(row, text="(0=keep)", fg='gray').pack(side='left', padx=4)
-        ToolTip(sp, "Font size for axis tick labels (years, values, etc.). "
-                "Smaller ticks free up plot area. Try 9-10 for mobile "
-                "gallery views. Set to 0 to keep original sizes.")
-
-        # ---- Navigation ----
-        sec = tk.LabelFrame(right, text="Navigation Controls", padx=6, pady=4)
-        sec.pack(fill='x', pady=3, padx=2)
-        ToolTip(sec, "Embed navigation controls in the exported HTML. "
-                "These appear as floating buttons in the gallery view, "
-                "enabling panning and zooming without Plotly's mode bar.")
-
-        self.var_show_nav = tk.BooleanVar(
-            value=self.config['show_nav_arrows'])
-        cb = tk.Checkbutton(sec, text="Show pan/zoom arrows",
-                            variable=self.var_show_nav)
-        cb.pack(anchor='w')
-        ToolTip(cb, "Add directional arrow buttons (up/down/left/right) "
-                "and zoom (+/-) to the exported HTML. Essential for 2D "
-                "charts on touch devices where you need to pan to specific "
-                "data points -- e.g., navigating to a particular year on "
-                "a paleoclimate chart to read its hover text. The arrows "
-                "shift the visible axis range in that direction. Also "
-                "useful for dense plots where pinch-zoom isn't precise "
-                "enough.")
 
         # ---- Portrait / Social (9:16) ----
         sec = tk.LabelFrame(portrait, text="Portrait / Social (9:16)",
@@ -2613,6 +2745,94 @@ class GalleryStudio:
                 "Only entries matching trace names are included. "
                 "Plotting suggestions (***ALL CAPS***) are filtered out.")
 
+        # ---- Hover ----
+        sec = tk.LabelFrame(portrait, text="Hover", padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "How hover tooltips behave when the viewer mouses "
+                "over data points in the gallery.")
+
+        self.var_hover_mode = tk.StringVar(value=self.config['hover_mode'])
+        rb = tk.Radiobutton(sec, text="Default hover",
+                            variable=self.var_hover_mode, value='default')
+        rb.pack(anchor='w')
+        ToolTip(rb, "Keep the original hover behavior from the source "
+                "plot. Desktop plots show full hovertext with distance, "
+                "velocity, coordinates, etc. Best for landscape/desktop "
+                "gallery viewing.")
+
+        rb = tk.Radiobutton(sec, text="Names only",
+                            variable=self.var_hover_mode, value='names_only')
+        rb.pack(anchor='w')
+        ToolTip(rb, "Show only the object name on hover -- no detailed "
+                "data. Cleaner for mobile views where full hovertext is "
+                "too large. The gallery viewer's info card (portrait mode) "
+                "can show details on tap instead.")
+
+        rb = tk.Radiobutton(sec, text="No hover",
+                            variable=self.var_hover_mode, value='none')
+        rb.pack(anchor='w')
+        ToolTip(rb, "Disable all hover tooltips. Use for purely visual "
+                "gallery pieces where interaction is not needed -- "
+                "presentation screenshots, static views, etc.")
+
+        # ---- 2D Axes ----
+        sec = tk.LabelFrame(portrait, text="2D Axes", padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Font controls for 2D chart axes (climate charts, "
+                "HR diagrams, paleoclimate plots). Ignored for 3D scenes. "
+                "Set to 0 to keep the original sizes from the source plot.")
+
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Axis title size:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_axis_title_size = tk.IntVar(
+            value=self.config['axis_title_font_size'])
+        sp = tk.Spinbox(row, from_=0, to=24,
+                        textvariable=self.var_axis_title_size, width=5)
+        sp.pack(side='left')
+        tk.Label(row, text="(0=keep)", fg='gray').pack(side='left', padx=4)
+        ToolTip(sp, "Font size for axis titles ('Temperature Anomaly', "
+                "'Year', etc.). The source plots often use 14-16 which "
+                "can overflow on mobile. Try 10-12 for gallery. "
+                "Set to 0 to keep the original size unchanged.")
+
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Tick label size:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_axis_tick_size = tk.IntVar(
+            value=self.config['axis_tick_font_size'])
+        sp = tk.Spinbox(row, from_=0, to=20,
+                        textvariable=self.var_axis_tick_size, width=5)
+        sp.pack(side='left')
+        tk.Label(row, text="(0=keep)", fg='gray').pack(side='left', padx=4)
+        ToolTip(sp, "Font size for axis tick labels (years, values, etc.). "
+                "Smaller ticks free up plot area. Try 9-10 for mobile "
+                "gallery views. Set to 0 to keep original sizes.")
+
+        # ---- Navigation ----
+        sec = tk.LabelFrame(portrait, text="Navigation Controls", padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Embed navigation controls in the exported HTML. "
+                "These appear as floating buttons in the gallery view, "
+                "enabling panning and zooming without Plotly's mode bar.")
+
+        self.var_show_nav = tk.BooleanVar(
+            value=self.config['show_nav_arrows'])
+        cb = tk.Checkbutton(sec, text="Show pan/zoom arrows",
+                            variable=self.var_show_nav)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Add directional arrow buttons (up/down/left/right) "
+                "and zoom (+/-) to the exported HTML. Essential for 2D "
+                "charts on touch devices where you need to pan to specific "
+                "data points -- e.g., navigating to a particular year on "
+                "a paleoclimate chart to read its hover text. The arrows "
+                "shift the visible axis range in that direction. Also "
+                "useful for dense plots where pinch-zoom isn't precise "
+                "enough.")
+
+
     def _update_bg_swatch(self):
         """Update the color swatch to show current BG color."""
         try:
@@ -2661,6 +2881,13 @@ class GalleryStudio:
             'show_annotations': self.var_show_annotations.get(),
             'strip_footer_annotations': self.var_strip_footer.get(),
             'annotation_bg_transparent': self.var_ann_transparent.get(),
+            'annotation_font_scale': self.var_ann_font_scale.get(),
+            'scene_aspectmode': self.var_scene_aspect.get(),
+            'legend_font_color': self.var_legend_color.get(),
+            'legend_border_transparent': self.var_legend_border.get(),
+            'legend_position': self.var_legend_position.get(),
+            'trace_visibility': self._collect_trace_visibility(),
+            'strip_hidden_traces': self.var_strip_hidden.get(),
             'marker_size_boost': self.var_marker_boost.get(),
             'line_width_min': self.var_line_min.get(),
             'show_modebar': self.var_show_modebar.get(),
@@ -2701,6 +2928,12 @@ class GalleryStudio:
         self.var_show_annotations.set(c.get('show_annotations', True))
         self.var_strip_footer.set(c.get('strip_footer_annotations', True))
         self.var_ann_transparent.set(c.get('annotation_bg_transparent', True))
+        self.var_ann_font_scale.set(c.get('annotation_font_scale', 0))
+        self.var_scene_aspect.set(c.get('scene_aspectmode', 'auto'))
+        self.var_legend_color.set(c.get('legend_font_color', ''))
+        self.var_legend_border.set(c.get('legend_border_transparent', True))
+        self.var_legend_position.set(c.get('legend_position', 'original'))
+        self.var_strip_hidden.set(c.get('strip_hidden_traces', False))
         self.var_marker_boost.set(c.get('marker_size_boost', 0))
         self.var_line_min.set(c.get('line_width_min', 2))
         self.var_show_modebar.set(c.get('show_modebar', False))
@@ -2721,6 +2954,215 @@ class GalleryStudio:
         self.var_encyclopedia.set(c.get('embed_encyclopedia', False))
 
     # ---- Presets ----
+
+    def _populate_trace_list(self):
+        """Populate the trace visibility checkboxes from loaded figure."""
+        # Clear existing
+        for widget in self.trace_inner.winfo_children():
+            widget.destroy()
+        self.trace_vars = {}
+
+        if self.fig_dict is None:
+            return
+
+        saved_vis = self.config.get('trace_visibility', {})
+        for trace in self.fig_dict.get('data', []):
+            name = trace.get('name', '')
+            if not name:
+                continue
+            var = tk.BooleanVar(value=saved_vis.get(name, True))
+            cb = tk.Checkbutton(self.trace_inner, text=name,
+                                variable=var, anchor='w',
+                                wraplength=250, justify='left')
+            cb.pack(fill='x', anchor='w')
+            self.trace_vars[name] = var
+
+    def _trace_select_all(self):
+        """Check all trace visibility boxes."""
+        for var in self.trace_vars.values():
+            var.set(True)
+
+    def _trace_select_none(self):
+        """Uncheck all trace visibility boxes."""
+        for var in self.trace_vars.values():
+            var.set(False)
+
+    def _collect_trace_visibility(self):
+        """Collect trace visibility state from checkboxes."""
+        vis = {}
+        for name, var in self.trace_vars.items():
+            if not var.get():  # Only record hidden traces
+                vis[name] = False
+        return vis
+
+    def _preview_as_gallery(self):
+        """Preview how this plot will look in the gallery (index.html).
+
+        Runs json_converter logic in memory: extracts figure data,
+        strips internal keys, then renders with a minimal viewer
+        that applies NO content transforms -- just like the
+        refactored index.html.
+        """
+        if self.fig_dict is None:
+            messagebox.showinfo("Preview", "Load an HTML file first.")
+            return
+
+        try:
+            self._collect_config()
+            transformed = apply_config(self.fig_dict, self.config)
+
+            # Simulate json_converter: strip internal keys, template
+            import copy
+            sim = json.loads(json.dumps(transformed))
+            layout = sim.get('layout', {})
+
+            # Remove _studio, _studio_nav, _routing_log (converter preserves
+            # _studio and _studio_nav but index reads and deletes them)
+            layout.pop('_studio', None)
+            layout.pop('_studio_nav', None)
+            layout.pop('_routing_log', None)
+
+            # Template already stripped by apply_config if strip_template=True
+
+            # Remove fixed dimensions (index does this)
+            layout.pop('width', None)
+            layout.pop('height', None)
+            layout['autosize'] = True
+
+            sim['layout'] = layout
+
+            # Build minimal gallery preview HTML
+            data_json = json.dumps(sim.get('data', []),
+                                   separators=(',', ':'))
+            layout_for_json = {k: v for k, v in layout.items()
+                               if not k.startswith('_')}
+            # But keep _encyclopedia if present for info card
+            if '_encyclopedia' in layout:
+                layout_for_json['_encyclopedia'] = layout['_encyclopedia']
+            layout_json = json.dumps(layout_for_json,
+                                     separators=(',', ':'))
+
+            title = self.config.get('custom_title', '').strip()
+            if not title:
+                title = os.path.splitext(
+                    os.path.basename(self.source_path or 'preview')
+                )[0]
+
+            # Minimal gallery viewer -- renders exactly as index.html
+            # would after the WYSIWYG refactor (no content transforms)
+            html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{title} - Gallery Preview</title>
+<script src="{PLOTLY_CDN}"></script>
+<style>
+  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  html, body {{ height: 100%; overflow: hidden; background: #0a0a0f; }}
+  #banner {{
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(201, 168, 76, 0.9); color: #000;
+    padding: 6px 16px; font: 600 13px 'Segoe UI', sans-serif;
+    text-align: center;
+  }}
+  #plotly-graph {{
+    width: 100%; height: calc(100vh - 28px); margin-top: 28px;
+  }}
+  /* Info card (portrait mode simulation) */
+  #info-card {{
+    display: none; position: fixed; bottom: 0; left: 0; right: 0;
+    background: #0f172a; border-top: 1px solid #334155;
+    padding: 16px 20px; max-height: 45vh; overflow-y: auto;
+    z-index: 50; font-family: monospace; color: #e8e6e3;
+  }}
+  #info-card h3 {{ font-size: 1.3rem; margin-bottom: 8px;
+    font-family: Georgia, serif; color: #c9a84c; }}
+  #info-card .body {{ font-size: 0.82rem; line-height: 1.5;
+    white-space: pre-wrap; }}
+  #dismiss {{ color: #666; font-size: 0.75rem; text-align: center;
+    margin-top: 8px; }}
+</style>
+</head>
+<body>
+<div id="banner">GALLERY PREVIEW -- This is how index.html will render this plot (no content transforms)</div>
+<div id="plotly-graph"></div>
+<div id="info-card">
+  <h3 id="card-name"></h3>
+  <div id="card-body" class="body"></div>
+  <div id="dismiss">Tap elsewhere to dismiss</div>
+</div>
+<script>
+var data = {data_json};
+var layout = {layout_json};
+var config = {{
+  displayModeBar: true,
+  displaylogo: true,
+  responsive: true,
+  modeBarButtonsToRemove: ['lasso2d', 'select2d']
+}};
+Plotly.newPlot('plotly-graph', data, layout, config).then(function() {{
+  setTimeout(function() {{ Plotly.Plots.resize('plotly-graph'); }}, 100);
+}});
+
+// Wire click -> info card (simulating index portrait mode)
+var graphDiv = document.getElementById('plotly-graph');
+graphDiv.on('plotly_click', function(evtData) {{
+  if (!evtData || !evtData.points || !evtData.points.length) return;
+  var pt = evtData.points[0];
+  var cd = null;
+  if (pt.customdata) {{
+    try {{
+      cd = typeof pt.customdata === 'string' ? JSON.parse(pt.customdata) : pt.customdata;
+    }} catch(e) {{}}
+  }}
+  if (!cd && pt.data && pt.data.text) {{
+    var tv = Array.isArray(pt.data.text) ? (pt.data.text[pt.pointIndex] || '') : (pt.data.text || '');
+    if (tv) {{
+      var nm = tv.match(/<b>([^<]+)<\\/b>/);
+      cd = {{ name: nm ? nm[1] : (pt.data.name || 'Object'), subtitle: '', body: tv }};
+    }}
+  }}
+  if (!cd && pt.data && pt.data.name) {{
+    cd = {{ name: pt.data.name, subtitle: '', body: '' }};
+  }}
+  if (cd) {{
+    var card = document.getElementById('info-card');
+    document.getElementById('card-name').textContent = cd.name || '';
+    var bodyEl = document.getElementById('card-body');
+    var bodyText = (cd.body || '').replace(/<br\\s*\\/?>/gi, '\\n').replace(/<[^>]+>/g, '');
+    bodyEl.textContent = bodyText;
+    card.style.display = 'block';
+  }}
+}});
+document.addEventListener('click', function(e) {{
+  var card = document.getElementById('info-card');
+  if (card.style.display === 'block' &&
+      !card.contains(e.target) &&
+      !document.getElementById('plotly-graph').contains(e.target)) {{
+    card.style.display = 'none';
+  }}
+}});
+</script>
+</body>
+</html>"""
+
+            # Write temp file
+            fd, temp_path = tempfile.mkstemp(
+                suffix='.html', prefix='gallery_preview_')
+            os.close(fd)
+            with open(temp_path, 'w', encoding='utf-8') as f:
+                f.write(html)
+
+            webbrowser.open('file://' + os.path.abspath(temp_path))
+            self.status_var.set("Gallery preview opened in browser")
+
+        except Exception as e:
+            self.status_var.set(f"Gallery preview error: {e}")
+            import traceback
+            traceback.print_exc()
+            messagebox.showerror("Preview Error",
+                                 f"Could not generate gallery preview:\n\n{e}")
 
     def _apply_portrait_preset(self):
         """Apply the portrait/social media preset."""
@@ -2788,6 +3230,9 @@ class GalleryStudio:
         info += f"  |  {'3D' if has_scene else '2D'}"
 
         self.file_label.configure(text=info, fg='black')
+
+        # Populate trace visibility checkboxes
+        self._populate_trace_list()
 
         # Check for saved config for this file
         config_key = os.path.basename(path)
