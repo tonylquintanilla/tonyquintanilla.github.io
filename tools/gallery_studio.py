@@ -304,20 +304,50 @@ def extract_figure_from_html(html_path):
 
     # Method 1: Plotly.newPlot("id", [data], {layout})
     result = _extract_newplot(html_content)
-    if result:
-        return result
+    if not result:
+        # Method 2: Social media view format (var data = ...; var layout = ...;)
+        result = _extract_variables(html_content)
+    if not result:
+        # Method 3: Plotly.react()
+        result = _extract_react(html_content)
+    if not result:
+        return None
 
-    # Method 2: Social media view format (var data = ...; var layout = ...;)
-    result = _extract_variables(html_content)
-    if result:
-        return result
+    # Extract animation frames if present (applies to all extraction methods)
+    # Plotly's write_html() embeds frames via Plotly.addFrames('id', [...])
+    # Studio re-exports use var frames = [...]
+    if 'frames' not in result or not result.get('frames'):
+        # Try var frames = [...] first (studio output)
+        frames = []
+        frames_match = re.search(r'var\s+frames\s*=\s*\[', html_content)
+        if frames_match:
+            fb_start = frames_match.end() - 1
+            frames_end = _match_bracket(html_content, fb_start, '[', ']')
+            if frames_end > 0:
+                try:
+                    frames = json.loads(html_content[fb_start:frames_end])
+                except json.JSONDecodeError:
+                    pass
 
-    # Method 3: Plotly.react()
-    result = _extract_react(html_content)
-    if result:
-        return result
+        # Fallback: Plotly.addFrames('id', [...]) from write_html() output
+        if not frames:
+            af_idx = html_content.find('Plotly.addFrames(')
+            if af_idx >= 0:
+                rest = html_content[af_idx + len('Plotly.addFrames('):]
+                bracket_pos = rest.find('[')
+                if bracket_pos >= 0:
+                    rest = rest[bracket_pos:]
+                    af_end = _match_bracket(rest, 0, '[', ']')
+                    if af_end > 0:
+                        try:
+                            frames = json.loads(rest[:af_end])
+                        except json.JSONDecodeError:
+                            pass
 
-    return None
+        if frames:
+            result["frames"] = frames
+
+    return result
 
 
 def _extract_newplot(html_content):
@@ -410,6 +440,24 @@ def _extract_variables(html_content):
                 frames = json.loads(html_content[fb_start:frames_end])
             except json.JSONDecodeError:
                 pass
+
+    # Fallback: Plotly.addFrames("id", [...]) from write_html() output
+    if not frames:
+        af_idx = html_content.find('Plotly.addFrames(')
+        if af_idx >= 0:
+            rest = html_content[af_idx + len('Plotly.addFrames('):]
+            # Skip the div ID - may be single or double quoted:
+            #   'uuid-string', [...]  or  "uuid-string", [...]
+            # Find the first [ which starts the frames array
+            bracket_pos = rest.find('[')
+            if bracket_pos >= 0:
+                rest = rest[bracket_pos:]
+                af_end = _match_bracket(rest, 0, '[', ']')
+                if af_end > 0:
+                    try:
+                        frames = json.loads(rest[:af_end])
+                    except json.JSONDecodeError:
+                        pass
 
     result = {"data": data, "layout": layout}
     if frames:

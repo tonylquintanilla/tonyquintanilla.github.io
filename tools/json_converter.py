@@ -98,13 +98,14 @@ def extract_plotly_json_from_html(html_path):
 
     Plotly's write_html() embeds the figure data in a Plotly.newPlot() call
     with heavy whitespace padding. This function uses bracket-matching to
-    reliably extract the data array and layout object.
+    reliably extract the data array and layout object. Animation frames
+    (if present) are extracted from the Plotly.addFrames() call.
 
     Parameters:
         html_path: Path to the HTML file
 
     Returns:
-        dict: Plotly figure dict with 'data' and 'layout' keys
+        dict: Plotly figure dict with 'data', 'layout', and optionally 'frames' keys
         None: If extraction fails
     """
     try:
@@ -118,21 +119,24 @@ def extract_plotly_json_from_html(html_path):
     # Primary method: Find Plotly.newPlot() and bracket-match the arguments
     # This handles Plotly's heavy whitespace padding reliably
     result = _extract_via_newplot(html_content)
-    if result:
-        return result
+    if not result:
+        # Fallback: Try Plotly.react() format
+        result = _extract_via_react(html_content)
+    if not result:
+        # Fallback: Try var data = ...; var layout = ...; format
+        result = _extract_via_variables(html_content)
+    if not result:
+        print("  ERROR: Could not find Plotly figure data in HTML")
+        return None
 
-    # Fallback: Try Plotly.react() format
-    result = _extract_via_react(html_content)
-    if result:
-        return result
+    # Extract animation frames if present
+    # Plotly's write_html() embeds frames via a separate addFrames() call
+    frames = _extract_frames(html_content)
+    if frames:
+        result["frames"] = frames
+        print(f"  Found {len(frames)} animation frames")
 
-    # Fallback: Try var data = ...; var layout = ...; format
-    result = _extract_via_variables(html_content)
-    if result:
-        return result
-
-    print("  ERROR: Could not find Plotly figure data in HTML")
-    return None
+    return result
 
 
 def _match_bracket(text, start, open_char, close_char):
@@ -171,6 +175,44 @@ def _match_bracket(text, start, open_char, close_char):
             if count == 0:
                 return i + 1
     return -1
+
+
+def _extract_frames(html_content):
+    """
+    Extract animation frames from Plotly.addFrames() call in HTML.
+
+    Plotly's write_html() embeds frames separately from the main newPlot call:
+        Plotly.addFrames('div-id', [{data: [...], name: "frame1"}, ...])
+
+    Note: div ID may be single or double quoted depending on Plotly version.
+
+    Returns:
+        list: Array of frame objects, or None if no frames found
+    """
+    idx = html_content.find('Plotly.addFrames(')
+    if idx < 0:
+        return None
+
+    # Skip past Plotly.addFrames(
+    rest = html_content[idx + len('Plotly.addFrames('):]
+
+    # Find the first [ which starts the frames array
+    # (skips the div ID regardless of quote style)
+    bracket_pos = rest.find('[')
+    if bracket_pos < 0:
+        return None
+    rest = rest[bracket_pos:]
+
+    frames_end = _match_bracket(rest, 0, '[', ']')
+    if frames_end < 0:
+        return None
+
+    try:
+        frames = json.loads(rest[:frames_end])
+        return frames if frames else None
+    except json.JSONDecodeError as e:
+        print(f"  Frames JSON parse error: {e}")
+        return None
 
 
 def _extract_via_newplot(html_content):

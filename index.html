@@ -1296,6 +1296,12 @@
 
                 await Plotly.newPlot('plotly-graph', figDict.data || [], figDict.layout, config);
 
+                // Load animation frames if present
+                if (figDict.frames && figDict.frames.length > 0) {
+                    await Plotly.addFrames('plotly-graph', figDict.frames);
+                    console.log('Loaded ' + figDict.frames.length + ' animation frames');
+                }
+
                 // For tall/square plots (aspect >= 0.8), set min-height
                 currentAspect = origAspect;
                 if (origAspect >= 0.8) {
