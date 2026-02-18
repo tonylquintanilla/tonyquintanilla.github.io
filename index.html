@@ -479,6 +479,18 @@
             height: 100%;
             text-align: center;
             padding: 40px;
+            position: relative;
+        }
+        .welcome-state::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url('favicon.ico');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: min(70vw, 70vh, 500px);
+            opacity: 0.08;
+            pointer-events: none;
         }
 
         .welcome-title {
@@ -519,6 +531,13 @@
             .welcome-device-hint::after {
                 content: 'Switch between Desktop and Mobile modes for different experiences.';
             }
+        }
+
+        .welcome-version {
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            margin-top: 32px;
+            letter-spacing: 0.5px;
         }
 
         /* Loading state */
@@ -940,6 +959,7 @@
                     Tap the menu to select a visualization.
                 </div>
                 <div class="welcome-device-hint"></div>
+                <div class="welcome-version" id="welcomeVersion"></div>
             </div>
 
             <!-- Plotly graph target -->
@@ -1123,6 +1143,15 @@
 
             // Render nav list
             renderNavList(vizs);
+
+            // Display version/update date
+            if (metadata.last_updated) {
+                var el = document.getElementById('welcomeVersion');
+                if (el) {
+                    var count = metadata.total_count || vizs.length;
+                    el.textContent = count + ' visualizations \u00b7 Updated ' + metadata.last_updated;
+                }
+            }
 
             // Setup event listeners
             setupEvents();
