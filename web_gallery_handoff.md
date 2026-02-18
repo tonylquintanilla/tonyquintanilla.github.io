@@ -1818,6 +1818,108 @@ re-export from the current app.
 | 3D zoom reset | Accept limitation | WebGL projection matrix below Plotly API reach; not worth chasing |
 | 3D pan step | Relative to camera distance (8%) | Prevents absolute step launching camera into space at close zoom |
 
+### Session 13 (Feb 17): Animation Support -- Frames Pipeline
+
+Animations from the desktop app (play/pause slider, frame-by-frame stepping)
+now flow through the entire gallery pipeline. This unlocks both
+`animate_objects` exports (planetary system animations) and the Sgr A*
+Grand Tour for the web gallery.
+
+**The problem**: Plotly animations consist of three parts: `data` (traces),
+`layout` (axes, UI controls, sliders), and `frames` (per-step updates to
+trace positions). The existing pipeline extracted data and layout but silently
+dropped frames. The slider rendered (it lives in layout) but pressing Play
+did nothing because the frame data it referenced wasn't loaded.
+
+**Three files changed**:
+
+1. **index.html** (+4 lines) -- After `Plotly.newPlot()`, checks for
+   `figDict.frames` and calls `Plotly.addFrames()` if present. Non-animated
+   visualizations unaffected (no frames key = no action).
+
+2. **json_converter.py** (new `_extract_frames` function) -- Extracts
+   animation frames from HTML during conversion to JSON. Handles two formats:
+   - `var frames = [...]` -- from Gallery Studio re-exports
+   - `Plotly.addFrames('id', [...])` -- from Plotly `write_html()` output
+
+3. **gallery_studio.py** (frames extraction in `extract_figure_from_html`) --
+   Same dual-format extraction, applied after any successful data/layout
+   extraction method (newPlot, react, or variables). Frames flow through
+   `apply_config`, into `build_gallery_html` / `build_social_html` templates,
+   and render in the Studio preview.
+
+**Bugs encountered and fixed**:
+
+1. **Single vs double quotes** -- Plotly's `write_html()` wraps the div ID
+   in single quotes (`'uuid-string'`), not double quotes. The initial
+   extraction looked for `",` to find the end of the div ID, which scanned
+   past it into the frame data JSON. Fix: skip directly to the first `[`
+   after `Plotly.addFrames(` regardless of quote style.
+
+2. **Early return in Studio extraction** -- `extract_figure_from_html` tried
+   `_extract_newplot` first, which returned `{data, layout}` without frames.
+   Since it succeeded, the function returned immediately -- the frames
+   extraction code (added to `_extract_variables`) was never reached. Fix:
+   restructured to extract data/layout first via any method, then always
+   attempt frames extraction afterward.
+
+3. **Two frame formats** -- Plotly `write_html()` uses
+   `Plotly.addFrames('id', [...])`. Gallery Studio re-exports use
+   `var frames = [...]`. The converter initially only handled the first
+   format, but Studio-exported HTML (the primary input to the converter)
+   uses the second. Fix: check both formats in both extractors.
+
+**Validation**: Tested with Paloma's Birthday animation (21 years,
+year-by-year, inner solar system). Animation plays in Studio preview,
+gallery landscape mode, and gallery portrait/mobile mode. Slider, Play/Pause,
+and manual frame stepping all functional.
+
+**Pipeline with frames**:
+```
+Desktop App (animate_objects / Sgr A* Grand Tour)
+    |
+    v
+save_utils.py -> write_html() with frames as Plotly.addFrames('id', [...])
+    |
+    v
+Gallery Studio (extracts frames, includes in preview and re-export)
+    |-- Preview: frames loaded via Plotly.addFrames in template JS
+    |-- Export: frames embedded as var frames = [...] in output HTML
+    |
+    v
+json_converter.py (extracts frames from either format, includes in JSON)
+    |
+    v
+JSON files with "data", "layout", AND "frames" keys
+    |
+    v
+index.html (Plotly.newPlot + Plotly.addFrames if frames present)
+    |
+    v
+Animated visualizations in the browser
+```
+
+**What this enables**:
+- Any `animate_objects` export (day/week/month/year stepping) in the gallery
+- Sgr A* Grand Tour with mode switching and animated orbital motion
+- Paloma's Birthday animation as a shareable link
+- All existing static visualizations completely unaffected
+
+**File sizes**: The Paloma's Birthday animation JSON (21 frames, 25 traces
+per frame) is a reasonable gallery item. The Sgr A* Grand Tour (140 frames,
+mode-switched visibility arrays) will be larger but should be manageable --
+to be tested next.
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Animation in gallery | Extract and load frames through full pipeline | One pipeline handles static and animated content |
+| Frame extraction format | Support both `Plotly.addFrames()` and `var frames` | Two producers (write_html vs Studio) use different formats |
+| Div ID quote handling | Find first `[` instead of parsing quotes | Quote-agnostic; simpler and more robust |
+| Extraction architecture | Frames extracted after data/layout, not inside individual methods | Runs regardless of which extraction method (newPlot/react/variables) succeeds |
+| Sgr A* approach | Start with Grand Tour through standard pipeline | Test animation support before adding category content |
+
 ---
 
 *"What was a hard Python environment becomes a modern easy shareable
@@ -1863,5 +1965,8 @@ the single source of truth, February 16, 2026
 
 *"We did the hard work up front."* -- Tony, on the audit-first approach
 to the WYSIWYG refactor, February 16, 2026
+
+*"Single quotes!"* -- The three-bug hunt that unlocked animation,
+February 17, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*
