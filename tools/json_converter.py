@@ -179,21 +179,33 @@ def _match_bracket(text, start, open_char, close_char):
 
 def _extract_frames(html_content):
     """
-    Extract animation frames from Plotly.addFrames() call in HTML.
+    Extract animation frames from HTML.
 
-    Plotly's write_html() embeds frames separately from the main newPlot call:
-        Plotly.addFrames('div-id', [{data: [...], name: "frame1"}, ...])
-
-    Note: div ID may be single or double quoted depending on Plotly version.
+    Handles two formats:
+    1. Plotly.addFrames('div-id', [...]) - from Plotly write_html() output
+    2. var frames = [...] - from Gallery Studio re-exports
 
     Returns:
         list: Array of frame objects, or None if no frames found
     """
+    # Method 1: var frames = [...] (Studio output)
+    frames_match = re.search(r'var\s+frames\s*=\s*\[', html_content)
+    if frames_match:
+        fb_start = frames_match.end() - 1
+        frames_end = _match_bracket(html_content, fb_start, '[', ']')
+        if frames_end > 0:
+            try:
+                frames = json.loads(html_content[fb_start:frames_end])
+                if frames:
+                    return frames
+            except json.JSONDecodeError:
+                pass
+
+    # Method 2: Plotly.addFrames('id', [...]) (write_html output)
     idx = html_content.find('Plotly.addFrames(')
     if idx < 0:
         return None
 
-    # Skip past Plotly.addFrames(
     rest = html_content[idx + len('Plotly.addFrames('):]
 
     # Find the first [ which starts the frames array
