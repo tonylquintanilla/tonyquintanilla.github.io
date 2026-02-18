@@ -482,8 +482,30 @@
       "size_kb": 103.2,
       "converted": "2026-02-17 01:49",
       "mode": "landscape"
+    },
+    {
+      "id": "inner_solar_system_animation_2-4-2005_21_years_social",
+      "title": "Inner Solar System Animation 2 4 2005 21 Years",
+      "filename": "inner_solar_system_animation_2-4-2005_21_years_social.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Animation of inner solar system from 2005 for 21 years.",
+      "size_kb": 477.9,
+      "converted": "2026-02-17 23:07",
+      "mode": "portrait"
+    },
+    {
+      "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape",
+      "title": "Inner Solar System Animation 2 4 2005 21 Years Gallery Landscape",
+      "filename": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Animation of the inner solar system from 2005 for 21 years.",
+      "size_kb": 450.0,
+      "converted": "2026-02-17 23:08",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-17 02:00",
-  "total_count": 46
+  "last_updated": "2026-02-17 23:08",
+  "total_count": 48
 }
