@@ -444,6 +444,12 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
         fig_dict["toggle_annotations"] = toggle_anns
         print(f"  Found {len(toggle_anns)} toggle annotations")
 
+    # Detect studio nav controls (pan/zoom arrows embedded in HTML wrapper)
+    # index.html checks layout._studio_nav to show pan controls vs zoom
+    if 'class="nav-controls"' in html_content and 'function panPlot' in html_content:
+        fig_dict.setdefault("layout", {})["_studio_nav"] = True
+        print(f"  Found studio nav controls")
+
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(fig_dict, f)
 
