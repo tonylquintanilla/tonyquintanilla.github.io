@@ -17,6 +17,89 @@ data services.
 
 ---
 
+## Completed This Session: Gallery Pipeline Improvements
+
+### Problem
+
+Gallery Studio exports standalone HTML with interactive controls (annotation
+toggle button, pan/zoom nav arrows) embedded in the HTML wrapper. But
+`json_converter.py` extracts only Plotly `data` and `layout`, discarding
+the wrapper. The gallery viewer (`index.html`) never saw these controls.
+Two features affected:
+
+1. **Annotation toggle** -- "Show Labels / Hide Labels" button for toggling
+   dense annotations on mobile-friendly views
+2. **Nav controls** -- Pan/zoom D-pad arrows selected in Studio's Chrome
+   section appeared in preview but disappeared in the gallery
+
+### Solution
+
+Bridged the pipeline gap: `json_converter.py` now detects both features
+in the source HTML and preserves signals in the JSON output that the
+gallery viewer already knows how to read. Added the annotation toggle
+button to the gallery viewer as a new interactive control.
+
+### Files Changed
+
+| File | What Changed |
+|------|-------------|
+| `gallery_studio.py` | New `annotation_toggle_button` config option. When enabled, processed annotations are preserved in `layout['_toggle_annotations']` even if `show_annotations` is False. Button CSS/HTML/JS injected into standalone HTML exports via `build_gallery_html()`. New "Embed toggle button" checkbox in Annotations GUI section. |
+| `json_converter.py` | New `_extract_toggle_annotations()` function finds `var _annStored = [...]` in source HTML using bracket-matching. Saves as top-level `toggle_annotations` key in gallery JSON output. Also detects studio nav controls (`class="nav-controls"` + `function panPlot`) and sets `layout._studio_nav = true` in JSON so the gallery viewer shows pan/zoom arrows instead of simple zoom buttons. |
+| `index.html` | CSS for `.ann-toggle` button matching existing gallery control styling (backdrop blur, border, transitions). Button HTML between zoom controls and pan controls. JS: `doToggleAnnotations()` using `Plotly.relayout()` to swap annotations. Uses `touchstart` + `mousedown` (same pattern as zoom/pan) for iOS WebGL compatibility. Button state resets on viz load and home navigation. On mobile (<=1024px), button moves into toolbar via JS (same pattern as nav/share buttons) to avoid overlap. |
+
+### How It Works
+
+**Annotation toggle:**
+1. In Gallery Studio, check "Embed toggle button" in the Annotations section
+2. Export HTML -- the button and stored annotations are embedded
+3. Run `json_converter.py` -- extracts `toggle_annotations` into the JSON
+4. Gallery viewer detects the key and shows the button
+5. Viewer taps to toggle -- `Plotly.relayout()` swaps annotations on/off
+
+**Nav controls (pan/zoom arrows):**
+1. In Gallery Studio, check "Show nav arrows" in the Chrome section
+2. Export HTML -- pan/zoom D-pad is embedded in the HTML wrapper
+3. Run `json_converter.py` -- detects nav controls in HTML, sets
+   `layout._studio_nav = true` in the JSON
+4. Gallery viewer reads the flag and shows pan/zoom D-pad instead of
+   simple +/- zoom buttons
+
+### Pipeline Pattern
+
+Both features follow the same pipeline bridge pattern:
+
+```
+Gallery Studio (HTML wrapper) -> json_converter (detects & preserves) -> index.html (reads & renders)
+```
+
+The standalone HTML embeds controls directly. The converter detects
+them in the source HTML and signals the gallery viewer via JSON keys.
+The viewer already had the rendering code -- it just needed the signal.
+
+### Design Decisions
+
+- Toggle button position: `top: 94px; right: 12px` on desktop (below
+  share button). On mobile, moves into toolbar flex row between nav
+  and share buttons.
+- Initial annotation state respects `show_annotations` setting -- can
+  start hidden (phone-first) or visible (desktop-first)
+- Annotations are processed (footer strip, transparency, font scaling)
+  before being stored, so toggle shows the curated version
+- `_toggle_annotations` uses underscore prefix convention so it gets
+  stripped from Plotly layout serialization but survives in the pipeline
+- Nav detection uses content signatures (`class="nav-controls"` +
+  `function panPlot`) rather than config file lookup -- more robust,
+  works even if config is missing
+
+### Testing
+
+Verified on: desktop browser (landscape), iPhone Safari, iPhone Chrome,
+iPhone Home Screen (PWA mode). The toolbar flow prevents overlap on all
+mobile configurations. Nav controls verified in standalone HTML preview
+and gallery viewer after re-running json_converter.
+
+---
+
 ## What We Already Have
 
 The project caches these datasets in `data/` as JSON files:
@@ -46,6 +129,11 @@ Visualization code:
 - `/mnt/project/paleoclimate_wet_bulb_full.py` -- wet bulb analysis
 - `/mnt/project/paleoclimate_human_origins_full.py` -- human origins overlay
 - `/mnt/project/paleoclimate_dual_scale.py` -- dual axis paleo plots
+
+Gallery pipeline:
+- `/mnt/project/gallery_studio.py` -- interactive HTML export tool
+- `/mnt/project/json_converter.py` -- HTML to gallery JSON converter
+- `/mnt/project/index.html` -- gallery viewer (GitHub Pages)
 
 ---
 
@@ -109,6 +197,7 @@ logic for this. If so, extend rather than duplicate.
    and ocean heat content in the existing GUI
 5. **Cache and validate** -- same pattern as existing climate cache manager
 6. **Gallery-ready** -- save HTML via `show_and_save`, curate in Studio
+   with annotation toggle enabled for mobile-friendly viewing
 
 ### Code Patterns
 
@@ -157,6 +246,8 @@ def generate_DATASET_plot():
 - Test that fetch works before building visualization
 - The `show_and_save` function in `save_utils.py` handles HTML export
   for gallery pipeline
+- Use "Embed toggle button" in Gallery Studio for climate plots with
+  dense annotations -- lets phone users toggle labels on demand
 
 ---
 
