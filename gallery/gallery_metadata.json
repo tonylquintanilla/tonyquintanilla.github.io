@@ -493,8 +493,19 @@
       "size_kb": 91.5,
       "converted": "2026-02-19 00:00",
       "mode": "portrait"
+    },
+    {
+      "id": "sea_level_rise_mobile3_gallery",
+      "title": "Sea Level Rise Mobile3 Gallery",
+      "filename": "sea_level_rise_mobile3_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Mean sea level rise, 1993 - 2025.",
+      "size_kb": 91.5,
+      "converted": "2026-02-19 00:09",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-19 00:00",
-  "total_count": 47
+  "last_updated": "2026-02-19 00:09",
+  "total_count": 48
 }
