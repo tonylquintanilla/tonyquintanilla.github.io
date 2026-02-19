@@ -98,14 +98,13 @@ def extract_plotly_json_from_html(html_path):
 
     Plotly's write_html() embeds the figure data in a Plotly.newPlot() call
     with heavy whitespace padding. This function uses bracket-matching to
-    reliably extract the data array and layout object. Animation frames
-    (if present) are extracted from the Plotly.addFrames() call.
+    reliably extract the data array and layout object.
 
     Parameters:
         html_path: Path to the HTML file
 
     Returns:
-        dict: Plotly figure dict with 'data', 'layout', and optionally 'frames' keys
+        dict: Plotly figure dict with 'data' and 'layout' keys
         None: If extraction fails
     """
     try:
@@ -119,24 +118,21 @@ def extract_plotly_json_from_html(html_path):
     # Primary method: Find Plotly.newPlot() and bracket-match the arguments
     # This handles Plotly's heavy whitespace padding reliably
     result = _extract_via_newplot(html_content)
-    if not result:
-        # Fallback: Try Plotly.react() format
-        result = _extract_via_react(html_content)
-    if not result:
-        # Fallback: Try var data = ...; var layout = ...; format
-        result = _extract_via_variables(html_content)
-    if not result:
-        print("  ERROR: Could not find Plotly figure data in HTML")
-        return None
+    if result:
+        return result
 
-    # Extract animation frames if present
-    # Plotly's write_html() embeds frames via a separate addFrames() call
-    frames = _extract_frames(html_content)
-    if frames:
-        result["frames"] = frames
-        print(f"  Found {len(frames)} animation frames")
+    # Fallback: Try Plotly.react() format
+    result = _extract_via_react(html_content)
+    if result:
+        return result
 
-    return result
+    # Fallback: Try var data = ...; var layout = ...; format
+    result = _extract_via_variables(html_content)
+    if result:
+        return result
+
+    print("  ERROR: Could not find Plotly figure data in HTML")
+    return None
 
 
 def _match_bracket(text, start, open_char, close_char):
@@ -175,56 +171,6 @@ def _match_bracket(text, start, open_char, close_char):
             if count == 0:
                 return i + 1
     return -1
-
-
-def _extract_frames(html_content):
-    """
-    Extract animation frames from HTML.
-
-    Handles two formats:
-    1. Plotly.addFrames('div-id', [...]) - from Plotly write_html() output
-    2. var frames = [...] - from Gallery Studio re-exports
-
-    Returns:
-        list: Array of frame objects, or None if no frames found
-    """
-    # Method 1: var frames = [...] (Studio output)
-    frames_match = re.search(r'var\s+frames\s*=\s*\[', html_content)
-    if frames_match:
-        fb_start = frames_match.end() - 1
-        frames_end = _match_bracket(html_content, fb_start, '[', ']')
-        if frames_end > 0:
-            try:
-                frames = json.loads(html_content[fb_start:frames_end])
-                if frames:
-                    return frames
-            except json.JSONDecodeError:
-                pass
-
-    # Method 2: Plotly.addFrames('id', [...]) (write_html output)
-    idx = html_content.find('Plotly.addFrames(')
-    if idx < 0:
-        return None
-
-    rest = html_content[idx + len('Plotly.addFrames('):]
-
-    # Find the first [ which starts the frames array
-    # (skips the div ID regardless of quote style)
-    bracket_pos = rest.find('[')
-    if bracket_pos < 0:
-        return None
-    rest = rest[bracket_pos:]
-
-    frames_end = _match_bracket(rest, 0, '[', ']')
-    if frames_end < 0:
-        return None
-
-    try:
-        frames = json.loads(rest[:frames_end])
-        return frames if frames else None
-    except json.JSONDecodeError as e:
-        print(f"  Frames JSON parse error: {e}")
-        return None
 
 
 def _extract_via_newplot(html_content):
@@ -348,6 +294,41 @@ def _extract_via_variables(html_content):
     return {"data": data, "layout": layout}
 
 
+def _extract_toggle_annotations(html_content):
+    """
+    Extract annotation toggle data from gallery studio HTML.
+
+    Gallery studio embeds toggle annotations as:
+        var _annStored = [{...}, {...}];
+
+    If found, the gallery viewer can render a show/hide labels button.
+
+    Returns:
+        list: Annotation dicts, or empty list if not found
+    """
+    idx = html_content.find('var _annStored = ')
+    if idx < 0:
+        return []
+
+    rest = html_content[idx + len('var _annStored = '):]
+    if not rest.lstrip().startswith('['):
+        return []
+
+    rest = rest.lstrip()
+    arr_end = _match_bracket(rest, 0, '[', ']')
+    if arr_end < 0:
+        return []
+
+    try:
+        annotations = json.loads(rest[:arr_end])
+        if isinstance(annotations, list) and len(annotations) > 0:
+            return annotations
+    except json.JSONDecodeError:
+        pass
+
+    return []
+
+
 # ============================================================================
 # FIGURE OBJECT -> JSON (for new figures)
 # ============================================================================
@@ -448,6 +429,20 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
     # applies its own theme anyway.
     if "layout" in fig_dict and "template" in fig_dict.get("layout", {}):
         del fig_dict["layout"]["template"]
+
+    # Extract toggle annotations from gallery studio HTML
+    # (embedded as var _annStored = [...] by the annotation toggle feature)
+    try:
+        with open(html_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+    except UnicodeDecodeError:
+        with open(html_path, 'r', encoding='latin-1') as f:
+            html_content = f.read()
+
+    toggle_anns = _extract_toggle_annotations(html_content)
+    if toggle_anns:
+        fig_dict["toggle_annotations"] = toggle_anns
+        print(f"  Found {len(toggle_anns)} toggle annotations")
 
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(fig_dict, f)

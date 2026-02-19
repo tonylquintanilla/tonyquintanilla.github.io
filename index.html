@@ -644,6 +644,39 @@
             transform: scale(0.93);
         }
 
+        /* Annotation toggle button (show/hide labels) */
+        .ann-toggle {
+            display: none;
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 350;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(18, 18, 26, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .ann-toggle.visible {
+            display: block;
+        }
+        .ann-toggle:active {
+            background: rgba(18, 18, 26, 0.95);
+            border-color: var(--accent-dim);
+            color: var(--accent);
+            transform: scale(0.95);
+        }
+
         /* Pan controls (D-pad + zoom, studio-curated plots) */
         .pan-controls {
             display: none;
@@ -977,6 +1010,9 @@
         </button>
     </div>
 
+    <!-- Annotation toggle button (show/hide labels) -->
+    <button class="ann-toggle" id="annToggleBtn" aria-label="Toggle annotations">Show Labels</button>
+
     <!-- Pan + Zoom controls (studio-curated plots with nav arrows) -->
     <div class="pan-controls" id="panControls">
         <div class="pan-row">
@@ -1099,6 +1135,9 @@
         var panZoomInBtn   = document.getElementById('panZoomIn');
         var panZoomOutBtn  = document.getElementById('panZoomOut');
         var panOrigRanges  = null;  // Captured on first pan/zoom for reset
+        var annToggleBtn   = document.getElementById('annToggleBtn');
+        var annStored      = null;  // Toggle annotations from JSON
+        var annVisible     = false; // Current annotation visibility state
 
         // Track current plot's aspect ratio for resize handler
         var currentAspect = 0;
@@ -1269,6 +1308,8 @@
             welcomeState.style.display = 'none';
             plotlyGraph.style.display = 'none';
             loadingOverlay.classList.add('visible');
+            annToggleBtn.classList.remove('visible');
+            annStored = null;
 
             // Close overlay
             closeOverlay();
@@ -1419,6 +1460,19 @@
                     panControls.classList.remove('visible');
                     zoomControls.classList.add('visible');
                     zoomControls.setAttribute('data-scene', figDict.layout.scene ? '3d' : '2d');
+                }
+
+                // Annotation toggle button (show/hide labels)
+                if (figDict.toggle_annotations && figDict.toggle_annotations.length > 0) {
+                    annStored = figDict.toggle_annotations;
+                    // Determine initial state: if layout has annotations, they start visible
+                    var layoutAnns = figDict.layout.annotations || [];
+                    annVisible = layoutAnns.length > 0;
+                    annToggleBtn.textContent = annVisible ? 'Hide Labels' : 'Show Labels';
+                    annToggleBtn.classList.add('visible');
+                } else {
+                    annToggleBtn.classList.remove('visible');
+                    annStored = null;
                 }
 
             } catch (err) {
@@ -1697,6 +1751,28 @@
                 doPanZoom(1);
             });
 
+            // Annotation toggle button (show/hide labels)
+            function doToggleAnnotations() {
+                var gd = document.getElementById('plotly-graph');
+                if (!gd || !annStored) return;
+                annVisible = !annVisible;
+                if (annVisible) {
+                    Plotly.relayout(gd, {'annotations': annStored});
+                    annToggleBtn.textContent = 'Hide Labels';
+                } else {
+                    Plotly.relayout(gd, {'annotations': []});
+                    annToggleBtn.textContent = 'Show Labels';
+                }
+            }
+            annToggleBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                doToggleAnnotations();
+            }, { passive: false });
+            annToggleBtn.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                doToggleAnnotations();
+            });
+
             // Hash changes (browser back/forward)
             window.addEventListener('hashchange', handleHash);
 
@@ -1912,6 +1988,8 @@
             dismissInfoCard();
             zoomControls.classList.remove('visible');
             panControls.classList.remove('visible');
+            annToggleBtn.classList.remove('visible');
+            annStored = null;
         }
 
         // ---- Utility ----
