@@ -471,8 +471,19 @@
       "description": "3D diagram of stars up to visual magnitude 4.0.",
       "size_kb": 423.8,
       "converted": "2026-02-08 19:51"
+    },
+    {
+      "id": "sea_level_rise_mobile",
+      "title": "Sea Level Rise Mobile",
+      "filename": "sea_level_rise_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Global mean sea level rise, 1993 to 2025.",
+      "size_kb": 91.5,
+      "converted": "2026-02-18 21:48",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-18 01:00",
-  "total_count": 45
+  "last_updated": "2026-02-18 21:48",
+  "total_count": 46
 }
