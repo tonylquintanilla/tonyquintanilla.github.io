@@ -545,6 +545,73 @@ def extract_encyclopedia_for_figure(fig_dict):
 # FIGURE TRANSFORMATION ENGINE
 # ============================================================================
 
+
+def _parse_hover_html(hover_html):
+    """
+    Parse a Plotly hover HTML string into structured panel data.
+
+    The existing hover text follows this pattern:
+      <b>ObjectName</b><br>
+      optional RA/Dec line<br><br>
+      Distance from Center: 1.234 AU<br>
+      Velocity: 0.123 AU/day<br>
+      ...
+
+    Returns:
+        dict with keys: name, subtitle, body
+    """
+    if not hover_html or not isinstance(hover_html, str):
+        return None
+
+    text = str(hover_html).strip()
+    if not text:
+        return None
+
+    # Extract the bold name: <b>Name</b>
+    name_match = re.match(r'<b>([^<]+)</b>', text)
+    if name_match:
+        name = name_match.group(1).strip()
+        # Everything after the name tag is potential body content
+        remainder = text[name_match.end():]
+    else:
+        # No bold tag - use first line as name
+        lines = text.split('<br>')
+        name = lines[0].strip()
+        remainder = '<br>'.join(lines[1:])
+
+    # Clean leading <br> tags from remainder
+    remainder = re.sub(r'^(\s*<br>\s*)+', '', remainder, flags=re.IGNORECASE)
+
+    # Try to extract a subtitle from RA/Dec line or first italic line
+    subtitle = ''
+    body = remainder
+
+    # Check for RA/Dec as subtitle (common pattern)
+    radec_match = re.match(
+        r'\s*(RA\s*[^<]+Dec\s*[^<]+?)(<br>|$)', remainder, re.IGNORECASE)
+    if radec_match:
+        subtitle = radec_match.group(1).strip()
+        body = remainder[radec_match.end():]
+    else:
+        # Check for italic subtitle: <i>text</i>
+        italic_match = re.match(r'\s*<i>([^<]+)</i>', remainder)
+        if italic_match:
+            subtitle = italic_match.group(1).strip()
+            body = remainder[italic_match.end():]
+
+    # Clean leading <br> tags from body
+    body = re.sub(r'^(\s*<br>\s*)+', '', body, flags=re.IGNORECASE)
+
+    # Clean trailing <br> tags from body
+    body = re.sub(r'(\s*<br>\s*)+$', '', body, flags=re.IGNORECASE)
+
+    return {
+        'name': name,
+        'subtitle': subtitle,
+        'body': body
+    }
+
+
 def apply_config(fig_dict, config):
     """
     Apply studio configuration to a Plotly figure dict.
@@ -808,121 +875,87 @@ def apply_config(fig_dict, config):
     # ---- Route hover text to customdata (for portrait info panel) ----
     # NOTE: Must run BEFORE hover_mode='none' so we can read original hoverinfo
     if config.get('route_hover_to_panel', False):
-        try:
-            from social_media_export import _parse_hover_html
-            _routing_log = ['[ROUTING] _parse_hover_html imported OK']
-        except ImportError:
-            # gallery_studio.py lives in tools/ but social_media_export.py
-            # is in the orrery/ directory (sibling to the github.io repo).
-            # Walk up to find it.
-            try:
-                import sys
-                _here = os.path.dirname(os.path.abspath(__file__))
-                _candidates = [
-                    os.path.join(_here, '..'),          # parent
-                    os.path.join(_here, '..', '..'),    # grandparent
-                    os.path.join(_here, '..', '..', 'orrery'),  # sibling
-                ]
-                _found = False
-                for _cand in _candidates:
-                    _cand = os.path.normpath(_cand)
-                    if os.path.isfile(os.path.join(
-                            _cand, 'social_media_export.py')):
-                        if _cand not in sys.path:
-                            sys.path.insert(0, _cand)
-                        _found = True
-                        break
-                if not _found:
-                    raise ImportError("not in candidate paths")
-                from social_media_export import _parse_hover_html
-                _routing_log = [
-                    f'[ROUTING] _parse_hover_html imported from {_cand}']
-            except ImportError:
-                print("[STUDIO] WARNING: social_media_export.py not found. "
-                      "Hover routing disabled.")
-                _parse_hover_html = None
-                _routing_log = ['[ROUTING] IMPORT FAILED']
+        _routing_log = ['[ROUTING] _parse_hover_html (local)']
 
-        if _parse_hover_html is not None:
-            for trace in fig.get('data', []):
-                hoverinfo = trace.get('hoverinfo', '')
-                tname = trace.get('name', '?')
-                if hoverinfo in ('skip',):
-                    _routing_log.append(
-                        f'[ROUTING] {tname}: skip (hoverinfo={hoverinfo})')
-                    continue
-                text_data = trace.get('text')
-                if text_data is None:
-                    _routing_log.append(
-                        f'[ROUTING] {tname}: skip (no text)')
-                    continue
-                if isinstance(text_data, str):
-                    text_list = [text_data]
+        for trace in fig.get('data', []):
+            hoverinfo = trace.get('hoverinfo', '')
+            tname = trace.get('name', '?')
+            if hoverinfo in ('skip',):
+                _routing_log.append(
+                    f'[ROUTING] {tname}: skip (hoverinfo={hoverinfo})')
+                continue
+            text_data = trace.get('text')
+            if text_data is None:
+                _routing_log.append(
+                    f'[ROUTING] {tname}: skip (no text)')
+                continue
+            if isinstance(text_data, str):
+                text_list = [text_data]
+            else:
+                text_list = list(text_data)
+            _routing_log.append(
+                f'[ROUTING] {tname}: hoverinfo={hoverinfo}, '
+                f'text_items={len(text_list)}, '
+                f'sample={str(text_list[0])[:60]}')
+            customdata_list = []
+            for hover_html in text_list:
+                parsed = _parse_hover_html(hover_html)
+                if parsed:
+                    customdata_list.append(json.dumps(parsed))
                 else:
-                    text_list = list(text_data)
-                _routing_log.append(
-                    f'[ROUTING] {tname}: hoverinfo={hoverinfo}, '
-                    f'text_items={len(text_list)}, '
-                    f'sample={str(text_list[0])[:60]}')
-                customdata_list = []
-                for hover_html in text_list:
-                    parsed = _parse_hover_html(hover_html)
-                    if parsed:
-                        customdata_list.append(json.dumps(parsed))
+                    fallback = (str(hover_html)[:80]
+                                if hover_html else '')
+                    customdata_list.append(json.dumps({
+                        'name': fallback,
+                        'subtitle': '',
+                        'body': (str(hover_html)
+                                 if hover_html else '')
+                    }))
+            trace['customdata'] = customdata_list
+            trace['text'] = ['' for _ in text_list]
+            # Keep hoverinfo='text' so Plotly fires click/hover
+            # events. With text=[''] the tooltip appears empty.
+            # Setting hoverinfo='none' kills 3D event detection
+            # in some Plotly versions when loaded from extracted HTML.
+            trace['hoverinfo'] = 'text'
+            trace['hovertemplate'] = None
+            _routing_log.append(
+                f'[ROUTING] {tname}: ROUTED ({len(customdata_list)} items)')
+
+        # Store routing log in layout for JS console output
+        layout['_routing_log'] = _routing_log
+        # Also print to Python stdout for debugging
+        for entry in _routing_log:
+            print(entry)
+
+        # Also route hover in animation frames
+        for frame in fig.get('frames', []):
+            for trace in frame.get('data', []):
+                text_data = trace.get('text')
+                if text_data is not None:
+                    if isinstance(text_data, str):
+                        text_list = [text_data]
                     else:
-                        fallback = (str(hover_html)[:80]
-                                    if hover_html else '')
-                        customdata_list.append(json.dumps({
-                            'name': fallback,
-                            'subtitle': '',
-                            'body': (str(hover_html)
-                                     if hover_html else '')
-                        }))
-                trace['customdata'] = customdata_list
-                trace['text'] = ['' for _ in text_list]
-                # Keep hoverinfo='text' so Plotly fires click/hover
-                # events. With text=[''] the tooltip appears empty.
-                # Setting hoverinfo='none' kills 3D event detection
-                # in some Plotly versions when loaded from extracted HTML.
-                trace['hoverinfo'] = 'text'
-                trace['hovertemplate'] = None
-                _routing_log.append(
-                    f'[ROUTING] {tname}: ROUTED ({len(customdata_list)} items)')
-
-            # Store routing log in layout for JS console output
-            layout['_routing_log'] = _routing_log
-            # Also print to Python stdout for debugging
-            for entry in _routing_log:
-                print(entry)
-
-            # Also route hover in animation frames
-            for frame in fig.get('frames', []):
-                for trace in frame.get('data', []):
-                    text_data = trace.get('text')
-                    if text_data is not None:
-                        if isinstance(text_data, str):
-                            text_list = [text_data]
+                        text_list = list(text_data)
+                    customdata_list = []
+                    for hover_html in text_list:
+                        parsed = _parse_hover_html(hover_html)
+                        if parsed:
+                            customdata_list.append(
+                                json.dumps(parsed))
                         else:
-                            text_list = list(text_data)
-                        customdata_list = []
-                        for hover_html in text_list:
-                            parsed = _parse_hover_html(hover_html)
-                            if parsed:
-                                customdata_list.append(
-                                    json.dumps(parsed))
-                            else:
-                                fallback = (str(hover_html)[:80]
-                                            if hover_html else '')
-                                customdata_list.append(json.dumps({
-                                    'name': fallback,
-                                    'subtitle': '',
-                                    'body': (str(hover_html)
-                                             if hover_html else '')
-                                }))
-                        trace['customdata'] = customdata_list
-                        trace['text'] = ['' for _ in text_list]
-                        trace['hoverinfo'] = 'text'
-                        trace['hovertemplate'] = None
+                            fallback = (str(hover_html)[:80]
+                                        if hover_html else '')
+                            customdata_list.append(json.dumps({
+                                'name': fallback,
+                                'subtitle': '',
+                                'body': (str(hover_html)
+                                         if hover_html else '')
+                            }))
+                    trace['customdata'] = customdata_list
+                    trace['text'] = ['' for _ in text_list]
+                    trace['hoverinfo'] = 'text'
+                    trace['hovertemplate'] = None
 
     # ---- Hover mode ----
     hover_mode = config.get('hover_mode', 'default')

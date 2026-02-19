@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-16, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-19, 2026 | Claude Opus 4.6
 
 ---
 
@@ -18,7 +18,7 @@ alive. No download, no install, no "is this safe?"
 
 ## Architecture Decided
 
-Current pipeline (as of Session 11):
+Current pipeline (as of Session 14):
 ```
 Desktop App (Python/Plotly)
     |
@@ -26,7 +26,8 @@ Desktop App (Python/Plotly)
 Gallery Studio (per-plot curation, preview, presets)
     |
     v
-json_converter.py (HTML -> JSON extraction, reads gallery_config.json)
+json_converter.py (HTML -> JSON extraction, reads gallery_config.json,
+                   detects Studio features: toggle annotations, nav controls, frames)
     |
     v
 JSON files + gallery_metadata.json
@@ -1277,20 +1278,20 @@ saved config backward compatibility.
 
 ### Deferred Items (future phases)
 
-- Animation frame extraction in converter (Plotly.addFrames support)
+- ~~Animation frame extraction in converter (Plotly.addFrames support)~~ DONE (Session 13)
 - ~~Legend handling for high-trace-count figures~~ SOLVED (Session 10)
 - ~~Studio social/portrait preset~~ SOLVED (Session 11)
 - ~~Studio WYSIWYG authority~~ DONE (Session 12)
 - ~~Trace visibility in studio~~ DONE (Session 12)
 - ~~Gallery preview button~~ DONE (Session 12)
-- Encyclopedia data in JSON pipeline (studio embeds, index displays)
-- Extract _parse_hover_html into shared hover_utils.py
-- Retire social_media_export.py export functions
+- ~~Encyclopedia data in JSON pipeline (studio embeds, index displays)~~ DONE (Session 12)
+- ~~Version/update date in gallery footer~~ DONE (Session 12)
+- ~~Custom pinch-to-zoom handler for 3D~~ SOLVED (Session 9 -- +/- buttons with synthetic WheelEvent)
+- ~~Extract _parse_hover_html into shared hover_utils.py~~ DONE (Session 14 -- moved directly into gallery_studio.py)
+- ~~Retire social_media_export.py export functions~~ DONE (Session 14 -- no remaining dependents)
 - Thumbnail generation for gallery cards
 - Link preview images for social sharing (og:image)
 - Website content pages (About, Downloads, Contact)
-- Version/update date in gallery footer
-- Custom pinch-to-zoom handler for 3D
 
 ### Immediate Next: Content Re-Population
 
@@ -1920,6 +1921,102 @@ to be tested next.
 | Extraction architecture | Frames extracted after data/layout, not inside individual methods | Runs regardless of which extraction method (newPlot/react/variables) succeeds |
 | Sgr A* approach | Start with Grand Tour through standard pipeline | Test animation support before adding category content |
 
+### Session 14 (Feb 19): Pipeline Bridge -- Annotation Toggle + Nav Controls
+
+Two Studio features that worked in standalone HTML exports were silently
+lost in the gallery viewer. Both had the same root cause: `json_converter`
+extracted only Plotly `data` and `layout`, discarding the HTML wrapper
+where Studio embeds interactive controls as CSS/HTML/JS.
+
+**Feature 1: Annotation Toggle Button**
+
+Climate visualizations have dense text annotations (data labels, status
+boxes, attribution) that help on desktop but obscure the graphic on
+phones. Studio already had "remove annotations" but that was all-or-nothing.
+
+Solution: A "Show Labels / Hide Labels" button that lets viewers toggle
+annotations at runtime via `Plotly.relayout()`.
+
+- `gallery_studio.py`: New `annotation_toggle_button` config option and
+  GUI checkbox. When enabled, processed annotations are stored in
+  `layout['_toggle_annotations']` (underscore prefix = stripped before
+  Plotly sees it). Button CSS/HTML/JS embedded in standalone HTML export.
+  Initial state respects `show_annotations` setting (hidden or visible).
+  Also: `_parse_hover_html` moved in from `social_media_export.py`,
+  eliminating the cross-directory import machinery (~30 lines removed).
+- `json_converter.py`: New `_extract_toggle_annotations()` finds
+  `var _annStored = [...]` in source HTML using bracket-matching. Saved
+  as top-level `toggle_annotations` key in gallery JSON.
+- `index.html`: New `.ann-toggle` button with gallery control styling.
+  Uses `touchstart` + `mousedown` (same pattern as zoom/pan) for iOS
+  WebGL compatibility. Button resets on viz load and home navigation.
+  On mobile (<=1024px), moves into toolbar via JS alongside nav/share
+  buttons to prevent overlap.
+
+**Feature 2: Nav Controls (Pan/Zoom Arrows)**
+
+Studio's "Show nav arrows" checkbox produced a D-pad in preview and
+standalone HTML, but the arrows disappeared in the gallery viewer.
+
+Solution: Converter now detects nav controls in source HTML and signals
+the gallery viewer.
+
+- `json_converter.py`: Detects `class="nav-controls"` + `function panPlot`
+  in HTML, sets `layout._studio_nav = true` in JSON output.
+- `index.html`: Already had `_studio_nav` reading logic (line 1459) --
+  it switches from simple +/- zoom to the full pan/zoom D-pad. The code
+  was there; it just never received the signal.
+
+**The Pipeline Bridge Pattern**
+
+Both fixes follow the same pattern that emerged from Session 13's
+animation work:
+
+```
+Studio embeds feature in HTML wrapper
+    |
+    v
+json_converter detects it in source HTML (content signatures, not config)
+    |
+    v
+Converter preserves signal in JSON (top-level key or layout flag)
+    |
+    v
+index.html reads signal and renders the feature
+```
+
+This is now the standard approach for any Studio feature that needs to
+survive the JSON pipeline. Detection uses content signatures in the HTML
+(class names, function names, variable declarations) rather than config
+file lookups -- more robust, works even if configs are missing.
+
+**Testing**: Verified on desktop browser (landscape), iPhone Safari,
+iPhone Chrome, iPhone Home Screen (PWA mode). Toolbar layout prevents
+button overlap on all mobile configurations.
+
+**Cleanup: _parse_hover_html moved into gallery_studio.py**
+
+The hover text parser was the last functional dependency on
+`social_media_export.py`. Moved the ~60-line function directly into
+`gallery_studio.py` (before `apply_config`) and removed ~30 lines of
+cross-directory import machinery that hunted for the old file. Studio
+no longer imports from `social_media_export.py` at all.
+
+This retires two deferred items at once: the function extraction and
+the `social_media_export.py` retirement. The old file can remain in
+the repo for reference but has no dependents.
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Annotation toggle in gallery | Extract stored annotations, render button in viewer | Same content, viewer chooses visibility |
+| Nav controls in gallery | Detect in HTML, signal via `_studio_nav` flag | Viewer already had rendering code; just needed the signal |
+| Detection method | Content signatures in HTML, not config lookup | Robust; works without config file; self-documenting |
+| Mobile button layout | Move toggle into toolbar alongside nav/share | Prevents overlap; consistent with existing mobile pattern |
+| Toggle initial state | Respects `show_annotations` setting | Phone-first exports start hidden; desktop-first start visible |
+| _parse_hover_html location | Move into gallery_studio.py directly | Simpler than shared module; eliminates cross-directory import; retires social_media_export dependency |
+
 ---
 
 *"What was a hard Python environment becomes a modern easy shareable
@@ -1968,5 +2065,8 @@ to the WYSIWYG refactor, February 16, 2026
 
 *"Single quotes!"* -- The three-bug hunt that unlocked animation,
 February 17, 2026
+
+*"Works great."* -- Tony, on the annotation toggle across all platforms,
+February 19, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*
