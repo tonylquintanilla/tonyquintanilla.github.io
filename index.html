@@ -887,7 +887,13 @@
             }
 
             .ann-toggle {
-                top: 12px;
+                position: relative;
+                top: auto;
+                right: auto;
+                z-index: auto;
+                background: var(--bg-secondary);
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
             }
         }
 
@@ -1205,6 +1211,7 @@
                 var toolbar = document.getElementById('vizToolbar');
                 if (toolbar) {
                     toolbar.appendChild(navBtn);
+                    toolbar.appendChild(annToggleBtn);
                     toolbar.appendChild(shareBtn);
                 }
             }
