@@ -377,7 +377,7 @@
     },
     {
       "id": "sea_level_rise_mobile",
-      "title": "Sea Level Rise",
+      "title": "Sea Level Rise Mobile",
       "filename": "sea_level_rise_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -429,19 +429,8 @@
       "converted": "2026-02-08 19:51"
     },
     {
-      "id": "sea_level_rise_mobile2_mobile",
-      "title": "Sea Level Rise",
-      "filename": "sea_level_rise_mobile2_mobile.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Global mean sea level rise, 1993 - 2025.",
-      "size_kb": 91.5,
-      "converted": "2026-02-18 22:49",
-      "mode": "portrait"
-    },
-    {
       "id": "arctic_ice_extent_mobile",
-      "title": "Arctic Ice Extent",
+      "title": "Arctic Ice Extent Mobile",
       "filename": "arctic_ice_extent_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -452,7 +441,7 @@
     },
     {
       "id": "ocean_acidification_ph_trend_mobile",
-      "title": "Ocean Acidification Ph Trend",
+      "title": "Ocean Acidification Ph Trend Mobile",
       "filename": "ocean_acidification_ph_trend_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -463,7 +452,7 @@
     },
     {
       "id": "planetary_boundaries_mobile",
-      "title": "Planetary Boundaries",
+      "title": "Planetary Boundaries Mobile",
       "filename": "planetary_boundaries_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -482,8 +471,30 @@
       "size_kb": 101.8,
       "converted": "2026-02-15 01:01",
       "mode": "portrait"
+    },
+    {
+      "id": "sea_level_rise_mobile2",
+      "title": "Sea Level Rise Mobile2",
+      "filename": "sea_level_rise_mobile2.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Global mean sea level rise, 1993 - 2025.",
+      "size_kb": 92.5,
+      "converted": "2026-02-18 22:44",
+      "mode": "portrait"
+    },
+    {
+      "id": "sea_level_rise_mobile2_mobile",
+      "title": "Sea Level Rise Mobile2 Mobile",
+      "filename": "sea_level_rise_mobile2_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Global mean sea level rise, 1993 - 2025.",
+      "size_kb": 91.5,
+      "converted": "2026-02-18 22:49",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-18 22:51",
-  "total_count": 46
+  "last_updated": "2026-02-18 22:49",
+  "total_count": 47
 }
