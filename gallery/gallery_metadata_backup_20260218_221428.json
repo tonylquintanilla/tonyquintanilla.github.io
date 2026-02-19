@@ -376,14 +376,58 @@
       "mode": "portrait"
     },
     {
-      "id": "sea_level_rise_mobile",
-      "title": "Sea Level Rise Mobile",
-      "filename": "sea_level_rise_mobile.json",
+      "id": "sea_level_rise_copy",
+      "title": "Sea Level Rise",
+      "filename": "sea_level_rise.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Global mean sea level rise, 1993 to 2025.",
-      "size_kb": 91.5,
-      "converted": "2026-02-18 21:48",
+      "description": "Graphic showing mean sea level rise from 1993 to 2025.",
+      "size_kb": 92.5,
+      "converted": "2026-02-09 00:10",
+      "mode": "portrait"
+    },
+    {
+      "id": "arctic_ice_extent_copy",
+      "title": "Arctic Ice Extent",
+      "filename": "arctic_ice_extent.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing Arctic sea ice extent in September, minimum.",
+      "size_kb": 5.2,
+      "converted": "2026-02-08 23:40",
+      "mode": "portrait"
+    },
+    {
+      "id": "ocean_acidification_ph_trend_copy",
+      "title": "Ocean Acidification Ph Trend (use portrait)",
+      "filename": "ocean_acidification_ph_trend.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing ocean surface pH from 1988 to 2023.",
+      "size_kb": 16.9,
+      "converted": "2026-02-09 00:09",
+      "mode": "portrait"
+    },
+    {
+      "id": "planetary_boundaries_gallery",
+      "title": "Planetary Boundaries",
+      "filename": "planetary_boundaries_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Planetary boundaries",
+      "size_kb": 10.9,
+      "converted": "2026-02-14 16:20",
+      "mode": "portrait"
+    },
+    {
+      "id": "paleoclimate_wet_bulb_gallery",
+      "title": "Paleoclimate Wet Bulb Gallery (use landscape)",
+      "filename": "paleoclimate_wet_bulb_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Paleoclimate history",
+      "size_kb": 101.8,
+      "converted": "2026-02-15 01:01",
       "mode": "portrait"
     },
     {
@@ -429,6 +473,17 @@
       "converted": "2026-02-08 19:51"
     },
     {
+      "id": "sea_level_rise_mobile",
+      "title": "Sea Level Rise Mobile",
+      "filename": "sea_level_rise_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Global mean sea level rise, 1993 to 2025.",
+      "size_kb": 91.5,
+      "converted": "2026-02-18 21:48",
+      "mode": "portrait"
+    },
+    {
       "id": "arctic_ice_extent_mobile",
       "title": "Arctic Ice Extent Mobile",
       "filename": "arctic_ice_extent_mobile.json",
@@ -437,17 +492,6 @@
       "description": "Arctic sea ice extent, September minimum, 1979 - 2025.",
       "size_kb": 2.9,
       "converted": "2026-02-18 21:52",
-      "mode": "portrait"
-    },
-    {
-      "id": "ocean_acidification_ph_trend_mobile",
-      "title": "Ocean Acidification Ph Trend Mobile",
-      "filename": "ocean_acidification_ph_trend_mobile.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Ocean acidification, surface pH.",
-      "size_kb": 15.1,
-      "converted": "2026-02-18 22:09",
       "mode": "portrait"
     },
     {
@@ -462,28 +506,17 @@
       "mode": "portrait"
     },
     {
-      "id": "paleoclimate_wet_bulb_gallery",
-      "title": "Paleoclimate Wet Bulb Gallery (use landscape)",
-      "filename": "paleoclimate_wet_bulb_gallery.json",
+      "id": "ocean_acidification_ph_trend_mobile",
+      "title": "Ocean Acidification Ph Trend Mobile",
+      "filename": "ocean_acidification_ph_trend_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Paleoclimate history",
-      "size_kb": 101.8,
-      "converted": "2026-02-15 01:01",
-      "mode": "portrait"
-    },
-    {
-      "id": "sea_level_rise_mobile2",
-      "title": "Sea Level Rise Mobile2",
-      "filename": "sea_level_rise_mobile2.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Global mean sea level rise, 1993 - 2025.",
-      "size_kb": 92.5,
-      "converted": "2026-02-18 22:44",
+      "description": "Ocean acidification, surface pH.",
+      "size_kb": 15.1,
+      "converted": "2026-02-18 22:09",
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-18 22:44",
-  "total_count": 46
+  "last_updated": "2026-02-18 22:09",
+  "total_count": 49
 }

@@ -76,6 +76,7 @@ DEFAULT_CONFIG = {
     "strip_footer_annotations": True,
     "annotation_bg_transparent": True,
     "annotation_font_scale": 0,  # 0 = keep original, 50-100 = percentage
+    "annotation_toggle_button": False,  # Embed show/hide button in HTML
 
     # Scene (3D) - additional
     "scene_aspectmode": "auto",  # auto, cube, data, manual
@@ -148,6 +149,7 @@ PORTRAIT_CONFIG = {
     "strip_footer_annotations": True,
     "annotation_bg_transparent": True,
     "annotation_font_scale": 70,
+    "annotation_toggle_button": False,
     "trace_visibility": {},
     "strip_hidden_traces": False,
     "marker_size_boost": 4,
@@ -304,50 +306,20 @@ def extract_figure_from_html(html_path):
 
     # Method 1: Plotly.newPlot("id", [data], {layout})
     result = _extract_newplot(html_content)
-    if not result:
-        # Method 2: Social media view format (var data = ...; var layout = ...;)
-        result = _extract_variables(html_content)
-    if not result:
-        # Method 3: Plotly.react()
-        result = _extract_react(html_content)
-    if not result:
-        return None
+    if result:
+        return result
 
-    # Extract animation frames if present (applies to all extraction methods)
-    # Plotly's write_html() embeds frames via Plotly.addFrames('id', [...])
-    # Studio re-exports use var frames = [...]
-    if 'frames' not in result or not result.get('frames'):
-        # Try var frames = [...] first (studio output)
-        frames = []
-        frames_match = re.search(r'var\s+frames\s*=\s*\[', html_content)
-        if frames_match:
-            fb_start = frames_match.end() - 1
-            frames_end = _match_bracket(html_content, fb_start, '[', ']')
-            if frames_end > 0:
-                try:
-                    frames = json.loads(html_content[fb_start:frames_end])
-                except json.JSONDecodeError:
-                    pass
+    # Method 2: Social media view format (var data = ...; var layout = ...;)
+    result = _extract_variables(html_content)
+    if result:
+        return result
 
-        # Fallback: Plotly.addFrames('id', [...]) from write_html() output
-        if not frames:
-            af_idx = html_content.find('Plotly.addFrames(')
-            if af_idx >= 0:
-                rest = html_content[af_idx + len('Plotly.addFrames('):]
-                bracket_pos = rest.find('[')
-                if bracket_pos >= 0:
-                    rest = rest[bracket_pos:]
-                    af_end = _match_bracket(rest, 0, '[', ']')
-                    if af_end > 0:
-                        try:
-                            frames = json.loads(rest[:af_end])
-                        except json.JSONDecodeError:
-                            pass
+    # Method 3: Plotly.react()
+    result = _extract_react(html_content)
+    if result:
+        return result
 
-        if frames:
-            result["frames"] = frames
-
-    return result
+    return None
 
 
 def _extract_newplot(html_content):
@@ -440,24 +412,6 @@ def _extract_variables(html_content):
                 frames = json.loads(html_content[fb_start:frames_end])
             except json.JSONDecodeError:
                 pass
-
-    # Fallback: Plotly.addFrames("id", [...]) from write_html() output
-    if not frames:
-        af_idx = html_content.find('Plotly.addFrames(')
-        if af_idx >= 0:
-            rest = html_content[af_idx + len('Plotly.addFrames('):]
-            # Skip the div ID - may be single or double quoted:
-            #   'uuid-string', [...]  or  "uuid-string", [...]
-            # Find the first [ which starts the frames array
-            bracket_pos = rest.find('[')
-            if bracket_pos >= 0:
-                rest = rest[bracket_pos:]
-                af_end = _match_bracket(rest, 0, '[', ']')
-                if af_end > 0:
-                    try:
-                        frames = json.loads(rest[:af_end])
-                    except json.JSONDecodeError:
-                        pass
 
     result = {"data": data, "layout": layout}
     if frames:
@@ -739,7 +693,9 @@ def apply_config(fig_dict, config):
         layout['legend'] = legend
 
     # ---- Annotations ----
-    if not config.get('show_annotations', True):
+    toggle_btn = config.get('annotation_toggle_button', False)
+
+    if not config.get('show_annotations', True) and not toggle_btn:
         layout['annotations'] = []
     else:
         annotations = layout.get('annotations', [])
@@ -772,7 +728,15 @@ def apply_config(fig_dict, config):
                     if original > 12:
                         ann['font']['size'] = max(10, int(original * scale_factor))
 
-        layout['annotations'] = annotations
+        # Store processed annotations for toggle button
+        if toggle_btn and annotations:
+            layout['_toggle_annotations'] = copy.deepcopy(annotations)
+
+        # Set initial visibility
+        if not config.get('show_annotations', True):
+            layout['annotations'] = []
+        else:
+            layout['annotations'] = annotations
 
     # ---- Trace visibility ----
     visibility = config.get('trace_visibility', {})
@@ -1325,7 +1289,9 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     """
     data_json = json.dumps(fig_dict.get('data', []), separators=(',', ':'))
     # Strip internal keys before serializing layout for Plotly
-    layout_for_json = {k: v for k, v in fig_dict.get('layout', {}).items()
+    layout_dict = fig_dict.get('layout', {})
+    toggle_annotations = layout_dict.get('_toggle_annotations', [])
+    layout_for_json = {k: v for k, v in layout_dict.items()
                        if not k.startswith('_')}
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
@@ -1584,6 +1550,64 @@ function zoomPlot(dir) {
   }
 """
 
+    # Annotation toggle button overlay
+    toggle_css = ""
+    toggle_html = ""
+    toggle_js = ""
+    show_toggle = config.get('annotation_toggle_button', False)
+
+    if show_toggle and toggle_annotations:
+        ann_json = json.dumps(toggle_annotations, separators=(',', ':'))
+        # Determine initial state from whether annotations are in layout
+        initial_visible = len(layout_for_json.get('annotations', [])) > 0
+        initial_label = 'Hide Labels' if initial_visible else 'Show Labels'
+
+        toggle_css = f"""
+  /* Annotation toggle button */
+  .ann-toggle {{
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid {btn_border};
+    background: {btn_bg};
+    color: {btn_color};
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
+  }}
+  .ann-toggle:hover {{ opacity: 1; }}
+  .ann-toggle:active {{ opacity: 0.6; }}
+"""
+
+        toggle_html = f"""
+<button class="ann-toggle" id="ann-toggle-btn" onclick="toggleAnnotations()">{initial_label}</button>
+"""
+
+        toggle_js = f"""
+var _annStored = {ann_json};
+var _annVisible = {'true' if initial_visible else 'false'};
+function toggleAnnotations() {{
+  var gd = document.getElementById('plotly-graph');
+  var btn = document.getElementById('ann-toggle-btn');
+  if (!gd) return;
+  _annVisible = !_annVisible;
+  if (_annVisible) {{
+    Plotly.relayout(gd, {{'annotations': _annStored}});
+    btn.textContent = 'Hide Labels';
+  }} else {{
+    Plotly.relayout(gd, {{'annotations': []}});
+    btn.textContent = 'Show Labels';
+  }}
+}}
+"""
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1604,15 +1628,18 @@ function zoomPlot(dir) {
   }}
 {nav_css}
 {enc_css}
+{toggle_css}
 </style>
 </head>
 <body>
 <div id="plotly-graph"></div>
 {nav_html}
 {enc_html}
+{toggle_html}
 <script>
 {nav_js}
 {enc_js}
+{toggle_js}
 document.addEventListener('DOMContentLoaded', function() {{
   var data = {data_json};
   var layout = {layout_json};
@@ -2540,6 +2567,16 @@ class GalleryStudio:
                 "(min 10pt). The index used 70%% on screens < 900px. "
                 "Now you control it explicitly per plot.")
 
+        self.var_ann_toggle_btn = tk.BooleanVar(
+            value=self.config.get('annotation_toggle_button', False))
+        cb = tk.Checkbutton(sec, text="Embed toggle button",
+                            variable=self.var_ann_toggle_btn)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Add a small 'Labels' button overlaid on the "
+                "exported HTML. Viewers can show/hide annotations "
+                "at runtime. Useful when annotations are helpful on "
+                "desktop but crowd the view on phones.")
+
         # ---- Trace Visibility ----
         sec = tk.LabelFrame(right, text="Trace Visibility", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
@@ -2928,6 +2965,7 @@ class GalleryStudio:
             'strip_footer_annotations': self.var_strip_footer.get(),
             'annotation_bg_transparent': self.var_ann_transparent.get(),
             'annotation_font_scale': self.var_ann_font_scale.get(),
+            'annotation_toggle_button': self.var_ann_toggle_btn.get(),
             'scene_aspectmode': self.var_scene_aspect.get(),
             'legend_font_color': self.var_legend_color.get(),
             'legend_border_transparent': self.var_legend_border.get(),
@@ -2975,6 +3013,7 @@ class GalleryStudio:
         self.var_strip_footer.set(c.get('strip_footer_annotations', True))
         self.var_ann_transparent.set(c.get('annotation_bg_transparent', True))
         self.var_ann_font_scale.set(c.get('annotation_font_scale', 0))
+        self.var_ann_toggle_btn.set(c.get('annotation_toggle_button', False))
         self.var_scene_aspect.set(c.get('scene_aspectmode', 'auto'))
         self.var_legend_color.set(c.get('legend_font_color', ''))
         self.var_legend_border.set(c.get('legend_border_transparent', True))
