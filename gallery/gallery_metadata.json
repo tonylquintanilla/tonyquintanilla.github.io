@@ -482,8 +482,19 @@
       "size_kb": 91.5,
       "converted": "2026-02-18 21:48",
       "mode": "portrait"
+    },
+    {
+      "id": "arctic_ice_extent_mobile",
+      "title": "Arctic Ice Extent Mobile",
+      "filename": "arctic_ice_extent_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Arctic sea ice extent, September minimum, 1979 - 2025.",
+      "size_kb": 2.9,
+      "converted": "2026-02-18 21:52",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-18 21:48",
-  "total_count": 46
+  "last_updated": "2026-02-18 21:52",
+  "total_count": 47
 }
