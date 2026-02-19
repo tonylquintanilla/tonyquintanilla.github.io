@@ -493,8 +493,30 @@
       "size_kb": 2.9,
       "converted": "2026-02-18 21:52",
       "mode": "portrait"
+    },
+    {
+      "id": "planetary_boundaries_mobile",
+      "title": "Planetary Boundaries Mobile",
+      "filename": "planetary_boundaries_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Planetary boundaries, Stockholm Resilience Centre.",
+      "size_kb": 11.0,
+      "converted": "2026-02-18 22:08",
+      "mode": "portrait"
+    },
+    {
+      "id": "ocean_acidification_ph_trend_mobile",
+      "title": "Ocean Acidification Ph Trend Mobile",
+      "filename": "ocean_acidification_ph_trend_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Ocean acidification, surface pH.",
+      "size_kb": 15.1,
+      "converted": "2026-02-18 22:09",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-18 21:52",
-  "total_count": 47
+  "last_updated": "2026-02-18 22:09",
+  "total_count": 49
 }
