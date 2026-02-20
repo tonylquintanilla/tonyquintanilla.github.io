@@ -1363,6 +1363,7 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     show_modebar = 'true' if config.get('show_modebar', False) else 'false'
     show_nav = config.get('show_nav_arrows', False)
     has_scene = 'scene' in fig_dict.get('layout', {})
+    has_polar = 'polar' in fig_dict.get('layout', {})
 
     # Determine display title
     display_title = config.get('custom_title', '').strip()
@@ -1517,6 +1518,66 @@ function zoomPlot(dir) {
     bubbles: true, cancelable: true
   });
   canvas.dispatchEvent(evt);
+}
+"""
+        elif has_polar:
+            # Polar pan/zoom: rotate angular axis, scale radial range
+            nav_js = """
+var _origRadial = null;
+var _origRotation = null;
+var _origAutorange = null;
+function _captureOriginal() {
+  if (_origRadial) return;
+  var gd = document.getElementById('plotly-graph');
+  if (!gd || !gd.layout || !gd.layout.polar) return;
+  var p = gd.layout.polar;
+  if (p.radialaxis && p.radialaxis.range) {
+    _origRadial = p.radialaxis.range.slice();
+    _origAutorange = p.radialaxis.autorange;
+  }
+  _origRotation = (p.angularaxis && p.angularaxis.rotation) || 0;
+}
+function panPlot(dir) {
+  var gd = document.getElementById('plotly-graph');
+  if (!gd || !gd.layout || !gd.layout.polar) return;
+  _captureOriginal();
+  if (dir === 'reset') {
+    var update = {};
+    if (_origRadial) {
+      update['polar.radialaxis.range'] = _origRadial.slice();
+      if (_origAutorange !== undefined) {
+        update['polar.radialaxis.autorange'] = _origAutorange;
+      }
+    }
+    if (_origRotation !== null) {
+      update['polar.angularaxis.rotation'] = _origRotation;
+    }
+    if (Object.keys(update).length > 0) Plotly.relayout(gd, update);
+    return;
+  }
+  if (dir === 'up')   { zoomPlot('in');  return; }
+  if (dir === 'down') { zoomPlot('out'); return; }
+  var angAx = gd.layout.polar.angularaxis || {};
+  var rot = angAx.rotation || 0;
+  var step = 15;
+  if (dir === 'left')  rot += step;
+  if (dir === 'right') rot -= step;
+  Plotly.relayout(gd, {'polar.angularaxis.rotation': rot});
+}
+function zoomPlot(dir) {
+  var gd = document.getElementById('plotly-graph');
+  if (!gd || !gd.layout || !gd.layout.polar) return;
+  _captureOriginal();
+  var factor = (dir === 'out') ? 1.3 : 1 / 1.3;
+  var rax = gd.layout.polar.radialaxis;
+  if (rax && rax.range && rax.range.length >= 2) {
+    var newMax = rax.range[1] * factor;
+    newMax = Math.max(0.5, Math.min(10.0, newMax));
+    Plotly.relayout(gd, {
+      'polar.radialaxis.autorange': false,
+      'polar.radialaxis.range': [rax.range[0], newMax]
+    });
+  }
 }
 """
         else:
