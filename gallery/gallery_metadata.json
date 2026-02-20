@@ -452,13 +452,13 @@
     },
     {
       "id": "planetary_boundaries_mobile",
-      "title": "Planetary Boundaries",
+      "title": "Planetary Boundaries Mobile",
       "filename": "planetary_boundaries_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Planetary boundaries, Stockholm Resilience Centre.",
-      "size_kb": 11.0,
-      "converted": "2026-02-18 22:08",
+      "description": "Planetary boundaries (Stockholm Resilience Centre)",
+      "size_kb": 12.9,
+      "converted": "2026-02-19 22:36",
       "mode": "portrait"
     },
     {
@@ -473,6 +473,6 @@
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-19 00:54",
+  "last_updated": "2026-02-19 22:36",
   "total_count": 45
 }
