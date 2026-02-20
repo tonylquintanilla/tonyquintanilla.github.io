@@ -471,8 +471,19 @@
       "size_kb": 101.8,
       "converted": "2026-02-15 01:01",
       "mode": "portrait"
+    },
+    {
+      "id": "planetary_boundaries_gallery",
+      "title": "Planetary Boundaries Gallery",
+      "filename": "planetary_boundaries_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Planetary Boundaries (Stockholm Resilience Centre)",
+      "size_kb": 10.9,
+      "converted": "2026-02-19 23:08",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-19 22:52",
-  "total_count": 45
+  "last_updated": "2026-02-19 23:08",
+  "total_count": 46
 }
