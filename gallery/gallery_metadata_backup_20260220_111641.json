@@ -322,7 +322,7 @@
     },
     {
       "id": "keeling_curve_co2_concentration_copy",
-      "title": "Keeling Curve of CO2 Concentration, 1958 - 2025",
+      "title": "Keeling Curve of CO2 Concentration",
       "filename": "keeling_curve_co2_concentration.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -333,7 +333,7 @@
     },
     {
       "id": "global_temperature_anomalies_mobile",
-      "title": "Global Temperature Anomalies, 1880 - 2025",
+      "title": "Globalerature Anomalies Mobile",
       "filename": "global_temperature_anomalies_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -344,7 +344,7 @@
     },
     {
       "id": "sea_level_rise_mobile4",
-      "title": "Global Mean Sea Level Rise, 1993 - 2025",
+      "title": "Global Mean Sea Level Rise",
       "filename": "sea_level_rise_mobile4.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -355,7 +355,7 @@
     },
     {
       "id": "arctic_ice_extent_mobile",
-      "title": "Arctic Ice Extent, 1979 - 2025",
+      "title": "Arctic Ice Extent",
       "filename": "arctic_ice_extent_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -366,7 +366,7 @@
     },
     {
       "id": "ocean_acidification_ph_trend_mobile",
-      "title": "Ocean Acidification pH Trend, 1991 - 2023",
+      "title": "Ocean Acidification Ph Trend",
       "filename": "ocean_acidification_ph_trend_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -377,7 +377,7 @@
     },
     {
       "id": "planetary_boundaries_mobile",
-      "title": "Planetary Boundaries 2025 (Stockholm Resilience Centre)",
+      "title": "Planetary Boundaries (Stockholm Resilience Centre)",
       "filename": "planetary_boundaries_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -484,6 +484,6 @@
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-20 11:16",
+  "last_updated": "2026-02-20 01:02",
   "total_count": 46
 }
