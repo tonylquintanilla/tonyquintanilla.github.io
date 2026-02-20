@@ -77,6 +77,7 @@ DEFAULT_CONFIG = {
     "annotation_bg_transparent": True,
     "annotation_font_scale": 0,  # 0 = keep original, 50-100 = percentage
     "annotation_toggle_button": False,  # Embed show/hide button in HTML
+    "label_font_scale": 0,  # 0 = keep original, 50-100 = percentage (trace textfont)
 
     # Scene (3D) - additional
     "scene_aspectmode": "auto",  # auto, cube, data, manual
@@ -846,6 +847,34 @@ def apply_config(fig_dict, config):
             if isinstance(width, (int, float)) and width < line_min:
                 line['width'] = line_min
             trace['line'] = line
+
+    # Label font scaling (trace textfont sizes)
+    label_scale = config.get('label_font_scale', 0)
+    if label_scale > 0 and label_scale < 100:
+        lbl_factor = label_scale / 100.0
+        for trace in fig.get('data', []):
+            tf = trace.get('textfont', {})
+            if tf.get('size'):
+                original = tf['size']
+                if isinstance(original, (int, float)):
+                    tf['size'] = max(4, int(original * lbl_factor))
+                    trace['textfont'] = tf
+            # Also scale inline font-size in text HTML strings
+            texts = trace.get('text', [])
+            if isinstance(texts, list):
+                def _scale_inline_font(match):
+                    val = float(match.group(1))
+                    unit = match.group(2)
+                    scaled = max(4, int(val * lbl_factor))
+                    return 'font-size:%d%s' % (scaled, unit)
+                scaled_texts = []
+                for t in texts:
+                    if isinstance(t, str) and 'font-size:' in t:
+                        t = re.sub(
+                            r'font-size:\s*(\d+(?:\.\d+)?)(px|pt|em)',
+                            _scale_inline_font, t)
+                    scaled_texts.append(t)
+                trace['text'] = scaled_texts
 
     # ---- Colorbar ----
     if not config.get('show_colorbar', True):
@@ -2610,6 +2639,22 @@ class GalleryStudio:
                 "at runtime. Useful when annotations are helpful on "
                 "desktop but crowd the view on phones.")
 
+        # Label (trace textfont) scaling
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Label font %:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_label_font_scale = tk.IntVar(
+            value=self.config.get('label_font_scale', 0))
+        sp_lbl = tk.Spinbox(row, from_=0, to=100,
+                            textvariable=self.var_label_font_scale, width=5)
+        sp_lbl.pack(side='left')
+        tk.Label(row, text="(0=keep)", fg='gray').pack(side='left', padx=4)
+        ToolTip(sp_lbl, "Scale trace label (textfont) sizes by this "
+                "percentage. 0 keeps originals. Useful for polar/radar "
+                "charts where labels crowd on small screens. "
+                "60 scales to 60%% of original (min 4pt).")
+
         # ---- Trace Visibility ----
         sec = tk.LabelFrame(right, text="Trace Visibility", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
@@ -2999,6 +3044,7 @@ class GalleryStudio:
             'annotation_bg_transparent': self.var_ann_transparent.get(),
             'annotation_font_scale': self.var_ann_font_scale.get(),
             'annotation_toggle_button': self.var_ann_toggle_btn.get(),
+            'label_font_scale': self.var_label_font_scale.get(),
             'scene_aspectmode': self.var_scene_aspect.get(),
             'legend_font_color': self.var_legend_color.get(),
             'legend_border_transparent': self.var_legend_border.get(),
@@ -3047,6 +3093,7 @@ class GalleryStudio:
         self.var_ann_transparent.set(c.get('annotation_bg_transparent', True))
         self.var_ann_font_scale.set(c.get('annotation_font_scale', 0))
         self.var_ann_toggle_btn.set(c.get('annotation_toggle_button', False))
+        self.var_label_font_scale.set(c.get('label_font_scale', 0))
         self.var_scene_aspect.set(c.get('scene_aspectmode', 'auto'))
         self.var_legend_color.set(c.get('legend_font_color', ''))
         self.var_legend_border.set(c.get('legend_border_transparent', True))

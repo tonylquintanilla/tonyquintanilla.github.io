@@ -457,8 +457,8 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Planetary Boundaries (Stockholm Resilience Centre)",
-      "size_kb": 12.9,
-      "converted": "2026-02-19 22:52",
+      "size_kb": 11.1,
+      "converted": "2026-02-19 23:56",
       "mode": "portrait"
     },
     {
@@ -484,6 +484,6 @@
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-19 23:08",
+  "last_updated": "2026-02-19 23:56",
   "total_count": 46
 }

@@ -22,6 +22,7 @@
     "annotation_bg_transparent": true,
     "annotation_font_scale": 0,
     "annotation_toggle_button": false,
+    "label_font_scale": 90,
     "scene_aspectmode": "auto",
     "legend_font_color": "",
     "legend_border_transparent": true,
