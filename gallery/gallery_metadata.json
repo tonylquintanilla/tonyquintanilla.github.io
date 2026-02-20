@@ -471,8 +471,19 @@
       "size_kb": 101.8,
       "converted": "2026-02-15 01:01",
       "mode": "portrait"
+    },
+    {
+      "id": "globalerature_anomalies_mobile",
+      "title": "Globalerature Anomalies Mobile",
+      "filename": "globalerature_anomalies_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Global Temperature Anomalies",
+      "size_kb": 42.2,
+      "converted": "2026-02-20 00:20",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-20 00:08",
-  "total_count": 45
+  "last_updated": "2026-02-20 00:20",
+  "total_count": 46
 }
