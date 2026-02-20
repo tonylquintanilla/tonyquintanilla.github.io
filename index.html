@@ -1195,11 +1195,7 @@
 
             // Display version/update date
             if (metadata.last_updated) {
-                var el = document.getElementById('welcomeVersion');
-                if (el) {
-                    var count = metadata.total_count || vizs.length;
-                    el.textContent = count + ' visualizations \u00b7 Updated ' + metadata.last_updated;
-                }
+                updateWelcomeCount();
             }
 
             // Setup event listeners
@@ -1225,6 +1221,20 @@
 
             // Check URL hash for deep link
             handleHash();
+        }
+
+        // ---- Update welcome screen visualization count ----
+        function updateWelcomeCount() {
+            if (!metadata || !metadata.last_updated) return;
+            var el = document.getElementById('welcomeVersion');
+            if (!el) return;
+            var vizs = metadata.visualizations || [];
+            var count = 0;
+            for (var i = 0; i < vizs.length; i++) {
+                var vMode = vizs[i].mode || 'landscape';
+                if (vMode === currentMode || vMode === 'both') count++;
+            }
+            el.textContent = count + ' visualizations \u00b7 Updated ' + metadata.last_updated;
         }
 
         // ---- Render navigation list ----
@@ -1924,6 +1934,7 @@
             // Re-render nav list filtered by mode
             if (metadata) {
                 renderNavList(metadata.visualizations || []);
+                updateWelcomeCount();
             }
         }
 
@@ -2052,8 +2063,10 @@
                 'stellar neighborhoods, exoplanets, and more.</div>' +
                 '<div class="welcome-hint">' +
                 'Tap the menu to select a visualization.</div>' +
-                '<div class="welcome-device-hint"></div>';
+                '<div class="welcome-device-hint"></div>' +
+                '<div class="welcome-version" id="welcomeVersion"></div>';
             welcomeState.style.display = 'flex';
+            updateWelcomeCount();
 
             // Deselect active card
             if (activeCard) {

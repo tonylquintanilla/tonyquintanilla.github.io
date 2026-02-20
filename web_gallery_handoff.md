@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-19, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-20, 2026 | Claude Opus 4.6
 
 ---
 
@@ -2017,6 +2017,116 @@ the repo for reference but has no dependents.
 | Toggle initial state | Respects `show_annotations` setting | Phone-first exports start hidden; desktop-first start visible |
 | _parse_hover_html location | Move into gallery_studio.py directly | Simpler than shared module; eliminates cross-directory import; retires social_media_export dependency |
 
+### Session 15 (Feb 20): Polar Chart Support + Label Font Scaling
+
+The Planetary Boundaries radar chart (polar/barpolar) exposed two gaps
+in the gallery infrastructure: pan/zoom controls didn't work, and the
+text labels were too large for mobile.
+
+**Bug: Pan/Zoom Buttons Had No Effect on Polar Charts**
+
+The D-pad and zoom buttons worked for cartesian (xaxis/yaxis) and 3D
+(scene.camera) charts, but did nothing on polar charts. Same bug in
+two places: the gallery viewer (`index.html`) and the studio preview
+HTML builder (`gallery_studio.py`).
+
+Root cause (zoom): `zoom2D()` searched for `xaxis`/`yaxis` in the
+layout -- polar charts use `polar.radialaxis.range` instead. Even
+after fixing the key path, Plotly still ignored the range update
+because `radialaxis.autorange` defaults to `true` and overrides
+explicit range values.
+
+Root cause (pan): Same xaxis/yaxis assumption. For polar charts,
+"panning" maps to rotating the angular axis -- left/right change
+`polar.angularaxis.rotation`, up/down map to zoom in/out (since
+vertical translation doesn't apply to radial layouts).
+
+Fix in `index.html`:
+- Scene type detection now distinguishes `'3d'`, `'polar'`, and `'2d'`
+- `zoom2D()`: detects `layout.polar`, scales `radialaxis.range[1]`,
+  sets `autorange: false` to prevent Plotly from overriding
+- `pan2D()`: detects `layout.polar`, rotates `angularaxis.rotation`
+  by 15 deg per tap (left/right), delegates up/down to zoom
+- `captureOriginalRanges()`: captures polar radial range, rotation,
+  and autorange state for reset
+- `resetPanZoom()`: restores all three polar properties
+
+Fix in `gallery_studio.py` (parallel pipeline):
+- Added `has_polar` detection alongside `has_scene`
+- New `elif has_polar:` branch in `build_gallery_html()` generates
+  polar-aware `panPlot()`/`zoomPlot()` JS with the same autorange fix
+- Preview HTML now matches gallery viewer behavior for polar charts
+
+**Lesson**: Parallel pipeline problem (protocol anti-pattern). The same
+pan/zoom logic existed in two places -- `index.html` for the gallery
+viewer and `gallery_studio.py` for the preview HTML. Fixing one didn't
+fix the other. Both needed the polar branch and the `autorange: false`
+fix independently.
+
+**Feature: Label Font Scaling (`label_font_scale`)**
+
+Polar chart text labels (boundary names like "CLIMATE CHANGE",
+"BIOSPHERE INTEGRITY") were sized for desktop and too large on phones.
+The existing `annotation_font_scale` only affects layout annotations,
+not trace `textfont` labels.
+
+New `label_font_scale` config option in `gallery_studio.py`:
+- Same pattern as `annotation_font_scale`: 0 = keep original,
+  50-100 = percentage of original size
+- Scales `textfont.size` on all traces that have it
+- Also regex-scans trace `text` HTML strings for inline
+  `font-size:Npx` patterns and scales those too -- this catches
+  secondary labels (grey subtext like "Radiative forcing",
+  "CO2 concentration") that use inline CSS rather than textfont
+- GUI spinbox in the Annotations section of the studio
+- Baked into JSON at export time (not a runtime viewer control)
+
+The font scaling question initially surfaced as "add A+/A- buttons to
+the viewer" but Tony caught it: this is a studio curation decision,
+not a viewer runtime control. Follows the WYSIWYG principle -- what
+you configure in studio is what the viewer renders.
+
+**Feature: Per-Axis Title and Tick Label Scaling**
+
+The Global Temperature Anomalies chart on mobile had an x axis title
+("Year (decimal notation: 2024.96 = late December)") crowding the
+plot. The tick labels (years) were sufficient -- the title was
+redundant on a small screen. But the existing `axis_title_font_size`
+was a single absolute-pixel control applied to all axes at once.
+
+Replaced the two old fields (`axis_title_font_size`,
+`axis_tick_font_size`) with four new percentage-based controls:
+
+| Field | 0 | 1-99 | 100 (default) |
+|-------|---|------|---------------|
+| `x_title_scale` | Remove x axis title | Scale % | Keep original |
+| `y_title_scale` | Remove y axis title | Scale % | Keep original |
+| `x_tick_scale` | Hide x tick labels | Scale % | Keep original |
+| `y_tick_scale` | Hide y tick labels | Scale % | Keep original |
+
+Design notes:
+- 0/100 pattern consistent with `annotation_font_scale` and
+  `label_font_scale` -- every font control in studio works the same way
+- Separate X/Y because the common case is asymmetric: remove x title
+  (redundant with tick labels) but keep y title (describes the units)
+- GUI puts X and Y on the same row to keep the section compact
+- Old fields still read as backward-compat fallback
+- Social preset sets both titles to 0 (remove) since portrait charts
+  need maximum plot area
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Polar pan/zoom | Detect `layout.polar`, use radialaxis.range + angularaxis.rotation | Polar charts have no xaxis/yaxis; need native polar axis manipulation |
+| autorange override | Set `autorange: false` alongside range update | Plotly default `autorange: true` silently overrides explicit range values |
+| Pan mapping for polar | Left/right = rotate, up/down = zoom | Rotation is the natural "pan" for radial layouts; vertical shift doesn't apply |
+| Label font control | Studio config (`label_font_scale`), not viewer runtime | Curation decision belongs in studio; WYSIWYG principle |
+| Secondary label scaling | Regex inline `font-size:Npx` in trace text HTML | Some labels use inline CSS rather than textfont.size; both must scale together |
+| Parallel pipeline fix | Both index.html and gallery_studio.py need polar branches | Preview and gallery viewer generate pan/zoom JS independently |
+| Axis control granularity | Separate X/Y, percentage scale (0-100) | Common case is asymmetric (remove x title, keep y); consistent pattern across studio |
+| Checkboxes vs spinboxes | Spinboxes (0-100) | Consistent with other font controls; scaling occasionally useful; checkboxes would be one-off |
+
 ---
 
 *"What was a hard Python environment becomes a modern easy shareable
@@ -2068,5 +2178,11 @@ February 17, 2026
 
 *"Works great."* -- Tony, on the annotation toggle across all platforms,
 February 19, 2026
+
+*"Shouldn't these controls be options in studio?"* -- Tony, catching
+the WYSIWYG violation before it shipped, February 20, 2026
+
+*"Works great!"* -- Tony, on polar pan/zoom + label scaling,
+February 20, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*
