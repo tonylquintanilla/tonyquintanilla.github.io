@@ -108,6 +108,8 @@ DEFAULT_CONFIG = {
     "y_title_scale": 100,
     "x_tick_scale": 100,
     "y_tick_scale": 100,
+    "y2_title_scale": 100,
+    "y2_tick_scale": 100,
 
     # Navigation controls (embedded in exported HTML)
     "show_nav_arrows": False,
@@ -169,6 +171,8 @@ PORTRAIT_CONFIG = {
     "y_title_scale": 0,
     "x_tick_scale": 100,
     "y_tick_scale": 100,
+    "y2_title_scale": 0,
+    "y2_tick_scale": 100,
     "show_nav_arrows": False,
     "output_format": "portrait",
     "route_hover_to_panel": True,
@@ -1085,6 +1089,8 @@ def apply_config(fig_dict, config):
     y_title = config.get('y_title_scale', 100)
     x_tick = config.get('x_tick_scale', 100)
     y_tick = config.get('y_tick_scale', 100)
+    y2_title = config.get('y2_title_scale', 100)
+    y2_tick = config.get('y2_tick_scale', 100)
 
     # Also apply old-style absolute sizes if present (backward compat)
     old_title_size = config.get('axis_title_font_size', 0)
@@ -1092,6 +1098,7 @@ def apply_config(fig_dict, config):
 
     need_axis_work = (x_title != 100 or y_title != 100 or
                       x_tick != 100 or y_tick != 100 or
+                      y2_title != 100 or y2_tick != 100 or
                       old_title_size > 0 or old_tick_size > 0)
     if need_axis_work:
         for key in list(layout.keys()):
@@ -1103,8 +1110,18 @@ def apply_config(fig_dict, config):
             if not isinstance(axis, dict):
                 continue
 
+            # Determine if primary or secondary Y axis
+            # yaxis = primary, yaxis2/yaxis3/etc = secondary
+            is_y2 = is_y and key != 'yaxis'
+
             # Title scale for this axis
-            t_scale = x_title if is_x else y_title
+            if is_x:
+                t_scale = x_title
+            elif is_y2:
+                t_scale = y2_title
+            else:
+                t_scale = y_title
+
             if t_scale == 0:
                 # Remove title entirely
                 axis.pop('title', None)
@@ -1127,7 +1144,13 @@ def apply_config(fig_dict, config):
                     title_obj['font']['size'] = old_title_size
 
             # Tick scale for this axis
-            tk_scale = x_tick if is_x else y_tick
+            if is_x:
+                tk_scale = x_tick
+            elif is_y2:
+                tk_scale = y2_tick
+            else:
+                tk_scale = y_tick
+
             if tk_scale == 0:
                 # Remove tick labels
                 axis['showticklabels'] = False
@@ -2476,6 +2499,14 @@ class GalleryStudio:
                 "Matches the standard Plotly template look. Use for plots "
                 "that were created without explicit background settings.")
 
+        green_btn = tk.Button(preset_row, text="Green", width=6,
+                               bg='#2d6a2d', fg='white',
+                               command=lambda: set_bg_preset('#2d6a2d', '#f0f4e8'))
+        green_btn.pack(side='left', padx=2)
+        ToolTip(green_btn, "Chlorophyll green (#2d6a2d) with warm light text. "
+                "Use for Earth system and climate visualizations -- "
+                "planetary boundaries, biosphere, ecology themes.")
+
         # Color entry + picker + swatch row
         color_row = tk.Frame(sec)
         color_row.pack(fill='x', pady=2)
@@ -3050,47 +3081,67 @@ class GalleryStudio:
                 "0 = remove, 1-99 = scale %, 100 = keep original. "
                 "Ignored for 3D scenes.")
 
-        row = tk.Frame(sec)
-        row.pack(fill='x', pady=2)
-        tk.Label(row, text="X title %:", width=14,
+        # Header row
+        hdr = tk.Frame(sec)
+        hdr.pack(fill='x')
+        tk.Label(hdr, text="", width=14, anchor='w').pack(side='left')
+        tk.Label(hdr, text="Title %", width=7, fg='gray',
                  anchor='w').pack(side='left')
+        tk.Label(hdr, text="Ticks %", width=7, fg='gray',
+                 anchor='w').pack(side='left', padx=(10, 0))
+
+        # X axis row
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=1)
+        tk.Label(row, text="X axis:", width=14, anchor='w').pack(side='left')
         self.var_x_title_scale = tk.IntVar(
             value=self.config.get('x_title_scale', 100))
         sp = tk.Spinbox(row, from_=0, to=100,
                         textvariable=self.var_x_title_scale, width=5)
         sp.pack(side='left')
-        tk.Label(row, text="Y title %:", width=10,
-                 anchor='w').pack(side='left', padx=(8, 0))
-        self.var_y_title_scale = tk.IntVar(
-            value=self.config.get('y_title_scale', 100))
-        sp2 = tk.Spinbox(row, from_=0, to=100,
-                         textvariable=self.var_y_title_scale, width=5)
-        sp2.pack(side='left')
-        ToolTip(sp, "X axis title: 0 removes it, 100 keeps original, "
-                "50 scales to half size. Good for mobile where "
-                "'Year' or 'Date' is redundant.")
-        ToolTip(sp2, "Y axis title: 0 removes it, 100 keeps original.")
-
-        row = tk.Frame(sec)
-        row.pack(fill='x', pady=2)
-        tk.Label(row, text="X ticks %:", width=14,
-                 anchor='w').pack(side='left')
+        ToolTip(sp, "X axis title: 0 removes it, 100 keeps original. "
+                "Good for mobile where 'Year' or 'Date' is redundant.")
         self.var_x_tick_scale = tk.IntVar(
             value=self.config.get('x_tick_scale', 100))
+        sp2 = tk.Spinbox(row, from_=0, to=100,
+                         textvariable=self.var_x_tick_scale, width=5)
+        sp2.pack(side='left', padx=(10, 0))
+        ToolTip(sp2, "X tick labels: 0 hides them, 100 keeps original.")
+
+        # Primary Y axis row
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=1)
+        tk.Label(row, text="Y axis:", width=14, anchor='w').pack(side='left')
+        self.var_y_title_scale = tk.IntVar(
+            value=self.config.get('y_title_scale', 100))
         sp = tk.Spinbox(row, from_=0, to=100,
-                        textvariable=self.var_x_tick_scale, width=5)
+                        textvariable=self.var_y_title_scale, width=5)
         sp.pack(side='left')
-        tk.Label(row, text="Y ticks %:", width=10,
-                 anchor='w').pack(side='left', padx=(8, 0))
+        ToolTip(sp, "Primary Y axis title: 0 removes it, 100 keeps original.")
         self.var_y_tick_scale = tk.IntVar(
             value=self.config.get('y_tick_scale', 100))
         sp2 = tk.Spinbox(row, from_=0, to=100,
                          textvariable=self.var_y_tick_scale, width=5)
-        sp2.pack(side='left')
-        ToolTip(sp, "X tick labels: 0 hides them, 100 keeps original, "
-                "70 scales to 70%%. Useful when tick text crowds "
-                "the chart on small screens.")
-        ToolTip(sp2, "Y tick labels: 0 hides them, 100 keeps original.")
+        sp2.pack(side='left', padx=(10, 0))
+        ToolTip(sp2, "Primary Y tick labels: 0 hides them, 100 keeps original.")
+
+        # Secondary Y axis row
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=1)
+        tk.Label(row, text="Y2 axis:", width=14, anchor='w').pack(side='left')
+        self.var_y2_title_scale = tk.IntVar(
+            value=self.config.get('y2_title_scale', 100))
+        sp = tk.Spinbox(row, from_=0, to=100,
+                        textvariable=self.var_y2_title_scale, width=5)
+        sp.pack(side='left')
+        ToolTip(sp, "Secondary Y axis title: 0 removes it, 100 keeps original. "
+                "Applies to yaxis2, yaxis3, etc.")
+        self.var_y2_tick_scale = tk.IntVar(
+            value=self.config.get('y2_tick_scale', 100))
+        sp2 = tk.Spinbox(row, from_=0, to=100,
+                         textvariable=self.var_y2_tick_scale, width=5)
+        sp2.pack(side='left', padx=(10, 0))
+        ToolTip(sp2, "Secondary Y tick labels: 0 hides them, 100 keeps original.")
 
         # ---- Navigation ----
         sec = tk.LabelFrame(portrait, text="Navigation Controls", padx=6, pady=4)
@@ -3183,6 +3234,8 @@ class GalleryStudio:
             'y_title_scale': self.var_y_title_scale.get(),
             'x_tick_scale': self.var_x_tick_scale.get(),
             'y_tick_scale': self.var_y_tick_scale.get(),
+            'y2_title_scale': self.var_y2_title_scale.get(),
+            'y2_tick_scale': self.var_y2_tick_scale.get(),
             'show_nav_arrows': self.var_show_nav.get(),
             'output_format': self.var_output_format.get(),
             'route_hover_to_panel': self.var_route_hover.get(),
@@ -3233,6 +3286,8 @@ class GalleryStudio:
         self.var_y_title_scale.set(c.get('y_title_scale', 100))
         self.var_x_tick_scale.set(c.get('x_tick_scale', 100))
         self.var_y_tick_scale.set(c.get('y_tick_scale', 100))
+        self.var_y2_title_scale.set(c.get('y2_title_scale', 100))
+        self.var_y2_tick_scale.set(c.get('y2_tick_scale', 100))
         self.var_show_nav.set(c.get('show_nav_arrows', False))
         self.var_output_format.set(c.get('output_format', 'landscape'))
         self.var_route_hover.set(c.get('route_hover_to_panel', False))

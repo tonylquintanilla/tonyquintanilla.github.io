@@ -92,17 +92,6 @@
       "converted": "2026-02-09 00:11"
     },
     {
-      "id": "monthly_temperature_lines",
-      "title": "Annual Temperature Anomalies by Month, 1885 - 2025",
-      "filename": "monthly_temperature_lines.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Annual temperature anomalies by month, 1885 - 2025",
-      "size_kb": 60.3,
-      "converted": "2026-02-21 23:29",
-      "mode": "landscape"
-    },
-    {
       "id": "sea_level_rise",
       "title": "Sea Level Rise",
       "filename": "sea_level_rise.json",
@@ -171,6 +160,16 @@
       "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
       "size_kb": 95.9,
       "converted": "2026-02-08 23:40"
+    },
+    {
+      "id": "paleoclimate_human_origins",
+      "title": "Paleoclimate Human Origins",
+      "filename": "paleoclimate_human_origins.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "540 MY paleoclimate chart with human origins markers.",
+      "size_kb": 116.3,
+      "converted": "2026-02-07 21:07"
     },
     {
       "id": "pluto_barycenter_system_20260208_1957",
@@ -344,17 +343,6 @@
       "mode": "portrait"
     },
     {
-      "id": "monthlyerature_lines_mobile",
-      "title": "Annual Temperature Anomalies by Month, 1885 - 2025",
-      "filename": "monthlyerature_lines_mobile.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Annual temperature anomalies by month, 1885 - 2025",
-      "size_kb": 60.0,
-      "converted": "2026-02-21 23:29",
-      "mode": "portrait"
-    },
-    {
       "id": "sea_level_rise_mobile4",
       "title": "Global Mean Sea Level Rise, 1993 - 2025",
       "filename": "sea_level_rise_mobile4.json",
@@ -396,6 +384,17 @@
       "description": "Planetary Boundaries (Stockholm Resilience Centre)",
       "size_kb": 11.1,
       "converted": "2026-02-19 23:56",
+      "mode": "portrait"
+    },
+    {
+      "id": "paleoclimate_wet_bulb_gallery",
+      "title": "Paleoclimate Wet Bulb Gallery (use landscape)",
+      "filename": "paleoclimate_wet_bulb_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Paleoclimate history",
+      "size_kb": 101.8,
+      "converted": "2026-02-15 01:01",
       "mode": "portrait"
     },
     {
@@ -485,27 +484,28 @@
       "mode": "portrait"
     },
     {
-      "id": "paleoclimate_wet_bulb_gallery",
-      "title": "Paleoclimate Wet Bulb Gallery (use landscape)",
-      "filename": "paleoclimate_wet_bulb_gallery.json",
+      "id": "monthlyerature_lines_mobile",
+      "title": "Monthlyerature Lines Mobile",
+      "filename": "monthlyerature_lines_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Paleoclimate history",
-      "size_kb": 101.8,
-      "converted": "2026-02-15 01:01",
+      "description": "Annual temperature anomalies by month, 1885 - 2025",
+      "size_kb": 60.0,
+      "converted": "2026-02-21 23:29",
       "mode": "portrait"
     },
     {
-      "id": "paleoclimate_human_origins",
-      "title": "Paleoclimate Human Origins",
-      "filename": "paleoclimate_human_origins.json",
+      "id": "monthly_temperature_lines",
+      "title": "Monthlyerature Lines",
+      "filename": "monthly_temperature_lines.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "540 MY paleoclimate chart with human origins markers.",
-      "size_kb": 116.3,
-      "converted": "2026-02-07 21:07"
+      "description": "Annual temperature anomalies by month, 1885 - 2025",
+      "size_kb": 60.3,
+      "converted": "2026-02-21 23:29",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-21 23:37",
+  "last_updated": "2026-02-21 23:29",
   "total_count": 48
 }
