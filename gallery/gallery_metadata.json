@@ -482,8 +482,30 @@
       "size_kb": 71.1,
       "converted": "2026-02-13 21:00",
       "mode": "portrait"
+    },
+    {
+      "id": "monthlyerature_lines_mobile",
+      "title": "Monthlyerature Lines Mobile",
+      "filename": "monthlyerature_lines_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Annual temperature anomalies by month, 1885 - 2025",
+      "size_kb": 60.0,
+      "converted": "2026-02-21 23:29",
+      "mode": "portrait"
+    },
+    {
+      "id": "monthly_temperature_lines",
+      "title": "Monthlyerature Lines",
+      "filename": "monthly_temperature_lines.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Annual temperature anomalies by month, 1885 - 2025",
+      "size_kb": 60.3,
+      "converted": "2026-02-21 23:29",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-20 11:16",
-  "total_count": 46
+  "last_updated": "2026-02-21 23:29",
+  "total_count": 48
 }
