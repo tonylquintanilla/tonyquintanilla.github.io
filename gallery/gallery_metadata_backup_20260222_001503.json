@@ -103,17 +103,6 @@
       "mode": "landscape"
     },
     {
-      "id": "warming_stripes",
-      "title": "Warming Stripes (Ed Hawkins), 1880 - 2025",
-      "filename": "warming_stripes.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Warming stripes (Ed Hawkins)",
-      "size_kb": 13.6,
-      "converted": "2026-02-22 00:12",
-      "mode": "landscape"
-    },
-    {
       "id": "sea_level_rise",
       "title": "Sea Level Rise",
       "filename": "sea_level_rise.json",
@@ -172,6 +161,16 @@
       "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
       "size_kb": 66.7,
       "converted": "2026-02-08 23:41"
+    },
+    {
+      "id": "paleoclimate_540ma_to_present",
+      "title": "Paleoclimate 540 Ma to Present",
+      "filename": "paleoclimate_540ma_to_present.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
+      "size_kb": 95.9,
+      "converted": "2026-02-08 23:40"
     },
     {
       "id": "pluto_barycenter_system_20260208_1957",
@@ -356,17 +355,6 @@
       "mode": "portrait"
     },
     {
-      "id": "warming_stripes_mobile",
-      "title": "Warming Stripes (Ed Hawkins) 1880 - 2025",
-      "filename": "warming_stripes_mobile.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Warming stripes (Ed Hawkins)",
-      "size_kb": 13.4,
-      "converted": "2026-02-22 00:12",
-      "mode": "portrait"
-    },
-    {
       "id": "sea_level_rise_mobile4",
       "title": "Global Mean Sea Level Rise, 1993 - 2025",
       "filename": "sea_level_rise_mobile4.json",
@@ -397,6 +385,17 @@
       "description": "Ocean acidification, surface pH.",
       "size_kb": 15.1,
       "converted": "2026-02-18 22:09",
+      "mode": "portrait"
+    },
+    {
+      "id": "planetary_boundaries_mobile",
+      "title": "Planetary Boundaries 2025 (Stockholm Resilience Centre)",
+      "filename": "planetary_boundaries_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Planetary Boundaries (Stockholm Resilience Centre)",
+      "size_kb": 11.1,
+      "converted": "2026-02-19 23:56",
       "mode": "portrait"
     },
     {
@@ -486,27 +485,6 @@
       "mode": "portrait"
     },
     {
-      "id": "planetary_boundaries_mobile",
-      "title": "Planetary Boundaries 2025 (Stockholm Resilience Centre)",
-      "filename": "planetary_boundaries_mobile.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Planetary Boundaries (Stockholm Resilience Centre)",
-      "size_kb": 11.1,
-      "converted": "2026-02-19 23:56",
-      "mode": "portrait"
-    },
-    {
-      "id": "paleoclimate_540ma_to_present",
-      "title": "Paleoclimate 540 Ma to Present",
-      "filename": "paleoclimate_540ma_to_present.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
-      "size_kb": 95.9,
-      "converted": "2026-02-08 23:40"
-    },
-    {
       "id": "paleoclimate_wet_bulb_gallery",
       "title": "Paleoclimate Wet Bulb Gallery (use landscape)",
       "filename": "paleoclimate_wet_bulb_gallery.json",
@@ -526,8 +504,30 @@
       "description": "540 MY paleoclimate chart with human origins markers.",
       "size_kb": 116.3,
       "converted": "2026-02-07 21:07"
+    },
+    {
+      "id": "warming_stripes_mobile",
+      "title": "Warming Stripes Mobile",
+      "filename": "warming_stripes_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Warming stripes (Ed Hawkins)",
+      "size_kb": 13.4,
+      "converted": "2026-02-22 00:12",
+      "mode": "portrait"
+    },
+    {
+      "id": "warming_stripes",
+      "title": "Warming Stripes",
+      "filename": "warming_stripes.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Warming stripes (Ed Hawkins)",
+      "size_kb": 13.6,
+      "converted": "2026-02-22 00:12",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-22 00:15",
+  "last_updated": "2026-02-22 00:12",
   "total_count": 50
 }
