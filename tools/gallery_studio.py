@@ -891,6 +891,9 @@ def apply_config(fig_dict, config):
         for trace in fig.get('data', []):
             if trace.get('marker', {}).get('colorbar'):
                 trace['marker']['showscale'] = False
+            # Heatmaps, contours, etc. have colorbar at trace level
+            if 'colorbar' in trace:
+                trace['showscale'] = False
             if 'showscale' in trace:
                 trace['showscale'] = False
         # Also strip coloraxis
