@@ -73,13 +73,13 @@
     },
     {
       "id": "energy_imbalance_desktop",
-      "title": "Energy Imbalance, 2005 - 2025",
+      "title": "Energy Imbalance Desktop",
       "filename": "energy_imbalance_desktop.json",
       "category": "climate",
       "category_label": "Earth System",
       "description": "Earth's energy imbalance",
       "size_kb": 30.7,
-      "converted": "2026-02-23 00:17",
+      "converted": "2026-02-23 01:24",
       "mode": "landscape"
     },
     {
@@ -540,6 +540,6 @@
       "converted": "2026-02-07 21:07"
     }
   ],
-  "last_updated": "2026-02-23 00:22",
+  "last_updated": "2026-02-23 01:24",
   "total_count": 51
 }

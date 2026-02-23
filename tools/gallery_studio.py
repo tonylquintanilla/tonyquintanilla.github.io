@@ -51,7 +51,7 @@ DEFAULT_CONFIG = {
     # Title
     "show_title": True,
     "custom_title": "",
-    "title_font_size": 18,
+    "title_font_scale": 100,  # 100 = keep original, 50-200 = percentage
     "title_color": "#f8fafc",
 
     # Layout
@@ -134,7 +134,7 @@ PORTRAIT_CONFIG = {
     "transparent_bg": False,
     "show_title": False,
     "custom_title": "",
-    "title_font_size": 18,
+    "title_font_scale": 100,
     "title_color": "#f8fafc",
     "margin_top": 0,
     "margin_bottom": 0,
@@ -666,25 +666,38 @@ def apply_config(fig_dict, config):
         if 'title' in layout:
             del layout['title']
     else:
+        title_scale = config.get('title_font_scale', 100)
+        title_color = config.get('title_color', '#f8fafc')
         custom = config.get('custom_title', '').strip()
+        default_px = 18  # fallback when source has no title font
+
+        # Get original font size from source
+        orig_size = default_px
+        if isinstance(layout.get('title'), dict):
+            src_font = layout['title'].get('font', {})
+            if src_font.get('size'):
+                orig_size = src_font['size']
+
+        scaled_size = max(10, int(orig_size * title_scale / 100))
+
         if custom:
             layout['title'] = {
                 'text': custom,
                 'font': {
-                    'size': config.get('title_font_size', 18),
-                    'color': config.get('title_color', '#f8fafc')
+                    'size': scaled_size,
+                    'color': title_color
                 },
                 'x': 0.5,
                 'xanchor': 'center'
             }
         elif 'title' in layout:
-            # Keep existing title, update styling
+            # Keep existing title, scale its font
             if isinstance(layout['title'], str):
                 layout['title'] = {'text': layout['title']}
             if isinstance(layout['title'], dict):
                 layout['title']['font'] = layout['title'].get('font', {})
-                layout['title']['font']['size'] = config.get('title_font_size', 18)
-                layout['title']['font']['color'] = config.get('title_color', '#f8fafc')
+                layout['title']['font']['size'] = scaled_size
+                layout['title']['font']['color'] = title_color
 
     # ---- Margins ----
     layout['margin'] = {
@@ -2318,6 +2331,9 @@ class GalleryStudio:
                         del cfg['legend_font_size']
                     if 'legend_grouptitle_font_scale' not in cfg:
                         cfg['legend_grouptitle_font_scale'] = 100
+                    if 'title_font_size' in cfg and 'title_font_scale' not in cfg:
+                        cfg['title_font_scale'] = 100
+                        del cfg['title_font_size']
                     # Migrate annotation/label from 0=keep to 100=keep
                     if cfg.get('annotation_font_scale', 100) == 0:
                         cfg['annotation_font_scale'] = 100
@@ -2480,14 +2496,18 @@ class GalleryStudio:
 
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
-        tk.Label(row, text="Title font size:", width=14, anchor='w').pack(side='left')
-        self.var_title_size = tk.IntVar(value=self.config['title_font_size'])
-        sp = tk.Spinbox(row, from_=10, to=36, textvariable=self.var_title_size,
-                        width=5)
+        tk.Label(row, text="Title font %:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_title_font_scale = tk.IntVar(
+            value=self.config.get('title_font_scale', 100))
+        sp = tk.Spinbox(row, from_=50, to=200, increment=5,
+                        textvariable=self.var_title_font_scale, width=5)
         sp.pack(side='left')
-        ToolTip(sp, "Font size in pixels for the title. "
-                "18 is good for gallery views. Use 14 for smaller/denser "
-                "plots, 24+ for presentation-style displays.")
+        tk.Label(row, text="(100=keep)", fg='gray').pack(
+            side='left', padx=4)
+        ToolTip(sp, "Scale the title font as a percentage of the "
+                "original. 100%% = no change. If the source plot "
+                "has no title, defaults to 18px as the base size.")
 
         # ---- Background ----
         sec = tk.LabelFrame(left, text="Background", padx=6, pady=4)
@@ -2632,48 +2652,6 @@ class GalleryStudio:
             sp.pack()
             ToolTip(sp, margin_tips[label])
 
-        # ---- Scene (3D) ----
-        sec = tk.LabelFrame(left, text="3D Scene", padx=6, pady=4)
-        sec.pack(fill='x', pady=3, padx=2)
-        ToolTip(sec, "Settings for 3D plots (solar system, stellar maps, "
-                "planet shells). Ignored for 2D plots like climate charts "
-                "and HR diagrams.")
-
-        self.var_show_axes = tk.BooleanVar(value=self.config['show_axes'])
-        cb = tk.Checkbutton(sec, text="Show axes",
-                            variable=self.var_show_axes)
-        cb.pack(anchor='w')
-        ToolTip(cb, "Show the x/y/z axis lines, labels, and tick marks. "
-                "OFF (default) gives a clean space view -- just objects "
-                "floating in the void. Turn ON for scientific plots where "
-                "coordinate reference matters (e.g., AU distances).")
-
-        self.var_show_grid = tk.BooleanVar(value=self.config['show_grid'])
-        cb = tk.Checkbutton(sec, text="Show grid",
-                            variable=self.var_show_grid)
-        cb.pack(anchor='w')
-        ToolTip(cb, "Show the 3D grid planes behind the plot. Only has "
-                "effect if axes are also shown. Useful for plots where "
-                "spatial relationships need a visual reference frame.")
-
-        row = tk.Frame(sec)
-        row.pack(fill='x', pady=2)
-        tk.Label(row, text="Aspect mode:", width=14,
-                 anchor='w').pack(side='left')
-        self.var_scene_aspect = tk.StringVar(
-            value=self.config.get('scene_aspectmode', 'auto'))
-        om = ttk.Combobox(row, textvariable=self.var_scene_aspect,
-                          values=['auto', 'cube', 'data', 'manual'],
-                          width=8, state='readonly')
-        om.pack(side='left')
-        ToolTip(om, "3D scene aspect ratio mode.\n"
-                "  auto: Plotly decides (default)\n"
-                "  cube: Equal axes, fills viewport (good for mobile)\n"
-                "  data: Proportional to data range\n"
-                "  manual: Use explicit aspectratio values\n"
-                "The gallery index used 'cube' on mobile. Now you "
-                "control it here.")
-
         # ---- Legend ----
         sec = tk.LabelFrame(left, text="Legend", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
@@ -2773,6 +2751,25 @@ class GalleryStudio:
         ToolTip(cb, "Remove the legend box border and background. "
                 "Keeps legend markers and labels visible but removes "
                 "the opaque box that can block data on small screens.")
+
+        # ---- Navigation ----
+        sec = tk.LabelFrame(left, text="Navigation Controls", padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Embed navigation controls in the exported HTML. "
+                "These appear as floating buttons in the gallery view, "
+                "enabling panning and zooming without Plotly's mode bar.")
+
+        self.var_show_nav = tk.BooleanVar(
+            value=self.config['show_nav_arrows'])
+        cb = tk.Checkbutton(sec, text="Show pan/zoom arrows",
+                            variable=self.var_show_nav)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Add directional arrow buttons (up/down/left/right) "
+                "and zoom (+/-) to the exported HTML. Landscape mode only "
+                "-- portrait/social uses touch gestures instead.\n\n"
+                "Essential for 2D charts on touch devices where you need "
+                "to pan to specific data points. Also useful for dense "
+                "plots where pinch-zoom isn't precise enough.")
 
         # ---- Annotations ----
         sec = tk.LabelFrame(right, text="Annotations", padx=6, pady=4)
@@ -3144,6 +3141,48 @@ class GalleryStudio:
                 "gallery pieces where interaction is not needed -- "
                 "presentation screenshots, static views, etc.")
 
+        # ---- Scene (3D) ----
+        sec = tk.LabelFrame(portrait, text="3D Scene", padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Settings for 3D plots (solar system, stellar maps, "
+                "planet shells). Ignored for 2D plots like climate charts "
+                "and HR diagrams.")
+
+        self.var_show_axes = tk.BooleanVar(value=self.config['show_axes'])
+        cb = tk.Checkbutton(sec, text="Show axes",
+                            variable=self.var_show_axes)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Show the x/y/z axis lines, labels, and tick marks. "
+                "OFF (default) gives a clean space view -- just objects "
+                "floating in the void. Turn ON for scientific plots where "
+                "coordinate reference matters (e.g., AU distances).")
+
+        self.var_show_grid = tk.BooleanVar(value=self.config['show_grid'])
+        cb = tk.Checkbutton(sec, text="Show grid",
+                            variable=self.var_show_grid)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Show the 3D grid planes behind the plot. Only has "
+                "effect if axes are also shown. Useful for plots where "
+                "spatial relationships need a visual reference frame.")
+
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Aspect mode:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_scene_aspect = tk.StringVar(
+            value=self.config.get('scene_aspectmode', 'auto'))
+        om = ttk.Combobox(row, textvariable=self.var_scene_aspect,
+                          values=['auto', 'cube', 'data', 'manual'],
+                          width=8, state='readonly')
+        om.pack(side='left')
+        ToolTip(om, "3D scene aspect ratio mode.\n"
+                "  auto: Plotly decides (default)\n"
+                "  cube: Equal axes, fills viewport (good for mobile)\n"
+                "  data: Proportional to data range\n"
+                "  manual: Use explicit aspectratio values\n"
+                "The gallery index used 'cube' on mobile. Now you "
+                "control it here.")
+
         # ---- 2D Axes ----
         sec = tk.LabelFrame(portrait, text="2D Axes", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
@@ -3213,25 +3252,6 @@ class GalleryStudio:
         sp2.pack(side='left', padx=(10, 0))
         ToolTip(sp2, "Secondary Y tick labels: 0 hides them, 100 keeps original.")
 
-        # ---- Navigation ----
-        sec = tk.LabelFrame(portrait, text="Navigation Controls", padx=6, pady=4)
-        sec.pack(fill='x', pady=3, padx=2)
-        ToolTip(sec, "Embed navigation controls in the exported HTML. "
-                "These appear as floating buttons in the gallery view, "
-                "enabling panning and zooming without Plotly's mode bar.")
-
-        self.var_show_nav = tk.BooleanVar(
-            value=self.config['show_nav_arrows'])
-        cb = tk.Checkbutton(sec, text="Show pan/zoom arrows",
-                            variable=self.var_show_nav)
-        cb.pack(anchor='w')
-        ToolTip(cb, "Add directional arrow buttons (up/down/left/right) "
-                "and zoom (+/-) to the exported HTML. Landscape mode only "
-                "-- portrait/social uses touch gestures instead.\n\n"
-                "Essential for 2D charts on touch devices where you need "
-                "to pan to specific data points. Also useful for dense "
-                "plots where pinch-zoom isn't precise enough.")
-
 
     def _update_bg_swatch(self):
         """Update the color swatch to show current BG color."""
@@ -3265,7 +3285,7 @@ class GalleryStudio:
             'transparent_bg': self.var_transparent_bg.get(),
             'show_title': self.var_show_title.get(),
             'custom_title': self.var_custom_title.get(),
-            'title_font_size': self.var_title_size.get(),
+            'title_font_scale': self.var_title_font_scale.get(),
             'title_color': title_color,
             'margin_top': self.var_margin_t.get(),
             'margin_bottom': self.var_margin_b.get(),
@@ -3324,7 +3344,7 @@ class GalleryStudio:
         self.var_transparent_bg.set(c.get('transparent_bg', False))
         self.var_show_title.set(c.get('show_title', True))
         self.var_custom_title.set(c.get('custom_title', ''))
-        self.var_title_size.set(c.get('title_font_size', 18))
+        self.var_title_font_scale.set(c.get('title_font_scale', 100))
         self.var_margin_t.set(c.get('margin_top', 40))
         self.var_margin_b.set(c.get('margin_bottom', 20))
         self.var_margin_l.set(c.get('margin_left', 20))
