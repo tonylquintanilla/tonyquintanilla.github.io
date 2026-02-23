@@ -77,9 +77,10 @@
       "filename": "energy_imbalance.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing energy imbalance, temperature anomaly and ocean heat content from 2005 to the present.",
+      "description": "Earth's energy imbalance",
       "size_kb": 31.1,
-      "converted": "2026-02-08 23:43"
+      "converted": "2026-02-22 23:27",
+      "mode": "landscape"
     },
     {
       "id": "global_temperature_anomalies",
@@ -526,8 +527,19 @@
       "description": "540 MY paleoclimate chart with human origins markers.",
       "size_kb": 116.3,
       "converted": "2026-02-07 21:07"
+    },
+    {
+      "id": "energy_imbalance_mobile",
+      "title": "Energy Imbalance Mobile",
+      "filename": "energy_imbalance_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Earth's energy imbalance",
+      "size_kb": 35.5,
+      "converted": "2026-02-22 23:27",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-22 00:15",
-  "total_count": 50
+  "last_updated": "2026-02-22 23:27",
+  "total_count": 51
 }
