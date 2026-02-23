@@ -336,13 +336,13 @@
     },
     {
       "id": "energy_imbalance_mobile",
-      "title": "Energy Imbalance, 2005 - 2025 (use landscape)",
+      "title": "Energy Imbalance Mobile",
       "filename": "energy_imbalance_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
       "description": "Earth's energy imbalance",
-      "size_kb": 35.5,
-      "converted": "2026-02-22 23:27",
+      "size_kb": 29.5,
+      "converted": "2026-02-23 00:17",
       "mode": "portrait"
     },
     {
@@ -538,8 +538,19 @@
       "size_kb": 101.8,
       "converted": "2026-02-15 01:01",
       "mode": "portrait"
+    },
+    {
+      "id": "energy_imbalance_desktop",
+      "title": "Energy Imbalance Desktop",
+      "filename": "energy_imbalance_desktop.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Earth's energy imbalance",
+      "size_kb": 30.7,
+      "converted": "2026-02-23 00:17",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-22 23:45",
-  "total_count": 51
+  "last_updated": "2026-02-23 00:17",
+  "total_count": 52
 }
