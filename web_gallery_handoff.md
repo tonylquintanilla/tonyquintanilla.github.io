@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-22, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-23, 2026 | Claude Opus 4.6
 
 ---
 
@@ -975,7 +975,8 @@ Present in both the static HTML and the goHome() JS rebuild.
 | 10 | Portrait preset | DONE (Session 11) - click-to-panel + encyclopedia |
 | 11 | Studio WYSIWYG refactor | DONE (Session 12) - studio sole authority, index dumb renderer, trace visibility, gallery preview |
 | 12 | Content re-population | NEXT - re-export all through studio, validate |
-| 13 | Polish | Version stamp, hints, nudges |
+| 13 | Font standardization | DONE (Session 16) - all font controls use 100%=keep convention |
+| 14 | Polish | Version stamp, hints, nudges |
 
 ### Session 10 (Feb 15): Gallery Export Studio
 
@@ -1168,7 +1169,7 @@ New config keys (6):
 - `legend_font_color`: explicit color (was index's #9a9a9a)
 - `legend_border_transparent`: checkbox (was index's bordercolor delete)
 - `legend_position`: original/top-center-h/bottom-h (was index's mobile)
-- `annotation_font_scale`: 0-100% (was index's 70% on <900px)
+- `annotation_font_scale`: 0-100% (was index's 70% on <900px) -- updated to 100=keep in Session 16
 - `trace_visibility` + `strip_hidden_traces`: non-destructive filtering
 
 New GUI controls:
@@ -1180,10 +1181,10 @@ New GUI controls:
 - "Gallery Preview" button: renders through minimal viewer with NO
   content transforms, gold banner labels it as gallery preview
 
-GUI column layout (reorganized for visibility):
-- Left: Title, Background, Margins, 3D Scene, Legend
+GUI column layout (reorganized Session 12, refined Session 16):
+- Left: Title, Background, Margins, Legend, Navigation Controls
 - Center: Annotations, Trace Visibility, Trace Appearance, Chrome
-- Right: Portrait / Social, Hover, 2D Axes, Navigation Controls
+- Right: Portrait / Social, Hover, 3D Scene, 2D Axes
 
 3D navigation fix: Reset button captures initial camera on first
 render (in Plotly.newPlot .then() callback) and restores via
@@ -1252,11 +1253,12 @@ different wording in the actual file -- insertions silently failed.
 Fixed by inserting controls with correct match targets.
 
 GUI layout refined per Tony's feedback: Annotations moved from left
-column to center; Hover, 2D Axes, Navigation Controls moved from
-center to right column (below Portrait). Final layout:
-- Left: Title, Background, Margins, 3D Scene, Legend
+column to center; Hover, 2D Axes moved from center to right column
+(below Portrait). Navigation Controls moved to column 1 (Session 16).
+Final layout:
+- Left: Title, Background, Margins, Legend, Navigation Controls
 - Center: Annotations, Trace Visibility, Trace Appearance, Chrome
-- Right: Portrait / Social, Hover, 2D Axes, Navigation Controls
+- Right: Portrait / Social, Hover, 3D Scene, 2D Axes
 
 3D nav reset fix: original `Plotly.relayout(gd, {'scene.camera': null})`
 launched camera into void. Fixed to capture initial camera in
@@ -1712,6 +1714,27 @@ re-export from the current app.
 - Changes go live within minutes of pushing
 - Custom 404.html can redirect to index.html for cleaner routing (future)
 
+### Instagram Reel Workflow (9:16 on Laptop)
+
+Portrait/social HTML previews render at 16:9 on a laptop browser by
+default. To capture 9:16 content for Instagram Reels in Clipchamp
+without using a phone:
+
+1. Open portrait preview HTML in Chrome or Edge
+2. Press **F12** to open DevTools
+3. Click the **device toolbar icon** (phone+tablet icon, top-left of
+   DevTools) or press **Ctrl+Shift+M**
+4. Select a device preset (e.g., "iPhone 14 Pro Max") or set custom
+   dimensions like **430 x 932** for 9:16
+5. The page renders at phone proportions on the laptop screen --
+   touch interactions become clicks, portrait layout activates
+6. Screen-record that browser window in Clipchamp
+
+This gives the exact phone rendering without needing the phone.
+DevTools responsive mode is a phone simulator built into every
+Chromium browser. Works for both gallery viewer testing and
+Reel production.
+
 ## Session Decisions Log
 
 | Question | Decision | Rationale |
@@ -1812,7 +1835,7 @@ re-export from the current app.
 | Strip hidden traces | Optional checkbox on export | File size reduction when traces definitely unneeded |
 | Gallery Preview viewer | Minimal HTML with NO content transforms + gold banner | WYSIWYG verification before GitHub push |
 | Old gallery content | Must re-export through studio | Index no longer provides any content safety net |
-| Annotation font scale | Percentage-based (0=keep, 70=typical mobile) | More flexible than index's hardcoded 70% on <900px |
+| Annotation font scale | Percentage-based (100=keep, 70=typical mobile) | More flexible than index's hardcoded 70% on <900px |
 | Scene aspectmode | Studio control, not device detection | Developer chooses cube/auto per plot, not per screen size |
 | GUI column reorg | Annotations->center, Hover/2D/Nav->right | Better visibility; left column was too long |
 | 3D nav reset | Capture camera on render, restore via relayout | setCamera alone doesn't reset zoom; relayout resets orientation+pan |
@@ -2071,8 +2094,8 @@ The existing `annotation_font_scale` only affects layout annotations,
 not trace `textfont` labels.
 
 New `label_font_scale` config option in `gallery_studio.py`:
-- Same pattern as `annotation_font_scale`: 0 = keep original,
-  50-100 = percentage of original size
+- Same pattern as `annotation_font_scale`: 100 = keep original,
+  50-200 = percentage of original size (standardized Session 16)
 - Scales `textfont.size` on all traces that have it
 - Also regex-scans trace `text` HTML strings for inline
   `font-size:Npx` patterns and scales those too -- this catches
@@ -2105,8 +2128,9 @@ Replaced the two old fields (`axis_title_font_size`,
 | `y_tick_scale` | Hide y tick labels | Scale % | Keep original |
 
 Design notes:
-- 0/100 pattern consistent with `annotation_font_scale` and
-  `label_font_scale` -- every font control in studio works the same way
+- 0/100 pattern for axis titles (0=remove, 100=keep) is specific to
+  axis controls where 0 means "actively remove the title" -- distinct
+  from the font scaling convention where 100=keep (Session 16 standard)
 - Separate X/Y because the common case is asymmetric: remove x title
   (redundant with tick labels) but keep y title (describes the units)
 - GUI puts X and Y on the same row to keep the section compact
@@ -2192,6 +2216,110 @@ is a striking combination.
 | Heatmap colorbar removal | Check `'colorbar' in trace` at trace level | Heatmaps don't use `marker.colorbar`; need top-level check |
 | Welcome count | Filter by current mode, update on mode switch | Total count misleading when mobile shows subset; "more on desktop" hint needs matching number |
 | BG color presets | Add chlorophyll green (#2d6a2d) | Earth system content benefits from thematic background; warming stripes + green is striking |
+
+### Session 16 (Feb 23): Font Scale Standardization + Original Preview
+
+Standardized all font controls in Gallery Studio to use a consistent
+percent scale (100% = keep original), added an "Original" preview
+button, and reorganized the GUI column layout.
+
+**Font Scale Standardization**
+
+Previously, font controls used three different conventions:
+- `legend_font_size: 11` -- absolute pixel override
+- `annotation_font_scale: 0` -- 0=keep, 50-100=percentage
+- `label_font_scale: 0` -- 0=keep, 50-100=percentage
+- Title font was always absolute pixel
+
+This was confusing: "0" meant "keep original" for annotations but
+would mean "zero pixels" intuitively. And the legend control
+hardcoded 11px regardless of what the source plot used.
+
+All font controls now use the same convention:
+
+| Control | Config Key | Default | What it scales |
+|---------|-----------|---------|----------------|
+| Title font % | `title_font_scale` | 100 | `layout.title.font.size` |
+| Legend trace font % | `legend_font_scale` | 100 | `layout.legend.font.size` |
+| Legend category font % | `legend_grouptitle_font_scale` | 100 | `trace.legendgrouptitle.font.size` |
+| Annotation font % | `annotation_font_scale` | 100 | `annotation.font.size` |
+| Label font % | `label_font_scale` | 100 | `trace.textfont.size` + inline |
+
+All use: 100% = keep original, range 50-200, spinbox increment 5.
+Fallback to sensible defaults (e.g., 18px for title) when the source
+plot has no value to scale from.
+
+**New: Legend Group Title Scaling**
+
+The energy imbalance chart uses `legendgrouptitle` for category
+headers ("Measurements", "Ocean Heat (0-2000m)"). These weren't
+affected by the existing legend font size control because they're
+per-trace properties, not layout-level. New `legend_grouptitle_font_scale`
+scales these independently.
+
+**New: Title Font Scaling**
+
+Title was previously an absolute pixel override (`title_font_size: 18`)
+that ignored the source plot's title size. Now uses percent scale
+like all other font controls. Custom titles just swap the text --
+the percent scale applies to whatever the source title's font size
+was (or 18px default if no source title exists).
+
+**New: "Original" Preview Button**
+
+Three preset buttons now in the Portrait section:
+- **Portrait Preset** (was "Apply Portrait Preset") -- social media settings
+- **Landscape Preset** (was "Back to Landscape") -- gallery-ready defaults
+- **Original** -- opens browser preview of the raw figure with zero
+  studio transforms. No margin changes, no font scaling, no legend
+  adjustments. Useful for A/B comparison against configured settings.
+
+The rename from "Apply Portrait Preset" / "Back to Landscape" to
+"Portrait Preset" / "Landscape Preset" clarifies that both are
+opinionated presets, not restores. "Original" is the true restore.
+
+**GUI Column Reorganization**
+
+Moved 3D Scene from column 1 to column 3 (above 2D Axes) and
+Navigation Controls from column 3 to column 1 (after Legend):
+- Left: Title, Background, Margins, Legend, Navigation Controls
+- Center: Annotations, Trace Visibility, Trace Appearance, Chrome
+- Right: Portrait / Social, Hover, 3D Scene, 2D Axes
+
+Rationale: 3D Scene and 2D Axes are rendering-type controls that
+belong together. Navigation Controls is a layout decision that
+belongs with Title, Margins, and Legend.
+
+**Config Migration**
+
+`_load_config_store()` now migrates old-format saved configs:
+- `legend_font_size` (absolute) -> `legend_font_scale: 100`
+- `title_font_size` (absolute) -> `title_font_scale: 100`
+- `annotation_font_scale: 0` -> `annotation_font_scale: 100`
+- `label_font_scale: 0` -> `label_font_scale: 100`
+- Missing `legend_grouptitle_font_scale` -> added at 100
+
+Existing `gallery_studio_configs.json` files load without issues.
+
+**Portrait preset** uses 85% for legend fonts (trace + grouptitle)
+and 70% for annotations.
+
+**gallery_studio.py** (~3,900 lines, up from ~3,500 in Session 15)
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Font scale convention | 100% = keep original (not 0=keep) | Intuitive; matches what percent means; consistent across all controls |
+| Font scale range | 50-200, increment 5 | Allows both shrink and enlarge; 5% steps are fine-grained enough |
+| Legend font approach | Percent of original (not absolute px) | Source plot chose its font for a reason; scaling preserves proportions |
+| Legend group titles | Separate control from trace labels | Category headers and trace names have different visual roles |
+| Title font approach | Percent scale, custom title just swaps text | One control, not two; simpler; custom title doesn't imply different font logic |
+| "Original" button | Preview from raw figure, no transforms | Developer needs A/B reference; "Landscape Preset" isn't original |
+| Preset button naming | "Portrait Preset" / "Landscape Preset" / "Original" | Clear hierarchy: two presets + one true restore |
+| 3D Scene column | Move to column 3 above 2D Axes | Rendering-type controls together |
+| Navigation column | Move to column 1 after Legend | Layout decisions together |
+| Config migration | Auto-detect and convert old keys on load | Backward compatible; no manual editing needed |
 
 ---
 
