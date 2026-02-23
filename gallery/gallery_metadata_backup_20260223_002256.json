@@ -72,14 +72,14 @@
       "converted": "2026-02-09 00:12"
     },
     {
-      "id": "energy_imbalance_desktop",
+      "id": "energy_imbalance",
       "title": "Energy Imbalance, 2005 - 2025",
-      "filename": "energy_imbalance_desktop.json",
+      "filename": "energy_imbalance.json",
       "category": "climate",
       "category_label": "Earth System",
       "description": "Earth's energy imbalance",
-      "size_kb": 30.7,
-      "converted": "2026-02-23 00:17",
+      "size_kb": 31.1,
+      "converted": "2026-02-22 23:27",
       "mode": "landscape"
     },
     {
@@ -163,6 +163,16 @@
       "description": "Graphic after the Stockholm Resilience Centre's Planetary Boundaries, showing processes that regulate planetary stability.",
       "size_kb": 13.4,
       "converted": "2026-02-08 23:37"
+    },
+    {
+      "id": "paleoclimate_cenozoic_66ma",
+      "title": "Paleoclimate Cenozoic (66 Ma)",
+      "filename": "paleoclimate_cenozoic_66ma.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
+      "size_kb": 66.7,
+      "converted": "2026-02-08 23:41"
     },
     {
       "id": "pluto_barycenter_system_20260208_1957",
@@ -326,7 +336,7 @@
     },
     {
       "id": "energy_imbalance_mobile",
-      "title": "Energy Imbalance, 2005 - 2025",
+      "title": "Energy Imbalance Mobile",
       "filename": "energy_imbalance_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -488,14 +498,14 @@
       "mode": "portrait"
     },
     {
-      "id": "paleoclimate_cenozoic_66ma",
-      "title": "Paleoclimate Cenozoic (66 Ma)",
-      "filename": "paleoclimate_cenozoic_66ma.json",
+      "id": "paleoclimate_540ma_to_present",
+      "title": "Paleoclimate 540 Ma to Present",
+      "filename": "paleoclimate_540ma_to_present.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
-      "size_kb": 66.7,
-      "converted": "2026-02-08 23:41"
+      "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
+      "size_kb": 95.9,
+      "converted": "2026-02-08 23:40"
     },
     {
       "id": "planetary_boundaries_mobile",
@@ -509,14 +519,14 @@
       "mode": "portrait"
     },
     {
-      "id": "paleoclimate_540ma_to_present",
-      "title": "Paleoclimate 540 Ma to Present",
-      "filename": "paleoclimate_540ma_to_present.json",
+      "id": "paleoclimate_human_origins",
+      "title": "Paleoclimate Human Origins",
+      "filename": "paleoclimate_human_origins.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
-      "size_kb": 95.9,
-      "converted": "2026-02-08 23:40"
+      "description": "540 MY paleoclimate chart with human origins markers.",
+      "size_kb": 116.3,
+      "converted": "2026-02-07 21:07"
     },
     {
       "id": "paleoclimate_wet_bulb_gallery",
@@ -530,16 +540,17 @@
       "mode": "portrait"
     },
     {
-      "id": "paleoclimate_human_origins",
-      "title": "Paleoclimate Human Origins",
-      "filename": "paleoclimate_human_origins.json",
+      "id": "energy_imbalance_desktop",
+      "title": "Energy Imbalance Desktop",
+      "filename": "energy_imbalance_desktop.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "540 MY paleoclimate chart with human origins markers.",
-      "size_kb": 116.3,
-      "converted": "2026-02-07 21:07"
+      "description": "Earth's energy imbalance",
+      "size_kb": 30.7,
+      "converted": "2026-02-23 00:17",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-23 00:22",
-  "total_count": 51
+  "last_updated": "2026-02-23 00:17",
+  "total_count": 52
 }
