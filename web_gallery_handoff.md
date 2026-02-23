@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-20, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-22, 2026 | Claude Opus 4.6
 
 ---
 
@@ -2114,6 +2114,68 @@ Design notes:
 - Social preset sets both titles to 0 (remove) since portrait charts
   need maximum plot area
 
+**Feature: Secondary Y Axis Controls**
+
+Extended axis scaling to support secondary Y axes (`yaxis2`, `yaxis3`,
+etc.) independently from the primary Y axis. Common in dual-axis
+climate charts where temperature and CO2 share an X axis but have
+different Y scales.
+
+GUI reorganized from two rows (X title + Y title, X ticks + Y ticks)
+to a three-row grid with column headers:
+
+```
+          Title %   Ticks %
+X axis:   [100]     [100]
+Y axis:   [100]     [100]
+Y2 axis:  [100]     [100]
+```
+
+The apply logic uses `key != 'yaxis'` to distinguish primary from
+secondary -- all numbered Y axes (yaxis2, yaxis3, ...) share the Y2
+controls.
+
+**Bug Fix: Colorbar Not Hiding on Heatmap Traces**
+
+The "Show colorbar" checkbox had no effect on heatmap-type traces
+(warming stripes, contour plots). The colorbar removal code only
+checked `trace.marker.colorbar` (scatter-style traces with colormapped
+markers) and existing `showscale` keys. Heatmaps put the `colorbar`
+dict directly on the trace -- no `marker` wrapper -- and `showscale`
+isn't present until explicitly set.
+
+Fix: Added check `if 'colorbar' in trace: trace['showscale'] = False`.
+Covers heatmaps, contour plots, and any trace type with a top-level
+colorbar.
+
+Discovery path: Tony unchecked the legend expecting the color scale
+to disappear. It didn't. Investigation revealed it was actually a
+colorbar (not a legend), and the colorbar checkbox was also broken.
+Two insights from one symptom -- legend vs colorbar distinction, plus
+the heatmap colorbar bug.
+
+**Bug Fix: Welcome Screen Visualization Count**
+
+The gallery welcome screen showed the total count across all modes
+(e.g., "46 visualizations") regardless of whether the user was in
+Desktop or Mobile mode. On mobile, where only 21 of 46 visualizations
+are available, this was confusing -- especially alongside the hint
+"More visualizations available on desktop."
+
+Fix: New `updateWelcomeCount()` function counts only visualizations
+matching the current mode (portrait+both or landscape+both). Called
+on init, on `setMode()`, and on home navigation reset. The home reset
+was also missing the `welcomeVersion` div entirely -- the count
+disappeared when navigating home via the logo.
+
+**Feature: Chlorophyll Green Background Preset**
+
+Added a "Green" button to the background color presets row:
+`#2d6a2d` with warm light title text `#f0f4e8`. Designed for Earth
+system and climate visualizations -- planetary boundaries, biosphere
+integrity, ecology themes. The warming stripes on chlorophyll green
+is a striking combination.
+
 ---
 
 | Question | Decision | Rationale |
@@ -2126,6 +2188,10 @@ Design notes:
 | Parallel pipeline fix | Both index.html and gallery_studio.py need polar branches | Preview and gallery viewer generate pan/zoom JS independently |
 | Axis control granularity | Separate X/Y, percentage scale (0-100) | Common case is asymmetric (remove x title, keep y); consistent pattern across studio |
 | Checkboxes vs spinboxes | Spinboxes (0-100) | Consistent with other font controls; scaling occasionally useful; checkboxes would be one-off |
+| Secondary Y axis | Separate Y2 controls, shared across yaxis2+ | Common dual-axis charts need independent control; primary vs numbered distinction is clean |
+| Heatmap colorbar removal | Check `'colorbar' in trace` at trace level | Heatmaps don't use `marker.colorbar`; need top-level check |
+| Welcome count | Filter by current mode, update on mode switch | Total count misleading when mobile shows subset; "more on desktop" hint needs matching number |
+| BG color presets | Add chlorophyll green (#2d6a2d) | Earth system content benefits from thematic background; warming stripes + green is striking |
 
 ---
 
@@ -2184,5 +2250,11 @@ the WYSIWYG violation before it shipped, February 20, 2026
 
 *"Works great!"* -- Tony, on polar pan/zoom + label scaling,
 February 20, 2026
+
+*"I love the spinning planetary boundaries!"* -- Tony, on the angular
+rotation pan control, February 22, 2026
+
+*"Edits work great."* -- Tony, on the axis scale + colorbar fixes,
+February 22, 2026
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*

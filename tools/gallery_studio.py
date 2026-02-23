@@ -68,16 +68,17 @@ DEFAULT_CONFIG = {
     # Legend
     "show_legend": True,
     "legend_orientation": "v",  # v=vertical, h=horizontal
-    "legend_font_size": 11,
+    "legend_font_scale": 100,  # 100 = keep original, 50-200 = percentage
+    "legend_grouptitle_font_scale": 100,  # 100 = keep original (category headers)
     "legend_bgcolor": "rgba(0,0,0,0)",
 
     # Annotations
     "show_annotations": True,
     "strip_footer_annotations": True,
     "annotation_bg_transparent": True,
-    "annotation_font_scale": 0,  # 0 = keep original, 50-100 = percentage
+    "annotation_font_scale": 100,  # 100 = keep original, 50-200 = percentage
     "annotation_toggle_button": False,  # Embed show/hide button in HTML
-    "label_font_scale": 0,  # 0 = keep original, 50-100 = percentage (trace textfont)
+    "label_font_scale": 100,  # 100 = keep original, 50-200 = percentage (trace textfont)
 
     # Scene (3D) - additional
     "scene_aspectmode": "auto",  # auto, cube, data, manual
@@ -145,7 +146,8 @@ PORTRAIT_CONFIG = {
     "scene_aspectmode": "cube",
     "show_legend": False,
     "legend_orientation": "h",
-    "legend_font_size": 10,
+    "legend_font_scale": 85,
+    "legend_grouptitle_font_scale": 85,
     "legend_bgcolor": "rgba(0,0,0,0)",
     "legend_font_color": "#9a9a9a",
     "legend_border_transparent": True,
@@ -731,7 +733,14 @@ def apply_config(fig_dict, config):
         layout['showlegend'] = True
         legend = layout.get('legend', {})
         legend['font'] = legend.get('font', {})
-        legend['font']['size'] = config.get('legend_font_size', 11)
+
+        # Legend trace font scaling (percent of original)
+        leg_scale = config.get('legend_font_scale', 100)
+        if leg_scale != 100:
+            orig_size = legend['font'].get('size', 12)
+            if isinstance(orig_size, (int, float)) and orig_size > 0:
+                legend['font']['size'] = max(6, int(orig_size * leg_scale / 100))
+
         legend['bgcolor'] = config.get('legend_bgcolor', 'rgba(0,0,0,0)')
 
         orient = config.get('legend_orientation', 'v')
@@ -770,6 +779,19 @@ def apply_config(fig_dict, config):
             legend.pop('borderwidth', None)
         layout['legend'] = legend
 
+    # Legend group title font scaling (category headers)
+    gt_scale = config.get('legend_grouptitle_font_scale', 100)
+    if gt_scale != 100:
+        for trace in fig.get('data', []):
+            gt = trace.get('legendgrouptitle', {})
+            if gt:
+                gt_font = gt.get('font', {})
+                orig_size = gt_font.get('size', 13)
+                if isinstance(orig_size, (int, float)) and orig_size > 0:
+                    gt_font['size'] = max(6, int(orig_size * gt_scale / 100))
+                    gt['font'] = gt_font
+                    trace['legendgrouptitle'] = gt
+
     # ---- Annotations ----
     toggle_btn = config.get('annotation_toggle_button', False)
 
@@ -797,8 +819,8 @@ def apply_config(fig_dict, config):
                 ann.pop('borderpad', None)
 
         # Annotation font scaling
-        ann_scale = config.get('annotation_font_scale', 0)
-        if ann_scale > 0 and ann_scale < 100:
+        ann_scale = config.get('annotation_font_scale', 100)
+        if ann_scale != 100:
             scale_factor = ann_scale / 100.0
             for ann in annotations:
                 if ann.get('font') and ann['font'].get('size'):
@@ -859,8 +881,8 @@ def apply_config(fig_dict, config):
             trace['line'] = line
 
     # Label font scaling (trace textfont sizes)
-    label_scale = config.get('label_font_scale', 0)
-    if label_scale > 0 and label_scale < 100:
+    label_scale = config.get('label_font_scale', 100)
+    if label_scale != 100:
         lbl_factor = label_scale / 100.0
         for trace in fig.get('data', []):
             tf = trace.get('textfont', {})
@@ -2286,7 +2308,22 @@ class GalleryStudio:
         if os.path.exists(self.config_store_path):
             try:
                 with open(self.config_store_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    store = json.load(f)
+                # Migrate old format configs
+                for key, cfg in store.items():
+                    if 'legend_font_size' in cfg and 'legend_font_scale' not in cfg:
+                        # Old absolute px -> new percent (can't recover exact %,
+                        # so just set to 100 = keep original)
+                        cfg['legend_font_scale'] = 100
+                        del cfg['legend_font_size']
+                    if 'legend_grouptitle_font_scale' not in cfg:
+                        cfg['legend_grouptitle_font_scale'] = 100
+                    # Migrate annotation/label from 0=keep to 100=keep
+                    if cfg.get('annotation_font_scale', 100) == 0:
+                        cfg['annotation_font_scale'] = 100
+                    if cfg.get('label_font_scale', 100) == 0:
+                        cfg['label_font_scale'] = 100
+                return store
             except (json.JSONDecodeError, IOError):
                 pass
         return {}
@@ -2669,14 +2706,34 @@ class GalleryStudio:
 
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
-        tk.Label(row, text="Font size:", width=14, anchor='w').pack(side='left')
-        self.var_legend_size = tk.IntVar(
-            value=self.config['legend_font_size'])
-        sp = tk.Spinbox(row, from_=8, to=20,
-                        textvariable=self.var_legend_size, width=5)
+        tk.Label(row, text="Trace font %:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_legend_font_scale = tk.IntVar(
+            value=self.config.get('legend_font_scale', 100))
+        sp = tk.Spinbox(row, from_=50, to=200, increment=5,
+                        textvariable=self.var_legend_font_scale, width=5)
         sp.pack(side='left')
-        ToolTip(sp, "Legend text size. 11 is default. Use 9-10 for "
-                "crowded plots with many traces, 13+ for presentation.")
+        tk.Label(row, text="(100=keep)", fg='gray').pack(
+            side='left', padx=4)
+        ToolTip(sp, "Scale legend trace label font sizes as a percentage "
+                "of the original. 100%% = no change. 70%% shrinks for "
+                "crowded plots, 120%% enlarges for presentations.")
+
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Category font %:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_legend_grouptitle_scale = tk.IntVar(
+            value=self.config.get('legend_grouptitle_font_scale', 100))
+        sp_gt = tk.Spinbox(row, from_=50, to=200, increment=5,
+                           textvariable=self.var_legend_grouptitle_scale,
+                           width=5)
+        sp_gt.pack(side='left')
+        tk.Label(row, text="(100=keep)", fg='gray').pack(
+            side='left', padx=4)
+        ToolTip(sp_gt, "Scale legend group category title font sizes "
+                "(e.g. 'Measurements', 'Ocean Heat'). 100%% = no change. "
+                "Only affects plots that use legendgrouptitle.")
 
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
@@ -2758,15 +2815,14 @@ class GalleryStudio:
         tk.Label(row, text="Font scale %:", width=14,
                  anchor='w').pack(side='left')
         self.var_ann_font_scale = tk.IntVar(
-            value=self.config.get('annotation_font_scale', 0))
-        sp = tk.Spinbox(row, from_=0, to=100,
+            value=self.config.get('annotation_font_scale', 100))
+        sp = tk.Spinbox(row, from_=50, to=200, increment=5,
                         textvariable=self.var_ann_font_scale, width=5)
         sp.pack(side='left')
-        tk.Label(row, text="(0=keep)", fg='gray').pack(side='left', padx=4)
-        ToolTip(sp, "Scale annotation font sizes by this percentage. "
-                "0 keeps originals. 70 scales fonts > 12pt to 70%% "
-                "(min 10pt). The index used 70%% on screens < 900px. "
-                "Now you control it explicitly per plot.")
+        tk.Label(row, text="(100=keep)", fg='gray').pack(side='left', padx=4)
+        ToolTip(sp, "Scale annotation font sizes as a percentage of "
+                "original. 100%% = no change. 70%% shrinks fonts > 12pt "
+                "to 70%% (min 10pt). Useful for smaller screens.")
 
         self.var_ann_toggle_btn = tk.BooleanVar(
             value=self.config.get('annotation_toggle_button', False))
@@ -2784,15 +2840,15 @@ class GalleryStudio:
         tk.Label(row, text="Label font %:", width=14,
                  anchor='w').pack(side='left')
         self.var_label_font_scale = tk.IntVar(
-            value=self.config.get('label_font_scale', 0))
-        sp_lbl = tk.Spinbox(row, from_=0, to=100,
+            value=self.config.get('label_font_scale', 100))
+        sp_lbl = tk.Spinbox(row, from_=50, to=200, increment=5,
                             textvariable=self.var_label_font_scale, width=5)
         sp_lbl.pack(side='left')
-        tk.Label(row, text="(0=keep)", fg='gray').pack(side='left', padx=4)
-        ToolTip(sp_lbl, "Scale trace label (textfont) sizes by this "
-                "percentage. 0 keeps originals. Useful for polar/radar "
+        tk.Label(row, text="(100=keep)", fg='gray').pack(side='left', padx=4)
+        ToolTip(sp_lbl, "Scale trace label (textfont) sizes as a percentage "
+                "of original. 100%% = no change. Useful for polar/radar "
                 "charts where labels crowd on small screens. "
-                "60 scales to 60%% of original (min 4pt).")
+                "60%% scales to 60%% of original (min 4pt).")
 
         # ---- Trace Visibility ----
         sec = tk.LabelFrame(right, text="Trace Visibility", padx=6, pady=4)
@@ -2940,9 +2996,9 @@ class GalleryStudio:
         preset_row = tk.Frame(sec)
         preset_row.pack(fill='x', pady=(2, 6))
         portrait_btn = tk.Button(
-            preset_row, text="Apply Portrait Preset",
+            preset_row, text="Portrait Preset",
             command=self._apply_portrait_preset,
-            width=22, bg='#1e293b', fg='white')
+            width=16, bg='#1e293b', fg='white')
         portrait_btn.pack(side='left', padx=2)
         ToolTip(portrait_btn,
                 "One-click preset: applies all recommended settings "
@@ -2952,14 +3008,25 @@ class GalleryStudio:
                 "You can adjust individual settings afterward.")
 
         landscape_btn = tk.Button(
-            preset_row, text="Back to Landscape",
+            preset_row, text="Landscape Preset",
             command=self._apply_landscape_preset,
-            width=18)
+            width=16)
         landscape_btn.pack(side='left', padx=2)
         ToolTip(landscape_btn,
                 "Reset to landscape defaults. Restores standard "
                 "gallery settings -- legend, annotations, default "
                 "hover, no info panel.")
+
+        original_btn = tk.Button(
+            preset_row, text="Original",
+            command=self._apply_original_preset,
+            width=10)
+        original_btn.pack(side='left', padx=2)
+        ToolTip(original_btn,
+                "Preview the original plot as-is, with no studio "
+                "transforms applied. Opens in browser directly from "
+                "the raw figure data. Useful for comparing against "
+                "your configured settings.")
 
         # Output format
         row = tk.Frame(sec)
@@ -3209,7 +3276,8 @@ class GalleryStudio:
             'scene_bgcolor': self.var_bg_color.get(),
             'show_legend': self.var_show_legend.get(),
             'legend_orientation': self.var_legend_orient.get(),
-            'legend_font_size': self.var_legend_size.get(),
+            'legend_font_scale': self.var_legend_font_scale.get(),
+            'legend_grouptitle_font_scale': self.var_legend_grouptitle_scale.get(),
             'legend_bgcolor': 'rgba(0,0,0,0)',
             'show_annotations': self.var_show_annotations.get(),
             'strip_footer_annotations': self.var_strip_footer.get(),
@@ -3265,13 +3333,15 @@ class GalleryStudio:
         self.var_show_grid.set(c.get('show_grid', False))
         self.var_show_legend.set(c.get('show_legend', True))
         self.var_legend_orient.set(c.get('legend_orientation', 'v'))
-        self.var_legend_size.set(c.get('legend_font_size', 11))
+        self.var_legend_font_scale.set(c.get('legend_font_scale', 100))
+        self.var_legend_grouptitle_scale.set(
+            c.get('legend_grouptitle_font_scale', 100))
         self.var_show_annotations.set(c.get('show_annotations', True))
         self.var_strip_footer.set(c.get('strip_footer_annotations', True))
         self.var_ann_transparent.set(c.get('annotation_bg_transparent', True))
-        self.var_ann_font_scale.set(c.get('annotation_font_scale', 0))
+        self.var_ann_font_scale.set(c.get('annotation_font_scale', 100))
         self.var_ann_toggle_btn.set(c.get('annotation_toggle_button', False))
-        self.var_label_font_scale.set(c.get('label_font_scale', 0))
+        self.var_label_font_scale.set(c.get('label_font_scale', 100))
         self.var_scene_aspect.set(c.get('scene_aspectmode', 'auto'))
         self.var_legend_color.set(c.get('legend_font_color', ''))
         self.var_legend_border.set(c.get('legend_border_transparent', True))
@@ -3520,6 +3590,54 @@ document.addEventListener('click', function(e) {{
         """Reset to landscape defaults."""
         self._apply_config_to_gui(DEFAULT_CONFIG)
         self.status_var.set("Landscape defaults restored")
+
+    def _apply_original_preset(self):
+        """Preview the original plot with no studio transforms applied."""
+        if self.fig_dict is None:
+            messagebox.showinfo("Original", "Load an HTML file first.")
+            return
+
+        try:
+            # Build HTML directly from the raw figure - no apply_config
+            fig_copy = copy.deepcopy(self.fig_dict)
+            title = os.path.splitext(
+                os.path.basename(self.source_path or 'original')
+            )[0]
+
+            # Minimal config just for build_gallery_html wrapper
+            orig_config = {
+                'show_modebar': True,
+                'show_nav_arrows': False,
+                'custom_title': '',
+                'bg_color': fig_copy.get('layout', {}).get(
+                    'paper_bgcolor', '#000000'),
+                'annotation_toggle_button': False,
+                'keep_animation_controls': True,
+            }
+
+            html = build_gallery_html(fig_copy, orig_config, title)
+
+            try:
+                if self.temp_file and os.path.exists(self.temp_file):
+                    os.remove(self.temp_file)
+            except OSError:
+                pass
+
+            fd, self.temp_file = tempfile.mkstemp(
+                suffix='.html', prefix='gallery_studio_original_')
+            os.close(fd)
+
+            with open(self.temp_file, 'w', encoding='utf-8',
+                      newline='\n') as f:
+                f.write(html)
+
+            webbrowser.open('file://' + os.path.abspath(self.temp_file))
+            self.status_var.set("Original preview opened (no transforms)")
+
+        except Exception as e:
+            self.status_var.set(f"Original preview error: {e}")
+            messagebox.showerror("Original Preview Error",
+                                 f"Could not generate original preview:\n\n{e}")
 
     # ---- Actions ----
 
