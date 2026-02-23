@@ -63,7 +63,7 @@
     },
     {
       "id": "keeling_curve_co2_concentration",
-      "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
+      "title": "Keeling Curve Co2 Concentration",
       "filename": "keeling_curve_co2_concentration.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -73,7 +73,7 @@
     },
     {
       "id": "energy_imbalance_desktop",
-      "title": "Energy Imbalance, 2005 - 2025",
+      "title": "Energy Imbalance Desktop",
       "filename": "energy_imbalance_desktop.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -315,7 +315,7 @@
     },
     {
       "id": "keeling_curve_co2_concentration_copy",
-      "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
+      "title": "Keeling Curve of CO2 Concentration, 1958 - 2025",
       "filename": "keeling_curve_co2_concentration.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -540,6 +540,6 @@
       "converted": "2026-02-07 21:07"
     }
   ],
-  "last_updated": "2026-02-23 01:37",
+  "last_updated": "2026-02-23 01:24",
   "total_count": 51
 }
