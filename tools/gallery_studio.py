@@ -91,6 +91,7 @@ DEFAULT_CONFIG = {
     # Traces
     "trace_visibility": {},  # {trace_name: True/False}, empty = all visible
     "strip_hidden_traces": False,  # Remove invisible traces on export
+    "featured_traces": [],  # List of trace names to show persistent labels
     "marker_size_boost": 0,
     "line_width_min": 2,
 
@@ -159,6 +160,7 @@ PORTRAIT_CONFIG = {
     "label_font_scale": 100,
     "trace_visibility": {},
     "strip_hidden_traces": False,
+    "featured_traces": [],
     "marker_size_boost": 0,
     "line_width_min": 0,
     "show_modebar": True,
@@ -1237,6 +1239,95 @@ def apply_config(fig_dict, config):
         if encyclopedia:
             layout['_encyclopedia'] = encyclopedia
 
+    # ---- Featured trace labels (persistent annotations) ----
+    featured = config.get('featured_traces', [])
+    if featured:
+        has_scene = 'scene' in layout
+        feat_annotations = []
+
+        for trace in fig.get('data', []):
+            tname = trace.get('name', '')
+            if tname not in featured:
+                continue
+            # Skip hidden traces
+            if trace.get('visible') is False:
+                continue
+
+            # Find anchor point: midpoint of trace data
+            if has_scene:
+                # 3D trace
+                xs = trace.get('x', [])
+                ys = trace.get('y', [])
+                zs = trace.get('z', [])
+                if xs and ys and zs:
+                    mid = len(xs) // 2
+                    ax = xs[mid] if mid < len(xs) else xs[0]
+                    ay = ys[mid] if mid < len(ys) else ys[0]
+                    az = zs[mid] if mid < len(zs) else zs[0]
+                    # Skip None values
+                    if ax is None or ay is None or az is None:
+                        # Try first non-None point
+                        for i in range(len(xs)):
+                            if (xs[i] is not None and ys[i] is not None
+                                    and zs[i] is not None):
+                                ax, ay, az = xs[i], ys[i], zs[i]
+                                break
+                        else:
+                            continue
+                    feat_annotations.append({
+                        'x': ax, 'y': ay, 'z': az,
+                        'text': tname,
+                        'showarrow': False,
+                        'font': {
+                            'color': '#c9a84c',
+                            'size': 13,
+                            'family': 'Georgia, Times New Roman, serif'
+                        },
+                        'bgcolor': 'rgba(15, 23, 42, 0.7)',
+                        'borderpad': 4,
+                        '_featured': True,  # marker for JS removal
+                    })
+            else:
+                # 2D trace
+                xs = trace.get('x', [])
+                ys = trace.get('y', [])
+                if xs and ys:
+                    mid = len(xs) // 2
+                    ax = xs[mid] if mid < len(xs) else xs[0]
+                    ay = ys[mid] if mid < len(ys) else ys[0]
+                    if ax is None or ay is None:
+                        for i in range(len(xs)):
+                            if xs[i] is not None and ys[i] is not None:
+                                ax, ay = xs[i], ys[i]
+                                break
+                        else:
+                            continue
+                    feat_annotations.append({
+                        'x': ax, 'y': ay,
+                        'text': tname,
+                        'showarrow': False,
+                        'font': {
+                            'color': '#c9a84c',
+                            'size': 13,
+                            'family': 'Georgia, Times New Roman, serif'
+                        },
+                        'bgcolor': 'rgba(15, 23, 42, 0.7)',
+                        'borderpad': 4,
+                        '_featured': True,  # marker for JS removal
+                    })
+
+        if feat_annotations:
+            if has_scene:
+                # 3D annotations go on the scene
+                scene_obj = layout.get('scene', {})
+                existing_ann = scene_obj.get('annotations', [])
+                scene_obj['annotations'] = existing_ann + feat_annotations
+                layout['scene'] = scene_obj
+            else:
+                # 2D annotations go on the layout
+                existing_ann = layout.get('annotations', [])
+                layout['annotations'] = existing_ann + feat_annotations
+
     # ---- Studio marker ----
     # Tells downstream consumers (index.html) that this figure was
     # curated by the studio and should not be re-processed.
@@ -1927,6 +2018,37 @@ function toggleAnnotations() {{
 }}
 """
 
+    # Featured trace labels -- click to remove persistent annotations
+    featured_js = ""
+    featured_names = config.get('featured_traces', [])
+    if featured_names:
+        has_scene_for_feat = 'scene' in fig_dict.get('layout', {})
+        featured_js = """
+  // Remove featured trace label on click
+  var _featuredNames = %s;
+  var _pg_feat = document.getElementById('plotly-graph');
+  if (_pg_feat) {
+    _pg_feat.on('plotly_click', function(data) {
+      if (!data || !data.points || !data.points.length) return;
+      var clickedName = data.points[0].data ? data.points[0].data.name : '';
+      if (_featuredNames.indexOf(clickedName) === -1) return;
+      // Remove the featured annotation for this trace
+      var gd = document.getElementById('plotly-graph');
+      %s
+    });
+  }
+""" % (
+            json.dumps(featured_names),
+            # 3D: scene.annotations, 2D: layout.annotations
+            """var anns = (gd.layout.scene && gd.layout.scene.annotations) || [];
+      var filtered = anns.filter(function(a) { return !(a._featured && a.text === clickedName); });
+      Plotly.relayout(gd, {'scene.annotations': filtered});"""
+            if has_scene_for_feat else
+            """var anns = gd.layout.annotations || [];
+      var filtered = anns.filter(function(a) { return !(a._featured && a.text === clickedName); });
+      Plotly.relayout(gd, {'annotations': filtered});"""
+        )
+
     # Info card for portrait mode (click -> slide-up card from bottom)
     # Matches index.html's mobile info card behavior
     infocard_css = ""
@@ -2191,6 +2313,7 @@ document.addEventListener('DOMContentLoaded', function() {{
       Plotly.addFrames('plotly-graph', frames);
     }}
 {enc_event_js}
+{featured_js}
 {infocard_js}
   }});
   window.addEventListener('resize', function() {{
@@ -3143,9 +3266,9 @@ class GalleryStudio:
         sec = tk.LabelFrame(right, text="Trace Visibility", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Toggle individual traces on/off. Uses Plotly "
-                "visible:false (non-destructive). The data stays in "
-                "the file but is hidden. Check 'Strip hidden' to "
-                "remove them on export for smaller file size.")
+                "visible:false (non-destructive). The gold checkbox "
+                "marks a trace as 'featured' -- it gets a persistent "
+                "gold label on load that disappears when tapped.")
 
         btn_row = tk.Frame(sec)
         btn_row.pack(fill='x', pady=(0, 4))
@@ -3183,6 +3306,7 @@ class GalleryStudio:
         self.trace_canvas.pack(side='left', fill='x', expand=True)
         trace_sb.pack(side='right', fill='y')
         self.trace_vars = {}  # Will be populated on file load
+        self.featured_vars = {}  # Will be populated on file load
 
         # ---- Trace Appearance ----
         sec = tk.LabelFrame(right, text="Trace Appearance", padx=6, pady=4)
@@ -3586,6 +3710,7 @@ class GalleryStudio:
             'legend_border_transparent': self.var_legend_border.get(),
             'legend_position': self.var_legend_position.get(),
             'trace_visibility': self._collect_trace_visibility(),
+            'featured_traces': self._collect_featured_traces(),
             'strip_hidden_traces': self.var_strip_hidden.get(),
             'marker_size_boost': self.var_marker_boost.get(),
             'line_width_min': self.var_line_min.get(),
@@ -3663,6 +3788,11 @@ class GalleryStudio:
         self.var_restyle_anim.set(c.get('restyle_animation_dark', False))
         self.var_encyclopedia.set(c.get('embed_encyclopedia', False))
 
+        # Refresh featured trace checkboxes if trace list exists
+        saved_feat = c.get('featured_traces', [])
+        for name, var in getattr(self, 'featured_vars', {}).items():
+            var.set(name in saved_feat)
+
     # ---- Presets ----
 
     def _populate_trace_list(self):
@@ -3671,21 +3801,43 @@ class GalleryStudio:
         for widget in self.trace_inner.winfo_children():
             widget.destroy()
         self.trace_vars = {}
+        self.featured_vars = {}
 
         if self.fig_dict is None:
             return
 
         saved_vis = self.config.get('trace_visibility', {})
+        saved_feat = self.config.get('featured_traces', [])
         for trace in self.fig_dict.get('data', []):
             name = trace.get('name', '')
             if not name:
                 continue
-            var = tk.BooleanVar(value=saved_vis.get(name, True))
-            cb = tk.Checkbutton(self.trace_inner, text=name,
-                                variable=var, anchor='w',
-                                wraplength=250, justify='left')
-            cb.pack(fill='x', anchor='w')
-            self.trace_vars[name] = var
+            row = tk.Frame(self.trace_inner)
+            row.pack(fill='x', anchor='w')
+
+            # Featured star checkbox (gold border)
+            feat_var = tk.BooleanVar(value=(name in saved_feat))
+            feat_cb = tk.Checkbutton(row, variable=feat_var,
+                                     selectcolor='#c9a84c')
+            feat_cb.pack(side='left', padx=(0, 0))
+            # Style the featured checkbox border
+            feat_cb.configure(
+                highlightbackground='#c9a84c',
+                highlightcolor='#c9a84c',
+                highlightthickness=1,
+                bd=0, padx=1, pady=0)
+            ToolTip(feat_cb, "Feature this trace: show a persistent "
+                    "gold label on load. Label disappears when the "
+                    "user taps the trace.")
+            self.featured_vars[name] = feat_var
+
+            # Visibility checkbox
+            vis_var = tk.BooleanVar(value=saved_vis.get(name, True))
+            cb = tk.Checkbutton(row, text=name,
+                                variable=vis_var, anchor='w',
+                                wraplength=230, justify='left')
+            cb.pack(side='left', fill='x', expand=True)
+            self.trace_vars[name] = vis_var
 
     def _trace_select_all(self):
         """Check all trace visibility boxes."""
@@ -3704,6 +3856,14 @@ class GalleryStudio:
             if not var.get():  # Only record hidden traces
                 vis[name] = False
         return vis
+
+    def _collect_featured_traces(self):
+        """Collect featured trace names from star checkboxes."""
+        featured = []
+        for name, var in getattr(self, 'featured_vars', {}).items():
+            if var.get():
+                featured.append(name)
+        return featured
 
     def _preview_as_gallery(self):
         """Preview how this plot will look in the gallery (index.html).
@@ -3975,6 +4135,7 @@ document.addEventListener('click', function(e) {{
             "label_font_scale": 100,
             "trace_visibility": {},
             "strip_hidden_traces": False,
+            "featured_traces": [],
             "marker_size_boost": 0,
             "line_width_min": 0,
             "show_modebar": True,

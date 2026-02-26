@@ -213,6 +213,12 @@ class GalleryEditor:
         ttk.Separator(toolbar, orient='vertical').pack(
             side='left', fill='y', padx=8, pady=2)
 
+        ttk.Button(toolbar, text="Toggle Featured",
+                   command=self._toggle_featured).pack(side='left', padx=2)
+
+        ttk.Separator(toolbar, orient='vertical').pack(
+            side='left', fill='y', padx=8, pady=2)
+
         ttk.Button(toolbar, text="Save All",
                    command=self._save_all).pack(side='right', padx=2)
 
@@ -348,11 +354,12 @@ class GalleryEditor:
 
                 for viz in items:
                     size = viz.get('size_kb', 0)
+                    star = "\u2605 " if viz.get('featured') else ""
                     self.tree.insert(
                         parent, 'end', iid=viz['id'],
                         text=viz.get('id', ''),
                         values=(
-                            viz.get('title', ''),
+                            star + viz.get('title', ''),
                             viz.get('description', '')[:80],
                             f"{size:,.1f}"
                         ))
@@ -654,6 +661,21 @@ class GalleryEditor:
             self._mark_dirty()
             self._refresh_tree()
             self.status_var.set(f"Deleted: {viz['id']}")
+
+    def _toggle_featured(self):
+        """Toggle the 'featured' flag on the selected visualization."""
+        viz = self._get_selected_viz()
+        if not viz:
+            return
+
+        current = viz.get('featured', False)
+        viz['featured'] = not current
+        self._mark_dirty()
+        self._refresh_tree()
+
+        state = "Featured" if viz['featured'] else "Unfeatured"
+        self.status_var.set(
+            f"{state}: {viz.get('title', viz['id'])}")
 
     # --------------------------------------------------------
     # Category Management
