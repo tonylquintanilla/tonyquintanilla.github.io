@@ -549,8 +549,30 @@
       "size_kb": 5098.6,
       "converted": "2026-02-25 22:23",
       "mode": "portrait"
+    },
+    {
+      "id": "c2024_e1_wierzchos_20260225_0236_portrait",
+      "title": "C2024 E1 Wierzchos 20260225 0236 Portrait",
+      "filename": "c2024_e1_wierzchos_20260225_0236_portrait.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet Wierzchos, perihelion 1-20-2026.",
+      "size_kb": 5444.1,
+      "converted": "2026-02-26 08:13",
+      "mode": "portrait"
+    },
+    {
+      "id": "c2024_e1_wierzchos_20260225_0236_landscape",
+      "title": "C2024 E1 Wierzchos 20260225 0236 Landscape",
+      "filename": "c2024_e1_wierzchos_20260225_0236_landscape.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet Wierzchos, perihelion 1-20-2026.",
+      "size_kb": 5106.5,
+      "converted": "2026-02-26 08:14",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-25 22:23",
-  "total_count": 52
+  "last_updated": "2026-02-26 08:14",
+  "total_count": 54
 }
