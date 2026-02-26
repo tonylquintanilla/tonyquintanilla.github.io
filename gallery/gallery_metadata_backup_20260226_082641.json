@@ -1,17 +1,6 @@
 {
   "visualizations": [
     {
-      "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy",
-      "title": "Inner Solar System Animation 2-4-2005 21 Years",
-      "filename": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "Animation of the inner solar system from 2005 for 21 years.",
-      "size_kb": 10082.0,
-      "converted": "2026-02-17 23:25",
-      "mode": "landscape"
-    },
-    {
       "id": "inner_planets_comets_solar_corona_20260207_1748",
       "title": "Inner Planets Comets Solar Corona 20260207 1748",
       "filename": "inner_planets_comets_solar_corona_20260207_1748.json",
@@ -20,6 +9,16 @@
       "description": "Solar photosphere, corona, current comets and inner planets. Static plot.",
       "size_kb": 31364.8,
       "converted": "2026-02-07 17:53"
+    },
+    {
+      "id": "orbital_transformation_mercury_20260208",
+      "title": "Orbital Transformation Mercury 20260208",
+      "filename": "orbital_transformation_mercury_20260208.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Mercury's orbital elements in the Ecliptic Frame",
+      "size_kb": 70.4,
+      "converted": "2026-02-08 01:01"
     },
     {
       "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape",
@@ -260,15 +259,15 @@
       "converted": "2026-02-10 23:40"
     },
     {
-      "id": "c2024_e1_wierzchos_20260225_0236_portrait",
-      "title": "Comet C2024 E1 Wierzchos on 2026 02 25 02:36",
-      "filename": "c2024_e1_wierzchos_20260225_0236_portrait.json",
+      "id": "current_comets_social_view_20260210_2331",
+      "title": "Current Comets on 2026 02 10 23:31",
+      "filename": "current_comets_social_view_20260210_2331.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Comet Wierzchos, perihelion 1-20-2026.",
-      "size_kb": 5444.1,
-      "converted": "2026-02-26 08:13",
-      "mode": "portrait"
+      "description": "Current comets and the inner solar system.",
+      "mode": "portrait",
+      "size_kb": 33130.3,
+      "converted": "2026-02-10 23:40"
     },
     {
       "id": "inner_solar_system_animation_2-4-2005_21_years_social",
@@ -541,29 +540,30 @@
       "converted": "2026-02-07 21:07"
     },
     {
-      "id": "current_comets_social_view_20260210_2331",
-      "title": "Current Comets on 2026 02 10 23:31",
-      "filename": "current_comets_social_view_20260210_2331.json",
+      "id": "c2024_e1_wierzchos_20260225_0236_social",
+      "title": "C2024 E1 Wierzchos 20260225 0236",
+      "filename": "c2024_e1_wierzchos_20260225_0236_social.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Current comets and the inner solar system.",
-      "mode": "portrait",
-      "size_kb": 33130.3,
-      "converted": "2026-02-10 23:40"
+      "description": "Comet Wierzchos",
+      "size_kb": 5098.6,
+      "converted": "2026-02-25 22:23",
+      "mode": "portrait"
     },
     {
-      "id": "orbital_transformation_mercury_20260208",
-      "title": "Orbital Transformation Mercury 20260208",
-      "filename": "orbital_transformation_mercury_20260208.json",
+      "id": "c2024_e1_wierzchos_20260225_0236_portrait",
+      "title": "C2024 E1 Wierzchos 20260225 0236 Portrait",
+      "filename": "c2024_e1_wierzchos_20260225_0236_portrait.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Mercury's orbital elements in the Ecliptic Frame",
-      "size_kb": 70.4,
-      "converted": "2026-02-08 01:01"
+      "description": "Comet Wierzchos, perihelion 1-20-2026.",
+      "size_kb": 5444.1,
+      "converted": "2026-02-26 08:13",
+      "mode": "portrait"
     },
     {
       "id": "c2024_e1_wierzchos_20260225_0236_landscape",
-      "title": "Comet C2024 E1 Wierzchos 20260225 0236",
+      "title": "C2024 E1 Wierzchos 20260225 0236 Landscape",
       "filename": "c2024_e1_wierzchos_20260225_0236_landscape.json",
       "category": "solar_system",
       "category_label": "Solar System",
@@ -573,6 +573,6 @@
       "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-26 08:26",
+  "last_updated": "2026-02-26 08:14",
   "total_count": 54
 }
