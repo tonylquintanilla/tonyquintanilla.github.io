@@ -9,8 +9,7 @@
       "description": "Animation of the inner solar system from 2005 for 21 years.",
       "size_kb": 10082.0,
       "converted": "2026-02-17 23:25",
-      "mode": "landscape",
-      "featured": true
+      "mode": "landscape"
     },
     {
       "id": "inner_planets_comets_solar_corona_20260207_1748",
@@ -31,8 +30,7 @@
       "description": "Animation of the inner solar system from 2005 for 21 years.",
       "size_kb": 10082.0,
       "converted": "2026-02-17 23:25",
-      "mode": "landscape",
-      "featured": false
+      "mode": "landscape"
     },
     {
       "id": "earth_heliocentric_20260207_0659",
@@ -72,8 +70,7 @@
       "category_label": "Earth System",
       "description": "Graphic showing atmospheric CO2 from 1958 to 2025.",
       "size_kb": 17.3,
-      "converted": "2026-02-09 00:12",
-      "featured": true
+      "converted": "2026-02-09 00:12"
     },
     {
       "id": "energy_imbalance_desktop",
@@ -238,8 +235,7 @@
       "description": "Animation of the inner solar system from 2005 for 21 years.",
       "size_kb": 10857.8,
       "converted": "2026-02-17 23:24",
-      "mode": "portrait",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "paloma_social_view_2005_02_04",
@@ -272,8 +268,7 @@
       "description": "Comet Wierzchos, perihelion 1-20-2026.",
       "size_kb": 5444.1,
       "converted": "2026-02-26 08:13",
-      "mode": "portrait",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "inner_solar_system_animation_2-4-2005_21_years_social",
@@ -328,8 +323,7 @@
       "description": "Graphic showing atmospheric CO2 from 1958 to 2025.",
       "size_kb": 17.3,
       "converted": "2026-02-09 00:12",
-      "mode": "portrait",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "energy_imbalance_mobile",
@@ -576,10 +570,9 @@
       "description": "Comet Wierzchos, perihelion 1-20-2026.",
       "size_kb": 5106.5,
       "converted": "2026-02-26 08:14",
-      "mode": "landscape",
-      "featured": true
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-26 12:16",
+  "last_updated": "2026-02-26 08:26",
   "total_count": 54
 }
