@@ -538,8 +538,19 @@
       "description": "540 MY paleoclimate chart with human origins markers.",
       "size_kb": 116.3,
       "converted": "2026-02-07 21:07"
+    },
+    {
+      "id": "c2024_e1_wierzchos_20260225_0236_social",
+      "title": "C2024 E1 Wierzchos 20260225 0236",
+      "filename": "c2024_e1_wierzchos_20260225_0236_social.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet Wierzchos",
+      "size_kb": 5098.6,
+      "converted": "2026-02-25 22:23",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-02-23 01:37",
-  "total_count": 51
+  "last_updated": "2026-02-25 22:23",
+  "total_count": 52
 }
