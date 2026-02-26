@@ -2523,4 +2523,106 @@ redundant."* -- Tony, on removing dead UI, February 26
 special changes."* -- Tony, on the revised portrait preset,
 February 26
 
+### Session 18 (Feb 26): Featured Labels + Gallery Badges + Git Attribution
+
+Two-level "featured" system: trace-level labels guide users within
+a plot, gallery-level badges guide users to a plot. Plus mobile
+modebar fix and git co-author research.
+
+**Featured Trace Labels (gallery_studio.py)**
+
+New gold star checkbox per trace in the Trace Visibility list.
+Checking it marks that trace as "featured." On export,
+`apply_config()` injects a Plotly annotation anchored to the trace's
+midpoint -- gold Georgia serif text on semi-transparent dark
+background, with `_featured: true` marker.
+
+3D traces: annotation on `scene.annotations` (rotates with scene).
+2D traces: annotation on `layout.annotations` (axis-anchored).
+Anchor point: midpoint of trace data array; skips None values.
+
+On click: JS handler filters out the `_featured` annotation for the
+clicked trace via `Plotly.relayout`. Label dissolves, info card
+appears. Label does NOT come back after dismissal. The plot is clean
+after the user has found what they need.
+
+Config: `featured_traces: []` (list of trace names). Stored in
+config alongside `trace_visibility`. Cleared by presets. Refreshed
+by `_apply_config_to_gui`.
+
+**Gallery Featured Badges (gallery_editor.py + index.html)**
+
+"Toggle Featured" button in gallery_editor.py toolbar. Sets
+`featured: true` on visualization metadata. Tree view shows star
+character next to featured titles.
+
+index.html renders a gold "Featured" pill badge on gallery cards
+with subtle pulse animation (2.5s ease-in-out cycle on opacity and
+border). Uses existing `--accent` color scheme (#c9a84c gold,
+`--accent-glow` background, `--accent-dim` border).
+
+Use case: new comet arrives, mark it featured. Month later when it's
+old news, uncheck it. Guides users to timely or noteworthy content.
+
+**Mobile Modebar Fix (index.html)**
+
+Gallery viewer was overriding `displayModeBar: false` on all mobile
+devices, ignoring studio's explicit choice. Now respects `_studio`
+flag: curated plots keep modebar on mobile, non-studio plots still
+get the touch-optimized hidden modebar.
+
+Pattern: `if (!figDict.layout || !figDict.layout._studio)` gates
+the mobile override. Consistent with existing `_studio` flag
+contract.
+
+**Featured Annotation Removal in Gallery Viewer (index.html)**
+
+Click handler checks both `scene.annotations` and
+`layout.annotations` for `_featured` markers on studio-curated
+plots. Removes matching annotation on click. Works for both 3D
+and 2D in the same handler. Gated behind `_studio` flag.
+
+**Git Co-Author Attribution (Mode 7 -- Gemini)**
+
+Researched proper git co-author tagging for AI collaborators.
+`noreply@anthropic.com` resolves to a random GitHub user
+("Panchajanya1999") -- known issue, no official Anthropic account.
+
+Gemini recommended using the commit description field with a blank
+line separator: `Co-authored-by: Claude <support@anthropic.com>`.
+Same pattern works for Gemini (`gemini@google.com`) and ChatGPT
+(`support@openai.com`). GitHub Desktop's co-author search field
+only finds real users; the description trailer approach is more
+reliable for AI attribution.
+
+**Files Modified:**
+- `gallery_studio.py` (~4,400 lines): featured_traces config,
+  star checkbox UI, annotation injection, click-to-remove JS
+- `gallery_editor.py` (~1,060 lines): Toggle Featured button,
+  star display in tree
+- `index.html` (~2,140 lines): featured badge CSS/rendering,
+  modebar mobile fix, featured annotation removal
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Featured trace anchor point | Midpoint of trace data array | Reasonable for orbits; object traces use their own coordinates |
+| Featured label styling | Gold Georgia serif, semi-transparent bg | Distinct from Names Only hover; matches gallery gold accent |
+| Label removal | Click dissolves, doesn't return | "Start here" breadcrumb that self-destructs once used |
+| Gallery badge animation | Subtle pulse (opacity + border) | Eye-catching without being distracting |
+| Mobile modebar | Respect _studio flag | Curated plots honor developer's choice |
+| Git co-author | Description trailer, not co-author field | Reliable for AI; avoids resolving to wrong GitHub user |
+
+---
+
+*"I'm impatient! I love building and visualizing. It's my
+engineer+artist+scientist+ai-partner vibe!"* -- Tony, February 26
+
+*"Too busy to care."* -- Tony, on Anthropic not having a GitHub
+account for Claude co-authorship despite 20%+ of commits, Feb 26
+
+*"Give credit where credit is due."* -- Tony, on documenting
+the session, February 26
+
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*
