@@ -1333,6 +1333,13 @@ def apply_config(fig_dict, config):
     # curated by the studio and should not be re-processed.
     layout['_studio'] = True
 
+    # Embed the studio config so Original preset can restore it
+    # on re-load. Exclude large/transient fields.
+    stored_config = {k: v for k, v in config.items()
+                     if k not in ('trace_visibility', 'plotly_js_source',
+                                  'output_mode')}
+    layout['_studio_config'] = stored_config
+
     fig['layout'] = layout
     return fig
 
@@ -4159,6 +4166,55 @@ document.addEventListener('click', function(e) {{
             "plotly_js_source": "cdn",
             "output_mode": "both",
         }
+
+        # Detect studio settings baked into the figure
+        # These survive the export round-trip as layout markers
+        if layout.get('_studio'):
+            # Best case: full config was embedded (exports from Session 18+)
+            if layout.get('_studio_config'):
+                sc = layout['_studio_config']
+                for k, v in sc.items():
+                    if k in orig_config:
+                        orig_config[k] = v
+            else:
+                # Fallback: heuristic detection for older exports
+                # Check for routed hover (customdata present on traces)
+                has_routed = any(
+                    t.get('customdata') is not None
+                    for t in self.fig_dict.get('data', [])
+                    if t.get('hoverinfo') != 'skip'
+                )
+                if has_routed:
+                    orig_config['route_hover_to_panel'] = True
+
+                # Check for embedded encyclopedia
+                if layout.get('_encyclopedia'):
+                    orig_config['embed_encyclopedia'] = True
+
+                # Check for nav arrows marker
+                if layout.get('_studio_nav'):
+                    orig_config['show_nav_arrows'] = True
+
+                # Check for dark-themed animation controls (sliders)
+                sliders = layout.get('sliders', [])
+                if sliders:
+                    sl = sliders[0]
+                    if sl.get('bgcolor') == '#1e293b':
+                        orig_config['restyle_animation_dark'] = True
+
+                # Check for featured annotations
+                feat_names = []
+                scene_anns = layout.get('scene', {}).get('annotations', [])
+                layout_anns = layout.get('annotations', [])
+                for ann in scene_anns + layout_anns:
+                    if ann.get('_featured') and ann.get('text'):
+                        feat_names.append(ann['text'])
+                if feat_names:
+                    orig_config['featured_traces'] = feat_names
+
+                # Detect portrait output format from aspect hints
+                if has_routed and orig_config.get('embed_encyclopedia'):
+                    orig_config['output_format'] = 'portrait'
 
         self._apply_config_to_gui(orig_config)
         self.status_var.set("Original preset applied - shows source as-is")
