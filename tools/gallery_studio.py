@@ -115,12 +115,11 @@ DEFAULT_CONFIG = {
     # Navigation controls (embedded in exported HTML)
     "show_nav_arrows": False,
 
-    # Portrait / Social (9:16)
+    # Presets & Output Format
     "output_format": "landscape",  # landscape or portrait
     "route_hover_to_panel": False,
     "marker_opacity_fix": False,
     "restyle_animation_dark": False,
-    "info_panel_branding": "Paloma's Orrery",
     "embed_encyclopedia": False,
 
     # Export
@@ -136,51 +135,51 @@ PORTRAIT_CONFIG = {
     "custom_title": "",
     "title_font_scale": 100,
     "title_color": "#f8fafc",
-    "margin_top": 0,
-    "margin_bottom": 0,
-    "margin_left": 0,
-    "margin_right": 0,
-    "show_axes": False,
-    "show_grid": False,
+    "margin_top": 10,
+    "margin_bottom": 75,
+    "margin_left": 10,
+    "margin_right": 10,
+    "show_axes": True,
+    "show_grid": True,
     "scene_bgcolor": "#000000",
     "scene_aspectmode": "cube",
     "show_legend": False,
-    "legend_orientation": "h",
-    "legend_font_scale": 85,
-    "legend_grouptitle_font_scale": 85,
+    "legend_orientation": "v",
+    "legend_font_scale": 100,
+    "legend_grouptitle_font_scale": 100,
     "legend_bgcolor": "rgba(0,0,0,0)",
-    "legend_font_color": "#9a9a9a",
-    "legend_border_transparent": True,
-    "legend_position": "top-center-h",
+    "legend_font_color": "",
+    "legend_border_transparent": False,
+    "legend_position": "original",
     "show_annotations": False,
-    "strip_footer_annotations": True,
-    "annotation_bg_transparent": True,
-    "annotation_font_scale": 70,
+    "strip_footer_annotations": False,
+    "annotation_bg_transparent": False,
+    "annotation_font_scale": 100,
     "annotation_toggle_button": False,
+    "label_font_scale": 100,
     "trace_visibility": {},
     "strip_hidden_traces": False,
-    "marker_size_boost": 4,
-    "line_width_min": 4,
-    "show_modebar": False,
-    "show_colorbar": False,
+    "marker_size_boost": 0,
+    "line_width_min": 0,
+    "show_modebar": True,
+    "show_colorbar": True,
     "strip_template": True,
     "strip_updatemenus": True,
     "keep_animation_controls": True,
-    "hover_mode": "none",
+    "hover_mode": "default",
     "axis_title_font_size": 0,
     "axis_tick_font_size": 0,
-    "x_title_scale": 0,
-    "y_title_scale": 0,
+    "x_title_scale": 100,
+    "y_title_scale": 100,
     "x_tick_scale": 100,
     "y_tick_scale": 100,
-    "y2_title_scale": 0,
+    "y2_title_scale": 100,
     "y2_tick_scale": 100,
-    "show_nav_arrows": False,
+    "show_nav_arrows": True,
     "output_format": "portrait",
     "route_hover_to_panel": True,
-    "marker_opacity_fix": True,
+    "marker_opacity_fix": False,
     "restyle_animation_dark": True,
-    "info_panel_branding": "Paloma's Orrery",
     "embed_encyclopedia": True,
     "plotly_js_source": "cdn",
     "output_mode": "both",
@@ -1218,6 +1217,20 @@ def apply_config(fig_dict, config):
         except ValueError:
             pass
 
+    # ---- Reset 3D scene domain to full plot area ----
+    # When updatemenus, legends, or colorbars are stripped, the scene
+    # may retain a domain offset from when those elements were present.
+    # Reset to fill the entire available area so the scene centers
+    # properly, especially in portrait/narrow viewports.
+    # Only reset when elements that affect domain have been removed.
+    scene = layout.get('scene', None)
+    if scene is not None:
+        stripped_menus = config.get('strip_updatemenus', False)
+        hidden_legend = not config.get('show_legend', True)
+        hidden_colorbar = not config.get('show_colorbar', True)
+        if stripped_menus or hidden_legend or hidden_colorbar:
+            scene['domain'] = {'x': [0, 1], 'y': [0, 1]}
+
     # ---- Embed encyclopedia data ----
     if config.get('embed_encyclopedia', False):
         encyclopedia = extract_encyclopedia_for_figure(fig)
@@ -1267,7 +1280,7 @@ def _build_encyclopedia_overlay(fig_dict):
     css = """
   /* ===== ENCYCLOPEDIA CARD ===== */
   .enc-btn {
-    position: fixed;
+    position: absolute;
     top: 12px;
     left: 12px;
     width: 32px;
@@ -1297,7 +1310,7 @@ def _build_encyclopedia_overlay(fig_dict):
   .enc-btn.visible { display: flex; }
 
   .enc-overlay {
-    position: fixed;
+    position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.6);
     z-index: 300;
@@ -1391,6 +1404,7 @@ def _build_encyclopedia_overlay(fig_dict):
 // ===== ENCYCLOPEDIA CARD =====
 var _encData = {enc_json};
 var _encCurrentName = null;
+var _encLocked = false;  // true when user clicked an object (sticky)
 
 function encShowButton(name) {{
   var btn = document.getElementById('enc-btn');
@@ -1399,8 +1413,34 @@ function encShowButton(name) {{
     _encCurrentName = name;
     btn.classList.add('visible');
   }} else {{
+    // Only hide if not locked (user clicked an object with info)
+    if (!_encLocked) {{
+      _encCurrentName = null;
+      btn.classList.remove('visible');
+    }}
+  }}
+}}
+
+function encLock(name) {{
+  // Called on click -- locks the button visible if entry exists
+  var btn = document.getElementById('enc-btn');
+  if (!btn) return;
+  if (name && _encData[name]) {{
+    _encCurrentName = name;
+    _encLocked = true;
+    btn.classList.add('visible');
+  }} else {{
+    _encLocked = false;
+    _encCurrentName = null;
     btn.classList.remove('visible');
   }}
+}}
+
+function encHide() {{
+  // Called on unhover -- hides button unless locked
+  if (_encLocked) return;
+  var btn = document.getElementById('enc-btn');
+  if (btn) btn.classList.remove('visible');
 }}
 
 function encOpenCard() {{
@@ -1499,11 +1539,59 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     nav_html = ""
     nav_js = ""
 
+    # Aspect ratio constraint for preview
+    # Landscape: 16:9, Portrait: 9:16, default: fill viewport
+    # Thin white frame shows the viewport boundary on the developer's screen
+    output_format = config.get('output_format', 'landscape')
+    if output_format == 'portrait':
+        aspect_css = f"""
+  #aspect-frame {{
+    width: min(100vw, calc(100vh * 9 / 16));
+    height: 100vh;
+    margin: 0 auto;
+    background: {bg_color};
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-sizing: border-box;
+  }}
+  #plotly-graph {{
+    width: 100%;
+    height: 100%;
+  }}"""
+    elif output_format == 'landscape':
+        aspect_css = f"""
+  #aspect-frame {{
+    width: 100vw;
+    height: min(100vh, calc(100vw * 9 / 16));
+    background: {bg_color};
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-sizing: border-box;
+  }}
+  #plotly-graph {{
+    width: 100%;
+    height: 100%;
+  }}"""
+    else:
+        aspect_css = """
+  #aspect-frame {
+    width: 100%;
+    height: 100%;
+  }
+  #plotly-graph {
+    width: 100%;
+    height: 100%;
+  }"""
+
     if show_nav:
         nav_css = f"""
   /* Navigation controls */
   .nav-controls {{
-    position: fixed;
+    position: absolute;
     bottom: 16px;
     right: 16px;
     z-index: 100;
@@ -1762,18 +1850,21 @@ function zoomPlot(dir) {
     enc_event_js = ""
     if enc_js:
         enc_event_js = """
-  // Wire encyclopedia button to Plotly click events
+  // Wire encyclopedia button to Plotly events
   var plotG = document.getElementById('plotly-graph');
   if (plotG) {
     plotG.on('plotly_click', function(data) {
       var pt = data.points[0];
       var name = pt.data ? pt.data.name : '';
-      if (typeof encShowButton === 'function') encShowButton(name);
+      if (typeof encLock === 'function') encLock(name);
     });
     plotG.on('plotly_hover', function(data) {
       var pt = data.points[0];
       var name = pt.data ? pt.data.name : '';
       if (typeof encShowButton === 'function') encShowButton(name);
+    });
+    plotG.on('plotly_unhover', function() {
+      if (typeof encHide === 'function') encHide();
     });
   }
 """
@@ -1793,7 +1884,7 @@ function zoomPlot(dir) {
         toggle_css = f"""
   /* Annotation toggle button */
   .ann-toggle {{
-    position: fixed;
+    position: absolute;
     top: 10px;
     right: 10px;
     z-index: 100;
@@ -1836,6 +1927,205 @@ function toggleAnnotations() {{
 }}
 """
 
+    # Info card for portrait mode (click -> slide-up card from bottom)
+    # Matches index.html's mobile info card behavior
+    infocard_css = ""
+    infocard_html = ""
+    infocard_js = ""
+
+    if output_format == 'portrait':
+        infocard_css = """
+  /* Floating info card (portrait mode - inside aspect frame) */
+  .info-card {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 400;
+    background: rgba(18, 18, 26, 0.92);
+    border-top: 1px solid rgba(201, 168, 76, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    max-height: 45%;
+    overflow-y: auto;
+    padding: 16px 20px 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .info-card.visible {
+    transform: translateY(0);
+  }
+  .info-card-handle {
+    width: 36px;
+    height: 4px;
+    background: #64748b;
+    border-radius: 2px;
+    margin: 0 auto 12px;
+    opacity: 0.5;
+  }
+  .info-card-name {
+    font-family: Georgia, 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #c9a84c;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .info-card-subtitle {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+  .info-card-body {
+    font-size: 0.82rem;
+    color: #e8e6e3;
+    line-height: 1.5;
+  }
+  .info-card-body br {
+    display: block;
+    margin-bottom: 2px;
+    content: "";
+  }
+  .info-card-dismiss {
+    font-size: 0.65rem;
+    color: #64748b;
+    text-align: center;
+    margin-top: 12px;
+    letter-spacing: 0.04em;
+  }
+  .tap-hint {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(18, 18, 26, 0.85);
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 10px 20px;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    z-index: 350;
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+    text-align: center;
+  }
+  .tap-hint.visible {
+    opacity: 1;
+  }"""
+
+        infocard_html = """
+<div class="info-card" id="infoCard">
+  <div class="info-card-handle"></div>
+  <div class="info-card-name" id="infoCardName"></div>
+  <div class="info-card-subtitle" id="infoCardSubtitle"></div>
+  <div class="info-card-body" id="infoCardBody"></div>
+  <div class="info-card-dismiss">Tap elsewhere to dismiss</div>
+</div>
+<div class="tap-hint" id="tapHint">Tap any object for details</div>"""
+
+        infocard_js = """
+  // Portrait info card logic
+  var _infoCard = document.getElementById('infoCard');
+  var _icName = document.getElementById('infoCardName');
+  var _icSub = document.getElementById('infoCardSubtitle');
+  var _icBody = document.getElementById('infoCardBody');
+  var _tapHint = document.getElementById('tapHint');
+  var _icShown = false;
+
+  function _showCard(cd) {
+    try {
+      var p = cd;
+      if (typeof cd === 'string') p = JSON.parse(cd);
+      _icName.textContent = p.name || '';
+      if (p.subtitle) {
+        _icSub.textContent = p.subtitle;
+        _icSub.style.display = '';
+      } else {
+        _icSub.style.display = 'none';
+      }
+      if (p.body) {
+        _icBody.innerHTML = p.body;
+        _icBody.style.display = '';
+      } else {
+        _icBody.style.display = 'none';
+      }
+      _infoCard.classList.add('visible');
+      _icShown = true;
+    } catch(e) {}
+  }
+
+  function _dismissCard() {
+    if (_icShown) {
+      _infoCard.classList.remove('visible');
+      _icShown = false;
+    }
+  }
+
+  // Wire click -> info card
+  var _pg = document.getElementById('plotly-graph');
+  _pg.on('plotly_click', function(evtData) {
+    if (!evtData || !evtData.points || !evtData.points.length) return;
+    var pt = evtData.points[0];
+    var cd = null;
+
+    // Try customdata first (routed hover data)
+    if (pt.customdata) {
+      try {
+        cd = typeof pt.customdata === 'string' ?
+          JSON.parse(pt.customdata) : pt.customdata;
+        if (!cd || !cd.name) cd = null;
+      } catch(e) { cd = null; }
+    }
+
+    // Fallback: parse trace.text HTML
+    if (!cd && pt.data && pt.data.text) {
+      var tv = Array.isArray(pt.data.text) ?
+        (pt.data.text[pt.pointIndex] || '') : (pt.data.text || '');
+      if (tv) {
+        var nm = tv.match(/<b>([^<]+)<\\/b>/);
+        var name = nm ? nm[1] : (pt.data.name || 'Object');
+        var body = tv;
+        if (nm) body = tv.substring(tv.indexOf('</b>') + 4);
+        body = body.replace(/^(\\s*<br\\s*\\/?>)+/gi, '');
+        cd = { name: name, subtitle: '', body: body };
+      }
+    }
+
+    // Last resort: trace name
+    if (!cd && pt.data && pt.data.name) {
+      cd = { name: pt.data.name, subtitle: '', body: '' };
+    }
+
+    if (cd) { _showCard(cd); _justShown = true; }
+  });
+
+  // Dismiss on click outside card and outside graph
+  var _justShown = false;
+  document.addEventListener('click', function(e) {
+    if (_justShown) { _justShown = false; return; }
+    if (_icShown && !_infoCard.contains(e.target)) {
+      _dismissCard();
+    }
+  });
+
+  // Dismiss on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') _dismissCard();
+  });
+
+  // Tap hint on first load
+  setTimeout(function() {
+    _tapHint.classList.add('visible');
+    setTimeout(function() {
+      _tapHint.classList.remove('visible');
+    }, 3000);
+  }, 800);
+"""
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1850,20 +2140,21 @@ function toggleAnnotations() {{
     overflow: hidden;
     background: {bg_color};
   }}
-  #plotly-graph {{
-    width: 100%;
-    height: 100%;
-  }}
+{aspect_css}
 {nav_css}
 {enc_css}
 {toggle_css}
+{infocard_css}
 </style>
 </head>
 <body>
+<div id="aspect-frame">
 <div id="plotly-graph"></div>
+{infocard_html}
 {nav_html}
 {enc_html}
 {toggle_html}
+</div>
 <script>
 {nav_js}
 {enc_js}
@@ -1900,6 +2191,7 @@ document.addEventListener('DOMContentLoaded', function() {{
       Plotly.addFrames('plotly-graph', frames);
     }}
 {enc_event_js}
+{infocard_js}
   }});
   window.addEventListener('resize', function() {{
     Plotly.Plots.resize('plotly-graph');
@@ -1959,7 +2251,7 @@ def build_social_html(fig_dict, config, title="Paloma's Orrery"):
     enc_hook = ""
     if enc_js:
         enc_hook = """
-      if (typeof encShowButton === 'function') encShowButton(parsed.name);"""
+      if (typeof encLock === 'function') encLock(parsed.name);"""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -2463,7 +2755,7 @@ class GalleryStudio:
             Annotations
 
         Right column: Output & interaction
-            Portrait / Social (9:16), Hover, 2D Axes,
+            Presets & Output Format, Hover, 2D Axes,
             Navigation Controls
         """
         left = self.col_left
@@ -2980,14 +3272,14 @@ class GalleryStudio:
                 "if 'Strip update menus' is checked. Animation controls "
                 "are identified by having buttons with method='animate'.")
 
-        # ---- Portrait / Social (9:16) ----
-        sec = tk.LabelFrame(portrait, text="Portrait / Social (9:16)",
+        # ---- Presets & Output Format ----
+        sec = tk.LabelFrame(portrait, text="Presets & Output Format",
                             padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
-        ToolTip(sec, "Settings for 9:16 portrait output optimized for "
-                "Instagram Reels, YouTube Shorts, and screen recordings. "
-                "The output HTML has a 60/40 split: 3D scene on top, "
-                "interactive info panel on bottom.")
+        ToolTip(sec, "Presets apply recommended settings for common use "
+                "cases. Output format sets the preview aspect ratio "
+                "(16:9 landscape or 9:16 portrait). You can adjust "
+                "individual settings after applying a preset.")
 
         # Preset button
         preset_row = tk.Frame(sec)
@@ -2995,14 +3287,14 @@ class GalleryStudio:
         portrait_btn = tk.Button(
             preset_row, text="Portrait Preset",
             command=self._apply_portrait_preset,
-            width=16, bg='#1e293b', fg='white')
+            width=16)
         portrait_btn.pack(side='left', padx=2)
         ToolTip(portrait_btn,
                 "One-click preset: applies all recommended settings "
-                "for 9:16 social media output. Sets output format to "
-                "portrait, enables info panel hover routing, strips "
-                "legend/annotations/axes, boosts markers +4, etc. "
-                "You can adjust individual settings afterward.")
+                "for 9:16 portrait output. Sets output format to "
+                "portrait, strips legend/annotations/axes, boosts "
+                "markers +4, etc. You can adjust individual settings "
+                "afterward.")
 
         landscape_btn = tk.Button(
             preset_row, text="Landscape Preset",
@@ -3020,10 +3312,9 @@ class GalleryStudio:
             width=10)
         original_btn.pack(side='left', padx=2)
         ToolTip(original_btn,
-                "Preview the original plot as-is, with no studio "
-                "transforms applied. Opens in browser directly from "
-                "the raw figure data. Useful for comparing against "
-                "your configured settings.")
+                "Set controls to match the source figure's original "
+                "values. Shows what the plot looked like before any "
+                "studio transforms. Use Preview to see it.")
 
         # Output format
         row = tk.Frame(sec)
@@ -3032,20 +3323,20 @@ class GalleryStudio:
                  anchor='w').pack(side='left')
         self.var_output_format = tk.StringVar(
             value=self.config.get('output_format', 'landscape'))
-        rb1 = tk.Radiobutton(row, text="Landscape",
+        rb1 = tk.Radiobutton(row, text="Landscape (16:9)",
                              variable=self.var_output_format,
                              value='landscape')
         rb1.pack(side='left')
-        ToolTip(rb1, "Standard full-screen Plotly HTML. Use for "
-                "desktop gallery views and web embedding.")
+        ToolTip(rb1, "Preview constrained to 16:9 aspect ratio. "
+                "Shows how the plot will look in a landscape browser "
+                "or desktop gallery view.")
         rb2 = tk.Radiobutton(row, text="Portrait (9:16)",
                              variable=self.var_output_format,
                              value='portrait')
         rb2.pack(side='left')
-        ToolTip(rb2, "9:16 HTML with 60/40 scene/panel split. "
-                "Designed for screen recording Instagram Reels "
-                "and YouTube Shorts. Info panel shows object "
-                "data on click/hover.")
+        ToolTip(rb2, "Preview constrained to 9:16 aspect ratio. "
+                "Shows how the plot will look on a phone screen "
+                "or in the gallery's mobile mode.")
 
         # Route hover to panel
         self.var_route_hover = tk.BooleanVar(
@@ -3082,21 +3373,6 @@ class GalleryStudio:
                 "controls visible on black backgrounds without "
                 "being distracting. Also hides slider tick text "
                 "while keeping the current-value date display.")
-
-        # Branding text
-        row = tk.Frame(sec)
-        row.pack(fill='x', pady=2)
-        tk.Label(row, text="Branding:", width=14,
-                 anchor='w').pack(side='left')
-        self.var_branding = tk.StringVar(
-            value=self.config.get('info_panel_branding',
-                                  "Paloma's Orrery"))
-        ent = tk.Entry(row, textvariable=self.var_branding, width=25)
-        ent.pack(side='left', fill='x', expand=True)
-        ToolTip(ent, "Text shown in the portrait info panel header "
-                "and as a watermark in the bottom-right corner. "
-                "Appears in the initial state before any object is "
-                "selected.")
 
         # Embed encyclopedia
         self.var_encyclopedia = tk.BooleanVar(
@@ -3332,7 +3608,6 @@ class GalleryStudio:
             'route_hover_to_panel': self.var_route_hover.get(),
             'marker_opacity_fix': self.var_opacity_fix.get(),
             'restyle_animation_dark': self.var_restyle_anim.get(),
-            'info_panel_branding': self.var_branding.get(),
             'embed_encyclopedia': self.var_encyclopedia.get(),
             'plotly_js_source': 'cdn',
         }
@@ -3386,8 +3661,6 @@ class GalleryStudio:
         self.var_route_hover.set(c.get('route_hover_to_panel', False))
         self.var_opacity_fix.set(c.get('marker_opacity_fix', False))
         self.var_restyle_anim.set(c.get('restyle_animation_dark', False))
-        self.var_branding.set(c.get('info_panel_branding',
-                                     "Paloma's Orrery"))
         self.var_encyclopedia.set(c.get('embed_encyclopedia', False))
 
     # ---- Presets ----
@@ -3612,52 +3885,122 @@ document.addEventListener('click', function(e) {{
         self.status_var.set("Landscape defaults restored")
 
     def _apply_original_preset(self):
-        """Preview the original plot with no studio transforms applied."""
+        """Set GUI controls to match the original source figure values.
+
+        Unlike the old behavior (which bypassed apply_config and opened
+        a preview directly), this works like Landscape and Portrait:
+        it populates the GUI controls, then the user hits Preview.
+        """
         if self.fig_dict is None:
             messagebox.showinfo("Original", "Load an HTML file first.")
             return
 
-        try:
-            # Build HTML directly from the raw figure - no apply_config
-            fig_copy = copy.deepcopy(self.fig_dict)
-            title = os.path.splitext(
-                os.path.basename(self.source_path or 'original')
-            )[0]
+        layout = self.fig_dict.get('layout', {})
 
-            # Minimal config just for build_gallery_html wrapper
-            orig_config = {
-                'show_modebar': True,
-                'show_nav_arrows': False,
-                'custom_title': '',
-                'bg_color': fig_copy.get('layout', {}).get(
-                    'paper_bgcolor', '#000000'),
-                'annotation_toggle_button': False,
-                'keep_animation_controls': True,
-            }
+        # Read source figure values to build a "pass-through" config
+        # For values that apply_config always sets, use the source values
+        # so the round-trip is identity (source -> config -> apply -> same)
+        paper_bg = layout.get('paper_bgcolor', '#000000')
 
-            html = build_gallery_html(fig_copy, orig_config, title)
+        # Margins from source (Plotly defaults if not set)
+        src_margin = layout.get('margin', {})
+        margin_l = src_margin.get('l', 80)
+        margin_r = src_margin.get('r', 80)
+        margin_t = src_margin.get('t', 100)
+        margin_b = src_margin.get('b', 80)
 
-            try:
-                if self.temp_file and os.path.exists(self.temp_file):
-                    os.remove(self.temp_file)
-            except OSError:
-                pass
+        # Scene settings
+        scene = layout.get('scene', {})
+        has_axes = any(
+            scene.get(ax, {}).get('showticklabels', True)
+            for ax in ('xaxis', 'yaxis', 'zaxis')
+        ) if scene else True
+        has_grid = any(
+            scene.get(ax, {}).get('showgrid', True)
+            for ax in ('xaxis', 'yaxis', 'zaxis')
+        ) if scene else True
+        scene_bg = scene.get('bgcolor', '#000000') if scene else '#000000'
+        src_aspect = scene.get('aspectmode', 'auto') if scene else 'auto'
 
-            fd, self.temp_file = tempfile.mkstemp(
-                suffix='.html', prefix='gallery_studio_original_')
-            os.close(fd)
+        # Legend
+        src_legend = layout.get('legend', {})
+        has_legend = layout.get('showlegend', True)
+        legend_orient = src_legend.get('orientation', 'v')
+        legend_bg = src_legend.get('bgcolor', 'rgba(0,0,0,0)')
 
-            with open(self.temp_file, 'w', encoding='utf-8',
-                      newline='\n') as f:
-                f.write(html)
+        # Title
+        has_title = 'title' in layout
+        title_color = '#f8fafc'
+        if isinstance(layout.get('title'), dict):
+            tfont = layout['title'].get('font', {})
+            title_color = tfont.get('color', '#f8fafc')
 
-            webbrowser.open('file://' + os.path.abspath(self.temp_file))
-            self.status_var.set("Original preview opened (no transforms)")
+        # Hover
+        src_hover = layout.get('hovermode', 'closest')
+        if src_hover in (False, 'false'):
+            hover_mode = 'none'
+        elif src_hover == 'x':
+            hover_mode = 'names_only'
+        else:
+            hover_mode = 'default'
 
-        except Exception as e:
-            self.status_var.set(f"Original preview error: {e}")
-            messagebox.showerror("Original Preview Error",
-                                 f"Could not generate original preview:\n\n{e}")
+        orig_config = {
+            "bg_color": paper_bg,
+            "transparent_bg": False,
+            "show_title": has_title,
+            "custom_title": "",
+            "title_font_scale": 100,
+            "title_color": title_color,
+            "margin_top": margin_t,
+            "margin_bottom": margin_b,
+            "margin_left": margin_l,
+            "margin_right": margin_r,
+            "show_axes": has_axes,
+            "show_grid": has_grid,
+            "scene_bgcolor": scene_bg,
+            "scene_aspectmode": src_aspect,
+            "show_legend": has_legend,
+            "legend_orientation": legend_orient,
+            "legend_font_scale": 100,
+            "legend_grouptitle_font_scale": 100,
+            "legend_bgcolor": legend_bg,
+            "legend_font_color": "",
+            "legend_border_transparent": False,
+            "legend_position": "original",
+            "show_annotations": True,
+            "strip_footer_annotations": False,
+            "annotation_bg_transparent": False,
+            "annotation_font_scale": 100,
+            "annotation_toggle_button": False,
+            "label_font_scale": 100,
+            "trace_visibility": {},
+            "strip_hidden_traces": False,
+            "marker_size_boost": 0,
+            "line_width_min": 0,
+            "show_modebar": True,
+            "show_colorbar": True,
+            "strip_template": True,
+            "strip_updatemenus": False,
+            "keep_animation_controls": True,
+            "hover_mode": hover_mode,
+            "x_title_scale": 100,
+            "y_title_scale": 100,
+            "x_tick_scale": 100,
+            "y_tick_scale": 100,
+            "y2_title_scale": 100,
+            "y2_tick_scale": 100,
+            "show_nav_arrows": False,
+            "output_format": "landscape",
+            "route_hover_to_panel": False,
+            "marker_opacity_fix": False,
+            "restyle_animation_dark": False,
+            "embed_encyclopedia": False,
+            "plotly_js_source": "cdn",
+            "output_mode": "both",
+        }
+
+        self._apply_config_to_gui(orig_config)
+        self.status_var.set("Original preset applied - shows source as-is")
 
     # ---- Actions ----
 
@@ -3752,10 +4095,7 @@ document.addEventListener('click', function(e) {{
                     os.path.basename(self.source_path or 'preview')
                 )[0]
 
-            if self.config.get('output_format') == 'portrait':
-                html = build_social_html(transformed, self.config, title)
-            else:
-                html = build_gallery_html(transformed, self.config, title)
+            html = build_gallery_html(transformed, self.config, title)
 
             # Write to temp file
             try:
@@ -3796,10 +4136,7 @@ document.addEventListener('click', function(e) {{
                     os.path.basename(self.source_path or 'export')
                 )[0]
 
-            if self.config.get('output_format') == 'portrait':
-                html = build_social_html(transformed, self.config, title)
-            else:
-                html = build_gallery_html(transformed, self.config, title)
+            html = build_gallery_html(transformed, self.config, title)
 
         except Exception as e:
             self.status_var.set(f"Export error: {e}")
@@ -3814,10 +4151,7 @@ document.addEventListener('click', function(e) {{
         # Strip _social, _temp suffixes for cleaner names
         for suffix in ['_social', '_temp', '_offline', '_cdn']:
             base = base.replace(suffix, '')
-        if self.config.get('output_format') == 'portrait':
-            default_name = f"{base}_social.html"
-        else:
-            default_name = f"{base}_gallery.html"
+        default_name = f"{base}_gallery.html"
 
         # Initial directory: same as source or images folder
         initial_dir = os.path.dirname(self.source_path or '.')

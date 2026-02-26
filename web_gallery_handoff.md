@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-23, 2026 | Claude Opus 4.6
+## Session Handoff | February 5-26, 2026 | Claude Opus 4.6
 
 ---
 
@@ -2384,5 +2384,143 @@ rotation pan control, February 22, 2026
 
 *"Edits work great."* -- Tony, on the axis scale + colorbar fixes,
 February 22, 2026
+
+### Session 17 (Feb 26): Portrait WYSIWYG -- Frame Containment + Encyclopedia Fix
+
+Resolved the core WYSIWYG discrepancy: studio portrait preview showed
+the old 60/40 social HTML layout while the gallery rendered full-screen
+Plotly with floating card. Unified the pipeline so both preview and
+export always use `build_gallery_html()`. Then contained all UI
+overlays inside the aspect ratio frame and fixed encyclopedia button
+behavior.
+
+**Unified Pipeline**
+
+Portrait is now a preset (configuration), not a separate pipeline.
+Both Preview and Export always call `build_gallery_html()` regardless
+of landscape/portrait. Removed the output_format branching from
+`_preview()` and `_export()`. Export filename is always `_gallery.html`.
+`build_social_html()` remains in the codebase but studio no longer
+calls it -- social views are created through the main GUI's existing
+export path.
+
+**Aspect Ratio Preview Framing**
+
+Output format controls preview aspect ratio on desktop:
+- Landscape (16:9): width 100vw, height capped at 9/16 ratio
+- Portrait (9:16): width capped at 9/16 of height, 100vh tall
+- Thin white border (1px, 40% opacity) shows viewport boundary
+- Gallery index.html unaffected (device provides the aspect ratio)
+
+**Frame Containment**
+
+All UI overlays now live inside `#aspect-frame` with `position:
+absolute` instead of `position: fixed`:
+- Navigation controls (pan/zoom arrows)
+- Encyclopedia "i" button and overlay
+- Annotation toggle button
+- Info card (portrait mode)
+- Modebar (Plotly native, already inside plotly-graph div)
+
+This means everything stays inside the 9:16 frame boundary in
+portrait preview. On a real phone the frame IS the viewport, so
+behavior is identical.
+
+**Encyclopedia Button Fix**
+
+The "i" button had inconsistent show/hide behavior -- sometimes
+sticking, sometimes disappearing immediately on cursor move. Root
+cause: no unhover handler, no click-lock mechanism.
+
+New behavior:
+- Hover: button appears if object has encyclopedia entry, hides on
+  unhover
+- Click: button "locks" visible (persists when cursor moves away)
+- Click object without entry: unlocks and hides
+- No entry: button never appears
+
+Three functions: `encShowButton()` (hover, respects lock),
+`encLock()` (click, sets sticky state), `encHide()` (unhover,
+respects lock).
+
+**Branding Field Removed**
+
+Since gallery viewer provides its own "Paloma's Orrery" chrome,
+per-plot branding is redundant. Removed `info_panel_branding` from:
+defaults (landscape, portrait, profile), GUI entry row, config
+collector, config applier. Only reference remaining is inside
+`build_social_html()` which the main GUI may still use.
+
+**Portrait Preset Revised**
+
+Updated PORTRAIT_CONFIG to preserve plot content rather than strip
+it down. The 9:16 frame and info card handle mobile adaptation:
+
+| Setting | Old | New |
+|---------|-----|-----|
+| Margins | 0/0/0/0 | 10/75/10/10 |
+| Show axes | False | True |
+| Show grid | False | True |
+| Marker size boost | +4 | 0 |
+| Line width min | 4 | 0 |
+| Show modebar | False | True |
+| Show colorbar | False | True |
+| Hover mode | none | default |
+| Show nav arrows | False | True |
+| Marker opacity fix | True | False |
+| Legend orientation | horizontal | vertical |
+| Legend font scales | 85% | 100% |
+| Annotation font scale | 70% | 100% |
+| Strip footer | True | False |
+
+Philosophy: let the frame do the work, not aggressive stripping.
+Good baseline for standard 3D orrery views. 2D graphics will
+require their own preset when the time comes.
+
+**Original Preset Fix**
+
+Original button now works like Landscape/Portrait: reads source
+figure values, populates GUI controls, waits for Preview. Previously
+bypassed `apply_config()` and launched preview directly.
+
+**Scene Domain Reset**
+
+`apply_config()` now resets `scene.domain` to `{x:[0,1], y:[0,1]}`
+when elements affecting domain are stripped (updatemenus, legend,
+colorbar). Fixes portrait centering where 3D grid was shifted left
+in narrow viewport.
+
+**Future: Custom Presets**
+
+The profile system (`gallery_studio_configs.json`) already saves
+per-plot configs as JSON dicts. Named user presets (e.g., "Stellar
+HR Diagram", "2D Paleoclimate") could reuse the same mechanism with
+a save/load UI. Not needed yet -- dedicated buttons suffice while
+the preset count is small.
+
+**gallery_studio.py** (~4,230 lines, up from ~3,900 in Session 16)
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Portrait pipeline | Always build_gallery_html(), never build_social_html() | WYSIWYG -- preview must match gallery rendering |
+| UI overlay positioning | position: absolute inside #aspect-frame | Frame is the world; everything stays inside it |
+| Encyclopedia on hover | Show on hover, lock on click, hide on unhover (unless locked) | Consistent: hover = peek, click = commit |
+| Per-plot branding | Removed from studio | Gallery viewer provides chrome; redundant in individual plots |
+| Portrait preset philosophy | Preserve content, let frame adapt | Less aggressive; axes/grid/modebar visible; frame does the work |
+| Custom presets | Defer until needed | Two presets + Original sufficient for now |
+
+---
+
+*"Can we put the pan/zoom buttons inside the frame too?"* -- Tony,
+the question that triggered frame containment review, February 26
+
+*"If the gallery viewer has the branding, branding in the plot is
+redundant."* -- Tony, on removing dead UI, February 26
+
+*"Good for this standard orrery view. 2D graphics will require
+special changes."* -- Tony, on the revised portrait preset,
+February 26
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*
