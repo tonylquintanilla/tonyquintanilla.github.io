@@ -2533,18 +2533,15 @@ modebar fix and git co-author research.
 
 New gold star checkbox per trace in the Trace Visibility list.
 Checking it marks that trace as "featured." On export,
-`apply_config()` injects a Plotly annotation anchored to the trace's
-midpoint -- gold Georgia serif text on semi-transparent dark
-background, with `_featured: true` marker.
+`apply_config()` injects a Plotly annotation anchored to trace data
+-- gold Georgia serif text on transparent background, with
+`_featured: true` marker.
 
 3D traces: annotation on `scene.annotations` (rotates with scene).
+Anchor: closest point to origin (avoids hyperbolic trajectories
+placing labels millions of AU away).
 2D traces: annotation on `layout.annotations` (axis-anchored).
-Anchor point: midpoint of trace data array; skips None values.
-
-On click: JS handler filters out the `_featured` annotation for the
-clicked trace via `Plotly.relayout`. Label dissolves, info card
-appears. Label does NOT come back after dismissal. The plot is clean
-after the user has found what they need.
+Anchor: closest point to data centroid.
 
 Config: `featured_traces: []` (list of trace names). Stored in
 config alongside `trace_visibility`. Cleared by presets. Refreshed
@@ -2571,17 +2568,6 @@ devices, ignoring studio's explicit choice. Now respects `_studio`
 flag: curated plots keep modebar on mobile, non-studio plots still
 get the touch-optimized hidden modebar.
 
-Pattern: `if (!figDict.layout || !figDict.layout._studio)` gates
-the mobile override. Consistent with existing `_studio` flag
-contract.
-
-**Featured Annotation Removal in Gallery Viewer (index.html)**
-
-Click handler checks both `scene.annotations` and
-`layout.annotations` for `_featured` markers on studio-curated
-plots. Removes matching annotation on click. Works for both 3D
-and 2D in the same handler. Gated behind `_studio` flag.
-
 **Git Co-Author Attribution (Mode 7 -- Gemini)**
 
 Researched proper git co-author tagging for AI collaborators.
@@ -2595,34 +2581,101 @@ Same pattern works for Gemini (`gemini@google.com`) and ChatGPT
 only finds real users; the description trailer approach is more
 reliable for AI attribution.
 
+### Session 19 (Feb 27): Featured Label Refinements + Lossless Re-Export
+
+Iterative refinement of featured labels through debugging with real
+data (Wierzchos comet 125-trace plot, Earth 3-planet plot). Plus
+lossless round-trip for studio re-export workflow.
+
+**3D/2D Split for Featured Click Behavior**
+
+Critical discovery: Plotly 3D scene annotations don't support
+`plotly_clickannotation`. Setting `captureevents: true` on 3D
+annotations causes them to eat click events without providing a
+handler -- worse than no interaction at all. Competing
+`plotly_click` handlers (featured removal vs info card) cause
+hangs from `Plotly.relayout` triggering full 3D re-renders on
+heavy plots.
+
+Solution: clean separation by dimension.
+- 3D: Featured labels are persistent wayfinding. No click handler.
+  Info card `plotly_click` runs uncontested. Remove labels only
+  by re-exporting from studio.
+- 2D: Featured labels removable via `plotly_clickannotation` (click
+  directly on gold text). Separate event from `plotly_click`, so
+  info cards work independently.
+
+**Smart Anchor Placement**
+
+Original midpoint anchor placed Wierzchos Keplerian Orbit label at
+(-1.3M, 1.3M, 3.3M) AU -- millions of AU off screen on the
+hyperbolic trajectory. Fixed with dimension-appropriate strategies:
+- 3D: closest point to origin (inner solar system = visible area)
+- 2D: closest point to data centroid (center of visual mass)
+- Single-point traces: use the point directly
+
+**Transparent Label Background**
+
+Changed from `rgba(15, 23, 42, 0.7)` (dark overlay) to
+`rgba(0,0,0,0)` (fully transparent). Gold text floats directly on
+the plot background.
+
+**Lossless Studio Re-Export (_studio_config)**
+
+Original preset was hardcoding `output_format: "landscape"` and
+other defaults when loading a portrait-exported file. Root cause:
+studio-level config (output format, route hover, encyclopedia,
+nav arrows) isn't stored in Plotly layout values.
+
+Fix: `apply_config()` now embeds `_studio_config` dict in the
+layout alongside `_studio: true`. Contains full config minus
+large/transient fields (trace_visibility, plotly_js_source,
+output_mode).
+
+`_apply_original_preset()` checks for `_studio_config` first
+(new exports: perfect round-trip). Falls back to heuristic
+detection for older exports (customdata -> route_hover,
+_encyclopedia, _studio_nav, slider bgcolor, _featured annotations).
+
+**Performance Insight: Strip Hidden Traces**
+
+With 125 traces in Wierzchos plot, the exported HTML is heavy even
+when most traces are hidden via visibility toggle. The existing
+"Strip hidden" checkbox in studio physically removes hidden traces
+from the export, dramatically reducing file size and viewer
+rendering load. This is the recommended workflow for complex plots:
+hide unnecessary traces, check "Strip hidden," then export.
+
 **Files Modified:**
-- `gallery_studio.py` (~4,400 lines): featured_traces config,
-  star checkbox UI, annotation injection, click-to-remove JS
-- `gallery_editor.py` (~1,060 lines): Toggle Featured button,
-  star display in tree
-- `index.html` (~2,140 lines): featured badge CSS/rendering,
-  modebar mobile fix, featured annotation removal
+- `gallery_studio.py` (~4,480 lines): _studio_config embedding,
+  smart anchor placement, 3D/2D click split, transparent bg,
+  heuristic Original preset detection, debug logging (added/removed)
+- `index.html` (~2,160 lines): simplified featured handler
+  (2D clickannotation only, no plotly_click for featured)
 
 ---
 
 | Question | Decision | Rationale |
 |----------|----------|-----------|
-| Featured trace anchor point | Midpoint of trace data array | Reasonable for orbits; object traces use their own coordinates |
-| Featured label styling | Gold Georgia serif, semi-transparent bg | Distinct from Names Only hover; matches gallery gold accent |
-| Label removal | Click dissolves, doesn't return | "Start here" breadcrumb that self-destructs once used |
-| Gallery badge animation | Subtle pulse (opacity + border) | Eye-catching without being distracting |
-| Mobile modebar | Respect _studio flag | Curated plots honor developer's choice |
-| Git co-author | Description trailer, not co-author field | Reliable for AI; avoids resolving to wrong GitHub user |
+| Featured click: 3D | Display-only, no handler | plotly_clickannotation unsupported; competing handlers cause hangs |
+| Featured click: 2D | plotly_clickannotation | Separate event, doesn't compete with info card |
+| 3D label anchor | Closest to origin | Hyperbolic orbits place midpoints millions of AU away |
+| 2D label anchor | Closest to data centroid | Center of visual mass, visible in default view |
+| Label background | Fully transparent | Gold text floats cleanly on any background |
+| Re-export config | _studio_config in layout | Lossless round-trip; heuristic fallback for old exports |
+| Heavy plots | Strip hidden traces | Physical removal beats visibility toggle for performance |
 
 ---
 
-*"I'm impatient! I love building and visualizing. It's my
-engineer+artist+scientist+ai-partner vibe!"* -- Tony, February 26
+*"Handoff this idea to a junior programmer: get back the product
+a day later. Handoff to Claude Opus 4.6: one minute later, done
+perfectly. Crazy."* -- Tony, February 27
 
-*"Too busy to care."* -- Tony, on Anthropic not having a GitHub
-account for Claude co-authorship despite 20%+ of commits, Feb 26
+*"Where are junior programmers going to cut their teeth if everyone
+is using Code?"* -- Tony, on the workforce implications of AI
+coding tools, February 27
 
-*"Give credit where credit is due."* -- Tony, on documenting
-the session, February 26
+*"3D scene annotations are display-only constructs. Don't try to
+make them interactive."* -- The Plotly 3D annotation lesson, Feb 27
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*

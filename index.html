@@ -1494,32 +1494,20 @@
                 // Studio-nav plots get full D-pad + zoom; others get zoom only
                 var hasStudioNav = figDict.layout._studio_nav === true;
 
-                // Featured trace labels: remove on click (studio-curated plots)
-                if (figDict.layout._studio) {
-                    plotlyGraph.on('plotly_click', function(data) {
-                        if (!data || !data.points || !data.points.length) return;
-                        var clickedName = data.points[0].data ? data.points[0].data.name : '';
+                // Featured trace labels: click-to-remove for 2D only
+                // 3D labels are persistent wayfinding (no handler needed)
+                if (figDict.layout._studio && !figDict.layout.scene) {
+                    plotlyGraph.on('plotly_clickannotation', function(evtData) {
+                        var ann = evtData.annotation;
+                        if (!ann || !ann._featured) return;
                         var gd = document.getElementById('plotly-graph');
                         if (!gd) return;
-                        // Check 3D scene annotations
-                        if (gd.layout.scene && gd.layout.scene.annotations) {
-                            var anns = gd.layout.scene.annotations;
-                            var filtered = anns.filter(function(a) {
-                                return !(a._featured && a.text === clickedName);
-                            });
-                            if (filtered.length !== anns.length) {
-                                Plotly.relayout(gd, {'scene.annotations': filtered});
-                            }
-                        }
-                        // Check 2D layout annotations
-                        if (gd.layout.annotations) {
-                            var anns2d = gd.layout.annotations;
-                            var filtered2d = anns2d.filter(function(a) {
-                                return !(a._featured && a.text === clickedName);
-                            });
-                            if (filtered2d.length !== anns2d.length) {
-                                Plotly.relayout(gd, {'annotations': filtered2d});
-                            }
+                        var anns = gd.layout.annotations || [];
+                        var filtered = anns.filter(function(a) {
+                            return !(a._featured && a.text === ann.text);
+                        });
+                        if (filtered.length !== anns.length) {
+                            Plotly.relayout(gd, {'annotations': filtered});
                         }
                     });
                 }

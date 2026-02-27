@@ -1253,68 +1253,87 @@ def apply_config(fig_dict, config):
             if trace.get('visible') is False:
                 continue
 
-            # Find anchor point: midpoint of trace data
             if has_scene:
-                # 3D trace
+                # 3D trace - find anchor point closest to origin
+                # This ensures labels appear in the visible scene area,
+                # not millions of AU away on hyperbolic trajectories
                 xs = trace.get('x', [])
                 ys = trace.get('y', [])
                 zs = trace.get('z', [])
-                if xs and ys and zs:
-                    mid = len(xs) // 2
-                    ax = xs[mid] if mid < len(xs) else xs[0]
-                    ay = ys[mid] if mid < len(ys) else ys[0]
-                    az = zs[mid] if mid < len(zs) else zs[0]
-                    # Skip None values
-                    if ax is None or ay is None or az is None:
-                        # Try first non-None point
-                        for i in range(len(xs)):
-                            if (xs[i] is not None and ys[i] is not None
-                                    and zs[i] is not None):
-                                ax, ay, az = xs[i], ys[i], zs[i]
-                                break
-                        else:
-                            continue
-                    feat_annotations.append({
-                        'x': ax, 'y': ay, 'z': az,
-                        'text': tname,
-                        'showarrow': False,
-                        'font': {
-                            'color': '#c9a84c',
-                            'size': 13,
-                            'family': 'Georgia, Times New Roman, serif'
-                        },
-                        'bgcolor': 'rgba(15, 23, 42, 0.7)',
-                        'borderpad': 4,
-                        '_featured': True,  # marker for JS removal
-                    })
+                if not xs or not ys or not zs:
+                    continue
+                ax, ay, az = None, None, None
+                best_dist = float('inf')
+                for i in range(len(xs)):
+                    xi, yi, zi = xs[i], ys[i], zs[i]
+                    if xi is None or yi is None or zi is None:
+                        continue
+                    d = xi * xi + yi * yi + zi * zi
+                    if d < best_dist:
+                        best_dist = d
+                        ax, ay, az = xi, yi, zi
+                if ax is None:
+                    continue
+                feat_annotations.append({
+                    'x': ax, 'y': ay, 'z': az,
+                    'text': tname,
+                    'showarrow': False,
+                    'font': {
+                        'color': '#c9a84c',
+                        'size': 13,
+                        'family': 'Georgia, Times New Roman, serif'
+                    },
+                    'bgcolor': 'rgba(0,0,0,0)',
+                    'borderpad': 4,
+                    # No captureevents for 3D -- plotly_clickannotation
+                    # doesn't fire for scene annotations, and captureevents
+                    # would block clicks from reaching traces underneath
+                    '_featured': True,  # marker for JS removal
+                })
             else:
-                # 2D trace
+                # 2D trace - find anchor point closest to median
                 xs = trace.get('x', [])
                 ys = trace.get('y', [])
-                if xs and ys:
-                    mid = len(xs) // 2
-                    ax = xs[mid] if mid < len(xs) else xs[0]
-                    ay = ys[mid] if mid < len(ys) else ys[0]
-                    if ax is None or ay is None:
+                if not xs or not ys:
+                    continue
+                ax, ay = None, None
+                # For short traces use the point directly
+                if len(xs) <= 3:
+                    for i in range(len(xs)):
+                        if xs[i] is not None and ys[i] is not None:
+                            ax, ay = xs[i], ys[i]
+                            break
+                else:
+                    # For long traces, find point closest to data center
+                    valid_x = [v for v in xs if v is not None]
+                    valid_y = [v for v in ys if v is not None]
+                    if valid_x and valid_y:
+                        cx = sum(valid_x) / len(valid_x)
+                        cy = sum(valid_y) / len(valid_y)
+                        best_dist = float('inf')
                         for i in range(len(xs)):
-                            if xs[i] is not None and ys[i] is not None:
+                            if xs[i] is None or ys[i] is None:
+                                continue
+                            d = (xs[i] - cx)**2 + (ys[i] - cy)**2
+                            if d < best_dist:
+                                best_dist = d
                                 ax, ay = xs[i], ys[i]
-                                break
-                        else:
-                            continue
-                    feat_annotations.append({
-                        'x': ax, 'y': ay,
-                        'text': tname,
-                        'showarrow': False,
-                        'font': {
-                            'color': '#c9a84c',
-                            'size': 13,
-                            'family': 'Georgia, Times New Roman, serif'
-                        },
-                        'bgcolor': 'rgba(15, 23, 42, 0.7)',
-                        'borderpad': 4,
-                        '_featured': True,  # marker for JS removal
-                    })
+                if ax is None:
+                    continue
+                feat_annotations.append({
+                    'x': ax, 'y': ay,
+                    'text': tname,
+                    'showarrow': False,
+                    'font': {
+                        'color': '#c9a84c',
+                        'size': 13,
+                        'family': 'Georgia, Times New Roman, serif'
+                    },
+                    'bgcolor': 'rgba(0,0,0,0)',
+                    'borderpad': 4,
+                    'captureevents': True,
+                    '_featured': True,  # marker for JS removal
+                })
 
         if feat_annotations:
             if has_scene:
@@ -2025,36 +2044,34 @@ function toggleAnnotations() {{
 }}
 """
 
-    # Featured trace labels -- click to remove persistent annotations
+    # Featured trace labels -- display-only for 3D, click-to-remove for 2D
     featured_js = ""
     featured_names = config.get('featured_traces', [])
     if featured_names:
         has_scene_for_feat = 'scene' in fig_dict.get('layout', {})
-        featured_js = """
-  // Remove featured trace label on click
-  var _featuredNames = %s;
+        if has_scene_for_feat:
+            # 3D: labels are persistent wayfinding, no click handler.
+            # plotly_clickannotation doesn't work for scene annotations,
+            # and plotly_click would compete with the info card handler.
+            # Remove labels by re-exporting from studio.
+            featured_js = ""
+        else:
+            # 2D: plotly_clickannotation works -- click label to remove
+            # Does NOT use plotly_click (avoids competing with info card)
+            featured_js = """
+  // Remove featured trace label on click (2D only)
   var _pg_feat = document.getElementById('plotly-graph');
   if (_pg_feat) {
-    _pg_feat.on('plotly_click', function(data) {
-      if (!data || !data.points || !data.points.length) return;
-      var clickedName = data.points[0].data ? data.points[0].data.name : '';
-      if (_featuredNames.indexOf(clickedName) === -1) return;
-      // Remove the featured annotation for this trace
+    _pg_feat.on('plotly_clickannotation', function(evtData) {
+      var ann = evtData.annotation;
+      if (!ann || !ann._featured) return;
       var gd = document.getElementById('plotly-graph');
-      %s
+      var anns = gd.layout.annotations || [];
+      var filtered = anns.filter(function(a) { return !(a._featured && a.text === ann.text); });
+      Plotly.relayout(gd, {'annotations': filtered});
     });
   }
-""" % (
-            json.dumps(featured_names),
-            # 3D: scene.annotations, 2D: layout.annotations
-            """var anns = (gd.layout.scene && gd.layout.scene.annotations) || [];
-      var filtered = anns.filter(function(a) { return !(a._featured && a.text === clickedName); });
-      Plotly.relayout(gd, {'scene.annotations': filtered});"""
-            if has_scene_for_feat else
-            """var anns = gd.layout.annotations || [];
-      var filtered = anns.filter(function(a) { return !(a._featured && a.text === clickedName); });
-      Plotly.relayout(gd, {'annotations': filtered});"""
-        )
+"""
 
     # Info card for portrait mode (click -> slide-up card from bottom)
     # Matches index.html's mobile info card behavior
