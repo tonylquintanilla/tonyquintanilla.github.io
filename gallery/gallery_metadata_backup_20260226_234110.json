@@ -265,15 +265,14 @@
     },
     {
       "id": "c2024_e1_wierzchos_20260225_0236_portrait",
-      "title": "C2024 E1 Wierzchos 20260225",
+      "title": "C2024 E1 Wierzchos 20260225 0236 Portrait",
       "filename": "c2024_e1_wierzchos_20260225_0236_portrait.json",
       "category": "solar_system",
       "category_label": "Solar System",
       "description": "Comet Wierzchos",
       "size_kb": 2510.0,
       "converted": "2026-02-26 23:35",
-      "mode": "portrait",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "inner_solar_system_animation_2-4-2005_21_years_social",
@@ -580,6 +579,6 @@
       "featured": true
     }
   ],
-  "last_updated": "2026-02-26 23:41",
+  "last_updated": "2026-02-26 23:35",
   "total_count": 54
 }
