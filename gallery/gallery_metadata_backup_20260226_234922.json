@@ -180,7 +180,7 @@
     },
     {
       "id": "trappist1_exoplanet_system_20260208_1957",
-      "title": "Trappist1 Exoplanet System",
+      "title": "Trappist1 Exoplanet System 20260208 1957",
       "filename": "trappist1_exoplanet_system_20260208_1957.json",
       "category": "exoplanets",
       "category_label": "Exoplanets",
@@ -190,7 +190,7 @@
     },
     {
       "id": "toi_binary_20260217_gallery_landscape",
-      "title": "TOI Binary Exoplanet System",
+      "title": "Toi Binary 20260217 Gallery Landscape",
       "filename": "toi_binary_20260217_gallery_landscape.json",
       "category": "exoplanets",
       "category_label": "Exoplanets",
@@ -201,7 +201,7 @@
     },
     {
       "id": "3d_stars_distance_20ly",
-      "title": "3D Stars Distance to 20 Light Years",
+      "title": "3D Stars Distance 20Ly",
       "filename": "3d_stars_distance_20ly.json",
       "category": "stellar",
       "category_label": "Stellar Neighborhood",
@@ -265,7 +265,7 @@
     },
     {
       "id": "c2024_e1_wierzchos_20260225_0236_portrait",
-      "title": "Comet C2024 E1 Wierzchos 20260225",
+      "title": "C2024 E1 Wierzchos 20260225",
       "filename": "c2024_e1_wierzchos_20260225_0236_portrait.json",
       "category": "solar_system",
       "category_label": "Solar System",
@@ -452,7 +452,7 @@
     },
     {
       "id": "toi_binary_20260217_social",
-      "title": "TOI Binary Exoplanet System",
+      "title": "Toi Binary 20260217",
       "filename": "toi_binary_20260217_social.json",
       "category": "exoplanets",
       "category_label": "Exoplanets",
@@ -463,7 +463,7 @@
     },
     {
       "id": "3d_stars_magnitude_4_0_social",
-      "title": "3D Stars to Visual Magnitude 4.0",
+      "title": "3D Stars Magnitude 4.0",
       "filename": "3d_stars_magnitude_4_0_social.json",
       "category": "stellar",
       "category_label": "Stellar Neighborhood",
@@ -474,7 +474,7 @@
     },
     {
       "id": "3d_stars_distance_20ly_social",
-      "title": "3D Stars to 20 light years",
+      "title": "3D Stars Distance 20Ly",
       "filename": "3d_stars_distance_20ly_social.json",
       "category": "stellar",
       "category_label": "Stellar Neighborhood",
@@ -580,6 +580,6 @@
       "featured": true
     }
   ],
-  "last_updated": "2026-02-26 23:49",
+  "last_updated": "2026-02-26 23:41",
   "total_count": 54
 }
