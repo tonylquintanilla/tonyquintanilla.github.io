@@ -1076,19 +1076,19 @@
     "plotly_js_source": "cdn"
   },
   "nyc_1948_teaser.html": {
-    "bg_color": "#2d6a2d",
+    "bg_color": "#e5ecf6",
     "transparent_bg": false,
     "show_title": true,
     "custom_title": "",
     "title_font_scale": 100,
-    "title_color": "#f8fafc",
+    "title_color": "#333333",
     "margin_top": 40,
     "margin_bottom": 0,
     "margin_left": 0,
     "margin_right": 0,
     "show_axes": true,
     "show_grid": true,
-    "scene_bgcolor": "#2d6a2d",
+    "scene_bgcolor": "#e5ecf6",
     "show_legend": true,
     "legend_orientation": "v",
     "legend_font_scale": 100,
@@ -1129,7 +1129,7 @@
     "marker_opacity_fix": false,
     "restyle_animation_dark": false,
     "embed_encyclopedia": false,
-    "kmz_link": "",
+    "kmz_link": "nyc_1948_blockbuster.kmz",
     "plotly_js_source": "cdn"
   }
 }

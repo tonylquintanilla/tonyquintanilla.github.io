@@ -585,12 +585,12 @@
       "filename": "nyc_1948_teaser_gallery.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Extreme heating event: New York City, August 1948",
-      "size_kb": 5.2,
-      "converted": "2026-02-28 00:09",
+      "description": "Extreme heating event, New York City, August 1948",
+      "size_kb": 5.3,
+      "converted": "2026-02-28 00:29",
       "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-28 00:09",
+  "last_updated": "2026-02-28 00:29",
   "total_count": 55
 }
