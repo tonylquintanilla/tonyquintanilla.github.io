@@ -187,7 +187,7 @@
         .share-btn {
             position: fixed;
             top: 52px;
-            right: 12px;
+            left: 62px;
             z-index: 200;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
@@ -902,7 +902,7 @@
             .share-btn {
                 position: relative;
                 top: auto;
-                right: auto;
+                left: auto;
                 z-index: auto;
             }
 
@@ -966,7 +966,7 @@
         <span class="share-text">Share</span>
     </button>
 
-    <a id="kmz-handoff-btn" style="display: none; position: fixed; top: 94px; right: 12px; z-index: 200; background: #2d6a2d; border: 1px solid #4ade80; border-radius: 8px; padding: 8px 14px; color: #f8fafc; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; text-decoration: none; align-items: center; gap: 6px; transition: all 0.2s;" target="_blank">
+    <a id="kmz-handoff-btn" style="display: none; position: fixed; top: 94px; left: 62px; z-index: 200; background: #2d6a2d; border: 1px solid #4ade80; border-radius: 8px; padding: 8px 14px; color: #f8fafc; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; text-decoration: none; align-items: center; gap: 6px; transition: all 0.2s;" target="_blank">
         <span style="font-size: 14px; line-height: 1;">🌍</span>
         <span class="share-text">3D Earth</span>
     </a>
@@ -1569,14 +1569,19 @@
 
                 panOrigRanges = null;  // Reset for new plot
 
-                // Detect scene type: 3d, polar, or 2d
+                // Detect scene type: 3d, polar, mapbox, or 2d
                 var sceneType = figDict.layout.scene ? '3d'
-                    : figDict.layout.polar ? 'polar' : '2d';
+                    : figDict.layout.polar ? 'polar'
+                    : figDict.layout.mapbox ? 'mapbox' : '2d';
 
                 if (hasStudioNav) {
                     zoomControls.classList.remove('visible');
                     panControls.classList.add('visible');
                     panControls.setAttribute('data-scene', sceneType);
+                } else if (sceneType === 'mapbox') {
+                    // Mapbox has built-in scroll/pinch zoom; our buttons don't work
+                    zoomControls.classList.remove('visible');
+                    panControls.classList.remove('visible');
                 } else {
                     panControls.classList.remove('visible');
                     zoomControls.classList.add('visible');
