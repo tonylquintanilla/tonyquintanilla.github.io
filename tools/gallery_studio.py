@@ -115,6 +115,9 @@ DEFAULT_CONFIG = {
 
     # Navigation controls (embedded in exported HTML)
     "show_nav_arrows": False,
+    
+    # 3D Handoff
+    "kmz_link": "",
 
     # Presets & Output Format
     "output_format": "landscape",  # landscape or portrait
@@ -178,6 +181,7 @@ PORTRAIT_CONFIG = {
     "y2_title_scale": 100,
     "y2_tick_scale": 100,
     "show_nav_arrows": True,
+    "kmz_link": "",
     "output_format": "portrait",
     "route_hover_to_panel": True,
     "marker_opacity_fix": False,
@@ -1352,6 +1356,11 @@ def apply_config(fig_dict, config):
     # curated by the studio and should not be re-processed.
     layout['_studio'] = True
 
+    # ---- KMZ Handoff (3D Blockbuster Pipeline) ----
+    kmz_link = config.get('kmz_link', '').strip()
+    if kmz_link:
+        layout['_kmz_handoff'] = kmz_link
+
     # Embed the studio config so Original preset can restore it
     # on re-load. Exclude large/transient fields.
     stored_config = {k: v for k, v in config.items()
@@ -1617,6 +1626,9 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     toggle_annotations = layout_dict.get('_toggle_annotations', [])
     layout_for_json = {k: v for k, v in layout_dict.items()
                        if not k.startswith('_')}
+    # Preserve _kmz_handoff for web gallery handoff button
+    if '_kmz_handoff' in layout_dict:
+        layout_for_json['_kmz_handoff'] = layout_dict['_kmz_handoff']
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
@@ -2375,6 +2387,9 @@ def build_social_html(fig_dict, config, title="Paloma's Orrery"):
     # Strip internal keys before serializing layout for Plotly
     layout_for_json = {k: v for k, v in fig_dict.get('layout', {}).items()
                        if not k.startswith('_')}
+    # Preserve _kmz_handoff for web gallery handoff button
+    if '_kmz_handoff' in fig_dict.get('layout', {}):
+        layout_for_json['_kmz_handoff'] = fig_dict['layout']['_kmz_handoff']
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
@@ -3210,6 +3225,17 @@ class GalleryStudio:
                 "to pan to specific data points. Also useful for dense "
                 "plots where pinch-zoom isn't precise enough.")
 
+        # ---- KMZ Handoff (Blockbuster) ----
+        sec = tk.LabelFrame(left, text="3D Handoff (Google Earth)", padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Link a KMZ file for 3D exploration.")
+
+        self.var_kmz_link = tk.StringVar(value=self.config.get('kmz_link', ''))
+        ent = tk.Entry(sec, textvariable=self.var_kmz_link)
+        ent.pack(fill='x', padx=2, pady=2)
+        ToolTip(ent, "Enter the KMZ filename (e.g., nyc_1948_blockbuster.kmz).\n"
+                     "This creates a launch button in the web gallery.")
+
         # ---- Annotations ----
         sec = tk.LabelFrame(right, text="Annotations", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
@@ -3758,6 +3784,7 @@ class GalleryStudio:
             'marker_opacity_fix': self.var_opacity_fix.get(),
             'restyle_animation_dark': self.var_restyle_anim.get(),
             'embed_encyclopedia': self.var_encyclopedia.get(),
+            'kmz_link': self.var_kmz_link.get(),
             'plotly_js_source': 'cdn',
         }
 
@@ -3811,6 +3838,7 @@ class GalleryStudio:
         self.var_opacity_fix.set(c.get('marker_opacity_fix', False))
         self.var_restyle_anim.set(c.get('restyle_animation_dark', False))
         self.var_encyclopedia.set(c.get('embed_encyclopedia', False))
+        self.var_kmz_link.set(c.get('kmz_link', ''))
 
         # Refresh featured trace checkboxes if trace list exists
         saved_feat = c.get('featured_traces', [])
@@ -3933,6 +3961,9 @@ class GalleryStudio:
             # But keep _encyclopedia if present for info card
             if '_encyclopedia' in layout:
                 layout_for_json['_encyclopedia'] = layout['_encyclopedia']
+            # Keep _kmz_handoff for web gallery handoff button
+            if '_kmz_handoff' in layout:
+                layout_for_json['_kmz_handoff'] = layout['_kmz_handoff']
             layout_json = json.dumps(layout_for_json,
                                      separators=(',', ':'))
 
@@ -4175,6 +4206,7 @@ document.addEventListener('click', function(e) {{
             "y2_title_scale": 100,
             "y2_tick_scale": 100,
             "show_nav_arrows": False,
+            "kmz_link": layout.get('_kmz_handoff', ""),
             "output_format": "landscape",
             "route_hover_to_panel": False,
             "marker_opacity_fix": False,

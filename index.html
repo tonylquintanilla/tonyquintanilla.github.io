@@ -966,6 +966,11 @@
         <span class="share-text">Share</span>
     </button>
 
+    <a id="kmz-handoff-btn" style="display: none; position: fixed; top: 94px; right: 12px; z-index: 200; background: #2d6a2d; border: 1px solid #4ade80; border-radius: 8px; padding: 8px 14px; color: #f8fafc; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; text-decoration: none; align-items: center; gap: 6px; transition: all 0.2s;" target="_blank">
+        <span style="font-size: 14px; line-height: 1;">🌍</span>
+        <span class="share-text">3D Earth</span>
+    </a>
+
     <!-- Overlay backdrop -->
     <div class="overlay-backdrop" id="overlayBackdrop"></div>
 
@@ -1378,6 +1383,26 @@
                     delete figDict.layout.template;
                 }
 
+                // --- Handle KMZ Blockbuster Handoff ---
+                var kmzBtn = document.getElementById('kmz-handoff-btn');
+                if (figDict.layout._kmz_handoff) {
+                    kmzBtn.style.display = 'flex';
+                    var relativePath = 'assets/' + figDict.layout._kmz_handoff;
+                    var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        // Build absolute URL for googleearth:// intent scheme
+                        var absoluteUrl = new URL(relativePath, window.location.href).href;
+                        kmzBtn.href = 'googleearth://url=' + absoluteUrl;
+                    } else {
+                        // Standard download for desktop
+                        kmzBtn.href = relativePath;
+                    }
+                } else {
+                    kmzBtn.style.display = 'none';
+                    kmzBtn.href = '#';
+                }
+                // -------------------------------------------
+
                 // Remove fixed dimensions - let Plotly fill container
                 var origWidth = figDict.layout.width;
                 var origHeight = figDict.layout.height;
@@ -1494,9 +1519,9 @@
                 // Studio-nav plots get full D-pad + zoom; others get zoom only
                 var hasStudioNav = figDict.layout._studio_nav === true;
 
-                // Featured trace labels: click-to-remove for 2D only
-                // 3D labels are persistent wayfinding (no handler needed)
-                if (figDict.layout._studio && !figDict.layout.scene) {
+                // Featured trace labels: remove on click (studio-curated plots)
+                if (figDict.layout._studio) {
+                    // Direct click on annotation text (2D only)
                     plotlyGraph.on('plotly_clickannotation', function(evtData) {
                         var ann = evtData.annotation;
                         if (!ann || !ann._featured) return;
@@ -1508,6 +1533,33 @@
                         });
                         if (filtered.length !== anns.length) {
                             Plotly.relayout(gd, {'annotations': filtered});
+                        }
+                    });
+                    // Click on trace data (works for both 2D and 3D)
+                    plotlyGraph.on('plotly_click', function(data) {
+                        if (!data || !data.points || !data.points.length) return;
+                        var clickedName = data.points[0].data ? data.points[0].data.name : '';
+                        var gd = document.getElementById('plotly-graph');
+                        if (!gd) return;
+                        // Check 3D scene annotations
+                        if (gd.layout.scene && gd.layout.scene.annotations) {
+                            var anns = gd.layout.scene.annotations;
+                            var filtered = anns.filter(function(a) {
+                                return !(a._featured && a.text === clickedName);
+                            });
+                            if (filtered.length !== anns.length) {
+                                Plotly.relayout(gd, {'scene.annotations': filtered});
+                            }
+                        }
+                        // Check 2D layout annotations
+                        if (gd.layout.annotations) {
+                            var anns2d = gd.layout.annotations;
+                            var filtered2d = anns2d.filter(function(a) {
+                                return !(a._featured && a.text === clickedName);
+                            });
+                            if (filtered2d.length !== anns2d.length) {
+                                Plotly.relayout(gd, {'annotations': filtered2d});
+                            }
                         }
                     });
                 }
@@ -2125,6 +2177,7 @@
             panControls.classList.remove('visible');
             annToggleBtn.classList.remove('visible');
             annStored = null;
+            document.getElementById('kmz-handoff-btn').style.display = 'none'; // NEW
         }
 
         // ---- Utility ----
