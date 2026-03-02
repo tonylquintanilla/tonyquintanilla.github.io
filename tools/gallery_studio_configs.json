@@ -1129,7 +1129,7 @@
     "marker_opacity_fix": false,
     "restyle_animation_dark": false,
     "embed_encyclopedia": false,
-    "kmz_link": "",
+    "kmz_link": "nyc_1948_blockbuster.kmz",
     "plotly_js_source": "cdn"
   },
   "delhi_heat_wave_teaser.html": {
@@ -1186,7 +1186,8 @@
     "marker_opacity_fix": false,
     "restyle_animation_dark": false,
     "embed_encyclopedia": false,
-    "kmz_link": "",
+    "kmz_link": "delhi_heat_wave_blockbuster.kmz",
     "plotly_js_source": "cdn"
-  }
+  },
+  "_last_load_dir": "C:\\Users\\tonyq\\OneDrive\\Desktop\\python_work\\palomas_orrery_images"
 }

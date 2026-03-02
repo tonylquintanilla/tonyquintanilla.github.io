@@ -596,9 +596,9 @@
       "filename": "delhi_heat_wave_teaser_desktop.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Extreme heat event, Asia May 2024.",
+      "description": "Extreme heat event, Asia, May 2024",
       "size_kb": 14.1,
-      "converted": "2026-03-02 00:48",
+      "converted": "2026-03-02 01:57",
       "mode": "landscape"
     },
     {
@@ -609,10 +609,10 @@
       "category_label": "Earth System",
       "description": "Extreme heat event, New York City, August 1948",
       "size_kb": 5.9,
-      "converted": "2026-03-02 00:48",
+      "converted": "2026-03-02 01:58",
       "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-02 00:48",
+  "last_updated": "2026-03-02 01:58",
   "total_count": 57
 }

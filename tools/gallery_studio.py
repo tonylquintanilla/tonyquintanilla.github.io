@@ -2910,15 +2910,15 @@ class GalleryStudio:
         """Build config sections in three columns.
 
         Left column: Figure structure (spatial layout)
-            Title, Background, Margins, 3D Scene, Legend
+            Title, Background, Margins, Legend
 
         Center column: Content & traces
             Trace Visibility, Trace Appearance, Chrome & Controls,
             Annotations
 
         Right column: Output & interaction
-            Presets & Output Format, Hover, 2D Axes,
-            Navigation Controls
+            3D Handoff (Google Earth), Presets & Output Format,
+            Hover, 3D Scene, 2D Axes, Navigation Controls
         """
         left = self.col_left
         right = self.col_right
@@ -3225,17 +3225,6 @@ class GalleryStudio:
                 "to pan to specific data points. Also useful for dense "
                 "plots where pinch-zoom isn't precise enough.")
 
-        # ---- KMZ Handoff (Blockbuster) ----
-        sec = tk.LabelFrame(left, text="3D Handoff (Google Earth)", padx=6, pady=4)
-        sec.pack(fill='x', pady=3, padx=2)
-        ToolTip(sec, "Link a KMZ file for 3D exploration.")
-
-        self.var_kmz_link = tk.StringVar(value=self.config.get('kmz_link', ''))
-        ent = tk.Entry(sec, textvariable=self.var_kmz_link)
-        ent.pack(fill='x', padx=2, pady=2)
-        ToolTip(ent, "Enter the KMZ filename (e.g., nyc_1948_blockbuster.kmz).\n"
-                     "This creates a launch button in the web gallery.")
-
         # ---- Annotations ----
         sec = tk.LabelFrame(right, text="Annotations", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
@@ -3445,6 +3434,20 @@ class GalleryStudio:
                 "buttons and date sliders for animated plots. Only relevant "
                 "if 'Strip update menus' is checked. Animation controls "
                 "are identified by having buttons with method='animate'.")
+
+        # ---- KMZ Handoff (Blockbuster) ----
+        sec = tk.LabelFrame(portrait, text="3D Handoff (Google Earth)", padx=6, pady=4)
+        sec.pack(fill='x', pady=3, padx=2)
+        ToolTip(sec, "Link a KMZ file for 3D Earth exploration in Google Earth.\n"
+                "When set, the web gallery shows a green '3D Earth' button\n"
+                "that launches the KMZ in Google Earth.")
+
+        self.var_kmz_link = tk.StringVar(value=self.config.get('kmz_link', ''))
+        ent = tk.Entry(sec, textvariable=self.var_kmz_link)
+        ent.pack(fill='x', padx=2, pady=2)
+        ToolTip(ent, "KMZ filename in gallery/assets/ (e.g., nyc_1948_blockbuster.kmz).\n"
+                     "Auto-detected from teaser filename when loaded.\n"
+                     "Creates a green launch button in the web gallery.")
 
         # ---- Presets & Output Format ----
         sec = tk.LabelFrame(portrait, text="Presets & Output Format",
@@ -4272,13 +4275,15 @@ document.addEventListener('click', function(e) {{
 
     def _load_file(self):
         """Open file dialog and load an HTML file."""
-        # Try to find the images folder
-        initial_dir = "."
-        for candidate in ["images", os.path.join("..", "images"),
-                          os.path.expanduser("~/Documents")]:
-            if os.path.isdir(candidate):
-                initial_dir = candidate
-                break
+        # Use last-used directory from config store, fall back to images/
+        initial_dir = self.config_store.get('_last_load_dir', '')
+        if not initial_dir or not os.path.isdir(initial_dir):
+            initial_dir = "."
+            for candidate in ["images", os.path.join("..", "images"),
+                              os.path.expanduser("~/Documents")]:
+                if os.path.isdir(candidate):
+                    initial_dir = candidate
+                    break
 
         path = filedialog.askopenfilename(
             parent=self.root,
@@ -4337,6 +4342,18 @@ document.addEventListener('click', function(e) {{
         else:
             self.status_var.set(f"Loaded: {trace_count} traces, "
                                f"{'3D' if has_scene else '2D'}")
+
+        # Auto-detect KMZ blockbuster from teaser filename
+        # Pattern: *_teaser*.html -> *_blockbuster.kmz
+        # Runs AFTER saved config restore so it fills empty fields
+        basename = os.path.basename(path)
+        if '_teaser' in basename and not self.var_kmz_link.get().strip():
+            kmz_guess = basename.split('_teaser')[0] + '_blockbuster.kmz'
+            self.var_kmz_link.set(kmz_guess)
+
+        # Remember this directory for next Load HTML dialog
+        self.config_store['_last_load_dir'] = os.path.dirname(os.path.abspath(path))
+        self._save_config_store()
 
     def _reload_file(self):
         """Reload the current source file."""
