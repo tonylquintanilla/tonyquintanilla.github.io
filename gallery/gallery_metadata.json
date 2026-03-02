@@ -601,8 +601,19 @@
       "description": "540 MY paleoclimate chart with human origins markers.",
       "size_kb": 116.3,
       "converted": "2026-02-07 21:07"
+    },
+    {
+      "id": "delhi_heat_wave_teaser_mobile",
+      "title": "Delhi Heat Wave Teaser Mobile",
+      "filename": "delhi_heat_wave_teaser_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Extreme heat, Asia, May 2024",
+      "size_kb": 14.1,
+      "converted": "2026-03-02 09:59",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-02 02:27",
-  "total_count": 56
+  "last_updated": "2026-03-02 09:59",
+  "total_count": 57
 }
