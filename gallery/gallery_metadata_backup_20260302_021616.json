@@ -65,16 +65,6 @@
       "converted": "2026-02-07 23:57"
     },
     {
-      "id": "planetary_boundaries",
-      "title": "Planetary Boundaries (Stockholm Resilience Centre)",
-      "filename": "planetary_boundaries.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic after the Stockholm Resilience Centre's Planetary Boundaries, showing processes that regulate planetary stability.",
-      "size_kb": 13.4,
-      "converted": "2026-02-08 23:37"
-    },
-    {
       "id": "keeling_curve_co2_concentration",
       "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
       "filename": "keeling_curve_co2_concentration.json",
@@ -167,6 +157,16 @@
       "description": "Graphic showing extreme heating events since the 1930s.",
       "size_kb": 129.3,
       "converted": "2026-02-08 23:35"
+    },
+    {
+      "id": "planetary_boundaries",
+      "title": "Planetary Boundaries (Stockholm Resilience Centre)",
+      "filename": "planetary_boundaries.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic after the Stockholm Resilience Centre's Planetary Boundaries, showing processes that regulate planetary stability.",
+      "size_kb": 13.4,
+      "converted": "2026-02-08 23:37"
     },
     {
       "id": "pluto_barycenter_system_20260208_1957",
@@ -495,15 +495,14 @@
       "mode": "portrait"
     },
     {
-      "id": "nyc_1948_teaser_desktop",
-      "title": "New York City, August 1948",
-      "filename": "nyc_1948_teaser_desktop.json",
+      "id": "paleoclimate_cenozoic_66ma",
+      "title": "Paleoclimate Cenozoic (66 Ma)",
+      "filename": "paleoclimate_cenozoic_66ma.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Extreme heat event, New York City, August 1948",
-      "size_kb": 5.9,
-      "converted": "2026-03-02 01:58",
-      "mode": "landscape"
+      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
+      "size_kb": 66.7,
+      "converted": "2026-02-08 23:41"
     },
     {
       "id": "planetary_boundaries_mobile",
@@ -517,15 +516,14 @@
       "mode": "portrait"
     },
     {
-      "id": "delhi_heat_wave_teaser_desktop",
-      "title": "Asia, May 2024",
-      "filename": "delhi_heat_wave_teaser_desktop.json",
+      "id": "paleoclimate_540ma_to_present",
+      "title": "Paleoclimate 540 Ma to Present",
+      "filename": "paleoclimate_540ma_to_present.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Extreme heat event, Asia, May 2024",
-      "size_kb": 14.1,
-      "converted": "2026-03-02 01:57",
-      "mode": "landscape"
+      "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
+      "size_kb": 95.9,
+      "converted": "2026-02-08 23:40"
     },
     {
       "id": "paleoclimate_wet_bulb_gallery",
@@ -539,14 +537,14 @@
       "mode": "portrait"
     },
     {
-      "id": "paleoclimate_cenozoic_66ma",
-      "title": "Paleoclimate Cenozoic (66 Ma)",
-      "filename": "paleoclimate_cenozoic_66ma.json",
+      "id": "paleoclimate_human_origins",
+      "title": "Paleoclimate Human Origins",
+      "filename": "paleoclimate_human_origins.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
-      "size_kb": 66.7,
-      "converted": "2026-02-08 23:41"
+      "description": "540 MY paleoclimate chart with human origins markers.",
+      "size_kb": 116.3,
+      "converted": "2026-02-07 21:07"
     },
     {
       "id": "current_comets_social_view_20260210_2331",
@@ -582,26 +580,39 @@
       "featured": true
     },
     {
-      "id": "paleoclimate_540ma_to_present",
-      "title": "Paleoclimate 540 Ma to Present",
-      "filename": "paleoclimate_540ma_to_present.json",
+      "id": "nyc_1948_teaser_gallery",
+      "title": "Nyc 1948 Teaser Gallery",
+      "filename": "nyc_1948_teaser_gallery.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
-      "size_kb": 95.9,
-      "converted": "2026-02-08 23:40"
+      "description": "Extreme heating event, New York City, August 1948",
+      "size_kb": 5.8,
+      "converted": "2026-02-28 03:30",
+      "mode": "landscape"
     },
     {
-      "id": "paleoclimate_human_origins",
-      "title": "Paleoclimate Human Origins",
-      "filename": "paleoclimate_human_origins.json",
+      "id": "delhi_heat_wave_teaser_desktop",
+      "title": "Delhi Heat Wave Teaser Desktop",
+      "filename": "delhi_heat_wave_teaser_desktop.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "540 MY paleoclimate chart with human origins markers.",
-      "size_kb": 116.3,
-      "converted": "2026-02-07 21:07"
+      "description": "Extreme heat event, Asia, May 2024",
+      "size_kb": 14.1,
+      "converted": "2026-03-02 01:57",
+      "mode": "landscape"
+    },
+    {
+      "id": "nyc_1948_teaser_desktop",
+      "title": "Nyc 1948 Teaser Desktop",
+      "filename": "nyc_1948_teaser_desktop.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Extreme heat event, New York City, August 1948",
+      "size_kb": 5.9,
+      "converted": "2026-03-02 01:58",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-02 02:16",
-  "total_count": 56
+  "last_updated": "2026-03-02 01:58",
+  "total_count": 57
 }
