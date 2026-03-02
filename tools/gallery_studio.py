@@ -2778,6 +2778,8 @@ class GalleryStudio:
                     store = json.load(f)
                 # Migrate old format configs
                 for key, cfg in store.items():
+                    if not isinstance(cfg, dict):
+                        continue  # Skip non-config entries (e.g. _last_load_dir)
                     if 'legend_font_size' in cfg and 'legend_font_scale' not in cfg:
                         # Old absolute px -> new percent (can't recover exact %,
                         # so just set to 100 = keep original)
