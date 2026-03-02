@@ -72,8 +72,7 @@
       "category_label": "Earth System",
       "description": "Graphic after the Stockholm Resilience Centre's Planetary Boundaries, showing processes that regulate planetary stability.",
       "size_kb": 13.4,
-      "converted": "2026-02-08 23:37",
-      "featured": true
+      "converted": "2026-02-08 23:37"
     },
     {
       "id": "keeling_curve_co2_concentration",
@@ -603,6 +602,6 @@
       "converted": "2026-02-07 21:07"
     }
   ],
-  "last_updated": "2026-03-02 02:27",
+  "last_updated": "2026-03-02 02:16",
   "total_count": 56
 }
