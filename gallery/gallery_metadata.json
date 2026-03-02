@@ -589,8 +589,30 @@
       "size_kb": 5.8,
       "converted": "2026-02-28 03:30",
       "mode": "landscape"
+    },
+    {
+      "id": "delhi_heat_wave_teaser_desktop",
+      "title": "Delhi Heat Wave Teaser Desktop",
+      "filename": "delhi_heat_wave_teaser_desktop.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Extreme heat event, Asia May 2024.",
+      "size_kb": 14.1,
+      "converted": "2026-03-02 00:48",
+      "mode": "landscape"
+    },
+    {
+      "id": "nyc_1948_teaser_desktop",
+      "title": "Nyc 1948 Teaser Desktop",
+      "filename": "nyc_1948_teaser_desktop.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Extreme heat event, New York City, August 1948",
+      "size_kb": 5.9,
+      "converted": "2026-03-02 00:48",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-02-28 03:30",
-  "total_count": 55
+  "last_updated": "2026-03-02 00:48",
+  "total_count": 57
 }

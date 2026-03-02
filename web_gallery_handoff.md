@@ -2679,3 +2679,134 @@ coding tools, February 27
 make them interactive."* -- The Plotly 3D annotation lesson, Feb 27
 
 *Data Preservation is Climate Action. Sharing is Astronomy Action.*
+
+### Session 20 (Feb 28): KMZ Integration Fixes (Mode 7 -- Gemini + Claude)
+
+Gemini drafted initial fixes for three KMZ integration issues. Tony
+brought them to Claude for implementation and validation. Session
+expanded to fix six issues total, several discovered during testing.
+
+**Fix 1: _kmz_handoff Underscore Stripping (gallery_studio.py)**
+
+`gallery_studio.py` strips all underscore-prefixed keys from Plotly
+JSON at three locations (lines 1628, 2386, 3954) to avoid polluting
+the Plotly figure with internal markers. This killed `_kmz_handoff`
+before it reached the exported HTML.
+
+Gemini recommended dropping the underscore (renaming to
+`kmz_handoff`). Claude diverged: kept `_kmz_handoff` and whitelisted
+it through all three filters, following the existing `_encyclopedia`
+pattern. This preserves the convention that underscore marks
+non-Plotly keys and avoids Plotly.js console warnings about unknown
+layout attributes.
+
+**Fix 2: Featured Trace Label Regression (index.html)**
+
+Gemini's prior session had removed the `plotly_click` handler that
+powered featured label click-to-dismiss. Restored the original
+handler. 3D featured labels are now clickable again.
+
+**Fix 3: Mobile Intent URL (index.html)**
+
+Adopted Gemini's `googleearth://url=` intent scheme. Desktop gets a
+standard download link. Mobile devices (detected via user agent)
+get `googleearth://url=<absoluteURL>` which prompts the OS to open
+Google Earth directly. Absolute URL constructed via
+`new URL(relativePath, window.location.href).href`. Needs
+real-device testing -- if Google Earth isn't installed, the OS
+should show an error or app store prompt.
+
+**Fix 4: KMZ 404 Error (index.html + _gitattributes)**
+
+Browser requesting `palomasorrery.com/assets/<file>.kmz` returned
+404. File actually located at
+`palomasorrery.com/gallery/assets/<file>.kmz`. Root cause:
+`index.html` served from root, JS built relative path as `assets/`
+which resolved to `/assets/` instead of `/gallery/assets/`.
+
+Fix: changed JS path from `'assets/'` to `'gallery/assets/'`.
+
+Secondary concern: `.gitattributes` had `* text=auto` which could
+corrupt binary KMZ files. Added explicit binary markers:
+```
+*.kmz binary
+*.kml binary
+*.png binary
+```
+
+**Fix 5: Button Positioning (index.html)**
+
+Share and 3D Earth buttons positioned at `right: 12px` obscured
+Plotly colorbar/legend on mapbox plots. Moved both to `left: 62px`
+(just right of hamburger menu). Updated CSS and inline styles.
+Mobile responsive override updated from `right: auto` to
+`left: auto`.
+
+**Fix 6: Mapbox Zoom Controls (index.html)**
+
+Zoom controls appeared but didn't work on mapbox plots. `zoom2D()`
+operates on xaxis/yaxis ranges; mapbox uses `mapbox.zoom` instead.
+Added mapbox detection to scene type logic. When
+`figDict.layout.mapbox` is detected, zoom controls hidden entirely
+(mapbox has built-in scroll/pinch zoom).
+
+**Fix 7: Missing Briefing Context on Teaser (earth_system_generator.py)**
+
+Web teaser lacked the briefing information present in the KMZ intel
+card. Added `briefing` and `description` parameters to
+`generate_plotly_teaser()`. Renders first paragraph of briefing as
+bottom-left annotation (200 char max, semi-transparent background,
+white text) plus hint: "Click 3D Earth for full visualization in
+Google Earth."
+
+**Fix 8: Raw File Deletion (earth_system_generator.py)**
+
+`package_and_cleanup()` deleted KML/PNG files after zipping to KMZ.
+Desktop Python orrery needs raw files in `data/`. Removed
+`os.remove()` loop. KMZ and raw files now coexist.
+
+**Fix 9: KMZ Multi-Layer Loading (earth_system_generator.py)**
+
+KMZ contained three separate KML files (spikes, heatmap, impact).
+Google Earth only reads the first KML in an archive. Attempted
+NetworkLink wrapper -- failed (Google Earth doesn't resolve
+relative NetworkLinks inside KMZ).
+
+Final fix: merged approach. `package_and_cleanup()` now reads all
+KML files, extracts `<Document>` body using regex, wraps each in a
+`<Folder>` with layer name, generates a single `doc.kml` containing
+all folders. Writes only `doc.kml` + PNG assets to KMZ.
+
+Result: single-document KMZ with toggleable folders in Google
+Earth's layer panel.
+
+**Files Modified:**
+- `gallery_studio.py` (~4,500 lines): whitelisted `_kmz_handoff`
+  through three underscore filters
+- `index.html` (~2,200 lines): button positioning, mapbox zoom
+  detection, KMZ path fix, mobile intent URL, featured label restore
+- `earth_system_generator.py` (~850 lines): briefing annotation,
+  no-delete policy, merged KML approach, `import re`
+- `_gitattributes`: binary markers for KMZ/KML/PNG
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Underscore convention | Keep `_kmz_handoff`, whitelist | Consistent with `_encyclopedia`; avoids Plotly.js warnings |
+| Gemini vs Claude approach | Claude diverged on underscore | Whitelist preserves convention; rename would break it |
+| Delete raw files? | No | Desktop orrery needs them in data/ |
+| Multi-KML in KMZ | Merge into single doc.kml | Google Earth only loads first KML; NetworkLinks don't resolve |
+| Button position | Left side (left: 62px) | Right side obscures legend/colorbar |
+| Mapbox zoom | Hide controls entirely | Mapbox has native pinch/scroll zoom; custom controls don't work |
+| Mobile KMZ | googleearth:// intent URL | Direct app launch vs download-to-Files |
+| KMZ asset path | gallery/assets/ not assets/ | index.html served from root, not gallery/ |
+
+---
+
+*"I am more comfortable working with you."* -- Tony, on bringing
+Gemini's fixes to Claude for implementation, February 28
+
+*"Fixing bug one reveals bug two."* -- The stacked bugs lesson
+continues: fixing the underscore stripping revealed the path bug,
+which revealed the button positioning bug, February 28
