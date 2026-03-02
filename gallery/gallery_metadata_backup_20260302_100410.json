@@ -604,7 +604,7 @@
     },
     {
       "id": "delhi_heat_wave_teaser_mobile",
-      "title": "Extreme Heat, Asia, May 2024 (use landscape)",
+      "title": "Delhi Heat Wave Teaser Mobile",
       "filename": "delhi_heat_wave_teaser_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -614,6 +614,6 @@
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-02 10:04",
+  "last_updated": "2026-03-02 09:59",
   "total_count": 57
 }
