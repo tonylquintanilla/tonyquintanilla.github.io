@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5-26, 2026 | Claude Opus 4.6
+## Session Handoff | February 5 - March 2, 2026 | Claude Opus 4.6
 
 ---
 
@@ -2810,3 +2810,108 @@ Gemini's fixes to Claude for implementation, February 28
 *"Fixing bug one reveals bug two."* -- The stacked bugs lesson
 continues: fixing the underscore stripping revealed the path bug,
 which revealed the button positioning bug, February 28
+
+### Session 21 (Mar 2): Earth-Like Basemap & Studio UX (Claude Opus 4.6)
+
+Tony identified a visual inconsistency: the dark `carto-darkmatter`
+basemap (space aesthetic) was wrong for Earth System teasers. "The
+dark theme is not a general choice -- it's consistent with the orrery
+or stellar views, but the earth-based files should have an earth-like
+theme, more blue and green not black (space)."
+
+**Basemap Investigation**
+
+Built an interactive comparison tool testing all available Plotly
+mapbox styles. Discovery: the Stamen tile styles (terrain, watercolor,
+toner) are dead -- Stamen Maps moved to Stadia Maps in July 2023
+and now require an API key. Only three built-in no-token styles
+work: `carto-darkmatter`, `open-street-map`, `carto-positron`.
+
+Solution: `white-bg` style with custom ESRI raster tile layer
+overlay. Tested five ESRI tile services. Selected **ESRI World Topo
+Map** -- green land, blue ocean, topographic shading, geographic
+labels. Free, no API key, well-maintained.
+
+**Basemap Change (earth_system_generator.py)**
+
+Six targeted changes to `generate_plotly_teaser()`:
+
+| Setting | Was | Now | Why |
+|---------|-----|-----|-----|
+| mapbox style | `carto-darkmatter` | `white-bg` + ESRI layer | Earth looks like Earth |
+| colorscale | `Inferno` | `YlOrRd` | Inferno's dark purples vanish on light maps |
+| marker opacity | 0.6 | 0.75 | Visibility on detailed basemap |
+| annotation font | `#e2e8f0` (light) | `#1a1a2e` (dark) | Readability on light map |
+| annotation bg | `rgba(0,0,0,0.7)` | `rgba(255,255,255,0.85)` | Light-on-light context |
+| body background | `#000` | `#f5f5f0` | HTML body matches light map |
+
+ESRI tile URL:
+`https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`
+
+**Gallery Studio UX Improvements (gallery_studio.py)**
+
+Three improvements to the studio workflow:
+
+1. **Moved "3D Handoff (Google Earth)" to column 3** -- was buried
+   in column 1 below Legend. Now the first section in the right
+   column, immediately visible when loading Earth System teasers.
+
+2. **Auto-detect KMZ filename from teaser filename** -- when loading
+   `*_teaser*.html`, the 3D Handoff field auto-populates with
+   `*_blockbuster.kmz`. Uses `basename.split('_teaser')[0]` to
+   derive the KMZ name. Guards: only fires when field is empty,
+   runs AFTER saved config restore (so saved values aren't
+   overwritten). This was the root cause of the missing Google
+   Earth button -- the field was empty because no one filled it in.
+
+   Ordering bug caught during testing: auto-detect initially ran
+   BEFORE saved config restore. A previously saved empty `kmz_link`
+   would overwrite the auto-detected value. Fix: moved auto-detect
+   to run AFTER `_apply_config_to_gui()`.
+
+3. **Remember last Load HTML directory** -- saves `_last_load_dir`
+   in `gallery_studio_configs.json` after each successful load.
+   Next "Load HTML..." dialog opens to that directory instead of
+   falling back to `images/` or `~/Documents`. Stored as a
+   top-level key in the config store (alongside per-file configs).
+
+**Files Modified:**
+- `earth_system_generator.py` (~925 lines): basemap, colorscale,
+  opacity, annotation colors, body background
+- `gallery_studio.py` (~4,515 lines): KMZ field moved to column 3,
+  auto-detect KMZ filename, last-used directory persistence
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Basemap for Earth views | ESRI World Topo via white-bg | Green/blue Earth colors, free, no API key |
+| Stamen tiles | Dead (require Stadia API key) | Moved to paid service July 2023 |
+| Colorscale on light map | YlOrRd | Inferno dark purples invisible on light backgrounds |
+| KMZ field placement | Column 3 (top) | Visibility -- was buried in column 1 |
+| KMZ auto-detect | Split on `_teaser`, append `_blockbuster.kmz` | Eliminates manual filename entry |
+| Auto-detect ordering | After saved config restore | Prevents saved empty value from overwriting |
+| Last directory | `_last_load_dir` in config store | Opens dialog where user left off |
+
+---
+
+**Technical Lessons Learned:**
+
+- Stamen tile styles in Plotly (`stamen-terrain`, `stamen-toner`,
+  `stamen-watercolor`) are defunct. They silently fail to render
+  (blank map, no error). Use `white-bg` with custom raster layers.
+
+- ESRI ArcGIS tile servers are free for direct use without API keys:
+  World_Topo_Map, World_Imagery, NatGeo_World_Map, World_Physical_Map.
+  Added via Plotly `mapbox.layers` with `sourcetype: 'raster'`.
+
+- Config restore ordering matters: auto-populated defaults must run
+  AFTER saved config is applied, not before. Otherwise saved empty
+  values overwrite the auto-detected values.
+
+- "Space views get dark, Earth views get Earth" -- visual theme
+  should match content domain, not be applied uniformly.
+
+---
+
+*"Data Preservation is Climate Action. Sharing is Astronomy Action."*
