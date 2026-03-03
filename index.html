@@ -966,7 +966,8 @@
         <span class="share-text">Share</span>
     </button>
 
-    <a id="kmz-handoff-btn" style="display: none; position: fixed; top: 94px; left: 62px; z-index: 200; background: #2d6a2d; border: 1px solid #4ade80; border-radius: 8px; padding: 8px 14px; color: #f8fafc; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; text-decoration: none; align-items: center; gap: 6px; transition: all 0.2s;" target="_blank">
+    <a id="kmz-handoff-btn" style="display: none; position: fixed; top: 94px; left: 62px; z-index: 200; background: #2d6a2d; border: 1px solid #4ade80; border-radius: 8px; padding: 8px 14px; color: #f8fafc; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; text-decoration: none; align-items: center; gap: 6px; transition: all 0.2s;" target="_blank" download></a>
+
         <span style="font-size: 14px; line-height: 1;">🌍</span>
         <span class="share-text">3D Earth</span>
     </a>
@@ -1851,6 +1852,23 @@
 
             // Share button
             shareBtn.addEventListener('click', shareLink);
+
+            // KMZ Handoff iOS Alert
+            var kmzBtn = document.getElementById('kmz-handoff-btn');
+            kmzBtn.addEventListener('click', function(e) {
+                // Detect iOS (including iPads requesting desktop sites)
+                var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                
+                if (isIOS) {
+                    e.preventDefault(); // Stop the immediate native click
+                    
+                    alert("iOS tip: Tap 'Download', then open your Safari downloads (the blue arrow in your address bar). Tap the file, then use the Share icon to open it in Google Earth.");
+                    
+                    // Safely open the file in a new tab after the user dismisses the alert
+                    window.open(this.href, '_blank'); 
+                }
+                // On non-iOS devices, the browser will natively follow the href + target="_blank" + download attribute.
+            });
 
             // Mode toggle buttons
             modeLandscape.addEventListener('click', function() { setMode('landscape'); });
