@@ -1385,18 +1385,29 @@
 
                 // --- Handle KMZ Blockbuster Handoff ---
                 var kmzBtn = document.getElementById('kmz-handoff-btn');
+
                 if (figDict.layout._kmz_handoff) {
                     kmzBtn.style.display = 'flex';
                     var relativePath = 'gallery/assets/' + figDict.layout._kmz_handoff;
-                    var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                    if (isMobile) {
+                    // Standard download for all platforms (desktop and mobile)
+                    // Mobile: OS handles .kmz via share sheet / "Open in" dialog
+                    // googleearth:// intent scheme was unreliable (opened app
+                    // but didn't load the KMZ file)
+                    kmzBtn.href = relativePath;
+
+            //    if (figDict.layout._kmz_handoff) {
+            //        kmzBtn.style.display = 'flex';
+            //        var relativePath = 'gallery/assets/' + figDict.layout._kmz_handoff;
+            //        var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            //        if (isMobile) {
                         // Build absolute URL for googleearth:// intent scheme
-                        var absoluteUrl = new URL(relativePath, window.location.href).href;
-                        kmzBtn.href = 'googleearth://url=' + absoluteUrl;
-                    } else {
+            //            var absoluteUrl = new URL(relativePath, window.location.href).href;
+            //            kmzBtn.href = 'googleearth://url=' + absoluteUrl;
+            //        } else {
                         // Standard download for desktop
-                        kmzBtn.href = relativePath;
-                    }
+            //            kmzBtn.href = relativePath;
+            //        }
+
                 } else {
                     kmzBtn.style.display = 'none';
                     kmzBtn.href = '#';
