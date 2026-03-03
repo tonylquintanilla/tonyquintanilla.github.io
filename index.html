@@ -1862,8 +1862,9 @@
                 // Detect environment
                 var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
                 var isChromeIOS = /CriOS/.test(ua);
-                var isEdgeIOS = /EdgiOS/.test(ua); // Separated Edge
-                var isBingIOS = /BingWeb|Bing/i.test(ua); // Separated Bing
+                var isEdgeIOS = /EdgiOS/.test(ua);
+                var isBingIOS = /BingWeb|Bing/i.test(ua);
+                var isFirefoxIOS = /FxiOS/.test(ua); // Added Firefox
                 
                 if (isIOS) {
                     e.preventDefault(); // Stop the immediate native click
@@ -1883,6 +1884,10 @@
                     } else if (isBingIOS) {
                         // Bing on iOS flow
                         alert("Bing Tip:\n1. Tap the downloaded kmz file\n2. Tap the saved file name\n3. Tap 'Open in another app' (ignore preview warning)\n4. Tap the Google Earth icon");
+                        window.open(this.href, '_blank'); 
+                    } else if (isFirefoxIOS) {
+                        // Firefox on iOS flow
+                        alert("Firefox Tip:\n1. Tap 'Download Now'\n2. Tap the menu (≡) and select 'Downloads'\n3. Tap the file\n4. Tap the Share icon and select Google Earth");
                         window.open(this.href, '_blank'); 
                     } else {
                         // Standard Safari flow
