@@ -1853,21 +1853,76 @@
             // Share button
             shareBtn.addEventListener('click', shareLink);
 
+
+
             // KMZ Handoff iOS Alert
-            var kmzBtn = document.getElementById('kmz-handoff-btn');
-            kmzBtn.addEventListener('click', function(e) {
+        //    var kmzBtn = document.getElementById('kmz-handoff-btn');
+        //    kmzBtn.addEventListener('click', function(e) {
                 // Detect iOS (including iPads requesting desktop sites)
-                var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        //        var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
                 
-                if (isIOS) {
-                    e.preventDefault(); // Stop the immediate native click
+        //        if (isIOS) {
+        //            e.preventDefault(); // Stop the immediate native click
                     
-                    alert("iOS tip: Tap 'Download', then open your Safari downloads (the blue arrow in your address bar). Tap the file, then use the Share icon to open it in Google Earth.");
+        //            alert("iOS tip: Tap 'Download', then open your Safari downloads (the blue arrow in your address bar). Tap the file, then use the Share icon to open it in Google Earth.");
                     
                     // Safely open the file in a new tab after the user dismisses the alert
-                    window.open(this.href, '_blank'); 
-                }
+        //            window.open(this.href, '_blank'); 
+        //        }
                 // On non-iOS devices, the browser will natively follow the href + target="_blank" + download attribute.
+        //    });
+
+            // KMZ Handoff iOS Native Share
+            var kmzBtn = document.getElementById('kmz-handoff-btn');
+            kmzBtn.addEventListener('click', async function(e) {
+                var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                
+                // Detect if running from the iOS Home Screen shortcut
+                var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+                
+                if (isIOS) {
+                    e.preventDefault(); 
+                    
+                    // 1. Try the modern Web Share API (Bypasses the "Files" app entirely)
+                    if (navigator.canShare) {
+                        try {
+                            // Show loading state since fetching a large KMZ takes a moment
+                            var textSpan = this.querySelector('.share-text');
+                            var originalText = textSpan.textContent;
+                            textSpan.textContent = "Loading 3D...";
+                            
+                            // Silently download the KMZ in the background
+                            var response = await fetch(this.href);
+                            var blob = await response.blob();
+                            var filename = this.href.split('/').pop() || 'visualization.kmz';
+                            var file = new File([blob], filename, { type: "application/vnd.google-earth.kmz" });
+                            
+                            textSpan.textContent = originalText;
+                            
+                            // If iOS allows sharing this file directly
+                            if (navigator.canShare({ files: [file] })) {
+                                showToast("Select 'Google Earth' from the apps menu");
+                                await navigator.share({
+                                    files: [file]
+                                });
+                                return; // Success! Stop here.
+                            }
+                        } catch (err) {
+                            console.log("Web Share failed:", err);
+                            if (textSpan) textSpan.textContent = "Google Earth";
+                        }
+                    }
+                    
+                    // 2. Fallback if Web Share fails or isn't supported
+                    if (isStandalone) {
+                        // Prevents the fatal black screen in Home Screen apps
+                        alert("iOS limits direct downloads from Home Screen apps. Tap the 'Share' icon at the top or bottom of your screen and select 'Open in Safari' to view this 3D model.");
+                    } else {
+                        // Normal Safari fallback
+                        alert("iOS tip: Tap 'Download', open Safari downloads (blue arrow), tap the file, and Share to Google Earth.");
+                        window.location.assign(this.href); 
+                    }
+                }
             });
 
             // Mode toggle buttons
