@@ -1856,23 +1856,27 @@
             // KMZ Handoff iOS Flow
             var kmzBtn = document.getElementById('kmz-handoff-btn');
             kmzBtn.addEventListener('click', function(e) {
-                var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                var ua = navigator.userAgent;
+                var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
                 
-                // Detect if running from the iOS Home Screen shortcut or in-app browser
+                // Detect environment
                 var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+                var isChromeIOS = /CriOS/.test(ua);
                 
                 if (isIOS) {
                     e.preventDefault(); // Stop the immediate native click
                     
                     if (isStandalone) {
                         // Prevent the black screen trap in Home Screen apps
-                        alert("iOS limits 3D downloads from Home Screen apps.\n\nPlease tap the Safari compass icon in the bottom corner to open this in your main browser, then tap this button again.");
-                        return; // Stop here. Let them move to Safari.
+                        alert("iOS limits 3D downloads from Home Screen apps.\n\nPlease tap the Safari compass icon to open this in your main browser, then tap this button again.");
+                        return; // Stop here.
+                    } else if (isChromeIOS) {
+                        // Chrome on iOS flow
+                        alert("Chrome Tip:\n1. Tap 'Save'\n2. Keep 'Files' checked and Save\n3. Tap 'Open In...'\n4. Select Google Earth");
+                        window.open(this.href, '_blank'); 
                     } else {
-                        // They are in standard Safari. Give them the native download map.
-                        alert("iOS tip: Tap 'Download', then tap the blue arrow (Downloads) in your address bar. Tap the file, and use the Share icon to open it in Google Earth.");
-                        
-                        // Safely trigger the native Safari download manager
+                        // Standard Safari flow
+                        alert("Safari Tip:\n1. Tap 'Download'\n2. Tap the blue arrow (↓) in your address bar (usually at the bottom left)\n3. Tap the file and open in Google Earth");
                         window.open(this.href, '_blank'); 
                     }
                 }
