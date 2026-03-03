@@ -1862,7 +1862,8 @@
                 // Detect environment
                 var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
                 var isChromeIOS = /CriOS/.test(ua);
-                var isBingIOS = /EdgiOS|BingWeb|Bing/i.test(ua);
+                var isEdgeIOS = /EdgiOS/.test(ua); // Separated Edge
+                var isBingIOS = /BingWeb|Bing/i.test(ua); // Separated Bing
                 
                 if (isIOS) {
                     e.preventDefault(); // Stop the immediate native click
@@ -1874,6 +1875,10 @@
                     } else if (isChromeIOS) {
                         // Chrome on iOS flow
                         alert("Chrome Tip:\n1. Tap 'Save'\n2. Keep 'Files' checked and Save\n3. Tap 'Open In...'\n4. Select Google Earth");
+                        window.open(this.href, '_blank'); 
+                    } else if (isEdgeIOS) {
+                        // Edge on iOS flow
+                        alert("Edge Tip:\n1. Tap 'Download' next to the file name\n2. Tap 'Open in...'\n3. Select Google Earth");
                         window.open(this.href, '_blank'); 
                     } else if (isBingIOS) {
                         // Bing on iOS flow
