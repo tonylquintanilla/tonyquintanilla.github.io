@@ -1177,12 +1177,30 @@
 
         // Inject responsive width into annotations so Plotly wraps text
         // instead of truncating. Desktop: ~35% of viewport. Mobile: ~85%.
-        function _sizeAnnotations(anns) {
+        // Plotly SVG annotations do not reflow text -- must use explicit br tags.
+        // Wrap plain-text segments at word boundaries; preserve existing br tags.
+        // Chars per line estimated from font-size 11px (~6.5px/char).
+        function _wrapAnnotations(anns) {
             if (!anns || !anns.length) return anns;
             var isMobile = window.innerWidth <= 768;
-            var w = Math.round(window.innerWidth * (isMobile ? 0.85 : 0.35));
+            var charsPerLine = isMobile ? 38 : 55;
             return anns.map(function(a) {
-                return Object.assign({}, a, { width: w, align: a.align || 'left' });
+                if (!a.text) return a;
+                var segments = a.text.split(/<br\s*\/?>/i);
+                var wrapped = segments.map(function(seg) {
+                    if (!seg.trim() || /^<[^>]+>.*<\/[^>]+>$/.test(seg.trim())) return seg;
+                    var words = seg.split(' ');
+                    var lines = [], line = '';
+                    for (var i = 0; i < words.length; i++) {
+                        var word = words[i];
+                        if (!line) { line = word; }
+                        else if ((line + ' ' + word).length <= charsPerLine) { line += ' ' + word; }
+                        else { lines.push(line); line = word; }
+                    }
+                    if (line) lines.push(line);
+                    return lines.join('<br>');
+                });
+                return Object.assign({}, a, { text: wrapped.join('<br>') });
             });
         }
 
@@ -1461,7 +1479,7 @@
 
                 // Apply responsive width to annotations before render
                 if (figDict.layout && figDict.layout.annotations && figDict.layout.annotations.length > 0) {
-                    figDict.layout.annotations = _sizeAnnotations(figDict.layout.annotations);
+                    figDict.layout.annotations = _wrapAnnotations(figDict.layout.annotations);
                 }
 
                 await Plotly.newPlot('plotly-graph', figDict.data || [], figDict.layout, config);
@@ -2019,7 +2037,7 @@
                 if (!gd || !annStored) return;
                 annVisible = !annVisible;
                 if (annVisible) {
-                    Plotly.relayout(gd, {'annotations': _sizeAnnotations(annStored)});
+                    Plotly.relayout(gd, {'annotations': _wrapAnnotations(annStored)});
                     annToggleBtn.textContent = 'Hide Labels';
                 } else {
                     Plotly.relayout(gd, {'annotations': []});
