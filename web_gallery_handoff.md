@@ -2915,3 +2915,10 @@ Three improvements to the studio workflow:
 ---
 
 *"Data Preservation is Climate Action. Sharing is Astronomy Action."*
+
+### Session 22: March 3, 2026 - iOS KMZ Handoff Workaround
+* **Issue Identified:** Downloading `.kmz` files on iOS resulted in severe friction. Apple's strict file sandboxing and the deprecation of custom URL schemes caused fatal black screens (especially in Home Screen PWAs) or trapped users in hidden download managers without clear paths to open the file in Google Earth.
+* **Button HTML Update:** Added the `download` attribute to the `kmz-handoff-btn` anchor tag to ensure desktop browsers and standard mobile environments handle the file as a download rather than attempting a page navigation.
+* **JavaScript Interception & Browser Sniffing:** Abandoned the Web Share API (which stripped third-party app associations for `.kmz` files) in favor of a targeted alert system. Used `navigator.userAgent` to detect specific iOS browsers (Safari, Chrome, Edge, Bing, Firefox).
+* **Expectation Management (The iOS Tour Guide):** Fired tailored, step-by-step `alert()` instructions *before* triggering `window.open(href, '_blank')`. This gives users a specific roadmap for navigating their browser's unique download UI to find the "Open In..." or "Share" sheet.
+* **PWA Black Screen Fix:** Implemented `window.navigator.standalone` detection to completely block downloads within iOS Home Screen apps. Replaced the action with an alert instructing the user to open the gallery in the native Safari app, effectively preventing the dead-end black screen trap.
