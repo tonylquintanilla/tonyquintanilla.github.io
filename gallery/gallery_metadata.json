@@ -519,14 +519,14 @@
     },
     {
       "id": "delhi_heat_wave_teaser_desktop",
-      "title": "Asia, May 2024",
+      "title": "Delhi Heat Wave Teaser Desktop",
       "filename": "delhi_heat_wave_teaser_desktop.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Extreme heat event, Asia, May 2024",
-      "size_kb": 14.1,
-      "converted": "2026-03-02 01:57",
-      "mode": "landscape"
+      "description": "Asian heat wave, May 2024",
+      "size_kb": 13.9,
+      "converted": "2026-03-04 00:26",
+      "mode": "portrait"
     },
     {
       "id": "paleoclimate_wet_bulb_gallery",
@@ -604,16 +604,16 @@
     },
     {
       "id": "delhi_heat_wave_teaser_mobile",
-      "title": "Extreme Heat, Asia, May 2024 (use landscape)",
+      "title": "Delhi Heat Wave Teaser Mobile",
       "filename": "delhi_heat_wave_teaser_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Extreme heat, Asia, May 2024",
-      "size_kb": 14.1,
-      "converted": "2026-03-02 09:59",
+      "description": "Asian heat wave, May 2024",
+      "size_kb": 14.0,
+      "converted": "2026-03-04 00:25",
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-02 10:04",
+  "last_updated": "2026-03-04 00:26",
   "total_count": 57
 }
