@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5 - March 2, 2026 | Claude Opus 4.6
+## Session Handoff | February 5 - March 4, 2026 | Claude Opus 4.6
 
 ---
 
@@ -2922,3 +2922,78 @@ Three improvements to the studio workflow:
 * **JavaScript Interception & Browser Sniffing:** Abandoned the Web Share API (which stripped third-party app associations for `.kmz` files) in favor of a targeted alert system. Used `navigator.userAgent` to detect specific iOS browsers (Safari, Chrome, Edge, Bing, Firefox).
 * **Expectation Management (The iOS Tour Guide):** Fired tailored, step-by-step `alert()` instructions *before* triggering `window.open(href, '_blank')`. This gives users a specific roadmap for navigating their browser's unique download UI to find the "Open In..." or "Share" sheet.
 * **PWA Black Screen Fix:** Implemented `window.navigator.standalone` detection to completely block downloads within iOS Home Screen apps. Replaced the action with an alert instructing the user to open the gallery in the native Safari app, effectively preventing the dead-end black screen trap.
+
+### Session 23 (Mar 4): Annotation Word-Wrap Fix (Claude Sonnet 4.6)
+
+**Problem:** Briefing annotation text on the Delhi heat wave teaser was
+truncating on both desktop and mobile. Two separate root causes, fixed
+in sequence.
+
+**Root Cause 1 -- Upstream truncation (earth_system_generator.py)**
+
+`generate_plotly_teaser()` had a hard 200-character cap on the briefing
+text: `brief_text[:197] + "..."`. The Delhi first paragraph is 208
+characters, so it was cut mid-word to `populati...`. This was baked
+into the exported JSON at generation time.
+
+Fix: removed the `[:197]` truncation entirely. The first-paragraph
+split (`briefing.split('\n\n')[0]`) is already a natural stopping point.
+No character limit needed -- word-wrap handles length at display time.
+
+**Root Cause 2 -- Plotly SVG text does not reflow (index.html)**
+
+The initial fix attempted to inject a pixel `width` into each annotation
+via a `_sizeAnnotations()` helper. This was wrong: Plotly annotation
+`width` constrains the box border but **SVG `<text>` elements do not
+reflow around it**. Annotations are not HTML divs. The box gets smaller
+but the text just clips.
+
+Fix: replaced `_sizeAnnotations` with `_wrapAnnotations`, which inserts
+explicit `<br>` tags at word boundaries at render time. Splits on
+existing `<br>` tags first (preserving intentional line breaks and the
+italic hint line), then wraps each plain-text segment independently.
+
+```
+Desktop: ~55 chars/line  (sized for annotation occupying ~35% viewport)
+Mobile:  ~38 chars/line  (sized for narrow screens)
+```
+
+The `<i>Click 3D Earth...</i>` hint segment matches the
+`/^<tag>...</tag>$/` regex and passes through unwrapped.
+
+**Files Modified:**
+- `earth_system_generator.py`: removed `[:197] + "..."` truncation
+  from `generate_plotly_teaser()`
+- `index.html`: replaced `_sizeAnnotations()` with `_wrapAnnotations()`
+  at definition and both call sites (initial render + toggle-on)
+
+**Deployment note:** The two Delhi JSON files also needed the full text
+patched in directly (the truncated string was already baked in from the
+previous export). Re-exporting through the updated generator produces
+correct output for all future teasers.
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Truncation cap | Remove entirely | First paragraph is natural stop; word-wrap handles length |
+| Plotly annotation width | Not usable for text reflow | SVG text doesn't reflow; width only constrains box border |
+| Word-wrap method | Explicit `<br>` injection at render time | Only reliable method for Plotly annotation text wrapping |
+| Existing `<br>` tags | Split on them, wrap each segment | Preserves intentional breaks; protects italic hint line |
+| Chars per line | 55 desktop / 38 mobile | ~6.5px per char at font-size 11; tuned to annotation width |
+
+---
+
+**Technical Lessons Learned:**
+
+- Plotly annotation `width` constrains the box border but SVG `<text>`
+  elements do not reflow. To wrap text in a Plotly annotation, you must
+  use explicit `<br>` tags. There is no layout engine.
+
+- Upstream truncation baked into JSON is invisible until you look at
+  the raw data. When text looks cut off, check the source JSON first
+  before debugging the renderer.
+
+- Two-bug stacks again: fixing the generator truncation revealed that
+  the renderer still wouldn't wrap (wrong approach). Both had to be
+  fixed independently.
