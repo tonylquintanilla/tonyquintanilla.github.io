@@ -321,18 +321,6 @@
       "converted": "2026-02-11 00:39"
     },
     {
-      "id": "planetary_boundaries_mobile",
-      "title": "Planetary Boundaries 2025 (Stockholm Resilience Centre)",
-      "filename": "planetary_boundaries_mobile.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Planetary Boundaries (Stockholm Resilience Centre)",
-      "size_kb": 11.1,
-      "converted": "2026-02-19 23:56",
-      "mode": "portrait",
-      "featured": true
-    },
-    {
       "id": "keeling_curve_co2_concentration_copy",
       "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
       "filename": "keeling_curve_co2_concentration.json",
@@ -397,6 +385,17 @@
       "description": "Mean sea level rise, 1993 - 2025.",
       "size_kb": 92.7,
       "converted": "2026-02-19 00:45",
+      "mode": "portrait"
+    },
+    {
+      "id": "arctic_ice_extent_mobile",
+      "title": "Arctic Ice Extent, 1979 - 2025",
+      "filename": "arctic_ice_extent_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Arctic sea ice extent, September minimum, 1979 - 2025.",
+      "size_kb": 2.9,
+      "converted": "2026-02-18 21:52",
       "mode": "portrait"
     },
     {
@@ -486,14 +485,14 @@
       "mode": "portrait"
     },
     {
-      "id": "arctic_ice_extent_mobile",
-      "title": "Arctic Ice Extent, 1979 - 2025",
-      "filename": "arctic_ice_extent_mobile.json",
+      "id": "ocean_acidification_ph_trend_mobile",
+      "title": "Ocean Acidification pH Trend, 1991 - 2023",
+      "filename": "ocean_acidification_ph_trend_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Arctic sea ice extent, September minimum, 1979 - 2025.",
-      "size_kb": 2.9,
-      "converted": "2026-02-18 21:52",
+      "description": "Ocean acidification, surface pH.",
+      "size_kb": 15.1,
+      "converted": "2026-02-18 22:09",
       "mode": "portrait"
     },
     {
@@ -508,14 +507,25 @@
       "mode": "landscape"
     },
     {
-      "id": "ocean_acidification_ph_trend_mobile",
-      "title": "Ocean Acidification pH Trend, 1991 - 2023",
-      "filename": "ocean_acidification_ph_trend_mobile.json",
+      "id": "planetary_boundaries_mobile",
+      "title": "Planetary Boundaries 2025 (Stockholm Resilience Centre)",
+      "filename": "planetary_boundaries_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Ocean acidification, surface pH.",
-      "size_kb": 15.1,
-      "converted": "2026-02-18 22:09",
+      "description": "Planetary Boundaries (Stockholm Resilience Centre)",
+      "size_kb": 11.1,
+      "converted": "2026-02-19 23:56",
+      "mode": "portrait"
+    },
+    {
+      "id": "delhi_heat_wave_teaser_desktop",
+      "title": "Delhi Heat Wave Teaser Desktop",
+      "filename": "delhi_heat_wave_teaser_desktop.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Asian heat wave, May 2024",
+      "size_kb": 13.9,
+      "converted": "2026-03-04 00:26",
       "mode": "portrait"
     },
     {
@@ -530,15 +540,14 @@
       "mode": "portrait"
     },
     {
-      "id": "delhi_heat_wave_teaser_desktop_copy",
-      "title": "Asian heat wave, May 2024",
-      "filename": "delhi_heat_wave_teaser_desktop.json",
+      "id": "paleoclimate_cenozoic_66ma",
+      "title": "Paleoclimate Cenozoic (66 Ma)",
+      "filename": "paleoclimate_cenozoic_66ma.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Asian heat wave, May 2024",
-      "size_kb": 13.9,
-      "converted": "2026-03-04 00:26",
-      "mode": "landscape"
+      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
+      "size_kb": 66.7,
+      "converted": "2026-02-08 23:41"
     },
     {
       "id": "current_comets_social_view_20260210_2331",
@@ -574,16 +583,6 @@
       "featured": true
     },
     {
-      "id": "paleoclimate_cenozoic_66ma",
-      "title": "Paleoclimate Cenozoic (66 Ma)",
-      "filename": "paleoclimate_cenozoic_66ma.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
-      "size_kb": 66.7,
-      "converted": "2026-02-08 23:41"
-    },
-    {
       "id": "paleoclimate_540ma_to_present",
       "title": "Paleoclimate 540 Ma to Present",
       "filename": "paleoclimate_540ma_to_present.json",
@@ -605,7 +604,7 @@
     },
     {
       "id": "delhi_heat_wave_teaser_mobile",
-      "title": "Asian heat wave, May 2024",
+      "title": "Delhi Heat Wave Teaser Mobile",
       "filename": "delhi_heat_wave_teaser_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -615,6 +614,6 @@
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-04 00:47",
+  "last_updated": "2026-03-04 00:26",
   "total_count": 57
 }
