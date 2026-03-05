@@ -1250,11 +1250,11 @@
   "earth-apophis_20290401_0000.html": {
     "bg_color": "black",
     "transparent_bg": false,
-    "show_title": false,
-    "custom_title": "",
+    "show_title": true,
+    "custom_title": "Apophis Closest Approach",
     "title_font_scale": 100,
     "title_color": "#f8fafc",
-    "margin_top": 20,
+    "margin_top": 80,
     "margin_bottom": 20,
     "margin_left": 5,
     "margin_right": 5,
@@ -1273,6 +1273,7 @@
     "annotation_toggle_button": true,
     "label_font_scale": 100,
     "scene_aspectmode": "cube",
+    "scene_camera": "isometric",
     "legend_font_color": "",
     "legend_border_transparent": false,
     "legend_position": "original",
@@ -1280,6 +1281,9 @@
     "featured_traces": [
       "Apophis Perigee (JPL CAD)"
     ],
+    "featured_labels": {
+      "Apophis Perigee (JPL CAD)": "Perigee"
+    },
     "strip_hidden_traces": false,
     "marker_size_boost": 0,
     "line_width_min": 0,

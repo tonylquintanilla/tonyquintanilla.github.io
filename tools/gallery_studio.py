@@ -82,6 +82,7 @@ DEFAULT_CONFIG = {
 
     # Scene (3D) - additional
     "scene_aspectmode": "auto",  # auto, cube, data, manual
+    "scene_camera": "original",  # original, isometric, top, front, side
 
     # Legend - additional
     "legend_font_color": "",  # empty = auto from bg brightness
@@ -148,7 +149,7 @@ PORTRAIT_CONFIG = {
     "show_grid": True,
     "scene_bgcolor": "#000000",
     "scene_aspectmode": "cube",
-    "show_legend": False,
+    "scene_camera": "original",
     "legend_orientation": "v",
     "legend_font_scale": 100,
     "legend_grouptitle_font_scale": 100,
@@ -740,6 +741,29 @@ def apply_config(fig_dict, config):
         aspect = config.get('scene_aspectmode', 'auto')
         if aspect != 'auto':
             scene['aspectmode'] = aspect
+
+        # 3D initial camera preset
+        _CAMERA_PRESETS = {
+            # Plotly's built-in "reset camera to default" view
+            'isometric': {'eye': {'x': 1.25, 'y': 1.25, 'z': 1.25},
+                          'center': {'x': 0, 'y': 0, 'z': 0},
+                          'up': {'x': 0, 'y': 0, 'z': 1}},
+            # True top-down (2D-like, what orrery opens with by default)
+            'top':       {'eye': {'x': 0, 'y': 0, 'z': 2.5},
+                          'center': {'x': 0, 'y': 0, 'z': 0},
+                          'up': {'x': 0, 'y': 1, 'z': 0}},
+            # Front view (looking along Y axis)
+            'front':     {'eye': {'x': 0, 'y': 2.5, 'z': 0},
+                          'center': {'x': 0, 'y': 0, 'z': 0},
+                          'up': {'x': 0, 'y': 0, 'z': 1}},
+            # Side view (looking along X axis)
+            'side':      {'eye': {'x': 2.5, 'y': 0, 'z': 0},
+                          'center': {'x': 0, 'y': 0, 'z': 0},
+                          'up': {'x': 0, 'y': 0, 'z': 1}},
+        }
+        cam_preset = config.get('scene_camera', 'original')
+        if cam_preset in _CAMERA_PRESETS:
+            scene['camera'] = _CAMERA_PRESETS[cam_preset]
 
         layout['scene'] = scene
 
@@ -3618,6 +3642,25 @@ class GalleryStudio:
                 "The gallery index used 'cube' on mobile. Now you "
                 "control it here.")
 
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Initial camera:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_scene_camera = tk.StringVar(
+            value=self.config.get('scene_camera', 'original'))
+        cam_om = ttk.Combobox(row, textvariable=self.var_scene_camera,
+                              values=['original', 'isometric', 'top',
+                                      'front', 'side'],
+                              width=10, state='readonly')
+        cam_om.pack(side='left')
+        ToolTip(cam_om, "Set the camera angle when the plot first loads.\n"
+                "  original: Keep whatever the source figure set\n"
+                "  isometric: Plotly's default 3D view (eye 1.25/1.25/1.25)\n"
+                "             Same as clicking 'Reset camera to default'\n"
+                "  top: Top-down view (2D-like, orrery default)\n"
+                "  front: Looking along Y axis\n"
+                "  side: Looking along X axis")
+
         # ---- 2D Axes ----
         sec = tk.LabelFrame(portrait, text="2D Axes", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
@@ -3741,6 +3784,7 @@ class GalleryStudio:
             'annotation_toggle_button': self.var_ann_toggle_btn.get(),
             'label_font_scale': self.var_label_font_scale.get(),
             'scene_aspectmode': self.var_scene_aspect.get(),
+            'scene_camera': self.var_scene_camera.get(),
             'legend_font_color': self.var_legend_color.get(),
             'legend_border_transparent': self.var_legend_border.get(),
             'legend_position': self.var_legend_position.get(),
@@ -3800,6 +3844,7 @@ class GalleryStudio:
         self.var_ann_toggle_btn.set(c.get('annotation_toggle_button', False))
         self.var_label_font_scale.set(c.get('label_font_scale', 100))
         self.var_scene_aspect.set(c.get('scene_aspectmode', 'auto'))
+        self.var_scene_camera.set(c.get('scene_camera', 'original'))
         self.var_legend_color.set(c.get('legend_font_color', ''))
         self.var_legend_border.set(c.get('legend_border_transparent', True))
         self.var_legend_position.set(c.get('legend_position', 'original'))
@@ -4195,6 +4240,7 @@ document.addEventListener('click', function(e) {{
             "show_grid": has_grid,
             "scene_bgcolor": scene_bg,
             "scene_aspectmode": src_aspect,
+            "scene_camera": "original",
             "show_legend": has_legend,
             "legend_orientation": legend_orient,
             "legend_font_scale": 100,
