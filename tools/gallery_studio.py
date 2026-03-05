@@ -92,6 +92,7 @@ DEFAULT_CONFIG = {
     "trace_visibility": {},  # {trace_name: True/False}, empty = all visible
     "strip_hidden_traces": False,  # Remove invisible traces on export
     "featured_traces": [],  # List of trace names to show persistent labels
+    "featured_labels": {},  # {trace_name: custom_label} overrides for featured annotations
     "marker_size_boost": 0,
     "line_width_min": 2,
 
@@ -164,9 +165,7 @@ PORTRAIT_CONFIG = {
     "trace_visibility": {},
     "strip_hidden_traces": False,
     "featured_traces": [],
-    "marker_size_boost": 0,
-    "line_width_min": 0,
-    "show_modebar": True,
+    "featured_labels": {},
     "show_colorbar": True,
     "strip_template": True,
     "strip_updatemenus": True,
@@ -1248,6 +1247,7 @@ def apply_config(fig_dict, config):
     if featured:
         has_scene = 'scene' in layout
         feat_annotations = []
+        feat_labels = config.get('featured_labels', {})
 
         for trace in fig.get('data', []):
             tname = trace.get('name', '')
@@ -1256,6 +1256,8 @@ def apply_config(fig_dict, config):
             # Skip hidden traces
             if trace.get('visible') is False:
                 continue
+            # Use custom label override if provided
+            feat_label = feat_labels.get(tname, tname)
 
             if has_scene:
                 # 3D trace - find anchor point closest to origin
@@ -1280,19 +1282,7 @@ def apply_config(fig_dict, config):
                     continue
                 feat_annotations.append({
                     'x': ax, 'y': ay, 'z': az,
-                    'text': tname,
-                    'showarrow': False,
-                    'font': {
-                        'color': '#c9a84c',
-                        'size': 13,
-                        'family': 'Georgia, Times New Roman, serif'
-                    },
-                    'bgcolor': 'rgba(0,0,0,0)',
-                    'borderpad': 4,
-                    # No captureevents for 3D -- plotly_clickannotation
-                    # doesn't fire for scene annotations, and captureevents
-                    # would block clicks from reaching traces underneath
-                    '_featured': True,  # marker for JS removal
+                    'text': feat_label,
                 })
             else:
                 # 2D trace - find anchor point closest to median
@@ -1326,17 +1316,7 @@ def apply_config(fig_dict, config):
                     continue
                 feat_annotations.append({
                     'x': ax, 'y': ay,
-                    'text': tname,
-                    'showarrow': False,
-                    'font': {
-                        'color': '#c9a84c',
-                        'size': 13,
-                        'family': 'Georgia, Times New Roman, serif'
-                    },
-                    'bgcolor': 'rgba(0,0,0,0)',
-                    'borderpad': 4,
-                    'captureevents': True,
-                    '_featured': True,  # marker for JS removal
+                    'text': feat_label,
                 })
 
         if feat_annotations:
@@ -3766,6 +3746,7 @@ class GalleryStudio:
             'legend_position': self.var_legend_position.get(),
             'trace_visibility': self._collect_trace_visibility(),
             'featured_traces': self._collect_featured_traces(),
+            'featured_labels': self._collect_featured_labels(),
             'strip_hidden_traces': self.var_strip_hidden.get(),
             'marker_size_boost': self.var_marker_boost.get(),
             'line_width_min': self.var_line_min.get(),
@@ -3850,6 +3831,11 @@ class GalleryStudio:
         for name, var in getattr(self, 'featured_vars', {}).items():
             var.set(name in saved_feat)
 
+        # Refresh label override entries
+        saved_labels = c.get('featured_labels', {})
+        for name, var in getattr(self, 'label_vars', {}).items():
+            var.set(saved_labels.get(name, ''))
+
     # ---- Presets ----
 
     def _populate_trace_list(self):
@@ -3859,12 +3845,14 @@ class GalleryStudio:
             widget.destroy()
         self.trace_vars = {}
         self.featured_vars = {}
+        self.label_vars = {}  # {trace_name: StringVar} for custom label overrides
 
         if self.fig_dict is None:
             return
 
         saved_vis = self.config.get('trace_visibility', {})
         saved_feat = self.config.get('featured_traces', [])
+        saved_labels = self.config.get('featured_labels', {})
         for trace in self.fig_dict.get('data', []):
             name = trace.get('name', '')
             if not name:
@@ -3892,9 +3880,23 @@ class GalleryStudio:
             vis_var = tk.BooleanVar(value=saved_vis.get(name, True))
             cb = tk.Checkbutton(row, text=name,
                                 variable=vis_var, anchor='w',
-                                wraplength=230, justify='left')
+                                wraplength=160, justify='left')
             cb.pack(side='left', fill='x', expand=True)
             self.trace_vars[name] = vis_var
+
+            # Label override entry (compact, shown to the right)
+            label_var = tk.StringVar(value=saved_labels.get(name, ''))
+            lbl_entry = tk.Entry(row, textvariable=label_var, width=12,
+                                 fg='#c9a84c', insertbackground='#c9a84c',
+                                 relief='flat', bd=1,
+                                 highlightthickness=1,
+                                 highlightbackground='#444444',
+                                 highlightcolor='#c9a84c')
+            lbl_entry.pack(side='right', padx=(2, 2), pady=1)
+            ToolTip(lbl_entry, "Custom label for featured annotation. "
+                    "Leave blank to use the trace name. "
+                    "Useful for abbreviating long names on mobile.")
+            self.label_vars[name] = label_var
 
     def _trace_select_all(self):
         """Check all trace visibility boxes."""
@@ -3921,6 +3923,20 @@ class GalleryStudio:
             if var.get():
                 featured.append(name)
         return featured
+
+    def _collect_featured_labels(self):
+        """Collect custom label overrides for featured traces.
+
+        Returns a dict of {trace_name: custom_label} for entries
+        where the user typed something. Empty entries are excluded
+        so the export falls back to the trace name automatically.
+        """
+        labels = {}
+        for name, var in getattr(self, 'label_vars', {}).items():
+            text = var.get().strip()
+            if text:
+                labels[name] = text
+        return labels
 
     def _preview_as_gallery(self):
         """Preview how this plot will look in the gallery (index.html).
@@ -4196,12 +4212,7 @@ document.addEventListener('click', function(e) {{
             "trace_visibility": {},
             "strip_hidden_traces": False,
             "featured_traces": [],
-            "marker_size_boost": 0,
-            "line_width_min": 0,
-            "show_modebar": True,
-            "show_colorbar": True,
-            "strip_template": True,
-            "strip_updatemenus": False,
+            "featured_labels": {},
             "keep_animation_controls": True,
             "hover_mode": hover_mode,
             "x_title_scale": 100,
