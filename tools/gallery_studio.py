@@ -83,6 +83,8 @@ DEFAULT_CONFIG = {
     # Scene (3D) - additional
     "scene_aspectmode": "auto",  # auto, cube, data, manual
     "scene_camera": "original",  # original, isometric, top, front, side
+    "scene_axis_range": 0.0,  # 0 = auto (keep figure values); >0 = symmetric +/- in AU
+    "scene_dtick": 0.0,  # 0 = auto (keep figure values); >0 = override dtick in AU
 
     # Legend - additional
     "legend_font_color": "",  # empty = auto from bg brightness
@@ -149,7 +151,10 @@ PORTRAIT_CONFIG = {
     "show_grid": True,
     "scene_bgcolor": "#000000",
     "scene_aspectmode": "cube",
-    "scene_camera": "original",
+    "scene_camera": "isometric",
+    "scene_axis_range": 0.0,
+    "scene_dtick": 0.0,
+    "show_legend": False,
     "legend_orientation": "v",
     "legend_font_scale": 100,
     "legend_grouptitle_font_scale": 100,
@@ -167,6 +172,7 @@ PORTRAIT_CONFIG = {
     "strip_hidden_traces": False,
     "featured_traces": [],
     "featured_labels": {},
+    "show_modebar": True,
     "show_colorbar": True,
     "strip_template": True,
     "strip_updatemenus": True,
@@ -726,10 +732,15 @@ def apply_config(fig_dict, config):
                 axis['showbackground'] = False
                 axis['visible'] = False
                 scene[axis_key] = axis
-        elif not config.get('show_grid', True):
+        else:
+            # Restore axis visibility (source file may have them hidden)
+            show_grid = config.get('show_grid', True)
             for axis_key in ('xaxis', 'yaxis', 'zaxis'):
                 axis = scene.get(axis_key, {})
-                axis['showgrid'] = False
+                axis['visible'] = True
+                axis['showticklabels'] = True
+                axis['showgrid'] = show_grid
+                axis['showbackground'] = show_grid
                 scene[axis_key] = axis
 
         scene_bg = config.get('scene_bgcolor', '#000000')
@@ -737,6 +748,55 @@ def apply_config(fig_dict, config):
             scene['bgcolor'] = 'rgba(0,0,0,0)'
         else:
             scene['bgcolor'] = scene_bg
+
+        # 3D axis range + dtick override (close-approach / flyby plots)
+        scene_axis_range = config.get('scene_axis_range', 0.0)
+        scene_dtick = config.get('scene_dtick', 0.0)
+
+        if scene_axis_range > 0 or scene_dtick > 0:
+            # Import grid calculator
+            try:
+                from visualization_utils import _calculate_grid_dtick
+            except ImportError:
+                import math
+                def _calculate_grid_dtick(axis_span):
+                    if axis_span <= 0:
+                        return 1.0
+                    raw_tick = axis_span / 6.0
+                    exponent = math.floor(math.log10(raw_tick))
+                    mantissa = raw_tick / (10 ** exponent)
+                    if mantissa < 1.5:   clean_mantissa = 1.0
+                    elif mantissa < 3.5: clean_mantissa = 2.0
+                    elif mantissa < 7.5: clean_mantissa = 5.0
+                    else:                clean_mantissa = 10.0
+                    return clean_mantissa * (10 ** exponent)
+
+            # Determine effective dtick
+            effective_dtick = scene_dtick
+            if scene_axis_range > 0 and scene_dtick <= 0:
+                effective_dtick = _calculate_grid_dtick(scene_axis_range * 2)
+
+            # Build km-equivalent suffix for axis titles at small scales
+            suffix = ""
+            if effective_dtick > 0:
+                dtick_km = effective_dtick * 149597870.7
+                if effective_dtick < 0.01:
+                    suffix = f" (grid: {dtick_km:,.0f} km)"
+                elif effective_dtick < 0.1:
+                    suffix = f" (grid: {dtick_km / 1e6:.1f}M km)"
+
+            for axis_key, axis_label in (('xaxis', 'X'), ('yaxis', 'Y'), ('zaxis', 'Z')):
+                axis = scene.get(axis_key, {})
+                if scene_axis_range > 0:
+                    axis['range'] = [-scene_axis_range, scene_axis_range]
+                if effective_dtick > 0:
+                    axis['dtick'] = effective_dtick
+                    axis['title'] = f"{axis_label} (AU){suffix}"
+                scene[axis_key] = axis
+
+            print(f"[Studio] 3D axis override: range=+/-{scene_axis_range}, "
+                  f"dtick={effective_dtick} ({effective_dtick * 149597870.7:,.0f} km)")
+
         # 3D aspect mode
         aspect = config.get('scene_aspectmode', 'auto')
         if aspect != 'auto':
@@ -980,9 +1040,14 @@ def apply_config(fig_dict, config):
             layout['updatemenus'] = []
 
     # ---- Route hover text to customdata (for portrait info panel) ----
-    # NOTE: Must run BEFORE hover_mode='none' so we can read original hoverinfo
+    # When routing is ON, the card REPLACES the tooltip:
+    #   - Tooltip is always suppressed (blank text, hovertemplate shows empty)
+    #   - Card content respects hover_mode (full / name-only / none)
+    #   - hover_mode='none' with routing = no tooltip AND no card
+    # NOTE: Must run BEFORE hover_mode block
     if config.get('route_hover_to_panel', False):
         _routing_log = ['[ROUTING] _parse_hover_html (local)']
+        hover_mode = config.get('hover_mode', 'default')
 
         for trace in fig.get('data', []):
             hoverinfo = trace.get('hoverinfo', '')
@@ -1004,6 +1069,10 @@ def apply_config(fig_dict, config):
                 f'[ROUTING] {tname}: hoverinfo={hoverinfo}, '
                 f'text_items={len(text_list)}, '
                 f'sample={str(text_list[0])[:60]}')
+
+            # Always parse full hover data into customdata for the card.
+            # The JS card handler will decide what to show based on
+            # _hover_mode flag embedded in layout.
             customdata_list = []
             for hover_html in text_list:
                 parsed = _parse_hover_html(hover_html)
@@ -1019,15 +1088,21 @@ def apply_config(fig_dict, config):
                                  if hover_html else '')
                     }))
             trace['customdata'] = customdata_list
+
+            # Always suppress tooltip when routing is on.
+            # Blank text + text-only template = invisible tooltip.
+            # Keep hoverinfo='text' so Plotly fires click/hover events
+            # for the info card. Setting hoverinfo='none' kills 3D
+            # event detection in some Plotly versions.
             trace['text'] = ['' for _ in text_list]
-            # Keep hoverinfo='text' so Plotly fires click/hover
-            # events. With text=[''] the tooltip appears empty.
-            # Setting hoverinfo='none' kills 3D event detection
-            # in some Plotly versions when loaded from extracted HTML.
+            trace['hovertemplate'] = '%{text}<extra></extra>'
             trace['hoverinfo'] = 'text'
-            trace['hovertemplate'] = None
             _routing_log.append(
-                f'[ROUTING] {tname}: ROUTED ({len(customdata_list)} items)')
+                f'[ROUTING] {tname}: ROUTED, tooltip suppressed '
+                f'({len(customdata_list)} items)')
+
+        # Store hover_mode in layout so JS card handler knows what to show
+        layout['_hover_mode'] = hover_mode
 
         # Store routing log in layout for JS console output
         layout['_routing_log'] = _routing_log
@@ -1061,24 +1136,56 @@ def apply_config(fig_dict, config):
                             }))
                     trace['customdata'] = customdata_list
                     trace['text'] = ['' for _ in text_list]
+                    trace['hovertemplate'] = '%{text}<extra></extra>'
                     trace['hoverinfo'] = 'text'
-                    trace['hovertemplate'] = None
 
     # ---- Hover mode ----
+    # Controls what the TOOLTIP shows. Independent of routing (which
+    # controls the info card).
+    #
+    # Key Plotly behavior:
+    #   - hovertemplate takes priority over hoverinfo when set
+    #   - Setting hovertemplate=None falls back to hoverinfo defaults
+    #     (which shows name + x + y + z in 3D -- not what we want)
+    #   - The source orrery sets hovertemplate='%{text}<extra></extra>'
+    #     to show only the text field
+    #   - Source traces may already have customdata from the orrery,
+    #     so customdata presence does NOT mean routing was active
     hover_mode = config.get('hover_mode', 'default')
+    is_routed = config.get('route_hover_to_panel', False)
+
     if hover_mode == 'none':
         for trace in fig.get('data', []):
-            # Skip traces that have been routed to the info panel -
-            # they need hoverinfo alive for Plotly click/hover event detection.
-            # Their text is already cleared, so no visible tooltip appears.
-            if trace.get('customdata'):
-                continue
-            trace['hoverinfo'] = 'none'
-            trace['hovertemplate'] = None
+            if is_routed:
+                # Routing is on: keep hoverinfo alive for click detection
+                # but make tooltip invisible by blanking text + using
+                # text-only template
+                text_data = trace.get('text')
+                if text_data is not None:
+                    if isinstance(text_data, (list, tuple)):
+                        trace['text'] = ['' for _ in text_data]
+                    else:
+                        trace['text'] = ''
+                trace['hovertemplate'] = '%{text}<extra></extra>'
+                trace['hoverinfo'] = 'text'
+            else:
+                # No routing: suppress hover entirely
+                trace['hoverinfo'] = 'none'
+                trace['hovertemplate'] = None
     elif hover_mode == 'names_only':
         for trace in fig.get('data', []):
-            if trace.get('customdata') and trace.get('hovertemplate'):
-                trace['hovertemplate'] = '%{customdata}<extra></extra>'
+            tname = trace.get('name', '')
+            # Replace text with just the name
+            text_data = trace.get('text')
+            if text_data is not None:
+                if isinstance(text_data, (list, tuple)):
+                    trace['text'] = [tname for _ in text_data]
+                else:
+                    trace['text'] = tname
+            # Use text-only template to suppress default xyz display
+            trace['hovertemplate'] = '%{text}<extra></extra>'
+            trace['hoverinfo'] = 'text'
+    # hover_mode == 'default': leave everything as-is (original hover)
 
     # ---- Marker opacity fix (Plotly hover detection workaround) ----
     if config.get('marker_opacity_fix', False):
@@ -1131,16 +1238,25 @@ def apply_config(fig_dict, config):
 
     # ---- Configure hoverlabel for portrait (minimal name-only tooltip) ----
     if config.get('output_format') == 'portrait':
-        layout['hoverlabel'] = {
-            'bgcolor': '#0f172a',
-            'bordercolor': '#f8fafc',
-            'font': {
-                'family': 'Consolas, SF Mono, Fira Code, Courier New, monospace',
-                'size': 16,
-                'color': '#f8fafc'
-            },
-            'align': 'left'
-        }
+        if config.get('route_hover_to_panel', False):
+            # Routing suppresses tooltip -- make hoverlabel invisible
+            # but keep hovermode alive for click event detection
+            layout['hoverlabel'] = {
+                'bgcolor': 'rgba(0,0,0,0)',
+                'bordercolor': 'rgba(0,0,0,0)',
+                'font': {'size': 1, 'color': 'rgba(0,0,0,0)'}
+            }
+        else:
+            layout['hoverlabel'] = {
+                'bgcolor': '#0f172a',
+                'bordercolor': '#f8fafc',
+                'font': {
+                    'family': 'Consolas, SF Mono, Fira Code, Courier New, monospace',
+                    'size': 16,
+                    'color': '#f8fafc'
+                },
+                'align': 'left'
+            }
 
     # ---- Modebar ----
     # (handled at render time via config, not in figure data)
@@ -1686,6 +1802,9 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     # Preserve _studio_nav for gallery pan controls
     if '_studio_nav' in layout_dict:
         layout_for_json['_studio_nav'] = layout_dict['_studio_nav']
+    # Preserve _hover_mode for JS card handler to respect hover settings
+    if '_hover_mode' in layout_dict:
+        layout_for_json['_hover_mode'] = layout_dict['_hover_mode']
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
@@ -2143,12 +2262,13 @@ function toggleAnnotations() {{
 """
 
     # Info card for portrait mode (click -> slide-up card from bottom)
-    # Matches index.html's mobile info card behavior
+    # Only injected when route_hover_to_panel is enabled -- the card is
+    # the routing destination. Without routing, no card.
     infocard_css = ""
     infocard_html = ""
     infocard_js = ""
 
-    if output_format == 'portrait':
+    if output_format == 'portrait' and config.get('route_hover_to_panel', False):
         infocard_css = """
   /* Floating info card (portrait mode - inside aspect frame) */
   .info-card {
@@ -2251,22 +2371,42 @@ function toggleAnnotations() {{
   var _tapHint = document.getElementById('tapHint');
   var _icShown = false;
 
+  // Read hover_mode from figure layout (set by Studio routing)
+  var _plotDiv = document.getElementById('plotly-graph');
+  var _hoverMode = (_plotDiv && _plotDiv.layout && _plotDiv.layout._hover_mode)
+                   ? _plotDiv.layout._hover_mode : 'default';
+
   function _showCard(cd) {
     try {
       var p = cd;
       if (typeof cd === 'string') p = JSON.parse(cd);
+
+      // Apply hover_mode filter to card content:
+      //   default:    show full card (name + subtitle + body)
+      //   names_only: show name only (hide subtitle + body)
+      //   none:       don't show card at all
+      if (_hoverMode === 'none') return;
+
       _icName.textContent = p.name || '';
-      if (p.subtitle) {
-        _icSub.textContent = p.subtitle;
-        _icSub.style.display = '';
-      } else {
+
+      if (_hoverMode === 'names_only') {
+        // Name only in card
         _icSub.style.display = 'none';
-      }
-      if (p.body) {
-        _icBody.innerHTML = p.body;
-        _icBody.style.display = '';
-      } else {
         _icBody.style.display = 'none';
+      } else {
+        // Full card
+        if (p.subtitle) {
+          _icSub.textContent = p.subtitle;
+          _icSub.style.display = '';
+        } else {
+          _icSub.style.display = 'none';
+        }
+        if (p.body) {
+          _icBody.innerHTML = p.body;
+          _icBody.style.display = '';
+        } else {
+          _icBody.style.display = 'none';
+        }
       }
       _infoCard.classList.add('visible');
       _icShown = true;
@@ -2283,6 +2423,9 @@ function toggleAnnotations() {{
   // Wire click -> info card
   var _pg = document.getElementById('plotly-graph');
   _pg.on('plotly_click', function(evtData) {
+    // hover_mode='none' means no card at all
+    if (_hoverMode === 'none') return;
+
     if (!evtData || !evtData.points || !evtData.points.length) return;
     var pt = evtData.points[0];
     var cd = null;
@@ -2332,13 +2475,15 @@ function toggleAnnotations() {{
     if (e.key === 'Escape') _dismissCard();
   });
 
-  // Tap hint on first load
-  setTimeout(function() {
-    _tapHint.classList.add('visible');
+  // Tap hint on first load (only if card will actually work)
+  if (_hoverMode !== 'none') {
     setTimeout(function() {
-      _tapHint.classList.remove('visible');
-    }, 3000);
-  }, 800);
+      _tapHint.classList.add('visible');
+      setTimeout(function() {
+        _tapHint.classList.remove('visible');
+      }, 3000);
+    }, 800);
+  }
 """
 
     html = f"""<!DOCTYPE html>
@@ -2455,6 +2600,8 @@ def build_social_html(fig_dict, config, title="Paloma's Orrery"):
         layout_for_json['_studio_config'] = portrait_layout['_studio_config']
     if '_studio_nav' in portrait_layout:
         layout_for_json['_studio_nav'] = portrait_layout['_studio_nav']
+    if '_hover_mode' in portrait_layout:
+        layout_for_json['_hover_mode'] = portrait_layout['_hover_mode']
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
@@ -2901,10 +3048,11 @@ class GalleryStudio:
         canvas.bind_all('<MouseWheel>', on_mousewheel)
         self._canvas = canvas
 
-        # Three-column layout inside scroll frame
+        # Four-column layout inside scroll frame
         self.scroll_frame.columnconfigure(0, weight=1)
         self.scroll_frame.columnconfigure(1, weight=1)
         self.scroll_frame.columnconfigure(2, weight=1)
+        self.scroll_frame.columnconfigure(3, weight=1)
 
         self.col_left = tk.Frame(self.scroll_frame)
         self.col_left.grid(row=0, column=0, sticky='nsew', padx=(0, 4))
@@ -2913,7 +3061,10 @@ class GalleryStudio:
         self.col_right.grid(row=0, column=1, sticky='nsew', padx=(4, 4))
 
         self.col_portrait = tk.Frame(self.scroll_frame)
-        self.col_portrait.grid(row=0, column=2, sticky='nsew', padx=(4, 0))
+        self.col_portrait.grid(row=0, column=2, sticky='nsew', padx=(4, 4))
+
+        self.col_3d = tk.Frame(self.scroll_frame)
+        self.col_3d.grid(row=0, column=3, sticky='nsew', padx=(4, 0))
 
         # Build config sections into the three columns
         self._build_config_sections()
@@ -2951,7 +3102,7 @@ class GalleryStudio:
         status_bar.pack(fill='x', side='bottom')
 
     def _build_config_sections(self):
-        """Build config sections in three columns.
+        """Build config sections in four columns.
 
         Left column: Figure structure (spatial layout)
             Title, Background, Margins, Legend
@@ -2962,11 +3113,15 @@ class GalleryStudio:
 
         Right column: Output & interaction
             3D Handoff (Google Earth), Presets & Output Format,
-            Hover, 3D Scene, 2D Axes, Navigation Controls
+            Hover, 2D Axes, Navigation Controls
+
+        3D column: 3D scene controls
+            3D Scene (axes, grid, aspect, camera, range, dtick)
         """
         left = self.col_left
         right = self.col_right
         portrait = self.col_portrait
+        col_3d = self.col_3d
 
         # ---- Title ----
         sec = tk.LabelFrame(left, text="Title", padx=6, pady=4)
@@ -3640,8 +3795,8 @@ class GalleryStudio:
                 "gallery pieces where interaction is not needed -- "
                 "presentation screenshots, static views, etc.")
 
-        # ---- Scene (3D) ----
-        sec = tk.LabelFrame(portrait, text="3D Scene", padx=6, pady=4)
+        # ---- Scene (3D) ---- [Column 3]
+        sec = tk.LabelFrame(col_3d, text="3D Scene", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
         ToolTip(sec, "Settings for 3D plots (solar system, stellar maps, "
                 "planet shells). Ignored for 2D plots like climate charts "
@@ -3700,6 +3855,51 @@ class GalleryStudio:
                 "  top: Top-down view (2D-like, orrery default)\n"
                 "  front: Looking along Y axis\n"
                 "  side: Looking along X axis")
+
+        # Axis range and dtick for close-approach / flyby plots
+        sep = ttk.Separator(sec, orient='horizontal')
+        sep.pack(fill='x', pady=4)
+
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Axis range +/-:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_scene_axis_range = tk.DoubleVar(
+            value=self.config.get('scene_axis_range', 0.0))
+        entry = tk.Entry(row, textvariable=self.var_scene_axis_range,
+                         width=12)
+        entry.pack(side='left')
+        tk.Label(row, text=" AU").pack(side='left')
+        ToolTip(entry, "Symmetric axis range in AU. 0 = keep figure values.\n"
+                "Sets all three axes to +/- this value.\n\n"
+                "Reference values for Earth-centered views:\n"
+                "  0.003  -- Moon orbit + Apophis flyby in frame\n"
+                "  0.001  -- GEO belt detail\n"
+                "  0.0005 -- GEO close-up\n\n"
+                "For Apophis perigee try 0.003;\n"
+                "for Moon orbit try 0.003;\n"
+                "for GEO belt try 0.001.")
+
+        row = tk.Frame(sec)
+        row.pack(fill='x', pady=2)
+        tk.Label(row, text="Axis dtick:", width=14,
+                 anchor='w').pack(side='left')
+        self.var_scene_dtick = tk.DoubleVar(
+            value=self.config.get('scene_dtick', 0.0))
+        entry = tk.Entry(row, textvariable=self.var_scene_dtick,
+                         width=12)
+        entry.pack(side='left')
+        tk.Label(row, text=" AU").pack(side='left')
+        ToolTip(entry, "Grid tick spacing in AU. 0 = auto-calculate from range.\n"
+                "When range is set and dtick is 0, auto-calculates\n"
+                "~6 gridlines across the view.\n\n"
+                "Reference values:\n"
+                "  0.0005 -- ~74,800 km per division (Apophis scale)\n"
+                "  0.001  -- ~149,600 km per division (Moon scale)\n"
+                "  0.0001 -- ~15,000 km per division (GEO scale)")
+
+        tk.Label(sec, text="(0 = auto / keep figure values)",
+                 fg='gray50', font=('TkDefaultFont', 8)).pack(anchor='w')
 
         # ---- 2D Axes ----
         sec = tk.LabelFrame(portrait, text="2D Axes", padx=6, pady=4)
@@ -3825,6 +4025,8 @@ class GalleryStudio:
             'label_font_scale': self.var_label_font_scale.get(),
             'scene_aspectmode': self.var_scene_aspect.get(),
             'scene_camera': self.var_scene_camera.get(),
+            'scene_axis_range': self.var_scene_axis_range.get(),
+            'scene_dtick': self.var_scene_dtick.get(),
             'legend_font_color': self.var_legend_color.get(),
             'legend_border_transparent': self.var_legend_border.get(),
             'legend_position': self.var_legend_position.get(),
@@ -3885,6 +4087,8 @@ class GalleryStudio:
         self.var_label_font_scale.set(c.get('label_font_scale', 100))
         self.var_scene_aspect.set(c.get('scene_aspectmode', 'auto'))
         self.var_scene_camera.set(c.get('scene_camera', 'original'))
+        self.var_scene_axis_range.set(c.get('scene_axis_range', 0.0))
+        self.var_scene_dtick.set(c.get('scene_dtick', 0.0))
         self.var_legend_color.set(c.get('legend_font_color', ''))
         self.var_legend_border.set(c.get('legend_border_transparent', True))
         self.var_legend_position.set(c.get('legend_position', 'original'))

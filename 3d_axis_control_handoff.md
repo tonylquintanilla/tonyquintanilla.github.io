@@ -1,5 +1,5 @@
 # Handoff: 3D Axis Control (dtick + range)
-## Paloma's Orrery | March 5, 2026
+## Paloma's Orrery | March 6, 2026 (updated)
 
 ---
 
@@ -13,6 +13,127 @@ Earth/Moon/GEO/Apophis all clustered invisibly at the center.
 
 This affects any Earth-centered view: Apophis perigee, Moon orbit,
 GEO belt, LEO belt. The scale mismatch is 3 orders of magnitude.
+
+---
+
+## Status
+
+### Part 1: Gallery Studio -- COMPLETE (March 6, 2026)
+
+All Studio changes implemented, tested, and verified.
+
+**What was built:**
+- 4th column added to Studio layout (`col_3d`) for 3D Scene section
+- `scene_axis_range` and `scene_dtick` config keys in DEFAULT_CONFIG,
+  PORTRAIT_CONFIG, GUI widgets, `_collect_config()`, `apply_config()`,
+  and `_apply_config_to_gui()`
+- `apply_config()` range/dtick override with auto-dtick calculation
+  (uses `_calculate_grid_dtick`) and km-equivalent suffix in axis titles
+  for small scales (dtick < 0.01 shows km, < 0.1 shows millions of km)
+- Fallback `_calculate_grid_dtick` inline if visualization_utils import fails
+- 6-decimal precision entry fields with reference-value tooltips
+
+**Tested at**: range=2 AU / dtick=0.25 AU (solar system scale) -- clean grid,
+AU-only axis titles (km suffix correctly suppressed at this scale).
+
+**Bug fixes discovered during Studio testing (also delivered):**
+- Show axes not restoring: added `else` branch to set `visible: True`
+  when show_axes is checked (source files with previously hidden axes
+  stayed hidden -- pre-existing bug)
+- Hover/routing matrix completely rewritten (see below)
+
+---
+
+### Part 2: Orrery GUI -- REMAINING
+
+When the user generates a 3D orrery plot with a non-Sun center body
+(Earth, Moon, Mars, etc.), the initial axis ranges should auto-fit to the
+data extent, and dtick should be calculated from that range.
+
+**Hook points confirmed (both call sites):**
+
+Call site 1 (static plot, line ~5312):
+```
+plot_idealized_orbits()          # line 5133
+_add_close_approach_extras()     # line 5148
+[exoplanet stuff]                # line 5209
+add_url_buttons()                # line 5314
+>>> NEW: axis auto-fit HERE <<<  # BEFORE fly-to buttons
+add_look_at_object_buttons()     # line 5317
+add_fly_to_object_buttons()      # line 5319  (reads axis range for baseline)
+```
+
+Call site 2 (animation plot, line ~6971):
+```
+plot_idealized_orbits()          # line 6297
+_add_close_approach_extras()     # line 6315
+[exoplanet stuff]                # line 6348
+add_hover_toggle_buttons()       # line 6972
+>>> NEW: axis auto-fit HERE <<<  # BEFORE fly-to buttons
+add_look_at_object_buttons()     # line 6975
+add_fly_to_object_buttons()      # line 6977  (reads axis range for baseline)
+```
+
+**Auto-range logic:**
+
+```python
+# After all traces added, before fly-to buttons -- for non-Sun center views
+if center_object_name != 'Sun':
+    all_x, all_y, all_z = [], [], []
+    for trace in fig.data:
+        if hasattr(trace, 'x') and trace.x is not None:
+            all_x.extend([v for v in trace.x if v is not None])
+        if hasattr(trace, 'y') and trace.y is not None:
+            all_y.extend([v for v in trace.y if v is not None])
+        if hasattr(trace, 'z') and trace.z is not None:
+            all_z.extend([v for v in trace.z if v is not None])
+
+    if all_x and all_y and all_z:
+        from visualization_utils import _calculate_grid_dtick
+        max_extent = max(
+            max(abs(v) for v in all_x),
+            max(abs(v) for v in all_y),
+            max(abs(v) for v in all_z)
+        )
+        # Cap at 1.5x farthest child orbit to exclude visitor trajectories
+        # (e.g., Apophis's full heliocentric arc in an Earth-centered plot)
+        # TODO: determine cap value from child objects, not raw data
+        axis_range = [-max_extent * 1.1, max_extent * 1.1]
+        axis_span = axis_range[1] - axis_range[0]
+        dtick = _calculate_grid_dtick(axis_span)
+
+        dtick_km = dtick * 149597870.7
+        if dtick < 0.01:
+            suffix = f" (grid: {dtick_km:,.0f} km)"
+        elif dtick < 0.1:
+            suffix = f" (grid: {dtick_km/1e6:.1f}M km)"
+        else:
+            suffix = ""
+
+        fig.update_layout(scene=dict(
+            xaxis=dict(range=axis_range, dtick=dtick,
+                       title=f"X (AU){suffix}"),
+            yaxis=dict(range=axis_range, dtick=dtick,
+                       title=f"Y (AU){suffix}"),
+            zaxis=dict(range=axis_range, dtick=dtick,
+                       title=f"Z (AU){suffix}"),
+        ))
+        print(f"[AxisControl] Non-Sun center: range={axis_range[0]:.4f} to "
+              f"{axis_range[1]:.4f} AU, dtick={dtick:.4f} AU ({dtick_km:,.0f} km)")
+```
+
+**Critical ordering:** This block MUST run BEFORE `add_fly_to_object_buttons()`
+because that function reads `fig.layout.scene.xaxis.range` to save the
+baseline for the "Return to Full View" button.
+
+**Trace filtering (Issue #1):** Traces for visitor objects (e.g., Apophis
+heliocentric arc) extend far beyond the center body's neighborhood. The
+auto-range should cap at ~1.5x the farthest child object's orbit. Need to
+determine which traces are children vs visitors -- check trace naming
+conventions or metadata during implementation.
+
+**Sun-centered guard:** `if center_object_name != 'Sun':` -- do NOT apply
+to Sun-centered plots. Existing AU-scale handling is correct there.
 
 ---
 
@@ -40,179 +161,8 @@ def _calculate_grid_dtick(axis_span):
     return clean_mantissa * (10 ** exponent)
 ```
 
-It's already used by `add_fly_to_object_buttons()` and
-`add_look_at_object_buttons()` in `visualization_utils.py` -- these set
-`scene.xaxis.dtick/range` on Fly-To dropdown button args. That's the
-BUTTON level. What's missing is setting them at **initial plot generation**.
-
----
-
-## Two-Part Implementation
-
-### Part 1: Orrery GUI -- at generation time (palomas_orrery.py)
-
-When the user generates a 3D orrery plot with a non-Sun center body
-(Earth, Moon, Mars, etc.), the initial axis ranges should auto-fit to the
-data extent, and dtick should be calculated from that range.
-
-**Where to add this:** Look for where `fig.update_layout(scene=...)` is
-called for Earth-centered plots. The right hook is after all traces have
-been added and before `fig.show()`. The data extent is knowable at that
-point from the position data already in scope.
-
-**Logic to add:**
-
-```python
-# After all traces added, before fig.show() -- for non-Sun center views
-if center_object_name != 'Sun':
-    # Collect all x/y/z values across traces to find data extent
-    all_x, all_y, all_z = [], [], []
-    for trace in fig.data:
-        if hasattr(trace, 'x') and trace.x is not None:
-            all_x.extend([v for v in trace.x if v is not None])
-        if hasattr(trace, 'y') and trace.y is not None:
-            all_y.extend([v for v in trace.y if v is not None])
-        if hasattr(trace, 'z') and trace.z is not None:
-            all_z.extend([v for v in trace.z if v is not None])
-
-    if all_x and all_y and all_z:
-        from visualization_utils import _calculate_grid_dtick
-        # Use symmetric range: max absolute value across all axes
-        max_extent = max(
-            max(abs(v) for v in all_x),
-            max(abs(v) for v in all_y),
-            max(abs(v) for v in all_z)
-        )
-        # Add 10% padding
-        axis_range = [-max_extent * 1.1, max_extent * 1.1]
-        axis_span = axis_range[1] - axis_range[0]
-        dtick = _calculate_grid_dtick(axis_span)
-
-        # Also format axis title to show km equivalent at small scales
-        dtick_km = dtick * 149597870.7
-        if dtick < 0.01:
-            suffix = f" (grid: {dtick_km:,.0f} km)"
-        elif dtick < 0.1:
-            suffix = f" (grid: {dtick_km/1e6:.1f}M km)"
-        else:
-            suffix = ""
-
-        fig.update_layout(scene=dict(
-            xaxis=dict(range=axis_range, dtick=dtick,
-                       title=f"X (AU){suffix}"),
-            yaxis=dict(range=axis_range, dtick=dtick,
-                       title=f"Y (AU){suffix}"),
-            zaxis=dict(range=axis_range, dtick=dtick,
-                       title=f"Z (AU){suffix}"),
-        ))
-        print(f"[AxisControl] Non-Sun center: range={axis_range[0]:.4f} to "
-              f"{axis_range[1]:.4f} AU, dtick={dtick:.4f} AU ({dtick_km:,.0f} km)")
-```
-
-**Note on scope:** The existing code in `palomas_orrery.py` calls
-`plot_idealized_orbits()` from `visualization_3d.py`, which builds the
-figure. The post-processing hook needs to run in `palomas_orrery.py`
-AFTER `plot_idealized_orbits()` returns the figure but BEFORE `fig.show()`.
-Check the call site -- there should be a clear place to inject this.
-
-**Interaction with existing fly-to buttons:** The fly-to buttons
-(`add_fly_to_object_buttons`) already set their own ranges per button.
-The initial range set here will be the "Return to Full View" baseline.
-`add_fly_to_object_buttons` already reads `fig.layout.scene.xaxis.range`
-to capture the baseline for the "Return to Full View" button -- so set
-this BEFORE calling that function.
-
----
-
-### Part 2: Gallery Studio -- refinement layer (gallery_studio.py)
-
-Studio gets three new numeric fields in the **3D Scene** section (column 3,
-currently contains Scene Aspect Mode, Background Color, Show Axes, Show Grid).
-
-**New config keys:**
-```python
-'scene_axis_range': 0.0,   # 0 = auto (keep figure values); >0 = symmetric +-value in AU
-'scene_dtick': 0.0,        # 0 = auto (keep figure values); >0 = override dtick in AU
-```
-
-**GUI placement:** Add below "Show axes / Show grid" in the 3D Scene section.
-These fields are only meaningful when axes are shown, but don't need to be
-gated -- they're harmless when axes are hidden.
-
-```
-3D Scene
-  Aspect mode:  [auto v]
-  BG color:     [______] [Dark] [Black]
-  Show axes:    [x]    Show grid: [x]
-  Axis range +/-: [0.000] AU  (0=auto)
-  Axis dtick:     [0.000] AU  (0=auto)
-```
-
-**Tooltip text:**
-- Axis range: "Symmetric axis range in AU. 0 = keep figure values. For Apophis perigee try 0.003; for Moon orbit try 0.003; for GEO belt try 0.001."
-- Axis dtick: "Grid tick spacing in AU. 0 = auto-calculate from range. For Apophis perigee try 0.0005; for Moon orbit try 0.001."
-
-**apply_config() addition:**
-
-```python
-# 3D axis range + dtick override (after show_axes/show_grid logic)
-scene_axis_range = config.get('scene_axis_range', 0.0)
-scene_dtick = config.get('scene_dtick', 0.0)
-
-if scene_axis_range > 0 or scene_dtick > 0:
-    # Read current values to fill gaps
-    try:
-        current_range = list(fig.layout.scene.xaxis.range) if fig.layout.scene.xaxis.range else None
-        current_dtick = fig.layout.scene.xaxis.dtick if fig.layout.scene.xaxis.dtick else None
-    except:
-        current_range = None
-        current_dtick = None
-
-    axis_update = {}
-
-    if scene_axis_range > 0:
-        r = scene_axis_range
-        for ax in ('xaxis', 'yaxis', 'zaxis'):
-            axis_update[f'scene.{ax}.range'] = [-r, r]
-        # Auto-calculate dtick from range if not explicitly set
-        if scene_dtick <= 0:
-            from visualization_utils import _calculate_grid_dtick
-            auto_dtick = _calculate_grid_dtick(scene_axis_range * 2)
-            for ax in ('xaxis', 'yaxis', 'zaxis'):
-                axis_update[f'scene.{ax}.dtick'] = auto_dtick
-
-    if scene_dtick > 0:
-        for ax in ('xaxis', 'yaxis', 'zaxis'):
-            axis_update[f'scene.{ax}.dtick'] = scene_dtick
-
-    if axis_update:
-        fig.update_layout(axis_update)
-        print(f"[Studio] 3D axis override: range={scene_axis_range}, dtick={scene_dtick}")
-```
-
-**_read_config_from_figure() addition:**
-
-```python
-# Read current 3D axis range and dtick from figure
-try:
-    x_range = fig.layout.scene.xaxis.range
-    if x_range and len(x_range) == 2:
-        # Store as symmetric half-range (positive value)
-        half_range = max(abs(x_range[0]), abs(x_range[1]))
-        config['scene_axis_range'] = round(half_range, 6)
-    else:
-        config['scene_axis_range'] = 0.0
-    config['scene_dtick'] = fig.layout.scene.xaxis.dtick or 0.0
-except:
-    config['scene_axis_range'] = 0.0
-    config['scene_dtick'] = 0.0
-```
-
-**DEFAULT_CONFIG addition:**
-```python
-'scene_axis_range': 0.0,
-'scene_dtick': 0.0,
-```
+Already used by `add_fly_to_object_buttons()` and
+`add_look_at_object_buttons()` for per-button axis scaling.
 
 ---
 
@@ -230,84 +180,59 @@ Key distances for Apophis close approach plots (Earth center):
 
 Suggested starting values for Apophis close approach view:
 - `scene_axis_range`: 0.003 AU (shows Moon + Apophis + GEO in frame)
-- `scene_dtick`: 0.0005 AU (~74,800 km per grid division -- about 2x GEO radius)
+- `scene_dtick`: 0.0005 AU (~74,800 km per grid division)
 
 For GEO-only view:
 - `scene_axis_range`: 0.0005 AU
 - `scene_dtick`: 0.0001 AU (~15,000 km per division)
 
+**Km suffix trigger thresholds:**
+- dtick < 0.01 AU: shows exact km (e.g., "grid: 74,799 km")
+- dtick < 0.1 AU: shows millions of km (e.g., "grid: 14.96M km")
+- dtick >= 0.1 AU: AU only (no km suffix)
+
 ---
 
 ## Known Issues / Watch Out For
 
-1. **Auto-range excludes non-child objects:** Traces for objects whose
-   orbits extend far beyond the plot range (e.g., Apophis's full
-   heliocentric orbit when plotted Earth-centered) will skew the
-   auto-range outward. The data extent collection should either exclude
-   traces marked as non-children OR cap at a reasonable bound (e.g.,
-   ignore extents > 5 AU in an Earth-centered view). Check what traces
-   are actually added by `plot_idealized_orbits` for Earth-centered plots.
+1. **Auto-range vs visitor trajectories:** Cap at ~1.5x farthest child
+   orbit. Need to identify child vs visitor traces during implementation.
 
-2. **Fly-To button ordering:** `add_fly_to_object_buttons()` reads
-   `fig.layout.scene.xaxis.range` at call time to save the baseline.
-   The orrery-side axis control MUST run before this function is called,
-   not after.
+2. **Fly-To button ordering:** Auto-fit MUST run before
+   `add_fly_to_object_buttons()` which captures the baseline range.
 
-3. **Return to Full View button:** The axis auto-fit sets the figure's
-   initial range. The Fly-To dropdown's "Return to Full View" button
-   captures this as its target. If the initial range is wrong, the
-   Return button will also be wrong.
+3. **Return to Full View:** Captures whatever range is set at call time.
+   If auto-fit is wrong, Return button is also wrong.
 
-4. **Sun-centered plots:** Do NOT apply auto-range to Sun-centered plots.
-   The existing axis handling for those is correct (AU scale is right).
-   Guard strictly with `if center_object_name != 'Sun':`.
+4. **Sun-centered plots:** Do NOT apply. Guard with
+   `if center_object_name != 'Sun':`.
 
-5. **Studio symmetric assumption:** The studio stores range as a single
-   positive number (symmetric +/-). This works for origin-centered plots
-   (Earth at origin, everything else relative). If a plot has an
-   asymmetric range for some reason, the studio will lose that asymmetry.
-   Acceptable for now -- all Earth-centered plots are symmetric.
+5. **Studio symmetric assumption:** Stores range as single positive value.
+   Fine for origin-centered plots. Would lose asymmetry if any existed.
 
 ---
 
-## Files to Touch
+## Files to Touch (Remaining)
 
 | File | Change |
 |------|--------|
-| `palomas_orrery.py` | Add auto-range/dtick block after `plot_idealized_orbits`, before `fig.show()`, guarded by non-Sun center |
-| `gallery_studio.py` | 4 changes: DEFAULT_CONFIG, GUI fields in 3D Scene section, `apply_config()` block, `_read_config_from_figure()` block |
-| `visualization_utils.py` | No changes needed -- `_calculate_grid_dtick` already exists |
+| `palomas_orrery.py` | Add auto-range/dtick block at both call sites (static ~5312, animation ~6971), guarded by non-Sun center |
+| `visualization_utils.py` | No changes needed |
+| `gallery_studio.py` | DONE -- no further changes |
 
 ---
 
-## Suggested Session Order
-
-1. Studio first (easier, self-contained, visual result immediate)
-   - Add DEFAULT_CONFIG keys
-   - Add GUI fields in 3D Scene section
-   - Add `apply_config()` block
-   - Add `_read_config_from_figure()` block
-   - Test: load Apophis source HTML, set range=0.003, preview -- axes should show Moon orbit in frame
-
-2. Orrery GUI second (requires finding the right hook point)
-   - Locate `plot_idealized_orbits` call site in `palomas_orrery.py`
-   - Add auto-range/dtick block after the call
-   - Test: generate Earth-centered plot with Moon + Apophis -- axes should auto-fit
-   - Verify: "Return to Full View" button target is correct after adding fly-to buttons
-
----
-
-## Success Criteria
+## Success Criteria (Remaining)
 
 - Apophis close approach plot: grid lines visible at ~0.001 AU spacing,
   Moon orbit fits in frame, Apophis trajectory arc visible
 - GEO belt plot: ring visible with tick labels in AU and km equivalent
   in axis title
 - Sun-centered plots: completely unchanged
-- Studio: range/dtick fields read back correctly when loading a previously
-  exported close-approach gallery file (round-trip)
+- "Return to Full View" button target is correct after fly-to buttons added
 
 ---
 
 *Created: March 5, 2026*
-*Context: Protocol v3.13, Part 1 of Apophis close approach polish*
+*Updated: March 6, 2026 -- Part 1 (Studio) complete, Part 2 (orrery GUI) remaining*
+*Context: Protocol v3.13*

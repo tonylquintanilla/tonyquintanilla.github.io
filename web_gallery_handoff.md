@@ -3119,3 +3119,151 @@ Standing convention for all new hover text in orrery modules.
 
 *"Especially in these fraught times."*
 -- Tony, on the partnership and what's at stake, March 5, 2026
+
+### Session 25 (Mar 6, 2026): 3D Axis Control + Hover/Routing Matrix Fix
+
+Two threads: implementing the 3D axis control feature (Studio side), and
+discovering and fixing a cascade of hover/routing bugs exposed during testing.
+
+**3D Axis Control -- Studio Side (gallery_studio.py)**
+
+Added manual axis range and dtick override fields to Studio for close-approach
+and flyby plot curation. This is Part 1 of the 3D Axis Control handoff;
+Part 2 (orrery GUI auto-range at generation time) remains for next session.
+
+Changes:
+- 4th column (`col_3d`) added to Studio layout. 3D Scene section moved
+  from crowded column 2 (portrait) to dedicated column 3. Gives room for
+  the new fields and future 3D controls.
+- `scene_axis_range` and `scene_dtick` config keys added to DEFAULT_CONFIG,
+  PORTRAIT_CONFIG, GUI widgets (6-decimal entry fields with reference-value
+  tooltips), `_collect_config()`, `apply_config()`, `_apply_config_to_gui()`.
+- `apply_config()` range/dtick override: when range > 0, sets symmetric
+  +/- range on all three scene axes. Auto-calculates dtick from range
+  (~6 gridlines) if dtick is 0. Appends km-equivalent suffix to axis
+  titles at small scales (< 0.01 AU shows km, < 0.1 AU shows millions of km,
+  >= 0.1 AU shows AU only).
+- Fallback `_calculate_grid_dtick` inline if visualization_utils import fails.
+
+Tested at range=2 AU / dtick=0.25 AU (solar system scale) -- clean grid,
+correct axis titles. Km suffix verified to trigger only at close-approach
+scales per the threshold logic.
+
+**Show Axes Bug Fix (pre-existing)**
+
+The `show_axes` toggle only had a code path to *hide* axes (set
+`visible: False`, clear title, etc.). No code path to *restore* them.
+When a source file had axes previously hidden (e.g., from a prior Studio
+export), checking Show axes did nothing.
+
+Fix: Added `else` branch that sets `visible: True`, `showticklabels: True`,
+and restores grid/background based on the Show grid setting.
+
+**Hover/Routing Matrix -- Complete Rewrite**
+
+Testing the axis control exposed inconsistent hover behavior across the
+6 combinations of hover mode (default/names_only/none) x routing (on/off).
+Root causes traced through 5 iterations:
+
+*Round 1: Routing destroyed tooltip text unconditionally*
+The routing block blanked `trace['text']` regardless of hover_mode.
+Initial fix: preserve text when hover_mode is "default".
+
+*Round 2: Wrong routed-trace detection*
+Code used `if trace.get('customdata')` to detect routed traces. But the
+orrery source already puts customdata on traces for its own purposes.
+Every trace looked "routed" even when routing was OFF.
+Fix: Use `config.get('route_hover_to_panel', False)` instead.
+
+*Round 3: Clearing hovertemplate exposed Plotly defaults*
+Source orrery sets `hovertemplate='%{text}<extra></extra>'` to show only
+the text field. Setting `hovertemplate = None` fell back to Plotly's
+default 3D hover (trace name + x + y + z). Fix: Keep the text-only
+template; only set `hoverinfo='none'` when truly suppressing all hover.
+
+*Round 4: `_hover_mode` stripped from layout JSON*
+The `layout_for_json` filter removes all underscore-prefixed keys. The
+`_hover_mode` flag wasn't in the preserve list, so JS always defaulted
+to 'default'. Fix: Added to preserve list in both landscape and portrait
+builders.
+
+*Round 5: Corrected semantic model*
+Final insight from Tony: routing ON means the card REPLACES the tooltip,
+not supplements it. The card content respects hover_mode.
+
+Final behavior matrix (all 6 cases verified):
+
+| | Route OFF | Route ON |
+|---|---|---|
+| **Default hover** | Full tooltip, no card | No tooltip, full card |
+| **Names only** | Name tooltip, no card | No tooltip, name card |
+| **No hover** | Nothing | Nothing |
+
+Implementation:
+- Routing block always suppresses tooltip (blank text + invisible
+  hovertemplate). Always populates customdata with full parsed hover
+  data. Stores `_hover_mode` in layout for JS.
+- Hover mode block handles tooltip independently: "none" suppresses
+  hover entirely (routed: blank text + template; non-routed: hoverinfo=none).
+  "Names only" replaces text with trace name, keeps text-only template.
+  "Default" leaves everything as-is.
+- JS card handler reads `_hover_mode` from layout: "default" shows full
+  card, "names_only" shows name only, "none" returns early (no card).
+- Card HTML/JS only injected when both portrait format AND
+  route_hover_to_panel are enabled.
+- Hoverlabel made transparent when routing is on (suppresses the arrow
+  pointer that rendered even with empty text).
+- Tap hint suppressed when hover_mode is "none".
+
+**Files Modified:**
+- `gallery_studio.py` (~4,700 lines): 4th column layout, axis control
+  fields + apply logic, show_axes restore, hover/routing matrix rewrite,
+  `_hover_mode` layout flag, card JS hover_mode awareness, hoverlabel
+  transparency, card injection gating
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Studio column layout | 4 columns (added col_3d) | Right column was crowded; 3D controls get dedicated space |
+| Axis field precision | 6 decimal places | Covers GEO scale (0.0000426 AU) through solar system (1+ AU) |
+| Km suffix threshold | < 0.01 AU shows km, < 0.1 shows M km | Solar system scale doesn't need km; close-approach scale does |
+| Dynamic grid on zoom | Not feasible in Plotly 3D | 3D dtick is fixed; Fly-To buttons handle per-target rescaling |
+| Routing + tooltip | Card replaces tooltip, not supplements | Tony's rule: routing moves hover to card, tooltip suppressed |
+| `_hover_mode` in layout | Preserved through JSON filter | JS needs it to filter card content; was being stripped |
+| Card without routing | Don't inject card HTML/JS | Card is the routing destination; no routing = no card |
+| Routed-trace detection | Use config flag, not customdata | Orrery source has customdata for its own purposes |
+| hovertemplate clearing | Keep text-only template | Clearing falls back to Plotly default (name + xyz) |
+
+---
+
+**Technical Lessons Learned:**
+
+- Plotly 3D `hovertemplate` takes priority over `hoverinfo`. Clearing
+  hovertemplate to None doesn't suppress hover -- it falls back to
+  Plotly's default display (trace name + x + y + z coordinates).
+
+- The orrery source already puts customdata on traces (for encyclopedia
+  lookups, etc.). Using customdata presence to detect "routed" traces is
+  wrong -- use the config flag that controls routing instead.
+
+- The `layout_for_json` filter strips all underscore-prefixed keys, then
+  selectively preserves specific ones. New underscore keys need to be
+  added to the preserve list in BOTH builders (landscape and portrait).
+
+- Plotly's hoverlabel renders a tiny arrow pointer even with empty text.
+  Making the hoverlabel background, border, and font transparent
+  suppresses this visual artifact.
+
+- Testing hover behavior requires a clean orrery source file, not a
+  previous Studio export. Studio exports have already been through the
+  routing pipeline -- trace.text may be blanked, making route-OFF tests
+  meaningless. Source = raw data; export = curated artifact.
+
+---
+
+*"The logic is inconsistent."*
+-- Tony, the observation that triggered the hover/routing matrix rewrite
+
+*"The card replaces the tooltip, not supplements it."*
+-- Tony, the semantic insight that simplified everything
