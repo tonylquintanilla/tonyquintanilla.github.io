@@ -56,7 +56,7 @@
     },
     {
       "id": "earth-apophis_20290401_0000_desktop",
-      "title": "Apophis Closest Approach on 4-13-29",
+      "title": "Apophis Closest Approach",
       "filename": "earth-apophis_20290401_0000_desktop.json",
       "category": "inner_planets",
       "category_label": "Inner Planets",
@@ -313,15 +313,14 @@
     },
     {
       "id": "earth-apophis_20290401_mobile",
-      "title": "Apophis Close Approach on 4-13-29",
+      "title": "Earth Apophis 20290401 Mobile",
       "filename": "earth-apophis_20290401_mobile.json",
       "category": "inner_planets",
       "category_label": "Inner Planets",
       "description": "Apophis close approach.",
       "size_kb": 2588.9,
       "converted": "2026-03-05 23:17",
-      "mode": "portrait",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "planetary_boundaries_mobile",
@@ -639,6 +638,6 @@
       "converted": "2026-02-07 23:57"
     }
   ],
-  "last_updated": "2026-03-05 23:22",
+  "last_updated": "2026-03-05 23:17",
   "total_count": 59
 }
