@@ -2997,3 +2997,125 @@ correct output for all future teasers.
 - Two-bug stacks again: fixing the generator truncation revealed that
   the renderer still wouldn't wrap (wrong approach). Both had to be
   fixed independently.
+### Session 24 (Mar 5, 2026): Featured Annotation Fixes + Studio Workflow Redesign
+
+Two threads in this session: completing the featured trace label bug fixes
+(duplicate labels, stale annotation persistence, white box rendering), and
+a broader studio workflow redesign that eliminates `gallery_studio_configs.json`
+dependency in favor of reading config directly from the figure.
+
+**Featured Annotation Bug Fixes (gallery_studio.py)**
+
+Three bugs fixed in sequence, each revealing the next.
+
+*Bug 1: Duplicate Labels*
+
+Featured trace for Moon Keplerian Apogee with custom label "Apogee"
+produced two superimposed labels: one white with grey arrow (Plotly's
+default 3D annotation box), one gold. Root cause: Plotly's 3D annotation
+default box (white background + grey border) renders even when
+`bgcolor: rgba(0,0,0,0)` is set. Must also set `bordercolor: rgba(0,0,0,0)`
+and `borderwidth: 0` to suppress the box entirely.
+
+Fix: Added explicit `bordercolor: 'rgba(0,0,0,0)'` and `borderwidth: 0`
+to both 3D and 2D featured annotations. 3D uses `showarrow: False`
+(Plotly 3D ignores arrows anyway). 2D retains gold arrow.
+
+*Bug 2: Annotation_bg_transparent Stripping Featured Annotations*
+
+The `annotation_bg_transparent` pass was stripping `bgcolor` from
+`_featured` annotations along with regular annotations, defeating the
+transparent background fix.
+
+Fix: Added `_featured` check to the annotation strip pass -- skip any
+annotation with `_featured: true` marker.
+
+*Bug 3: Stale Annotations Persist Across Load/Reload*
+
+Loading a gallery export that had `_featured` annotations baked in, then
+unchecking all featured traces, then pressing Original -- labels persisted.
+Root cause: the stale annotation strip was inside `if featured:`, so it
+never ran when `featured_traces = []`.
+
+Fix: Moved the stale `_featured` annotation strip **unconditionally** to
+before the `if featured:` guard. Strips from both `scene.annotations` and
+`layout.annotations` on every `apply_config()` call, regardless of whether
+new featured annotations will be added.
+
+Rule derived: guards like `if list:` that control cleanup let stale
+embedded data persist when the list is emptied. Strip unconditionally
+before the guard.
+
+**Studio Workflow Redesign: Source vs Gallery Export Distinction**
+
+The original studio loaded configs from `gallery_studio_configs.json` --
+a separate file keyed by filename. This created hidden state: the config
+store was a second source of truth that could drift from the actual figure.
+
+New architecture:
+- `_read_config_from_figure(fig)`: reads 16 layout values directly from
+  the figure (margins, bg color, title font, legend settings, etc.)
+- Source HTML load: calls `_read_config_from_figure` to populate GUI
+  from the raw figure's values
+- Gallery export load (file with `_studio_config` in layout): reads that
+  embedded config dict back into the GUI for perfect round-trip
+- `gallery_studio_configs.json` still saved for backward compat but is
+  no longer the authoritative source
+
+The key conceptual distinction: **source file = raw figure data; gallery
+export = curated artifact with `_studio_config` overlay**. These are
+different "originals" requiring different restore strategies.
+
+`_apply_original_preset()` respects this: checks for `_studio_config`
+first (gallery exports), falls back to heuristic detection for older
+exports, reads native figure values for true source files.
+
+Also fixed: `layout_json` NameError in both `build_gallery_html()` and
+`build_social_html()` -- variable referenced before assignment in error
+handling paths.
+
+**Two New Standing Conventions (orrery-wide)**
+
+*3D Axis dtick + range:*
+Close-approach and flyby plots require both `dtick` (tick spacing) and
+`range` (axis extent) overridden on all three scene axes. The default
+AU-scale axes make Apophis/GEO geometry completely invisible -- everything
+interesting is happening at ~0.001 AU while the grid shows at ~1 AU scale.
+Both properties should be set at generation time in the orrery GUI, with
+Studio providing a refinement layer for per-export adjustment.
+
+*Hover text AU convention:*
+All distance hover text must include AU alongside km. GEO altitude is the
+immediate example -- currently shows km and Earth radii but not AU.
+The AU figure enables cross-plot comparison: GEO ~0.000285 AU, Moon
+~0.00257 AU, Apophis perigee ~0.000245 AU. Conversion: `km / 149597870.7`.
+Standing convention for all new hover text in orrery modules.
+
+**Files Modified:**
+- `gallery_studio.py` (~4,520 lines): featured annotation white-box
+  suppression, `_featured` protection in annotation_bg_transparent,
+  unconditional stale annotation strip, `_read_config_from_figure`,
+  workflow redesign, `layout_json` NameError fix
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Plotly 3D annotation box | Set bordercolor + borderwidth: 0 explicitly | bgcolor alone insufficient; default box always renders |
+| annotation_bg_transparent + featured | Skip _featured annotations | Featured bg is intentionally transparent; strip pass must not undo it |
+| Stale strip guard | Strip unconditionally before `if featured:` | List can be emptied; strip must run regardless |
+| Studio config source | Read from figure (_read_config_from_figure) | Figure is the truth; config store was a second source that could drift |
+| Source vs gallery export | Different restore strategies | Source = raw values; gallery export = _studio_config overlay |
+| 3D axis scale | dtick + range both needed | Tick spacing without range correction leaves axes at wrong scale |
+| Hover text AU | Required alongside km for all distances | Enables cross-plot comparison; GEO/Moon/Apophis comparison only works with AU |
+
+---
+
+*"The source file and the gallery file are different originals. Treat them that way."*
+-- Studio workflow redesign insight, March 5, 2026
+
+*"All hovertext should include figures in AU, not just km, so we can compare distances on that basis."*
+-- Tony, March 5, 2026
+
+*"Especially in these fraught times."*
+-- Tony, on the partnership and what's at stake, March 5, 2026

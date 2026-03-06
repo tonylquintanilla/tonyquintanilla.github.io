@@ -850,9 +850,11 @@ def apply_config(fig_dict, config):
                         ann['y'] < 0)
             ]
 
-        # Make annotation backgrounds transparent
+        # Make annotation backgrounds transparent (skip featured -- they have their own styling)
         if config.get('annotation_bg_transparent', True):
             for ann in annotations:
+                if ann.get('_featured'):
+                    continue  # featured annotations manage their own appearance
                 if ann.get('bgcolor'):
                     ann['bgcolor'] = 'rgba(0,0,0,0)'
                 ann.pop('bordercolor', None)
@@ -1267,6 +1269,22 @@ def apply_config(fig_dict, config):
             layout['_encyclopedia'] = encyclopedia
 
     # ---- Featured trace labels (persistent annotations) ----
+    # Always strip stale _featured annotations first -- ensures a clean slate
+    # whether featured_traces is empty (removing all labels) or non-empty
+    # (replacing with fresh ones). Without this, annotations baked into a
+    # gallery export persist even after the user unchecks all featured traces.
+    if 'scene' in layout:
+        scene_obj = layout.get('scene', {})
+        scene_anns = scene_obj.get('annotations', [])
+        if any(a.get('_featured') for a in scene_anns):
+            scene_obj['annotations'] = [a for a in scene_anns
+                                         if not a.get('_featured')]
+            layout['scene'] = scene_obj
+    existing_layout_anns = layout.get('annotations', [])
+    if any(a.get('_featured') for a in existing_layout_anns):
+        layout['annotations'] = [a for a in existing_layout_anns
+                                  if not a.get('_featured')]
+
     featured = config.get('featured_traces', [])
     if featured:
         has_scene = 'scene' in layout
@@ -1307,6 +1325,17 @@ def apply_config(fig_dict, config):
                 feat_annotations.append({
                     'x': ax, 'y': ay, 'z': az,
                     'text': feat_label,
+                    'showarrow': False,
+                    'font': {
+                        'color': '#c9a84c',
+                        'size': 13,
+                        'family': 'Georgia, Times New Roman, serif'
+                    },
+                    'bgcolor': 'rgba(0,0,0,0)',
+                    'bordercolor': 'rgba(0,0,0,0)',
+                    'borderwidth': 0,
+                    'borderpad': 4,
+                    '_featured': True,
                 })
             else:
                 # 2D trace - find anchor point closest to median
@@ -1341,18 +1370,32 @@ def apply_config(fig_dict, config):
                 feat_annotations.append({
                     'x': ax, 'y': ay,
                     'text': feat_label,
+                    'showarrow': True,
+                    'arrowcolor': '#c9a84c',
+                    'arrowsize': 1,
+                    'arrowwidth': 1,
+                    'arrowhead': 2,
+                    'font': {
+                        'color': '#c9a84c',
+                        'size': 13,
+                        'family': 'Georgia, Times New Roman, serif'
+                    },
+                    'bgcolor': 'rgba(0,0,0,0)',
+                    'bordercolor': 'rgba(0,0,0,0)',
+                    'borderwidth': 0,
+                    'borderpad': 4,
+                    'captureevents': True,
+                    '_featured': True,
                 })
 
         if feat_annotations:
             if has_scene:
-                # 3D annotations go on the scene
                 scene_obj = layout.get('scene', {})
-                existing_ann = scene_obj.get('annotations', [])
+                existing_ann = scene_obj.get('annotations', [])  # already stripped above
                 scene_obj['annotations'] = existing_ann + feat_annotations
                 layout['scene'] = scene_obj
             else:
-                # 2D annotations go on the layout
-                existing_ann = layout.get('annotations', [])
+                existing_ann = layout.get('annotations', [])  # already stripped above
                 layout['annotations'] = existing_ann + feat_annotations
 
     # ---- Studio marker ----
@@ -1633,6 +1676,16 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     # Preserve _kmz_handoff for web gallery handoff button
     if '_kmz_handoff' in layout_dict:
         layout_for_json['_kmz_handoff'] = layout_dict['_kmz_handoff']
+    # Preserve _studio and _studio_config for lossless round-trip re-export
+    # These survive Plotly.newPlot() serialization and allow studio to restore
+    # the full config when this exported HTML is reloaded into studio.
+    if '_studio' in layout_dict:
+        layout_for_json['_studio'] = layout_dict['_studio']
+    if '_studio_config' in layout_dict:
+        layout_for_json['_studio_config'] = layout_dict['_studio_config']
+    # Preserve _studio_nav for gallery pan controls
+    if '_studio_nav' in layout_dict:
+        layout_for_json['_studio_nav'] = layout_dict['_studio_nav']
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
@@ -2394,6 +2447,14 @@ def build_social_html(fig_dict, config, title="Paloma's Orrery"):
     # Preserve _kmz_handoff for web gallery handoff button
     if '_kmz_handoff' in fig_dict.get('layout', {}):
         layout_for_json['_kmz_handoff'] = fig_dict['layout']['_kmz_handoff']
+    # Preserve _studio and _studio_config for lossless round-trip re-export
+    portrait_layout = fig_dict.get('layout', {})
+    if '_studio' in portrait_layout:
+        layout_for_json['_studio'] = portrait_layout['_studio']
+    if '_studio_config' in portrait_layout:
+        layout_for_json['_studio_config'] = portrait_layout['_studio_config']
+    if '_studio_nav' in portrait_layout:
+        layout_for_json['_studio_nav'] = portrait_layout['_studio_nav']
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
@@ -2764,53 +2825,19 @@ class GalleryStudio:
         self.fig_dict = None           # Original extracted figure
         self.config = DEFAULT_CONFIG.copy()
         self.temp_file = None
-
-        # Config file for saving/loading per-plot configs
-        self.config_store_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'gallery_studio_configs.json'
-        )
-        self.config_store = self._load_config_store()
+        self._last_load_dir = ''       # Remembers last folder used in file browser
 
         self._build_ui()
 
     def _load_config_store(self):
-        """Load saved per-plot configs from disk."""
-        if os.path.exists(self.config_store_path):
-            try:
-                with open(self.config_store_path, 'r', encoding='utf-8') as f:
-                    store = json.load(f)
-                # Migrate old format configs
-                for key, cfg in store.items():
-                    if not isinstance(cfg, dict):
-                        continue  # Skip non-config entries (e.g. _last_load_dir)
-                    if 'legend_font_size' in cfg and 'legend_font_scale' not in cfg:
-                        # Old absolute px -> new percent (can't recover exact %,
-                        # so just set to 100 = keep original)
-                        cfg['legend_font_scale'] = 100
-                        del cfg['legend_font_size']
-                    if 'legend_grouptitle_font_scale' not in cfg:
-                        cfg['legend_grouptitle_font_scale'] = 100
-                    if 'title_font_size' in cfg and 'title_font_scale' not in cfg:
-                        cfg['title_font_scale'] = 100
-                        del cfg['title_font_size']
-                    # Migrate annotation/label from 0=keep to 100=keep
-                    if cfg.get('annotation_font_scale', 100) == 0:
-                        cfg['annotation_font_scale'] = 100
-                    if cfg.get('label_font_scale', 100) == 0:
-                        cfg['label_font_scale'] = 100
-                return store
-            except (json.JSONDecodeError, IOError):
-                pass
+        """Retired -- settings are now embedded in each exported HTML file.
+        Kept as a stub to avoid errors if called from old code paths."""
         return {}
 
     def _save_config_store(self):
-        """Save per-plot configs to disk."""
-        try:
-            with open(self.config_store_path, 'w', encoding='utf-8') as f:
-                json.dump(self.config_store, f, indent=2)
-        except IOError as e:
-            print(f"[STUDIO] Could not save configs: {e}")
+        """Retired -- settings are now embedded in each exported HTML file.
+        Kept as a stub to avoid errors if called from old code paths."""
+        pass
 
     def _build_ui(self):
         """Build the studio interface with two-column layout."""
@@ -2826,13 +2853,24 @@ class GalleryStudio:
         btn_row = tk.Frame(file_frame)
         btn_row.pack(fill='x', pady=(4, 0))
 
-        tk.Button(btn_row, text="Load HTML...", command=self._load_file,
-                  width=14).pack(side='left', padx=2)
+        load_btn = tk.Button(btn_row, text="Load HTML...", command=self._load_file,
+                             width=14)
+        load_btn.pack(side='left', padx=2)
+        ToolTip(load_btn,
+                "Open an HTML file.\n"
+                "Gallery export (*_gallery.html): settings are restored\n"
+                "  from the file itself -- you see exactly what you exported.\n"
+                "Source file (raw orrery output): controls reset to defaults\n"
+                "  -- clean slate, ready for fresh curation.")
         reload_btn = tk.Button(btn_row, text="Reload", command=self._reload_file,
                                width=8)
         reload_btn.pack(side='left', padx=2)
-        ToolTip(reload_btn, "Re-read the source HTML from disk. Useful after "
-                "regenerating the plot in the orrery or star visualization.")
+        ToolTip(reload_btn,
+                "Re-read the same file from disk without browsing.\n"
+                "Same as Load but skips the file browser.\n"
+                "Use after regenerating a plot in the orrery to pick up\n"
+                "  new data. Gallery exports restore their settings;\n"
+                "  source files reset to defaults.")
 
         # ---- Scrollable config area ----
         config_container = tk.Frame(self.root)
@@ -3495,9 +3533,11 @@ class GalleryStudio:
             width=10)
         original_btn.pack(side='left', padx=2)
         ToolTip(original_btn,
-                "Set controls to match the source figure's original "
-                "values. Shows what the plot looked like before any "
-                "studio transforms. Use Preview to see it.")
+                "Strip all studio settings and show the raw source figure.\n"
+                "Useful when you have a gallery export loaded and want to\n"
+                "  see the underlying data before any curation, or start\n"
+                "  a fresh curation from scratch.\n"
+                "Press Preview after to see the result.")
 
         # Output format
         row = tk.Frame(sec)
@@ -4166,11 +4206,17 @@ document.addEventListener('click', function(e) {{
         self.status_var.set("Landscape defaults restored")
 
     def _apply_original_preset(self):
-        """Set GUI controls to match the original source figure values.
+        """Strip all studio settings and show the raw underlying figure.
 
-        Unlike the old behavior (which bypassed apply_config and opened
-        a preview directly), this works like Landscape and Portrait:
-        it populates the GUI controls, then the user hits Preview.
+        For a gallery export: removes all studio curation, revealing what
+        the source visualization looked like before any studio transforms.
+        Useful for starting a fresh curation or seeing the raw data.
+
+        For a raw source file: equivalent to Load -- applies DEFAULT_CONFIG
+        with the figure's own background color and margins preserved, since
+        those come from the visualization itself, not from studio.
+
+        Press Preview after to see the result.
         """
         if self.fig_dict is None:
             messagebox.showinfo("Original", "Load an HTML file first.")
@@ -4178,164 +4224,39 @@ document.addEventListener('click', function(e) {{
 
         layout = self.fig_dict.get('layout', {})
 
-        # Read source figure values to build a "pass-through" config
-        # For values that apply_config always sets, use the source values
-        # so the round-trip is identity (source -> config -> apply -> same)
-        paper_bg = layout.get('paper_bgcolor', '#000000')
+        # Start from DEFAULT_CONFIG (clean slate, no studio curation)
+        raw_config = DEFAULT_CONFIG.copy()
 
-        # Margins from source (Plotly defaults if not set)
+        # Preserve the figure's own background color and margins --
+        # these come from the source visualization, not from studio choices
+        paper_bg = layout.get('paper_bgcolor', DEFAULT_CONFIG['bg_color'])
+        raw_config['bg_color'] = paper_bg
+
         src_margin = layout.get('margin', {})
-        margin_l = src_margin.get('l', 80)
-        margin_r = src_margin.get('r', 80)
-        margin_t = src_margin.get('t', 100)
-        margin_b = src_margin.get('b', 80)
+        raw_config['margin_top'] = src_margin.get('t', DEFAULT_CONFIG['margin_top'])
+        raw_config['margin_bottom'] = src_margin.get('b', DEFAULT_CONFIG['margin_bottom'])
+        raw_config['margin_left'] = src_margin.get('l', DEFAULT_CONFIG['margin_left'])
+        raw_config['margin_right'] = src_margin.get('r', DEFAULT_CONFIG['margin_right'])
 
-        # Scene settings
-        scene = layout.get('scene', {})
-        has_axes = any(
-            scene.get(ax, {}).get('showticklabels', True)
-            for ax in ('xaxis', 'yaxis', 'zaxis')
-        ) if scene else True
-        has_grid = any(
-            scene.get(ax, {}).get('showgrid', True)
-            for ax in ('xaxis', 'yaxis', 'zaxis')
-        ) if scene else True
-        scene_bg = scene.get('bgcolor', '#000000') if scene else '#000000'
-        src_aspect = scene.get('aspectmode', 'auto') if scene else 'auto'
+        # Preserve KMZ handoff link if present
+        raw_config['kmz_link'] = layout.get('_kmz_handoff', '')
 
-        # Legend
-        src_legend = layout.get('legend', {})
-        has_legend = layout.get('showlegend', True)
-        legend_orient = src_legend.get('orientation', 'v')
-        legend_bg = src_legend.get('bgcolor', 'rgba(0,0,0,0)')
+        self._apply_config_to_gui(raw_config)
 
-        # Title
-        has_title = 'title' in layout
-        title_color = '#f8fafc'
-        if isinstance(layout.get('title'), dict):
-            tfont = layout['title'].get('font', {})
-            title_color = tfont.get('color', '#f8fafc')
-
-        # Hover
-        src_hover = layout.get('hovermode', 'closest')
-        if src_hover in (False, 'false'):
-            hover_mode = 'none'
-        elif src_hover == 'x':
-            hover_mode = 'names_only'
+        is_export = bool(layout.get('_studio'))
+        if is_export:
+            self.status_var.set(
+                "Original: studio settings stripped -- showing raw source figure. "
+                "Press Preview to see it.")
         else:
-            hover_mode = 'default'
-
-        orig_config = {
-            "bg_color": paper_bg,
-            "transparent_bg": False,
-            "show_title": has_title,
-            "custom_title": "",
-            "title_font_scale": 100,
-            "title_color": title_color,
-            "margin_top": margin_t,
-            "margin_bottom": margin_b,
-            "margin_left": margin_l,
-            "margin_right": margin_r,
-            "show_axes": has_axes,
-            "show_grid": has_grid,
-            "scene_bgcolor": scene_bg,
-            "scene_aspectmode": src_aspect,
-            "scene_camera": "original",
-            "show_legend": has_legend,
-            "legend_orientation": legend_orient,
-            "legend_font_scale": 100,
-            "legend_grouptitle_font_scale": 100,
-            "legend_bgcolor": legend_bg,
-            "legend_font_color": "",
-            "legend_border_transparent": False,
-            "legend_position": "original",
-            "show_annotations": True,
-            "strip_footer_annotations": False,
-            "annotation_bg_transparent": False,
-            "annotation_font_scale": 100,
-            "annotation_toggle_button": False,
-            "label_font_scale": 100,
-            "trace_visibility": {},
-            "strip_hidden_traces": False,
-            "featured_traces": [],
-            "featured_labels": {},
-            "keep_animation_controls": True,
-            "hover_mode": hover_mode,
-            "x_title_scale": 100,
-            "y_title_scale": 100,
-            "x_tick_scale": 100,
-            "y_tick_scale": 100,
-            "y2_title_scale": 100,
-            "y2_tick_scale": 100,
-            "show_nav_arrows": False,
-            "kmz_link": layout.get('_kmz_handoff', ""),
-            "output_format": "landscape",
-            "route_hover_to_panel": False,
-            "marker_opacity_fix": False,
-            "restyle_animation_dark": False,
-            "embed_encyclopedia": False,
-            "plotly_js_source": "cdn",
-            "output_mode": "both",
-        }
-
-        # Detect studio settings baked into the figure
-        # These survive the export round-trip as layout markers
-        if layout.get('_studio'):
-            # Best case: full config was embedded (exports from Session 18+)
-            if layout.get('_studio_config'):
-                sc = layout['_studio_config']
-                for k, v in sc.items():
-                    if k in orig_config:
-                        orig_config[k] = v
-            else:
-                # Fallback: heuristic detection for older exports
-                # Check for routed hover (customdata present on traces)
-                has_routed = any(
-                    t.get('customdata') is not None
-                    for t in self.fig_dict.get('data', [])
-                    if t.get('hoverinfo') != 'skip'
-                )
-                if has_routed:
-                    orig_config['route_hover_to_panel'] = True
-
-                # Check for embedded encyclopedia
-                if layout.get('_encyclopedia'):
-                    orig_config['embed_encyclopedia'] = True
-
-                # Check for nav arrows marker
-                if layout.get('_studio_nav'):
-                    orig_config['show_nav_arrows'] = True
-
-                # Check for dark-themed animation controls (sliders)
-                sliders = layout.get('sliders', [])
-                if sliders:
-                    sl = sliders[0]
-                    if sl.get('bgcolor') == '#1e293b':
-                        orig_config['restyle_animation_dark'] = True
-
-                # Check for featured annotations
-                feat_names = []
-                scene_anns = layout.get('scene', {}).get('annotations', [])
-                layout_anns = layout.get('annotations', [])
-                for ann in scene_anns + layout_anns:
-                    if ann.get('_featured') and ann.get('text'):
-                        feat_names.append(ann['text'])
-                if feat_names:
-                    orig_config['featured_traces'] = feat_names
-
-                # Detect portrait output format from aspect hints
-                if has_routed and orig_config.get('embed_encyclopedia'):
-                    orig_config['output_format'] = 'portrait'
-
-        self._apply_config_to_gui(orig_config)
-        self.status_var.set("Original preset applied - shows source as-is")
+            self.status_var.set(
+                "Original: source file has no studio settings -- showing as loaded.")
 
     # ---- Actions ----
 
     def _load_file(self):
         """Open file dialog and load an HTML file."""
-        # Use last-used directory from config store, fall back to images/
-        initial_dir = self.config_store.get('_last_load_dir', '')
+        initial_dir = getattr(self, '_last_load_dir', '')
         if not initial_dir or not os.path.isdir(initial_dir):
             initial_dir = "."
             for candidate in ["images", os.path.join("..", "images"),
@@ -4392,27 +4313,36 @@ document.addEventListener('click', function(e) {{
         # Populate trace visibility checkboxes
         self._populate_trace_list()
 
-        # Check for saved config for this file
-        config_key = os.path.basename(path)
-        if config_key in self.config_store:
-            saved = self.config_store[config_key]
-            self._apply_config_to_gui(saved)
-            self.status_var.set(f"Loaded with saved config: {config_key}")
+        # Config restore: the file is the only source of truth.
+        # Studio export (_studio_config present): restore exactly as exported.
+        # Raw orrery output (no _studio marker): clean slate — DEFAULT_CONFIG.
+        layout = fig.get('layout', {})
+        if layout.get('_studio') and layout.get('_studio_config'):
+            # Gallery export: restore the config embedded in the file.
+            # Start from DEFAULT_CONFIG so any new keys have safe defaults,
+            # then overlay everything stored in the file.
+            restore = DEFAULT_CONFIG.copy()
+            for k, v in layout['_studio_config'].items():
+                if k in restore:
+                    restore[k] = v
+            self._apply_config_to_gui(restore)
+            self.status_var.set(
+                f"Loaded gallery export: settings restored from file  |  "
+                f"{trace_count} traces, {'3D' if has_scene else '2D'}")
         else:
-            self.status_var.set(f"Loaded: {trace_count} traces, "
-                               f"{'3D' if has_scene else '2D'}")
+            self._apply_config_to_gui(DEFAULT_CONFIG)
+            self.status_var.set(
+                f"Loaded source file: controls reset to defaults  |  "
+                f"{trace_count} traces, {'3D' if has_scene else '2D'}")
 
         # Auto-detect KMZ blockbuster from teaser filename
-        # Pattern: *_teaser*.html -> *_blockbuster.kmz
-        # Runs AFTER saved config restore so it fills empty fields
         basename = os.path.basename(path)
         if '_teaser' in basename and not self.var_kmz_link.get().strip():
             kmz_guess = basename.split('_teaser')[0] + '_blockbuster.kmz'
             self.var_kmz_link.set(kmz_guess)
 
         # Remember this directory for next Load HTML dialog
-        self.config_store['_last_load_dir'] = os.path.dirname(os.path.abspath(path))
-        self._save_config_store()
+        self._last_load_dir = os.path.dirname(os.path.abspath(path))
 
     def _reload_file(self):
         """Reload the current source file."""
@@ -4518,17 +4448,11 @@ document.addEventListener('click', function(e) {{
 
         size_kb = os.path.getsize(save_path) / 1024
 
-        # Save config for this source file (under the hood)
-        config_key = os.path.basename(self.source_path)
-        self.config_store[config_key] = self.config.copy()
-        self._save_config_store()
-
         self.status_var.set(
             f"Exported: {os.path.basename(save_path)} ({size_kb:.0f} KB)")
 
         print(f"[GALLERY STUDIO] Exported: {save_path} ({size_kb:.0f} KB)")
-        print(f"[GALLERY STUDIO] Config saved for: {config_key}")
-        print(f"[GALLERY STUDIO] Next step: run json_converter.py on this file")
+        print(f"[GALLERY STUDIO] Settings embedded in file. Next step: run json_converter.py")
 
     def _reset_defaults(self):
         """Reset all config options to defaults."""
