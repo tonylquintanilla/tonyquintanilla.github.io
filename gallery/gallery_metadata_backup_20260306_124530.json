@@ -55,14 +55,14 @@
       "converted": "2026-02-07 16:41"
     },
     {
-      "id": "earth-apophis_20290401_29_desktop",
-      "title": "Apophis Closest Approach 4-13-2029",
-      "filename": "earth-apophis_20290401_29_desktop.json",
+      "id": "earth-apophis_20290401_0000_desktop",
+      "title": "Apophis Closest Approach on 4-13-29",
+      "filename": "earth-apophis_20290401_0000_desktop.json",
       "category": "inner_planets",
       "category_label": "Inner Planets",
-      "description": "Apophis closest approach",
-      "size_kb": 4281.7,
-      "converted": "2026-03-06 12:38",
+      "description": "Apophis closest approach, 4-1-2029",
+      "size_kb": 3135.7,
+      "converted": "2026-03-04 23:59",
       "mode": "landscape",
       "featured": true
     },
@@ -312,14 +312,14 @@
       "converted": "2026-02-10 16:46"
     },
     {
-      "id": "earth-apophis_20290401_29_mobile",
-      "title": "Apophis Closest Approach 4-13-2029",
-      "filename": "earth-apophis_20290401_29_mobile.json",
+      "id": "earth-apophis_20290401_mobile",
+      "title": "Apophis Close Approach on 4-13-29",
+      "filename": "earth-apophis_20290401_mobile.json",
       "category": "inner_planets",
       "category_label": "Inner Planets",
-      "description": "Apophis closest approach",
-      "size_kb": 3796.7,
-      "converted": "2026-03-06 12:38",
+      "description": "Apophis close approach.",
+      "size_kb": 2588.9,
+      "converted": "2026-03-05 23:17",
       "mode": "portrait",
       "featured": true
     },
@@ -637,8 +637,30 @@
       "description": "Plot of near-Earth asteroids between Venus and Mars.",
       "size_kb": 1887.3,
       "converted": "2026-02-07 23:57"
+    },
+    {
+      "id": "earth-apophis_20290401_29_mobile",
+      "title": "Earth Apophis 20290401 29 Mobile",
+      "filename": "earth-apophis_20290401_29_mobile.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Apophis closest approach",
+      "size_kb": 3796.7,
+      "converted": "2026-03-06 12:38",
+      "mode": "portrait"
+    },
+    {
+      "id": "earth-apophis_20290401_29_desktop",
+      "title": "Earth Apophis 20290401 29 Desktop",
+      "filename": "earth-apophis_20290401_29_desktop.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Apophis closest approach",
+      "size_kb": 4281.7,
+      "converted": "2026-03-06 12:38",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-06 12:45",
-  "total_count": 59
+  "last_updated": "2026-03-06 12:38",
+  "total_count": 61
 }
