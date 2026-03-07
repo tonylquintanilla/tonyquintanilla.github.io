@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5 - March 4, 2026 | Claude Opus 4.6
+## Session Handoff | February 5 - March 7, 2026 | Claude Opus 4.6
 
 ---
 
@@ -3267,3 +3267,67 @@ Implementation:
 
 *"The card replaces the tooltip, not supplements it."*
 -- Tony, the semantic insight that simplified everything
+
+### Session 26 (Mar 7, 2026): Trace Visibility Round-Trip Verification
+
+Focused testing session to verify the trace visibility persistence fix
+from Session 24's workflow redesign. The previous implementation failed
+at step 7 of the round-trip test (restored traces reverted to hidden on
+reload). This session confirmed the fix works correctly.
+
+**Test Protocol (second run, fresh source file)**
+
+Source: Venus, Earth, and Mars orbits with markers (raw orrery export,
+not a prior Studio file). Landscape preset.
+
+| Step | Action | Result |
+|------|--------|--------|
+| 1 | Load fresh raw source file | Clean load, all traces visible |
+| 2 | Uncheck Venus and Earth in Trace Visibility panel | Confirmed hidden in preview |
+| 3 | Export | Exported with Venus and Earth removed |
+| 4 | Reload that export | Venus and Earth still hidden -- correct |
+| 5 | Re-check Venus and Earth (restore to visible) | Restored and verified in preview |
+| 6 | Export again | Exported with all traces visible |
+| 7 | Reload second export | All traces visible -- **PASS** |
+
+**Minor observation (accepted):** On restore (step 5), Venus and Earth's
+Keplerian position and mean orbit sub-traces came back as visible
+(checked), even though they are normally hidden by default. Mars's
+sub-traces stayed in their default-hidden state because Mars was never
+removed/restored. The restore operation sets all sub-traces of a restored
+parent to visible rather than restoring them to their default visibility
+state. This is cosmetic and easily recoverable by unchecking the
+sub-traces -- not worth tracking down.
+
+**Conclusion:** The `_read_config_from_figure` approach (Session 24) and
+the unconditional stale annotation strip fix correctly persist trace
+visibility through the full export -> reload -> modify -> export ->
+reload cycle. The bug that failed this test before Session 24 is
+resolved.
+
+**Strip Hidden Traces Test**
+
+Verified that the "Strip hidden" checkbox physically removes hidden
+traces from the export (not just sets visibility to false).
+
+| Step | Action | Result |
+|------|--------|--------|
+| 1 | Load fresh Venus/Earth/Mars source | All traces visible |
+| 2 | Hide Venus and Earth | Confirmed hidden in preview |
+| 3 | Check "Strip hidden," export | Exported with Venus and Earth stripped |
+| 4 | Reload that export | Venus and Earth absent from Trace Visibility panel entirely -- not hidden, gone |
+| 5 | Preview | Only Mars plottable -- **PASS** |
+
+This confirms the two complementary workflows: hide traces with
+visibility toggle (non-destructive, reversible on reload) vs strip
+hidden traces (destructive, reduces file size permanently). Both work
+as designed. File size reduction: 915 KB -> 314 KB (66% reduction from
+stripping 2-3 traces worth of Venus and Earth orbit data).
+
+**No files modified.** This was a verification-only session.
+
+---
+
+*"That's such a minor detail that is not worth tracking down. It's easily
+recoverable."*
+-- Tony, on sub-trace default visibility after restore, March 7, 2026

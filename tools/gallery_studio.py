@@ -948,6 +948,14 @@ def apply_config(fig_dict, config):
             tname = trace.get('name', '')
             if tname in visibility:
                 trace['visible'] = visibility[tname]
+    else:
+        # All traces checked (empty dict) -- ensure none are stuck at
+        # visible:False from a previous export. Without this, reloading
+        # a file that had hidden traces and re-checking them has no effect
+        # because the empty dict skips the visibility block entirely.
+        for trace in fig.get('data', []):
+            if trace.get('visible') is False:
+                trace['visible'] = True
 
     # Strip hidden traces if requested (reduces file size)
     if config.get('strip_hidden_traces', False) and visibility:
