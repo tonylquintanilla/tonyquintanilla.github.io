@@ -35,7 +35,7 @@ import tempfile
 import webbrowser
 import platform
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk, colorchooser
+from tkinter import filedialog, messagebox, ttk, colorchooser, scrolledtext
 from datetime import datetime
 
 
@@ -2984,10 +2984,12 @@ class GalleryStudio:
         self.source_path = None
         self.fig_dict = None           # Original extracted figure
         self.config = DEFAULT_CONFIG.copy()
+        self._prev_config = None  # Set after first _collect_config; avoids noisy initial diff
         self.temp_file = None
         self._last_load_dir = ''       # Remembers last folder used in file browser
 
         self._build_ui()
+        self._log_status("Gallery Studio ready -- load an HTML file to begin")
 
     def _load_config_store(self):
         """Retired -- settings are now embedded in each exported HTML file.
@@ -3914,6 +3916,20 @@ class GalleryStudio:
         tk.Label(sec, text="(0 = auto / keep figure values)",
                  fg='gray50', font=('TkDefaultFont', 8)).pack(anchor='w')
 
+        # ---- Status Log ---- [Column 3, below 3D Scene]
+        log_frame = tk.LabelFrame(col_3d, text="Status Log", padx=6, pady=4)
+        log_frame.pack(fill='both', expand=True, pady=3, padx=2)
+        ToolTip(log_frame, "Accumulated log of studio operations: "
+                "load, preview, export, preset changes, and errors. "
+                "The status bar at the bottom shows only the latest message.")
+
+        self.status_log = scrolledtext.ScrolledText(
+            log_frame, wrap='word', height=10, width=30,
+            state='disabled', font=('TkDefaultFont', 8),
+            bg='#1a1a2e', fg='#c0c0c0', insertbackground='#c0c0c0',
+            selectbackground='#3a3a5e', relief='sunken', bd=1)
+        self.status_log.pack(fill='both', expand=True)
+
         # ---- 2D Axes ----
         sec = tk.LabelFrame(portrait, text="2D Axes", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
@@ -3995,6 +4011,20 @@ class GalleryStudio:
         except Exception:
             pass
 
+    def _log_status(self, msg):
+        """Append a timestamped message to the status log and status bar.
+
+        Updates both the scrolled text log in column 4 and the
+        single-line status bar at the bottom border.
+        """
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        line = f"{timestamp}  {msg}\n"
+        self.status_log.configure(state='normal')
+        self.status_log.insert('end', line)
+        self.status_log.see('end')
+        self.status_log.configure(state='disabled')
+        self.status_var.set(msg)
+
     def _collect_config(self):
         """Read all GUI values into the config dict."""
         # Auto-detect title color based on background brightness
@@ -4072,6 +4102,25 @@ class GalleryStudio:
             'kmz_link': self.var_kmz_link.get(),
             'plotly_js_source': 'cdn',
         }
+
+        # Log config changes since last collect
+        # Skip noisy keys that change structurally (dicts/lists)
+        skip_keys = {'trace_visibility', 'featured_traces', 'featured_labels',
+                     'plotly_js_source', 'title_color'}
+        prev = getattr(self, '_prev_config', None)
+        if prev is not None:
+            changes = []
+            for k, v in self.config.items():
+                if k in skip_keys:
+                    continue
+                if prev.get(k) != v:
+                    changes.append(f"{k}: {prev.get(k)} -> {v}")
+            if changes:
+                self._log_status(
+                    f"Config changed ({len(changes)}): "
+                    + ', '.join(changes[:5])
+                    + (f' (+{len(changes)-5} more)' if len(changes) > 5 else ''))
+        self._prev_config = dict(self.config)
 
     def _apply_config_to_gui(self, config):
         """Set GUI values from a config dict."""
@@ -4165,7 +4214,9 @@ class GalleryStudio:
             # Featured star checkbox (gold border)
             feat_var = tk.BooleanVar(value=(name in saved_feat))
             feat_cb = tk.Checkbutton(row, variable=feat_var,
-                                     selectcolor='#c9a84c')
+                                     selectcolor='#c9a84c',
+                                     command=lambda n=name, v=feat_var: self._log_status(
+                                         f"Featured {'on' if v.get() else 'off'}: {n}"))
             feat_cb.pack(side='left', padx=(0, 0))
             # Style the featured checkbox border
             feat_cb.configure(
@@ -4182,7 +4233,9 @@ class GalleryStudio:
             vis_var = tk.BooleanVar(value=saved_vis.get(name, True))
             cb = tk.Checkbutton(row, text=name,
                                 variable=vis_var, anchor='w',
-                                wraplength=160, justify='left')
+                                wraplength=160, justify='left',
+                                command=lambda n=name, v=vis_var: self._log_status(
+                                    f"Trace {'shown' if v.get() else 'hidden'}: {n}"))
             cb.pack(side='left', fill='x', expand=True)
             self.trace_vars[name] = vis_var
 
@@ -4204,11 +4257,13 @@ class GalleryStudio:
         """Check all trace visibility boxes."""
         for var in self.trace_vars.values():
             var.set(True)
+        self._log_status(f"All {len(self.trace_vars)} traces shown")
 
     def _trace_select_none(self):
         """Uncheck all trace visibility boxes."""
         for var in self.trace_vars.values():
             var.set(False)
+        self._log_status(f"All {len(self.trace_vars)} traces hidden")
 
     def _collect_trace_visibility(self):
         """Collect trace visibility state from checkboxes."""
@@ -4403,10 +4458,10 @@ document.addEventListener('click', function(e) {{
                 f.write(html)
 
             webbrowser.open('file://' + os.path.abspath(temp_path))
-            self.status_var.set("Gallery preview opened in browser")
+            self._log_status("Gallery preview opened in browser")
 
         except Exception as e:
-            self.status_var.set(f"Gallery preview error: {e}")
+            self._log_status(f"Gallery preview error: {e}")
             import traceback
             traceback.print_exc()
             messagebox.showerror("Preview Error",
@@ -4415,12 +4470,12 @@ document.addEventListener('click', function(e) {{
     def _apply_portrait_preset(self):
         """Apply the portrait/social media preset."""
         self._apply_config_to_gui(PORTRAIT_CONFIG)
-        self.status_var.set("Portrait preset applied - adjust as needed")
+        self._log_status("Portrait preset applied - adjust as needed")
 
     def _apply_landscape_preset(self):
         """Reset to landscape defaults."""
         self._apply_config_to_gui(DEFAULT_CONFIG)
-        self.status_var.set("Landscape defaults restored")
+        self._log_status("Landscape defaults restored")
 
     def _apply_original_preset(self):
         """Strip all studio settings and show the raw underlying figure.
@@ -4462,11 +4517,11 @@ document.addEventListener('click', function(e) {{
 
         is_export = bool(layout.get('_studio'))
         if is_export:
-            self.status_var.set(
+            self._log_status(
                 "Original: studio settings stripped -- showing raw source figure. "
                 "Press Preview to see it.")
         else:
-            self.status_var.set(
+            self._log_status(
                 "Original: source file has no studio settings -- showing as loaded.")
 
     # ---- Actions ----
@@ -4499,7 +4554,7 @@ document.addEventListener('click', function(e) {{
 
     def _do_load(self, path):
         """Actually load and parse an HTML file."""
-        self.status_var.set(f"Loading: {os.path.basename(path)}...")
+        self._log_status(f"Loading: {os.path.basename(path)}...")
         self.root.update_idletasks()
 
         fig = extract_figure_from_html(path)
@@ -4509,7 +4564,7 @@ document.addEventListener('click', function(e) {{
                 f"Could not extract Plotly figure from:\n{path}\n\n"
                 "The file may not contain a valid Plotly visualization."
             )
-            self.status_var.set("Load failed")
+            self._log_status("Load failed")
             return
 
         self.source_path = path
@@ -4532,7 +4587,7 @@ document.addEventListener('click', function(e) {{
 
         # Config restore: the file is the only source of truth.
         # Studio export (_studio_config present): restore exactly as exported.
-        # Raw orrery output (no _studio marker): clean slate — DEFAULT_CONFIG.
+        # Raw orrery output (no _studio marker): clean slate -- DEFAULT_CONFIG.
         layout = fig.get('layout', {})
         if layout.get('_studio') and layout.get('_studio_config'):
             # Gallery export: restore the config embedded in the file.
@@ -4561,14 +4616,14 @@ document.addEventListener('click', function(e) {{
                     if orig is not None:
                         trace['text'] = orig
 
-            self.status_var.set(
+            self._log_status(
                 f"Loaded gallery export: settings restored from file  |  "
                 f"{trace_count} traces, {'3D' if has_scene else '2D'}"
                 + (f"  |  {restored_count} traces: hover text restored"
                    if restored_count else ""))
         else:
             self._apply_config_to_gui(DEFAULT_CONFIG)
-            self.status_var.set(
+            self._log_status(
                 f"Loaded source file: controls reset to defaults  |  "
                 f"{trace_count} traces, {'3D' if has_scene else '2D'}")
 
@@ -4586,7 +4641,7 @@ document.addEventListener('click', function(e) {{
         if self.source_path and os.path.exists(self.source_path):
             self._do_load(self.source_path)
         else:
-            self.status_var.set("No file to reload")
+            self._log_status("No file to reload")
 
     def _preview(self):
         """Generate a preview and open in browser."""
@@ -4622,10 +4677,10 @@ document.addEventListener('click', function(e) {{
                 f.write(html)
 
             webbrowser.open('file://' + os.path.abspath(self.temp_file))
-            self.status_var.set("Preview opened in browser")
+            self._log_status("Preview opened in browser")
 
         except Exception as e:
-            self.status_var.set(f"Preview error: {e}")
+            self._log_status(f"Preview error: {e}")
             messagebox.showerror("Preview Error",
                                  f"Could not generate preview:\n\n{e}")
 
@@ -4648,7 +4703,7 @@ document.addEventListener('click', function(e) {{
             html = build_gallery_html(transformed, self.config, title)
 
         except Exception as e:
-            self.status_var.set(f"Export error: {e}")
+            self._log_status(f"Export error: {e}")
             messagebox.showerror("Export Error",
                                  f"Could not transform figure:\n\n{e}")
             return
@@ -4677,7 +4732,7 @@ document.addEventListener('click', function(e) {{
         )
 
         if not save_path:
-            self.status_var.set("Export cancelled")
+            self._log_status("Export cancelled")
             return
 
         with open(save_path, 'w', encoding='utf-8', newline='\n') as f:
@@ -4685,7 +4740,7 @@ document.addEventListener('click', function(e) {{
 
         size_kb = os.path.getsize(save_path) / 1024
 
-        self.status_var.set(
+        self._log_status(
             f"Exported: {os.path.basename(save_path)} ({size_kb:.0f} KB)")
 
         print(f"[GALLERY STUDIO] Exported: {save_path} ({size_kb:.0f} KB)")
@@ -4694,7 +4749,7 @@ document.addEventListener('click', function(e) {{
     def _reset_defaults(self):
         """Reset all config options to defaults."""
         self._apply_config_to_gui(DEFAULT_CONFIG)
-        self.status_var.set("Reset to defaults")
+        self._log_status("Reset to defaults")
 
     def cleanup(self):
         """Clean up temp files on exit."""
