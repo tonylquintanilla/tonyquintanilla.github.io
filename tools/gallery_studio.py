@@ -1094,6 +1094,11 @@ def apply_config(fig_dict, config):
             # Keep hoverinfo='text' so Plotly fires click/hover events
             # for the info card. Setting hoverinfo='none' kills 3D
             # event detection in some Plotly versions.
+            #
+            # Stash original text for round-trip re-export.
+            # When this file is reloaded into Studio, _original_text
+            # is restored to text so hover data isn't lost.
+            trace['_original_text'] = text_list
             trace['text'] = ['' for _ in text_list]
             trace['hovertemplate'] = '%{text}<extra></extra>'
             trace['hoverinfo'] = 'text'
@@ -1135,6 +1140,7 @@ def apply_config(fig_dict, config):
                                          if hover_html else '')
                             }))
                     trace['customdata'] = customdata_list
+                    trace['_original_text'] = text_list
                     trace['text'] = ['' for _ in text_list]
                     trace['hovertemplate'] = '%{text}<extra></extra>'
                     trace['hoverinfo'] = 'text'
@@ -1525,10 +1531,9 @@ def apply_config(fig_dict, config):
         layout['_kmz_handoff'] = kmz_link
 
     # Embed the studio config so Original preset can restore it
-    # on re-load. Exclude large/transient fields.
+    # on re-load. Exclude transient fields only.
     stored_config = {k: v for k, v in config.items()
-                     if k not in ('trace_visibility', 'plotly_js_source',
-                                  'output_mode')}
+                     if k not in ('plotly_js_source', 'output_mode')}
     layout['_studio_config'] = stored_config
 
     fig['layout'] = layout
@@ -4530,9 +4535,29 @@ document.addEventListener('click', function(e) {{
                 if k in restore:
                     restore[k] = v
             self._apply_config_to_gui(restore)
+
+            # Restore original hover text that was stashed during routing.
+            # Without this, re-editing a routed export loses all hover data
+            # because routing blanks trace['text'] and stashes the original
+            # in trace['_original_text'].
+            restored_count = 0
+            for trace in fig.get('data', []):
+                orig = trace.pop('_original_text', None)
+                if orig is not None:
+                    trace['text'] = orig
+                    restored_count += 1
+            # Also restore in animation frames
+            for frame in fig.get('frames', []):
+                for trace in frame.get('data', []):
+                    orig = trace.pop('_original_text', None)
+                    if orig is not None:
+                        trace['text'] = orig
+
             self.status_var.set(
                 f"Loaded gallery export: settings restored from file  |  "
-                f"{trace_count} traces, {'3D' if has_scene else '2D'}")
+                f"{trace_count} traces, {'3D' if has_scene else '2D'}"
+                + (f"  |  {restored_count} traces: hover text restored"
+                   if restored_count else ""))
         else:
             self._apply_config_to_gui(DEFAULT_CONFIG)
             self.status_var.set(

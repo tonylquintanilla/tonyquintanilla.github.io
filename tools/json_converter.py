@@ -451,6 +451,14 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
         print(f"  Found studio nav controls")
 
     with open(json_path, 'w', encoding='utf-8') as f:
+        # Strip _original_text stash from traces before writing.
+        # This key is a Studio round-trip artifact: it preserves hover
+        # text for re-editing but serves no purpose in the gallery.
+        for trace in fig_dict.get('data', []):
+            trace.pop('_original_text', None)
+        for frame in fig_dict.get('frames', []):
+            for trace in frame.get('data', []):
+                trace.pop('_original_text', None)
         json.dump(fig_dict, f)
 
     size_kb = os.path.getsize(json_path) / 1024

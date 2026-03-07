@@ -637,8 +637,19 @@
       "description": "Plot of near-Earth asteroids between Venus and Mars.",
       "size_kb": 1887.3,
       "converted": "2026-02-07 23:57"
+    },
+    {
+      "id": "gallery_test_gallery_routing_on",
+      "title": "Gallery Test Gallery Routing On",
+      "filename": "gallery_test_gallery_routing_on.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "testing reloaded file with routing on",
+      "size_kb": 468.2,
+      "converted": "2026-03-07 00:02",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-06 13:27",
-  "total_count": 59
+  "last_updated": "2026-03-07 00:02",
+  "total_count": 60
 }
