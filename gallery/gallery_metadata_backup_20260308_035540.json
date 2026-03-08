@@ -747,9 +747,7 @@
       "description": "New York City 1948",
       "size_kb": 5.7,
       "converted": "2026-03-08 00:49",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "st_louis_1954_teaser",
@@ -771,9 +769,7 @@
       "description": "Los Angeles 1955",
       "size_kb": 2.2,
       "converted": "2026-03-08 00:50",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "st_louis_nyc_1966_teaser",
@@ -784,9 +780,7 @@
       "description": "St Louis 1966",
       "size_kb": 3.9,
       "converted": "2026-03-08 00:50",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "uk_1976_teaser",
@@ -797,9 +791,7 @@
       "description": "United Kingdom",
       "size_kb": 5.0,
       "converted": "2026-03-08 00:50",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "us_1980_teaser",
@@ -810,9 +802,7 @@
       "description": "United States 1980",
       "size_kb": 3.3,
       "converted": "2026-03-08 00:50",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "athens_1987_teaser",
@@ -823,9 +813,7 @@
       "description": "Athens 1987",
       "size_kb": 3.0,
       "converted": "2026-03-08 00:50",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "chicago_1995_teaser",
@@ -836,9 +824,7 @@
       "description": "Chicago 1995",
       "size_kb": 6.7,
       "converted": "2026-03-08 00:51",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "europe_2003_teaser",
@@ -1050,6 +1036,6 @@
       "mode": "both"
     }
   ],
-  "last_updated": "2026-03-08 03:55",
+  "last_updated": "2026-03-08 03:26",
   "total_count": 90
 }
