@@ -575,7 +575,7 @@
     },
     {
       "id": "nyc_1948_teaser_desktop",
-      "title": "New York City 1948",
+      "title": "New York City, August 1948",
       "filename": "nyc_1948_teaser_desktop.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -642,6 +642,19 @@
       "converted": "2026-02-08 23:35",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
+    },
+    {
+      "id": "nyc_1948_teaser",
+      "title": "New York City 1948",
+      "filename": "nyc_1948_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "New York City 1948",
+      "size_kb": 5.7,
+      "converted": "2026-03-08 00:49",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
     },
     {
       "id": "paleoclimate_human_origins",
@@ -976,7 +989,7 @@
     },
     {
       "id": "delhi_heat_wave_teaser_desktop_copy",
-      "title": "Asia 2024",
+      "title": "Asian heat wave, May 2024",
       "filename": "delhi_heat_wave_teaser_desktop.json",
       "category": "climate",
       "category_label": "Earth System",
@@ -1053,6 +1066,6 @@
       "subcategory_label": "Extreme Heating Events"
     }
   ],
-  "last_updated": "2026-03-08 08:46",
-  "total_count": 87
+  "last_updated": "2026-03-08 08:45",
+  "total_count": 88
 }

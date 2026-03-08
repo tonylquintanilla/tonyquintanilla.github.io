@@ -718,35 +718,73 @@ class GalleryEditor:
             parts = item_id.split('_', 3)
             if len(parts) < 4:
                 return
-            sub_key = parts[3]
+            old_key = parts[3]
 
             # Find current label
             current_label = ''
             for v in vizs:
-                if v.get('subcategory') == sub_key:
-                    current_label = v.get('subcategory_label', sub_key)
+                if v.get('subcategory') == old_key:
+                    current_label = v.get('subcategory_label', old_key)
                     break
 
-            new_label = simpledialog.askstring(
-                "Edit Subcategory Label",
-                f"Subcategory key: {sub_key}\n\n"
-                f"Current label: {current_label}\n\n"
-                f"New label (applied to all entries with this key):",
-                initialvalue=current_label,
-                parent=self.root)
+            # Dialog with both key and label fields
+            dlg = tk.Toplevel(self.root)
+            dlg.title(f"Edit Subcategory - {old_key}")
+            dlg.geometry("400x220")
+            dlg.transient(self.root)
+            dlg.grab_set()
 
-            if new_label and new_label.strip() != current_label:
-                new_label = new_label.strip()
+            ttk.Label(dlg, text=f"Editing subcategory: {old_key}").pack(
+                anchor='w', padx=12, pady=(12, 8))
+
+            ttk.Label(dlg, text="Key:").pack(
+                anchor='w', padx=12, pady=(4, 0))
+            key_entry = ttk.Entry(dlg, width=30)
+            key_entry.pack(fill='x', padx=12, pady=(0, 4))
+            key_entry.insert(0, old_key)
+
+            ttk.Label(dlg, text="Label:").pack(
+                anchor='w', padx=12, pady=(4, 0))
+            label_entry = ttk.Entry(dlg, width=30)
+            label_entry.pack(fill='x', padx=12, pady=(0, 8))
+            label_entry.insert(0, current_label)
+
+            def on_ok():
+                new_key = key_entry.get().strip()
+                new_label = label_entry.get().strip()
+                if not new_key or not new_label:
+                    dlg.destroy()
+                    return
+
                 count = 0
                 for v in vizs:
-                    if v.get('subcategory') == sub_key:
+                    if v.get('subcategory') == old_key:
+                        v['subcategory'] = new_key
                         v['subcategory_label'] = new_label
                         count += 1
-                self._mark_dirty()
-                self._refresh_tree()
-                self.status_var.set(
-                    f"Subcategory label updated: {sub_key} -> "
-                    f"'{new_label}' ({count} entries)")
+
+                if count > 0:
+                    changes = []
+                    if new_key != old_key:
+                        changes.append(f"key: {old_key} -> {new_key}")
+                    if new_label != current_label:
+                        changes.append(
+                            f"label: {current_label} -> {new_label}")
+                    self._mark_dirty()
+                    self._refresh_tree()
+                    self.status_var.set(
+                        f"Subcategory updated: "
+                        f"{', '.join(changes)} ({count} entries)")
+                dlg.destroy()
+
+            btn_frame = ttk.Frame(dlg)
+            btn_frame.pack(fill='x', padx=12, pady=(0, 12))
+            ttk.Button(btn_frame, text="OK", command=on_ok).pack(
+                side='right', padx=2)
+            ttk.Button(btn_frame, text="Cancel",
+                       command=dlg.destroy).pack(side='right', padx=2)
+            dlg.bind('<Return>', lambda e: on_ok())
+            dlg.bind('<Escape>', lambda e: dlg.destroy())
 
         elif item_id.startswith('cat_'):
             # Category node: cat_{mode}_{cat}
@@ -1219,11 +1257,16 @@ class GalleryEditor:
         target_mode = viz.get('mode', 'landscape')
         target_sub = viz.get('subcategory', '')
 
-        # Collect indices of siblings (same mode + category + subcategory)
+        # Collect indices of siblings visible in the same tree section.
+        # A viz is a sibling if it shares category + subcategory AND
+        # its mode matches the target mode OR is 'both' (which appears
+        # in both tree sections). This matches what _refresh_tree shows.
         sibling_indices = [i for i, v in enumerate(vizs)
                            if v.get('category', 'other') == target_cat
-                           and v.get('mode', 'landscape') == target_mode
-                           and v.get('subcategory', '') == target_sub]
+                           and v.get('subcategory', '') == target_sub
+                           and (v.get('mode', 'landscape') == target_mode
+                                or v.get('mode') == 'both'
+                                or target_mode == 'both')]
 
         # Find position within sibling group
         pos = sibling_indices.index(idx)
