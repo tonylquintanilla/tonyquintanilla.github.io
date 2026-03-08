@@ -215,8 +215,6 @@ class GalleryEditor:
 
         ttk.Button(toolbar, text="Toggle Featured",
                    command=self._toggle_featured).pack(side='left', padx=2)
-        ttk.Button(toolbar, text="Set Subcategory",
-                   command=self._set_subcategory).pack(side='left', padx=2)
 
         ttk.Separator(toolbar, orient='vertical').pack(
             side='left', fill='y', padx=8, pady=2)
@@ -354,54 +352,17 @@ class GalleryEditor:
                     text=f"{cat_label} ({len(items)})",
                     open=True)
 
-                # Check if any items have subcategories
-                has_subs = any(v.get('subcategory') for v in items)
-
-                if has_subs:
-                    # Group by subcategory within this category
-                    sub_groups = {}
-                    sub_order = []
-                    for viz in items:
-                        sub = viz.get('subcategory', '')
-                        sub_label = viz.get('subcategory_label',
-                                            sub or 'Ungrouped')
-                        if sub not in sub_groups:
-                            sub_groups[sub] = []
-                            sub_order.append((sub, sub_label))
-                        sub_groups[sub].append(viz)
-
-                    for sub_key, sub_label in sub_order:
-                        sub_items = sub_groups[sub_key]
-                        sub_iid = (f'sub_{mode_key}_{cat_key}'
-                                   f'_{sub_key}')
-                        sub_parent = self.tree.insert(
-                            parent, 'end', iid=sub_iid,
-                            text=f"{sub_label} ({len(sub_items)})",
-                            open=True)
-                        for viz in sub_items:
-                            size = viz.get('size_kb', 0)
-                            star = "\u2605 " if viz.get('featured') else ""
-                            self.tree.insert(
-                                sub_parent, 'end', iid=viz['id'],
-                                text=viz.get('id', ''),
-                                values=(
-                                    star + viz.get('title', ''),
-                                    viz.get('description', '')[:80],
-                                    f"{size:,.1f}"
-                                ))
-                else:
-                    # No subcategories -- flat list as before
-                    for viz in items:
-                        size = viz.get('size_kb', 0)
-                        star = "\u2605 " if viz.get('featured') else ""
-                        self.tree.insert(
-                            parent, 'end', iid=viz['id'],
-                            text=viz.get('id', ''),
-                            values=(
-                                star + viz.get('title', ''),
-                                viz.get('description', '')[:80],
-                                f"{size:,.1f}"
-                            ))
+                for viz in items:
+                    size = viz.get('size_kb', 0)
+                    star = "\u2605 " if viz.get('featured') else ""
+                    self.tree.insert(
+                        parent, 'end', iid=viz['id'],
+                        text=viz.get('id', ''),
+                        values=(
+                            star + viz.get('title', ''),
+                            viz.get('description', '')[:80],
+                            f"{size:,.1f}"
+                        ))
 
     # --------------------------------------------------------
     # Selection Helpers
@@ -416,8 +377,7 @@ class GalleryEditor:
             return None
 
         item_id = sel[0]
-        if (item_id.startswith('mode_') or item_id.startswith('cat_')
-                or item_id.startswith('sub_')):
+        if item_id.startswith('mode_') or item_id.startswith('cat_'):
             messagebox.showinfo("Group Selected",
                                 "Select a visualization, not a group.")
             return None
@@ -428,7 +388,7 @@ class GalleryEditor:
         return None
 
     def _get_selected_type(self):
-        """Determine what is selected: 'viz', 'category', 'subcategory', 'mode', or None."""
+        """Determine what is selected: 'viz', 'category', 'mode', or None."""
         sel = self.tree.selection()
         if not sel:
             return None, None
@@ -437,8 +397,6 @@ class GalleryEditor:
             return 'mode', item_id
         elif item_id.startswith('cat_'):
             return 'category', item_id
-        elif item_id.startswith('sub_'):
-            return 'subcategory', item_id
         else:
             return 'viz', item_id
 
@@ -567,108 +525,6 @@ class GalleryEditor:
                     self._select_item(viz['id'])
                     self.status_var.set(
                         f"Category changed: {viz['id']} -> {new_cat_label}")
-            dlg.destroy()
-
-        btn_frame = ttk.Frame(dlg)
-        btn_frame.pack(fill='x', padx=12, pady=(0, 12))
-        ttk.Button(btn_frame, text="OK", command=on_ok).pack(
-            side='right', padx=2)
-        ttk.Button(btn_frame, text="Cancel",
-                   command=dlg.destroy).pack(side='right', padx=2)
-        listbox.bind('<Double-1>', lambda e: on_ok())
-        dlg.bind('<Escape>', lambda e: dlg.destroy())
-
-    def _set_subcategory(self):
-        """Set or change the subcategory of the selected visualization."""
-        viz = self._get_selected_viz()
-        if not viz:
-            return
-
-        current_sub = viz.get('subcategory', '')
-        current_sub_label = viz.get('subcategory_label', '')
-
-        # Collect existing subcategories from all vizs for suggestions
-        existing = {}
-        for v in self.data.get('visualizations', []):
-            s = v.get('subcategory', '')
-            sl = v.get('subcategory_label', '')
-            if s and s not in existing:
-                existing[s] = sl
-
-        # Build selection list
-        sub_list = [('', '(none -- remove subcategory)')]
-        for key in sorted(existing.keys()):
-            sub_list.append((key, existing[key]))
-
-        dlg = tk.Toplevel(self.root)
-        dlg.title(f"Set Subcategory - {viz['id']}")
-        dlg.geometry("400x380")
-        dlg.transient(self.root)
-        dlg.grab_set()
-
-        cur_text = (f"{current_sub_label} [{current_sub}]"
-                    if current_sub else "(none)")
-        ttk.Label(dlg, text=f"Current: {cur_text}").pack(
-            anchor='w', padx=12, pady=(12, 4))
-        ttk.Label(dlg, text="Select existing or enter new:").pack(
-            anchor='w', padx=12, pady=(0, 4))
-
-        listbox = tk.Listbox(dlg, height=min(len(sub_list), 8))
-        listbox.pack(fill='both', expand=True, padx=12, pady=4)
-
-        for i, (key, label) in enumerate(sub_list):
-            display = f"{label}  [{key}]" if key else label
-            listbox.insert('end', display)
-            if key == current_sub:
-                listbox.selection_set(i)
-                listbox.see(i)
-
-        # New subcategory entry
-        new_frame = ttk.LabelFrame(dlg, text="Or create new")
-        new_frame.pack(fill='x', padx=12, pady=4)
-
-        ttk.Label(new_frame, text="Key:").grid(
-            row=0, column=0, padx=4, pady=2, sticky='w')
-        key_entry = ttk.Entry(new_frame, width=20)
-        key_entry.grid(row=0, column=1, padx=4, pady=2, sticky='ew')
-
-        ttk.Label(new_frame, text="Label:").grid(
-            row=1, column=0, padx=4, pady=2, sticky='w')
-        label_entry = ttk.Entry(new_frame, width=20)
-        label_entry.grid(row=1, column=1, padx=4, pady=2, sticky='ew')
-        new_frame.columnconfigure(1, weight=1)
-
-        def on_ok():
-            # Check if new entry fields have content
-            new_key = key_entry.get().strip()
-            new_label = label_entry.get().strip()
-
-            if new_key and new_label:
-                # Use the new subcategory
-                viz['subcategory'] = new_key
-                viz['subcategory_label'] = new_label
-            else:
-                # Use listbox selection
-                sel = listbox.curselection()
-                if sel:
-                    chosen_key, chosen_label = sub_list[sel[0]]
-                    if chosen_key:
-                        viz['subcategory'] = chosen_key
-                        viz['subcategory_label'] = chosen_label
-                    else:
-                        # Remove subcategory
-                        viz.pop('subcategory', None)
-                        viz.pop('subcategory_label', None)
-                else:
-                    dlg.destroy()
-                    return
-
-            self._mark_dirty()
-            self._refresh_tree()
-            self._select_item(viz['id'])
-            sub_display = viz.get('subcategory_label', '(none)')
-            self.status_var.set(
-                f"Subcategory set: {viz['id']} -> {sub_display}")
             dlg.destroy()
 
         btn_frame = ttk.Frame(dlg)
