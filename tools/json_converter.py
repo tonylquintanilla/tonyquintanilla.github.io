@@ -491,7 +491,7 @@ def _update_metadata(output_folder, safe_name, display_name, category,
     # Create/update entry
     entry = {
         "id": safe_name,
-        "title": _clean_title(display_name),
+        "title": description if description else _clean_title(display_name),
         "filename": f"{safe_name}.json",
         "category": category,
         "category_label": CATEGORIES.get(category, "Other"),
