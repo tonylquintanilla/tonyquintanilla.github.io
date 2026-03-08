@@ -91,13 +91,14 @@ def get_category_order(vizs, mode_key):
     """Derive category display order from JSON sequence for a given mode.
 
     Returns list of (cat_key, cat_label) in first-appearance order,
-    matching exactly what the gallery renders.
+    matching exactly what the gallery renders. Entries with mode='both'
+    appear in both landscape and portrait.
     """
     seen = set()
     order = []
     for viz in vizs:
         viz_mode = viz.get('mode', 'landscape')
-        if viz_mode != mode_key:
+        if viz_mode != mode_key and viz_mode != 'both':
             continue
         cat = viz.get('category', 'other')
         if cat not in seen:
@@ -329,20 +330,21 @@ class GalleryEditor:
             if not cat_order:
                 continue
 
-            # Count total vizs in this mode
+            # Count total vizs in this mode (including 'both')
             mode_count = sum(
                 1 for v in vizs
-                if v.get('mode', 'landscape') == mode_key)
+                if v.get('mode', 'landscape') in (mode_key, 'both'))
             mode_label = MODE_LABELS.get(mode_key, mode_key)
             mode_node = self.tree.insert(
                 '', 'end', iid=f'mode_{mode_key}',
                 text=f"{mode_label} ({mode_count})",
                 open=True)
 
-            # Group vizs by category for this mode
+            # Group vizs by category for this mode (including 'both')
             groups = {}
             for viz in vizs:
-                if viz.get('mode', 'landscape') != mode_key:
+                viz_mode = viz.get('mode', 'landscape')
+                if viz_mode != mode_key and viz_mode != 'both':
                     continue
                 cat = viz.get('category', 'other')
                 groups.setdefault(cat, []).append(viz)
@@ -383,9 +385,15 @@ class GalleryEditor:
                         for viz in sub_items:
                             size = viz.get('size_kb', 0)
                             star = "\u2605 " if viz.get('featured') else ""
+                            # Suffix iid for 'both' entries to avoid
+                            # collision across landscape/portrait sections
+                            viz_iid = viz['id']
+                            if viz.get('mode') == 'both':
+                                viz_iid = viz['id'] + '@@' + mode_key
+                            both_tag = " [both]" if viz.get('mode') == 'both' else ""
                             self.tree.insert(
-                                sub_parent, 'end', iid=viz['id'],
-                                text=viz.get('id', ''),
+                                sub_parent, 'end', iid=viz_iid,
+                                text=viz.get('id', '') + both_tag,
                                 values=(
                                     star + viz.get('title', ''),
                                     viz.get('description', '')[:80],
@@ -396,9 +404,13 @@ class GalleryEditor:
                     for viz in items:
                         size = viz.get('size_kb', 0)
                         star = "\u2605 " if viz.get('featured') else ""
+                        viz_iid = viz['id']
+                        if viz.get('mode') == 'both':
+                            viz_iid = viz['id'] + '@@' + mode_key
+                        both_tag = " [both]" if viz.get('mode') == 'both' else ""
                         self.tree.insert(
-                            parent, 'end', iid=viz['id'],
-                            text=viz.get('id', ''),
+                            parent, 'end', iid=viz_iid,
+                            text=viz.get('id', '') + both_tag,
                             values=(
                                 star + viz.get('title', ''),
                                 viz.get('description', '')[:80],
@@ -424,8 +436,11 @@ class GalleryEditor:
                                 "Select a visualization, not a group.")
             return None
 
+        # Strip @@mode suffix used for 'both' entries
+        real_id = item_id.split('@@')[0]
+
         for viz in self.data.get('visualizations', []):
-            if viz['id'] == item_id:
+            if viz['id'] == real_id:
                 return viz
         return None
 
@@ -1188,11 +1203,15 @@ class GalleryEditor:
         same group, then all group entries are written back to their
         original positions in the master list.
         """
+        # Strip @@mode suffix used for 'both' entries in tree
+        tree_iid = viz_id
+        real_id = viz_id.split('@@')[0]
+
         vizs = self.data['visualizations']
-        idx = next((i for i, v in enumerate(vizs) if v['id'] == viz_id),
+        idx = next((i for i, v in enumerate(vizs) if v['id'] == real_id),
                    None)
         if idx is None:
-            self.status_var.set(f"Move failed: {viz_id} not found")
+            self.status_var.set(f"Move failed: {real_id} not found")
             return
 
         viz = vizs[idx]
@@ -1231,8 +1250,8 @@ class GalleryEditor:
 
         self._mark_dirty()
         self._refresh_tree()
-        self._select_item(viz_id)
-        self.status_var.set(f"Moved: {viz_id}")
+        self._select_item(tree_iid)
+        self.status_var.set(f"Moved: {real_id}")
 
     def _move_subcategory(self, sub_iid, direction):
         """Move an entire subcategory within its mode+category.

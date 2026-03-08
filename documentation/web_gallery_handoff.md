@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5 - March 7, 2026 | Claude Opus 4.6
+## Session Handoff | February 5 - March 8, 2026 | Claude Opus 4.6
 
 ---
 
@@ -18,7 +18,7 @@ alive. No download, no install, no "is this safe?"
 
 ## Architecture Decided
 
-Current pipeline (as of Session 14):
+Current pipeline (as of Session 27):
 ```
 Desktop App (Python/Plotly)
     |
@@ -30,20 +30,21 @@ json_converter.py (HTML -> JSON extraction, reads gallery_config.json,
                    detects Studio features: toggle annotations, nav controls, frames)
     |
     v
-JSON files + gallery_metadata.json
+JSON files + gallery_metadata.json (with optional subcategory fields)
     |
     v
 GitHub Repository (tonyquintanilla.github.io)
     |
     v
-index.html Gallery Viewer (Plotly.js, reads gallery_config.json for colors)
+index.html Gallery Viewer (Plotly.js, reads gallery_config.json for colors,
+                           renders collapsible subcategory groups)
     |
     v
 Anyone with a browser, any device
 
 Gallery management:
     gallery_config.json  <-- single source of truth for categories
-    gallery_editor.py    <-- GUI for editing metadata, categories, ordering
+    gallery_editor.py    <-- GUI for editing metadata, categories, subcategories, ordering
 ```
 
 Target pipeline (Session 12 refactor):
@@ -3331,3 +3332,213 @@ stripping 2-3 traces worth of Venus and Earth orbit data).
 *"That's such a minor detail that is not worth tracking down. It's easily
 recoverable."*
 -- Tony, on sub-trace default visibility after restore, March 7, 2026
+
+### Session 27 (Mar 8, 2026): Earth System Subcategories + Gallery Architecture Design
+
+Design session that evolved from open-ended exploration ("how would you
+approach extending the earth system generator to other planetary
+boundaries?") into a concrete architectural plan and first implementation
+of subcategory support for the gallery.
+
+**Design Evolution (conversation-first, 4 phases):**
+
+1. *Boundary extension options* -- Three approaches proposed: tipping
+   points forensics (extend KML teaser pattern), polar chart as hub
+   (each wedge becomes navigable), unified transgression timeline (all
+   boundaries on one time axis). Tony unified all three as different
+   scales of the same story.
+
+2. *Data fragility prioritization* -- Ranked data sources by institutional
+   risk and measurement irreplaceability: NOAA Coral Reef Watch SST
+   (vulnerable agency, unique product), NASA GRACE-FO ice mass
+   (irreplaceable measurement), MODIS NDVI (aging satellite), NOAA CPC
+   drought indices (reconstructable). Build order follows fragility,
+   not visual drama. "Data Preservation is Climate Action."
+
+3. *Gallery as communicator* -- Tony's insight: the app is the generator,
+   the gallery is the communicator, Instagram is the teaser. Start at
+   the gallery end because it constrains upstream design. Explored
+   scrollytelling (NYT, Guardian, Pudding) vs open-world (museum)
+   models. Tony's bias: "a map more than a channel."
+
+4. *Museum model* -- Research into Met, Smithsonian, museum UX revealed
+   the key principle: objects first, interpretation available. Layered
+   interpretation (object -> label -> wall text -> catalog). Three
+   modes of traversal: Browse (card catalog, open world), Explore
+   (connections on objects, follow threads), Read (curated scroll feed,
+   guided narrative). Tony chose evolutionary implementation: build the
+   rooms first, add wall text later.
+
+**Second-order effects framework:** Tony identified the gap between
+physical climate measurement and human consequence -- the chain from
+ecological to economic to demographic to political impacts. Attribution
+weakens along the chain but the connections matter. Tony's anthropologist
+background is the right lens. Honest approach: present physical data
+rigorously, document human chain separately with explicit attribution
+strength labels (strong / moderate / contested / interpretive). The
+interpretive layer is Tony-authored, not auto-generated.
+
+**Media research findings:**
+- The Pudding: closest overall match (data-forward, sparse prose,
+  personal voice, open-source tools)
+- Bloomberg/Climate Impact Lab: closest to content (heat mortality,
+  inequality mapping)
+- Pew Research: closest to mobile discipline (one idea per viewport)
+- Guardian: closest to cross-disciplinary narrative (following threads
+  through systems)
+- Key difference: none attempt the full causal chain with explicit
+  attribution strength. That's genuinely new.
+
+**Implementation: Subcategory Support (3 files)**
+
+Added `subcategory` and `subcategory_label` optional fields to
+gallery_metadata.json for Earth System entries. Non-climate categories
+are unaffected.
+
+**gallery_editor.py** changes (~380 lines added, 1,452 total):
+
+- "Set Subcategory" toolbar button with dialog: listbox of existing
+  subcategories + create-new fields (key + label). Supports removing
+  subcategories.
+- "Edit Labels" toolbar button: select a category or subcategory node
+  in the tree, rename the label across ALL entries sharing that key.
+  Category renames also update gallery_config.json.
+- Tree display: subcategory-aware grouping within categories that have
+  them. Shows Mode -> Category -> Subcategory -> Visualization hierarchy.
+  Categories without subcategories render flat as before.
+- "Copy To..." dialog: added subcategory selection alongside existing
+  category and mode pickers. Fixed `exportselection=False` on both
+  listboxes (Tkinter gotcha: clicking one listbox deselected the other).
+- Move Up/Down: now respects subcategory boundaries. Vizs stay within
+  their subcategory when reordering. New `_move_subcategory` method
+  reorders entire subcategory groups within a category. Status bar
+  feedback when moves fail ("Already at top of climate_change").
+- Selection helpers: recognize `sub_` prefixed tree nodes.
+- Move algorithm: extract-reorder-reinsert instead of direct swap.
+  Handles non-contiguous entries safely (portrait entries interspersed
+  between landscape entries of the same subcategory).
+
+**index.html** changes (~105 lines added, 2,400 total):
+
+- CSS: `.subcategory-header`, `.subcategory-label`, `.subcategory-arrow`,
+  `.subcategory-items` with collapsible animation. Arrow rotates 90deg
+  when collapsed, items container animates max-height to 0.
+- JS `renderVizCard()`: extracted card HTML into reusable function
+  (shared by flat and subcategory layouts, eliminates duplication).
+- JS `renderNavList()`: checks `hasSubs` per category. If any item has
+  a subcategory field, groups into collapsible subcategory sections.
+  Falls back to flat list for non-subcategory categories.
+- JS click handler: subcategory header click toggles collapsed state.
+  Falls through to viz-card handler for non-header clicks.
+
+**assign_subcategories.py**: one-time bootstrap script (or use gallery
+editor GUI). Maps 26 existing Earth System entries to subcategories.
+
+**Initial subcategory structure:**
+
+```
+Earth System
+  +-- Overview (Planetary Boundaries polar chart)
+  +-- Climate Change (14 entries)
+  |     Keeling Curve, Energy Imbalance, Temperature Anomalies,
+  |     Monthly Temperature, Warming Stripes, Sea Level Rise,
+  |     Arctic Ice Extent, Paleoclimate Cenozoic 66Ma,
+  |     Paleoclimate 540Ma, Paleoclimate Human Origins
+  +-- Extreme Heating Events (5 entries)
+  |     Paleoclimate Wet-Bulb, NYC 1948, Delhi 2024
+  +-- Ocean Acidification (2 entries)
+        Ocean pH Trend
+```
+
+**Future subcategories (keys reserved, unpopulated):**
+biochemical_flows, biosphere_integrity, land_system_change,
+freshwater_change, aerosol_loading, ozone_depletion, novel_entities
+
+**Metadata schema addition:**
+
+```json
+{
+    "id": "keeling_curve_co2_concentration",
+    "category": "climate",
+    "category_label": "Earth System",
+    "subcategory": "climate_change",
+    "subcategory_label": "Climate Change",
+    ...
+}
+```
+
+**What doesn't change:** gallery_config.json (subcategories live in
+metadata, not config), json_converter.py, gallery_studio.py, any
+non-climate gallery entries, the _studio flag system, the JSON pipeline.
+
+**Design artifacts produced (for future reference):**
+- `earth_system_exhibit_wireframe.md`: 13-screen scrollytelling mockup
+  for "The Heat Chain" (energy imbalance -> temperature -> heat events ->
+  human impacts). Now archived as future "Read mode" reference.
+- `gallery_navigation_flowchart.mermaid`: three-mode architecture
+  (Browse/Explore/Read) showing how all modes lead to same visualizations.
+- `subcategory_handoff.md`: detailed implementation guide with targeted
+  code snippets.
+
+**Files modified:**
+- `gallery_editor.py` (1,069 -> 1,452 lines)
+- `index.html` (2,295 -> 2,400 lines)
+
+**Files created:**
+- `assign_subcategories.py` (one-time bootstrap, optional)
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Scrollytelling vs open world | Open world (museum model) | Tony's bias: "a map more than a channel." Gallery is already a gallery |
+| Where do paleoclimate charts go? | Under Climate Change | They're an interpretive layer explaining climate through deep time |
+| Where does wet-bulb chart go? | Extreme Heating Events | It's a focused bridge between deep time and specific heat events |
+| Subcategories in config or metadata? | Metadata only | Lighter touch; grows organically; config stays for top-level categories |
+| Linear exhibits or connections? | Connections on objects (future) | Museum model: "see also" links, not forced paths |
+| Curated feeds? | Future "Read mode" | Build rooms first, add audio guide later |
+| Data caching priority | Fragility-first: Coral Reef Watch SST, GRACE-FO, MODIS, CPC | Preserve what might disappear, not what's most visual |
+| Second-order effects | Tony-authored interpretive layer with attribution strength | Not auto-generated; anthropologist's synthesis with honest uncertainty |
+
+---
+
+**Technical Lessons Learned:**
+
+- Tkinter `exportselection=True` (default) causes multiple Listbox
+  widgets in the same dialog to steal selection from each other. Set
+  `exportselection=False` on each Listbox when multiple coexist.
+
+- Move Up/Down with direct array swap (`vizs[idx], vizs[other_idx] =
+  ...`) fails intermittently when sibling entries are non-contiguous in
+  the master array. Extract-reorder-reinsert is more robust: pull out
+  the sibling group, swap within the extracted list, write back to
+  original slot positions.
+
+- Subcategory boundaries must be enforced in move operations. Without
+  subcategory matching in the sibling filter, vizs can jump across
+  boundary groups.
+
+- Museum UX principle: "layered interpretation" -- visitors choose their
+  depth of engagement. Object (viz) -> label (card metadata) -> wall
+  text (interpretation) -> catalog (citations). Each layer is opt-in.
+
+- Gallery navigation structure: max 3 levels deep (category ->
+  subcategory -> visualization). Deeper hierarchies frustrate mobile
+  users.
+
+---
+
+*"Let the facts speak but don't shy from the connections."*
+-- Tony, on the interpretive approach, March 8, 2026
+
+*"A map more than a channel."*
+-- Tony, choosing open-world exploration over scrollytelling, March 8, 2026
+
+*"The gallery is the communicator."*
+-- Tony, on why to start at the audience end, March 8, 2026
+
+*"I am also an anthropologist, besides artist and engineer."*
+-- Tony, claiming the interpretive layer, March 8, 2026
+
+*"Data Preservation is Climate Action."*
+-- Standing project principle, applied to fragility-first prioritization
