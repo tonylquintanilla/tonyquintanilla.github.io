@@ -80,19 +80,6 @@
       "subcategory_label": "Narrative"
     },
     {
-      "id": "energy_imbalance_desktop",
-      "title": "Energy Imbalance, 2005 - 2025",
-      "filename": "energy_imbalance_desktop.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Earth's energy imbalance",
-      "size_kb": 30.7,
-      "converted": "2026-02-23 01:24",
-      "mode": "landscape",
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
       "id": "keeling_curve_co2_concentration",
       "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
       "filename": "keeling_curve_co2_concentration.json",
@@ -102,18 +89,6 @@
       "size_kb": 17.3,
       "converted": "2026-02-09 00:12",
       "featured": true,
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
-      "id": "global_temperature_anomalies",
-      "title": "Global Temperature Anomalies, 1880 - 2025",
-      "filename": "global_temperature_anomalies.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing surface mean temperature anomalies from 1880 to 2025.",
-      "size_kb": 43.0,
-      "converted": "2026-02-09 00:11",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
     },
@@ -144,28 +119,16 @@
       "subcategory_label": "Climate Change"
     },
     {
-      "id": "ocean_acidification_ph_trend",
-      "title": "Ocean Acidification pH Trend, 1991 - 2023",
-      "filename": "ocean_acidification_ph_trend.json",
+      "id": "global_temperature_anomalies",
+      "title": "Global Temperature Anomalies, 1880 - 2025",
+      "filename": "global_temperature_anomalies.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing ocean surface pH from 1988 to 2023.",
-      "size_kb": 16.9,
-      "converted": "2026-02-09 00:09",
-      "subcategory": "acidificatioin",
-      "subcategory_label": "Ocean Acidification"
-    },
-    {
-      "id": "paleoclimate_540ma_to_present",
-      "title": "Paleoclimate 540 Ma to Present",
-      "filename": "paleoclimate_540ma_to_present.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
-      "size_kb": 95.9,
-      "converted": "2026-02-08 23:40",
-      "subcategory": "narrative",
-      "subcategory_label": "Narrative"
+      "description": "Graphic showing surface mean temperature anomalies from 1880 to 2025.",
+      "size_kb": 43.0,
+      "converted": "2026-02-09 00:11",
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
     },
     {
       "id": "sea_level_rise",
@@ -180,16 +143,54 @@
       "subcategory_label": "Climate Change"
     },
     {
-      "id": "paleoclimate_cenozoic_66ma",
-      "title": "Paleoclimate Cenozoic (66 Ma)",
-      "filename": "paleoclimate_cenozoic_66ma.json",
+      "id": "ocean_acidification_ph_trend",
+      "title": "Ocean Acidification pH Trend, 1991 - 2023",
+      "filename": "ocean_acidification_ph_trend.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
-      "size_kb": 66.7,
-      "converted": "2026-02-08 23:41",
-      "subcategory": "narrative",
-      "subcategory_label": "Narrative"
+      "description": "Graphic showing ocean surface pH from 1988 to 2023.",
+      "size_kb": 16.9,
+      "converted": "2026-02-09 00:09",
+      "subcategory": "acidificatioin",
+      "subcategory_label": "Ocean Acidification"
+    },
+    {
+      "id": "arctic_ice_extent",
+      "title": "Arctic Ice Extent, 1979 - 2025",
+      "filename": "arctic_ice_extent.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing Arctic sea ice extent in September, minimum.",
+      "size_kb": 5.2,
+      "converted": "2026-02-08 23:40",
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
+    },
+    {
+      "id": "nyc_1948_teaser_desktop",
+      "title": "New York City, August 1948",
+      "filename": "nyc_1948_teaser_desktop.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Extreme heat event, New York City, August 1948",
+      "size_kb": 5.9,
+      "converted": "2026-03-02 01:58",
+      "mode": "landscape",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "delhi_heat_wave_teaser_desktop_copy",
+      "title": "Asian heat wave, May 2024",
+      "filename": "delhi_heat_wave_teaser_desktop.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Asian heat wave, May 2024",
+      "size_kb": 13.9,
+      "converted": "2026-03-04 00:26",
+      "mode": "landscape",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
     },
     {
       "id": "pluto_barycenter_system_20260208_1957",
@@ -358,19 +359,6 @@
       "subcategory_label": "Narrative"
     },
     {
-      "id": "energy_imbalance_mobile",
-      "title": "Energy Imbalance, 2005 - 2025",
-      "filename": "energy_imbalance_mobile.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Earth's energy imbalance",
-      "size_kb": 29.5,
-      "converted": "2026-02-23 00:17",
-      "mode": "portrait",
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
       "id": "keeling_curve_co2_concentration_copy",
       "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
       "filename": "keeling_curve_co2_concentration.json",
@@ -381,6 +369,19 @@
       "converted": "2026-02-09 00:12",
       "mode": "portrait",
       "featured": true,
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
+    },
+    {
+      "id": "energy_imbalance_mobile",
+      "title": "Energy Imbalance, 2005 - 2025",
+      "filename": "energy_imbalance_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Earth's energy imbalance",
+      "size_kb": 29.5,
+      "converted": "2026-02-23 00:17",
+      "mode": "portrait",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
     },
@@ -536,7 +537,7 @@
       "subcategory_label": "Climate Change"
     },
     {
-      "id": "paleoclimate_wet_bulb_copy",
+      "id": "paleoclimate_wet_bulb",
       "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
       "filename": "paleoclimate_wet_bulb.json",
       "category": "climate",
@@ -544,8 +545,8 @@
       "description": "Graphic showing extreme heating events since the 1930s.",
       "size_kb": 129.3,
       "converted": "2026-02-08 23:35",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
     },
     {
       "id": "ocean_acidification_ph_trend_mobile",
@@ -574,17 +575,16 @@
       "subcategory_label": "Extreme Heating Events"
     },
     {
-      "id": "nyc_1948_teaser_desktop",
-      "title": "New York City, August 1948",
-      "filename": "nyc_1948_teaser_desktop.json",
+      "id": "paleoclimate_cenozoic_66ma",
+      "title": "Paleoclimate Cenozoic (66 Ma)",
+      "filename": "paleoclimate_cenozoic_66ma.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Extreme heat event, New York City, August 1948",
-      "size_kb": 5.9,
-      "converted": "2026-03-02 01:58",
-      "mode": "landscape",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
+      "size_kb": 66.7,
+      "converted": "2026-02-08 23:41",
+      "subcategory": "narrative",
+      "subcategory_label": "Narrative"
     },
     {
       "id": "current_comets_social_view_20260210_2331",
@@ -620,41 +620,29 @@
       "featured": true
     },
     {
-      "id": "arctic_ice_extent",
-      "title": "Arctic Ice Extent, 1979 - 2025",
-      "filename": "arctic_ice_extent.json",
+      "id": "paleoclimate_540ma_to_present",
+      "title": "Paleoclimate 540 Ma to Present",
+      "filename": "paleoclimate_540ma_to_present.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing Arctic sea ice extent in September, minimum.",
-      "size_kb": 5.2,
+      "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
+      "size_kb": 95.9,
       "converted": "2026-02-08 23:40",
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
+      "subcategory": "narrative",
+      "subcategory_label": "Narrative"
     },
     {
-      "id": "paleoclimate_wet_bulb",
-      "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
-      "filename": "paleoclimate_wet_bulb.json",
+      "id": "energy_imbalance_desktop",
+      "title": "Energy Imbalance, 2005 - 2025",
+      "filename": "energy_imbalance_desktop.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing extreme heating events since the 1930s.",
-      "size_kb": 129.3,
-      "converted": "2026-02-08 23:35",
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
-      "id": "delhi_heat_wave_teaser_desktop_copy",
-      "title": "Asian heat wave, May 2024",
-      "filename": "delhi_heat_wave_teaser_desktop.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Asian heat wave, May 2024",
-      "size_kb": 13.9,
-      "converted": "2026-03-04 00:26",
+      "description": "Earth's energy imbalance",
+      "size_kb": 30.7,
+      "converted": "2026-02-23 01:24",
       "mode": "landscape",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
     },
     {
       "id": "paleoclimate_human_origins",
@@ -665,18 +653,6 @@
       "description": "540 MY paleoclimate chart with human origins markers.",
       "size_kb": 116.3,
       "converted": "2026-02-07 21:07",
-      "subcategory": "narrative",
-      "subcategory_label": "Narrative"
-    },
-    {
-      "id": "paleoclimate_wet_bulb_copy_copy",
-      "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
-      "filename": "paleoclimate_wet_bulb.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing extreme heating events since the 1930s.",
-      "size_kb": 129.3,
-      "converted": "2026-02-08 23:35",
       "subcategory": "narrative",
       "subcategory_label": "Narrative"
     },
@@ -692,19 +668,6 @@
       "mode": "portrait",
       "subcategory": "heating",
       "subcategory_label": "Extreme Heating Events"
-    },
-    {
-      "id": "paleoclimate_wet_bulb_gallery_copy",
-      "title": "Paleoclimage and Extreme Heating Events, 1930s - 2025 (use landscape)",
-      "filename": "paleoclimate_wet_bulb_gallery.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Paleoclimate history",
-      "size_kb": 101.8,
-      "converted": "2026-02-15 01:01",
-      "mode": "portrait",
-      "subcategory": "narrative",
-      "subcategory_label": "Narrative"
     },
     {
       "id": "near_earth_asteroids_social_view_20260211_0024",
@@ -1036,6 +999,6 @@
       "mode": "both"
     }
   ],
-  "last_updated": "2026-03-08 03:26",
-  "total_count": 90
+  "last_updated": "2026-03-08 01:44",
+  "total_count": 87
 }

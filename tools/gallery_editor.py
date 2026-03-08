@@ -217,6 +217,8 @@ class GalleryEditor:
                    command=self._toggle_featured).pack(side='left', padx=2)
         ttk.Button(toolbar, text="Set Subcategory",
                    command=self._set_subcategory).pack(side='left', padx=2)
+        ttk.Button(toolbar, text="Edit Labels",
+                   command=self._edit_labels).pack(side='left', padx=2)
 
         ttk.Separator(toolbar, orient='vertical').pack(
             side='left', fill='y', padx=8, pady=2)
@@ -680,15 +682,112 @@ class GalleryEditor:
         listbox.bind('<Double-1>', lambda e: on_ok())
         dlg.bind('<Escape>', lambda e: dlg.destroy())
 
+    def _edit_labels(self):
+        """Edit category_label or subcategory_label for a selected group.
+
+        Select a category or subcategory node in the tree, then click
+        Edit Labels. The new label is applied to ALL visualizations
+        that share that category or subcategory key.
+        """
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showinfo("No Selection",
+                                "Select a category or subcategory node.")
+            return
+
+        item_id = sel[0]
+        vizs = self.data.get('visualizations', [])
+
+        if item_id.startswith('sub_'):
+            # Subcategory node: sub_{mode}_{cat}_{subcat}
+            parts = item_id.split('_', 3)
+            if len(parts) < 4:
+                return
+            sub_key = parts[3]
+
+            # Find current label
+            current_label = ''
+            for v in vizs:
+                if v.get('subcategory') == sub_key:
+                    current_label = v.get('subcategory_label', sub_key)
+                    break
+
+            new_label = simpledialog.askstring(
+                "Edit Subcategory Label",
+                f"Subcategory key: {sub_key}\n\n"
+                f"Current label: {current_label}\n\n"
+                f"New label (applied to all entries with this key):",
+                initialvalue=current_label,
+                parent=self.root)
+
+            if new_label and new_label.strip() != current_label:
+                new_label = new_label.strip()
+                count = 0
+                for v in vizs:
+                    if v.get('subcategory') == sub_key:
+                        v['subcategory_label'] = new_label
+                        count += 1
+                self._mark_dirty()
+                self._refresh_tree()
+                self.status_var.set(
+                    f"Subcategory label updated: {sub_key} -> "
+                    f"'{new_label}' ({count} entries)")
+
+        elif item_id.startswith('cat_'):
+            # Category node: cat_{mode}_{cat}
+            parts = item_id.split('_', 2)
+            if len(parts) < 3:
+                return
+            cat_key = parts[2]
+
+            # Find current label
+            current_label = ''
+            for v in vizs:
+                if v.get('category') == cat_key:
+                    current_label = v.get('category_label', cat_key)
+                    break
+
+            new_label = simpledialog.askstring(
+                "Edit Category Label",
+                f"Category key: {cat_key}\n\n"
+                f"Current label: {current_label}\n\n"
+                f"New label (applied to all entries with this key):",
+                initialvalue=current_label,
+                parent=self.root)
+
+            if new_label and new_label.strip() != current_label:
+                new_label = new_label.strip()
+                count = 0
+                for v in vizs:
+                    if v.get('category') == cat_key:
+                        v['category_label'] = new_label
+                        count += 1
+                # Also update gallery_config.json
+                for c in self.categories:
+                    if c['key'] == cat_key:
+                        c['label'] = new_label
+                        break
+                self._mark_dirty()
+                self._refresh_tree()
+                self.status_var.set(
+                    f"Category label updated: {cat_key} -> "
+                    f"'{new_label}' ({count} entries + config)")
+        else:
+            messagebox.showinfo(
+                "Select a Group",
+                "Select a category or subcategory node to edit its label.\n"
+                "To edit a visualization title, use Edit Title.")
+
     # --------------------------------------------------------
     # Copy / Delete Visualizations
     # --------------------------------------------------------
 
     def _copy_viz(self):
-        """Copy a visualization to another category (and optionally mode).
+        """Copy a visualization to another category/subcategory/mode.
 
         Creates a duplicate entry with a _copy suffix on the ID,
-        placed in the target category. The original stays in place.
+        placed in the target category and subcategory. The original
+        stays in place.
         """
         viz = self._get_selected_viz()
         if not viz:
@@ -698,10 +797,22 @@ class GalleryEditor:
         all_cats = [(c['key'], c['label']) for c in self.categories]
         current_cat = viz.get('category', 'other')
         current_mode = viz.get('mode', 'landscape')
+        current_sub = viz.get('subcategory', '')
+
+        # Collect existing subcategories
+        existing_subs = {}
+        for v in self.data.get('visualizations', []):
+            s = v.get('subcategory', '')
+            sl = v.get('subcategory_label', '')
+            if s and s not in existing_subs:
+                existing_subs[s] = sl
+        sub_list = [('', '(none)')]
+        for key in sorted(existing_subs.keys()):
+            sub_list.append((key, existing_subs[key]))
 
         dlg = tk.Toplevel(self.root)
         dlg.title(f"Copy To... - {viz['id']}")
-        dlg.geometry("380x400")
+        dlg.geometry("380x520")
         dlg.transient(self.root)
         dlg.grab_set()
 
@@ -724,20 +835,35 @@ class GalleryEditor:
         # Category selection
         ttk.Label(dlg, text="Target category:").pack(
             anchor='w', padx=12, pady=(8, 2))
-        listbox = tk.Listbox(dlg, height=min(len(all_cats), 10))
-        listbox.pack(fill='both', expand=True, padx=12, pady=4)
+        cat_listbox = tk.Listbox(dlg, height=min(len(all_cats), 6),
+                                  exportselection=False)
+        cat_listbox.pack(fill='x', padx=12, pady=4)
 
         for i, (key, label) in enumerate(all_cats):
-            listbox.insert('end', f"{label}  [{key}]")
+            cat_listbox.insert('end', f"{label}  [{key}]")
             if key == current_cat:
-                listbox.selection_set(i)
+                cat_listbox.selection_set(i)
+
+        # Subcategory selection
+        ttk.Label(dlg, text="Target subcategory:").pack(
+            anchor='w', padx=12, pady=(8, 2))
+        sub_listbox = tk.Listbox(dlg, height=min(len(sub_list), 6),
+                                  exportselection=False)
+        sub_listbox.pack(fill='x', padx=12, pady=4)
+
+        for i, (key, label) in enumerate(sub_list):
+            display = f"{label}  [{key}]" if key else label
+            sub_listbox.insert('end', display)
+            if key == current_sub:
+                sub_listbox.selection_set(i)
+                sub_listbox.see(i)
 
         def on_ok():
-            sel = listbox.curselection()
-            if not sel:
+            cat_sel = cat_listbox.curselection()
+            if not cat_sel:
                 return
 
-            target_cat_key, target_cat_label = all_cats[sel[0]]
+            target_cat_key, target_cat_label = all_cats[cat_sel[0]]
             target_mode = mode_var.get()
 
             # Create the copy
@@ -747,6 +873,18 @@ class GalleryEditor:
 
             if target_mode != current_mode:
                 new_viz['mode'] = target_mode
+
+            # Apply subcategory selection
+            sub_sel = sub_listbox.curselection()
+            if sub_sel:
+                chosen_sub_key, chosen_sub_label = sub_list[sub_sel[0]]
+                if chosen_sub_key:
+                    new_viz['subcategory'] = chosen_sub_key
+                    new_viz['subcategory_label'] = chosen_sub_label
+                else:
+                    # (none) selected -- remove subcategory
+                    new_viz.pop('subcategory', None)
+                    new_viz.pop('subcategory_label', None)
 
             # Generate unique ID
             base_id = viz['id']
@@ -774,9 +912,11 @@ class GalleryEditor:
             self._mark_dirty()
             self._refresh_tree()
             self._select_item(new_id)
+            sub_display = new_viz.get('subcategory_label', '')
+            sub_msg = f" / {sub_display}" if sub_display else ""
             self.status_var.set(
                 f"Copied: {viz['id']} -> {new_id} "
-                f"in {target_cat_label} ({target_mode})")
+                f"in {target_cat_label}{sub_msg} ({target_mode})")
             dlg.destroy()
 
         btn_frame = ttk.Frame(dlg)
@@ -1026,11 +1166,13 @@ class GalleryEditor:
         self._move(1)
 
     def _move(self, direction):
-        """Move selected item. Works for vizs and categories."""
+        """Move selected item. Works for vizs, subcategories, and categories."""
         sel_type, sel_id = self._get_selected_type()
 
         if sel_type == 'viz':
             self._move_viz(sel_id, direction)
+        elif sel_type == 'subcategory':
+            self._move_subcategory(sel_id, direction)
         elif sel_type == 'category':
             self._move_category(sel_id, direction)
         elif sel_type == 'mode':
@@ -1039,34 +1181,132 @@ class GalleryEditor:
             messagebox.showinfo("No Selection", "Select an item first.")
 
     def _move_viz(self, viz_id, direction):
-        """Move a visualization within its mode+category group."""
+        """Move a visualization within its mode+category+subcategory group.
+
+        Uses extract-reorder-reinsert to handle non-contiguous entries
+        safely. The viz swaps position with its neighbor within the
+        same group, then all group entries are written back to their
+        original positions in the master list.
+        """
         vizs = self.data['visualizations']
         idx = next((i for i, v in enumerate(vizs) if v['id'] == viz_id),
                    None)
         if idx is None:
+            self.status_var.set(f"Move failed: {viz_id} not found")
             return
 
         viz = vizs[idx]
         target_cat = viz.get('category', 'other')
         target_mode = viz.get('mode', 'landscape')
+        target_sub = viz.get('subcategory', '')
 
-        siblings = [i for i, v in enumerate(vizs)
-                    if v.get('category', 'other') == target_cat
-                    and v.get('mode', 'landscape') == target_mode]
+        # Collect indices of siblings (same mode + category + subcategory)
+        sibling_indices = [i for i, v in enumerate(vizs)
+                           if v.get('category', 'other') == target_cat
+                           and v.get('mode', 'landscape') == target_mode
+                           and v.get('subcategory', '') == target_sub]
 
-        pos = siblings.index(idx)
+        # Find position within sibling group
+        pos = sibling_indices.index(idx)
         new_pos = pos + direction
 
-        if new_pos < 0 or new_pos >= len(siblings):
-            return
+        if new_pos < 0 or new_pos >= len(sibling_indices):
+            direction_word = "top" if direction < 0 else "bottom"
+            sub_info = f" / {target_sub}" if target_sub else ""
+            self.status_var.set(
+                f"Already at {direction_word} of "
+                f"{target_cat}{sub_info} ({target_mode})")
+            return  # Already at boundary
 
-        other_idx = siblings[new_pos]
-        vizs[idx], vizs[other_idx] = vizs[other_idx], vizs[idx]
+        # Extract sibling vizs in current order
+        sibling_vizs = [vizs[i] for i in sibling_indices]
+
+        # Swap within the extracted list
+        sibling_vizs[pos], sibling_vizs[new_pos] = (
+            sibling_vizs[new_pos], sibling_vizs[pos])
+
+        # Write back to original positions
+        for i, si in enumerate(sibling_indices):
+            vizs[si] = sibling_vizs[i]
 
         self._mark_dirty()
         self._refresh_tree()
         self._select_item(viz_id)
         self.status_var.set(f"Moved: {viz_id}")
+
+    def _move_subcategory(self, sub_iid, direction):
+        """Move an entire subcategory within its mode+category.
+
+        Extracts all vizs for this mode+category, regroups by
+        subcategory, swaps subcategory order, then reinserts.
+        """
+        # Parse sub_{mode}_{cat}_{subcat}
+        parts = sub_iid.split('_', 3)
+        if len(parts) < 4:
+            return
+        mode_key = parts[1]
+        cat_key = parts[2]
+        sub_key = parts[3]
+
+        vizs = self.data['visualizations']
+
+        # Find all vizs in this mode+category
+        group_indices = [i for i, v in enumerate(vizs)
+                         if v.get('mode', 'landscape') == mode_key
+                         and v.get('category', 'other') == cat_key]
+
+        if not group_indices:
+            return
+
+        # Derive subcategory order from JSON sequence
+        sub_order = []
+        seen_subs = set()
+        for i in group_indices:
+            s = vizs[i].get('subcategory', '')
+            if s not in seen_subs:
+                seen_subs.add(s)
+                sub_order.append(s)
+
+        if sub_key not in sub_order:
+            return
+
+        pos = sub_order.index(sub_key)
+        new_pos = pos + direction
+
+        if new_pos < 0 or new_pos >= len(sub_order):
+            return
+
+        # Swap subcategory order
+        sub_order[pos], sub_order[new_pos] = (
+            sub_order[new_pos], sub_order[pos])
+
+        # Group vizs by subcategory
+        by_sub = {}
+        for i in group_indices:
+            s = vizs[i].get('subcategory', '')
+            by_sub.setdefault(s, []).append(vizs[i])
+
+        # Rebuild in new subcategory order
+        reordered = []
+        for sk in sub_order:
+            reordered.extend(by_sub.get(sk, []))
+
+        # Replace in master list
+        new_vizs = []
+        group_iter = iter(reordered)
+        group_set = set(group_indices)
+        for i, v in enumerate(vizs):
+            if i in group_set:
+                new_vizs.append(next(group_iter))
+            else:
+                new_vizs.append(v)
+
+        self.data['visualizations'] = new_vizs
+
+        self._mark_dirty()
+        self._refresh_tree()
+        self._select_item(sub_iid)
+        self.status_var.set(f"Moved subcategory: {sub_key}")
 
     def _move_category(self, cat_iid, direction):
         """Move an entire category within its mode.

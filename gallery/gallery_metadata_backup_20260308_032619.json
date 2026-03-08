@@ -80,19 +80,6 @@
       "subcategory_label": "Narrative"
     },
     {
-      "id": "energy_imbalance_desktop",
-      "title": "Energy Imbalance, 2005 - 2025",
-      "filename": "energy_imbalance_desktop.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Earth's energy imbalance",
-      "size_kb": 30.7,
-      "converted": "2026-02-23 01:24",
-      "mode": "landscape",
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
       "id": "keeling_curve_co2_concentration",
       "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
       "filename": "keeling_curve_co2_concentration.json",
@@ -102,18 +89,6 @@
       "size_kb": 17.3,
       "converted": "2026-02-09 00:12",
       "featured": true,
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
-      "id": "global_temperature_anomalies",
-      "title": "Global Temperature Anomalies, 1880 - 2025",
-      "filename": "global_temperature_anomalies.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing surface mean temperature anomalies from 1880 to 2025.",
-      "size_kb": 43.0,
-      "converted": "2026-02-09 00:11",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
     },
@@ -144,6 +119,30 @@
       "subcategory_label": "Climate Change"
     },
     {
+      "id": "global_temperature_anomalies",
+      "title": "Global Temperature Anomalies, 1880 - 2025",
+      "filename": "global_temperature_anomalies.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing surface mean temperature anomalies from 1880 to 2025.",
+      "size_kb": 43.0,
+      "converted": "2026-02-09 00:11",
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
+    },
+    {
+      "id": "sea_level_rise",
+      "title": "Global Mean Sea Level Rise, 1993 - 2025",
+      "filename": "sea_level_rise.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing mean sea level rise from 1993 to 2025.",
+      "size_kb": 92.5,
+      "converted": "2026-02-09 00:10",
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
+    },
+    {
       "id": "ocean_acidification_ph_trend",
       "title": "Ocean Acidification pH Trend, 1991 - 2023",
       "filename": "ocean_acidification_ph_trend.json",
@@ -168,14 +167,14 @@
       "subcategory_label": "Narrative"
     },
     {
-      "id": "sea_level_rise",
-      "title": "Global Mean Sea Level Rise, 1993 - 2025",
-      "filename": "sea_level_rise.json",
+      "id": "arctic_ice_extent",
+      "title": "Arctic Ice Extent, 1979 - 2025",
+      "filename": "arctic_ice_extent.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing mean sea level rise from 1993 to 2025.",
-      "size_kb": 92.5,
-      "converted": "2026-02-09 00:10",
+      "description": "Graphic showing Arctic sea ice extent in September, minimum.",
+      "size_kb": 5.2,
+      "converted": "2026-02-08 23:40",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
     },
@@ -358,19 +357,6 @@
       "subcategory_label": "Narrative"
     },
     {
-      "id": "energy_imbalance_mobile",
-      "title": "Energy Imbalance, 2005 - 2025",
-      "filename": "energy_imbalance_mobile.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Earth's energy imbalance",
-      "size_kb": 29.5,
-      "converted": "2026-02-23 00:17",
-      "mode": "portrait",
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
       "id": "keeling_curve_co2_concentration_copy",
       "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
       "filename": "keeling_curve_co2_concentration.json",
@@ -381,6 +367,19 @@
       "converted": "2026-02-09 00:12",
       "mode": "portrait",
       "featured": true,
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
+    },
+    {
+      "id": "energy_imbalance_mobile",
+      "title": "Energy Imbalance, 2005 - 2025",
+      "filename": "energy_imbalance_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Earth's energy imbalance",
+      "size_kb": 29.5,
+      "converted": "2026-02-23 00:17",
+      "mode": "portrait",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
     },
@@ -620,18 +619,6 @@
       "featured": true
     },
     {
-      "id": "arctic_ice_extent",
-      "title": "Arctic Ice Extent, 1979 - 2025",
-      "filename": "arctic_ice_extent.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing Arctic sea ice extent in September, minimum.",
-      "size_kb": 5.2,
-      "converted": "2026-02-08 23:40",
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
       "id": "paleoclimate_wet_bulb",
       "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
       "filename": "paleoclimate_wet_bulb.json",
@@ -640,6 +627,19 @@
       "description": "Graphic showing extreme heating events since the 1930s.",
       "size_kb": 129.3,
       "converted": "2026-02-08 23:35",
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
+    },
+    {
+      "id": "energy_imbalance_desktop",
+      "title": "Energy Imbalance, 2005 - 2025",
+      "filename": "energy_imbalance_desktop.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Earth's energy imbalance",
+      "size_kb": 30.7,
+      "converted": "2026-02-23 01:24",
+      "mode": "landscape",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
     },
@@ -1036,6 +1036,6 @@
       "mode": "both"
     }
   ],
-  "last_updated": "2026-03-08 03:26",
+  "last_updated": "2026-03-08 03:16",
   "total_count": 90
 }
