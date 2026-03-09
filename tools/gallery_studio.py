@@ -3019,20 +3019,24 @@ class GalleryStudio:
                              width=14)
         load_btn.pack(side='left', padx=2)
         ToolTip(load_btn,
-                "Open an HTML file.\n"
-                "Gallery export (*_gallery.html): settings are restored\n"
-                "  from the file itself -- you see exactly what you exported.\n"
-                "Source file (raw orrery output): controls reset to defaults\n"
-                "  -- clean slate, ready for fresh curation.")
+                "Open an HTML file.\n\n"
+                "Gallery export (*_gallery.html): settings restored from\n"
+                "  the file. Hover text recovered, route reset to OFF.\n"
+                "  Trace visibility map restored, but traces that were\n"
+                "  stripped (Strip hidden) are permanently gone.\n"
+                "Source file (raw orrery output): controls reset to\n"
+                "  defaults -- clean slate for fresh curation.")
         reload_btn = tk.Button(btn_row, text="Reload", command=self._reload_file,
                                width=8)
         reload_btn.pack(side='left', padx=2)
         ToolTip(reload_btn,
-                "Re-read the same file from disk without browsing.\n"
-                "Same as Load but skips the file browser.\n"
-                "Use after regenerating a plot in the orrery to pick up\n"
-                "  new data. Gallery exports restore their settings;\n"
-                "  source files reset to defaults.")
+                "Re-read the same file from disk without browsing.\n\n"
+                "Gallery export: settings restored from the file.\n"
+                "  Hover text recovered from _original_text stash.\n"
+                "  Route hover resets to OFF (routing is destructive;\n"
+                "  the recovered text needs fresh routing on next export).\n"
+                "  Trace visibility restored, but stripped traces are gone.\n"
+                "Source file: controls reset to defaults.")
 
         # ---- Scrollable config area ----
         config_container = tk.Frame(self.root)
@@ -3092,19 +3096,27 @@ class GalleryStudio:
                                command=self._preview, width=12)
         preview_btn.pack(side='left', padx=3)
         ToolTip(preview_btn, "Apply current settings and open in browser "
-                "as a temp file. Tweak and preview again until right.")
+                "as a temp file. Non-destructive -- the loaded figure "
+                "is not modified. Tweak and preview again until right.")
 
         export_btn = tk.Button(action_frame, text="Export HTML...",
                                command=self._export, width=14,
                                fg='blue')
         export_btn.pack(side='left', padx=3)
-        ToolTip(export_btn, "Save tailored HTML. Settings auto-saved "
-                "for this source file.")
+        ToolTip(export_btn, "Save tailored HTML with all current settings "
+                "embedded in the file. The exported file is the single "
+                "source of truth -- reload it later to restore settings.\n\n"
+                "Destructive transforms (routing, strip hidden traces) "
+                "are baked in. Reload restores hover text and resets "
+                "route to OFF so you can re-curate safely.")
 
         reset_btn = tk.Button(action_frame, text="Reset Defaults",
                               command=self._reset_defaults, width=14)
         reset_btn.pack(side='right', padx=3)
-        ToolTip(reset_btn, "Reset all settings to built-in defaults.")
+        ToolTip(reset_btn, "Reset all settings to built-in defaults.\n"
+                "Resets layout, hover, routing, presets -- everything "
+                "except trace visibility and featured traces, which "
+                "are tied to the loaded figure's trace list.")
 
         # Spacer to push status bar down and give tooltip room
         spacer = tk.Frame(self.root, height=40)
@@ -3683,9 +3695,11 @@ class GalleryStudio:
         ToolTip(portrait_btn,
                 "One-click preset: applies all recommended settings "
                 "for 9:16 portrait output. Sets output format to "
-                "portrait, strips legend/annotations/axes, boosts "
-                "markers +4, etc. You can adjust individual settings "
-                "afterward.")
+                "portrait, enables hover routing to info panel, "
+                "strips legend/annotations/axes, boosts markers +4. "
+                "Adjust individual settings afterward.\n\n"
+                "Note: routing is destructive -- hover text is parsed "
+                "into customdata. Reload reverts route to OFF.")
 
         landscape_btn = tk.Button(
             preset_row, text="Landscape Preset",
@@ -3694,8 +3708,9 @@ class GalleryStudio:
         landscape_btn.pack(side='left', padx=2)
         ToolTip(landscape_btn,
                 "Reset to landscape defaults. Restores standard "
-                "gallery settings -- legend, annotations, default "
-                "hover, no info panel.")
+                "gallery settings: legend on, annotations on, "
+                "default hover, route OFF, no info panel. "
+                "Does not affect trace visibility or featured traces.")
 
         original_btn = tk.Button(
             preset_row, text="Original",
@@ -3703,10 +3718,11 @@ class GalleryStudio:
             width=10)
         original_btn.pack(side='left', padx=2)
         ToolTip(original_btn,
-                "Strip all studio settings and show the raw source figure.\n"
-                "Useful when you have a gallery export loaded and want to\n"
-                "  see the underlying data before any curation, or start\n"
-                "  a fresh curation from scratch.\n"
+                "Strip all studio settings and show the raw source figure.\n\n"
+                "Gallery export: removes curation, restoring the raw data\n"
+                "  underneath. Trace visibility and routing are reset.\n"
+                "Source file: equivalent to Load -- applies defaults with\n"
+                "  the figure's own background and margins preserved.\n\n"
                 "Press Preview after to see the result.")
 
         # Output format
@@ -3739,10 +3755,12 @@ class GalleryStudio:
         cb.pack(anchor='w')
         ToolTip(cb, "Parse trace hover text into structured data "
                 "(name, subtitle, body) and move it to customdata. "
-                "The portrait HTML info panel reads customdata on "
-                "click to display object information. Required for "
-                "the portrait info panel to work. Also useful for "
-                "landscape views that embed their own panel.")
+                "Required for portrait info panel to work.\n\n"
+                "Routing is destructive: it blanks trace text and "
+                "moves content to customdata. When you reload a "
+                "gallery export, the original text is restored and "
+                "this checkbox resets to OFF. Turn it back on "
+                "before exporting portrait output.")
 
         # Marker opacity fix
         self.var_opacity_fix = tk.BooleanVar(
@@ -4598,6 +4616,13 @@ document.addEventListener('click', function(e) {{
                 if k in restore:
                     restore[k] = v
             self._apply_config_to_gui(restore)
+
+            # Force route_hover OFF on reload.  The routing pipeline is
+            # destructive (blanks trace text, moves to customdata).  The
+            # restore above recovers _original_text, so the figure is back
+            # to its pre-routed state.  Leaving the checkbox ON would be
+            # misleading -- routing isn't active until the next Preview.
+            self.var_route_hover.set(False)
 
             # Restore original hover text that was stashed during routing.
             # Without this, re-editing a routed export loses all hover data
