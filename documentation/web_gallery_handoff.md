@@ -3542,3 +3542,222 @@ non-climate gallery entries, the _studio flag system, the JSON pipeline.
 
 *"Data Preservation is Climate Action."*
 -- Standing project principle, applied to fragility-first prioritization
+
+### Session 28 (Mar 9, 2026): Status Log, Tooltip Overhaul, Routing Bug
+
+Three threads: adding a status log widget to Gallery Studio, updating
+all button tooltips for current behavior, and discovering/diagnosing
+a hover routing data loss bug.
+
+**Status Log Widget (gallery_studio.py)**
+
+Added a multi-line scrolled text log at the bottom of column 4 (col_3d),
+below the 3D Scene section. Dark-themed (`#1a1a2e` background, light
+grey text), 10 lines, read-only with auto-scroll.
+
+New `_log_status(msg)` method replaces all 18 `status_var.set()` calls.
+Prepends `HH:MM:SS` timestamp, appends to scrolled log, syncs to the
+single-line status bar at bottom border. Both displays update together.
+
+Additional logging beyond existing status messages:
+- Trace visibility checkbox toggles: "Trace shown/hidden: {name}"
+- Featured trace toggles: "Featured on/off: {name}"
+- Select All / Select None: logs count
+- Config diff on Preview/Export: compares against `_prev_config`
+  snapshot, reports up to 5 changed keys with old->new values
+
+**Tooltip Overhaul**
+
+Updated tooltips on 9 controls to document current reload behavior,
+especially the limitations around routed exports:
+
+- Load: notes route resets to OFF, stripped traces are gone, blank
+  hover stash means reload from raw source
+- Reload: same semantics, explains hover text recovery
+- Preview: clarifies non-destructive (loaded figure not modified)
+- Export: explains destructive transforms baked in, reload recovers
+- Reset: notes it doesn't affect trace visibility or featured traces
+- Portrait Preset: mentions routing is destructive, reload reverts
+- Landscape Preset: explicit about route OFF
+- Original: distinguishes gallery export vs source file behavior
+- Route hover: explains destructive pipeline, reload resets to OFF
+
+**Route Hover Reset on Reload**
+
+When loading a gallery export with `_studio_config` containing
+`route_hover_to_panel: True`, the GUI now forces the route checkbox
+to OFF after config restore. Routing is destructive (blanks trace
+text), and the restore code recovers `_original_text` back to text,
+so the figure is in a pre-routed state. Leaving the checkbox ON
+would be misleading.
+
+**Hover Routing Data Loss Bug -- Diagnosed**
+
+Testing with the Apophis Closest Approach plot revealed that reloading
+a gallery export and turning route back ON produces cards with names
+only (no subtitle, no body). The hover mode was correctly set to
+"Default" in the GUI and correctly injected as `var _hoverMode =
+'default'` in the JS.
+
+Root cause: the `_original_text` stash in the exported file contained
+blank strings. The hover text was already gone. The routing pipeline
+in `apply_config()` blanks `trace['text']` and stashes the original
+in `_original_text`. If the source file was itself a gallery export
+that had already been through routing, `_original_text` captures
+blanks. The restore on reload recovers blanks. Data permanently lost.
+
+Secondary bug found during diagnosis: the JS card handler was reading
+`_hover_mode` from `_plotDiv.layout._hover_mode` (the rendered Plotly
+DOM). Plotly's `newPlot()` can strip underscore-prefixed layout keys.
+Fixed by injecting `_hoverMode` as a JS string literal via string
+concatenation, bypassing the Plotly layout entirely.
+
+Blank stash detection added to `_do_load()`: status log now warns
+"WARNING: N traces had blank hover stash -- reload from raw orrery
+source for full hover" when it detects the condition.
+
+**Non-Destructive Routing -- Designed, Not Yet Implemented**
+
+Tony's insight: "Keep all the information in the export, but only
+display what's selected. With the option to strip globally, not just
+for traces." This unifies the pattern:
+
+- Non-destructive (default): routing ON means JS suppresses tooltips
+  and shows cards, but `trace['text']` stays intact in the data.
+  Full round-trip editing. No `_original_text` stash needed.
+- Destructive (opt-in): generalize "Strip hidden" to "Strip
+  suppressed data" -- strip hidden traces AND strip routed hover
+  text. On reload of stripped file, grey out the controls for
+  stripped content with status log warning.
+
+Detailed implementation plan in `non_destructive_routing_handoff.md`.
+
+**Bonus: Pre-existing em dash on line 4535 fixed to ASCII `--`.**
+
+**Files Modified:**
+- `gallery_studio.py` (~4,830 lines): status log widget, _log_status
+  method, all status_var.set -> _log_status, trace/featured/config
+  logging, tooltip overhaul, route reset on reload, blank stash
+  detection, _hoverMode JS injection fix, em dash fix
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Status log placement | Bottom of col_3d | Natural reading flow: 3D controls above, activity log below |
+| Timestamp format | HH:MM:SS | Enough precision for session tracking, compact |
+| Config diff logging | On Preview/Export only | When `_collect_config` runs -- the natural "applying changes" moments |
+| Route reset on reload | Force OFF | Routing is destructive; restored figure is pre-routed state |
+| `_hoverMode` JS source | String literal injection | Plotly strips underscore layout keys; can't rely on DOM |
+| Non-destructive routing | Design approved, build next session | Separates curation (what to show) from optimization (what to strip) |
+
+---
+
+**Technical Lessons Learned:**
+
+- Plotly's `newPlot()` may strip underscore-prefixed layout keys from
+  the rendered layout object. Never rely on `_plotDiv.layout._key`
+  surviving render. Inject values as JS literals instead.
+
+- Destructive transforms in a round-trip pipeline compound across
+  cycles. If transform A blanks data and stashes it, and transform A
+  runs again on the stashed version, the stash captures blanks. The
+  safe pattern: keep data intact by default, strip on explicit request.
+
+- "Source file = raw data. Gallery file = curated artifact" is correct
+  but insufficient for full round-trip editing. The curated artifact
+  should be fully re-editable, not just re-displayable. Non-destructive
+  transforms make this possible.
+
+---
+
+*"Keep all the information in the export, but only display what's been
+selected."*
+-- Tony, the design insight that unifies non-destructive editing with
+explicit stripping, March 9, 2026
+
+*"The agentic drumbeat..."*
+-- Tony, on Anthropic's Skills guide optimizing for removing humans
+from the loop, March 9, 2026
+
+### Session 29 (Mar 9, 2026): Non-Destructive Routing -- Phase 1 Shipped
+
+Implemented the non-destructive routing architecture designed in
+Session 28. Eight targeted changes to `gallery_studio.py`.
+
+**Core change:** Routing no longer blanks `trace['text']`. Customdata
+is still parsed from hover HTML for the info card, but the original
+text stays intact in the figure data. Tooltip suppression is handled
+by transparent hoverlabel (visual layer) instead of text destruction
+(data layer).
+
+**Changes made to `gallery_studio.py`:**
+
+1. Routing block in `apply_config()`: removed `_original_text` stash
+   and `trace['text'] = ['' for ...]` blanking. Kept customdata
+   parsing, hovertemplate, and hoverinfo settings.
+
+2. Animation frames routing: same removal pattern.
+
+3. Hoverlabel config: moved `route_hover_to_panel` check outside the
+   `output_format == 'portrait'` guard. Transparent hoverlabel now
+   applies to all output formats when routing is active.
+
+4. `_do_load()` restore block: simplified. Removed blank-stash
+   detection and warnings. Kept backward-compat `_original_text`
+   restore for older exports (pop and restore if present).
+
+5. Three tooltip updates: Load, Reload, Route hover checkbox --
+   updated language from "destructive" to "non-destructive."
+
+6. Routing section comment updated.
+
+**Test results:** Full 6-cell matrix (3 hover modes x route on/off)
+passed. Round-trip export -> reload -> re-export with different
+settings (dtick change) confirmed text intact throughout.
+
+**Known cosmetic issue:** Route ON + Default hover shows a large grey
+arrow pointer (Plotly tooltip arrow renders even with transparent
+hoverlabel box). Diagnosed fix: change hovertemplate from
+`'%{text}<extra></extra>'` to `'<extra></extra>'`. Deferred.
+
+**Phase 2 (generalized "Strip suppressed data" UI) designed but
+deferred.** May not be needed -- the main WYSIWYG objective is
+accomplished with Phase 1.
+
+**Files modified:**
+- `gallery_studio.py` (~4,830 lines): 8 targeted changes
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Non-destructive routing | Shipped (Phase 1) | WYSIWYG round-trip editing is the Studio promise |
+| Grey arrow pointer | Deferred cosmetic fix | `<extra></extra>` template eliminates it |
+| Phase 2 strip UI | Designed, deferred | May not be needed; WYSIWYG accomplished |
+| Backward compat for old exports | Pop `_original_text` on load | Simple, no version flags needed |
+| Hoverlabel scope | All formats when routed | Text no longer blanked; visual suppression needed everywhere |
+
+---
+
+**Technical Lessons Learned:**
+
+- Transparent hoverlabel suppresses the tooltip box but not the arrow
+  pointer. The arrow is a separate SVG element. To fully suppress,
+  use an empty hovertemplate (`'<extra></extra>'`) that references no
+  data fields.
+
+- Non-destructive routing cleanly separates data layer (keep
+  everything) from display layer (show selectively). The previous
+  approach conflated them by using text blanking for visual
+  suppression.
+
+- The hover_mode block runs AFTER routing and overwrites the
+  hovertemplate. This means `names_only` and `none` modes override
+  routing's template. For `default` mode, routing's template
+  survives. Correct but must be understood when changing either block.
+
+---
+
+*"The main objective, WYSIWYG, is accomplished."*
+-- Tony, confirming Phase 1 success, March 9, 2026

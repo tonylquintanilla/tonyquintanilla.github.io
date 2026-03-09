@@ -1048,9 +1048,8 @@ def apply_config(fig_dict, config):
             layout['updatemenus'] = []
 
     # ---- Route hover text to customdata (for portrait info panel) ----
-    # Non-destructive: parses hover HTML into customdata for the card,
-    # but keeps trace['text'] intact. Tooltip is suppressed visually
-    # by transparent hoverlabel (configured in the hoverlabel block).
+    # When routing is ON, the card REPLACES the tooltip:
+    #   - Tooltip is always suppressed (blank text, hovertemplate shows empty)
     #   - Card content respects hover_mode (full / name-only / none)
     #   - hover_mode='none' with routing = no tooltip AND no card
     # NOTE: Must run BEFORE hover_mode block
@@ -1098,12 +1097,17 @@ def apply_config(fig_dict, config):
                     }))
             trace['customdata'] = customdata_list
 
-            # Non-destructive routing: keep trace['text'] intact.
-            # Tooltip is suppressed visually by transparent hoverlabel
-            # (set in the hoverlabel config block below).
+            # Always suppress tooltip when routing is on.
+            # Blank text + text-only template = invisible tooltip.
             # Keep hoverinfo='text' so Plotly fires click/hover events
             # for the info card. Setting hoverinfo='none' kills 3D
             # event detection in some Plotly versions.
+            #
+            # Stash original text for round-trip re-export.
+            # When this file is reloaded into Studio, _original_text
+            # is restored to text so hover data isn't lost.
+            trace['_original_text'] = text_list
+            trace['text'] = ['' for _ in text_list]
             trace['hovertemplate'] = '%{text}<extra></extra>'
             trace['hoverinfo'] = 'text'
             _routing_log.append(
@@ -1144,8 +1148,8 @@ def apply_config(fig_dict, config):
                                          if hover_html else '')
                             }))
                     trace['customdata'] = customdata_list
-                    # Non-destructive: keep text intact in frames too.
-                    # Tooltip suppressed visually by transparent hoverlabel.
+                    trace['_original_text'] = text_list
+                    trace['text'] = ['' for _ in text_list]
                     trace['hovertemplate'] = '%{text}<extra></extra>'
                     trace['hoverinfo'] = 'text'
 
@@ -1246,28 +1250,27 @@ def apply_config(fig_dict, config):
             layout['margin'] = layout.get('margin', {})
             layout['margin']['b'] = 40
 
-    # ---- Configure hoverlabel ----
-    if config.get('route_hover_to_panel', False):
-        # Non-destructive routing: trace['text'] stays intact but
-        # tooltip is visually suppressed via transparent hoverlabel.
-        # Applies to all output formats when routing is active.
-        layout['hoverlabel'] = {
-            'bgcolor': 'rgba(0,0,0,0)',
-            'bordercolor': 'rgba(0,0,0,0)',
-            'font': {'size': 1, 'color': 'rgba(0,0,0,0)'}
-        }
-    elif config.get('output_format') == 'portrait':
-        # Portrait without routing: styled tooltip
-        layout['hoverlabel'] = {
-            'bgcolor': '#0f172a',
-            'bordercolor': '#f8fafc',
-            'font': {
-                'family': 'Consolas, SF Mono, Fira Code, Courier New, monospace',
-                'size': 16,
-                'color': '#f8fafc'
-            },
-            'align': 'left'
-        }
+    # ---- Configure hoverlabel for portrait (minimal name-only tooltip) ----
+    if config.get('output_format') == 'portrait':
+        if config.get('route_hover_to_panel', False):
+            # Routing suppresses tooltip -- make hoverlabel invisible
+            # but keep hovermode alive for click event detection
+            layout['hoverlabel'] = {
+                'bgcolor': 'rgba(0,0,0,0)',
+                'bordercolor': 'rgba(0,0,0,0)',
+                'font': {'size': 1, 'color': 'rgba(0,0,0,0)'}
+            }
+        else:
+            layout['hoverlabel'] = {
+                'bgcolor': '#0f172a',
+                'bordercolor': '#f8fafc',
+                'font': {
+                    'family': 'Consolas, SF Mono, Fira Code, Courier New, monospace',
+                    'size': 16,
+                    'color': '#f8fafc'
+                },
+                'align': 'left'
+            }
 
     # ---- Modebar ----
     # (handled at render time via config, not in figure data)
@@ -3022,10 +3025,12 @@ class GalleryStudio:
         ToolTip(load_btn,
                 "Open an HTML file.\n\n"
                 "Gallery export (*_gallery.html): settings restored from\n"
-                "  the file. Route hover resets to OFF. Trace visibility\n"
-                "  map restored, but stripped traces are permanently gone.\n"
-                "  Hover text is preserved (non-destructive routing).\n"
-                "  Older exports with legacy stash are auto-recovered.\n\n"
+                "  the file. Hover text recovered, route reset to OFF.\n"
+                "  Trace visibility map restored, but traces that were\n"
+                "  stripped (Strip hidden) are permanently gone.\n\n"
+                "If hover text was already blank in the export (from a\n"
+                "  prior routing cycle), it cannot be recovered. Reload\n"
+                "  from the raw orrery source HTML for full hover data.\n\n"
                 "Source file (raw orrery output): controls reset to\n"
                 "  defaults -- clean slate for fresh curation.")
         reload_btn = tk.Button(btn_row, text="Reload", command=self._reload_file,
@@ -3034,8 +3039,9 @@ class GalleryStudio:
         ToolTip(reload_btn,
                 "Re-read the same file from disk without browsing.\n\n"
                 "Gallery export: settings restored from the file.\n"
-                "  Route hover resets to OFF. Hover text intact\n"
-                "  (non-destructive routing preserves trace text).\n"
+                "  Hover text recovered from _original_text stash.\n"
+                "  Route hover resets to OFF (routing is destructive;\n"
+                "  the recovered text needs fresh routing on next export).\n"
                 "  Trace visibility restored, but stripped traces are gone.\n"
                 "Source file: controls reset to defaults.")
 
@@ -3755,14 +3761,13 @@ class GalleryStudio:
                             variable=self.var_route_hover)
         cb.pack(anchor='w')
         ToolTip(cb, "Parse trace hover text into structured data "
-                "(name, subtitle, body) and store in customdata. "
+                "(name, subtitle, body) and move it to customdata. "
                 "Required for portrait info panel to work.\n\n"
-                "Non-destructive: trace text stays intact in the "
-                "export. Tooltip is suppressed visually via "
-                "transparent hoverlabel; the info card shows "
-                "content from customdata on click.\n\n"
-                "Resets to OFF on reload. Turn back on before "
-                "exporting portrait output.")
+                "Routing is destructive: it blanks trace text and "
+                "moves content to customdata. When you reload a "
+                "gallery export, the original text is restored and "
+                "this checkbox resets to OFF. Turn it back on "
+                "before exporting portrait output.")
 
         # Marker opacity fix
         self.var_opacity_fix = tk.BooleanVar(
@@ -4619,21 +4624,31 @@ document.addEventListener('click', function(e) {{
                     restore[k] = v
             self._apply_config_to_gui(restore)
 
-            # Force route_hover OFF on reload.  Routing is applied at
-            # Preview/Export time by apply_config(), not by stored state.
-            # Non-destructive routing keeps trace['text'] intact, so the
-            # figure is ready for any hover/routing combination.
+            # Force route_hover OFF on reload.  The routing pipeline is
+            # destructive (blanks trace text, moves to customdata).  The
+            # restore above recovers _original_text, so the figure is back
+            # to its pre-routed state.  Leaving the checkbox ON would be
+            # misleading -- routing isn't active until the next Preview.
             self.var_route_hover.set(False)
 
-            # Backward compat: older exports (pre-non-destructive) stashed
-            # original text in _original_text after blanking trace['text'].
-            # Restore from stash if present so those files still round-trip.
+            # Restore original hover text that was stashed during routing.
+            # Without this, re-editing a routed export loses all hover data
+            # because routing blanks trace['text'] and stashes the original
+            # in trace['_original_text'].
             restored_count = 0
+            blank_stash_count = 0
             for trace in fig.get('data', []):
                 orig = trace.pop('_original_text', None)
                 if orig is not None:
                     trace['text'] = orig
                     restored_count += 1
+                    # Check if the stash was blank (text was already lost)
+                    if isinstance(orig, list):
+                        if all(not s for s in orig):
+                            blank_stash_count += 1
+                    elif not orig:
+                        blank_stash_count += 1
+            # Also restore in animation frames
             for frame in fig.get('frames', []):
                 for trace in frame.get('data', []):
                     orig = trace.pop('_original_text', None)
@@ -4645,7 +4660,11 @@ document.addEventListener('click', function(e) {{
                 f"{trace_count} traces, {'3D' if has_scene else '2D'}"]
             if restored_count:
                 status_parts.append(
-                    f"{restored_count} traces: hover text restored from legacy stash")
+                    f"{restored_count} traces: hover text restored")
+            if blank_stash_count:
+                status_parts.append(
+                    f"WARNING: {blank_stash_count} traces had blank hover "
+                    f"stash -- reload from raw orrery source for full hover")
             self._log_status('  |  '.join(status_parts))
         else:
             self._apply_config_to_gui(DEFAULT_CONFIG)
