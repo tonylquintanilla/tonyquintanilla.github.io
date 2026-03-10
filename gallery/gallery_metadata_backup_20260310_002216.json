@@ -55,6 +55,18 @@
       "converted": "2026-02-07 16:41"
     },
     {
+      "id": "earth-apophis_20290401_29_desktop",
+      "title": "Apophis Closest Approach 4-13-2029",
+      "filename": "earth-apophis_20290401_29_desktop.json",
+      "category": "inner_planets",
+      "category_label": "Inner Planets",
+      "description": "Apophis closest approach",
+      "size_kb": 4281.7,
+      "converted": "2026-03-06 12:38",
+      "mode": "landscape",
+      "featured": true
+    },
+    {
       "id": "planetary_boundaries",
       "title": "Planetary Boundaries (Stockholm Resilience Centre)",
       "filename": "planetary_boundaries.json",
@@ -328,8 +340,7 @@
       "description": "Apophis Closest Approach, 4-13-2029",
       "size_kb": 5827.7,
       "converted": "2026-03-10 00:16",
-      "mode": "portrait",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "planetary_boundaries_mobile",
@@ -706,16 +717,14 @@
       "converted": "2026-02-11 00:39"
     },
     {
-      "id": "earth-apophis_20290401_29",
-      "title": "Apophis Closest Approach, 4-13-2029",
-      "filename": "earth-apophis_20290401_29.json",
+      "id": "near_earth_asteroids_20260207_2114",
+      "title": "Near Earth Asteroids 20260207 2114",
+      "filename": "near_earth_asteroids_20260207_2114.json",
       "category": "inner_planets",
       "category_label": "Inner Planets",
-      "description": "Apophis Closest Approach, 4-13-2029",
-      "size_kb": 4280.1,
-      "converted": "2026-03-10 00:16",
-      "mode": "landscape",
-      "featured": true
+      "description": "Plot of near-Earth asteroids between Venus and Mars.",
+      "size_kb": 1887.3,
+      "converted": "2026-02-07 23:57"
     },
     {
       "id": "st_louis_nyc_1966_teaser",
@@ -1043,16 +1052,17 @@
       "subcategory_label": "Extreme Heating Events"
     },
     {
-      "id": "near_earth_asteroids_20260207_2114",
-      "title": "Near Earth Asteroids 20260207 2114",
-      "filename": "near_earth_asteroids_20260207_2114.json",
+      "id": "earth-apophis_20290401_29",
+      "title": "Apophis Closest Approach, 4-13-2029",
+      "filename": "earth-apophis_20290401_29.json",
       "category": "inner_planets",
       "category_label": "Inner Planets",
-      "description": "Plot of near-Earth asteroids between Venus and Mars.",
-      "size_kb": 1887.3,
-      "converted": "2026-02-07 23:57"
+      "description": "Apophis Closest Approach, 4-13-2029",
+      "size_kb": 4280.1,
+      "converted": "2026-03-10 00:16",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-10 00:22",
-  "total_count": 87
+  "last_updated": "2026-03-10 00:16",
+  "total_count": 88
 }
