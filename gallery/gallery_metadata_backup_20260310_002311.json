@@ -559,8 +559,7 @@
       "converted": "2026-02-15 01:01",
       "mode": "portrait",
       "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events",
-      "featured": true
+      "subcategory_label": "Extreme Heating Events"
     },
     {
       "id": "nyc_1948_teaser_desktop",
@@ -963,8 +962,7 @@
       "converted": "2026-03-04 00:25",
       "mode": "portrait",
       "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events",
-      "featured": true
+      "subcategory_label": "Extreme Heating Events"
     },
     {
       "id": "delhi_heat_wave_teaser_desktop_copy",
@@ -1055,6 +1053,6 @@
       "converted": "2026-02-07 23:57"
     }
   ],
-  "last_updated": "2026-03-10 00:23",
+  "last_updated": "2026-03-10 00:22",
   "total_count": 87
 }
