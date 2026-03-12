@@ -1053,8 +1053,30 @@
       "description": "Plot of near-Earth asteroids between Venus and Mars.",
       "size_kb": 1887.3,
       "converted": "2026-02-07 23:57"
+    },
+    {
+      "id": "3i_atlas_perihelion_20251015_mobile",
+      "title": "3I/ATLAS Perihelion",
+      "filename": "3i_atlas_perihelion_20251015_mobile.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS Perihelion",
+      "size_kb": 4618.8,
+      "converted": "2026-03-12 01:39",
+      "mode": "portrait"
+    },
+    {
+      "id": "3i_atlas_perihelion_20251015",
+      "title": "3I/ATLAS Perihelion",
+      "filename": "3i_atlas_perihelion_20251015.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS Perihelion",
+      "size_kb": 3572.4,
+      "converted": "2026-03-12 01:40",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-10 00:23",
-  "total_count": 87
+  "last_updated": "2026-03-12 01:40",
+  "total_count": 89
 }
