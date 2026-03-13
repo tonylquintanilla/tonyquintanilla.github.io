@@ -834,9 +834,9 @@
            ENCYCLOPEDIA CARD OVERLAY
            ================================================================ */
         .enc-btn {
-            position: absolute;
-            top: 12px;
-            left: 12px;
+            position: fixed;
+            top: 92px;
+            left: 62px;
             width: 32px;
             height: 32px;
             border-radius: 50%;
@@ -864,7 +864,7 @@
         .enc-btn.visible { display: flex; }
 
         .enc-overlay {
-            position: absolute;
+            position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.6);
             z-index: 300;
@@ -1020,6 +1020,13 @@
                 background: var(--bg-secondary);
                 backdrop-filter: none;
                 -webkit-backdrop-filter: none;
+            }
+
+            .enc-btn {
+                position: relative;
+                top: auto;
+                left: auto;
+                z-index: auto;
             }
         }
 
@@ -1391,6 +1398,7 @@
                 if (toolbar) {
                     toolbar.appendChild(navBtn);
                     toolbar.appendChild(annToggleBtn);
+                    toolbar.appendChild(encBtn);
                     toolbar.appendChild(shareBtn);
                 }
             }
