@@ -3761,3 +3761,148 @@ accomplished with Phase 1.
 
 *"The main objective, WYSIWYG, is accomplished."*
 -- Tony, confirming Phase 1 success, March 9, 2026
+
+---
+
+### Session 30: Encyclopedia "i" Button Missing in Gallery (March 13, 2026)
+
+**Problem:** The encyclopedia "i" info button appeared in Studio preview and in
+standalone exported HTML, but disappeared in the web gallery after
+`json_converter.py` processing.
+
+**Investigation path:**
+1. `test_gallery.html` (Studio export) had 17 encyclopedia references including
+   `enc-btn`, `encLock`, `encShowButton` functions -- the standalone export worked.
+2. `test_gallery.json` (converter output) had zero `_encyclopedia` references.
+3. The `_encyclopedia` data was present in `fig_dict['layout']` (added by
+   `apply_config` when `embed_encyclopedia` is True), and `_build_encyclopedia_overlay`
+   read it from there to generate the standalone HTML overlay.
+4. But `build_gallery_html()` strips all underscore-prefixed keys from
+   `layout_for_json` (line ~1800), then selectively preserves specific ones.
+   `_encyclopedia` was NOT in the preserve list.
+5. The standalone export worked because `_build_encyclopedia_overlay` reads from
+   the original `fig_dict['layout']` (which still has it), not from `layout_for_json`.
+   But `json_converter.py` extracts from `var layout = {...}` in the HTML, which
+   uses `layout_for_json` -- so the data was lost.
+6. Key finding: `_preview_as_gallery()` (line ~4362) ALREADY had the `_encyclopedia`
+   preservation. Only `build_gallery_html()` was missing it. Classic parallel
+   pipeline bug -- preview path worked, export path didn't.
+
+**Root cause:** `_encyclopedia` missing from the underscore-key preserve list in
+`build_gallery_html()`. Same bug pattern as `_kmz_handoff` (Session 27) and
+`_hover_mode` (Session 29 Round 4).
+
+**Fix 1: `gallery_studio.py` -- 2 lines added (~line 1819):**
+```python
+# Preserve _encyclopedia for gallery viewer info button
+if '_encyclopedia' in layout_dict:
+    layout_for_json['_encyclopedia'] = layout_dict['_encyclopedia']
+```
+Same pattern as `_studio`, `_kmz_handoff`, `_studio_nav`, `_hover_mode`.
+
+**Fix 2: `index.html` -- encyclopedia overlay support (4 touchpoints):**
+
+- **CSS** (~line 836): `.enc-btn` (circular "i" button), `.enc-overlay` (backdrop),
+  `.enc-card` / `.enc-card-header` / `.enc-card-body` (modal card). Dark theme,
+  scrollable body, close button.
+
+- **HTML** (~line 1206): `<button class="enc-btn">i</button>` and
+  `<div class="enc-overlay">` with card structure. Placed after info card div,
+  before tap hint.
+
+- **JS state + functions** (~line 1297 refs, ~line 2287 functions):
+  - State: `_encData` (dict from layout), `_encCurrentName`, `_encLocked`
+  - `encShowButton(name)`: show "i" on hover if entry exists
+  - `encLock(name)`: lock "i" visible on click
+  - `encHideButton()`: hide on unhover (unless locked)
+  - `encOpenCard()` / `encCloseCard()`: modal open/close
+  - `encReset()`: clear state when switching plots
+  - Button events wired once (persistent elements); Escape key dismisses
+
+- **JS wiring** (~line 1780): On plot load, reads `figDict.layout._encyclopedia`.
+  If present, wires `plotly_hover` -> `encShowButton`, `plotly_click` -> `encLock`,
+  `plotly_unhover` -> `encHideButton`. Then deletes `_encyclopedia` from layout
+  before Plotly.newPlot (avoids Plotly console warnings about unknown keys).
+
+- **JS reset** (~line 1524): `encReset()` called when switching plots (alongside
+  `dismissInfoCard()` and annotation toggle reset).
+
+- **Mobile toolbar** (~line 1402): `encBtn` appended to `vizToolbar` on screens
+  < 1024px, between annotation toggle and share button.
+
+**Positioning:** Desktop: `position: fixed; top: 92px; left: 62px` (below Share
+button, clear of hamburger menu). Mobile: `position: relative` flows into toolbar
+flexbox. Overlay: `position: fixed` for full-viewport coverage.
+
+**Pipeline flow after fix:**
+```
+Studio (apply_config: embed_encyclopedia=true)
+  -> _encyclopedia added to layout
+  -> build_gallery_html preserves _encyclopedia in layout_for_json  [NEW]
+  -> var layout = {...} in exported HTML includes _encyclopedia
+  -> json_converter.py extracts layout including _encyclopedia
+  -> gallery_metadata.json references the JSON file
+  -> index.html loads JSON, reads layout._encyclopedia
+  -> Creates "i" button + card overlay, wires plotly events
+  -> Deletes _encyclopedia from layout before Plotly.newPlot
+```
+
+**Underscore-key preserve list (current complete list in `build_gallery_html`):**
+- `_kmz_handoff` -- KMZ download handoff button (Session 27)
+- `_studio` -- studio curation flag
+- `_studio_config` -- full config for lossless round-trip re-export
+- `_studio_nav` -- pan/zoom control flag
+- `_hover_mode` -- hover mode for JS card handler (Session 29)
+- `_encyclopedia` -- object encyclopedia data for info button (Session 30) [NEW]
+
+**Test protocol:**
+1. Load orrery source HTML in Studio with "Embed encyclopedia" checked
+2. Export -> new gallery HTML
+3. Run `json_converter.py` on the export
+4. Verify `_encyclopedia` present in output JSON layout
+5. Deploy to gallery, tap/click object -> "i" button appears
+6. Click "i" -> encyclopedia card opens with object info
+7. Switch to plot without encyclopedia -> "i" disappears, no errors
+
+**Files modified:**
+- `gallery_studio.py`: 1 change (underscore preserve line)
+- `index.html`: 4 changes (CSS, HTML, JS functions, JS wiring + mobile toolbar)
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Where to position "i" button (desktop) | Below Share button (top: 92px, left: 62px) | Original position (top: 12px, left: 12px) overlapped hamburger menu |
+| Mobile "i" button | Flows into toolbar flexbox | Same pattern as nav, share, annotation toggle buttons |
+| Encyclopedia overlay position | `position: fixed` | Must cover full viewport regardless of button position |
+| When to delete _encyclopedia from layout | After reading, before Plotly.newPlot | Avoids Plotly console warnings; data already captured in JS variable |
+| Encyclopedia + info card coexistence | Both work independently | "i" button is for encyclopedia deep-dive; info card is for hover data in portrait mode |
+
+---
+
+**Technical Lessons Learned:**
+
+- The underscore-key preserve list in `build_gallery_html()` is now 6
+  entries long and growing. Each new underscore key that needs to survive
+  into the gallery must be added here. The pattern is consistent but the
+  list is manual -- easy to miss.
+
+- `_preview_as_gallery()` and `build_gallery_html()` have SEPARATE
+  underscore-key preserve lists. A key present in one but not the other
+  creates a preview-vs-export divergence that's hard to diagnose (preview
+  works, export doesn't). Always check both when adding a new key.
+
+- The standalone HTML export works differently from the gallery pipeline:
+  `_build_encyclopedia_overlay()` reads from `fig_dict['layout']` directly
+  (before stripping), so it always has the data. The gallery pipeline
+  reads from `layout_for_json` (after stripping), so it needs the
+  preserve line. Two paths, same data, different access points.
+
+- `json_converter.py` doesn't need changes for new underscore keys --
+  it does a raw JSON parse of `var layout = {...}`, so whatever keys
+  are in `layout_for_json` survive automatically into the JSON file.
+
+---
+
+*"The preview worked but the export didn't -- parallel pipeline bug."*
+-- On the encyclopedia fix, March 13, 2026
