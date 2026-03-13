@@ -1088,8 +1088,19 @@
       "size_kb": 623.6,
       "converted": "2026-03-13 01:11",
       "mode": "portrait"
+    },
+    {
+      "id": "test_gallery_2",
+      "title": "test 2 of encyclopedia button",
+      "filename": "test_gallery_2.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "test 2 of encyclopedia button",
+      "size_kb": 625.8,
+      "converted": "2026-03-13 01:34",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-13 01:22",
-  "total_count": 90
+  "last_updated": "2026-03-13 01:34",
+  "total_count": 91
 }
