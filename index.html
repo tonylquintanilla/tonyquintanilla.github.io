@@ -381,50 +381,6 @@
             text-transform: uppercase;
         }
 
-        /* Subcategory headers (collapsible groups within a category) */
-        .subcategory-header {
-            padding: 10px 0 4px 8px;
-            margin-bottom: 4px;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .subcategory-label {
-            font-size: 0.63rem;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            transition: color 0.2s ease;
-        }
-
-        .subcategory-header:hover .subcategory-label {
-            color: var(--text-primary);
-        }
-
-        .subcategory-arrow {
-            display: inline-block;
-            width: 12px;
-            font-size: 0.6rem;
-            color: var(--text-dim);
-            transition: transform 0.2s ease;
-        }
-
-        .subcategory-header.collapsed .subcategory-arrow {
-            transform: rotate(-90deg);
-        }
-
-        .subcategory-items {
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .subcategory-items.collapsed {
-            max-height: 0 !important;
-            margin: 0;
-            padding: 0;
-        }
-
         /* Visualization cards */
         .viz-card {
             padding: 10px 14px;
@@ -874,6 +830,112 @@
             letter-spacing: 0.04em;
         }
 
+        /* ================================================================
+           ENCYCLOPEDIA CARD OVERLAY
+           ================================================================ */
+        .enc-btn {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #475569;
+            background: rgba(15, 23, 42, 0.85);
+            color: #94a3b8;
+            font-size: 18px;
+            font-weight: 700;
+            font-style: italic;
+            font-family: Georgia, 'Times New Roman', serif;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            transition: all 0.2s ease;
+            line-height: 1;
+            padding: 0 0 2px 0;
+        }
+        .enc-btn:hover {
+            border-color: #c9a84c;
+            color: #c9a84c;
+            background: rgba(15, 23, 42, 0.95);
+        }
+        .enc-btn.visible { display: flex; }
+
+        .enc-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 300;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .enc-overlay.open { display: flex; }
+
+        .enc-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            max-width: 560px;
+            width: 100%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        .enc-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px 12px 20px;
+            border-bottom: 1px solid #1e293b;
+            flex-shrink: 0;
+        }
+        .enc-card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: 0.5px;
+        }
+        .enc-card-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: transparent;
+            color: #64748b;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            padding: 0;
+        }
+        .enc-card-close:hover {
+            color: #f8fafc;
+            border-color: #64748b;
+        }
+        .enc-card-body {
+            padding: 16px 20px 20px 20px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.65;
+            color: #cbd5e1;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            scrollbar-width: thin;
+            scrollbar-color: #334155 transparent;
+        }
+        .enc-card-body::-webkit-scrollbar { width: 5px; }
+        .enc-card-body::-webkit-scrollbar-track { background: transparent; }
+        .enc-card-body::-webkit-scrollbar-thumb {
+            background: #334155; border-radius: 3px;
+        }
+
         /* First-load hint overlay */
         .tap-hint {
             position: fixed;
@@ -1140,6 +1202,18 @@
         <div class="info-card-dismiss">Tap elsewhere to dismiss</div>
     </div>
 
+    <!-- Encyclopedia info button + card overlay -->
+    <button class="enc-btn" id="enc-btn" title="Object encyclopedia">i</button>
+    <div class="enc-overlay" id="enc-overlay">
+        <div class="enc-card">
+            <div class="enc-card-header">
+                <div class="enc-card-title" id="enc-title"></div>
+                <button class="enc-card-close" id="enc-close">&#10005;</button>
+            </div>
+            <div class="enc-card-body" id="enc-body"></div>
+        </div>
+    </div>
+
     <!-- First-load tap hint (portrait mode) -->
     <div class="tap-hint" id="tapHint">Tap any object for details</div>
 
@@ -1218,6 +1292,16 @@
         var annToggleBtn   = document.getElementById('annToggleBtn');
         var annStored      = null;  // Toggle annotations from JSON
         var annVisible     = false; // Current annotation visibility state
+
+        // Encyclopedia overlay refs and state
+        var encBtn         = document.getElementById('enc-btn');
+        var encOverlay     = document.getElementById('enc-overlay');
+        var encTitle       = document.getElementById('enc-title');
+        var encBody        = document.getElementById('enc-body');
+        var encClose       = document.getElementById('enc-close');
+        var _encData       = null;  // Encyclopedia dict for current plot (or null)
+        var _encCurrentName = null;
+        var _encLocked     = false;
 
         // Inject responsive width into annotations so Plotly wraps text
         // instead of truncating. Desktop: ~35% of viewport. Mobile: ~85%.
@@ -1336,24 +1420,6 @@
             el.textContent = count + ' visualizations \u00b7 Updated ' + metadata.last_updated;
         }
 
-        // ---- Render a single viz card (shared by flat and subcategory layouts) ----
-        function renderVizCard(item) {
-            var h = '';
-            h += '<div class="viz-card" data-viz-id="' + escapeHtml(item.id) + '">';
-            h += '<div class="viz-card-title">' + escapeHtml(item.title || 'Untitled') + '</div>';
-            if (item.description) {
-                h += '<div class="viz-card-desc">' + escapeHtml(item.description) + '</div>';
-            }
-            if (item.size_kb) {
-                h += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
-            }
-            if (item.featured) {
-                h += '<div class="viz-card-featured">Featured</div>';
-            }
-            h += '</div>';
-            return h;
-        }
-
         // ---- Render navigation list ----
         function renderNavList(vizs) {
             // Filter by current mode: show items matching mode or "both"
@@ -1393,52 +1459,21 @@
                         escapeHtml(catData.label) + '</span>';
                 html += '</div>';
 
-                // Check if any items have subcategories
-                var hasSubs = false;
+                // Cards
                 for (var j = 0; j < catData.items.length; j++) {
-                    if (catData.items[j].subcategory) { hasSubs = true; break; }
-                }
-
-                if (hasSubs) {
-                    // Group by subcategory, preserving JSON order
-                    var subGroups = {};
-                    var subOrder = [];
-                    for (var j = 0; j < catData.items.length; j++) {
-                        var item = catData.items[j];
-                        var sub = item.subcategory || '_ungrouped';
-                        var subLabel = item.subcategory_label || 'Other';
-                        if (!subGroups[sub]) {
-                            subGroups[sub] = { label: subLabel, items: [] };
-                            subOrder.push(sub);
-                        }
-                        subGroups[sub].items.push(item);
+                    var item = catData.items[j];
+                    html += '<div class="viz-card" data-viz-id="' + escapeHtml(item.id) + '">';
+                    html += '<div class="viz-card-title">' + escapeHtml(item.title || 'Untitled') + '</div>';
+                    if (item.description) {
+                        html += '<div class="viz-card-desc">' + escapeHtml(item.description) + '</div>';
                     }
-
-                    for (var s = 0; s < subOrder.length; s++) {
-                        var subKey = subOrder[s];
-                        var subData = subGroups[subKey];
-                        var subId = 'sub_' + catKey + '_' + subKey;
-
-                        // Subcategory header (collapsible)
-                        html += '<div class="subcategory-header" data-sub-id="' + subId + '">';
-                        html += '<span class="subcategory-arrow">&#9660;</span> ';
-                        html += '<span class="subcategory-label" style="color: ' + color + '99;">';
-                        html += escapeHtml(subData.label);
-                        html += ' (' + subData.items.length + ')';
-                        html += '</span></div>';
-
-                        // Subcategory items container
-                        html += '<div class="subcategory-items" id="' + subId + '">';
-                        for (var k = 0; k < subData.items.length; k++) {
-                            html += renderVizCard(subData.items[k]);
-                        }
-                        html += '</div>';
+                    if (item.size_kb) {
+                        html += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
                     }
-                } else {
-                    // No subcategories -- flat list as before
-                    for (var j = 0; j < catData.items.length; j++) {
-                        html += renderVizCard(catData.items[j]);
+                    if (item.featured) {
+                        html += '<div class="viz-card-featured">Featured</div>';
                     }
+                    html += '</div>';
                 }
             }
 
@@ -1486,6 +1521,7 @@
             // Close overlay
             closeOverlay();
             dismissInfoCard();
+            encReset();
 
             try {
                 var resp = await fetch(DATA_PATH + '/' + viz.filename);
@@ -1740,6 +1776,29 @@
                     annStored = null;
                 }
 
+                // Encyclopedia: load data from layout if present
+                encReset();
+                if (figDict.layout._encyclopedia && typeof figDict.layout._encyclopedia === 'object') {
+                    _encData = figDict.layout._encyclopedia;
+                    // Wire hover -> show "i" button (landscape + portrait)
+                    plotlyGraph.on('plotly_hover', function(data) {
+                        if (!data || !data.points || !data.points.length) return;
+                        var name = data.points[0].data ? data.points[0].data.name : '';
+                        encShowButton(name);
+                    });
+                    plotlyGraph.on('plotly_unhover', function() {
+                        encHideButton();
+                    });
+                    // Wire click -> lock "i" button visible
+                    plotlyGraph.on('plotly_click', function(data) {
+                        if (!data || !data.points || !data.points.length) return;
+                        var name = data.points[0].data ? data.points[0].data.name : '';
+                        encLock(name);
+                    });
+                    // Clean up _encyclopedia from layout so Plotly doesn't choke
+                    delete figDict.layout._encyclopedia;
+                }
+
             } catch (err) {
                 loadingOverlay.classList.remove('visible');
                 plotlyGraph.style.display = 'none';
@@ -1968,18 +2027,6 @@
 
             // Card clicks (event delegation)
             selectorNav.addEventListener('click', function(e) {
-                // Subcategory collapse/expand
-                var subHeader = e.target.closest('.subcategory-header');
-                if (subHeader) {
-                    var subId = subHeader.getAttribute('data-sub-id');
-                    var subItems = document.getElementById(subId);
-                    if (subItems) {
-                        subHeader.classList.toggle('collapsed');
-                        subItems.classList.toggle('collapsed');
-                    }
-                    return;
-                }
-
                 var card = e.target.closest('.viz-card');
                 if (!card) return;
                 var vizId = card.getAttribute('data-viz-id');
@@ -2236,6 +2283,71 @@
         }
 
         // ---- Info card ----
+        // ---- Encyclopedia card ----
+        function encShowButton(name) {
+            if (!encBtn || !_encData) return;
+            if (name && _encData[name]) {
+                _encCurrentName = name;
+                encBtn.classList.add('visible');
+            } else {
+                if (!_encLocked) {
+                    _encCurrentName = null;
+                    encBtn.classList.remove('visible');
+                }
+            }
+        }
+
+        function encLock(name) {
+            if (!encBtn || !_encData) return;
+            if (name && _encData[name]) {
+                _encCurrentName = name;
+                _encLocked = true;
+                encBtn.classList.add('visible');
+            } else {
+                _encLocked = false;
+                _encCurrentName = null;
+                encBtn.classList.remove('visible');
+            }
+        }
+
+        function encHideButton() {
+            if (_encLocked) return;
+            if (encBtn) encBtn.classList.remove('visible');
+        }
+
+        function encOpenCard() {
+            if (!_encCurrentName || !_encData || !_encData[_encCurrentName]) return;
+            encTitle.textContent = _encCurrentName;
+            encBody.textContent = _encData[_encCurrentName];
+            encOverlay.classList.add('open');
+        }
+
+        function encCloseCard() {
+            if (encOverlay) encOverlay.classList.remove('open');
+        }
+
+        function encReset() {
+            // Reset encyclopedia state when switching plots
+            _encData = null;
+            _encCurrentName = null;
+            _encLocked = false;
+            if (encBtn) encBtn.classList.remove('visible');
+            encCloseCard();
+        }
+
+        // Wire encyclopedia button events (one-time, elements are persistent)
+        if (encBtn) encBtn.addEventListener('click', encOpenCard);
+        if (encClose) encClose.addEventListener('click', encCloseCard);
+        if (encOverlay) {
+            encOverlay.addEventListener('click', function(e) {
+                if (e.target === encOverlay) encCloseCard();
+            });
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') encCloseCard();
+        });
+
+        // ---- Info card (portrait mode) ----
         function showInfoCard(data) {
             try {
                 var parsed = data;

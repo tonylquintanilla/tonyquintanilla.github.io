@@ -1815,6 +1815,9 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     # Preserve _hover_mode for JS card handler to respect hover settings
     if '_hover_mode' in layout_dict:
         layout_for_json['_hover_mode'] = layout_dict['_hover_mode']
+    # Preserve _encyclopedia for gallery viewer info button
+    if '_encyclopedia' in layout_dict:
+        layout_for_json['_encyclopedia'] = layout_dict['_encyclopedia']
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
