@@ -1099,8 +1099,30 @@
       "size_kb": 625.8,
       "converted": "2026-03-13 01:34",
       "mode": "portrait"
+    },
+    {
+      "id": "new_horizons_full_mission_20060120_20200101_mobile",
+      "title": "New Horizons mission 2006 to 2020",
+      "filename": "new_horizons_full_mission_20060120_20200101_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "New Horizons mission 2006 to 2020",
+      "size_kb": 1413.7,
+      "converted": "2026-03-14 20:57",
+      "mode": "portrait"
+    },
+    {
+      "id": "new_horizons_full_mission_20060120_20200101",
+      "title": "New Horizons mission 2006 to 2020",
+      "filename": "new_horizons_full_mission_20060120_20200101.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "New Horizons mission 2006 to 2020",
+      "size_kb": 1212.3,
+      "converted": "2026-03-14 20:57",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-13 01:34",
-  "total_count": 91
+  "last_updated": "2026-03-14 20:57",
+  "total_count": 93
 }
