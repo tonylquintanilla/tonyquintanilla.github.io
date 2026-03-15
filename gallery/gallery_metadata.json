@@ -1121,8 +1121,30 @@
       "size_kb": 1212.3,
       "converted": "2026-03-14 20:57",
       "mode": "landscape"
+    },
+    {
+      "id": "new_horizons_jupiter__20070220_20070307_mobile",
+      "title": "New Horizons Jupiter Gravity Assist 2-28-2007",
+      "filename": "new_horizons_jupiter__20070220_20070307_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "New Horizons Jupiter Gravity Assist 2-28-2007",
+      "size_kb": 5769.1,
+      "converted": "2026-03-15 00:56",
+      "mode": "portrait"
+    },
+    {
+      "id": "new_horizons_jupiter__20070220_20070307",
+      "title": "New Horizons Jupiter Gravity Assist 2-28-2007",
+      "filename": "new_horizons_jupiter__20070220_20070307.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "New Horizons Jupiter Gravity Assist 2-28-2007",
+      "size_kb": 8413.3,
+      "converted": "2026-03-15 00:56",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-14 20:57",
-  "total_count": 93
+  "last_updated": "2026-03-15 00:56",
+  "total_count": 95
 }
