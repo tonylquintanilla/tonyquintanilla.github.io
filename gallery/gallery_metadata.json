@@ -1143,8 +1143,30 @@
       "size_kb": 8413.3,
       "converted": "2026-03-15 00:56",
       "mode": "landscape"
+    },
+    {
+      "id": "3iatlas_perihelion_20251029_mobile",
+      "title": "3I/ATLAS Perihelion 10-29-2025",
+      "filename": "3iatlas_perihelion_20251029_mobile.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS Perihelion 10-29-2025",
+      "size_kb": 6183.4,
+      "converted": "2026-03-16 01:49",
+      "mode": "portrait"
+    },
+    {
+      "id": "3iatlas_perihelion_20251029",
+      "title": "3I/ATLAS Perihelion 10-29-2025",
+      "filename": "3iatlas_perihelion_20251029.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS Perihelion 10-29-2025",
+      "size_kb": 3791.1,
+      "converted": "2026-03-16 01:49",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-15 00:56",
-  "total_count": 95
+  "last_updated": "2026-03-16 01:49",
+  "total_count": 97
 }
