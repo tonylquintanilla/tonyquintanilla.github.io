@@ -1,8 +1,8 @@
 # Fly-to Mobile Buttons & Studio Preset — Design & Implementation Handoff
 
-## Date: March 16, 2026
-## Sessions: Design (zero code) + Implementation
-## Status: Feature B implemented and verified; Feature C and preview deferred
+## Date: March 16-17, 2026
+## Sessions: Design (zero code) + Implementation + Preview
+## Status: Feature B complete (gallery viewer + preview); Feature C deferred by design
 
 ---
 
@@ -16,11 +16,13 @@ The "Fly to" dropdown menu on desktop allows users to snap the 3D camera to a cl
 
 ## What Was Built (Feature B: Fly-to Buttons)
 
-### gallery_studio.py (6 edits)
+### gallery_studio.py
+
+**Studio UI (6 edits):**
 
 1. **DEFAULT_CONFIG and PORTRAIT_CONFIG:** Added `"flyto_targets": []` default to both config dicts.
 
-2. **Trace Visibility panel (`_populate_trace_list`):** Added green fly-to checkbox column per trace row. Order: gold (featured) → green (fly-to) → visibility checkbox with name → label override entry. Green-themed (`#2d8a4e`) to distinguish from gold featured checkboxes.
+2. **Trace Visibility panel (`_populate_trace_list`):** Added green fly-to checkbox column per trace row. Order: gold (featured) -> green (fly-to) -> visibility checkbox with name -> label override entry. Green-themed (`#2d8a4e`) to distinguish from gold featured checkboxes.
 
 3. **`_on_flyto_toggle()` method:** Handles checkbox toggle with max enforcement (4 targets) and auto-enables "Show pan/zoom arrows" when any fly-to target is checked (guarantees Reset View exists).
 
@@ -30,7 +32,15 @@ The "Fly to" dropdown menu on desktop allows users to snap the 3D camera to a cl
 
 6. **Section tooltip:** Updated Trace Visibility tooltip to mention the green fly-to column.
 
-### index.html (5 edits)
+**Preview/Export (`build_gallery_html`) (3 edits):**
+
+7. **`flyto_css`, `flyto_html`, `flyto_js` variables:** Initialized empty alongside nav variables. Populated when `flyto_targets` exists and plot has a 3D scene. Uses theme-aware button colors (`btn_bg`/`btn_border`/`btn_color`).
+
+8. **Fly-to button block:** CSS uses `position: absolute` (inside aspect-frame container, unlike gallery viewer's `position: fixed`). HTML generates buttons with colored dots and `onclick="flyToTarget('name')"`. JS stores target data as array, `flyToTarget()` finds target by name and calls `Plotly.relayout()` with camera + axis data. Reset piggybacks on existing nav reset (`panPlot('reset')`) which already restores `_initCamera` and `_initScene`.
+
+9. **Template injection:** `{flyto_css}`, `{flyto_html}`, `{flyto_js}` injected after their nav counterparts in the HTML template.
+
+### index.html (6 edits)
 
 1. **CSS:** Added `.flyto-controls`, `.flyto-btn`, `.flyto-dot` styles. Buttons positioned `bottom: 24px; left: 16px` (opposite the pan/zoom controls on the right). Styled to match existing control aesthetic (dark glass, blur backdrop, accent borders on active).
 
@@ -40,15 +50,15 @@ The "Fly to" dropdown menu on desktop allows users to snap the 3D camera to a cl
 
 4. **Button rendering JS:** Reads `_studio_config.flyto_targets` (with `_flyto_targets` fallback). For each target: creates button with colored dot + name label, wires click handler that calls `Plotly.relayout()` with camera, axis ranges, dtick, aspectmode, and aspectratio. Captures original camera + axis ranges for reset. Stores originals as data attributes on the flytoControls container.
 
-5. **`resetPanZoom()` 3D handler:** Expanded to restore original axis ranges and recalculate original dtick when fly-to targets are present. Uses stored data attributes from flytoControls.
+5. **`resetPanZoom()` 3D handler:** Expanded to restore original axis ranges and recalculate original dtick when fly-to targets are present. Uses stored data attributes from flytoControls. Also added `title="Reset view"` to panReset button for desktop hover text.
 
 6. **Card switch cleanup:** Added `flytoControls.classList.remove('visible')` and `flytoControls.innerHTML = ''` on gallery card switch.
 
-### json_converter.py — No changes needed
+### json_converter.py -- No changes needed
 
 `_studio_config` passes through as a blob in both `build_gallery_html()` landscape and portrait exports. `flyto_targets` inside it survives automatically.
 
-### palomas_orrery.py — Not modified
+### palomas_orrery.py -- Not modified
 
 Desktop fly-to dropdown unchanged. Used as reference only for the camera computation math.
 
@@ -59,14 +69,12 @@ Desktop fly-to dropdown unchanged. Used as reference only for the camera computa
 - Studio loads without error with 3I/ATLAS perihelion plot (57 traces, 3D)
 - Green fly-to checkboxes appear in Trace Visibility panel
 - Fly-to checkbox toggle logs correctly in status bar
+- Max enforcement: 5th target rejected with warning
 - Auto-enables pan/zoom arrows when fly-to target checked
-- Full pipeline: Studio export → JSON converter → gallery viewer → buttons appear → fly-to works → Reset View restores
-
----
-
-## Known Issue: Minor Cleanup
-
-`saved_flyto = self.config.get('flyto_targets', [])` is inside the `_populate_trace_list()` loop (line ~4262). Should be hoisted before the loop alongside `saved_vis`, `saved_feat`, `saved_labels` (line ~4236). Works correctly but does redundant dict lookup per iteration.
+- Multiple targets: 3 buttons render, each flies to correct position
+- Full pipeline: Studio export -> JSON converter -> gallery viewer -> buttons appear -> fly-to works -> Reset View restores
+- Preview: fly-to buttons appear in Studio preview with correct styling and navigation
+- Reset View hover text shows "Reset view" on desktop (title attribute added)
 
 ---
 
@@ -79,46 +87,32 @@ Desktop fly-to dropdown unchanged. Used as reference only for the camera computa
 | "Full View" button | Not needed | Existing "Reset View" in pan/zoom arrows handles this |
 | Camera data | Static at export | Simpler, no JS math, consistent with Studio philosophy |
 | Where in Studio UI | Trace Visibility column | Space available, logical grouping, follows "featured" pattern |
-| Auto-enable pan/zoom | Yes | Safety net — guarantees return path exists |
+| Auto-enable pan/zoom | Yes | Safety net -- guarantees return path exists |
 | Desktop changes | None | Existing dropdown stays as-is |
 | Position extraction | Last point of trace x/y/z arrays | Matches desktop fly-to (current epoch position) |
-| Color matching | Trace marker/line color → colored dot on button | Visual connection between button and trace |
+| Color matching | Trace marker/line color -> colored dot on button | Visual connection between button and trace |
 | Animation | Deferred (instant snap for now) | Haven't tested Plotly transitions in gallery context |
 | Fly-to key name | `flyto_targets` (no leading underscore) | Consistent with other config keys; JS checks both forms defensively |
-| `position: fixed` for buttons | Yes | Matches existing pan/zoom and zoom controls pattern |
+| Gallery viewer: `position: fixed` | Yes | Matches existing pan/zoom and zoom controls pattern |
+| Preview: `position: absolute` | Yes | Stays inside aspect-frame container (fixed would escape it) |
+| Feature C (preset export) | Not needed | Fly-to buttons give users access to the close-up view directly |
+| Preview buttons | Embedded in `build_gallery_html()` | Same dual-path pattern as nav arrows |
 
 ---
 
 ## Deferred (On the Horizon)
 
-### Feature C: Fly-to Preset (Gallery Studio Export)
-
-Export a standalone gallery entry pre-zoomed to the fly-to view. Opens at the close-up — a separate gallery card from the full-view export.
-
-**Status:** Designed but not implemented. Placement: near existing Portrait/Landscape/Original preset buttons in "Presets & Output Format" section.
-
-**Use case:** 3I/ATLAS perihelion would have two gallery cards:
-1. Full mission trajectory (with fly-to buttons for mobile navigation)
-2. Perihelion close-up (pre-zoomed, its own standalone entry)
-
-### Preview Fly-to Buttons
-
-Studio preview (`_preview()` → `build_gallery_html()`) does not render fly-to buttons. Buttons only appear in the gallery viewer (index.html). This is a workflow gap — you can't visually verify fly-to placement/behavior without going through the full pipeline.
-
-**Fix:** Embed fly-to button HTML/CSS/JS in `build_gallery_html()`, similar to how nav arrows are already embedded in standalone exports. Precedent exists (nav arrows live in both places).
-
 ### Animation on Fly-to
 
-Mobile might benefit from a brief transition (500ms) to maintain spatial orientation. Plotly supports `transition: {duration: 500}` in relayout calls. Desktop fly-to is instant. Test before enabling.
+Mobile might benefit from a brief transition (500ms) to maintain spatial orientation. Plotly supports `transition: {duration: 500}` in relayout calls. Desktop fly-to is instant. All animation options in gallery view need testing -- current focus has been static plots.
 
-### Remaining Test Scenarios
+### Known Minor Items
 
-1. **Multiple targets:** Check 3 targets → 3 buttons render → Each flies to correct position
-2. **Max enforcement:** Try to check 5th target → Studio warns
-3. **Auto pan/zoom:** Uncheck "Show pan/zoom arrows" → Check a fly-to target → Pan/zoom auto-re-enables
-4. **No targets:** Plot with no fly-to targets checked → No buttons rendered in gallery viewer
-5. **Round-trip re-export:** Load fly-to-enabled gallery export back into Studio → green checkboxes restored → re-export → data survives
-6. **Card switch:** Fly to a target → switch gallery cards → buttons disappear
+1. **`saved_flyto` loop placement:** `saved_flyto = self.config.get('flyto_targets', [])` is inside the `_populate_trace_list()` loop. Should be hoisted before the loop alongside `saved_vis`, `saved_feat`, `saved_labels`. Works correctly but does redundant dict lookup per iteration.
+
+2. **Round-trip checkbox restoration:** Fly-to checkboxes don't re-check when reloading a gallery export into Studio. Same accepted limitation as trace visibility and featured traces. Data survives in `_studio_config` so pipeline output is unaffected. Two layers: (a) `_populate_trace_list` runs before `_apply_config_to_gui` restores config; (b) `saved_flyto` is a list of dicts, not strings, so `name in saved_flyto` would always be False even if timing were fixed.
+
+3. **Auto pan/zoom is one-way:** Checking a fly-to target auto-enables pan/zoom arrows, but the user can manually uncheck pan/zoom afterwards. Accepted behavior -- the auto-enable is a safety nudge, not a hard constraint.
 
 ---
 
@@ -152,21 +146,27 @@ layout['_studio_config']['flyto_targets'] = [
 
 ```
 Studio (Python/Tkinter)
-  → User checks fly-to targets in Trace Visibility (green checkbox)
-  → _collect_flyto_targets() computes camera + axis ranges from trace data
-  → Stored in config['flyto_targets']
-  → apply_config() stores in layout['_studio_config']['flyto_targets']
-  → build_gallery_html() preserves _studio_config blob in export
+  -> User checks fly-to targets in Trace Visibility (green checkbox)
+  -> _collect_flyto_targets() computes camera + axis ranges from trace data
+  -> Stored in config['flyto_targets']
+  -> apply_config() stores in layout['_studio_config']['flyto_targets']
+  -> build_gallery_html() both preserves in _studio_config AND renders buttons
 
 JSON Converter (json_converter.py)
-  → _studio_config passes through as blob (no special handling needed)
+  -> _studio_config passes through as blob (no special handling needed)
 
 Gallery Viewer (index.html)
-  → Reads flyto_targets from layout._studio_config (checks both key forms)
-  → Renders buttons bottom-left with colored dots
-  → Button tap: Plotly.relayout() with camera + axis data
-  → Reset View: restores original camera + axis ranges + dtick
-  → Card switch: clears buttons
+  -> Reads flyto_targets from layout._studio_config (checks both key forms)
+  -> Renders buttons bottom-left with colored dots
+  -> Button tap: Plotly.relayout() with camera + axis data
+  -> Reset View: restores original camera + axis ranges + dtick
+  -> Card switch: clears buttons
+
+Preview (build_gallery_html standalone)
+  -> Reads flyto_targets from config
+  -> Embeds buttons as inline HTML/CSS/JS (same pattern as nav arrows)
+  -> flyToTarget() calls Plotly.relayout()
+  -> Reset piggybacks on existing panPlot('reset') which restores _initCamera/_initScene
 ```
 
 ### Camera computation (in `_collect_flyto_targets`)
@@ -176,7 +176,7 @@ Matches `visualization_utils.add_fly_to_object_buttons()`:
 - `distance_scale_factor = 0.05` (camera distance scales with object distance)
 - `view_radius = fly_distance + (dist_from_center * distance_scale_factor)`
 - Axis ranges: `[pos - view_radius, pos + view_radius]` on all 3 axes
-- dtick: `_calculate_grid_dtick(view_radius * 2)` — ~6 gridlines across view
+- dtick: `_calculate_grid_dtick(view_radius * 2)` -- ~6 gridlines across view
 - Camera: default isometric `eye: {1.5, 1.5, 1.2}`, `center: {0, 0, 0}`, `up: {0, 0, 1}`
 
 ---
@@ -185,8 +185,8 @@ Matches `visualization_utils.add_fly_to_object_buttons()`:
 
 | File | Lines Added | Nature |
 |------|-------------|--------|
-| gallery_studio.py | ~145 | Config defaults, UI checkbox, 3 new methods, config wiring, tooltip |
-| index.html | ~138 | CSS, HTML container, JS variable, button rendering, reset handler, cleanup |
+| gallery_studio.py | ~210 | Config defaults, UI checkbox, 3 new methods, config wiring, tooltip, preview embed |
+| index.html | ~140 | CSS, HTML container, JS variable, button rendering, reset handler, hover text, cleanup |
 | json_converter.py | 0 | Verified pass-through, no changes needed |
 | palomas_orrery.py | 0 | Reference only, not modified |
 
@@ -194,13 +194,15 @@ Matches `visualization_utils.add_fly_to_object_buttons()`:
 
 ## Lessons Learned
 
-- **Preview vs gallery viewer gap:** Studio preview (`build_gallery_html`) and gallery viewer (`index.html`) are separate rendering paths. Features that live in index.html (like fly-to buttons) don't appear in preview. Nav arrows already have this dual-path pattern. Future: consider embedding fly-to in preview too.
-- **`position: fixed` pattern:** All floating gallery controls use `position: fixed` — consistent but means they escape CSS containment. Documented in lessons archive.
+- **Dual rendering paths:** Studio preview (`build_gallery_html`) and gallery viewer (`index.html`) are separate rendering paths. Features need to exist in both. Nav arrows established this dual-path pattern; fly-to buttons now follow it.
+- **`position: absolute` vs `position: fixed`:** Preview uses absolute (stays inside aspect-frame); gallery viewer uses fixed (full-screen context). Different contexts require different positioning.
 - **Defensive key checking:** JS checks both `_flyto_targets` and `flyto_targets` because the handoff document used the underscore-prefix form while the Python implementation stores it without prefix. Belt and suspenders.
-- **Config key naming:** New config keys should NOT have leading underscores — those are reserved for layout-level flags (`_studio`, `_studio_config`, `_kmz_handoff`). Config keys inside `_studio_config` use plain names (`flyto_targets`, not `_flyto_targets`).
+- **Config key naming convention:** New config keys should NOT have leading underscores -- those are reserved for layout-level flags (`_studio`, `_studio_config`, `_kmz_handoff`). Config keys inside `_studio_config` use plain names.
+- **Preview reset reuse:** The preview's fly-to reset piggybacks on the existing nav `panPlot('reset')` function which already captures and restores `_initCamera` and `_initScene`. No duplicate reset logic needed.
+- **Feature C unnecessary:** With fly-to buttons working in both gallery viewer and preview, the user can navigate to the close-up view interactively. A separate preset export adds complexity without clear value.
 
 ---
 
-*Design session: Tony + Claude, March 16, 2026. Zero-code session — four rounds of iterative design.*
-*Implementation session: Tony + Claude, March 16, 2026.*
+*Design session: Tony + Claude, March 16, 2026. Zero-code session -- four rounds of iterative design.*
+*Implementation session: Tony + Claude, March 17, 2026.*
 *"Is this what they call 'software engineering' as distinct from 'coding'?"*

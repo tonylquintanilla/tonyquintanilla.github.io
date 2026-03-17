@@ -1859,6 +1859,10 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     nav_html = ""
     nav_js = ""
 
+    flyto_css = ""
+    flyto_html = ""
+    flyto_js = ""
+
     # Aspect ratio constraint for preview
     # Landscape: 16:9, Portrait: 9:16, default: fill viewport
     # Thin white frame shows the viewport boundary on the developer's screen
@@ -2161,6 +2165,92 @@ function zoomPlot(dir) {
   }
   if (Object.keys(update).length > 0) Plotly.relayout(gd, update);
 }
+"""
+
+# Fly-to navigation buttons (embedded in preview/export)
+    flyto_targets = config.get('flyto_targets', [])
+    if flyto_targets and has_scene:
+        flyto_css = f"""
+  .flyto-controls {{
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    user-select: none;
+    -webkit-user-select: none;
+  }}
+  .flyto-btn {{
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 6px;
+    border: 1px solid {btn_border};
+    background: {btn_bg};
+    color: {btn_color};
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.15s;
+    line-height: 1;
+    white-space: nowrap;
+  }}
+  .flyto-btn:hover {{ opacity: 0.8; }}
+  .flyto-btn:active {{ opacity: 0.6; }}
+  .flyto-dot {{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }}
+"""
+        # Build button HTML from targets
+        buttons_html = ""
+        for t in flyto_targets:
+            color = t.get('color', btn_color)
+            name = t.get('name', 'Target')
+            # Escape for HTML safety
+            safe_name = name.replace('&', '&amp;').replace('<', '&lt;').replace('"', '&quot;')
+            buttons_html += (
+                f'  <button class="flyto-btn" onclick="flyToTarget(\'{safe_name}\')" '
+                f'title="Fly to {safe_name}">'
+                f'<span class="flyto-dot" style="background:{color}"></span>'
+                f'{safe_name}</button>\n'
+            )
+        flyto_html = f"""
+<div class="flyto-controls">
+{buttons_html}</div>
+"""
+        # Build JS: target data + click handler
+        flyto_data_json = json.dumps(flyto_targets, separators=(',', ':'))
+        flyto_js = f"""
+var _flytoTargets = {flyto_data_json};
+function flyToTarget(name) {{
+  var gd = document.getElementById('plotly-graph');
+  if (!gd) return;
+  for (var i = 0; i < _flytoTargets.length; i++) {{
+    var t = _flytoTargets[i];
+    if (t.name === name) {{
+      var update = {{
+        'scene.camera': t.camera,
+        'scene.xaxis.range': t.axis_ranges.xaxis,
+        'scene.yaxis.range': t.axis_ranges.yaxis,
+        'scene.zaxis.range': t.axis_ranges.zaxis,
+        'scene.xaxis.dtick': t.dtick,
+        'scene.yaxis.dtick': t.dtick,
+        'scene.zaxis.dtick': t.dtick,
+        'scene.aspectmode': 'cube',
+        'scene.aspectratio': {{x: 1, y: 1, z: 1}}
+      }};
+      Plotly.relayout(gd, update);
+      return;
+    }}
+  }}
+}}
 """
 
     # Encyclopedia card overlay
@@ -2521,6 +2611,7 @@ function toggleAnnotations() {{
   }}
 {aspect_css}
 {nav_css}
+{flyto_css}
 {enc_css}
 {toggle_css}
 {infocard_css}
@@ -2531,11 +2622,13 @@ function toggleAnnotations() {{
 <div id="plotly-graph"></div>
 {infocard_html}
 {nav_html}
+{flyto_html}
 {enc_html}
 {toggle_html}
 </div>
 <script>
 {nav_js}
+{flyto_js}
 {enc_js}
 {toggle_js}
 document.addEventListener('DOMContentLoaded', function() {{

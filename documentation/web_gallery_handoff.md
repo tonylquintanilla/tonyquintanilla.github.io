@@ -3906,3 +3906,147 @@ Studio (apply_config: embed_encyclopedia=true)
 
 *"The preview worked but the export didn't -- parallel pipeline bug."*
 -- On the encyclopedia fix, March 13, 2026
+
+### Session 31 (Mar 16-17, 2026): Fly-to Mobile Buttons
+
+**Problem:** The desktop "Fly to" dropdown menu (Plotly updatemenu annotation)
+allows users to snap the 3D camera to a close-up heliocentric view of a
+specific object with tight axis ranges. Essential for perihelion geometry,
+close approaches, and flyby detail. But the portrait preset strips all
+annotation-based menus ("Strip update menus"), removing fly-to functionality
+entirely on mobile.
+
+**Design session (Mar 16):** Zero-code session -- four rounds of iterative
+design. Explored dropdown alternatives, evaluated mobile screen constraints,
+designed data architecture, resolved reset-view dependency. Key insight:
+compact buttons (bottom-left, opposite pan/zoom controls) with colored dots
+matching trace colors. Maximum 4 targets. Existing "Reset View" in pan/zoom
+D-pad handles return to full view -- no dedicated "Full View" button needed.
+
+**Implementation (Mar 17):** Three files modified.
+
+**gallery_studio.py (~210 lines added):**
+
+- Studio UI: green fly-to checkbox column in Trace Visibility panel (alongside
+  existing gold featured checkbox). Green-themed (`#2d8a4e`) to distinguish.
+- `_on_flyto_toggle()`: max 4 enforcement, auto-enables pan/zoom arrows when
+  any fly-to target checked (safety net -- guarantees Reset View exists).
+- `_collect_flyto_targets()`: extracts position from trace data (last point of
+  x/y/z arrays), computes camera + axis ranges matching desktop fly-to math
+  from `visualization_utils.add_fly_to_object_buttons()`. Adaptive dtick via
+  same algorithm as `_calculate_grid_dtick`. Extracts trace color for button
+  styling.
+- `flyto_targets` wired into `_collect_studio_config()` and stored in
+  `_studio_config` blob.
+- Preview/export: `flyto_css`, `flyto_html`, `flyto_js` embedded in
+  `build_gallery_html()` following the nav arrows dual-path pattern. Uses
+  `position: absolute` (inside aspect-frame) vs gallery viewer's
+  `position: fixed`.
+
+**index.html (~140 lines added):**
+
+- CSS: `.flyto-controls` positioned `bottom: 24px; left: 16px` (opposite
+  pan/zoom on right). Dark glass aesthetic matching existing controls.
+- HTML: empty `<div class="flyto-controls" id="flytoControls"></div>`.
+- JS: reads `_studio_config.flyto_targets` (with `_flyto_targets` fallback).
+  Dynamically creates buttons with colored dots + name labels. Click handler
+  calls `Plotly.relayout()` with camera, axis ranges, dtick, aspectmode.
+  Captures original camera + ranges for reset. Stores originals as data
+  attributes on the container element.
+- `resetPanZoom()` 3D handler expanded to restore original axis ranges and
+  recalculate original dtick when fly-to targets present.
+- Added `title="Reset view"` to panReset button for desktop hover text.
+- Card switch cleanup: clears fly-to buttons and innerHTML.
+
+**json_converter.py -- no changes.** `_studio_config` passes through as blob.
+
+**Data architecture:**
+
+```python
+layout['_studio_config']['flyto_targets'] = [
+    {
+        'name': '3I/ATLAS',
+        'trace_index': 5,
+        'color': '#ff0000',
+        'camera': {'eye': {'x': 1.5, 'y': 1.5, 'z': 1.2},
+                   'center': {'x': 0, 'y': 0, 'z': 0},
+                   'up': {'x': 0, 'y': 0, 'z': 1}},
+        'axis_ranges': {'xaxis': [min, max],
+                        'yaxis': [min, max],
+                        'zaxis': [min, max]},
+        'dtick': 0.05
+    }
+]
+```
+
+**Data flow:**
+```
+Studio: green checkbox -> _collect_flyto_targets() -> config -> _studio_config
+  build_gallery_html(): preserves in _studio_config blob AND renders inline buttons
+JSON converter: _studio_config passes through as blob
+Gallery viewer: reads flyto_targets, renders buttons, Plotly.relayout() on tap
+Preview: embedded buttons, reset piggybacks on existing panPlot('reset')
+```
+
+**Note:** `flyto_targets` lives INSIDE `_studio_config`, not as a separate
+underscore key. No addition to the underscore-key preserve list needed --
+the `_studio_config` blob already survives.
+
+**Verified working:**
+- Studio loads, green checkboxes appear, max enforcement works
+- Auto pan/zoom enable on fly-to check
+- Full pipeline: Studio -> JSON converter -> gallery viewer -> buttons -> fly-to -> reset
+- Preview: buttons appear with correct styling and navigation
+- Multiple targets (3 tested), each flies to correct position
+- Reset View restores original view including axis ranges and dtick
+
+**Known limitations (accepted):**
+- Fly-to checkboxes don't round-trip (same as trace visibility/featured)
+- Auto pan/zoom enable is one-way nudge (user can disable after)
+- Animation deferred (instant snap; Plotly transitions need broader testing)
+
+**Files modified:**
+- `gallery_studio.py`: ~210 lines (UI, methods, config, preview embed)
+- `index.html`: ~140 lines (CSS, HTML, JS rendering, reset, cleanup)
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Dropdown vs buttons | Buttons | Dropdown too space-heavy for mobile |
+| Max targets | 4 | Limited mobile screen space |
+| Reset View | Existing pan/zoom D-pad center button | No new UI needed |
+| Camera data | Static at export | No JS math, consistent with Studio philosophy |
+| Preview buttons | Embedded in `build_gallery_html()` | Same dual-path pattern as nav arrows |
+| Feature C (preset export) | Not needed | Fly-to buttons give direct access to close-up |
+| Gallery viewer positioning | `position: fixed` | Matches existing controls |
+| Preview positioning | `position: absolute` | Stays inside aspect-frame container |
+
+---
+
+**Technical Lessons Learned:**
+
+- Dual rendering paths (preview vs gallery viewer) require features in both
+  places. Nav arrows established this pattern; fly-to buttons follow it. The
+  preview uses `position: absolute` (aspect-frame containment) while the
+  gallery viewer uses `position: fixed` (full-screen context).
+
+- The preview's fly-to reset piggybacks on the existing `panPlot('reset')`
+  which already captures `_initCamera` and `_initScene`. No duplicate reset
+  logic needed -- just a different click handler for the fly-to, same restore
+  mechanism.
+
+- Config keys inside `_studio_config` use plain names (no leading underscore).
+  Underscore prefix is reserved for layout-level flags (`_studio`, `_studio_nav`,
+  `_kmz_handoff`). The JS defensively checks both forms.
+
+- Feature C (fly-to preset export for standalone gallery cards) was designed
+  but deemed unnecessary once fly-to buttons worked in both contexts. The
+  buttons give users interactive access to the close-up view without needing
+  a separate export.
+
+---
+
+*"Is this what they call 'software engineering' as distinct from 'coding'?"*
+-- Tony, after a zero-code design session moved the project further than
+most coding sessions, March 16, 2026
