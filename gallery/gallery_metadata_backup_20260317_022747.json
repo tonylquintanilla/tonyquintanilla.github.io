@@ -584,7 +584,7 @@
       "size_kb": 2510.0,
       "converted": "2026-02-26 23:35",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "orbital_transformation_mercury_20260208",
@@ -606,7 +606,7 @@
       "size_kb": 5106.5,
       "converted": "2026-02-26 08:14",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "arctic_ice_extent",
@@ -1055,6 +1055,28 @@
       "converted": "2026-02-07 23:57"
     },
     {
+      "id": "test_gallery",
+      "title": "test test test",
+      "filename": "test_gallery.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "test",
+      "size_kb": 623.6,
+      "converted": "2026-03-13 01:11",
+      "mode": "portrait"
+    },
+    {
+      "id": "test_gallery_2",
+      "title": "test 2 of encyclopedia button",
+      "filename": "test_gallery_2.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "test 2 of encyclopedia button",
+      "size_kb": 625.8,
+      "converted": "2026-03-13 01:34",
+      "mode": "portrait"
+    },
+    {
       "id": "new_horizons_full_mission_20060120_20200101_mobile",
       "title": "New Horizons mission 2006 to 2020",
       "filename": "new_horizons_full_mission_20060120_20200101_mobile.json",
@@ -1107,8 +1129,7 @@
       "description": "3I/ATLAS Perihelion 10-29-2025",
       "size_kb": 6184.1,
       "converted": "2026-03-17 00:09",
-      "mode": "portrait",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "3iatlas_perihelion_20251029",
@@ -1123,6 +1144,17 @@
       "featured": true
     },
     {
+      "id": "3iatlas_perihelion_20251029_gallery_test",
+      "title": "4 button flyto test",
+      "filename": "3iatlas_perihelion_20251029_gallery_test.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "4 button flyto test",
+      "size_kb": 6185.1,
+      "converted": "2026-03-16 23:24",
+      "mode": "portrait"
+    },
+    {
       "id": "halley_perihelion_19860208_mobile",
       "title": "Comet Halley Perihelion 2-8-1986",
       "filename": "halley_perihelion_19860208_mobile.json",
@@ -1131,8 +1163,7 @@
       "description": "Comet Halley Perihelion 2-8-1986",
       "size_kb": 4011.1,
       "converted": "2026-03-17 00:56",
-      "mode": "portrait",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "halley_perihelion_19860208",
@@ -1143,10 +1174,9 @@
       "description": "Comet Halley Perihelion 2-8-1986",
       "size_kb": 3444.5,
       "converted": "2026-03-17 00:57",
-      "mode": "landscape",
-      "featured": true
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-17 02:27",
-  "total_count": 95
+  "last_updated": "2026-03-17 00:57",
+  "total_count": 98
 }

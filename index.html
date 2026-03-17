@@ -376,11 +376,16 @@
             padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
         }
 
-        /* Category headers */
+        /* Category headers (collapsible) */
         .category-header {
             padding: 18px 0 6px;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             border-bottom: 1px solid transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
         }
 
         .category-label {
@@ -388,6 +393,36 @@
             font-weight: 600;
             letter-spacing: 0.12em;
             text-transform: uppercase;
+        }
+
+        .category-count {
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            margin-left: 6px;
+            font-weight: 400;
+            letter-spacing: normal;
+            text-transform: none;
+        }
+
+        .category-chevron {
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            transition: transform 0.25s ease;
+        }
+
+        .category-header.expanded .category-chevron {
+            transform: rotate(90deg);
+        }
+
+        .category-items {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .category-items.expanded {
+            max-height: 5000px;
+            transition: max-height 0.5s ease;
         }
 
         /* Visualization cards */
@@ -1237,7 +1272,7 @@
             <button class="pan-btn" id="panLeft" aria-label="Pan left">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 8L10 3V13Z"/></svg>
             </button>
-            <button class="pan-btn" id="panReset" aria-label="Reset view" title="Reset view">
+            <button class="pan-btn" id="panReset" aria-label="Reset view">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="7" r="3"/></svg>
             </button>
             <button class="pan-btn" id="panRight" aria-label="Pan right">
@@ -1495,6 +1530,21 @@
         }
 
         // ---- Render navigation list ----
+        function expandActiveCategory() {
+            if (!selectorNav) return;
+            var activeCard = selectorNav.querySelector('.viz-card.active');
+            if (activeCard) {
+                var container = activeCard.closest('.category-items');
+                if (container) {
+                    container.classList.add('expanded');
+                    var cat = container.getAttribute('data-cat');
+                    var header = selectorNav.querySelector('.category-header[data-cat="' + cat + '"]');
+                    if (header) header.classList.add('expanded');
+                }
+            }
+            // If no active viz, all stay collapsed — user sees category landscape
+        }
+
         function renderNavList(vizs) {
             // Filter by current mode: show items matching mode or "both"
             var filtered = [];
@@ -1527,11 +1577,14 @@
                 var catData = categories[catKey];
                 var color = CATEGORY_COLORS[catKey] || CATEGORY_COLORS.other;
 
-                // Category header
-                html += '<div class="category-header" style="border-bottom-color: ' + color + '33;">';
-                html += '<span class="category-label" style="color: ' + color + ';">' +
-                        escapeHtml(catData.label) + '</span>';
+                // Category header (collapsible)
+                html += '<div class="category-header" data-cat="' + catKey + '" style="border-bottom-color: ' + color + '33;">';
+                html += '<span><span class="category-label" style="color: ' + color + ';">' +
+                        escapeHtml(catData.label) + '</span>' +
+                        '<span class="category-count">(' + catData.items.length + ')</span></span>';
+                html += '<span class="category-chevron">&#9654;</span>';
                 html += '</div>';
+                html += '<div class="category-items" data-cat="' + catKey + '">';
 
                 // Cards
                 for (var j = 0; j < catData.items.length; j++) {
@@ -1549,6 +1602,7 @@
                     }
                     html += '</div>';
                 }
+                html += '</div>'; // close .category-items
             }
 
             if (!filtered.length) {
@@ -1557,6 +1611,23 @@
             }
 
             selectorNav.innerHTML = html;
+
+            // Category collapse/expand handlers
+            var catHeaders = selectorNav.querySelectorAll('.category-header');
+            for (var h = 0; h < catHeaders.length; h++) {
+                catHeaders[h].addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var cat = this.getAttribute('data-cat');
+                    var items = selectorNav.querySelector('.category-items[data-cat="' + cat + '"]');
+                    if (items) {
+                        items.classList.toggle('expanded');
+                        this.classList.toggle('expanded');
+                    }
+                });
+            }
+
+            // Auto-expand category of active viz (if any)
+            expandActiveCategory();
         }
 
         // ---- Load and display a visualization ----
@@ -1584,6 +1655,7 @@
             if (activeCard) activeCard.classList.remove('active');
             activeCard = selectorNav.querySelector('[data-viz-id="' + vizId + '"]');
             if (activeCard) activeCard.classList.add('active');
+            expandActiveCategory();
 
             // Show loading
             welcomeState.style.display = 'none';
