@@ -96,6 +96,7 @@ DEFAULT_CONFIG = {
     "strip_hidden_traces": False,  # Remove invisible traces on export
     "featured_traces": [],  # List of trace names to show persistent labels
     "featured_labels": {},  # {trace_name: custom_label} overrides for featured annotations
+    "flyto_targets": [],  # List of trace names to create fly-to buttons in gallery viewer
     "marker_size_boost": 0,
     "line_width_min": 2,
 
@@ -172,6 +173,7 @@ PORTRAIT_CONFIG = {
     "strip_hidden_traces": False,
     "featured_traces": [],
     "featured_labels": {},
+    "flyto_targets": [],
     "show_modebar": True,
     "show_colorbar": True,
     "strip_template": True,
@@ -3534,10 +3536,13 @@ class GalleryStudio:
         # ---- Trace Visibility ----
         sec = tk.LabelFrame(right, text="Trace Visibility", padx=6, pady=4)
         sec.pack(fill='x', pady=3, padx=2)
+
         ToolTip(sec, "Toggle individual traces on/off. Uses Plotly "
                 "visible:false (non-destructive). The gold checkbox "
                 "marks a trace as 'featured' -- it gets a persistent "
-                "gold label on load that disappears when tapped.")
+                "gold label on load that disappears when tapped. "
+                "The green checkbox marks a trace as a fly-to target "
+                "-- creates a navigation button in the gallery viewer.")
 
         btn_row = tk.Frame(sec)
         btn_row.pack(fill='x', pady=(0, 4))
@@ -4099,6 +4104,7 @@ class GalleryStudio:
             'trace_visibility': self._collect_trace_visibility(),
             'featured_traces': self._collect_featured_traces(),
             'featured_labels': self._collect_featured_labels(),
+            'flyto_targets': self._collect_flyto_targets(),
             'strip_hidden_traces': self.var_strip_hidden.get(),
             'marker_size_boost': self.var_marker_boost.get(),
             'line_width_min': self.var_line_min.get(),
@@ -4129,7 +4135,7 @@ class GalleryStudio:
         # Log config changes since last collect
         # Skip noisy keys that change structurally (dicts/lists)
         skip_keys = {'trace_visibility', 'featured_traces', 'featured_labels',
-                     'plotly_js_source', 'title_color'}
+                     'flyto_targets', 'plotly_js_source', 'title_color'}
         prev = getattr(self, '_prev_config', None)
         if prev is not None:
             changes = []
@@ -4219,6 +4225,7 @@ class GalleryStudio:
             widget.destroy()
         self.trace_vars = {}
         self.featured_vars = {}
+        self.flyto_vars = {}  # {trace_name: BooleanVar} for fly-to target checkboxes
         self.label_vars = {}  # {trace_name: StringVar} for custom label overrides
 
         if self.fig_dict is None:
@@ -4227,6 +4234,7 @@ class GalleryStudio:
         saved_vis = self.config.get('trace_visibility', {})
         saved_feat = self.config.get('featured_traces', [])
         saved_labels = self.config.get('featured_labels', {})
+        saved_flyto = self.config.get('flyto_targets', [])        
         for trace in self.fig_dict.get('data', []):
             name = trace.get('name', '')
             if not name:
@@ -4251,6 +4259,23 @@ class GalleryStudio:
                     "gold label on load. Label disappears when the "
                     "user taps the trace.")
             self.featured_vars[name] = feat_var
+            # Fly-to target checkbox (green border)
+
+            flyto_var = tk.BooleanVar(value=(name in saved_flyto))
+            flyto_cb = tk.Checkbutton(row, variable=flyto_var,
+                                       selectcolor='#2d8a4e',
+                                       command=lambda n=name, v=flyto_var: self._on_flyto_toggle(n, v))
+            flyto_cb.pack(side='left', padx=(0, 2))
+            flyto_cb.configure(
+                highlightbackground='#2d8a4e',
+                highlightcolor='#2d8a4e',
+                highlightthickness=1,
+                bd=0, padx=1, pady=0)
+            ToolTip(flyto_cb, "Include as Fly-to button in gallery viewer. "
+                    "Creates a compact navigation button that flies the "
+                    "camera to this object's position with tight axis ranges. "
+                    "Maximum 4 targets.")
+            self.flyto_vars[name] = flyto_var            
 
             # Visibility checkbox
             vis_var = tk.BooleanVar(value=saved_vis.get(name, True))
@@ -4317,6 +4342,128 @@ class GalleryStudio:
             if text:
                 labels[name] = text
         return labels
+
+
+    def _on_flyto_toggle(self, name, var):
+        """Handle fly-to checkbox toggle with max enforcement and auto-nav."""
+        if var.get():
+            # Check max limit (4)
+            current_count = sum(1 for v in self.flyto_vars.values() if v.get())
+            if current_count > 4:
+                var.set(False)
+                self._log_status(f"Maximum 4 fly-to targets allowed (already have {current_count - 1})")
+                return
+            self._log_status(f"Fly-to target added: {name}")
+            # Auto-enable pan/zoom arrows (guarantees Reset View exists)
+            if not self.var_show_nav.get():
+                self.var_show_nav.set(True)
+                self._log_status("Auto-enabled pan/zoom arrows (Reset View needed for fly-to)")
+        else:
+            self._log_status(f"Fly-to target removed: {name}")
+
+    def _collect_flyto_targets(self):
+        """Collect fly-to target data with computed camera positions.
+
+        For each checked fly-to trace, extracts position from trace data
+        and computes camera/axis parameters matching the desktop fly-to logic.
+
+        Returns:
+            list: List of dicts with name, trace_index, camera, axis_ranges, dtick
+        """
+        import math
+
+        if self.fig_dict is None:
+            return []
+
+        targets = []
+        traces = self.fig_dict.get('data', [])
+
+        for name, var in self.flyto_vars.items():
+            if not var.get():
+                continue
+
+            # Find this trace in fig_dict to get position and color
+            trace_index = None
+            target_pos = None
+            trace_color = None
+            for i, trace in enumerate(traces):
+                if trace.get('name') == name:
+                    trace_index = i
+                    # Extract position: last point of x/y/z arrays
+                    x_arr = trace.get('x', [])
+                    y_arr = trace.get('y', [])
+                    z_arr = trace.get('z', [])
+                    if x_arr and y_arr and z_arr:
+                        # Use last point (current epoch position)
+                        target_pos = [
+                            float(x_arr[-1]) if not isinstance(x_arr[-1], str) else 0,
+                            float(y_arr[-1]) if not isinstance(y_arr[-1], str) else 0,
+                            float(z_arr[-1]) if not isinstance(z_arr[-1], str) else 0,
+                        ]
+                    # Get trace color for button styling
+                    marker = trace.get('marker', {})
+                    line = trace.get('line', {})
+                    trace_color = marker.get('color') or line.get('color') or None
+                    # If color is a list/array, take first element
+                    if isinstance(trace_color, (list, tuple)) and trace_color:
+                        trace_color = trace_color[0]
+                    break
+
+            if target_pos is None or trace_index is None:
+                self._log_status(f"Fly-to skip {name}: no position data found")
+                continue
+
+            # Compute camera + axis ranges (matches visualization_utils.add_fly_to_object_buttons)
+            fly_distance = 0.1
+            distance_scale_factor = 0.05
+            dist_from_center = math.sqrt(sum(c**2 for c in target_pos))
+
+            if dist_from_center < 1e-10:
+                continue
+
+            view_radius = fly_distance + (dist_from_center * distance_scale_factor)
+
+            axis_ranges = {
+                'xaxis': [target_pos[0] - view_radius, target_pos[0] + view_radius],
+                'yaxis': [target_pos[1] - view_radius, target_pos[1] + view_radius],
+                'zaxis': [target_pos[2] - view_radius, target_pos[2] + view_radius],
+            }
+
+            # Adaptive grid dtick (same algorithm as _calculate_grid_dtick)
+            axis_span = view_radius * 2
+            if axis_span <= 0:
+                zoom_dtick = 1.0
+            else:
+                raw_tick = axis_span / 6.0
+                exponent = math.floor(math.log10(raw_tick))
+                mantissa = raw_tick / (10 ** exponent)
+                if mantissa < 1.5:
+                    clean_mantissa = 1.0
+                elif mantissa < 3.5:
+                    clean_mantissa = 2.0
+                elif mantissa < 7.5:
+                    clean_mantissa = 5.0
+                else:
+                    clean_mantissa = 10.0
+                zoom_dtick = clean_mantissa * (10 ** exponent)
+
+            target_entry = {
+                'name': name,
+                'trace_index': trace_index,
+                'camera': {
+                    'eye': {'x': 1.5, 'y': 1.5, 'z': 1.2},
+                    'center': {'x': 0, 'y': 0, 'z': 0},
+                    'up': {'x': 0, 'y': 0, 'z': 1}
+                },
+                'axis_ranges': axis_ranges,
+                'dtick': zoom_dtick,
+            }
+            if trace_color and isinstance(trace_color, str):
+                target_entry['color'] = trace_color
+
+            targets.append(target_entry)
+
+        return targets
 
     def _preview_as_gallery(self):
         """Preview how this plot will look in the gallery (index.html).

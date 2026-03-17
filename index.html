@@ -718,6 +718,59 @@
             gap: 2px;
         }
 
+        /* Fly-to navigation buttons (studio-curated, bottom-left) */
+        .flyto-controls {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            left: 16px;
+            z-index: 350;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .flyto-controls.visible {
+            display: flex;
+        }
+
+        .flyto-btn {
+            height: 36px;
+            padding: 0 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(18, 18, 26, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            white-space: nowrap;
+        }
+
+        .flyto-btn:active {
+            background: rgba(18, 18, 26, 0.95);
+            border-color: var(--accent-dim);
+            transform: scale(0.95);
+        }
+
+        .flyto-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
         .pan-controls.visible {
             display: flex;
         }
@@ -1209,6 +1262,9 @@
         </div>
     </div>
 
+    <!-- Fly-to navigation buttons (studio-curated, bottom-left) -->
+    <div class="flyto-controls" id="flytoControls"></div>
+
     <!-- Floating info card (portrait mode) -->
     <div class="info-card" id="infoCard">
         <div class="info-card-handle"></div>
@@ -1308,6 +1364,7 @@
         var annToggleBtn   = document.getElementById('annToggleBtn');
         var annStored      = null;  // Toggle annotations from JSON
         var annVisible     = false; // Current annotation visibility state
+        var flytoControls  = document.getElementById('flytoControls');
 
         // Encyclopedia overlay refs and state
         var encBtn         = document.getElementById('enc-btn');
@@ -1711,6 +1768,62 @@
                 // Studio-nav plots get full D-pad + zoom; others get zoom only
                 var hasStudioNav = figDict.layout._studio_nav === true;
 
+                // Fly-to navigation buttons (from _studio_config)
+                var flytoTargets = (figDict.layout._studio_config || {})._flyto_targets ||
+                                   (figDict.layout._studio_config || {}).flyto_targets || [];
+                flytoControls.innerHTML = '';
+                if (flytoTargets.length > 0) {
+                    // Capture original camera + ranges for Reset View compatibility
+                    var origCamera = null;
+                    var origRanges = {};
+                    if (figDict.layout.scene) {
+                        origCamera = figDict.layout.scene.camera || null;
+                        if (figDict.layout.scene.xaxis && figDict.layout.scene.xaxis.range)
+                            origRanges.x = figDict.layout.scene.xaxis.range.slice();
+                        if (figDict.layout.scene.yaxis && figDict.layout.scene.yaxis.range)
+                            origRanges.y = figDict.layout.scene.yaxis.range.slice();
+                        if (figDict.layout.scene.zaxis && figDict.layout.scene.zaxis.range)
+                            origRanges.z = figDict.layout.scene.zaxis.range.slice();
+                    }
+
+                    flytoTargets.forEach(function(target) {
+                        var btn = document.createElement('button');
+                        btn.className = 'flyto-btn';
+                        btn.setAttribute('aria-label', 'Fly to ' + target.name);
+                        // Color dot from trace color
+                        var dot = document.createElement('span');
+                        dot.className = 'flyto-dot';
+                        dot.style.background = target.color || 'var(--accent)';
+                        btn.appendChild(dot);
+                        btn.appendChild(document.createTextNode(target.name));
+                        btn.addEventListener('click', function() {
+                            var gd = document.getElementById('plotly-graph');
+                            if (!gd) return;
+                            var update = {
+                                'scene.camera': target.camera,
+                                'scene.xaxis.range': target.axis_ranges.xaxis,
+                                'scene.yaxis.range': target.axis_ranges.yaxis,
+                                'scene.zaxis.range': target.axis_ranges.zaxis,
+                                'scene.xaxis.dtick': target.dtick,
+                                'scene.yaxis.dtick': target.dtick,
+                                'scene.zaxis.dtick': target.dtick,
+                                'scene.aspectmode': 'cube',
+                                'scene.aspectratio': {x: 1, y: 1, z: 1}
+                            };
+                            Plotly.relayout(gd, update);
+                        });
+                        flytoControls.appendChild(btn);
+                    });
+                    flytoControls.classList.add('visible');
+
+                    // Wire Reset View (panReset) to also restore original ranges
+                    // Store originals on the control for the reset handler
+                    flytoControls.setAttribute('data-orig-camera', JSON.stringify(origCamera));
+                    flytoControls.setAttribute('data-orig-ranges', JSON.stringify(origRanges));
+                } else {
+                    flytoControls.classList.remove('visible');
+                }
+
                 // Featured trace labels: remove on click (studio-curated plots)
                 if (figDict.layout._studio) {
                     // Direct click on annotation text (2D only)
@@ -2000,7 +2113,30 @@
 
             // 3D reset
             if (graphDiv.layout.scene) {
-                Plotly.relayout(graphDiv, {'scene.camera': null});
+                var update = {'scene.camera': null};
+                // If fly-to targets exist, restore original axis ranges
+                var fc = document.getElementById('flytoControls');
+                if (fc && fc.classList.contains('visible')) {
+                    try {
+                        var origRanges = JSON.parse(fc.getAttribute('data-orig-ranges') || '{}');
+                        if (origRanges.x) update['scene.xaxis.range'] = origRanges.x;
+                        if (origRanges.y) update['scene.yaxis.range'] = origRanges.y;
+                        if (origRanges.z) update['scene.zaxis.range'] = origRanges.z;
+                        // Restore original dtick (recalculate from span)
+                        if (origRanges.x) {
+                            var span = origRanges.x[1] - origRanges.x[0];
+                            var rawTick = span / 6.0;
+                            var exp = Math.floor(Math.log10(rawTick));
+                            var mant = rawTick / Math.pow(10, exp);
+                            var cleanMant = mant < 1.5 ? 1 : mant < 3.5 ? 2 : mant < 7.5 ? 5 : 10;
+                            var origDtick = cleanMant * Math.pow(10, exp);
+                            update['scene.xaxis.dtick'] = origDtick;
+                            update['scene.yaxis.dtick'] = origDtick;
+                            update['scene.zaxis.dtick'] = origDtick;
+                        }
+                    } catch(e) {}
+                }
+                Plotly.relayout(graphDiv, update);
                 return;
             }
 
@@ -2505,6 +2641,8 @@
             dismissInfoCard();
             zoomControls.classList.remove('visible');
             panControls.classList.remove('visible');
+            flytoControls.classList.remove('visible');
+            flytoControls.innerHTML = '';           
             annToggleBtn.classList.remove('visible');
             annStored = null;
             document.getElementById('kmz-handoff-btn').style.display = 'none'; // NEW
