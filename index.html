@@ -425,6 +425,56 @@
             transition: max-height 0.5s ease;
         }
 
+        /* Subcategory headers (nested inside category) */
+        .subcategory-header {
+            padding: 10px 8px 4px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .subcategory-label {
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .subcategory-count {
+            font-size: 0.58rem;
+            color: var(--text-dim);
+            margin-left: 5px;
+            font-weight: 400;
+            letter-spacing: normal;
+            text-transform: none;
+        }
+
+        .subcategory-chevron {
+            font-size: 0.5rem;
+            color: var(--text-dim);
+            transition: transform 0.25s ease;
+        }
+
+        .subcategory-header.expanded .subcategory-chevron {
+            transform: rotate(90deg);
+        }
+
+        .subcategory-items {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .subcategory-items.expanded {
+            max-height: 5000px;
+            transition: max-height 0.5s ease;
+        }
+
         /* Visualization cards */
         .viz-card {
             padding: 10px 14px;
@@ -1534,12 +1584,21 @@
             if (!selectorNav) return;
             var activeCard = selectorNav.querySelector('.viz-card.active');
             if (activeCard) {
-                var container = activeCard.closest('.category-items');
-                if (container) {
-                    container.classList.add('expanded');
-                    var cat = container.getAttribute('data-cat');
-                    var header = selectorNav.querySelector('.category-header[data-cat="' + cat + '"]');
-                    if (header) header.classList.add('expanded');
+                // Expand parent category
+                var catContainer = activeCard.closest('.category-items');
+                if (catContainer) {
+                    catContainer.classList.add('expanded');
+                    var cat = catContainer.getAttribute('data-cat');
+                    var catHeader = selectorNav.querySelector('.category-header[data-cat="' + cat + '"]');
+                    if (catHeader) catHeader.classList.add('expanded');
+                }
+                // Expand parent subcategory (if nested)
+                var subContainer = activeCard.closest('.subcategory-items');
+                if (subContainer) {
+                    subContainer.classList.add('expanded');
+                    var sub = subContainer.getAttribute('data-subcat');
+                    var subHeader = selectorNav.querySelector('.subcategory-header[data-subcat="' + sub + '"]');
+                    if (subHeader) subHeader.classList.add('expanded');
                 }
             }
             // If no active viz, all stay collapsed — user sees category landscape
@@ -1586,21 +1645,75 @@
                 html += '</div>';
                 html += '<div class="category-items" data-cat="' + catKey + '">';
 
-                // Cards
-                for (var j = 0; j < catData.items.length; j++) {
-                    var item = catData.items[j];
-                    html += '<div class="viz-card" data-viz-id="' + escapeHtml(item.id) + '">';
-                    html += '<div class="viz-card-title">' + escapeHtml(item.title || 'Untitled') + '</div>';
-                    if (item.description) {
-                        html += '<div class="viz-card-desc">' + escapeHtml(item.description) + '</div>';
+                // Check if any items have subcategories
+                var hasSubs = false;
+                for (var s = 0; s < catData.items.length; s++) {
+                    if (catData.items[s].subcategory) { hasSubs = true; break; }
+                }
+
+                if (hasSubs) {
+                    // Group by subcategory, preserving JSON order
+                    var subGroups = {};
+                    var subOrder = [];
+                    for (var j = 0; j < catData.items.length; j++) {
+                        var item = catData.items[j];
+                        var subKey = item.subcategory || '';
+                        var subLabel = item.subcategory_label || subKey || 'Other';
+                        if (!subGroups[subKey]) {
+                            subGroups[subKey] = { label: subLabel, items: [] };
+                            subOrder.push(subKey);
+                        }
+                        subGroups[subKey].items.push(item);
                     }
-                    if (item.size_kb) {
-                        html += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
+
+                    for (var si = 0; si < subOrder.length; si++) {
+                        var sk = subOrder[si];
+                        var sg = subGroups[sk];
+                        var subId = catKey + '_' + (sk || '_none');
+
+                        // Subcategory header
+                        html += '<div class="subcategory-header" data-subcat="' + subId + '">';
+                        html += '<span><span class="subcategory-label">' +
+                                escapeHtml(sg.label) + '</span>' +
+                                '<span class="subcategory-count">(' + sg.items.length + ')</span></span>';
+                        html += '<span class="subcategory-chevron">&#9654;</span>';
+                        html += '</div>';
+                        html += '<div class="subcategory-items" data-subcat="' + subId + '">';
+
+                        for (var j = 0; j < sg.items.length; j++) {
+                            var item = sg.items[j];
+                            html += '<div class="viz-card" data-viz-id="' + escapeHtml(item.id) + '">';
+                            html += '<div class="viz-card-title">' + escapeHtml(item.title || 'Untitled') + '</div>';
+                            if (item.description) {
+                                html += '<div class="viz-card-desc">' + escapeHtml(item.description) + '</div>';
+                            }
+                            if (item.size_kb) {
+                                html += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
+                            }
+                            if (item.featured) {
+                                html += '<div class="viz-card-featured">Featured</div>';
+                            }
+                            html += '</div>';
+                        }
+                        html += '</div>'; // close .subcategory-items
                     }
-                    if (item.featured) {
-                        html += '<div class="viz-card-featured">Featured</div>';
+                } else {
+                    // No subcategories — flat card list
+                    for (var j = 0; j < catData.items.length; j++) {
+                        var item = catData.items[j];
+                        html += '<div class="viz-card" data-viz-id="' + escapeHtml(item.id) + '">';
+                        html += '<div class="viz-card-title">' + escapeHtml(item.title || 'Untitled') + '</div>';
+                        if (item.description) {
+                            html += '<div class="viz-card-desc">' + escapeHtml(item.description) + '</div>';
+                        }
+                        if (item.size_kb) {
+                            html += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
+                        }
+                        if (item.featured) {
+                            html += '<div class="viz-card-featured">Featured</div>';
+                        }
+                        html += '</div>';
                     }
-                    html += '</div>';
                 }
                 html += '</div>'; // close .category-items
             }
@@ -1619,6 +1732,20 @@
                     e.stopPropagation();
                     var cat = this.getAttribute('data-cat');
                     var items = selectorNav.querySelector('.category-items[data-cat="' + cat + '"]');
+                    if (items) {
+                        items.classList.toggle('expanded');
+                        this.classList.toggle('expanded');
+                    }
+                });
+            }
+
+            // Subcategory collapse/expand handlers
+            var subHeaders = selectorNav.querySelectorAll('.subcategory-header');
+            for (var h = 0; h < subHeaders.length; h++) {
+                subHeaders[h].addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var sub = this.getAttribute('data-subcat');
+                    var items = selectorNav.querySelector('.subcategory-items[data-subcat="' + sub + '"]');
                     if (items) {
                         items.classList.toggle('expanded');
                         this.classList.toggle('expanded');
