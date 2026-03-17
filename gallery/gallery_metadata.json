@@ -1127,10 +1127,9 @@
       "category": "solar_system",
       "category_label": "Solar System",
       "description": "3I/ATLAS Perihelion 10-29-2025",
-      "size_kb": 6183.4,
-      "converted": "2026-03-16 01:49",
-      "mode": "portrait",
-      "featured": true
+      "size_kb": 6184.1,
+      "converted": "2026-03-17 00:09",
+      "mode": "portrait"
     },
     {
       "id": "3iatlas_perihelion_20251029",
@@ -1156,6 +1155,6 @@
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-16 23:24",
+  "last_updated": "2026-03-17 00:09",
   "total_count": 96
 }
