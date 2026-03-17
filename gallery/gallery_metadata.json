@@ -1153,8 +1153,30 @@
       "size_kb": 6185.1,
       "converted": "2026-03-16 23:24",
       "mode": "portrait"
+    },
+    {
+      "id": "halley_perihelion_19860208_mobile",
+      "title": "Comet Halley Perihelion 2-8-1986",
+      "filename": "halley_perihelion_19860208_mobile.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet Halley Perihelion 2-8-1986",
+      "size_kb": 4011.1,
+      "converted": "2026-03-17 00:56",
+      "mode": "portrait"
+    },
+    {
+      "id": "halley_perihelion_19860208",
+      "title": "Comet Halley Perihelion 2-8-1986",
+      "filename": "halley_perihelion_19860208.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet Halley Perihelion 2-8-1986",
+      "size_kb": 3444.5,
+      "converted": "2026-03-17 00:57",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-17 00:09",
-  "total_count": 96
+  "last_updated": "2026-03-17 00:57",
+  "total_count": 98
 }
