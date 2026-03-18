@@ -275,18 +275,15 @@
       "converted": "2026-02-10 23:40"
     },
     {
-      "id": "3iatlas_jupiter_20260316_1222_mobile",
-      "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
-      "filename": "3iatlas_jupiter_20260316_1222_mobile.json",
+      "id": "current_comets_social_view_20260210_2331",
+      "title": "Current Comets on 2026 02 10 23:31",
+      "filename": "current_comets_social_view_20260210_2331.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
-      "size_kb": 16441.2,
-      "converted": "2026-03-18 02:30",
+      "description": "Current comets and the inner solar system.",
       "mode": "portrait",
-      "subcategory": "comets",
-      "subcategory_label": "Comets",
-      "featured": true
+      "size_kb": 33130.3,
+      "converted": "2026-02-10 23:40"
     },
     {
       "id": "inner_solar_system_animation_2-4-2005_21_years_social",
@@ -578,17 +575,16 @@
       "subcategory_label": "Extreme Heating Events"
     },
     {
-      "id": "current_comets_social_view_20260210_2331",
-      "title": "Current Comets on 2026 02 10 23:31",
-      "filename": "current_comets_social_view_20260210_2331.json",
+      "id": "c2024_e1_wierzchos_20260225_0236_portrait",
+      "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
+      "filename": "c2024_e1_wierzchos_20260225_0236_portrait.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Current comets and the inner solar system.",
+      "description": "Comet Wierzchos",
+      "size_kb": 2510.0,
+      "converted": "2026-02-26 23:35",
       "mode": "portrait",
-      "size_kb": 33130.3,
-      "converted": "2026-02-10 23:40",
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "featured": false
     },
     {
       "id": "orbital_transformation_mercury_20260208",
@@ -601,18 +597,16 @@
       "converted": "2026-02-08 01:01"
     },
     {
-      "id": "3iatlas_jupiter_20260316_1222",
-      "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
-      "filename": "3iatlas_jupiter_20260316_1222.json",
+      "id": "c2024_e1_wierzchos_20260225_0236_landscape",
+      "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
+      "filename": "c2024_e1_wierzchos_20260225_0236_landscape.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
-      "size_kb": 12271.7,
-      "converted": "2026-03-18 02:30",
+      "description": "Comet Wierzchos, perihelion 1-20-2026.",
+      "size_kb": 5106.5,
+      "converted": "2026-02-26 08:14",
       "mode": "landscape",
-      "subcategory": "comets",
-      "subcategory_label": "Comets",
-      "featured": true
+      "featured": false
     },
     {
       "id": "arctic_ice_extent",
@@ -1105,34 +1099,6 @@
       "mode": "landscape"
     },
     {
-      "id": "c2024_e1_wierzchos_20260225_0236_portrait",
-      "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
-      "filename": "c2024_e1_wierzchos_20260225_0236_portrait.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "Comet Wierzchos",
-      "size_kb": 2510.0,
-      "converted": "2026-02-26 23:35",
-      "mode": "portrait",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
-    },
-    {
-      "id": "c2024_e1_wierzchos_20260225_0236_landscape",
-      "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
-      "filename": "c2024_e1_wierzchos_20260225_0236_landscape.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "Comet Wierzchos, perihelion 1-20-2026.",
-      "size_kb": 5106.5,
-      "converted": "2026-02-26 08:14",
-      "mode": "landscape",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
-    },
-    {
       "id": "3iatlas_perihelion_20251029_mobile",
       "title": "3I/ATLAS Perihelion 10-29-2025",
       "filename": "3iatlas_perihelion_20251029_mobile.json",
@@ -1142,9 +1108,7 @@
       "size_kb": 6184.1,
       "converted": "2026-03-17 00:09",
       "mode": "portrait",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "featured": true
     },
     {
       "id": "3iatlas_perihelion_20251029",
@@ -1156,9 +1120,7 @@
       "size_kb": 3791.1,
       "converted": "2026-03-16 01:49",
       "mode": "landscape",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "featured": true
     },
     {
       "id": "halley_perihelion_19860208_mobile",
@@ -1170,9 +1132,7 @@
       "size_kb": 4011.1,
       "converted": "2026-03-17 00:56",
       "mode": "portrait",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "featured": true
     },
     {
       "id": "halley_perihelion_19860208",
@@ -1184,11 +1144,31 @@
       "size_kb": 3444.5,
       "converted": "2026-03-17 00:57",
       "mode": "landscape",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "featured": true
+    },
+    {
+      "id": "3iatlas_jupiter_20260316_1222_mobile",
+      "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
+      "filename": "3iatlas_jupiter_20260316_1222_mobile.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
+      "size_kb": 16441.2,
+      "converted": "2026-03-18 02:30",
+      "mode": "portrait"
+    },
+    {
+      "id": "3iatlas_jupiter_20260316_1222",
+      "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
+      "filename": "3iatlas_jupiter_20260316_1222.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
+      "size_kb": 12271.7,
+      "converted": "2026-03-18 02:30",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-18 09:22",
+  "last_updated": "2026-03-18 02:30",
   "total_count": 97
 }
