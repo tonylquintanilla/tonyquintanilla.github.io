@@ -543,27 +543,161 @@
             flex-shrink: 0;
         }
 
-        .selector-footer a {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 0.72rem;
-            transition: color 0.2s;
-        }
-
-        .selector-footer a:hover {
-            color: var(--accent);
-        }
-
-        .footer-links {
+        .footer-icons {
             display: flex;
-            gap: 16px;
+            gap: 20px;
             align-items: center;
         }
 
-        .footer-sep {
-            color: var(--border);
-            font-size: 0.6rem;
+        .footer-icons a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
+        .footer-icons a:hover {
+            color: var(--accent);
+        }
+
+        .footer-about-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1.5px solid var(--text-secondary);
+            color: var(--text-secondary);
+            font-size: 16px;
+            font-weight: 700;
+            font-style: italic;
+            font-family: Georgia, 'Times New Roman', serif;
+            line-height: 1;
+            padding: 0 0 1px 0;
+            cursor: pointer;
+            background: transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .footer-about-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* About overlay */
+        .about-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 300;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .about-overlay.open { display: flex; }
+
+        .about-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            max-width: 560px;
+            width: 100%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .about-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px 12px 20px;
+            border-bottom: 1px solid #1e293b;
+            flex-shrink: 0;
+        }
+
+        .about-card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+            font-family: 'Cormorant Garamond', Georgia, serif;
+        }
+
+        .about-card-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: transparent;
+            color: #64748b;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            padding: 0;
+        }
+
+        .about-card-close:hover {
+            color: #f8fafc;
+            border-color: #64748b;
+        }
+
+        .about-card-body {
+            padding: 20px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #cbd5e1;
+            scrollbar-width: thin;
+            scrollbar-color: #334155 transparent;
+        }
+
+        .about-card-body p {
+            margin: 0 0 14px;
+        }
+
+        .about-card-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .about-links {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid #1e293b;
+            margin-top: 6px;
+        }
+
+        .about-links a {
+            color: #94a3b8;
+            font-size: 13px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .about-links a:hover {
+            color: var(--accent);
+        }
+
+        .about-credit {
+            margin: 16px 0 0;
+            font-size: 12px;
+            color: #475569;
+        }
+
 
         /* ================================================================
            VISUALIZATION AREA (always full screen)
@@ -1256,14 +1390,17 @@
         </nav>
 
         <div class="selector-footer">
-
-            <div class="footer-links">
-                <a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener">Instagram</a>
-                <span class="footer-sep">|</span>
-                <a href="https://github.com/tonylquintanilla/palomas_orrery" target="_blank" rel="noopener">GitHub</a>
+            <div class="footer-icons">
+                <button class="footer-about-btn" id="about-btn" title="About Paloma's Orrery">i</button>
+                <a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener" title="Instagram @palomas_orrery">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+                </a>
+                <a href="https://github.com/tonylquintanilla/palomas_orrery" target="_blank" rel="noopener" title="Source code on GitHub">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
             </div>
-
         </div>
+
     </aside>
 
     <!-- Main app container (always full-screen) -->
@@ -1370,6 +1507,34 @@
                 <button class="enc-card-close" id="enc-close">&#10005;</button>
             </div>
             <div class="enc-card-body" id="enc-body"></div>
+        </div>
+    </div>
+
+
+    <!-- About overlay -->
+    <div class="about-overlay" id="about-overlay">
+        <div class="about-card">
+            <div class="about-card-header">
+                <div class="about-card-title">Paloma's Orrery</div>
+                <button class="about-card-close" id="about-close">&#10005;</button>
+            </div>
+            <div class="about-card-body">
+                <p>An interactive astronomy and Earth science explorer, built for my daughter Paloma — and for anyone curious about the universe and the planet we live on.</p>
+                <p>Explore the solar system in motion, from Mercury to the Kuiper Belt. Follow spacecraft on their missions. Map the stellar neighborhood out to 100 light-years. Watch how Earth's climate systems are changing — and why the data matters.</p>
+                <p>Built with real science: orbital positions from JPL Horizons, stellar catalogs from Gaia and Hipparcos, and climate datasets from NASA, NOAA, and the research community.</p>
+                <p style="color: #c9a84c; font-style: italic;">Data Preservation is Climate Action.</p>
+                <div class="about-links">
+                    <a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+                        @palomas_orrery
+                    </a>
+                    <a href="https://github.com/tonylquintanilla/palomas_orrery" target="_blank" rel="noopener">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                        Source code
+                    </a>
+                </div>
+                <p class="about-credit">Created by Tony Quintanilla with Claude (Anthropic)</p>
+            </div>
         </div>
     </div>
 
@@ -2707,6 +2872,27 @@
             if (e.key === 'Escape') encCloseCard();
         });
 
+
+        // Wire About overlay (one-time, elements are persistent)
+        var aboutBtn = document.getElementById('about-btn');
+        var aboutOverlay = document.getElementById('about-overlay');
+        var aboutClose = document.getElementById('about-close');
+
+        function openAbout() { if (aboutOverlay) aboutOverlay.classList.add('open'); }
+        function closeAbout() { if (aboutOverlay) aboutOverlay.classList.remove('open'); }
+
+        if (aboutBtn) aboutBtn.addEventListener('click', openAbout);
+        if (aboutClose) aboutClose.addEventListener('click', closeAbout);
+        if (aboutOverlay) {
+            aboutOverlay.addEventListener('click', function(e) {
+                if (e.target === aboutOverlay) closeAbout();
+            });
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeAbout();
+        });
+
+        
         // ---- Info card (portrait mode) ----
         function showInfoCard(data) {
             try {
