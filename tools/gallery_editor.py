@@ -177,55 +177,115 @@ class GalleryEditor:
         cat_menu.add_command(label="New Category...",
                              command=self._new_category)
         cat_menu.add_command(label="Rename Category...",
-                             command=self._rename_category)
+                             command=self._rename_category)     
         cat_menu.add_command(label="Edit Category Color...",
                              command=self._edit_category_color)
+        cat_menu.add_separator()
+        cat_menu.add_command(label="Delete Category...",
+                             command=self._delete_category)
         menubar.add_cascade(label="Categories", menu=cat_menu)
 
         self.root.bind('<Control-s>', lambda e: self._save_all())
+
 
     def _build_toolbar(self):
         toolbar = ttk.Frame(self.root)
         toolbar.pack(fill='x', padx=8, pady=(8, 4))
 
-        ttk.Button(toolbar, text="Edit Title",
-                   command=self._edit_title).pack(side='left', padx=2)
-        ttk.Button(toolbar, text="Edit Description",
-                   command=self._edit_description).pack(side='left', padx=2)
-        ttk.Button(toolbar, text="Change Category",
-                   command=self._change_category).pack(side='left', padx=2)
+        # -- Edit group --
+        b = ttk.Button(toolbar, text="Edit Title",
+                       command=self._edit_title)
+        b.pack(side='left', padx=2)
+        self._tip(b, "Edit title of selected visualization")
+
+        b = ttk.Button(toolbar, text="Edit Description",
+                       command=self._edit_description)
+        b.pack(side='left', padx=2)
+        self._tip(b, "Edit description of selected visualization")
+
+        b = ttk.Button(toolbar, text="Change Category",
+                       command=self._change_category)
+        b.pack(side='left', padx=2)
+        self._tip(b, "Move selected visualization to a different category")
+
+        b = ttk.Button(toolbar, text="Set Subcategory",
+                       command=self._set_subcategory)
+        b.pack(side='left', padx=2)
+        self._tip(b, "Set or clear subcategory for selected visualization")
+
+        b = ttk.Button(toolbar, text="Edit Labels",
+                       command=self._edit_labels)
+        b.pack(side='left', padx=2)
+        self._tip(b, "Edit category and subcategory display labels")
 
         ttk.Separator(toolbar, orient='vertical').pack(
             side='left', fill='y', padx=8, pady=2)
 
-        ttk.Button(toolbar, text="Move Up",
-                   command=self._move_up).pack(side='left', padx=2)
-        ttk.Button(toolbar, text="Move Down",
-                   command=self._move_down).pack(side='left', padx=2)
+        # -- Organize group --
+        b = ttk.Button(toolbar, text="Move Up",
+                       command=self._move_up)
+        b.pack(side='left', padx=2)
+        self._tip(b, "Move selected item up (works on vizs and categories)")
+
+        b = ttk.Button(toolbar, text="Move Down",
+                       command=self._move_down)
+        b.pack(side='left', padx=2)
+        self._tip(b, "Move selected item down (works on vizs and categories)")
 
         ttk.Separator(toolbar, orient='vertical').pack(
             side='left', fill='y', padx=8, pady=2)
 
-        ttk.Button(toolbar, text="Copy To...",
-                   command=self._copy_viz).pack(side='left', padx=2)
-        ttk.Button(toolbar, text="Delete",
-                   command=self._delete_viz).pack(side='left', padx=2)
+        # -- Actions group --
+        b = ttk.Button(toolbar, text="Copy To...",
+                       command=self._copy_viz)
+        b.pack(side='left', padx=2)
+        self._tip(b, "Duplicate visualization to another category/mode")
+
+        b = ttk.Button(toolbar, text="Toggle Featured",
+                       command=self._toggle_featured)
+        b.pack(side='left', padx=2)
+        self._tip(b, "Mark/unmark selected visualization as featured")
+
+        b = ttk.Button(toolbar, text="Delete",
+                       command=self._delete_selected)
+        b.pack(side='left', padx=2)
+        self._tip(b, "Delete selected visualization or empty category")
 
         ttk.Separator(toolbar, orient='vertical').pack(
             side='left', fill='y', padx=8, pady=2)
 
-        ttk.Button(toolbar, text="Toggle Featured",
-                   command=self._toggle_featured).pack(side='left', padx=2)
-        ttk.Button(toolbar, text="Set Subcategory",
-                   command=self._set_subcategory).pack(side='left', padx=2)
-        ttk.Button(toolbar, text="Edit Labels",
-                   command=self._edit_labels).pack(side='left', padx=2)
+        b = ttk.Button(toolbar, text="Save All",
+                       command=self._save_all)
+        b.pack(side='right', padx=2)
+        self._tip(b, "Save metadata and config (Ctrl+S)")
 
-        ttk.Separator(toolbar, orient='vertical').pack(
-            side='left', fill='y', padx=8, pady=2)
 
-        ttk.Button(toolbar, text="Save All",
-                   command=self._save_all).pack(side='right', padx=2)
+    @staticmethod
+    def _tip(widget, text):
+        """Add hover tooltip to a widget."""
+        tip = None
+
+        def enter(e):
+            nonlocal tip
+            x = widget.winfo_rootx() + 20
+            y = widget.winfo_rooty() + widget.winfo_height() + 4
+            tip = tk.Toplevel(widget)
+            tip.wm_overrideredirect(True)
+            tip.wm_geometry(f"+{x}+{y}")
+            lbl = tk.Label(tip, text=text, background="#ffffe0",
+                           relief='solid', borderwidth=1,
+                           font=('TkDefaultFont', 9))
+            lbl.pack()
+
+        def leave(e):
+            nonlocal tip
+            if tip:
+                tip.destroy()
+                tip = None
+
+        widget.bind('<Enter>', enter)
+        widget.bind('<Leave>', leave)
+
 
     def _build_tree(self):
         """Build the treeview showing visualizations grouped by category."""
@@ -980,6 +1040,17 @@ class GalleryEditor:
                    command=dlg.destroy).pack(side='right', padx=2)
         dlg.bind('<Escape>', lambda e: dlg.destroy())
 
+    def _delete_selected(self):
+        """Route Delete to viz or category based on tree selection."""
+        sel_type, sel_id = self._get_selected_type()
+        if sel_type == 'category':
+            self._delete_category()
+        elif sel_type == 'viz':
+            self._delete_viz()
+        else:
+            self.status_var.set("Select a visualization or category to delete")
+
+
     def _delete_viz(self):
         """Delete the selected visualization from the metadata."""
         viz = self._get_selected_viz()
@@ -1164,6 +1235,46 @@ class GalleryEditor:
         self._mark_config_dirty()
         self.status_var.set(
             f"Color updated: {cat_label} -> {new_color}")
+
+    def _delete_category(self):
+        """Delete a category from gallery_config.json (must be empty)."""
+        sel_type, sel_id = self._get_selected_type()
+
+        if sel_type == 'category':
+            _, cat_key = self._parse_cat_iid(sel_id)
+        else:
+            cat_key = self._ask_category("Delete Category",
+                                         "Select category to delete:")
+        if not cat_key:
+            return
+
+        # Check for visualizations using this category
+        cat_map = config_to_map(self.categories)
+        cat_label = cat_map.get(cat_key, cat_key)
+
+        viz_count = sum(1 for v in self.data.get('visualizations', [])
+                        if v.get('category') == cat_key)
+
+        if viz_count > 0:
+            messagebox.showwarning(
+                "Category Not Empty",
+                f"'{cat_label}' has {viz_count} visualization(s).\n\n"
+                f"Move or delete them first, then try again.",
+                parent=self.root)
+            return
+
+        result = messagebox.askyesno(
+            "Delete Category",
+            f"Delete category '{cat_label}' [{cat_key}]?\n\n"
+            f"This removes it from gallery_config.json.",
+            parent=self.root)
+
+        if result:
+            self.categories = [c for c in self.categories
+                               if c['key'] != cat_key]
+            self._mark_config_dirty()
+            self._refresh_tree()
+            self.status_var.set(f"Deleted category: {cat_label}")
 
     def _ask_category(self, title, prompt):
         """Show a dialog to pick a category. Returns the key or None."""

@@ -21,11 +21,6 @@
       "color": "#4a7c8f"
     },
     {
-      "key": "sgr_a",
-      "label": "Sgr A*",
-      "color": "#9b59b6"
-    },
-    {
       "key": "stellar",
       "label": "Stellar Neighborhood",
       "color": "#3498db"
