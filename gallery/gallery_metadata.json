@@ -1156,8 +1156,19 @@
       "size_kb": 627.0,
       "converted": "2026-03-17 19:06",
       "mode": "portrait"
+    },
+    {
+      "id": "fly_to_export_test_gallery_gallery",
+      "title": "dtick test",
+      "filename": "fly_to_export_test_gallery_gallery.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "dtick test",
+      "size_kb": 627.0,
+      "converted": "2026-03-17 19:43",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-17 19:06",
-  "total_count": 96
+  "last_updated": "2026-03-17 19:43",
+  "total_count": 97
 }
