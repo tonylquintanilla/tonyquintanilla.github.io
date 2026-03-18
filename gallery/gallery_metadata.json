@@ -1145,8 +1145,19 @@
       "converted": "2026-03-17 00:57",
       "mode": "landscape",
       "featured": true
+    },
+    {
+      "id": "fly_to_export_test_gallery",
+      "title": "fly to and dtick test",
+      "filename": "fly_to_export_test_gallery.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "fly to and dtick test",
+      "size_kb": 627.0,
+      "converted": "2026-03-17 19:06",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-17 02:27",
-  "total_count": 95
+  "last_updated": "2026-03-17 19:06",
+  "total_count": 96
 }

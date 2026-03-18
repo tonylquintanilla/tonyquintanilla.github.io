@@ -134,6 +134,10 @@ DEFAULT_CONFIG = {
     # Export
     "plotly_js_source": "cdn",
     "output_mode": "both",  # landscape, portrait, both
+
+    # Per-trace settings (restored before trace list population)
+    "flyto_targets": [],
+
 }
 
 # Portrait preset - applies social-media-optimized settings
@@ -1998,11 +2002,18 @@ function panPlot(dir) {
       var update = {'scene.camera': JSON.parse(JSON.stringify(_initCamera))};
       // Also restore axis ranges if captured
       if (_initScene) {
+
         ['xaxis', 'yaxis', 'zaxis'].forEach(function(ax) {
-          if (_initScene[ax] && _initScene[ax].range) {
-            update['scene.' + ax + '.range'] = _initScene[ax].range.slice();
+          if (_initScene[ax]) {
+            if (_initScene[ax].range) {
+              update['scene.' + ax + '.range'] = _initScene[ax].range.slice();
+            }
+            if (_initScene[ax].dtick != null) {
+              update['scene.' + ax + '.dtick'] = _initScene[ax].dtick;
+            }
           }
         });
+
       }
       Plotly.relayout(gd, update);
     }
@@ -2654,7 +2665,7 @@ document.addEventListener('DOMContentLoaded', function() {{
         _initScene = {{}};
         ['xaxis', 'yaxis', 'zaxis'].forEach(function(ax) {{
           if (_sl[ax] && _sl[ax].range) {{
-            _initScene[ax] = {{range: _sl[ax].range.slice()}};
+            _initScene[ax] = {{range: _sl[ax].range.slice(), dtick: _sl[ax].dtick}};
           }}
         }});
       }} catch(e) {{}}
@@ -4327,7 +4338,13 @@ class GalleryStudio:
         saved_vis = self.config.get('trace_visibility', {})
         saved_feat = self.config.get('featured_traces', [])
         saved_labels = self.config.get('featured_labels', {})
-        saved_flyto = self.config.get('flyto_targets', [])        
+
+        saved_flyto_raw = self.config.get('flyto_targets', [])
+        # flyto_targets stores dicts with name/camera/axis_ranges;
+        # extract just the names for checkbox matching
+        saved_flyto = [t['name'] if isinstance(t, dict) else t
+                       for t in saved_flyto_raw]
+      
         for trace in self.fig_dict.get('data', []):
             name = trace.get('name', '')
             if not name:
@@ -4845,28 +4862,20 @@ document.addEventListener('click', function(e) {{
 
         self.file_label.configure(text=info, fg='black')
 
-        # Populate trace visibility checkboxes
-        self._populate_trace_list()
-
         # Config restore: the file is the only source of truth.
         # Studio export (_studio_config present): restore exactly as exported.
         # Raw orrery output (no _studio marker): clean slate -- DEFAULT_CONFIG.
+        # NOTE: config must be restored BEFORE _populate_trace_list() so that
+        # per-trace settings (flyto_targets, featured_traces, etc.) are
+        # available when the trace checkboxes are built.
         layout = fig.get('layout', {})
         if layout.get('_studio') and layout.get('_studio_config'):
-            # Gallery export: restore the config embedded in the file.
-            # Start from DEFAULT_CONFIG so any new keys have safe defaults,
-            # then overlay everything stored in the file.
             restore = DEFAULT_CONFIG.copy()
             for k, v in layout['_studio_config'].items():
                 if k in restore:
                     restore[k] = v
             self._apply_config_to_gui(restore)
-
-            # Force route_hover OFF on reload.  Routing is applied at
-            # Preview/Export time by apply_config(), not by stored state.
-            # Non-destructive routing keeps trace['text'] intact, so the
-            # figure is ready for any hover/routing combination.
-            self.var_route_hover.set(False)
+            self.config = restore  # Make restored config available to _populate_trace_list
 
             # Backward compat: older exports (pre-non-destructive) stashed
             # original text in _original_text after blanking trace['text'].
@@ -4892,9 +4901,14 @@ document.addEventListener('click', function(e) {{
             self._log_status('  |  '.join(status_parts))
         else:
             self._apply_config_to_gui(DEFAULT_CONFIG)
+            self.config = DEFAULT_CONFIG.copy()
             self._log_status(
                 f"Loaded source file: controls reset to defaults  |  "
                 f"{trace_count} traces, {'3D' if has_scene else '2D'}")
+
+        # Populate trace visibility checkboxes (after config restore
+        # so flyto_targets, featured_traces, etc. are in self.config)
+        self._populate_trace_list()
 
         # Auto-detect KMZ blockbuster from teaser filename
         basename = os.path.basename(path)

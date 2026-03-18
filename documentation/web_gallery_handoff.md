@@ -3999,9 +3999,9 @@ the `_studio_config` blob already survives.
 - Preview: buttons appear with correct styling and navigation
 - Multiple targets (3 tested), each flies to correct position
 - Reset View restores original view including axis ranges and dtick
+- Fly-to checkboxes round-trip on gallery export reload (Session 31b fix)
 
 **Known limitations (accepted):**
-- Fly-to checkboxes don't round-trip (same as trace visibility/featured)
 - Auto pan/zoom enable is one-way nudge (user can disable after)
 - Animation deferred (instant snap; Plotly transitions need broader testing)
 
@@ -4050,3 +4050,114 @@ the `_studio_config` blob already survives.
 *"Is this what they call 'software engineering' as distinct from 'coding'?"*
 -- Tony, after a zero-code design session moved the project further than
 most coding sessions, March 16, 2026
+
+### Session 31b (Mar 17, 2026): Fly-to & Route Hover Round-Trip Fixes
+
+Three bugs preventing studio settings from round-tripping on gallery
+export reload. All targeted fixes, no new features.
+
+**Bug 1: flyto_targets filtered out on reload**
+
+`_studio_config` stores `flyto_targets` as a list of dicts (name,
+camera, axis_ranges, dtick). On reload, the restore path
+(`_do_load`) starts from `DEFAULT_CONFIG.copy()` and only overlays
+keys present in the default dict (`if k in restore`). `flyto_targets`
+was missing from `DEFAULT_CONFIG`, so it was silently dropped.
+
+Fix: Added `"flyto_targets": []` to `DEFAULT_CONFIG`.
+
+**Bug 2: Trace list populated before config restore**
+
+`_populate_trace_list()` was called before the `_studio_config`
+restore block, so per-trace settings (flyto checkboxes, featured
+checkboxes) read from `self.config` before it was updated with the
+restored values.
+
+Fix: Moved `_populate_trace_list()` after the config restore
+`if/else` block. Added `self.config = restore` (or
+`DEFAULT_CONFIG.copy()` in the else branch) before the trace list
+population so `self.config` reflects the restored state.
+
+**Bug 3: flyto_targets type mismatch on checkbox restore**
+
+`_populate_trace_list` checked `name in saved_flyto` where `name`
+is a string like `"Mercury"` but `saved_flyto` is a list of dicts
+(`[{"name": "Mercury", "camera": {...}, ...}]`). String-in-list-of-
+dicts always returns False.
+
+Fix: Extract names from the dict list before comparison:
+```python
+saved_flyto_raw = self.config.get('flyto_targets', [])
+saved_flyto = [t['name'] if isinstance(t, dict) else t
+               for t in saved_flyto_raw]
+```
+
+**Bug 4: route_hover_to_panel forced off on reload**
+
+Line 4869 explicitly called `self.var_route_hover.set(False)` after
+config restore. The original comment explained this was because
+"routing is applied at export time, not by stored state." But the
+non-destructive routing refactor (Session 29) already ensures
+`trace['text']` is intact on reload, so there's no data-safety
+reason to force it off. The checkbox should reflect what was saved.
+
+Fix: Removed the `self.var_route_hover.set(False)` block entirely.
+
+**Bug 5: Fly-to dtick not restored on Reset View**
+
+The `panPlot('reset')` function in `build_gallery_html()` captured
+and restored `_initScene` axis ranges but not dtick. Fly-to buttons
+set a tight dtick for close-up views, which then persisted after
+reset.
+
+Fix: Capture dtick alongside range in `_initScene`:
+```javascript
+_initScene[ax] = {range: _sl[ax].range.slice(), dtick: _sl[ax].dtick};
+```
+Restore dtick on reset alongside range:
+```javascript
+if (_initScene[ax].dtick != null) {
+  update['scene.' + ax + '.dtick'] = _initScene[ax].dtick;
+}
+```
+
+**Files modified:**
+- `gallery_studio.py`: `DEFAULT_CONFIG` (added `flyto_targets`),
+  `_do_load` (reordered trace list population, removed route_hover
+  force-off, added `self.config` assignment), `_populate_trace_list`
+  (flyto name extraction from dicts), `build_gallery_html` JS template
+  (dtick capture and restore in `_initScene`/`panPlot('reset')`)
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| flyto_targets in DEFAULT_CONFIG | Add as empty list | Keys not in default are silently dropped on reload |
+| Trace list vs config restore order | Config first, then populate | Per-trace checkboxes need config values at build time |
+| route_hover force-off | Remove | Non-destructive routing (Session 29) makes it safe; checkbox should reflect saved intent |
+| dtick in _initScene | Capture and restore | Fly-to sets tight dtick; reset must undo it |
+| flyto name extraction | isinstance guard | Handles both dict format (current) and hypothetical plain-string format |
+
+---
+
+**Technical Lessons Learned:**
+
+- Per-trace config (flyto_targets, featured_traces) stored as complex
+  types (list of dicts, list of strings) needs special handling in both
+  the restore path (must be in DEFAULT_CONFIG to survive the filter) and
+  the comparison path (extract comparable values from complex structures).
+
+- Ordering matters in load sequences: GUI population that reads from
+  `self.config` must happen AFTER config restore, not before. The previous
+  ordering happened to work for featured_traces only because
+  `_apply_config_to_gui` had an explicit refresh loop for `featured_vars`.
+
+- When a force-off was added as a safety measure for a destructive
+  operation (old routing blanked trace text), revisit it after the
+  operation becomes non-destructive. Stale safety measures become bugs.
+
+- Reset functions should restore ALL properties that fly-to/navigation
+  functions modify. Camera + range without dtick leaves the grid in the
+  wrong state. Pattern: any property set in the "go" function must have
+  a corresponding restore in the "reset" function.
+
