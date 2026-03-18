@@ -10,23 +10,17 @@
       "size_kb": 10082.0,
       "converted": "2026-02-17 23:25",
       "mode": "landscape",
-      "featured": true,
-      "subcategory": "general",
-      "subcategory_label": "General"
+      "featured": true
     },
     {
-      "id": "3iatlas_jupiter_20260316_1222",
-      "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
-      "filename": "3iatlas_jupiter_20260316_1222.json",
+      "id": "inner_planets_comets_solar_corona_20260207_1748",
+      "title": "Inner Planets Comets Solar Corona 20260207 1748",
+      "filename": "inner_planets_comets_solar_corona_20260207_1748.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
-      "size_kb": 12271.7,
-      "converted": "2026-03-18 02:30",
-      "mode": "landscape",
-      "subcategory": "comets",
-      "subcategory_label": "Comets",
-      "featured": true
+      "description": "Solar photosphere, corona, current comets and inner planets. Static plot.",
+      "size_kb": 31364.8,
+      "converted": "2026-02-07 17:53"
     },
     {
       "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape",
@@ -256,35 +250,29 @@
       "size_kb": 10857.8,
       "converted": "2026-02-17 23:24",
       "mode": "portrait",
-      "featured": true,
-      "subcategory": "general",
-      "subcategory_label": "General"
+      "featured": true
     },
     {
       "id": "paloma_social_view_2005_02_04",
-      "title": "Paloma's Orrery for 2-4-2005",
+      "title": "Paloma's Orrery for 2005 02 04",
       "filename": "paloma_social_view_2005_02_04.json",
       "category": "solar_system",
       "category_label": "Solar System",
       "description": "Inner planets on February 4, 2005.",
       "mode": "portrait",
       "size_kb": 622.8,
-      "converted": "2026-02-11 00:38",
-      "subcategory": "general",
-      "subcategory_label": "General"
+      "converted": "2026-02-11 00:38"
     },
     {
       "id": "planets_social_view_20260210_2327",
-      "title": "Planets on 2-10-2026",
+      "title": "Planets on 2026 02 10 23:27",
       "filename": "planets_social_view_20260210_2327.json",
       "category": "solar_system",
       "category_label": "Solar System",
       "description": "Major planets.",
       "mode": "portrait",
       "size_kb": 1346.3,
-      "converted": "2026-02-10 23:40",
-      "subcategory": "general",
-      "subcategory_label": "General"
+      "converted": "2026-02-10 23:40"
     },
     {
       "id": "3iatlas_jupiter_20260316_1222_mobile",
@@ -604,27 +592,27 @@
     },
     {
       "id": "orbital_transformation_mercury_20260208",
-      "title": "Orbital Transformation of Mercury 2-8-2026",
+      "title": "Orbital Transformation Mercury 20260208",
       "filename": "orbital_transformation_mercury_20260208.json",
       "category": "solar_system",
       "category_label": "Solar System",
       "description": "Mercury's orbital elements in the Ecliptic Frame",
       "size_kb": 70.4,
-      "converted": "2026-02-08 01:01",
-      "subcategory": "general",
-      "subcategory_label": "General"
+      "converted": "2026-02-08 01:01"
     },
     {
-      "id": "inner_planets_comets_solar_corona_20260207_1748",
-      "title": "Current comets 2-7-2026",
-      "filename": "inner_planets_comets_solar_corona_20260207_1748.json",
+      "id": "3iatlas_jupiter_20260316_1222",
+      "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
+      "filename": "3iatlas_jupiter_20260316_1222.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Solar photosphere, corona, current comets and inner planets. Static plot.",
-      "size_kb": 31364.8,
-      "converted": "2026-02-07 17:53",
+      "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
+      "size_kb": 12271.7,
+      "converted": "2026-03-18 02:30",
+      "mode": "landscape",
       "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "subcategory_label": "Comets",
+      "featured": true
     },
     {
       "id": "arctic_ice_extent",
@@ -1201,6 +1189,6 @@
       "subcategory_label": "Comets"
     }
   ],
-  "last_updated": "2026-03-18 09:34",
+  "last_updated": "2026-03-18 09:22",
   "total_count": 97
 }
