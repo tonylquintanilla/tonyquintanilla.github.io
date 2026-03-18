@@ -1322,7 +1322,7 @@
             <button class="pan-btn" id="panLeft" aria-label="Pan left">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 8L10 3V13Z"/></svg>
             </button>
-            <button class="pan-btn" id="panReset" aria-label="Reset view">
+            <button class="pan-btn" id="panReset" aria-label="Reset view" title="Reset view"></button>    
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="7" r="3"/></svg>
             </button>
             <button class="pan-btn" id="panRight" aria-label="Pan right">
@@ -1974,15 +1974,18 @@
                 if (flytoTargets.length > 0) {
                     // Capture original camera + ranges for Reset View compatibility
                     var origCamera = null;
+
                     var origRanges = {};
+                    var origDticks = {};
                     if (figDict.layout.scene) {
                         origCamera = figDict.layout.scene.camera || null;
-                        if (figDict.layout.scene.xaxis && figDict.layout.scene.xaxis.range)
-                            origRanges.x = figDict.layout.scene.xaxis.range.slice();
-                        if (figDict.layout.scene.yaxis && figDict.layout.scene.yaxis.range)
-                            origRanges.y = figDict.layout.scene.yaxis.range.slice();
-                        if (figDict.layout.scene.zaxis && figDict.layout.scene.zaxis.range)
-                            origRanges.z = figDict.layout.scene.zaxis.range.slice();
+                        ['xaxis', 'yaxis', 'zaxis'].forEach(function(ax) {
+                            var a = figDict.layout.scene[ax];
+                            if (a) {
+                                if (a.range) origRanges[ax[0]] = a.range.slice();
+                                if (a.dtick != null) origDticks[ax[0]] = a.dtick;
+                            }
+                        });
                     }
 
                     flytoTargets.forEach(function(target) {
@@ -2019,6 +2022,8 @@
                     // Store originals on the control for the reset handler
                     flytoControls.setAttribute('data-orig-camera', JSON.stringify(origCamera));
                     flytoControls.setAttribute('data-orig-ranges', JSON.stringify(origRanges));
+                    flytoControls.setAttribute('data-orig-dticks', JSON.stringify(origDticks));
+
                 } else {
                     flytoControls.classList.remove('visible');
                 }
@@ -2317,22 +2322,23 @@
                 var fc = document.getElementById('flytoControls');
                 if (fc && fc.classList.contains('visible')) {
                     try {
+
                         var origRanges = JSON.parse(fc.getAttribute('data-orig-ranges') || '{}');
+                        var origDticks = JSON.parse(fc.getAttribute('data-orig-dticks') || '{}');
                         if (origRanges.x) update['scene.xaxis.range'] = origRanges.x;
                         if (origRanges.y) update['scene.yaxis.range'] = origRanges.y;
                         if (origRanges.z) update['scene.zaxis.range'] = origRanges.z;
-                        // Restore original dtick (recalculate from span)
-                        if (origRanges.x) {
-                            var span = origRanges.x[1] - origRanges.x[0];
-                            var rawTick = span / 6.0;
-                            var exp = Math.floor(Math.log10(rawTick));
-                            var mant = rawTick / Math.pow(10, exp);
-                            var cleanMant = mant < 1.5 ? 1 : mant < 3.5 ? 2 : mant < 7.5 ? 5 : 10;
-                            var origDtick = cleanMant * Math.pow(10, exp);
-                            update['scene.xaxis.dtick'] = origDtick;
-                            update['scene.yaxis.dtick'] = origDtick;
-                            update['scene.zaxis.dtick'] = origDtick;
-                        }
+                        // Restore original dtick values
+                        ['x', 'y', 'z'].forEach(function(k) {
+                            var ax = k === 'x' ? 'xaxis' : k === 'y' ? 'yaxis' : 'zaxis';
+                            if (origDticks[k] != null) {
+                                update['scene.' + ax + '.dtick'] = origDticks[k];
+                            } else {
+                                // No explicit dtick was set; clear to let Plotly auto-calculate
+                                update['scene.' + ax + '.dtick'] = null;
+                            }
+                        });
+
                     } catch(e) {}
                 }
                 Plotly.relayout(graphDiv, update);
