@@ -4747,15 +4747,23 @@ document.addEventListener('click', function(e) {{
             messagebox.showerror("Preview Error",
                                  f"Could not generate gallery preview:\n\n{e}")
 
+
     def _apply_portrait_preset(self):
         """Apply the portrait/social media preset."""
+        kmz = self.var_kmz_link.get()
         self._apply_config_to_gui(PORTRAIT_CONFIG)
+        if kmz.strip():
+            self.var_kmz_link.set(kmz)
         self._log_status("Portrait preset applied - adjust as needed")
 
     def _apply_landscape_preset(self):
         """Reset to landscape defaults."""
+        kmz = self.var_kmz_link.get()
         self._apply_config_to_gui(DEFAULT_CONFIG)
+        if kmz.strip():
+            self.var_kmz_link.set(kmz)
         self._log_status("Landscape defaults restored")
+
 
     def _apply_original_preset(self):
         """Strip all studio settings and show the raw underlying figure.
