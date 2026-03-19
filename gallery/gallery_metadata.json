@@ -1199,8 +1199,30 @@
       "featured": false,
       "subcategory": "comets",
       "subcategory_label": "Comets"
+    },
+    {
+      "id": "3iatlas_20250318_20260318_mobile",
+      "title": "3I/ATLAS March 2025 to March 2026",
+      "filename": "3iatlas_20250318_20260318_mobile.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS March 2025 to March 2026",
+      "size_kb": 2802.9,
+      "converted": "2026-03-18 19:22",
+      "mode": "portrait"
+    },
+    {
+      "id": "solar_system_20250318_1901",
+      "title": "3I/ATLAS March 2025 to March 2026",
+      "filename": "solar_system_20250318_1901.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS March 2025 to March 2026",
+      "size_kb": 3203.9,
+      "converted": "2026-03-18 19:23",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-18 09:34",
-  "total_count": 97
+  "last_updated": "2026-03-18 19:23",
+  "total_count": 99
 }
