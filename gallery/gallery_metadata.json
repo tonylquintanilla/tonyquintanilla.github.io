@@ -1221,8 +1221,19 @@
       "size_kb": 3203.9,
       "converted": "2026-03-18 19:23",
       "mode": "landscape"
+    },
+    {
+      "id": "delhi_heat_wave_teaser_test",
+      "title": "kmz test",
+      "filename": "delhi_heat_wave_teaser_test.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "kmz test",
+      "size_kb": 14.4,
+      "converted": "2026-03-18 23:35",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-18 19:23",
-  "total_count": 99
+  "last_updated": "2026-03-18 23:35",
+  "total_count": 100
 }
