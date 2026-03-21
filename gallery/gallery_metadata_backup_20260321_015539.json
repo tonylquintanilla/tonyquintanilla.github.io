@@ -538,6 +538,18 @@
       "subcategory_label": "Climate Change"
     },
     {
+      "id": "paleoclimate_wet_bulb_copy",
+      "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
+      "filename": "paleoclimate_wet_bulb.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing extreme heating events since the 1930s.",
+      "size_kb": 129.3,
+      "converted": "2026-02-08 23:35",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
       "id": "ocean_acidification_ph_trend_mobile",
       "title": "Ocean Acidification pH Trend, 1991 - 2023",
       "filename": "ocean_acidification_ph_trend_mobile.json",
@@ -563,6 +575,19 @@
       "subcategory": "heating",
       "subcategory_label": "Extreme Heating Events",
       "featured": true
+    },
+    {
+      "id": "nyc_1948_teaser_desktop",
+      "title": "New York City 1948",
+      "filename": "nyc_1948_teaser_desktop.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Extreme heat event, New York City, August 1948",
+      "size_kb": 5.9,
+      "converted": "2026-03-02 01:58",
+      "mode": "landscape",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
     },
     {
       "id": "current_comets_social_view_20260210_2331",
@@ -676,6 +701,19 @@
       "subcategory_label": "Narrative"
     },
     {
+      "id": "la_1955_teaser",
+      "title": "Los Angeles 1955",
+      "filename": "la_1955_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Los Angeles 1955",
+      "size_kb": 2.2,
+      "converted": "2026-03-08 00:50",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
       "id": "near_earth_asteroids_social_view_20260211_0024",
       "title": "Near Earth Asteroids on 2026 02 11 00:24",
       "filename": "near_earth_asteroids_social_view_20260211_0024.json",
@@ -699,6 +737,240 @@
       "featured": true
     },
     {
+      "id": "st_louis_nyc_1966_teaser",
+      "title": "St Louis to New York City 1966",
+      "filename": "st_louis_nyc_1966_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "St Louis 1966",
+      "size_kb": 3.9,
+      "converted": "2026-03-08 00:50",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "uk_1976_teaser",
+      "title": "United Kingdom 1976",
+      "filename": "uk_1976_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "United Kingdom 1976",
+      "size_kb": 5.0,
+      "converted": "2026-03-08 00:50",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "us_1980_teaser",
+      "title": "United States 1980",
+      "filename": "us_1980_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "United States 1980",
+      "size_kb": 3.3,
+      "converted": "2026-03-08 00:50",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "athens_1987_teaser",
+      "title": "Athens 1987",
+      "filename": "athens_1987_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Athens 1987",
+      "size_kb": 3.0,
+      "converted": "2026-03-08 00:50",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "chicago_1995_teaser",
+      "title": "Chicago 1995",
+      "filename": "chicago_1995_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Chicago 1995",
+      "size_kb": 6.7,
+      "converted": "2026-03-08 00:51",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "europe_2003_teaser",
+      "title": "Europe 2003",
+      "filename": "europe_2003_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Europe 2003",
+      "size_kb": 5.0,
+      "converted": "2026-03-08 00:51",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "russia_2010_teaser",
+      "title": "Russia 2010",
+      "filename": "russia_2010_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Russia 2010",
+      "size_kb": 7.6,
+      "converted": "2026-03-08 00:51",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "india_pak_2015_teaser",
+      "title": "India and Pakistan 2015",
+      "filename": "india_pak_2015_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "India and Pakistan 2015",
+      "size_kb": 18.7,
+      "converted": "2026-03-08 00:51",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "iran_2015_teaser",
+      "title": "Iran 2015",
+      "filename": "iran_2015_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Iran 2015",
+      "size_kb": 10.1,
+      "converted": "2026-03-08 00:51",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "se_asia_2016_teaser",
+      "title": "Southeast Asia 2016",
+      "filename": "se_asia_2016_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Asia 2016",
+      "size_kb": 4.8,
+      "converted": "2026-03-08 00:52",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "japan_2018_teaser",
+      "title": "Japan 2018",
+      "filename": "japan_2018_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Japan 2018",
+      "size_kb": 3.1,
+      "converted": "2026-03-08 00:52",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "europe_2019_teaser",
+      "title": "Europe 2019",
+      "filename": "europe_2019_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Europe 2019",
+      "size_kb": 3.9,
+      "converted": "2026-03-08 00:52",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "siberia_2020_teaser",
+      "title": "Siberia 2020",
+      "filename": "siberia_2020_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Siberia 2020",
+      "size_kb": 4.6,
+      "converted": "2026-03-08 00:52",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "pnw_heat_dome_teaser",
+      "title": "Pacific Northwest 2021",
+      "filename": "pnw_heat_dome_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Pacific Northwest Heat Dome",
+      "size_kb": 8.4,
+      "converted": "2026-03-08 00:52",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "china_2022_teaser",
+      "title": "China 2022",
+      "filename": "china_2022_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "China 2022",
+      "size_kb": 3.7,
+      "converted": "2026-03-08 00:52",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "amazon_2023_teaser",
+      "title": "Amazon 2023",
+      "filename": "amazon_2023_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Amazon 2023",
+      "size_kb": 3.9,
+      "converted": "2026-03-08 00:53",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "rio_2023_teaser",
+      "title": "Rio 2023",
+      "filename": "rio_2023_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Rio 2023",
+      "size_kb": 2.8,
+      "converted": "2026-03-08 00:53",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "mali_2024_teaser",
+      "title": "Mali 2024",
+      "filename": "mali_2024_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Mali 2024",
+      "size_kb": 26.2,
+      "converted": "2026-03-08 00:53",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
       "id": "delhi_heat_wave_teaser_mobile",
       "title": "Asia 2024",
       "filename": "delhi_heat_wave_teaser_mobile.json",
@@ -711,6 +983,84 @@
       "subcategory": "heating",
       "subcategory_label": "Extreme Heating Events",
       "featured": true
+    },
+    {
+      "id": "delhi_heat_wave_teaser_desktop_copy",
+      "title": "Asia 2024",
+      "filename": "delhi_heat_wave_teaser_desktop.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Asian heat wave, May 2024",
+      "size_kb": 13.9,
+      "converted": "2026-03-04 00:26",
+      "mode": "landscape",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "persian_gulf_2024_teaser",
+      "title": "Persian Gulf 2024",
+      "filename": "persian_gulf_2024_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Persian Gulf 2024",
+      "size_kb": 4.8,
+      "converted": "2026-03-08 00:53",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "australia_heat_dome_teaser",
+      "title": "Australia 2024",
+      "filename": "australia_heat_dome_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Australia Heat Dome",
+      "size_kb": 82.1,
+      "converted": "2026-03-08 00:53",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "pakistan_2025_teaser",
+      "title": "Pakistan 2025",
+      "filename": "pakistan_2025_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Pakistan 2025",
+      "size_kb": 3.0,
+      "converted": "2026-03-08 00:54",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "us_grid_2025_teaser",
+      "title": "United States 2025",
+      "filename": "us_grid_2025_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "United States 2025",
+      "size_kb": 6.9,
+      "converted": "2026-03-08 00:54",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
+    },
+    {
+      "id": "amazon_drought_2025_teaser",
+      "title": "Amazon 2025",
+      "filename": "amazon_drought_2025_teaser.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Amazon 2025",
+      "size_kb": 8.3,
+      "converted": "2026-03-08 00:54",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events"
     },
     {
       "id": "near_earth_asteroids_20260207_2114",
@@ -892,9 +1242,7 @@
       "description": "New York 1948",
       "size_kb": 7.0,
       "converted": "2026-03-21 01:34",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "st_louis_1954_teaser_gallery",
@@ -905,9 +1253,7 @@
       "description": "St Louis 1954",
       "size_kb": 6.2,
       "converted": "2026-03-21 01:34",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "la_1955_teaser_gallery",
@@ -918,9 +1264,7 @@
       "description": "Los Angeles 1955",
       "size_kb": 3.8,
       "converted": "2026-03-21 01:35",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "st_louis_nyc_1966_teaser_gallery",
@@ -931,9 +1275,7 @@
       "description": "St Louis 1966",
       "size_kb": 5.4,
       "converted": "2026-03-21 01:35",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "uk_1976_teaser_gallery",
@@ -944,9 +1286,7 @@
       "description": "United Kingdom 1976",
       "size_kb": 6.3,
       "converted": "2026-03-21 01:35",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "us_1980_teaser_gallery",
@@ -957,9 +1297,7 @@
       "description": "US 1980",
       "size_kb": 4.8,
       "converted": "2026-03-21 01:35",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "athens_1987_teaser_gallery",
@@ -970,9 +1308,7 @@
       "description": "Athens 1987",
       "size_kb": 4.6,
       "converted": "2026-03-21 01:35",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "chicago_1995_teaser_gallery",
@@ -983,9 +1319,7 @@
       "description": "Chicago 1995",
       "size_kb": 7.9,
       "converted": "2026-03-21 01:35",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "europe_2003_teaser_gallery",
@@ -996,9 +1330,7 @@
       "description": "Europe 2003",
       "size_kb": 6.4,
       "converted": "2026-03-21 01:36",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "russia_2010_teaser_gallery",
@@ -1009,9 +1341,7 @@
       "description": "Russia 2010",
       "size_kb": 8.7,
       "converted": "2026-03-21 01:36",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "india_pak_2015_teaser_gallery",
@@ -1022,9 +1352,7 @@
       "description": "India-Pakistan 2015",
       "size_kb": 18.7,
       "converted": "2026-03-21 01:36",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "iran_2015_teaser_gallery",
@@ -1035,9 +1363,7 @@
       "description": "Iran 2015",
       "size_kb": 10.9,
       "converted": "2026-03-21 01:36",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "se_asia_2016_teaser_gallery",
@@ -1048,9 +1374,7 @@
       "description": "Souteast Asia 2016",
       "size_kb": 6.1,
       "converted": "2026-03-21 01:36",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "japan_2018_teaser_gallery",
@@ -1061,9 +1385,7 @@
       "description": "Japan 2018",
       "size_kb": 4.7,
       "converted": "2026-03-21 01:36",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "europe_2019_teaser_gallery",
@@ -1074,9 +1396,7 @@
       "description": "Europe 2019",
       "size_kb": 5.3,
       "converted": "2026-03-21 01:37",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "siberia_2020_teaser_gallery",
@@ -1087,9 +1407,7 @@
       "description": "Siberia 2020",
       "size_kb": 6.0,
       "converted": "2026-03-21 01:37",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "pnw_heat_dome_teaser_gallery",
@@ -1100,9 +1418,7 @@
       "description": "Pacific Northwest",
       "size_kb": 9.4,
       "converted": "2026-03-21 01:37",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "china_2022_teaser_gallery",
@@ -1113,9 +1429,7 @@
       "description": "China 2022",
       "size_kb": 5.2,
       "converted": "2026-03-21 01:37",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "amazon_2023_teaser_gallery",
@@ -1126,9 +1440,7 @@
       "description": "Amazon 2023",
       "size_kb": 5.4,
       "converted": "2026-03-21 01:37",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "rio_2023_teaser_gallery",
@@ -1139,9 +1451,7 @@
       "description": "Rio 2023",
       "size_kb": 4.4,
       "converted": "2026-03-21 01:38",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "mali_2024_teaser_gallery",
@@ -1152,9 +1462,7 @@
       "description": "Mali 2024",
       "size_kb": 25.5,
       "converted": "2026-03-21 01:38",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "pakistan_2025_teaser_gallery",
@@ -1165,9 +1473,7 @@
       "description": "Pakistan 2025",
       "size_kb": 4.5,
       "converted": "2026-03-21 01:38",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "us_grid_2025_teaser_gallery",
@@ -1178,9 +1484,7 @@
       "description": "US 2025",
       "size_kb": 8.1,
       "converted": "2026-03-21 01:38",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "delhi_heat_wave_teaser_gallery",
@@ -1191,9 +1495,7 @@
       "description": "Delhi",
       "size_kb": 14.4,
       "converted": "2026-03-21 01:38",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "persian_gulf_2024_teaser_gallery",
@@ -1204,9 +1506,7 @@
       "description": "Persian Gulf 2024",
       "size_kb": 6.2,
       "converted": "2026-03-21 01:38",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "australia_heat_dome_teaser_gallery",
@@ -1217,9 +1517,7 @@
       "description": "Australia",
       "size_kb": 76.3,
       "converted": "2026-03-21 01:39",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "amazon_drought_2025_teaser_gallery",
@@ -1230,9 +1528,7 @@
       "description": "Amazon 2025",
       "size_kb": 9.3,
       "converted": "2026-03-21 01:39",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events"
+      "mode": "both"
     },
     {
       "id": "florida_coral_2023_teaser_gallery",
@@ -1243,11 +1539,9 @@
       "description": "Florida Coral 2023",
       "size_kb": 626.5,
       "converted": "2026-03-21 01:39",
-      "mode": "both",
-      "subcategory": "coral",
-      "subcategory_label": "Coral Bleaching Events"
+      "mode": "both"
     }
   ],
-  "last_updated": "2026-03-21 01:55",
-  "total_count": 101
+  "last_updated": "2026-03-21 01:39",
+  "total_count": 128
 }
