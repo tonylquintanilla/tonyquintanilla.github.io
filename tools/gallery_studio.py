@@ -203,6 +203,69 @@ PORTRAIT_CONFIG = {
     "output_mode": "both",
 }
 
+# Generator preset - applies earth system generator output settings.
+# Matches the curated style for heatwave/coral teasers in the gallery.
+# Green background, no legend, annotations with transparent bg,
+# modebar visible, colorbar visible. Title and KMZ link are per-scenario
+# so they are NOT overwritten by this preset.
+GENERATOR_CONFIG = {
+    "bg_color": "#2d6a2d",
+    "transparent_bg": False,
+    "show_title": True,
+    "custom_title": "",
+    "title_font_scale": 100,
+    "title_color": "#f8fafc",
+    "margin_top": 80,
+    "margin_bottom": 20,
+    "margin_left": 80,
+    "margin_right": 20,
+    "show_axes": False,
+    "show_grid": False,
+    "scene_bgcolor": "#2d6a2d",
+    "show_legend": False,
+    "legend_orientation": "v",
+    "legend_font_scale": 100,
+    "legend_grouptitle_font_scale": 100,
+    "legend_bgcolor": "rgba(0,0,0,0)",
+    "legend_font_color": "",
+    "legend_border_transparent": True,
+    "legend_position": "original",
+    "show_annotations": True,
+    "strip_footer_annotations": True,
+    "annotation_bg_transparent": True,
+    "annotation_font_scale": 100,
+    "annotation_toggle_button": False,
+    "label_font_scale": 100,
+    "trace_visibility": {},
+    "strip_hidden_traces": False,
+    "featured_traces": [],
+    "featured_labels": {},
+    "flyto_targets": [],
+    "show_modebar": True,
+    "show_colorbar": True,
+    "strip_template": True,
+    "strip_updatemenus": True,
+    "keep_animation_controls": True,
+    "hover_mode": "default",
+    "x_title_scale": 100,
+    "y_title_scale": 100,
+    "x_tick_scale": 100,
+    "y_tick_scale": 100,
+    "y2_title_scale": 100,
+    "y2_tick_scale": 100,
+    "show_nav_arrows": False,
+    "kmz_link": "",
+    "output_format": "landscape",
+    "route_hover_to_panel": False,
+    "marker_opacity_fix": False,
+    "marker_size_boost": 0,
+    "line_width_min": 2,
+    "restyle_animation_dark": False,
+    "embed_encyclopedia": False,
+    "plotly_js_source": "cdn",
+    "output_mode": "both",
+}
+
 # Plotly CDN URL
 PLOTLY_CDN = "https://cdn.plot.ly/plotly-2.35.2.min.js"
 
@@ -3838,6 +3901,18 @@ class GalleryStudio:
                 "  the figure's own background and margins preserved.\n\n"
                 "Press Preview after to see the result.")
 
+        generator_btn = tk.Button(
+            preset_row, text="Generator",
+            command=self._apply_generator_preset,
+            width=10)
+        generator_btn.pack(side='left', padx=2)
+        ToolTip(generator_btn,
+                "Earth system generator preset: green background,\n"
+                "no legend, annotations with transparent bg,\n"
+                "modebar visible, colorbar visible.\n\n"
+                "Preserves current KMZ link and custom title\n"
+                "since those are per-scenario values.")
+
         # Output format
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
@@ -4747,23 +4822,35 @@ document.addEventListener('click', function(e) {{
             messagebox.showerror("Preview Error",
                                  f"Could not generate gallery preview:\n\n{e}")
 
-
     def _apply_portrait_preset(self):
         """Apply the portrait/social media preset."""
-        kmz = self.var_kmz_link.get()
         self._apply_config_to_gui(PORTRAIT_CONFIG)
-        if kmz.strip():
-            self.var_kmz_link.set(kmz)
         self._log_status("Portrait preset applied - adjust as needed")
 
     def _apply_landscape_preset(self):
         """Reset to landscape defaults."""
-        kmz = self.var_kmz_link.get()
         self._apply_config_to_gui(DEFAULT_CONFIG)
-        if kmz.strip():
-            self.var_kmz_link.set(kmz)
         self._log_status("Landscape defaults restored")
 
+    def _apply_generator_preset(self):
+        """Apply the earth system generator preset.
+        
+        Preserves the current KMZ link and custom title since those
+        are per-scenario values that the preset should not wipe.
+        """
+        # Stash per-scenario values
+        current_kmz = self.var_kmz_link.get()
+        current_title = self.var_custom_title.get()
+
+        self._apply_config_to_gui(GENERATOR_CONFIG)
+
+        # Restore per-scenario values
+        if current_kmz:
+            self.var_kmz_link.set(current_kmz)
+        if current_title:
+            self.var_custom_title.set(current_title)
+
+        self._log_status("Generator preset applied - green bg, no legend, annotations on")
 
     def _apply_original_preset(self):
         """Strip all studio settings and show the raw underlying figure.
