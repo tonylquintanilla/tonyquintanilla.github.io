@@ -873,6 +873,17 @@
       "mode": "landscape"
     },
     {
+      "id": "delhi_heat_wave_teaser_test",
+      "title": "kmz test",
+      "filename": "delhi_heat_wave_teaser_test.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "kmz test",
+      "size_kb": 14.4,
+      "converted": "2026-03-18 23:35",
+      "mode": "landscape"
+    },
+    {
       "id": "nyc_1948_teaser_gallery",
       "title": "New York 1948",
       "filename": "nyc_1948_teaser_gallery.json",
@@ -1237,6 +1248,6 @@
       "subcategory_label": "Coral Bleaching Events"
     }
   ],
-  "last_updated": "2026-03-21 01:58",
-  "total_count": 100
+  "last_updated": "2026-03-21 01:55",
+  "total_count": 101
 }
