@@ -1244,7 +1244,7 @@
       "category_label": "Earth System",
       "description": "Western heat wave March 21 2026",
       "size_kb": 92.0,
-      "converted": "2026-03-22 00:28",
+      "converted": "2026-03-22 01:06",
       "mode": "both"
     },
     {
@@ -1255,7 +1255,7 @@
       "category_label": "Earth System",
       "description": "Western heat wave March 20 2026",
       "size_kb": 60.1,
-      "converted": "2026-03-22 00:28",
+      "converted": "2026-03-22 01:07",
       "mode": "both"
     },
     {
@@ -1266,7 +1266,7 @@
       "category_label": "Earth System",
       "description": "Western heat wave March 18 2026",
       "size_kb": 59.8,
-      "converted": "2026-03-22 00:28",
+      "converted": "2026-03-22 01:07",
       "mode": "both"
     },
     {
@@ -1277,7 +1277,7 @@
       "category_label": "Earth System",
       "description": "Western heat wave March 17 2026",
       "size_kb": 59.7,
-      "converted": "2026-03-22 00:29",
+      "converted": "2026-03-22 01:07",
       "mode": "both"
     },
     {
@@ -1288,10 +1288,10 @@
       "category_label": "Earth System",
       "description": "Western heat wave March 14 2026",
       "size_kb": 59.8,
-      "converted": "2026-03-22 00:29",
+      "converted": "2026-03-22 01:07",
       "mode": "both"
     }
   ],
-  "last_updated": "2026-03-22 00:29",
+  "last_updated": "2026-03-22 01:07",
   "total_count": 105
 }
