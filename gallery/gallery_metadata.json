@@ -1305,8 +1305,19 @@
       "subcategory": "heating",
       "subcategory_label": "Extreme Heating Events",
       "featured": true
+    },
+    {
+      "id": "western_heatwave_march_21_teaser_mobile",
+      "title": "Western Heat Wave - March 21, 2026",
+      "filename": "western_heatwave_march_21_teaser_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Wave - March 21, 2026",
+      "size_kb": 91.2,
+      "converted": "2026-03-22 13:57",
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-22 08:36",
-  "total_count": 105
+  "last_updated": "2026-03-22 13:57",
+  "total_count": 106
 }
