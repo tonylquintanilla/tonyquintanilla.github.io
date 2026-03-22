@@ -1235,8 +1235,63 @@
       "mode": "both",
       "subcategory": "coral",
       "subcategory_label": "Coral Bleaching Events"
+    },
+    {
+      "id": "western_heatwave_march_21_teaser_gallery",
+      "title": "Western Heat Wave March 21 2026",
+      "filename": "western_heatwave_march_21_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Wave March 21 2026",
+      "size_kb": 92.0,
+      "converted": "2026-03-21 23:37",
+      "mode": "both"
+    },
+    {
+      "id": "western_heatwave_march_20_teaser_gallery",
+      "title": "Western Heat Wave March 20 2026",
+      "filename": "western_heatwave_march_20_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Wave March 20 2026",
+      "size_kb": 60.1,
+      "converted": "2026-03-21 23:38",
+      "mode": "both"
+    },
+    {
+      "id": "western_heatwave_march_18_teaser_gallery",
+      "title": "Western Heat Wave March 18 2026",
+      "filename": "western_heatwave_march_18_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Wave March 18 2026",
+      "size_kb": 59.8,
+      "converted": "2026-03-21 23:38",
+      "mode": "both"
+    },
+    {
+      "id": "western_heatwave_march_17_teaser_gallery",
+      "title": "Western Heat Wave March 17 2026",
+      "filename": "western_heatwave_march_17_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Wave March 17 2026",
+      "size_kb": 59.7,
+      "converted": "2026-03-21 23:38",
+      "mode": "both"
+    },
+    {
+      "id": "western_heatwave_march_14_teaser_gallery",
+      "title": "Western Heat Wave March 14 2026",
+      "filename": "western_heatwave_march_14_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Wave March 14 2026",
+      "size_kb": 59.8,
+      "converted": "2026-03-21 23:38",
+      "mode": "both"
     }
   ],
-  "last_updated": "2026-03-21 01:58",
-  "total_count": 100
+  "last_updated": "2026-03-21 23:38",
+  "total_count": 105
 }
