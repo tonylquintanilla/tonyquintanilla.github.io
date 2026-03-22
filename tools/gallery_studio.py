@@ -266,6 +266,73 @@ GENERATOR_CONFIG = {
     "output_mode": "both",
 }
 
+# Generator Mobile preset - clean map view for mobile/portrait gallery display
+# Strips title and annotations (gallery viewer provides its own title bar).
+# Keeps colorbar and modebar for interaction. Green background.
+GEN_MOBILE_CONFIG = {
+    "bg_color": "#2d6a2d",
+    "transparent_bg": False,
+    "show_title": False,
+    "custom_title": "",
+    "title_font_scale": 100,
+    "title_color": "#f8fafc",
+    "margin_top": 20,
+    "margin_bottom": 20,
+    "margin_left": 20,
+    "margin_right": 20,
+    "show_axes": False,
+    "show_grid": False,
+    "scene_bgcolor": "#2d6a2d",
+    "scene_aspectmode": "auto",
+    "scene_camera": "original",
+    "scene_axis_range": 0.0,
+    "scene_dtick": 0.0,
+    "show_legend": False,
+    "legend_orientation": "v",
+    "legend_font_scale": 100,
+    "legend_grouptitle_font_scale": 100,
+    "legend_bgcolor": "rgba(0,0,0,0)",
+    "legend_font_color": "",
+    "legend_border_transparent": True,
+    "legend_position": "original",
+    "show_annotations": False,
+    "strip_footer_annotations": True,
+    "annotation_bg_transparent": True,
+    "annotation_font_scale": 100,
+    "annotation_toggle_button": False,
+    "label_font_scale": 100,
+    "trace_visibility": {},
+    "strip_hidden_traces": False,
+    "featured_traces": [],
+    "featured_labels": {},
+    "flyto_targets": [],
+    "marker_size_boost": 0,
+    "line_width_min": 2,
+    "show_modebar": True,
+    "show_colorbar": True,
+    "strip_template": True,
+    "strip_updatemenus": True,
+    "keep_animation_controls": True,
+    "hover_mode": "default",
+    "axis_title_font_size": 0,
+    "axis_tick_font_size": 0,
+    "x_title_scale": 100,
+    "y_title_scale": 100,
+    "x_tick_scale": 100,
+    "y_tick_scale": 100,
+    "y2_title_scale": 100,
+    "y2_tick_scale": 100,
+    "show_nav_arrows": False,
+    "kmz_link": "",
+    "output_format": "landscape",
+    "route_hover_to_panel": False,
+    "marker_opacity_fix": False,
+    "restyle_animation_dark": False,
+    "embed_encyclopedia": False,
+    "plotly_js_source": "cdn",
+    "output_mode": "both",
+}
+
 # Plotly CDN URL
 PLOTLY_CDN = "https://cdn.plot.ly/plotly-2.35.2.min.js"
 
@@ -3863,30 +3930,6 @@ class GalleryStudio:
         # Preset button
         preset_row = tk.Frame(sec)
         preset_row.pack(fill='x', pady=(2, 6))
-        portrait_btn = tk.Button(
-            preset_row, text="Portrait Preset",
-            command=self._apply_portrait_preset,
-            width=16)
-        portrait_btn.pack(side='left', padx=2)
-        ToolTip(portrait_btn,
-                "One-click preset: applies all recommended settings "
-                "for 9:16 portrait output. Sets output format to "
-                "portrait, enables hover routing to info panel, "
-                "strips legend/annotations/axes, boosts markers +4. "
-                "Adjust individual settings afterward.\n\n"
-                "Note: routing is destructive -- hover text is parsed "
-                "into customdata. Reload reverts route to OFF.")
-
-        landscape_btn = tk.Button(
-            preset_row, text="Landscape Preset",
-            command=self._apply_landscape_preset,
-            width=16)
-        landscape_btn.pack(side='left', padx=2)
-        ToolTip(landscape_btn,
-                "Reset to landscape defaults. Restores standard "
-                "gallery settings: legend on, annotations on, "
-                "default hover, route OFF, no info panel. "
-                "Does not affect trace visibility or featured traces.")
 
         original_btn = tk.Button(
             preset_row, text="Original",
@@ -3901,6 +3944,31 @@ class GalleryStudio:
                 "  the figure's own background and margins preserved.\n\n"
                 "Press Preview after to see the result.")
 
+        landscape_btn = tk.Button(
+            preset_row, text="Landscape",
+            command=self._apply_landscape_preset,
+            width=10)
+        landscape_btn.pack(side='left', padx=2)
+        ToolTip(landscape_btn,
+                "Reset to landscape defaults. Restores standard "
+                "gallery settings: legend on, annotations on, "
+                "default hover, route OFF, no info panel. "
+                "Does not affect trace visibility or featured traces.")
+
+        portrait_btn = tk.Button(
+            preset_row, text="Portrait",
+            command=self._apply_portrait_preset,
+            width=10)
+        portrait_btn.pack(side='left', padx=2)
+        ToolTip(portrait_btn,
+                "One-click preset: applies all recommended settings "
+                "for 9:16 portrait output. Sets output format to "
+                "portrait, enables hover routing to info panel, "
+                "strips legend/annotations/axes, boosts markers +4. "
+                "Adjust individual settings afterward.\n\n"
+                "Note: routing is destructive -- hover text is parsed "
+                "into customdata. Reload reverts route to OFF.")
+
         generator_btn = tk.Button(
             preset_row, text="Generator",
             command=self._apply_generator_preset,
@@ -3912,6 +3980,19 @@ class GalleryStudio:
                 "modebar visible, colorbar visible.\n\n"
                 "Preserves current KMZ link and custom title\n"
                 "since those are per-scenario values.")
+
+        gen_mobile_btn = tk.Button(
+            preset_row, text="Gen-Mobile",
+            command=self._apply_gen_mobile_preset,
+            width=10)
+        gen_mobile_btn.pack(side='left', padx=2)
+        ToolTip(gen_mobile_btn,
+                "Generator mobile preset: clean map view for\n"
+                "mobile/portrait gallery display. Strips title\n"
+                "and annotations (gallery viewer provides its own\n"
+                "title bar). Green background, tight margins,\n"
+                "colorbar and modebar on. Does not set KMZ link\n"
+                "(set that separately per scenario).")
 
         # Output format
         row = tk.Frame(sec)
@@ -4831,6 +4912,11 @@ document.addEventListener('click', function(e) {{
         """Reset to landscape defaults."""
         self._apply_config_to_gui(DEFAULT_CONFIG)
         self._log_status("Landscape defaults restored")
+
+    def _apply_gen_mobile_preset(self):
+        """Apply the generator mobile preset for clean map views."""
+        self._apply_config_to_gui(GEN_MOBILE_CONFIG)
+        self._log_status("Gen - Mobile preset applied - set KMZ link separately")
 
     def _apply_generator_preset(self):
         """Apply the earth system generator preset.
