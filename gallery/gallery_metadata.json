@@ -1313,11 +1313,55 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Wave - March 21, 2026",
-      "size_kb": 91.2,
-      "converted": "2026-03-22 13:57",
+      "size_kb": 91.9,
+      "converted": "2026-03-23 00:18",
+      "mode": "portrait"
+    },
+    {
+      "id": "western_heatwave_march_20_teaser_mobile",
+      "title": "Western Heat Wave - March 20, 2026",
+      "filename": "western_heatwave_march_20_teaser_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Wave - March 20, 2026",
+      "size_kb": 60.0,
+      "converted": "2026-03-23 00:18",
+      "mode": "portrait"
+    },
+    {
+      "id": "western_heatwave_march_18_teaser_mobile",
+      "title": "Western Heat Wave - March 18, 2026",
+      "filename": "western_heatwave_march_18_teaser_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Wave - March 18, 2026",
+      "size_kb": 59.7,
+      "converted": "2026-03-23 00:18",
+      "mode": "portrait"
+    },
+    {
+      "id": "western_heatwave_march_17_teaser_mobile",
+      "title": "Western Heat Wave - March 17, 2026",
+      "filename": "western_heatwave_march_17_teaser_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Wave - March 17, 2026",
+      "size_kb": 59.7,
+      "converted": "2026-03-23 00:18",
+      "mode": "portrait"
+    },
+    {
+      "id": "western_heatwave_march_14_teaser_mobile",
+      "title": "Western Heat Wave - March 14, 2026",
+      "filename": "western_heatwave_march_14_teaser_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Wave - March 14, 2026",
+      "size_kb": 59.7,
+      "converted": "2026-03-23 00:19",
       "mode": "portrait"
     }
   ],
-  "last_updated": "2026-03-22 13:57",
-  "total_count": 106
+  "last_updated": "2026-03-23 00:19",
+  "total_count": 110
 }

@@ -78,6 +78,7 @@ DEFAULT_CONFIG = {
     "annotation_bg_transparent": True,
     "annotation_font_scale": 100,  # 100 = keep original, 50-200 = percentage
     "annotation_toggle_button": False,  # Embed show/hide button in HTML
+    "use_mobile_briefing": False,
     "label_font_scale": 100,  # 100 = keep original, 50-200 = percentage (trace textfont)
 
     # Scene (3D) - additional
@@ -172,6 +173,7 @@ PORTRAIT_CONFIG = {
     "annotation_bg_transparent": False,
     "annotation_font_scale": 100,
     "annotation_toggle_button": False,
+    "use_mobile_briefing": False,
     "label_font_scale": 100,
     "trace_visibility": {},
     "strip_hidden_traces": False,
@@ -235,6 +237,7 @@ GENERATOR_CONFIG = {
     "annotation_bg_transparent": True,
     "annotation_font_scale": 100,
     "annotation_toggle_button": False,
+    "use_mobile_briefing": False,
     "label_font_scale": 100,
     "trace_visibility": {},
     "strip_hidden_traces": False,
@@ -295,7 +298,8 @@ GEN_MOBILE_CONFIG = {
     "legend_font_color": "",
     "legend_border_transparent": True,
     "legend_position": "original",
-    "show_annotations": False,
+    "show_annotations": True,
+    "use_mobile_briefing": True,
     "strip_footer_annotations": True,
     "annotation_bg_transparent": True,
     "annotation_font_scale": 100,
@@ -1066,6 +1070,18 @@ def apply_config(fig_dict, config):
                     original = ann['font']['size']
                     if original > 12:
                         ann['font']['size'] = max(10, int(original * scale_factor))
+
+        # Swap to mobile briefing if requested and available
+        if config.get('use_mobile_briefing', False):
+            mobile_text = layout.get('_mobile_briefing', '')
+            if mobile_text and annotations:
+                # Replace the briefing annotation (bottom-left, y <= 0.05)
+                for ann in annotations:
+                    if (ann.get('yref') == 'paper' and
+                            isinstance(ann.get('y'), (int, float)) and
+                            ann['y'] <= 0.05):
+                        ann['text'] = mobile_text
+                        break  # Only swap the first match
 
         # Store processed annotations for toggle button
         if toggle_btn and annotations:
@@ -1942,7 +1958,7 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     # These survive Plotly.newPlot() serialization and allow studio to restore
     # the full config when this exported HTML is reloaded into studio.
     if '_studio' in layout_dict:
-        layout_for_json['_studio'] = layout_dict['_studio']
+        layout_for_json['_studio'] = layout_dict['_studio']      
     if '_studio_config' in layout_dict:
         layout_for_json['_studio_config'] = layout_dict['_studio_config']
     # Preserve _studio_nav for gallery pan controls
@@ -1954,6 +1970,9 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
     # Preserve _encyclopedia for gallery viewer info button
     if '_encyclopedia' in layout_dict:
         layout_for_json['_encyclopedia'] = layout_dict['_encyclopedia']
+    # Preserve _mobile_briefing for studio mobile briefing swap
+    if '_mobile_briefing' in layout_dict:
+        layout_for_json['_mobile_briefing'] = layout_dict['_mobile_briefing']        
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
@@ -2855,6 +2874,8 @@ def build_social_html(fig_dict, config, title="Paloma's Orrery"):
         layout_for_json['_studio_nav'] = portrait_layout['_studio_nav']
     if '_hover_mode' in portrait_layout:
         layout_for_json['_hover_mode'] = portrait_layout['_hover_mode']
+    if '_mobile_briefing' in portrait_layout:
+        layout_for_json['_mobile_briefing'] = portrait_layout['_mobile_briefing']        
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
@@ -3751,6 +3772,17 @@ class GalleryStudio:
                 "at runtime. Useful when annotations are helpful on "
                 "desktop but crowd the view on phones.")
 
+        self.var_use_mobile_briefing = tk.BooleanVar(
+            value=self.config.get('use_mobile_briefing', False))
+        cb = tk.Checkbutton(sec, text="Use mobile briefing",
+                            variable=self.var_use_mobile_briefing)
+        cb.pack(anchor='w')
+        ToolTip(cb, "Swap annotation text to a shorter mobile version "
+                "embedded by the generator. Available for all scenarios -- "
+                "auto-generated (title + narrative) unless the scenario "
+                "provides a custom mobile_briefing. If no briefing is "
+                "embedded, this has no effect.")
+
         # Label (trace textfont) scaling
         row = tk.Frame(sec)
         row.pack(fill='x', pady=2)
@@ -4353,6 +4385,7 @@ class GalleryStudio:
             'annotation_bg_transparent': self.var_ann_transparent.get(),
             'annotation_font_scale': self.var_ann_font_scale.get(),
             'annotation_toggle_button': self.var_ann_toggle_btn.get(),
+            'use_mobile_briefing': self.var_use_mobile_briefing.get(),
             'label_font_scale': self.var_label_font_scale.get(),
             'scene_aspectmode': self.var_scene_aspect.get(),
             'scene_camera': self.var_scene_camera.get(),
@@ -4435,6 +4468,7 @@ class GalleryStudio:
         self.var_ann_transparent.set(c.get('annotation_bg_transparent', True))
         self.var_ann_font_scale.set(c.get('annotation_font_scale', 100))
         self.var_ann_toggle_btn.set(c.get('annotation_toggle_button', False))
+        self.var_use_mobile_briefing.set(c.get('use_mobile_briefing', False))        
         self.var_label_font_scale.set(c.get('label_font_scale', 100))
         self.var_scene_aspect.set(c.get('scene_aspectmode', 'auto'))
         self.var_scene_camera.set(c.get('scene_camera', 'original'))
@@ -4778,6 +4812,9 @@ class GalleryStudio:
             # Keep _kmz_handoff for web gallery handoff button
             if '_kmz_handoff' in layout:
                 layout_for_json['_kmz_handoff'] = layout['_kmz_handoff']
+            # Keep _mobile_briefing for studio mobile briefing swap
+            if '_mobile_briefing' in layout:
+                layout_for_json['_mobile_briefing'] = layout['_mobile_briefing']                
             layout_json = json.dumps(layout_for_json,
                                      separators=(',', ':'))
 
@@ -4914,9 +4951,24 @@ document.addEventListener('click', function(e) {{
         self._log_status("Landscape defaults restored")
 
     def _apply_gen_mobile_preset(self):
-        """Apply the generator mobile preset for clean map views."""
+        """Apply the generator mobile preset for clean map views.
+        
+        Preserves the current KMZ link and custom title since those
+        are per-scenario values that the preset should not wipe.
+        """
+        # Stash per-scenario values
+        current_kmz = self.var_kmz_link.get()
+        current_title = self.var_custom_title.get()
+
         self._apply_config_to_gui(GEN_MOBILE_CONFIG)
-        self._log_status("Gen - Mobile preset applied - set KMZ link separately")
+
+        # Restore per-scenario values
+        if current_kmz:
+            self.var_kmz_link.set(current_kmz)
+        if current_title:
+            self.var_custom_title.set(current_title)
+
+        self._log_status("Gen - Mobile preset applied")
 
     def _apply_generator_preset(self):
         """Apply the earth system generator preset.
