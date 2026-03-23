@@ -2074,9 +2074,11 @@
                 }, 100);
 
                 // Portrait mode: wire click -> info card
-                // (Landscape uses standard Plotly hover tooltips)
-                if (currentMode === 'portrait') {
+                // Only when Studio routed hover to panel (_hover_mode in layout).
+                // If Studio didn't set routing, the viewer stays silent.
+                if (currentMode === 'portrait' && figDict.layout && figDict.layout._hover_mode) {
                     plotlyGraph.on('plotly_click', function(data) {
+
                         if (!data || !data.points || !data.points.length) return;
                         var point = data.points[0];
                         var cardData = null;
