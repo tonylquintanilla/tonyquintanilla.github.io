@@ -1075,6 +1075,8 @@ def apply_config(fig_dict, config):
         if config.get('use_mobile_briefing', False):
             mobile_text = layout.get('_mobile_briefing', '')
             if mobile_text and annotations:
+                # Strip leading bold title (gallery viewer has its own title bar)
+                mobile_text = re.sub(r'^<b>[^<]*</b>(\s*<br\s*/?>)*', '', mobile_text).strip()
                 # Replace the briefing annotation (bottom-left, y <= 0.05)
                 for ann in annotations:
                     if (ann.get('yref') == 'paper' and
