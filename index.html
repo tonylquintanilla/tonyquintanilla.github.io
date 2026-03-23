@@ -2298,6 +2298,15 @@
                         var name = data.points[0].data ? data.points[0].data.name : '';
                         encLock(name);
                     });
+                    // Single-entry encyclopedia: show "i" button immediately
+                    // (multi-trace plots show on hover; single-trace plots like
+                    // earth system teasers should not require a tap first)
+                    var encKeys = Object.keys(_encData);
+                    if (encKeys.length === 1) {
+                        _encCurrentName = encKeys[0];
+                        _encLocked = true;
+                        encBtn.classList.add('visible');
+                    }
                     // Clean up _encyclopedia from layout so Plotly doesn't choke
                     delete figDict.layout._encyclopedia;
                 }
@@ -2845,7 +2854,7 @@
         function encOpenCard() {
             if (!_encCurrentName || !_encData || !_encData[_encCurrentName]) return;
             encTitle.textContent = _encCurrentName;
-            encBody.textContent = _encData[_encCurrentName];
+            encBody.innerHTML = _encData[_encCurrentName];
             encOverlay.classList.add('open');
         }
 

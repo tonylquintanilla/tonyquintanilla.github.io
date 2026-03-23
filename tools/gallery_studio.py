@@ -332,7 +332,7 @@ GEN_MOBILE_CONFIG = {
     "route_hover_to_panel": False,
     "marker_opacity_fix": False,
     "restyle_animation_dark": False,
-    "embed_encyclopedia": False,
+    "embed_encyclopedia": True,
     "plotly_js_source": "cdn",
     "output_mode": "both",
 }
