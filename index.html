@@ -2011,6 +2011,11 @@
                     kmzBtn.style.display = 'none';
                     kmzBtn.href = '#';
                 }
+                // Position encyclopedia "i" button below Google Earth button
+                // when the KMZ button is visible, or at its default position
+                if (encBtn) {
+                    encBtn.style.top = (kmzBtn.style.display === 'flex') ? '138px' : '';
+                }
                 // -------------------------------------------
 
                 // Remove fixed dimensions - let Plotly fill container

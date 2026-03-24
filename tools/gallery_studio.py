@@ -264,7 +264,7 @@ GENERATOR_CONFIG = {
     "marker_size_boost": 0,
     "line_width_min": 2,
     "restyle_animation_dark": False,
-    "embed_encyclopedia": False,
+    "embed_encyclopedia": True,
     "plotly_js_source": "cdn",
     "output_mode": "both",
 }
