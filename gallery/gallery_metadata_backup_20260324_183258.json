@@ -647,7 +647,7 @@
       "converted": "2026-03-23 18:16",
       "mode": "landscape",
       "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
+      "subcategory_label": "Western Heat Dome 2026",
       "featured": true
     },
     {
@@ -661,7 +661,7 @@
       "converted": "2026-03-23 18:18",
       "mode": "portrait",
       "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
+      "subcategory_label": "Western Heat Dome 2026",
       "featured": true
     },
     {
@@ -1222,7 +1222,7 @@
       "converted": "2026-03-23 18:17",
       "mode": "portrait",
       "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
+      "subcategory_label": "Western Heat Dome 2026",
       "featured": true
     },
     {
@@ -1236,7 +1236,7 @@
       "converted": "2026-03-23 18:14",
       "mode": "portrait",
       "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
+      "subcategory_label": "Western Heat Dome 2026",
       "featured": true
     },
     {
@@ -1250,7 +1250,7 @@
       "converted": "2026-03-24 18:17",
       "mode": "portrait",
       "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
+      "subcategory_label": "Western Heat Dome 2026",
       "featured": true
     },
     {
@@ -1264,7 +1264,7 @@
       "converted": "2026-03-24 18:17",
       "mode": "portrait",
       "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
+      "subcategory_label": "Western Heat Dome 2026",
       "featured": true
     },
     {
@@ -1292,7 +1292,7 @@
       "converted": "2026-03-23 18:16",
       "mode": "landscape",
       "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
+      "subcategory_label": "Western Heat Dome 2026",
       "featured": true
     },
     {
@@ -1306,7 +1306,7 @@
       "converted": "2026-03-23 18:14",
       "mode": "landscape",
       "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
+      "subcategory_label": "Western Heat Dome 2026",
       "featured": true
     },
     {
@@ -1320,7 +1320,7 @@
       "converted": "2026-03-24 18:16",
       "mode": "landscape",
       "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
+      "subcategory_label": "Western Heat Dome 2026",
       "featured": true
     },
     {
@@ -1334,7 +1334,7 @@
       "converted": "2026-03-24 18:16",
       "mode": "landscape",
       "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
+      "subcategory_label": "Western Heat Dome 2026",
       "featured": true
     },
     {
@@ -1350,6 +1350,6 @@
       "subcategory_label": "Ocean Acidification"
     }
   ],
-  "last_updated": "2026-03-24 18:32",
+  "last_updated": "2026-03-24 18:30",
   "total_count": 108
 }

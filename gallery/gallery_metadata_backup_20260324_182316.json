@@ -74,54 +74,6 @@
       "subcategory_label": "Narrative"
     },
     {
-      "id": "paleoclimate_540ma_to_present",
-      "title": "Paleoclimate 540 Ma to Present",
-      "filename": "paleoclimate_540ma_to_present.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
-      "size_kb": 95.9,
-      "converted": "2026-02-08 23:40",
-      "subcategory": "narrative",
-      "subcategory_label": "Narrative"
-    },
-    {
-      "id": "paleoclimate_cenozoic_66ma",
-      "title": "Paleoclimate Cenozoic (66 Ma)",
-      "filename": "paleoclimate_cenozoic_66ma.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
-      "size_kb": 66.7,
-      "converted": "2026-02-08 23:41",
-      "subcategory": "narrative",
-      "subcategory_label": "Narrative"
-    },
-    {
-      "id": "paleoclimate_human_origins",
-      "title": "Paleoclimate Human Origins",
-      "filename": "paleoclimate_human_origins.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "540 MY paleoclimate chart with human origins markers.",
-      "size_kb": 116.3,
-      "converted": "2026-02-07 21:07",
-      "subcategory": "narrative",
-      "subcategory_label": "Narrative"
-    },
-    {
-      "id": "paleoclimate_wet_bulb_copy_copy",
-      "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
-      "filename": "paleoclimate_wet_bulb.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing extreme heating events since the 1930s.",
-      "size_kb": 129.3,
-      "converted": "2026-02-08 23:35",
-      "subcategory": "narrative",
-      "subcategory_label": "Narrative"
-    },
-    {
       "id": "energy_imbalance_desktop",
       "title": "Energy Imbalance, 2005 - 2025",
       "filename": "energy_imbalance_desktop.json",
@@ -184,6 +136,54 @@
       "mode": "landscape",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
+    },
+    {
+      "id": "ocean_acidification_ph_trend",
+      "title": "Ocean Acidification pH Trend, 1991 - 2023",
+      "filename": "ocean_acidification_ph_trend.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing ocean surface pH from 1988 to 2023.",
+      "size_kb": 16.9,
+      "converted": "2026-02-09 00:09",
+      "subcategory": "acidification",
+      "subcategory_label": "Ocean Acidification"
+    },
+    {
+      "id": "paleoclimate_540ma_to_present",
+      "title": "Paleoclimate 540 Ma to Present",
+      "filename": "paleoclimate_540ma_to_present.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
+      "size_kb": 95.9,
+      "converted": "2026-02-08 23:40",
+      "subcategory": "narrative",
+      "subcategory_label": "Narrative"
+    },
+    {
+      "id": "sea_level_rise",
+      "title": "Global Mean Sea Level Rise, 1993 - 2025",
+      "filename": "sea_level_rise.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing mean sea level rise from 1993 to 2025.",
+      "size_kb": 92.5,
+      "converted": "2026-02-09 00:10",
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
+    },
+    {
+      "id": "paleoclimate_cenozoic_66ma",
+      "title": "Paleoclimate Cenozoic (66 Ma)",
+      "filename": "paleoclimate_cenozoic_66ma.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
+      "size_kb": 66.7,
+      "converted": "2026-02-08 23:41",
+      "subcategory": "narrative",
+      "subcategory_label": "Narrative"
     },
     {
       "id": "pluto_barycenter_system_20260208_1957",
@@ -360,19 +360,6 @@
       "subcategory_label": "Narrative"
     },
     {
-      "id": "paleoclimate_wet_bulb_gallery_copy",
-      "title": "Paleoclimage and Extreme Heating Events, 1930s - 2025 (use landscape)",
-      "filename": "paleoclimate_wet_bulb_gallery.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Paleoclimate history",
-      "size_kb": 101.8,
-      "converted": "2026-02-15 01:01",
-      "mode": "portrait",
-      "subcategory": "narrative",
-      "subcategory_label": "Narrative"
-    },
-    {
       "id": "energy_imbalance_mobile",
       "title": "Energy Imbalance, 2005 - 2025",
       "filename": "energy_imbalance_mobile.json",
@@ -434,6 +421,19 @@
       "description": "Warming stripes (Ed Hawkins)",
       "size_kb": 13.4,
       "converted": "2026-02-22 00:12",
+      "mode": "portrait",
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
+    },
+    {
+      "id": "sea_level_rise_mobile4",
+      "title": "Global Mean Sea Level Rise, 1993 - 2025",
+      "filename": "sea_level_rise_mobile4.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Mean sea level rise, 1993 - 2025.",
+      "size_kb": 92.7,
+      "converted": "2026-02-19 00:45",
       "mode": "portrait",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
@@ -525,19 +525,6 @@
       "mode": "portrait"
     },
     {
-      "id": "sea_level_rise_mobile4",
-      "title": "Global Mean Sea Level Rise, 1993 - 2025",
-      "filename": "sea_level_rise_mobile4.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Mean sea level rise, 1993 - 2025.",
-      "size_kb": 92.7,
-      "converted": "2026-02-19 00:45",
-      "mode": "portrait",
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
       "id": "arctic_ice_extent_mobile",
       "title": "Arctic Ice Extent, 1979 - 2025",
       "filename": "arctic_ice_extent_mobile.json",
@@ -562,6 +549,20 @@
       "mode": "portrait",
       "subcategory": "acidification",
       "subcategory_label": "Ocean Acidification"
+    },
+    {
+      "id": "paleoclimate_wet_bulb_gallery",
+      "title": "Paleoclimage and Extreme Heating Events, 1930s - 2025 (use landscape)",
+      "filename": "paleoclimate_wet_bulb_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Paleoclimate history",
+      "size_kb": 101.8,
+      "converted": "2026-02-15 01:01",
+      "mode": "portrait",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events (landscape mode)",
+      "featured": true
     },
     {
       "id": "current_comets_social_view_20260210_2331",
@@ -601,18 +602,6 @@
       "subcategory_label": "Comets"
     },
     {
-      "id": "sea_level_rise",
-      "title": "Global Mean Sea Level Rise, 1993 - 2025",
-      "filename": "sea_level_rise.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing mean sea level rise from 1993 to 2025.",
-      "size_kb": 92.5,
-      "converted": "2026-02-09 00:10",
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
       "id": "arctic_ice_extent",
       "title": "Arctic Ice Extent, 1979 - 2025",
       "filename": "arctic_ice_extent.json",
@@ -637,32 +626,41 @@
       "subcategory_label": "Climate Change"
     },
     {
-      "id": "western_heatwave_march_14_teaser_gallery",
-      "title": "Western Heat Dome - March 14, 2026",
-      "filename": "western_heatwave_march_14_teaser_gallery.json",
+      "id": "paleoclimate_human_origins",
+      "title": "Paleoclimate Human Origins",
+      "filename": "paleoclimate_human_origins.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Western Heat Dome - March 17, 2026",
-      "size_kb": 62.2,
-      "converted": "2026-03-23 18:16",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
-      "featured": true
+      "description": "540 MY paleoclimate chart with human origins markers.",
+      "size_kb": 116.3,
+      "converted": "2026-02-07 21:07",
+      "subcategory": "narrative",
+      "subcategory_label": "Narrative"
     },
     {
-      "id": "western_heatwave_march_14_teaser_mobile",
-      "title": "Western Heat Dome - March 14, 2026",
-      "filename": "western_heatwave_march_14_teaser_mobile.json",
+      "id": "paleoclimate_wet_bulb_copy_copy",
+      "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
+      "filename": "paleoclimate_wet_bulb.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Western Heat Dome - March 14, 2026",
-      "size_kb": 61.7,
-      "converted": "2026-03-23 18:18",
+      "description": "Graphic showing extreme heating events since the 1930s.",
+      "size_kb": 129.3,
+      "converted": "2026-02-08 23:35",
+      "subcategory": "narrative",
+      "subcategory_label": "Narrative"
+    },
+    {
+      "id": "paleoclimate_wet_bulb_gallery_copy",
+      "title": "Paleoclimage and Extreme Heating Events, 1930s - 2025 (use landscape)",
+      "filename": "paleoclimate_wet_bulb_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Paleoclimate history",
+      "size_kb": 101.8,
+      "converted": "2026-02-15 01:01",
       "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
-      "featured": true
+      "subcategory": "narrative",
+      "subcategory_label": "Narrative"
     },
     {
       "id": "near_earth_asteroids_social_view_20260211_0024",
@@ -1212,6 +1210,17 @@
       "subcategory_label": "Coral Bleaching Events"
     },
     {
+      "id": "western_heatwave_march_14_teaser_mobile",
+      "title": "Western Heat Dome - March 14, 2026",
+      "filename": "western_heatwave_march_14_teaser_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Dome - March 14, 2026",
+      "size_kb": 61.7,
+      "converted": "2026-03-23 18:18",
+      "mode": "portrait"
+    },
+    {
       "id": "western_heatwave_march_17_teaser_mobile",
       "title": "Western Heat Dome - March 17, 2026",
       "filename": "western_heatwave_march_17_teaser_mobile.json",
@@ -1220,10 +1229,7 @@
       "description": "Western Heat Dome - March 17, 2026",
       "size_kb": 62.2,
       "converted": "2026-03-23 18:17",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_18_teaser_mobile",
@@ -1234,10 +1240,7 @@
       "description": "Western Heat Dome - March 18, 2026",
       "size_kb": 62.7,
       "converted": "2026-03-23 18:14",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_20_teaser_mobile",
@@ -1248,10 +1251,7 @@
       "description": "Western Heat Dome - March 20, 2026",
       "size_kb": 64.6,
       "converted": "2026-03-24 18:17",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_21_teaser_mobile",
@@ -1262,66 +1262,7 @@
       "description": "Western Heat Dome - March 21, 2026",
       "size_kb": 146.4,
       "converted": "2026-03-24 18:17",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
-      "featured": true
-    },
-    {
-      "id": "paleoclimate_wet_bulb_gallery",
-      "title": "Paleoclimage and Extreme Heating Events, 1930s - 2025 (use landscape)",
-      "filename": "paleoclimate_wet_bulb_gallery.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Paleoclimate history",
-      "size_kb": 101.8,
-      "converted": "2026-02-15 01:01",
-      "mode": "portrait",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)",
-      "featured": true
-    },
-    {
-      "id": "western_heatwave_march_17_teaser_gallery",
-      "title": "Wesern Heat Dome - March 17, 2026",
-      "filename": "western_heatwave_march_17_teaser_gallery.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Wesern Heat Dome - March 17, 2026",
-      "size_kb": 62.7,
-      "converted": "2026-03-23 18:16",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
-      "featured": true
-    },
-    {
-      "id": "western_heatwave_march_18_teaser_gallery",
-      "title": "Western Heat Dome - March 18, 2026",
-      "filename": "western_heatwave_march_18_teaser_gallery.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Western Heat Dome - March 18, 2026",
-      "size_kb": 63.1,
-      "converted": "2026-03-23 18:14",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
-      "featured": true
-    },
-    {
-      "id": "western_heatwave_march_20_teaser_gallery",
-      "title": "Western Heat Dome - March 20, 2026",
-      "filename": "western_heatwave_march_20_teaser_gallery.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Western Heat Dome - March 20, 2026",
-      "size_kb": 65.0,
-      "converted": "2026-03-24 18:16",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_21_teaser_gallery",
@@ -1332,24 +1273,53 @@
       "description": "Western Heat Dome - March 21, 2026",
       "size_kb": 146.8,
       "converted": "2026-03-24 18:16",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)",
-      "featured": true
+      "mode": "landscape"
     },
     {
-      "id": "ocean_acidification_ph_trend",
-      "title": "Ocean Acidification pH Trend, 1991 - 2023",
-      "filename": "ocean_acidification_ph_trend.json",
+      "id": "western_heatwave_march_20_teaser_gallery",
+      "title": "Western Heat Dome - March 20, 2026",
+      "filename": "western_heatwave_march_20_teaser_gallery.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing ocean surface pH from 1988 to 2023.",
-      "size_kb": 16.9,
-      "converted": "2026-02-09 00:09",
-      "subcategory": "acidification",
-      "subcategory_label": "Ocean Acidification"
+      "description": "Western Heat Dome - March 20, 2026",
+      "size_kb": 65.0,
+      "converted": "2026-03-24 18:16",
+      "mode": "landscape"
+    },
+    {
+      "id": "western_heatwave_march_18_teaser_gallery",
+      "title": "Western Heat Dome - March 18, 2026",
+      "filename": "western_heatwave_march_18_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Dome - March 18, 2026",
+      "size_kb": 63.1,
+      "converted": "2026-03-23 18:14",
+      "mode": "landscape"
+    },
+    {
+      "id": "western_heatwave_march_14_teaser_gallery",
+      "title": "Western Heat Dome - March 17, 2026",
+      "filename": "western_heatwave_march_14_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Dome - March 17, 2026",
+      "size_kb": 62.2,
+      "converted": "2026-03-23 18:16",
+      "mode": "landscape"
+    },
+    {
+      "id": "western_heatwave_march_17_teaser_gallery",
+      "title": "Wesern Heat Dome - March 17, 2026",
+      "filename": "western_heatwave_march_17_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Wesern Heat Dome - March 17, 2026",
+      "size_kb": 62.7,
+      "converted": "2026-03-23 18:16",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-24 18:32",
+  "last_updated": "2026-03-24 18:17",
   "total_count": 108
 }
