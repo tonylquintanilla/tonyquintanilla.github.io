@@ -645,9 +645,7 @@
       "description": "Western Heat Dome - March 14, 2026",
       "size_kb": 62.2,
       "converted": "2026-03-25 00:20",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)"
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_14_teaser_mobile",
@@ -658,9 +656,7 @@
       "description": "Western Heat Dome - March 14, 2026",
       "size_kb": 61.7,
       "converted": "2026-03-25 00:20",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)"
+      "mode": "portrait"
     },
     {
       "id": "near_earth_asteroids_social_view_20260211_0024",
@@ -832,9 +828,7 @@
       "description": "3I/ATLAS March 2025 to March 2026",
       "size_kb": 2802.9,
       "converted": "2026-03-18 19:22",
-      "mode": "portrait",
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "mode": "portrait"
     },
     {
       "id": "solar_system_20250318_1901",
@@ -1220,9 +1214,7 @@
       "description": "Western Heat Dome - March 17, 2026",
       "size_kb": 62.2,
       "converted": "2026-03-25 00:20",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)"
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_18_teaser_mobile",
@@ -1233,9 +1225,7 @@
       "description": "Western Heat Dome - March 18, 2026",
       "size_kb": 62.7,
       "converted": "2026-03-25 00:19",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)"
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_20_teaser_mobile",
@@ -1246,9 +1236,7 @@
       "description": "Western Heat Dome - March 20, 2026",
       "size_kb": 64.6,
       "converted": "2026-03-25 00:19",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)"
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_21_teaser_mobile",
@@ -1259,9 +1247,7 @@
       "description": "Western Heat Dome - March 21, 2026",
       "size_kb": 146.4,
       "converted": "2026-03-25 00:18",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)"
+      "mode": "portrait"
     },
     {
       "id": "paleoclimate_wet_bulb_gallery",
@@ -1286,9 +1272,7 @@
       "description": "Western Heat Dome - March 17, 2026",
       "size_kb": 62.7,
       "converted": "2026-03-25 00:20",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)"
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_18_teaser_gallery",
@@ -1299,9 +1283,7 @@
       "description": "Western Heat Dome - March 18, 2026",
       "size_kb": 63.1,
       "converted": "2026-03-25 00:19",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)"
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_20_teaser_gallery",
@@ -1312,9 +1294,7 @@
       "description": "Western Heat Dome - March 20, 2026",
       "size_kb": 65.0,
       "converted": "2026-03-25 00:19",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)"
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_21_teaser_gallery",
@@ -1325,9 +1305,7 @@
       "description": "Western Heat Dome - March 21, 2026",
       "size_kb": 146.8,
       "converted": "2026-03-25 00:18",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome 2026 (landscape mode)"
+      "mode": "landscape"
     },
     {
       "id": "ocean_acidification_ph_trend",
@@ -1342,6 +1320,6 @@
       "subcategory_label": "Ocean Acidification"
     }
   ],
-  "last_updated": "2026-03-25 00:27",
+  "last_updated": "2026-03-25 00:20",
   "total_count": 108
 }
