@@ -2012,8 +2012,8 @@
                     kmzBtn.href = '#';
                 }
                 // Position encyclopedia "i" button below Google Earth button
-                // when the KMZ button is visible, or at its default position
-                if (encBtn) {
+                // in landscape mode when the KMZ button is visible
+                if (encBtn && currentMode === 'landscape') {
                     encBtn.style.top = (kmzBtn.style.display === 'flex') ? '138px' : '';
                 }
                 // -------------------------------------------
