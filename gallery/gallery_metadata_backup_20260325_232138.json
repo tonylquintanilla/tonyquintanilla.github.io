@@ -645,10 +645,7 @@
       "description": "Western Heat Dome - March 14, 2026",
       "size_kb": 255.2,
       "converted": "2026-03-25 23:16",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_14_teaser_mobile",
@@ -659,10 +656,7 @@
       "description": "Western Heat Dome - March 14, 2026",
       "size_kb": 254.8,
       "converted": "2026-03-25 23:16",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "near_earth_asteroids_social_view_20260211_0024",
@@ -1224,10 +1218,7 @@
       "description": "Western Heat Dome - March 17, 2026",
       "size_kb": 255.7,
       "converted": "2026-03-25 23:16",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_18_teaser_mobile",
@@ -1238,10 +1229,7 @@
       "description": "Western Heat Dome - March 18, 2026",
       "size_kb": 256.1,
       "converted": "2026-03-25 23:15",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_20_teaser_mobile",
@@ -1252,10 +1240,7 @@
       "description": "Western Heat Dome - March 20, 2026",
       "size_kb": 782.1,
       "converted": "2026-03-25 23:15",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_21_teaser_mobile",
@@ -1266,10 +1251,7 @@
       "description": "Western Heat Dome - March 21, 2026",
       "size_kb": 784.3,
       "converted": "2026-03-25 23:14",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "paleoclimate_wet_bulb_gallery",
@@ -1294,10 +1276,7 @@
       "description": "Western Heat Dome - March 17, 2026",
       "size_kb": 256.1,
       "converted": "2026-03-25 23:16",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_18_teaser_gallery",
@@ -1308,10 +1287,7 @@
       "description": "Western Heat Dome - March 18, 2026",
       "size_kb": 256.6,
       "converted": "2026-03-25 23:15",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_20_teaser_gallery",
@@ -1322,10 +1298,7 @@
       "description": "Western Heat Dome - March 20, 2026",
       "size_kb": 782.6,
       "converted": "2026-03-25 23:15",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_21_teaser_gallery",
@@ -1336,10 +1309,7 @@
       "description": "Western Heat Dome - March 21, 2026",
       "size_kb": 784.8,
       "converted": "2026-03-25 23:14",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "mode": "landscape"
     },
     {
       "id": "ocean_acidification_ph_trend",
@@ -1354,6 +1324,6 @@
       "subcategory_label": "Ocean Acidification"
     }
   ],
-  "last_updated": "2026-03-25 23:21",
+  "last_updated": "2026-03-25 23:16",
   "total_count": 108
 }
