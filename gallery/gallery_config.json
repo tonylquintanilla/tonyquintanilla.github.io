@@ -39,6 +39,11 @@
       "key": "other",
       "label": "Other",
       "color": "#7f8c8d"
+    },
+    {
+      "key": "featured",
+      "label": "Featured",
+      "color": "#f50ae3"
     }
   ]
 }

@@ -12,7 +12,7 @@ Usage: python gallery_editor.py  (from tools/ directory)
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox, simpledialog, colorchooser
 import json
 import os
 import re
@@ -1111,19 +1111,15 @@ class GalleryEditor:
                 parent=self.root)
             return
 
-        # Ask for color (with a sensible default)
-        color = simpledialog.askstring(
-            "Category Color",
-            f"Hex color for '{label}'\n"
-            f"(e.g. #e76f51, or press OK for default):",
-            initialvalue="#7f8c8d",
+        # Ask for color via picker
+        result = colorchooser.askcolor(
+            color="#7f8c8d",
+            title=f"Color for '{label}'",
             parent=self.root)
 
-        if color is None:
+        if result[1] is None:
             return
-        color = color.strip()
-        if not color.startswith('#'):
-            color = '#' + color
+        color = result[1]
 
         self.categories.append({
             'key': key,
@@ -1213,19 +1209,14 @@ class GalleryEditor:
         cat_map = config_to_map(self.categories)
         cat_label = cat_map.get(cat_key, cat_key)
 
-        new_color = simpledialog.askstring(
-            "Edit Color",
-            f"Category: {cat_label}\n"
-            f"Current color: {current_color}\n\n"
-            f"New hex color:",
-            initialvalue=current_color,
+        result = colorchooser.askcolor(
+            color=current_color,
+            title=f"Color for '{cat_label}'",
             parent=self.root)
 
-        if not new_color or not new_color.strip():
+        if result[1] is None:
             return
-        new_color = new_color.strip()
-        if not new_color.startswith('#'):
-            new_color = '#' + new_color
+        new_color = result[1]
 
         for cat in self.categories:
             if cat['key'] == cat_key:
