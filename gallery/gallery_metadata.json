@@ -1116,12 +1116,9 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 22, 2026",
-      "size_kb": 1084.6,
-      "converted": "2026-03-28 01:12",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "size_kb": 1431.7,
+      "converted": "2026-03-28 01:40",
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_22_teaser_gallery",
@@ -1130,12 +1127,9 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 22, 2026",
-      "size_kb": 1085.0,
-      "converted": "2026-03-28 01:12",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "size_kb": 1432.1,
+      "converted": "2026-03-28 01:40",
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_25_teaser_mobile",
@@ -1144,12 +1138,9 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 25, 2026",
-      "size_kb": 275.0,
-      "converted": "2026-03-28 01:11",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "size_kb": 360.2,
+      "converted": "2026-03-28 01:40",
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_25_teaser_gallery",
@@ -1158,12 +1149,9 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 25, 2026",
-      "size_kb": 275.5,
-      "converted": "2026-03-28 01:11",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "size_kb": 360.7,
+      "converted": "2026-03-28 01:40",
+      "mode": "landscape"
     },
     {
       "id": "nyc_1948_teaser_gallery",
@@ -1721,6 +1709,6 @@
       "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-28 01:20",
+  "last_updated": "2026-03-28 01:40",
   "total_count": 138
 }
