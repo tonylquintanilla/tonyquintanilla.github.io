@@ -1116,12 +1116,9 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 22, 2026",
-      "size_kb": 229.3,
-      "converted": "2026-03-26 16:29",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "size_kb": 894.8,
+      "converted": "2026-03-28 00:34",
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_22_teaser_gallery",
@@ -1130,12 +1127,9 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 22, 2026",
-      "size_kb": 229.8,
-      "converted": "2026-03-26 16:29",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "size_kb": 895.3,
+      "converted": "2026-03-28 00:34",
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_25_teaser_mobile",
@@ -1145,11 +1139,8 @@
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 25, 2026",
       "size_kb": 229.6,
-      "converted": "2026-03-26 16:29",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "converted": "2026-03-28 00:33",
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_25_teaser_gallery",
@@ -1159,11 +1150,8 @@
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 25, 2026",
       "size_kb": 230.1,
-      "converted": "2026-03-26 16:29",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "converted": "2026-03-28 00:34",
+      "mode": "landscape"
     },
     {
       "id": "nyc_1948_teaser_gallery",
@@ -1721,6 +1709,6 @@
       "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-26 17:32",
+  "last_updated": "2026-03-28 00:34",
   "total_count": 138
 }
