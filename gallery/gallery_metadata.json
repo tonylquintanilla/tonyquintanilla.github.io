@@ -1116,12 +1116,9 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 22, 2026",
-      "size_kb": 1431.7,
-      "converted": "2026-03-28 01:40",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "size_kb": 1432.1,
+      "converted": "2026-03-30 02:04",
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_22_teaser_gallery",
@@ -1130,12 +1127,9 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 22, 2026",
-      "size_kb": 1432.1,
-      "converted": "2026-03-28 01:40",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "size_kb": 1432.6,
+      "converted": "2026-03-30 02:05",
+      "mode": "landscape"
     },
     {
       "id": "western_heatwave_march_25_teaser_mobile",
@@ -1144,12 +1138,9 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 25, 2026",
-      "size_kb": 360.2,
-      "converted": "2026-03-28 01:40",
-      "mode": "portrait",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "size_kb": 1421.6,
+      "converted": "2026-03-30 02:04",
+      "mode": "portrait"
     },
     {
       "id": "western_heatwave_march_25_teaser_gallery",
@@ -1158,12 +1149,9 @@
       "category": "climate",
       "category_label": "Earth System",
       "description": "Western Heat Dome - March 25, 2026",
-      "size_kb": 360.7,
-      "converted": "2026-03-28 01:40",
-      "mode": "landscape",
-      "subcategory": "heatdome",
-      "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": true
+      "size_kb": 1422.1,
+      "converted": "2026-03-30 02:04",
+      "mode": "landscape"
     },
     {
       "id": "nyc_1948_teaser_gallery",
@@ -1719,8 +1707,30 @@
       "size_kb": 8413.3,
       "converted": "2026-03-15 00:56",
       "mode": "landscape"
+    },
+    {
+      "id": "western_heatwave_march_26_teaser_mobile",
+      "title": "Western Heat Dome - March 26, 2026",
+      "filename": "western_heatwave_march_26_teaser_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Dome - March 26, 2026",
+      "size_kb": 364.1,
+      "converted": "2026-03-30 02:03",
+      "mode": "portrait"
+    },
+    {
+      "id": "western_heatwave_march_26_teaser_gallery",
+      "title": "Western Heat Dome - March 26, 2026",
+      "filename": "western_heatwave_march_26_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Western Heat Dome - March 26, 2026",
+      "size_kb": 364.6,
+      "converted": "2026-03-30 02:03",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-28 01:48",
-  "total_count": 138
+  "last_updated": "2026-03-30 02:05",
+  "total_count": 140
 }
