@@ -13,18 +13,6 @@
       "featured": true
     },
     {
-      "id": "c2025k1bcd_perihelion_20251007_gallery_copy",
-      "title": "Comet C/2025 K1 Breakup",
-      "filename": "c2025k1bcd_perihelion_20251007_gallery.json",
-      "category": "featured",
-      "category_label": "Featured",
-      "description": "Comet C/2025 K1 Breakup",
-      "size_kb": 5459.4,
-      "converted": "2026-03-30 08:14",
-      "mode": "landscape",
-      "featured": true
-    },
-    {
       "id": "earth-apophis_20290401_29_mobile_copy",
       "title": "Apophis Closest Approach, 4-13-2029",
       "filename": "earth-apophis_20290401_29_mobile.json",
@@ -243,6 +231,18 @@
       "subcategory_label": "General"
     },
     {
+      "id": "inner_planets_comets_solar_corona_20260207_1748",
+      "title": "Current comets 2-7-2026",
+      "filename": "inner_planets_comets_solar_corona_20260207_1748.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Solar photosphere, corona, current comets and inner planets. Static plot.",
+      "size_kb": 31364.8,
+      "converted": "2026-02-07 17:53",
+      "subcategory": "comets",
+      "subcategory_label": "Comets"
+    },
+    {
       "id": "c2024_e1_wierzchos_20260225_0236_landscape",
       "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
       "filename": "c2024_e1_wierzchos_20260225_0236_landscape.json",
@@ -253,18 +253,6 @@
       "converted": "2026-02-26 08:14",
       "mode": "landscape",
       "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
-    },
-    {
-      "id": "inner_planets_comets_solar_corona_20260207_1748",
-      "title": "Current comets 2-7-2026",
-      "filename": "inner_planets_comets_solar_corona_20260207_1748.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "Solar photosphere, corona, current comets and inner planets. Static plot.",
-      "size_kb": 31364.8,
-      "converted": "2026-02-07 17:53",
       "subcategory": "comets",
       "subcategory_label": "Comets"
     },
@@ -283,18 +271,18 @@
       "subcategory_label": "Comets"
     },
     {
-      "id": "c2025k1bcd_perihelion_20251007_gallery",
-      "title": "Comet C/2025 K1 Breakup 10-16-2025",
-      "filename": "c2025k1bcd_perihelion_20251007_gallery.json",
+      "id": "halley_perihelion_19860208",
+      "title": "Comet Halley Perihelion 2-8-1986",
+      "filename": "halley_perihelion_19860208.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Comet C/2025 K1 Breakup",
-      "size_kb": 5459.4,
-      "converted": "2026-03-30 08:14",
+      "description": "Comet Halley Perihelion 2-8-1986",
+      "size_kb": 3444.5,
+      "converted": "2026-03-17 00:57",
       "mode": "landscape",
+      "featured": false,
       "subcategory": "comets",
-      "subcategory_label": "Comets",
-      "featured": true
+      "subcategory_label": "Comets"
     },
     {
       "id": "solar_system_20250318_1901",
@@ -617,18 +605,6 @@
       "featured": true
     },
     {
-      "id": "c2025k1bcd_perihelion_20251008_mobile_copy",
-      "title": "Comet C/2025 K1 Breakup 10-16-2025",
-      "filename": "c2025k1bcd_perihelion_20251008_mobile.json",
-      "category": "featured",
-      "category_label": "Featured",
-      "description": "Comet C/2025 K1 Breakup",
-      "size_kb": 5390.7,
-      "converted": "2026-03-30 08:14",
-      "mode": "portrait",
-      "featured": true
-    },
-    {
       "id": "inner_solar_system_animation_2-4-2005_21_years_social_copy2",
       "title": "Inner Solar System Animation 2-4-2005 for 21 Years",
       "filename": "inner_solar_system_animation_2-4-2005_21_years_social.json",
@@ -684,7 +660,7 @@
     },
     {
       "id": "current_comets_social_view_20260210_2331",
-      "title": "Current Comets on 2-10-2026",
+      "title": "Current Comets on 2026 02 10 23:31",
       "filename": "current_comets_social_view_20260210_2331.json",
       "category": "solar_system",
       "category_label": "Solar System",
@@ -724,18 +700,18 @@
       "subcategory_label": "Comets"
     },
     {
-      "id": "c2025k1bcd_perihelion_20251008_mobile",
-      "title": "Comet C/2025 K1 Breakup 10-16-2025",
-      "filename": "c2025k1bcd_perihelion_20251008_mobile.json",
+      "id": "halley_perihelion_19860208_mobile",
+      "title": "Comet Halley Perihelion 2-8-1986",
+      "filename": "halley_perihelion_19860208_mobile.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Comet C/2025 K1 Breakup",
-      "size_kb": 5390.7,
-      "converted": "2026-03-30 08:14",
+      "description": "Comet Halley Perihelion 2-8-1986",
+      "size_kb": 4011.1,
+      "converted": "2026-03-17 00:56",
       "mode": "portrait",
+      "featured": false,
       "subcategory": "comets",
-      "subcategory_label": "Comets",
-      "featured": true
+      "subcategory_label": "Comets"
     },
     {
       "id": "3iatlas_20250318_20260318_mobile",
@@ -1845,45 +1821,28 @@
       "featured": true
     },
     {
-      "id": "halley_perihelion_19860208_mobile",
-      "title": "Comet Halley Perihelion 2-8-1986",
-      "filename": "halley_perihelion_19860208_mobile.json",
+      "id": "c2025k1bcd_perihelion_20251008_mobile",
+      "title": "Comet C/2025 K1 Breakup",
+      "filename": "c2025k1bcd_perihelion_20251008_mobile.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Comet Halley Perihelion 2-8-1986",
-      "size_kb": 4011.1,
-      "converted": "2026-03-17 00:56",
-      "mode": "portrait",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "description": "Comet C/2025 K1 Breakup",
+      "size_kb": 5390.7,
+      "converted": "2026-03-30 08:14",
+      "mode": "portrait"
     },
     {
-      "id": "halley_perihelion_19860208",
-      "title": "Comet Halley Perihelion 2-8-1986",
-      "filename": "halley_perihelion_19860208.json",
+      "id": "c2025k1bcd_perihelion_20251007_gallery",
+      "title": "Comet C/2025 K1 Breakup",
+      "filename": "c2025k1bcd_perihelion_20251007_gallery.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Comet Halley Perihelion 2-8-1986",
-      "size_kb": 3444.5,
-      "converted": "2026-03-17 00:57",
-      "mode": "landscape",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
-    },
-    {
-      "id": "c2025k1bcd_perihelion_20251007",
-      "title": "test",
-      "filename": "c2025k1bcd_perihelion_20251007.json",
-      "category": "other",
-      "category_label": "Other",
-      "description": "test",
-      "size_kb": 5457.9,
-      "converted": "2026-03-30 08:44",
+      "description": "Comet C/2025 K1 Breakup",
+      "size_kb": 5459.4,
+      "converted": "2026-03-30 08:14",
       "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-30 08:44",
-  "total_count": 151
+  "last_updated": "2026-03-30 08:14",
+  "total_count": 148
 }
