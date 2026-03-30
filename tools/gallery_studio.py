@@ -4948,9 +4948,25 @@ document.addEventListener('click', function(e) {{
         self._log_status("Portrait preset applied - adjust as needed")
 
     def _apply_landscape_preset(self):
-        """Reset to landscape defaults."""
+        """Reset to landscape defaults with standard orrery settings.
+
+        Starts from DEFAULT_CONFIG, then applies:
+        - Embed encyclopedia checked
+        - Top margin 100 (room for title + subtitle)
+        - Show mode bar
+        - Show axes
+        - Show grid
+        """
         self._apply_config_to_gui(DEFAULT_CONFIG)
-        self._log_status("Landscape defaults restored")
+
+        # Override the five landscape-specific settings
+        self.var_encyclopedia.set(True)
+        self.var_margin_t.set(100)
+        self.var_show_modebar.set(True)
+        self.var_show_axes.set(True)
+        self.var_show_grid.set(True)
+
+        self._log_status("Landscape preset applied")
 
     def _apply_gen_mobile_preset(self):
         """Apply the generator mobile preset for clean map views.
