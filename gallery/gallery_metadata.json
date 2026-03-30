@@ -1819,8 +1819,30 @@
       "subcategory": "heatdome",
       "subcategory_label": "Western Heat Dome (landscape mode)",
       "featured": true
+    },
+    {
+      "id": "c2025k1bcd_perihelion_20251008_mobile",
+      "title": "Comet C/2025 K1 Breakup",
+      "filename": "c2025k1bcd_perihelion_20251008_mobile.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet C/2025 K1 Breakup",
+      "size_kb": 5390.7,
+      "converted": "2026-03-30 08:14",
+      "mode": "portrait"
+    },
+    {
+      "id": "c2025k1bcd_perihelion_20251007_gallery",
+      "title": "Comet C/2025 K1 Breakup",
+      "filename": "c2025k1bcd_perihelion_20251007_gallery.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet C/2025 K1 Breakup",
+      "size_kb": 5459.4,
+      "converted": "2026-03-30 08:14",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-30 02:21",
-  "total_count": 146
+  "last_updated": "2026-03-30 08:14",
+  "total_count": 148
 }
