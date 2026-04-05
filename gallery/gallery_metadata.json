@@ -284,17 +284,14 @@
     },
     {
       "id": "c2025k1bcd_perihelion_20251007_gallery",
-      "title": "Comet C/2025 K1 Breakup 10-16-2025",
+      "title": "C2025K1Bcd Perihelion 20251007 Gallery",
       "filename": "c2025k1bcd_perihelion_20251007_gallery.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "Comet C/2025 K1 Breakup",
-      "size_kb": 5459.4,
-      "converted": "2026-03-30 08:14",
-      "mode": "landscape",
-      "subcategory": "comets",
-      "subcategory_label": "Comets",
-      "featured": true
+      "category": "other",
+      "category_label": "Other",
+      "description": "",
+      "size_kb": 5466.1,
+      "converted": "2026-04-05 03:56",
+      "mode": "both"
     },
     {
       "id": "solar_system_20250318_1901",
@@ -1871,8 +1868,63 @@
       "featured": false,
       "subcategory": "comets",
       "subcategory_label": "Comets"
+    },
+    {
+      "id": "c2025k1bcd_perihelion_20251007_mobile",
+      "title": "C2025K1Bcd Perihelion 20251007 Mobile",
+      "filename": "c2025k1bcd_perihelion_20251007_mobile.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "",
+      "size_kb": 6779.6,
+      "converted": "2026-04-05 03:56",
+      "mode": "both"
+    },
+    {
+      "id": "artemis_ii_20260402-0411_mission_moon_center2_mobile",
+      "title": "Artemis II Moon Flyby March 6, 2026",
+      "filename": "artemis_ii_20260402-0411_mission_moon_center2_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II Moon Flyby March 6, 2026",
+      "size_kb": 11242.3,
+      "converted": "2026-04-05 03:59",
+      "mode": "portrait"
+    },
+    {
+      "id": "artemis_ii_20260402-0411_mission_moon_center2_gallery",
+      "title": "Artemis II Moon Flyby March 6, 2026",
+      "filename": "artemis_ii_20260402-0411_mission_moon_center2_gallery.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II Moon Flyby March 6, 2026",
+      "size_kb": 6276.1,
+      "converted": "2026-04-05 04:00",
+      "mode": "landscape"
+    },
+    {
+      "id": "artemis_ii_20260402-0411_mission_mobile",
+      "title": "Artemis II Mission March 6, 2026",
+      "filename": "artemis_ii_20260402-0411_mission_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II Mission March 6, 2026",
+      "size_kb": 10992.3,
+      "converted": "2026-04-05 04:00",
+      "mode": "portrait"
+    },
+    {
+      "id": "artemis_ii_20260402-0411_mission_gallery",
+      "title": "Artemis II Mission March 6, 2026",
+      "filename": "artemis_ii_20260402-0411_mission_gallery.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II Mission March 6, 2026",
+      "size_kb": 6412.2,
+      "converted": "2026-04-05 04:01",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-03-30 08:53",
-  "total_count": 150
+  "last_updated": "2026-04-05 04:01",
+  "total_count": 155
 }
