@@ -1882,13 +1882,13 @@
     },
     {
       "id": "artemis_ii_20260402-0411_mission_moon_center2_mobile",
-      "title": "Artemis II Moon Flyby March 6, 2026",
+      "title": "Artemis II Moon Flyby April 6, 2026",
       "filename": "artemis_ii_20260402-0411_mission_moon_center2_mobile.json",
       "category": "missions",
       "category_label": "Missions",
-      "description": "Artemis II Moon Flyby March 6, 2026",
-      "size_kb": 11242.3,
-      "converted": "2026-04-05 03:59",
+      "description": "Artemis II Moon Flyby April 6, 2026",
+      "size_kb": 11242.1,
+      "converted": "2026-04-05 04:24",
       "mode": "portrait"
     },
     {
@@ -1904,13 +1904,13 @@
     },
     {
       "id": "artemis_ii_20260402-0411_mission_mobile",
-      "title": "Artemis II Mission March 6, 2026",
+      "title": "Artemis II Mission April 2-11 2026",
       "filename": "artemis_ii_20260402-0411_mission_mobile.json",
       "category": "missions",
       "category_label": "Missions",
-      "description": "Artemis II Mission March 6, 2026",
-      "size_kb": 10992.3,
-      "converted": "2026-04-05 04:00",
+      "description": "Artemis II Mission April 2-11 2026",
+      "size_kb": 10991.9,
+      "converted": "2026-04-05 04:26",
       "mode": "portrait"
     },
     {
@@ -1925,6 +1925,6 @@
       "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-05 04:01",
+  "last_updated": "2026-04-05 04:26",
   "total_count": 155
 }
