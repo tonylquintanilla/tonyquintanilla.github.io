@@ -1,18 +1,6 @@
 {
   "visualizations": [
     {
-      "id": "earth-apophis_20290401_29_mobile_copy",
-      "title": "Apophis Closest Approach, 4-13-2029",
-      "filename": "earth-apophis_20290401_29_mobile.json",
-      "category": "featured",
-      "category_label": "Featured",
-      "description": "Apophis Closest Approach, 4-13-2029",
-      "size_kb": 5827.7,
-      "converted": "2026-03-10 00:16",
-      "mode": "landscape",
-      "featured": true
-    },
-    {
       "id": "artemis_ii_20260402-0411_mission_gallery_copy",
       "title": "Artemis II Mission April 6, 2026",
       "filename": "artemis_ii_20260402-0411_mission_gallery.json",
@@ -50,7 +38,7 @@
     },
     {
       "id": "c2025k1bcd_perihelion_20251007_gallery_copy",
-      "title": "Comet C/2025 K1 Breakup 10-16-25",
+      "title": "Comet C/2025 K1 Breakup October 16, 2025",
       "filename": "c2025k1bcd_perihelion_20251007_gallery.json",
       "category": "featured",
       "category_label": "Featured",
@@ -69,6 +57,18 @@
       "description": "Animation of the inner solar system from 2005 for 21 years.",
       "size_kb": 10857.8,
       "converted": "2026-02-17 23:24",
+      "mode": "landscape",
+      "featured": true
+    },
+    {
+      "id": "earth-apophis_20290401_29_mobile_copy",
+      "title": "Apophis Closest Approach, 4-13-2029",
+      "filename": "earth-apophis_20290401_29_mobile.json",
+      "category": "featured",
+      "category_label": "Featured",
+      "description": "Apophis Closest Approach, 4-13-2029",
+      "size_kb": 5827.7,
+      "converted": "2026-03-10 00:16",
       "mode": "landscape",
       "featured": true
     },
@@ -267,15 +267,16 @@
       "subcategory_label": "General"
     },
     {
-      "id": "solar_system_20250318_1901",
-      "title": "3I/ATLAS March 2025 to March 2026",
-      "filename": "solar_system_20250318_1901.json",
+      "id": "c2024_e1_wierzchos_20260225_0236_landscape",
+      "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
+      "filename": "c2024_e1_wierzchos_20260225_0236_landscape.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "3I/ATLAS March 2025 to March 2026",
-      "size_kb": 3203.9,
-      "converted": "2026-03-18 19:23",
+      "description": "Comet Wierzchos, perihelion 1-20-2026.",
+      "size_kb": 5106.5,
+      "converted": "2026-02-26 08:14",
       "mode": "landscape",
+      "featured": false,
       "subcategory": "comets",
       "subcategory_label": "Comets"
     },
@@ -292,20 +293,6 @@
       "subcategory_label": "Comets"
     },
     {
-      "id": "c2024_e1_wierzchos_20260225_0236_landscape",
-      "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
-      "filename": "c2024_e1_wierzchos_20260225_0236_landscape.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "Comet Wierzchos, perihelion 1-20-2026.",
-      "size_kb": 5106.5,
-      "converted": "2026-02-26 08:14",
-      "mode": "landscape",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
-    },
-    {
       "id": "3iatlas_perihelion_20251029",
       "title": "3I/ATLAS Perihelion 10-29-2025",
       "filename": "3iatlas_perihelion_20251029.json",
@@ -316,6 +303,19 @@
       "converted": "2026-03-16 01:49",
       "mode": "landscape",
       "featured": false,
+      "subcategory": "comets",
+      "subcategory_label": "Comets"
+    },
+    {
+      "id": "solar_system_20250318_1901",
+      "title": "3I/ATLAS March 2025 to March 2026",
+      "filename": "solar_system_20250318_1901.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS March 2025 to March 2026",
+      "size_kb": 3203.9,
+      "converted": "2026-03-18 19:23",
+      "mode": "landscape",
       "subcategory": "comets",
       "subcategory_label": "Comets"
     },
@@ -435,6 +435,54 @@
       "subcategory_label": "Narrative"
     },
     {
+      "id": "artemis_ii_20260402-0411_mission_mobile_copy",
+      "title": "Artemis II Mission April 2-11 2026",
+      "filename": "artemis_ii_20260402-0411_mission_mobile.json",
+      "category": "featured",
+      "category_label": "Featured",
+      "description": "Artemis II Mission April 2-11 2026",
+      "size_kb": 10991.9,
+      "converted": "2026-04-05 04:26",
+      "mode": "portrait",
+      "featured": true
+    },
+    {
+      "id": "artemis_ii_20260402-0411_mission_moon_center2_mobile_copy",
+      "title": "Artemis II Moon Flyby April 6, 2026",
+      "filename": "artemis_ii_20260402-0411_mission_moon_center2_mobile.json",
+      "category": "featured",
+      "category_label": "Featured",
+      "description": "Artemis II Moon Flyby April 6, 2026",
+      "size_kb": 11242.1,
+      "converted": "2026-04-05 04:24",
+      "mode": "portrait",
+      "featured": true
+    },
+    {
+      "id": "3iatlas_jupiter_20260316_1222_copy",
+      "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
+      "filename": "3iatlas_jupiter_20260316_1222.json",
+      "category": "featured",
+      "category_label": "Featured",
+      "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
+      "size_kb": 12271.7,
+      "converted": "2026-03-18 02:30",
+      "mode": "portrait",
+      "featured": true
+    },
+    {
+      "id": "c2025k1bcd_perihelion_20251008_mobile_copy",
+      "title": "Comet C/2025 K1 Breakup 10-16-2025",
+      "filename": "c2025k1bcd_perihelion_20251008_mobile.json",
+      "category": "featured",
+      "category_label": "Featured",
+      "description": "Comet C/2025 K1 Breakup",
+      "size_kb": 5390.7,
+      "converted": "2026-03-30 08:14",
+      "mode": "portrait",
+      "featured": true
+    },
+    {
       "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy_copy",
       "title": "Inner Solar System Animation 2-4-2005 21 Years",
       "filename": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape.json",
@@ -455,18 +503,6 @@
       "description": "Apophis Closest Approach, 4-13-2029",
       "size_kb": 5827.7,
       "converted": "2026-03-10 00:16",
-      "mode": "portrait",
-      "featured": true
-    },
-    {
-      "id": "3iatlas_jupiter_20260316_1222_copy",
-      "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
-      "filename": "3iatlas_jupiter_20260316_1222.json",
-      "category": "featured",
-      "category_label": "Featured",
-      "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
-      "size_kb": 12271.7,
-      "converted": "2026-03-18 02:30",
       "mode": "portrait",
       "featured": true
     },
@@ -623,18 +659,6 @@
       "description": "Western Heat Dome - March 26, 2026",
       "size_kb": 364.1,
       "converted": "2026-03-30 02:03",
-      "mode": "portrait",
-      "featured": true
-    },
-    {
-      "id": "c2025k1bcd_perihelion_20251008_mobile_copy",
-      "title": "Comet C/2025 K1 Breakup 10-16-2025",
-      "filename": "c2025k1bcd_perihelion_20251008_mobile.json",
-      "category": "featured",
-      "category_label": "Featured",
-      "description": "Comet C/2025 K1 Breakup",
-      "size_kb": 5390.7,
-      "converted": "2026-03-30 08:14",
       "mode": "portrait",
       "featured": true
     },
@@ -1658,6 +1682,30 @@
       "converted": "2026-02-11 00:38"
     },
     {
+      "id": "artemis_ii_20260402-0411_mission_mobile",
+      "title": "Artemis II Mission April 2-11 2026",
+      "filename": "artemis_ii_20260402-0411_mission_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II Mission April 2-11 2026",
+      "size_kb": 10991.9,
+      "converted": "2026-04-05 04:26",
+      "mode": "portrait",
+      "featured": true
+    },
+    {
+      "id": "artemis_ii_20260402-0411_mission_moon_center2_mobile",
+      "title": "Artemis II Moon Flyby April 6, 2026",
+      "filename": "artemis_ii_20260402-0411_mission_moon_center2_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II Moon Flyby April 6, 2026",
+      "size_kb": 11242.1,
+      "converted": "2026-04-05 04:24",
+      "mode": "portrait",
+      "featured": true
+    },
+    {
       "id": "voyager1_2_social_view_20260210_2337",
       "title": "Voyager 1 and 2 Missions on 2026 02 10 23:37",
       "filename": "voyager1_2_social_view_20260210_2337.json",
@@ -1667,28 +1715,6 @@
       "mode": "portrait",
       "size_kb": 1469.3,
       "converted": "2026-02-10 23:40"
-    },
-    {
-      "id": "new_horizons_full_mission_20060120_20200101_mobile",
-      "title": "New Horizons mission 2006 to 2020",
-      "filename": "new_horizons_full_mission_20060120_20200101_mobile.json",
-      "category": "missions",
-      "category_label": "Missions",
-      "description": "New Horizons mission 2006 to 2020",
-      "size_kb": 1413.7,
-      "converted": "2026-03-14 20:57",
-      "mode": "portrait"
-    },
-    {
-      "id": "new_horizons_jupiter__20070220_20070307_mobile",
-      "title": "New Horizons Jupiter Gravity Assist 2-28-2007",
-      "filename": "new_horizons_jupiter__20070220_20070307_mobile.json",
-      "category": "missions",
-      "category_label": "Missions",
-      "description": "New Horizons Jupiter Gravity Assist 2-28-2007",
-      "size_kb": 5769.1,
-      "converted": "2026-03-15 00:56",
-      "mode": "portrait"
     },
     {
       "id": "pluto_barycenter_system_20260208_1957",
@@ -1871,20 +1897,6 @@
       "subcategory_label": "Comets"
     },
     {
-      "id": "c2025k1bcd_perihelion_20251007_gallery_copy_copy",
-      "title": "Comet C/2025 K1 Breakup 10-16-2025",
-      "filename": "c2025k1bcd_perihelion_20251007_gallery.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "Comet C/2025 K1 Breakup",
-      "size_kb": 5459.4,
-      "converted": "2026-03-30 08:14",
-      "mode": "landscape",
-      "featured": true,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
-    },
-    {
       "id": "halley_perihelion_19860208",
       "title": "Comet Halley Perihelion 2-8-1986",
       "filename": "halley_perihelion_19860208.json",
@@ -1899,14 +1911,14 @@
       "subcategory_label": "Comets"
     },
     {
-      "id": "artemis_ii_20260402-0411_mission_moon_center2_mobile",
-      "title": "Artemis II Moon Flyby April 6, 2026",
-      "filename": "artemis_ii_20260402-0411_mission_moon_center2_mobile.json",
+      "id": "new_horizons_full_mission_20060120_20200101_mobile",
+      "title": "New Horizons mission 2006 to 2020",
+      "filename": "new_horizons_full_mission_20060120_20200101_mobile.json",
       "category": "missions",
       "category_label": "Missions",
-      "description": "Artemis II Moon Flyby March 6, 2026",
-      "size_kb": 11242.3,
-      "converted": "2026-04-05 03:59",
+      "description": "New Horizons mission 2006 to 2020",
+      "size_kb": 1413.7,
+      "converted": "2026-03-14 20:57",
       "mode": "portrait"
     },
     {
@@ -1921,14 +1933,14 @@
       "mode": "landscape"
     },
     {
-      "id": "artemis_ii_20260402-0411_mission_mobile",
-      "title": "Artemis II Mission April 6, 2026",
-      "filename": "artemis_ii_20260402-0411_mission_mobile.json",
+      "id": "new_horizons_jupiter__20070220_20070307_mobile",
+      "title": "New Horizons Jupiter Gravity Assist 2-28-2007",
+      "filename": "new_horizons_jupiter__20070220_20070307_mobile.json",
       "category": "missions",
       "category_label": "Missions",
-      "description": "Artemis II Mission March 6, 2026",
-      "size_kb": 10992.3,
-      "converted": "2026-04-05 04:00",
+      "description": "New Horizons Jupiter Gravity Assist 2-28-2007",
+      "size_kb": 5769.1,
+      "converted": "2026-03-15 00:56",
       "mode": "portrait"
     },
     {
@@ -1941,30 +1953,8 @@
       "size_kb": 8413.3,
       "converted": "2026-03-15 00:56",
       "mode": "landscape"
-    },
-    {
-      "id": "artemis_ii_20260407_moon_2306_close_encounter_mobile",
-      "title": "Artemis II - Moon Flyby April 6, 2026",
-      "filename": "artemis_ii_20260407_moon_2306_close_encounter_mobile.json",
-      "category": "missions",
-      "category_label": "Missions",
-      "description": "Artemis II - Moon Flyby April 6, 2026",
-      "size_kb": 788.3,
-      "converted": "2026-04-06 00:59",
-      "mode": "portrait"
-    },
-    {
-      "id": "artemis_ii_20260407_moon_2306_close_encounter_gallery",
-      "title": "Artemis II - Moon Flyby April 6, 2026",
-      "filename": "artemis_ii_20260407_moon_2306_close_encounter_gallery.json",
-      "category": "missions",
-      "category_label": "Missions",
-      "description": "Artemis II - Moon Flyby April 6, 2026",
-      "size_kb": 913.1,
-      "converted": "2026-04-06 00:59",
-      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-06 00:59",
-  "total_count": 158
+  "last_updated": "2026-04-05 04:46",
+  "total_count": 157
 }
