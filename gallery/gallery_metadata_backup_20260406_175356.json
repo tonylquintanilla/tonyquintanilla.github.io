@@ -1950,16 +1950,15 @@
       "subcategory_label": "Comets"
     },
     {
-      "id": "artemis_ii_20260407_moon_2306_close_encounter2_mobile",
-      "title": "Artemis II - Mission April 2-11, 2026",
-      "filename": "artemis_ii_20260407_moon_2306_close_encounter2_mobile.json",
+      "id": "voyager1_2_social_view_20260210_2337",
+      "title": "Voyager 1 and 2 Missions on 2026 02 10 23:37",
+      "filename": "voyager1_2_social_view_20260210_2337.json",
       "category": "missions",
       "category_label": "Missions",
-      "description": "Artemis II - Mission April 2-11, 2026",
-      "size_kb": 11826.2,
-      "converted": "2026-04-06 17:49",
+      "description": "Voyager 1 and 2 mission from launch through the present.",
       "mode": "portrait",
-      "featured": true
+      "size_kb": 1469.3,
+      "converted": "2026-02-10 23:40"
     },
     {
       "id": "artemis_ii_20260407_moon_2306_close_encounter_gallery",
@@ -1974,29 +1973,6 @@
       "featured": true
     },
     {
-      "id": "voyager1_2_social_view_20260210_2337",
-      "title": "Voyager 1 and 2 Missions on 2026 02 10 23:37",
-      "filename": "voyager1_2_social_view_20260210_2337.json",
-      "category": "missions",
-      "category_label": "Missions",
-      "description": "Voyager 1 and 2 mission from launch through the present.",
-      "mode": "portrait",
-      "size_kb": 1469.3,
-      "converted": "2026-02-10 23:40"
-    },
-    {
-      "id": "artemis_ii_20260407_moon_2306_close_encounter2_gallery",
-      "title": "Artemis II - Mission April 2-11, 2026",
-      "filename": "artemis_ii_20260407_moon_2306_close_encounter2_gallery.json",
-      "category": "missions",
-      "category_label": "Missions",
-      "description": "Artemis II - Mission April 2-11, 2026",
-      "size_kb": 7554.9,
-      "converted": "2026-04-06 17:49",
-      "mode": "landscape",
-      "featured": true
-    },
-    {
       "id": "new_horizons_full_mission_20060120_20200101_mobile",
       "title": "New Horizons mission 2006 to 2020",
       "filename": "new_horizons_full_mission_20060120_20200101_mobile.json",
@@ -2006,18 +1982,6 @@
       "size_kb": 1413.7,
       "converted": "2026-03-14 20:57",
       "mode": "portrait"
-    },
-    {
-      "id": "artemis_moon_animation_20260406",
-      "title": "Artemis II - Mission April 2-11, 2026 animated",
-      "filename": "artemis_moon_animation_20260406.json",
-      "category": "missions",
-      "category_label": "Missions",
-      "description": "Artemis II - Mission April 2-11, 2026 animated",
-      "size_kb": 4390.6,
-      "converted": "2026-04-06 17:50",
-      "mode": "landscape",
-      "featured": true
     },
     {
       "id": "new_horizons_full_mission_20060120_20200101",
@@ -2051,8 +2015,41 @@
       "size_kb": 8413.3,
       "converted": "2026-03-15 00:56",
       "mode": "landscape"
+    },
+    {
+      "id": "artemis_moon_animation_20260406",
+      "title": "Artemis II - Mission April 2-11, 2026 animated",
+      "filename": "artemis_moon_animation_20260406.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II - Mission April 2-11, 2026 animated",
+      "size_kb": 4390.6,
+      "converted": "2026-04-06 17:50",
+      "mode": "landscape"
+    },
+    {
+      "id": "artemis_ii_20260407_moon_2306_close_encounter2_mobile",
+      "title": "Artemis II - Mission April 2-11, 2026",
+      "filename": "artemis_ii_20260407_moon_2306_close_encounter2_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II - Mission April 2-11, 2026",
+      "size_kb": 11826.2,
+      "converted": "2026-04-06 17:49",
+      "mode": "portrait"
+    },
+    {
+      "id": "artemis_ii_20260407_moon_2306_close_encounter2_gallery",
+      "title": "Artemis II - Mission April 2-11, 2026",
+      "filename": "artemis_ii_20260407_moon_2306_close_encounter2_gallery.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II - Mission April 2-11, 2026",
+      "size_kb": 7554.9,
+      "converted": "2026-04-06 17:49",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-06 17:53",
+  "last_updated": "2026-04-06 17:50",
   "total_count": 165
 }
