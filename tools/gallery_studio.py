@@ -1153,10 +1153,35 @@ def apply_config(fig_dict, config):
 
     # Strip hidden traces if requested (reduces file size)
     if config.get('strip_hidden_traces', False) and visibility:
-        fig['data'] = [
-            t for t in fig.get('data', [])
-            if visibility.get(t.get('name', ''), True) is not False
+        original_data = fig.get('data', [])
+        keep_mask = [
+            visibility.get(t.get('name', ''), True) is not False
+            for t in original_data
         ]
+        fig['data'] = [t for t, keep in zip(original_data, keep_mask) if keep]
+
+        # Remap frame trace indices to match new positions
+        # old_idx -> new_idx for kept traces; stripped traces map to None
+        old_to_new = {}
+        new_idx = 0
+        for old_idx, keep in enumerate(keep_mask):
+            if keep:
+                old_to_new[old_idx] = new_idx
+                new_idx += 1
+
+        for frame in fig.get('frames', []):
+            old_traces = frame.get('traces', [])
+            old_frame_data = frame.get('data', [])
+            if old_traces:
+                new_traces = []
+                new_frame_data = []
+                for i, old_t in enumerate(old_traces):
+                    if old_t in old_to_new:
+                        new_traces.append(old_to_new[old_t])
+                        if i < len(old_frame_data):
+                            new_frame_data.append(old_frame_data[i])
+                frame['traces'] = new_traces
+                frame['data'] = new_frame_data
 
     # ---- Trace modifications ----
     marker_boost = config.get('marker_size_boost', 0)
