@@ -2051,8 +2051,19 @@
       "size_kb": 8413.3,
       "converted": "2026-03-15 00:56",
       "mode": "landscape"
+    },
+    {
+      "id": "sun_system_animation_20260407_0032_gallery",
+      "title": "test animation",
+      "filename": "sun_system_animation_20260407_0032_gallery.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "test animation",
+      "size_kb": 339.5,
+      "converted": "2026-04-07 01:07",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-06 17:53",
-  "total_count": 165
+  "last_updated": "2026-04-07 01:07",
+  "total_count": 166
 }

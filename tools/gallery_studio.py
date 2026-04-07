@@ -450,6 +450,45 @@ def _match_bracket(text, start, open_char, close_char):
     return -1
 
 
+def _extract_frames_from_html(html_content):
+    """Extract animation frames from HTML, checking both formats.
+    
+    Format 1: var frames = [...]  (Gallery Studio re-exports)
+    Format 2: Plotly.addFrames('id', [...])  (Plotly write_html output)
+    
+    Returns list of frames, or empty list if none found.
+    """
+    frames = []
+    
+    # Format 1: var frames = [...]
+    frames_match = re.search(r'var\s+frames\s*=\s*\[', html_content)
+    if frames_match:
+        fb_start = frames_match.end() - 1
+        frames_end = _match_bracket(html_content, fb_start, '[', ']')
+        if frames_end > 0:
+            try:
+                frames = json.loads(html_content[fb_start:frames_end])
+            except json.JSONDecodeError:
+                pass
+    
+    # Format 2: Plotly.addFrames('id', [...])
+    if not frames:
+        add_idx = html_content.find('Plotly.addFrames(')
+        if add_idx >= 0:
+            rest = html_content[add_idx + len('Plotly.addFrames('):]
+            # Skip to the first [ (past the div ID argument)
+            bracket_pos = rest.find('[')
+            if bracket_pos >= 0:
+                frames_end = _match_bracket(rest, bracket_pos, '[', ']')
+                if frames_end > 0:
+                    try:
+                        frames = json.loads(rest[bracket_pos:frames_end])
+                    except json.JSONDecodeError:
+                        pass
+    
+    return frames
+
+
 def extract_figure_from_html(html_path):
     """
     Extract Plotly figure dict from an HTML file.
@@ -468,22 +507,23 @@ def extract_figure_from_html(html_path):
         with open(html_path, 'r', encoding='latin-1') as f:
             html_content = f.read()
 
-    # Method 1: Plotly.newPlot("id", [data], {layout})
+    # Try extraction methods in order
     result = _extract_newplot(html_content)
-    if result:
-        return result
+    if not result:
+        result = _extract_variables(html_content)
+    if not result:
+        result = _extract_react(html_content)
+    if not result:
+        return None
 
-    # Method 2: Social media view format (var data = ...; var layout = ...;)
-    result = _extract_variables(html_content)
-    if result:
-        return result
+    # ALWAYS attempt frames extraction after any successful method
+    # Frames may exist as var frames = [...] or Plotly.addFrames('id', [...])
+    if 'frames' not in result:
+        frames = _extract_frames_from_html(html_content)
+        if frames:
+            result['frames'] = frames
 
-    # Method 3: Plotly.react()
-    result = _extract_react(html_content)
-    if result:
-        return result
-
-    return None
+    return result
 
 
 def _extract_newplot(html_content):
