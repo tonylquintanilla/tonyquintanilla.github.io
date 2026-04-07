@@ -2070,8 +2070,8 @@
       "category": "missions",
       "category_label": "Missions",
       "description": "Artemis II - Moon Flyby April 2-11, 2026",
-      "size_kb": 15325.4,
-      "converted": "2026-04-07 02:30",
+      "size_kb": 14906.2,
+      "converted": "2026-04-07 02:41",
       "mode": "portrait"
     },
     {
@@ -2086,6 +2086,6 @@
       "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-07 02:31",
+  "last_updated": "2026-04-07 02:41",
   "total_count": 168
 }
