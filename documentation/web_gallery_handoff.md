@@ -1328,11 +1328,12 @@ live in the studio. Remaining work:
    Testing with inconsistent data made it hard to distinguish gallery viewer
    bugs from data format issues. Decision: rebuild gallery systematically.
 
-4. **Animation not yet supported**: json_converter.py extracts only `data`
-   and `layout`. Plotly animated figures also have `frames` (injected via
-   `Plotly.addFrames()` in the HTML). The gallery viewer's `Plotly.newPlot()`
-   call does not pass frames. Both need targeted additions -- a few lines
-   each. Deferred until static plots are solid.
+4. **Animation support** (Session 13 shipped frames pipeline; Session 32
+   fixed extraction and strip-trace bugs): Frames now flow through the
+   full pipeline. **Remaining caveat**: stripping hidden traces
+   (`strip_hidden_traces`) in animated plots requires frame trace-index
+   remapping (Session 32 fix). Without the remap, stripped portrait
+   exports animate the wrong traces. See Session 32 for the fix pattern.
 
 5. **Mobile legend repositioning**: ~~The horizontal legend override
    (orientation: 'h', y: 1.02) on screens <1024px may conflict with titles
@@ -4160,4 +4161,172 @@ if (_initScene[ax].dtick != null) {
   functions modify. Camera + range without dtick leaves the grid in the
   wrong state. Pattern: any property set in the "go" function must have
   a corresponding restore in the "reset" function.
+
+
+### Session 32 (Apr 7, 2026): Animation Pipeline Fixes -- Frame Extraction & Trace Index Remapping
+
+Four bugs found and fixed while testing animation plots through the
+gallery pipeline. Mercury orbit (5 frames) and Artemis II Moon flyby
+(10 frames) used as test cases. All fixes applied and verified.
+
+**Bug 1: Gallery Studio drops frames from fresh orrery exports**
+
+`extract_figure_from_html()` tries `_extract_newplot` first. Fresh orrery
+HTML uses `Plotly.newPlot()` for data+layout and a separate
+`Plotly.addFrames()` call for frames. `_extract_newplot` succeeds on
+data+layout and returns immediately -- frames extraction code only existed
+inside `_extract_variables`, which never runs.
+
+Root cause: Session 13 documented this exact bug and described the fix
+("restructured to extract data/layout first via any method, then always
+attempt frames extraction afterward") but the restructure was only
+partially applied. Frames extraction was added to `_extract_variables`
+but the parent function still early-returned from `_extract_newplot`.
+
+Why it passed Session 13 testing: Paloma's Birthday was tested as a
+round-trip (Studio re-export), which uses `var data/layout/frames` format.
+`_extract_newplot` fails on re-exports (no `Plotly.newPlot` call with
+inline args), so `_extract_variables` runs and finds frames. First-time
+imports from the orrery were never tested.
+
+Fix: New `_extract_frames_from_html()` helper function (handles both
+`var frames = [...]` and `Plotly.addFrames('id', [...])` formats).
+`extract_figure_from_html()` restructured: try all methods for
+data+layout, then ALWAYS attempt frames extraction on the raw HTML
+before returning.
+
+**Bug 2: json_converter.py has the same early-return bug**
+
+`extract_plotly_json_from_html()` in json_converter.py had identical
+structure: `_extract_via_newplot` succeeds, returns without frames,
+`_extract_via_variables` (which could find `var frames`) never runs.
+Same fix pattern: add `_extract_frames_from_html()` and call it after
+any successful extraction method.
+
+Parallel pipeline lesson: fix in gallery_studio.py didn't propagate to
+json_converter.py. Both extractors need the same frames logic.
+
+**Bug 3: Stripping hidden traces breaks animation frame indices**
+
+Plotly frames carry a `traces` array that maps frame.data entries to
+absolute fig.data indices (e.g., `traces: [5,6,7,8,9]` means
+frame.data[0] updates fig.data[5]). When `strip_hidden_traces` removes
+traces from fig.data, the absolute indices in frames become wrong --
+they point past the end of the shortened array or at the wrong traces.
+
+Symptom: Artemis II landscape (14 traces, no strip) animates correctly.
+Portrait (9 traces, 5 stripped) -- slider works but Artemis and Earth
+markers don't move. The frame updates target indices that no longer
+exist.
+
+Fix: After stripping traces in `apply_config`, build old-index-to-new-
+index map and remap every frame's `traces` array. Also drop frame.data
+entries for stripped traces:
+
+```python
+old_to_new = {}
+new_idx = 0
+for old_idx, keep in enumerate(keep_mask):
+    if keep:
+        old_to_new[old_idx] = new_idx
+        new_idx += 1
+
+for frame in fig.get('frames', []):
+    old_traces = frame.get('traces', [])
+    old_frame_data = frame.get('data', [])
+    if old_traces:
+        new_traces = []
+        new_frame_data = []
+        for i, old_t in enumerate(old_traces):
+            if old_t in old_to_new:
+                new_traces.append(old_to_new[old_t])
+                if i < len(old_frame_data):
+                    new_frame_data.append(old_frame_data[i])
+        frame['traces'] = new_traces
+        frame['data'] = new_frame_data
+```
+
+**Bug 4: HTML annotations with mixed plain text + anchor tags**
+
+`_wrapAnnotations()` in index.html word-wraps annotation text by
+splitting on spaces. Its skip condition (`/^<[^>]+>.*<\/[^>]+>$/`)
+only passes through segments that are *entirely* an HTML tag. Mixed
+content like `"Search: <a href='...'>NASA</a>"` falls through to
+word-splitting, which breaks the anchor tag across lines.
+
+Symptom: `animate_objects` annotations use prefixed links ("Search:",
+"Data source:") while `plot_objects` uses bare links. In landscape
+gallery view, the raw HTML tags render as text instead of clickable
+links.
+
+Note: In portrait exports, these annotations are stripped entirely by
+the portrait preset (`strip_footer_annotations`). That's by design --
+the portrait info panel replaces the annotation-based links. The
+`_wrapAnnotations` bug only manifests in landscape gallery view.
+
+Fix: Change the skip condition on line 1644 of index.html to detect
+any HTML tag presence:
+```javascript
+if (!seg.trim() || /<[a-zA-Z]/.test(seg)) return seg;
+```
+
+**Also noted (not a pipeline bug):**
+
+`animate_objects` is missing two of the four standard link annotations
+(Paloma's Orrery Web Site and GitHub Page) that `plot_objects` includes.
+Parallel pipeline divergence in `palomas_orrery.py` -- the annotations
+block at line ~7202 has only NASA + Horizons, while `plot_objects` at
+line ~5349 has all four. Fix: add the two missing annotations to the
+`animate_objects` block.
+
+**Files modified:**
+- `gallery_studio.py`: New `_extract_frames_from_html()` function,
+  restructured `extract_figure_from_html()` to always attempt frames
+  after data+layout extraction. Frame trace-index remapping after
+  `strip_hidden_traces` in `apply_config()`.
+- `json_converter.py`: Same `_extract_frames_from_html()` function and
+  restructured `extract_plotly_json_from_html()`.
+- `index.html`: `_wrapAnnotations()` skip condition updated to preserve
+  any segment containing HTML tags.
+- `palomas_orrery.py` (pending): Two missing link annotations in
+  `animate_objects` annotations block.
+
+**Validation:**
+- Mercury 5-frame animation: Studio preview, Studio export, JSON
+  conversion, gallery landscape -- all animate correctly.
+- Artemis II 10-frame animation: Studio landscape (14 traces) and
+  portrait (9 traces, 5 stripped) both exported. Landscape works in
+  gallery. Portrait requires the frame trace-index remap fix.
+
+---
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Frame extraction location | Standalone helper called from parent, not embedded in individual methods | Runs regardless of which extraction method succeeded |
+| Two formats for frames | `var frames = [...]` + `Plotly.addFrames('id', [...])` | Studio re-exports use format 1, fresh orrery exports use format 2 |
+| Duplicate helper in two files | Same function in gallery_studio.py and json_converter.py | Each file has its own `_match_bracket`; keeping extractors self-contained |
+| strip_hidden_traces + frames | Remap indices inline after strip | Frame indices are absolute; must track what shifted |
+| HTML tag detection in _wrapAnnotations | `/<[a-zA-Z]/` test | Catches both bare links and prefixed links; plain text passes through to word-wrap |
+| animate_objects missing links | Add to palomas_orrery.py | Same parallel divergence pattern -- two code paths that should have same annotations |
+
+---
+
+**Technical Lessons Learned:**
+
+- Testing round-trips (Studio -> export -> Studio) validates one input
+  format but misses first-time imports from the source application.
+  Both paths must be tested independently.
+
+- Frame trace indexing is absolute, not by name. Any operation that
+  changes the number or order of traces (strip, reorder, filter) must
+  remap frame.traces arrays. This is the same class of bug as hover
+  customdata index mismatches.
+
+- Word-wrapping annotation text is dangerous when annotations contain
+  HTML. The safe pattern is to skip any segment that contains HTML tags,
+  not just segments that are purely HTML.
+
+- "Works in landscape, breaks in portrait" often means the portrait
+  pipeline does something extra (strip, route, resize) that the
+  landscape pipeline doesn't. The difference IS the bug.
 
