@@ -49,18 +49,6 @@
       "featured": true
     },
     {
-      "id": "artemis_moon_animation_20260406_gallery_copy",
-      "title": "Artemis II - Moon Flyby April 2-11, 2026, animated",
-      "filename": "artemis_moon_animation_20260406_gallery.json",
-      "category": "featured",
-      "category_label": "Featured",
-      "description": "Artemis II - Moon Flyby April 2-11, 2026",
-      "size_kb": 11496.9,
-      "converted": "2026-04-07 02:31",
-      "mode": "landscape",
-      "featured": true
-    },
-    {
       "id": "3iatlas_jupiter_20260316_1222_copy2",
       "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "filename": "3iatlas_jupiter_20260316_1222.json",
@@ -491,18 +479,6 @@
       "description": "Artemis II - Moon Flyby April 6, 2026",
       "size_kb": 788.3,
       "converted": "2026-04-06 00:59",
-      "mode": "portrait",
-      "featured": true
-    },
-    {
-      "id": "artemis_moon_animation_20260406_mobile_copy",
-      "title": "Artemis II - Moon Flyby April 2-11, 2026, animated",
-      "filename": "artemis_moon_animation_20260406_mobile.json",
-      "category": "featured",
-      "category_label": "Featured",
-      "description": "Artemis II - Moon Flyby April 2-11, 2026",
-      "size_kb": 14906.2,
-      "converted": "2026-04-07 02:41",
       "mode": "portrait",
       "featured": true
     },
@@ -1998,16 +1974,15 @@
       "featured": true
     },
     {
-      "id": "artemis_moon_animation_20260406_mobile",
-      "title": "Artemis II - Moon Flyby April 2-11, 2026, animated",
-      "filename": "artemis_moon_animation_20260406_mobile.json",
+      "id": "voyager1_2_social_view_20260210_2337",
+      "title": "Voyager 1 and 2 Missions on 2026 02 10 23:37",
+      "filename": "voyager1_2_social_view_20260210_2337.json",
       "category": "missions",
       "category_label": "Missions",
-      "description": "Artemis II - Moon Flyby April 2-11, 2026",
-      "size_kb": 14906.2,
-      "converted": "2026-04-07 02:41",
+      "description": "Voyager 1 and 2 mission from launch through the present.",
       "mode": "portrait",
-      "featured": true
+      "size_kb": 1469.3,
+      "converted": "2026-02-10 23:40"
     },
     {
       "id": "artemis_ii_20260407_moon_2306_close_encounter2_gallery",
@@ -2022,29 +1997,6 @@
       "featured": true
     },
     {
-      "id": "voyager1_2_social_view_20260210_2337",
-      "title": "Voyager 1 and 2 Missions on 2026 02 10 23:37",
-      "filename": "voyager1_2_social_view_20260210_2337.json",
-      "category": "missions",
-      "category_label": "Missions",
-      "description": "Voyager 1 and 2 mission from launch through the present.",
-      "mode": "portrait",
-      "size_kb": 1469.3,
-      "converted": "2026-02-10 23:40"
-    },
-    {
-      "id": "artemis_moon_animation_20260406_gallery",
-      "title": "Artemis II - Moon Flyby April 2-11, 2026, animated",
-      "filename": "artemis_moon_animation_20260406_gallery.json",
-      "category": "missions",
-      "category_label": "Missions",
-      "description": "Artemis II - Moon Flyby April 2-11, 2026",
-      "size_kb": 11496.9,
-      "converted": "2026-04-07 02:31",
-      "mode": "landscape",
-      "featured": true
-    },
-    {
       "id": "new_horizons_full_mission_20060120_20200101_mobile",
       "title": "New Horizons mission 2006 to 2020",
       "filename": "new_horizons_full_mission_20060120_20200101_mobile.json",
@@ -2054,6 +2006,18 @@
       "size_kb": 1413.7,
       "converted": "2026-03-14 20:57",
       "mode": "portrait"
+    },
+    {
+      "id": "artemis_moon_animation_20260406",
+      "title": "Artemis II - Mission April 2-11, 2026 animated",
+      "filename": "artemis_moon_animation_20260406.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II - Mission April 2-11, 2026 animated",
+      "size_kb": 4390.6,
+      "converted": "2026-04-06 17:50",
+      "mode": "landscape",
+      "featured": true
     },
     {
       "id": "new_horizons_full_mission_20060120_20200101",
@@ -2087,8 +2051,41 @@
       "size_kb": 8413.3,
       "converted": "2026-03-15 00:56",
       "mode": "landscape"
+    },
+    {
+      "id": "sun_system_animation_20260407_0032_gallery",
+      "title": "animation test",
+      "filename": "sun_system_animation_20260407_0032_gallery.json",
+      "category": "other",
+      "category_label": "Other",
+      "description": "animation test",
+      "size_kb": 1991.7,
+      "converted": "2026-04-07 01:29",
+      "mode": "landscape"
+    },
+    {
+      "id": "artemis_moon_animation_20260406_mobile",
+      "title": "Artemis II - Moon Flyby April 2-11, 2026",
+      "filename": "artemis_moon_animation_20260406_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II - Moon Flyby April 2-11, 2026",
+      "size_kb": 14906.2,
+      "converted": "2026-04-07 02:41",
+      "mode": "portrait"
+    },
+    {
+      "id": "artemis_moon_animation_20260406_gallery",
+      "title": "Artemis II - Moon Flyby April 2-11, 2026",
+      "filename": "artemis_moon_animation_20260406_gallery.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II - Moon Flyby April 2-11, 2026",
+      "size_kb": 11496.9,
+      "converted": "2026-04-07 02:31",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-07 03:04",
+  "last_updated": "2026-04-07 02:41",
   "total_count": 168
 }
