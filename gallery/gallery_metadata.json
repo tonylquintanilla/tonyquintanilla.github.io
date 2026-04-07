@@ -2062,8 +2062,30 @@
       "size_kb": 1991.7,
       "converted": "2026-04-07 01:29",
       "mode": "landscape"
+    },
+    {
+      "id": "artemis_moon_animation_20260406_mobile",
+      "title": "Artemis II - Moon Flyby April 2-11, 2026",
+      "filename": "artemis_moon_animation_20260406_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II - Moon Flyby April 2-11, 2026",
+      "size_kb": 15031.1,
+      "converted": "2026-04-07 02:02",
+      "mode": "portrait"
+    },
+    {
+      "id": "artemis_moon_animation_20260406_gallery",
+      "title": "Artemis II - Moon Flyby April 2-11, 2026",
+      "filename": "artemis_moon_animation_20260406_gallery.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Artemis II - Moon Flyby April 2-11, 2026",
+      "size_kb": 11496.9,
+      "converted": "2026-04-07 02:02",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-07 01:29",
-  "total_count": 166
+  "last_updated": "2026-04-07 02:02",
+  "total_count": 168
 }
