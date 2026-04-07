@@ -92,6 +92,44 @@ CATEGORIES = _load_categories()
 # HTML -> JSON EXTRACTION
 # ============================================================================
 
+def _extract_frames_from_html(html_content):
+    """Extract animation frames from HTML, checking both formats.
+    
+    Format 1: var frames = [...]  (Gallery Studio re-exports)
+    Format 2: Plotly.addFrames('id', [...])  (Plotly write_html output)
+    
+    Returns list of frames, or empty list if none found.
+    """
+    frames = []
+    
+    # Format 1: var frames = [...]
+    frames_match = re.search(r'var\s+frames\s*=\s*\[', html_content)
+    if frames_match:
+        fb_start = frames_match.end() - 1
+        frames_end = _match_bracket(html_content, fb_start, '[', ']')
+        if frames_end > 0:
+            try:
+                frames = json.loads(html_content[fb_start:frames_end])
+            except json.JSONDecodeError:
+                pass
+    
+    # Format 2: Plotly.addFrames('id', [...])
+    if not frames:
+        add_idx = html_content.find('Plotly.addFrames(')
+        if add_idx >= 0:
+            rest = html_content[add_idx + len('Plotly.addFrames('):]
+            bracket_pos = rest.find('[')
+            if bracket_pos >= 0:
+                frames_end = _match_bracket(rest, bracket_pos, '[', ']')
+                if frames_end > 0:
+                    try:
+                        frames = json.loads(rest[bracket_pos:frames_end])
+                    except json.JSONDecodeError:
+                        pass
+    
+    return frames
+
+
 def extract_plotly_json_from_html(html_path):
     """
     Extract Plotly figure JSON from an HTML file.
@@ -115,24 +153,24 @@ def extract_plotly_json_from_html(html_path):
         with open(html_path, 'r', encoding='latin-1') as f:
             html_content = f.read()
 
-    # Primary method: Find Plotly.newPlot() and bracket-match the arguments
-    # This handles Plotly's heavy whitespace padding reliably
+    # Try extraction methods in order
     result = _extract_via_newplot(html_content)
-    if result:
-        return result
+    if not result:
+        result = _extract_via_react(html_content)
+    if not result:
+        result = _extract_via_variables(html_content)
+    if not result:
+        print("  ERROR: Could not find Plotly figure data in HTML")
+        return None
 
-    # Fallback: Try Plotly.react() format
-    result = _extract_via_react(html_content)
-    if result:
-        return result
+    # ALWAYS attempt frames extraction after any successful method
+    if 'frames' not in result:
+        frames = _extract_frames_from_html(html_content)
+        if frames:
+            result['frames'] = frames
+            print(f"  Found {len(frames)} animation frames")
 
-    # Fallback: Try var data = ...; var layout = ...; format
-    result = _extract_via_variables(html_content)
-    if result:
-        return result
-
-    print("  ERROR: Could not find Plotly figure data in HTML")
-    return None
+    return result
 
 
 def _match_bracket(text, start, open_char, close_char):

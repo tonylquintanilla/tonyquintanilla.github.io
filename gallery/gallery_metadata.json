@@ -2054,16 +2054,16 @@
     },
     {
       "id": "sun_system_animation_20260407_0032_gallery",
-      "title": "test animation",
+      "title": "animation test",
       "filename": "sun_system_animation_20260407_0032_gallery.json",
       "category": "other",
       "category_label": "Other",
-      "description": "test animation",
-      "size_kb": 339.5,
-      "converted": "2026-04-07 01:07",
+      "description": "animation test",
+      "size_kb": 1991.7,
+      "converted": "2026-04-07 01:29",
       "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-07 01:07",
+  "last_updated": "2026-04-07 01:29",
   "total_count": 166
 }
