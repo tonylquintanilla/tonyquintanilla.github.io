@@ -1641,7 +1641,7 @@
                 if (!a.text) return a;
                 var segments = a.text.split(/<br\s*\/?>/i);
                 var wrapped = segments.map(function(seg) {
-                    if (!seg.trim() || /^<[^>]+>.*<\/[^>]+>$/.test(seg.trim())) return seg;
+                    if (!seg.trim() || /<[a-zA-Z]/.test(seg)) return seg;
                     var words = seg.split(' ');
                     var lines = [], line = '';
                     for (var i = 0; i < words.length; i++) {
