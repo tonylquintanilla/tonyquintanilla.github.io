@@ -114,16 +114,19 @@ def _extract_frames_from_html(html_content):
                 pass
     
     # Format 2: Plotly.addFrames('id', [...])
+    # The array must follow immediately after the div ID argument (within 50 chars).
+    # A [  appearing hundreds of chars later is JS code, not a frames array.
     if not frames:
         add_idx = html_content.find('Plotly.addFrames(')
         if add_idx >= 0:
             rest = html_content[add_idx + len('Plotly.addFrames('):]
             bracket_pos = rest.find('[')
-            if bracket_pos >= 0:
+            if bracket_pos >= 0 and bracket_pos < 50:
                 frames_end = _match_bracket(rest, bracket_pos, '[', ']')
                 if frames_end > 0:
                     try:
-                        frames = json.loads(rest[bracket_pos:frames_end])
+                        parsed = json.loads(rest[bracket_pos:frames_end])
+                        frames = [f for f in parsed if isinstance(f, dict)]
                     except json.JSONDecodeError:
                         pass
     
@@ -495,6 +498,8 @@ def convert_html_to_gallery_json(html_path, output_folder=None, category="other"
         for trace in fig_dict.get('data', []):
             trace.pop('_original_text', None)
         for frame in fig_dict.get('frames', []):
+            if not isinstance(frame, dict):
+                continue
             for trace in frame.get('data', []):
                 trace.pop('_original_text', None)
         json.dump(fig_dict, f)
