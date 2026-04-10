@@ -2187,8 +2187,30 @@
       "subcategory": "heatdome",
       "subcategory_label": "Western Heat Dome (landscape mode)",
       "featured": true
+    },
+    {
+      "id": "maps_disintegration_20260403_07_structures_mobile",
+      "title": "MAPS Disintegration April 4, 2026",
+      "filename": "maps_disintegration_20260403_07_structures_mobile.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "MAPS Disintegration April 4, 2026",
+      "size_kb": 3579.4,
+      "converted": "2026-04-10 17:51",
+      "mode": "portrait"
+    },
+    {
+      "id": "maps_disintegration_20260403_07_structures_gallery",
+      "title": "MAPS Disintegration April 4, 2026",
+      "filename": "maps_disintegration_20260403_07_structures_gallery.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "MAPS Disintegration April 4, 2026",
+      "size_kb": 3126.2,
+      "converted": "2026-04-10 17:52",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-08 00:39",
-  "total_count": 176
+  "last_updated": "2026-04-10 17:52",
+  "total_count": 178
 }
