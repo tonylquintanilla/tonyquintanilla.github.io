@@ -85,18 +85,6 @@
       "featured": true
     },
     {
-      "id": "maps_disintegration_20260403_07_structures_gallery_copy",
-      "title": "MAPS Disintegration April 4, 2026",
-      "filename": "maps_disintegration_20260403_07_structures_gallery.json",
-      "category": "featured",
-      "category_label": "Featured",
-      "description": "MAPS Disintegration April 4, 2026",
-      "size_kb": 3126.2,
-      "converted": "2026-04-10 17:52",
-      "mode": "landscape",
-      "featured": true
-    },
-    {
       "id": "inner_solar_system_animation_2-4-2005_21_years_social_copy2_copy",
       "title": "Inner Solar System Animation 2-4-2005 for 21 Years",
       "filename": "inner_solar_system_animation_2-4-2005_21_years_social.json",
@@ -313,32 +301,6 @@
       "subcategory_label": "General"
     },
     {
-      "id": "maps_disintegration_20260403_07_structures_gallery",
-      "title": "MAPS Disintegration April 4, 2026",
-      "filename": "maps_disintegration_20260403_07_structures_gallery.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "MAPS Disintegration April 4, 2026",
-      "size_kb": 3126.2,
-      "converted": "2026-04-10 17:52",
-      "mode": "landscape",
-      "featured": true,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
-    },
-    {
-      "id": "orbital_transformation_mercury_20260208",
-      "title": "Orbital Transformation of Mercury 2-8-2026",
-      "filename": "orbital_transformation_mercury_20260208.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "Mercury's orbital elements in the Ecliptic Frame",
-      "size_kb": 70.4,
-      "converted": "2026-02-08 01:01",
-      "subcategory": "general",
-      "subcategory_label": "General"
-    },
-    {
       "id": "3iatlas_jupiter_20260316_1222",
       "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "filename": "3iatlas_jupiter_20260316_1222.json",
@@ -351,6 +313,18 @@
       "subcategory": "comets",
       "subcategory_label": "Comets",
       "featured": true
+    },
+    {
+      "id": "orbital_transformation_mercury_20260208",
+      "title": "Orbital Transformation of Mercury 2-8-2026",
+      "filename": "orbital_transformation_mercury_20260208.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Mercury's orbital elements in the Ecliptic Frame",
+      "size_kb": 70.4,
+      "converted": "2026-02-08 01:01",
+      "subcategory": "general",
+      "subcategory_label": "General"
     },
     {
       "id": "solar_system_20250318_1901",
@@ -386,6 +360,20 @@
       "description": "Comet Wierzchos, perihelion 1-20-2026.",
       "size_kb": 5106.5,
       "converted": "2026-02-26 08:14",
+      "mode": "landscape",
+      "featured": false,
+      "subcategory": "comets",
+      "subcategory_label": "Comets"
+    },
+    {
+      "id": "3iatlas_perihelion_20251029",
+      "title": "3I/ATLAS Perihelion 10-29-2025",
+      "filename": "3iatlas_perihelion_20251029.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS Perihelion 10-29-2025",
+      "size_kb": 3791.1,
+      "converted": "2026-03-16 01:49",
       "mode": "landscape",
       "featured": false,
       "subcategory": "comets",
@@ -505,18 +493,6 @@
       "converted": "2026-02-08 23:35",
       "subcategory": "narrative",
       "subcategory_label": "Narrative"
-    },
-    {
-      "id": "maps_disintegration_20260403_07_structures_mobile_copy",
-      "title": "MAPS Disintegration April 4, 2026",
-      "filename": "maps_disintegration_20260403_07_structures_mobile.json",
-      "category": "featured",
-      "category_label": "Featured",
-      "description": "MAPS Disintegration April 4, 2026",
-      "size_kb": 3579.4,
-      "converted": "2026-04-10 17:51",
-      "mode": "portrait",
-      "featured": true
     },
     {
       "id": "artemis_ii_20260402-0411_mission_mobile_copy",
@@ -847,20 +823,6 @@
       "subcategory_label": "General"
     },
     {
-      "id": "maps_disintegration_20260403_07_structures_mobile",
-      "title": "MAPS Disintegration April 4, 2026",
-      "filename": "maps_disintegration_20260403_07_structures_mobile.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "MAPS Disintegration April 4, 2026",
-      "size_kb": 3579.4,
-      "converted": "2026-04-10 17:51",
-      "mode": "portrait",
-      "subcategory": "comets",
-      "subcategory_label": "Comets",
-      "featured": true
-    },
-    {
       "id": "3iatlas_jupiter_20260316_1222_mobile",
       "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "filename": "3iatlas_jupiter_20260316_1222_mobile.json",
@@ -928,6 +890,19 @@
       "subcategory": "comets",
       "subcategory_label": "Comets",
       "featured": true
+    },
+    {
+      "id": "3iatlas_20250318_20260318_mobile",
+      "title": "3I/ATLAS March 2025 to March 2026",
+      "filename": "3iatlas_20250318_20260318_mobile.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "3I/ATLAS March 2025 to March 2026",
+      "size_kb": 2802.9,
+      "converted": "2026-03-18 19:22",
+      "mode": "portrait",
+      "subcategory": "comets",
+      "subcategory_label": "Comets"
     },
     {
       "id": "inner_solar_system_animation_2-4-2005_21_years_social",
@@ -2029,28 +2004,15 @@
       "featured": true
     },
     {
-      "id": "3iatlas_20250318_20260318_mobile",
-      "title": "3I/ATLAS March 2025 to March 2026",
-      "filename": "3iatlas_20250318_20260318_mobile.json",
+      "id": "halley_perihelion_19860208_mobile",
+      "title": "Comet Halley Perihelion 2-8-1986",
+      "filename": "halley_perihelion_19860208_mobile.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "3I/ATLAS March 2025 to March 2026",
-      "size_kb": 2802.9,
-      "converted": "2026-03-18 19:22",
+      "description": "Comet Halley Perihelion 2-8-1986",
+      "size_kb": 4011.1,
+      "converted": "2026-03-17 00:56",
       "mode": "portrait",
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
-    },
-    {
-      "id": "3iatlas_perihelion_20251029",
-      "title": "3I/ATLAS Perihelion 10-29-2025",
-      "filename": "3iatlas_perihelion_20251029.json",
-      "category": "solar_system",
-      "category_label": "Solar System",
-      "description": "3I/ATLAS Perihelion 10-29-2025",
-      "size_kb": 3791.1,
-      "converted": "2026-03-16 01:49",
-      "mode": "landscape",
       "featured": false,
       "subcategory": "comets",
       "subcategory_label": "Comets"
@@ -2066,6 +2028,20 @@
       "converted": "2026-03-30 08:14",
       "mode": "landscape",
       "featured": true,
+      "subcategory": "comets",
+      "subcategory_label": "Comets"
+    },
+    {
+      "id": "halley_perihelion_19860208",
+      "title": "Comet Halley Perihelion 2-8-1986",
+      "filename": "halley_perihelion_19860208.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet Halley Perihelion 2-8-1986",
+      "size_kb": 3444.5,
+      "converted": "2026-03-17 00:57",
+      "mode": "landscape",
+      "featured": false,
       "subcategory": "comets",
       "subcategory_label": "Comets"
     },
@@ -2213,34 +2189,28 @@
       "featured": true
     },
     {
-      "id": "halley_perihelion_19860208_mobile",
-      "title": "Comet Halley Perihelion 2-8-1986",
-      "filename": "halley_perihelion_19860208_mobile.json",
+      "id": "maps_disintegration_20260403_07_structures_mobile",
+      "title": "MAPS Disintegration April 4, 2026",
+      "filename": "maps_disintegration_20260403_07_structures_mobile.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Comet Halley Perihelion 2-8-1986",
-      "size_kb": 4011.1,
-      "converted": "2026-03-17 00:56",
-      "mode": "portrait",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "description": "MAPS Disintegration April 4, 2026",
+      "size_kb": 3579.4,
+      "converted": "2026-04-10 17:51",
+      "mode": "portrait"
     },
     {
-      "id": "halley_perihelion_19860208",
-      "title": "Comet Halley Perihelion 2-8-1986",
-      "filename": "halley_perihelion_19860208.json",
+      "id": "maps_disintegration_20260403_07_structures_gallery",
+      "title": "MAPS Disintegration April 4, 2026",
+      "filename": "maps_disintegration_20260403_07_structures_gallery.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "Comet Halley Perihelion 2-8-1986",
-      "size_kb": 3444.5,
-      "converted": "2026-03-17 00:57",
-      "mode": "landscape",
-      "featured": false,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "description": "MAPS Disintegration April 4, 2026",
+      "size_kb": 3126.2,
+      "converted": "2026-04-10 17:52",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-10 17:58",
-  "total_count": 180
+  "last_updated": "2026-04-10 17:52",
+  "total_count": 178
 }
