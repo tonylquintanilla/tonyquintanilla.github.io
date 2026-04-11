@@ -946,6 +946,7 @@
             z-index: 350;
             flex-direction: column;
             gap: 6px;
+            max-width: 140px;
         }
 
         .flyto-controls.visible {
@@ -954,7 +955,7 @@
 
         .flyto-btn {
             height: 36px;
-            padding: 0 14px;
+            padding: 0 10px;
             border-radius: 10px;
             border: 1px solid var(--border);
             background: rgba(18, 18, 26, 0.85);
@@ -975,6 +976,15 @@
             user-select: none;
             -webkit-touch-callout: none;
             white-space: nowrap;
+            max-width: 140px;
+            overflow: hidden;
+        }
+
+        .flyto-btn-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
         }
 
         .flyto-btn:active {
@@ -2221,7 +2231,10 @@
                         dot.className = 'flyto-dot';
                         dot.style.background = target.color || 'var(--accent)';
                         btn.appendChild(dot);
-                        btn.appendChild(document.createTextNode(target.name));
+                        var label = document.createElement('span');
+                        label.className = 'flyto-btn-label';
+                        label.textContent = target.name;
+                        btn.appendChild(label);
                         btn.addEventListener('click', function() {
                             var gd = document.getElementById('plotly-graph');
                             if (!gd) return;
