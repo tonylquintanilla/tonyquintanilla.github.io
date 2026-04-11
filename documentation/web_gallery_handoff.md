@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5 - March 8, 2026 | Claude Opus 4.6
+## Session Handoff | February 5 - April 11, 2026 | Claude Opus 4.6
 
 ---
 
@@ -18,7 +18,7 @@ alive. No download, no install, no "is this safe?"
 
 ## Architecture Decided
 
-Current pipeline (as of Session 27):
+Current pipeline (as of Session 34):
 ```
 Desktop App (Python/Plotly)
     |
@@ -45,6 +45,7 @@ Anyone with a browser, any device
 Gallery management:
     gallery_config.json  <-- single source of truth for categories
     gallery_editor.py    <-- GUI for editing metadata, categories, subcategories, ordering
+    gallery_json_fixer.py <-- batch-fix older JSONs for current viewer compatibility
 ```
 
 Target pipeline (Session 12 refactor):
@@ -4455,4 +4456,116 @@ Implementation: `.card-tip` div (`position: fixed/absolute`, `top: 0`,
   internal to Plotly's WebGL touch handling and cannot be fixed by listening
   to different Plotly events — `plotly_click` simply never fires on iPhone
   for 3D scenes in narrow viewports.
+
+
+### Session 34 (Apr 11, 2026): Gallery JSON Fixer
+
+**Context**: Older gallery JSON exports progressively broke as index.html
+evolved -- hover text stopped displaying, info cards didn't appear in
+portrait mode. The alternative was re-running every file through the full
+Gallery Studio -> json_converter pipeline, which requires per-file visual
+judgment. The fixer applies mechanical, non-destructive fixes so older
+visualizations work correctly with the current viewer without re-curation.
+
+**New file: `gallery_json_fixer.py`** (in `tools/` alongside other gallery tools)
+
+A standalone batch tool that scans gallery JSON files and adds missing
+fields the current index.html viewer expects. Zero dependencies on the
+orrery codebase -- contains its own copy of `_parse_hover_html()` so it
+runs anywhere the gallery folder is accessible.
+
+**Three run modes:**
+- Interactive: `python gallery_json_fixer.py` -- file browser, select specific files
+- Batch: `python gallery_json_fixer.py --batch` -- all JSONs in gallery folder
+- Dry run: `python gallery_json_fixer.py --batch --dry-run` -- report only, no writes
+- Optional: `--folder /path/to/gallery` to override auto-detection
+
+**What it fixes (additive only -- never removes existing data):**
+- Strips embedded Plotly template (prevents version mismatch errors)
+- Adds `hovertemplate='%{text}<extra></extra>'` on traces with HTML text
+  that lack it (fixes hover display)
+- Parses `trace.text` HTML into structured `customdata` (name/subtitle/body)
+  for info card support in portrait mode
+- Adds `_hover_mode='default'` to layout when customdata exists (enables
+  info card click handler in portrait mode)
+- Fixes animation frame traces the same way (hovertemplate + customdata)
+- Creates `.json.bak` backups before writing
+- Idempotent: running twice produces no changes on second run
+
+**What it does NOT fix (requires visual judgment / full pipeline):**
+- Theme/bgcolor issues
+- Axis scaling (dtick/range for close-approach plots)
+- Trace visibility curation
+- Legend sizing / positioning
+- Featured annotations
+- Any aesthetic decisions that Gallery Studio handles
+
+**Design decisions:**
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Import hover parser or copy? | Self-contained copy | Zero dependencies on orrery codebase; runs from website repo alone |
+| Destructive or additive? | Additive only | Never removes data; only adds missing fields |
+| Batch or interactive default? | Interactive (file browser) | Matches gallery_editor.py pattern; batch via --batch flag |
+| Backup strategy | One-generation .json.bak | Simple; .gitignore keeps backups out of repo |
+| Dashboard integration | Added to Gallery & Web group | Same GALLERY_TOOLS_DIR, no interactive console needed |
+
+**Test results (Tony's gallery):**
+- 273 files scanned, 55 identified for fixes, 218 already OK, 0 errors
+- Dry run matched actual run (minus 2 files manually fixed during testing)
+- Three categories of fixes observed:
+  - Most common (all 55): `_hover_mode='default'` -- pre-Studio exports lacking the layout flag
+  - Medium (~20 files): customdata parsing -- hover was broken in portrait/mobile mode
+  - Rare (3 files): missing hovertemplate -- oldest exports, most broken
+- TRAPPIST-1 exoplanet system (heaviest test case: 8 traces, all 3 fix types)
+  verified working with info cards in portrait mode after fix
+- Idempotency confirmed: second batch run found 0 files to fix
+
+**Dashboard integration:**
+Added to `palomas_orrery_dashboard.py` LAUNCH_GROUPS["Gallery & Web"]:
+```python
+("Gallery JSON Fixer",
+"gallery_json_fixer.py",
+"Fix older gallery JSON files for current viewer",
+GALLERY_TOOLS_DIR),
+```
+
+**`.gitignore` for website repo:**
+Created `tonyquintanilla.github.io/.gitignore` with `*.json.bak` to
+keep backup files out of the repository.
+
+**Files created:**
+- `gallery_json_fixer.py` (new, in tools/)
+- `.gitignore` (new, in website repo root)
+
+**Files modified:**
+- `palomas_orrery_dashboard.py` (added fixer to Gallery & Web launch group)
+- orrery `.gitignore` (added `*.json.bak`)
+
+---
+
+**Technical Lessons Learned:**
+
+- As index.html evolves, older JSON exports drift out of compatibility.
+  A batch fixer is cheaper than re-curating through the full pipeline,
+  and buys time to re-export at leisure. The fixer is a compression of
+  the pipeline's transforms into additive-only patches.
+
+- Self-contained tools (no cross-repo imports) are more robust for
+  maintenance tasks. The fixer works even if the orrery codebase isn't
+  on the same machine.
+
+- Dry run mode is essential for batch operations on production data.
+  The dry run matched the actual run exactly, building confidence before
+  committing to 273 file modifications.
+
+- `.gitignore` should be created early in any repo that generates
+  artifacts. The website repo had `.gitattributes` but no `.gitignore`,
+  allowing backup files to show up as pending changes in GitHub Desktop.
+
+- Session efficiency: sidebars (product questions, philosophy, "how does
+  X work") should be separate sessions from working sessions. Every
+  message in a session adds to the context that gets replayed on every
+  subsequent response. A fresh session with a good handoff is lighter
+  than a long session carrying accumulated tangent context.
 
