@@ -4330,3 +4330,129 @@ line ~5349 has all four. Fix: add the two missing annotations to the
   pipeline does something extra (strip, route, resize) that the
   landscape pipeline doesn't. The difference IS the bug.
 
+
+### Session 33 (Apr 11, 2026): Flyto Button Truncation + Portrait Touch UX Investigation
+
+**Context**: Two issues surfaced during portrait preview and gallery testing.
+
+---
+
+**Fix 1: Flyto buttons covering zoom +/- buttons in portrait preview**
+
+Long target names caused flyto buttons to extend across the frame and
+overlap the zoom controls (bottom-right). Root cause: no width constraint
+on either the button or its container.
+
+Fix applied to `gallery_studio.py` (preview exports) and `index.html`
+(gallery viewer):
+
+- `.flyto-controls`: added `max-width: 140px`
+- `.flyto-btn`: added `max-width: 140px`, `overflow: hidden`, reduced
+  padding `0 14px → 0 10px`
+- `.flyto-btn-label`: new class (`overflow: hidden; text-overflow: ellipsis;
+  min-width: 0`) wrapping the button text so ellipsis applies to text
+  only, not the color dot
+- Color dot gets `flex-shrink: 0` (already present) so it never disappears
+
+In `gallery_studio.py`, button HTML is generated as an f-string — label
+text wrapped in `<span class="flyto-btn-label">`.
+
+In `index.html`, buttons are built via `document.createElement` — replaced
+`document.createTextNode(target.name)` with a `<span class="flyto-btn-label">`
+element so the CSS has a target.
+
+The 140px cap clears the nav cluster (3 × 36px buttons + gaps ≈ 112px)
+with a small margin. Full name always available on hover via existing
+`title` attribute.
+
+**Note on double-braces**: flyto CSS lives inside a Python f-string in
+`gallery_studio.py`. CSS curly braces must be doubled (`{{`, `}}`) to
+avoid Python interpreting them as f-string variables. Single-brace
+interpolations like `{btn_border}` are actual substitutions. The
+`.flyto-btn-label` rule uses `{{` / `}}` throughout (no interpolated
+values).
+
+**Parallel pipeline note**: flyto CSS in `gallery_studio.py` and
+`index.html` are independent — fix must be applied to both. The JS button
+builder in `index.html` is also a separate path from the HTML template in
+`gallery_studio.py`.
+
+---
+
+**Investigation 2: Portrait info card touch behavior by device**
+
+Mapped actual behavior across three contexts:
+
+| | Desktop preview | iPhone | iPad mini |
+|---|---|---|---|
+| First tap/click | arrow displays | arrow displays | card comes up ✓ |
+| Second tap/click | card comes up | nothing | not required |
+| Swipe up | not possible | card comes up | not required |
+
+Root cause: Plotly's 3D WebGL touch handling treats touch as potentially
+pan/rotate on narrow viewports (iPhone). On first touch it fires
+`plotly_hover` (showing the arrow indicator) but holds back `plotly_click`.
+A deliberate swipe-end near the origin crosses an internal threshold that
+triggers `plotly_click`. iPad mini is wide enough that Plotly commits to
+`plotly_click` on tap-end immediately.
+
+The "swipe up to open card" behavior on iPhone is accidental — it works
+but is not discoverable.
+
+**Attempted fix: persistent device-aware tip bar**
+
+Added a 28px bar at top of frame with device-specific text:
+- Desktop: "Click any object to open its information card"
+- iPhone (<500px): "Tap any object · then swipe up for its information card"
+- iPad / wide touch: "Tap any object to open its information card"
+
+Implementation: `.card-tip` div (`position: fixed/absolute`, `top: 0`,
+`z-index` tuned), text set at runtime via JS device detection
+(`'ontouchstart' in window`, `navigator.maxTouchPoints`,
+`window.innerWidth < 500`).
+
+**Reverted**: Two problems emerged in gallery:
+1. z-index 350 covered the hamburger menu and share button (both z-index 200)
+2. Lowering to z-index 150 hid the bar behind the Plotly title
+
+**Decision**: Tip bar removed entirely from both files. Rationale:
+- iPad mini behavior (card on first tap) is already intuitive
+- iPhone swipe behavior follows iOS native patterns users already know
+- A tip that's hard to see or gets in the way is worse than no tip
+
+**Files modified this session:**
+- `gallery_studio.py`: flyto button max-width + label span (CSS + HTML template)
+- `index.html`: flyto button max-width + label span (CSS + JS builder)
+
+**Files NOT modified (tip bar reverted):**
+- Both files restored to pre-tip state; only flyto fixes remain
+
+---
+
+**Technical Lessons Learned:**
+
+- `max-width` on a flex container must also be set on the children if
+  children can independently exceed it. Set both `.flyto-controls` and
+  `.flyto-btn` to 140px.
+
+- `text-overflow: ellipsis` requires a block or inline-block context with
+  `overflow: hidden` AND `white-space: nowrap`. In a flex child, also
+  requires `min-width: 0` — without it, flex items won't shrink below their
+  content width even with `overflow: hidden`.
+
+- `document.createTextNode()` produces a bare text node with no class —
+  CSS `text-overflow` cannot target it. Must wrap in a `<span>` to apply
+  ellipsis.
+
+- `position: fixed` elements at `top: 0` compete with other fixed UI
+  chrome at the same position. z-index tuning alone cannot solve overlap
+  with Plotly's WebGL canvas (which has its own stacking context). A bar
+  spanning full width at top: 0 will always conflict with hamburger/share
+  buttons at the same corner unless it has a left offset.
+
+- Plotly 3D touch behavior varies by viewport width: narrow (iPhone) fires
+  hover-then-never-click; wide (iPad) fires click on tap-end. This is
+  internal to Plotly's WebGL touch handling and cannot be fixed by listening
+  to different Plotly events — `plotly_click` simply never fires on iPhone
+  for 3D scenes in narrow viewports.
+
