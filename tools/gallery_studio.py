@@ -2398,7 +2398,7 @@ function zoomPlot(dir) {
     flyto_targets = config.get('flyto_targets', [])
     if flyto_targets and has_scene:
         flyto_css = f"""
-  .flyto-controls {{
+    .flyto-controls {{
     position: absolute;
     bottom: 16px;
     left: 16px;
@@ -2406,12 +2406,13 @@ function zoomPlot(dir) {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    max-width: 140px;
     user-select: none;
     -webkit-user-select: none;
   }}
   .flyto-btn {{
     height: 36px;
-    padding: 0 14px;
+    padding: 0 10px;
     border-radius: 6px;
     border: 1px solid {btn_border};
     background: {btn_bg};
@@ -2425,6 +2426,14 @@ function zoomPlot(dir) {
     transition: opacity 0.15s;
     line-height: 1;
     white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+  }}
+  .flyto-btn-label {{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
   }}
   .flyto-btn:hover {{ opacity: 0.8; }}
   .flyto-btn:active {{ opacity: 0.6; }}
@@ -2442,12 +2451,12 @@ function zoomPlot(dir) {
             name = t.get('name', 'Target')
             # Escape for HTML safety
             safe_name = name.replace('&', '&amp;').replace('<', '&lt;').replace('"', '&quot;')
-            buttons_html += (
-                f'  <button class="flyto-btn" onclick="flyToTarget(\'{safe_name}\')" '
-                f'title="Fly to {safe_name}">'
-                f'<span class="flyto-dot" style="background:{color}"></span>'
-                f'{safe_name}</button>\n'
-            )
+        buttons_html += (
+            f'  <button class="flyto-btn" onclick="flyToTarget(\'{safe_name}\')" '
+            f'title="Fly to {safe_name}">'
+            f'<span class="flyto-dot" style="background:{color}"></span>'
+            f'<span class="flyto-btn-label">{safe_name}</span></button>\n'
+        )
         flyto_html = f"""
 <div class="flyto-controls">
 {buttons_html}</div>
@@ -2687,9 +2696,33 @@ function toggleAnnotations() {{
   }
   .tap-hint.visible {
     opacity: 1;
+  }
+  .card-tip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    z-index: 350;
+    background: rgba(18, 18, 26, 0.75);
+    border-bottom: 1px solid rgba(100, 116, 139, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .card-tip-text {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.68rem;
+    color: #64748b;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
   }"""
 
         infocard_html = """
+<div class="card-tip" id="cardTip">
+  <span class="card-tip-text" id="cardTipText"></span>
+</div>
 <div class="info-card" id="infoCard">
   <div class="info-card-handle"></div>
   <div class="info-card-name" id="infoCardName"></div>
@@ -2704,6 +2737,26 @@ function toggleAnnotations() {{
   var _infoCard = document.getElementById('infoCard');
   var _icName = document.getElementById('infoCardName');
   var _icSub = document.getElementById('infoCardSubtitle');
+  var _icBody = document.getElementById('infoCardBody');
+  var _tapHint = document.getElementById('tapHint');
+  var _icShown = false;
+
+  // Device-aware card tip
+  (function() {
+    var tipEl = document.getElementById('cardTipText');
+    if (!tipEl) return;
+    var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    var isNarrow = window.innerWidth < 500;
+    var tip;
+    if (!isTouch) {
+      tip = 'Click any object to open its information card';
+    } else if (isNarrow) {
+      tip = 'Tap any object \u00b7 then swipe up for its information card';
+    } else {
+      tip = 'Tap any object to open its information card';
+    }
+    tipEl.textContent = tip;
+  })();
   var _icBody = document.getElementById('infoCardBody');
   var _tapHint = document.getElementById('tapHint');
   var _icShown = false;
