@@ -848,17 +848,14 @@
     },
     {
       "id": "maps_disintegration_20260403_07_structures_mobile",
-      "title": "MAPS Disintegration April 4, 2026",
+      "title": "MAPS - Disintegration April 4, 2026",
       "filename": "maps_disintegration_20260403_07_structures_mobile.json",
       "category": "solar_system",
       "category_label": "Solar System",
-      "description": "MAPS Disintegration April 4, 2026",
-      "size_kb": 3579.4,
-      "converted": "2026-04-10 17:51",
-      "mode": "portrait",
-      "subcategory": "comets",
-      "subcategory_label": "Comets",
-      "featured": true
+      "description": "MAPS - Disintegration April 4, 2026",
+      "size_kb": 3580.2,
+      "converted": "2026-04-11 00:25",
+      "mode": "portrait"
     },
     {
       "id": "3iatlas_jupiter_20260316_1222_mobile",
@@ -2241,6 +2238,6 @@
       "subcategory_label": "Comets"
     }
   ],
-  "last_updated": "2026-04-10 17:58",
+  "last_updated": "2026-04-11 00:25",
   "total_count": 180
 }
