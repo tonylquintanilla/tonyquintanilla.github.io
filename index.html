@@ -1250,32 +1250,6 @@
             opacity: 1;
         }
 
-        .card-tip {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 28px;
-            z-index: 150;
-            background: rgba(18, 18, 26, 0.75);
-            border-bottom: 1px solid rgba(100, 116, 139, 0.3);
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-        }
-
-        .card-tip.visible {
-            display: flex;
-        }
-
-        .card-tip-text {
-            font-size: 0.68rem;
-            color: var(--text-dim);
-            letter-spacing: 0.03em;
-            white-space: nowrap;
-        }
-
         /* ================================================================
            TOAST NOTIFICATION
            ================================================================ */
@@ -1577,11 +1551,6 @@
     <!-- First-load tap hint (portrait mode) -->
     <div class="tap-hint" id="tapHint">Tap any object for details</div>
 
-    <!-- Persistent card interaction tip (portrait mode, device-aware) -->
-    <div class="card-tip" id="cardTip">
-        <span class="card-tip-text" id="cardTipText"></span>
-    </div>
-
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>
 
@@ -1642,8 +1611,6 @@
         var infoCardSubtitle = document.getElementById('infoCardSubtitle');
         var infoCardBody   = document.getElementById('infoCardBody');
         var tapHint        = document.getElementById('tapHint');
-        var cardTip        = document.getElementById('cardTip');
-        var cardTipText    = document.getElementById('cardTipText');
         var zoomControls   = document.getElementById('zoomControls');
         var zoomInBtn      = document.getElementById('zoomIn');
         var zoomOutBtn     = document.getElementById('zoomOut');
@@ -1999,7 +1966,6 @@
             plotlyGraph.style.display = 'none';
             loadingOverlay.classList.add('visible');
             annToggleBtn.classList.remove('visible');
-            if (cardTip) cardTip.classList.remove('visible');
             annStored = null;
 
             // Close overlay
@@ -2178,22 +2144,6 @@
                                 tapHint.classList.remove('visible');
                             }, 3000);
                         }, 800);
-                    }
-
-                    // Show persistent device-aware card tip
-                    if (cardTip && cardTipText) {
-                        var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-                        var isNarrow = window.innerWidth < 500;
-                        var tip;
-                        if (!isTouch) {
-                            tip = 'Click any object to open its information card';
-                        } else if (isNarrow) {
-                            tip = 'Tap any object \u00b7 then swipe up for its information card';
-                        } else {
-                            tip = 'Tap any object to open its information card';
-                        }
-                        cardTipText.textContent = tip;
-                        cardTip.classList.add('visible');
                     }
                 }
 

@@ -61,7 +61,7 @@
       "featured": true
     },
     {
-      "id": "3iatlas_jupiter_20260316_1222_copy_copy",
+      "id": "3iatlas_jupiter_20260316_1222_copy2",
       "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "filename": "3iatlas_jupiter_20260316_1222.json",
       "category": "featured",
@@ -567,6 +567,18 @@
       "featured": true
     },
     {
+      "id": "3iatlas_jupiter_20260316_1222_copy",
+      "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
+      "filename": "3iatlas_jupiter_20260316_1222.json",
+      "category": "featured",
+      "category_label": "Featured",
+      "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
+      "size_kb": 12271.7,
+      "converted": "2026-03-18 02:30",
+      "mode": "portrait",
+      "featured": true
+    },
+    {
       "id": "c2025k1bcd_perihelion_20251008_mobile_copy",
       "title": "Comet C/2025 K1 Breakup 10-16-2025",
       "filename": "c2025k1bcd_perihelion_20251008_mobile.json",
@@ -575,6 +587,18 @@
       "description": "Comet C/2025 K1 Breakup",
       "size_kb": 5390.7,
       "converted": "2026-03-30 08:14",
+      "mode": "portrait",
+      "featured": true
+    },
+    {
+      "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy_copy",
+      "title": "Inner Solar System Animation 2-4-2005 21 Years",
+      "filename": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape.json",
+      "category": "featured",
+      "category_label": "Featured",
+      "description": "Animation of the inner solar system from 2005 for 21 years.",
+      "size_kb": 10082.0,
+      "converted": "2026-02-17 23:25",
       "mode": "portrait",
       "featured": true
     },
@@ -589,6 +613,18 @@
       "converted": "2026-03-10 00:16",
       "mode": "portrait",
       "featured": true
+    },
+    {
+      "id": "planetary_boundaries_copy",
+      "title": "Planetary Boundaries (Stockholm Resilience Centre)",
+      "filename": "planetary_boundaries.json",
+      "category": "featured",
+      "category_label": "Featured",
+      "description": "Graphic after the Stockholm Resilience Centre's Planetary Boundaries, showing processes that regulate planetary stability.",
+      "size_kb": 13.4,
+      "converted": "2026-02-08 23:37",
+      "featured": true,
+      "mode": "portrait"
     },
     {
       "id": "keeling_curve_co2_concentration_copy2",
@@ -819,10 +855,7 @@
       "description": "MAPS - Disintegration April 4, 2026",
       "size_kb": 3580.2,
       "converted": "2026-04-11 00:25",
-      "mode": "portrait",
-      "subcategory": "comets",
-      "subcategory_label": "Comets",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "3iatlas_jupiter_20260316_1222_mobile",
@@ -2205,6 +2238,6 @@
       "subcategory_label": "Comets"
     }
   ],
-  "last_updated": "2026-04-11 01:47",
-  "total_count": 177
+  "last_updated": "2026-04-11 00:25",
+  "total_count": 180
 }

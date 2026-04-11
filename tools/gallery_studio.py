@@ -2696,33 +2696,9 @@ function toggleAnnotations() {{
   }
   .tap-hint.visible {
     opacity: 1;
-  }
-  .card-tip {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 28px;
-    z-index: 350;
-    background: rgba(18, 18, 26, 0.75);
-    border-bottom: 1px solid rgba(100, 116, 139, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-  }
-  .card-tip-text {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 0.68rem;
-    color: #64748b;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
   }"""
 
         infocard_html = """
-<div class="card-tip" id="cardTip">
-  <span class="card-tip-text" id="cardTipText"></span>
-</div>
 <div class="info-card" id="infoCard">
   <div class="info-card-handle"></div>
   <div class="info-card-name" id="infoCardName"></div>
@@ -2737,26 +2713,6 @@ function toggleAnnotations() {{
   var _infoCard = document.getElementById('infoCard');
   var _icName = document.getElementById('infoCardName');
   var _icSub = document.getElementById('infoCardSubtitle');
-  var _icBody = document.getElementById('infoCardBody');
-  var _tapHint = document.getElementById('tapHint');
-  var _icShown = false;
-
-  // Device-aware card tip
-  (function() {
-    var tipEl = document.getElementById('cardTipText');
-    if (!tipEl) return;
-    var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    var isNarrow = window.innerWidth < 500;
-    var tip;
-    if (!isTouch) {
-      tip = 'Click any object to open its information card';
-    } else if (isNarrow) {
-      tip = 'Tap any object \u00b7 then swipe up for its information card';
-    } else {
-      tip = 'Tap any object to open its information card';
-    }
-    tipEl.textContent = tip;
-  })();
   var _icBody = document.getElementById('infoCardBody');
   var _tapHint = document.getElementById('tapHint');
   var _icShown = false;
