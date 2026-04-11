@@ -1,0 +1,21 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Data files
+*.vot 
+*.pkl
+*.csv
+
+# Plot outputs
+# *.html -- removed to allow tracking of certain html files used for visualization
+*.png
+
+# Backup files added json backup 
+*.json.bak
+*.backup
+*.backup_old
+*_backup
+data/*verify_backup*
+
+
