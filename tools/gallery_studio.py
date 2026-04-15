@@ -706,7 +706,7 @@ def extract_encyclopedia_for_figure(fig_dict):
         dict: {object_name: filtered_info_text} for objects found in INFO
     """
     try:
-        from constants_new import INFO
+        from info_dictionary import INFO
     except ImportError:
         try:
             import sys as _sys
@@ -722,7 +722,7 @@ def extract_encyclopedia_for_figure(fig_dict):
                     if _cand not in _sys.path:
                         _sys.path.insert(0, _cand)
                     break
-            from constants_new import INFO
+            from info_dictionary import INFO
         except ImportError:
             return {}
 
