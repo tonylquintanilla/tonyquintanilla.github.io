@@ -24,6 +24,7 @@ Usage:
     python gallery_studio.py
 
 Author: Tony Quintanilla / Paloma's Orrery
+Module updated: April 2026 with Anthropic's Claude Opus 4.6
 """
 
 import os
@@ -149,7 +150,7 @@ PORTRAIT_CONFIG = {
     "custom_title": "",
     "title_font_scale": 100,
     "title_color": "#f8fafc",
-    "margin_top": 100,
+    "margin_top": 125,
     "margin_bottom": 125,
     "margin_left": 10,
     "margin_right": 10,

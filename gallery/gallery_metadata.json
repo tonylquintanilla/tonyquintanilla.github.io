@@ -2203,8 +2203,30 @@
       "featured": false,
       "subcategory": "comets",
       "subcategory_label": "Comets"
+    },
+    {
+      "id": "panstarrs_20260417_portrait",
+      "title": "Comet PANSTARRS near perihelion",
+      "filename": "panstarrs_20260417_portrait.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet PANSTARRS near perihelion",
+      "size_kb": 3908.7,
+      "converted": "2026-04-17 00:54",
+      "mode": "portrait"
+    },
+    {
+      "id": "panstarrs_20260417_gallery",
+      "title": "Comet PANSTARRS near perihelion",
+      "filename": "panstarrs_20260417_gallery.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet PANSTARRS near perihelion",
+      "size_kb": 3075.2,
+      "converted": "2026-04-17 00:54",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-11 01:47",
-  "total_count": 177
+  "last_updated": "2026-04-17 00:54",
+  "total_count": 179
 }
