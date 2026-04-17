@@ -326,17 +326,14 @@
     },
     {
       "id": "panstarrs_20260417_gallery",
-      "title": "Comet PANSTARRS near perihelion 4-19-2026",
+      "title": "Comet PANSTARRS near perihelion",
       "filename": "panstarrs_20260417_gallery.json",
       "category": "solar_system",
       "category_label": "Solar System",
       "description": "Comet PANSTARRS near perihelion",
       "size_kb": 3074.8,
       "converted": "2026-04-17 01:36",
-      "mode": "landscape",
-      "featured": true,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "mode": "landscape"
     },
     {
       "id": "orbital_transformation_mercury_20260208",
@@ -836,17 +833,14 @@
     },
     {
       "id": "panstarrs_20260417_portrait",
-      "title": "Comet PANSTARRS near perihelion 4-19-2026",
+      "title": "Comet PANSTARRS near perihelion",
       "filename": "panstarrs_20260417_portrait.json",
       "category": "solar_system",
       "category_label": "Solar System",
       "description": "Comet PANSTARRS near perihelion",
       "size_kb": 3908.9,
       "converted": "2026-04-17 01:36",
-      "mode": "portrait",
-      "featured": true,
-      "subcategory": "comets",
-      "subcategory_label": "Comets"
+      "mode": "portrait"
     },
     {
       "id": "maps_disintegration_20260403_07_structures_mobile",
@@ -2257,6 +2251,6 @@
       "subcategory_label": "Comets"
     }
   ],
-  "last_updated": "2026-04-17 01:41",
+  "last_updated": "2026-04-17 01:36",
   "total_count": 181
 }
