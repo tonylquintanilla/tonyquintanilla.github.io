@@ -4707,3 +4707,19 @@ Removed two orphaned functions from `gallery_studio.py`:
   builder never called. `_preview()` uses `build_gallery_html()`.
 
 5527 -> 5025 lines. Syntax verified. No callers existed for either function.
+
+**Shell info marker strip_hidden -- confirmed working (same session):**
+
+Investigated why Roche Limit info marker cross survived strip_hidden.
+Root cause: Tony loaded an HTML file exported BEFORE the legendgroup fix
+(Session 34b). Old exports carry pre-fix trace structure (info markers
+without matching legendgroup). Re-tested with a fresh plot from current
+`solar_visualization_shells.py` -- shells and their info markers strip
+cleanly. Not a code bug; old exports need re-generation to pick up the fix.
+
+**Credit line added** to `gallery_studio.py` module docstring per convention.
+
+**Next steps for next session:**
+- Test link icon end-to-end through full pipeline (Studio -> json_converter -> index.html)
+- Verify link icon positioning with enc-btn and KMZ button coexistence
+- Orbit hover bloat fix deferred to plotting consolidation Ring 2
