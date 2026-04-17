@@ -1276,6 +1276,72 @@
         }
 
         /* ================================================================
+           LINK BUTTON + DROPDOWN
+           ================================================================ */
+        .link-btn {
+            position: fixed;
+            top: 92px;
+            left: 100px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #475569;
+            background: rgba(15, 23, 42, 0.85);
+            color: #94a3b8;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+        .link-btn:hover {
+            border-color: #1e90ff;
+            color: #1e90ff;
+            background: rgba(15, 23, 42, 0.95);
+        }
+        .link-btn.visible { display: flex; }
+
+        .link-dropdown {
+            position: fixed;
+            top: 130px;
+            left: 100px;
+            min-width: 160px;
+            max-width: 260px;
+            max-height: 50vh;
+            overflow-y: auto;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 6px 0;
+            z-index: 250;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+        .link-dropdown.open { display: block; }
+        .link-dropdown a {
+            display: block;
+            padding: 8px 14px;
+            color: #1e90ff;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background 0.15s;
+        }
+        .link-dropdown a:hover {
+            background: rgba(30, 144, 255, 0.12);
+        }
+        .link-dropdown::-webkit-scrollbar { width: 5px; }
+        .link-dropdown::-webkit-scrollbar-track { background: transparent; }
+        .link-dropdown::-webkit-scrollbar-thumb {
+            background: #475569; border-radius: 3px;
+        }
+
+        /* ================================================================
            RESPONSIVE
            ================================================================ */
         @media (max-width: 1024px) {
@@ -1318,6 +1384,19 @@
                 top: auto;
                 left: auto;
                 z-index: auto;
+            }
+
+            .link-btn {
+                position: relative;
+                top: auto;
+                left: auto;
+                z-index: auto;
+            }
+
+            .link-dropdown {
+                position: fixed;
+                top: 48px;
+                left: 8px;
             }
         }
 
@@ -1520,6 +1599,15 @@
         </div>
     </div>
 
+    <!-- Link button + dropdown (reference URLs from celestial objects) -->
+    <button class="link-btn" id="link-btn" title="Reference links" aria-label="Reference links">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+    </button>
+    <div class="link-dropdown" id="link-dropdown"></div>
+
 
     <!-- About overlay -->
     <div class="about-overlay" id="about-overlay">
@@ -1638,6 +1726,11 @@
         var _encCurrentName = null;
         var _encLocked     = false;
 
+        // Link button refs and state
+        var linkBtn        = document.getElementById('link-btn');
+        var linkDropdown   = document.getElementById('link-dropdown');
+        var _linkData      = null;  // [{name, url}] for current plot (or null)
+
         // Inject responsive width into annotations so Plotly wraps text
         // instead of truncating. Desktop: ~35% of viewport. Mobile: ~85%.
         // Plotly SVG annotations do not reflow text -- must use explicit br tags.
@@ -1727,6 +1820,7 @@
                     toolbar.appendChild(navBtn);
                     toolbar.appendChild(annToggleBtn);
                     toolbar.appendChild(encBtn);
+                    toolbar.appendChild(linkBtn);
                     toolbar.appendChild(shareBtn);
                 }
             }
@@ -2025,6 +2119,16 @@
                 // in landscape mode when the KMZ button is visible
                 if (encBtn && currentMode === 'landscape') {
                     encBtn.style.top = (kmzBtn.style.display === 'flex') ? '138px' : '';
+                }
+                // Position link button below enc-btn in landscape
+                if (linkBtn && currentMode === 'landscape') {
+                    if (kmzBtn.style.display === 'flex') {
+                        linkBtn.style.top = '138px';
+                        linkBtn.style.left = '138px';
+                    } else {
+                        linkBtn.style.top = '';
+                        linkBtn.style.left = '';
+                    }
                 }
                 // -------------------------------------------
 
@@ -2327,6 +2431,26 @@
                     }
                     // Clean up _encyclopedia from layout so Plotly doesn't choke
                     delete figDict.layout._encyclopedia;
+                }
+
+                // Link data: load from layout if present
+                linkReset();
+                if (figDict.layout._link_data && Array.isArray(figDict.layout._link_data)) {
+                    _linkData = figDict.layout._link_data;
+                    // Filter to only links whose name matches a visible trace
+                    var visibleNames = new Set();
+                    (figDict.data || []).forEach(function(t) {
+                        if (t.name && t.visible !== false) visibleNames.add(t.name);
+                    });
+                    var filtered = _linkData.filter(function(ld) {
+                        return visibleNames.has(ld.name);
+                    });
+                    if (filtered.length > 0) {
+                        _linkData = filtered;
+                        linkBtn.classList.add('visible');
+                    }
+                    // Clean up so Plotly doesn't choke on underscore keys
+                    delete figDict.layout._link_data;
                 }
 
             } catch (err) {
@@ -2899,6 +3023,48 @@
         }
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') encCloseCard();
+        });
+
+        // ---- Link button functions ----
+        function linkReset() {
+            _linkData = null;
+            if (linkBtn) linkBtn.classList.remove('visible');
+            if (linkDropdown) {
+                linkDropdown.classList.remove('open');
+                linkDropdown.innerHTML = '';
+            }
+        }
+
+        function linkToggle() {
+            if (!_linkData || !linkDropdown) return;
+            if (linkDropdown.classList.contains('open')) {
+                linkDropdown.classList.remove('open');
+                return;
+            }
+            // Build dropdown items
+            linkDropdown.innerHTML = '';
+            _linkData.forEach(function(ld) {
+                var a = document.createElement('a');
+                a.href = ld.url;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.textContent = ld.name;
+                linkDropdown.appendChild(a);
+            });
+            linkDropdown.classList.add('open');
+        }
+
+        // Wire link button events (one-time)
+        if (linkBtn) linkBtn.addEventListener('click', linkToggle);
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (linkDropdown && !linkDropdown.contains(e.target) &&
+                linkBtn && !linkBtn.contains(e.target)) {
+                linkDropdown.classList.remove('open');
+            }
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && linkDropdown) linkDropdown.classList.remove('open');
         });
 
 

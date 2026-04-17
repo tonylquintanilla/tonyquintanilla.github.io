@@ -4569,3 +4569,141 @@ keep backup files out of the repository.
   subsequent response. A fresh session with a good handoff is lighter
   than a long session carrying accumulated tangent context.
 
+
+### Session 35 (Apr 16, 2026): Link Icon Feature + Orbit Hover Bloat Discovery
+
+---
+
+**Goal:** Add a link icon button to the gallery viewer toolbar that provides
+access to reference URLs (NASA, JPL, etc.) independently of the annotation
+toggle. When annotations are turned off for a clean view, links remain
+accessible via the icon.
+
+**Design decisions:**
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Where does link data come from? | `_link_data` array extracted from `<a href>` annotations | Clean separation; no regex parsing at render time |
+| When is extraction done? | `apply_config()` before annotation visibility toggle | Data survives even when show_annotations is off |
+| Visibility filtering? | `index.html` filters by visible trace names; Studio preview shows all | Studio preview has no trace visibility context at JS level |
+| Portrait vs landscape? | Both -- icon is always visible when `_link_data` exists | Annotations off kills links in both orientations; icon recovers them |
+| Where does the icon live? | `_build_link_overlay()` in `gallery_studio.py` | Same CSS/HTML/JS pattern as `_build_encyclopedia_overlay()` |
+| Preview or export? | Both -- wired into `build_gallery_html()` | `_preview()` and `_export()` both call this function |
+
+**Architecture:**
+
+1. `apply_config()` scans `layout.annotations` for `<a href>` tags, extracts
+   `{name, url}` pairs into `layout['_link_data']` before the show_annotations
+   toggle runs. Data survives annotation clearing.
+
+2. `_build_link_overlay(fig_dict)` reads `_link_data` from layout, returns
+   CSS + HTML + JS (chain-link SVG icon, dropdown, click-outside-to-close,
+   Escape key). Same modular pattern as encyclopedia overlay.
+
+3. `build_gallery_html()` calls `_build_link_overlay()` and inserts the
+   three pieces into the template alongside enc_css/html/js.
+
+4. Three serialization points preserve `_link_data` in `layout_for_json`:
+   landscape builder (~line 2225), portrait builder (~line 3145),
+   preview (~line 5087).
+
+5. `index.html` reads `_link_data` from gallery JSON, filters entries
+   to names matching visible traces, shows icon if any match.
+   JS: `linkReset()`, `linkToggle()`, click-outside/Escape handlers.
+
+**Pipeline flow:**
+
+```
+celestial_objects.py (mission_url/url per object)
+  -> add_url_buttons() creates <a href> annotations in layout
+  -> apply_config() extracts _link_data from annotations
+  -> _build_link_overlay() embeds icon CSS/HTML/JS in gallery HTML
+  -> json_converter passes _link_data through as layout key
+  -> index.html reads _link_data, shows icon + dropdown
+```
+
+**Key discovery: `_preview_as_gallery()` is orphaned.** Neither `_preview()`
+nor `_export()` calls it. Both go through `build_gallery_html()`. The
+`build_social_html()` function is also unused in Studio (legacy orrery GUI
+export only). Initial link button code was placed in the orphaned function --
+that's why the icon didn't appear. Fix: moved to `_build_link_overlay()` +
+`build_gallery_html()`.
+
+**Key discovery: `build_social_html()` is obsolete in Studio.** It exists
+as an orrery GUI export path but is not called by Studio preview or export.
+Both paths use `build_gallery_html()`.
+
+---
+
+**Orbit hover text bloat (discovered, parked):**
+
+While testing a Mercury-only plot, file size was 442 KB for a single planet.
+Root cause: Keplerian and Mean orbit traces duplicate the full perturbation
+description (521 chars) on every orbit point (360 points each). This is the
+pre-existing pattern that the single info marker convention was designed to fix
+-- but idealized orbits in `idealized_orbits.py` haven't been refactored yet.
+
+| Trace | Points | text size | customdata size |
+|-------|--------|-----------|-----------------|
+| Keplerian Orbit | 360 | 189 KB | 10 KB |
+| Mean Orbit | 360 | ~95 KB | ~5 KB |
+| Actual Orbit | 51 | ~2 KB | negligible |
+
+**Impact:** ~300 KB wasted per planet (both text + customdata duplicated).
+For a full 8-planet plot, that's ~2.4 MB of pure hover text bloat, invisible
+in large plots but dominant in small ones.
+
+**Fix (deferred to plotting consolidation):** Apply single info marker pattern
+to idealized orbit traces in `idealized_orbits.py`. Geometry points get
+`hoverinfo='skip'`; one cross marker at a representative position carries
+the hover text. This is the same refactor planned for Ring 2 of the plotting
+consolidation.
+
+---
+
+**Files modified:**
+- `gallery_studio.py` -- `_link_data` extraction in `apply_config()`,
+  `_build_link_overlay()` function, three serialization points,
+  `build_gallery_html()` template insertions
+- `index.html` -- link button CSS, HTML, JS vars, toolbar append,
+  `loadVisualization` link data loading, `linkReset()`/`linkToggle()`
+  functions, event wiring
+
+**Files NOT modified:**
+- `json_converter.py` -- `_link_data` passes through as layout key
+- `celestial_objects.py` -- source data unchanged
+- `palomas_orrery_helpers.py` -- `add_url_buttons()` unchanged
+
+---
+
+**Technical Lessons Learned:**
+
+- Preview and export share a single HTML builder (`build_gallery_html()`).
+  Orphaned builder functions (`_preview_as_gallery`, `build_social_html`)
+  exist but are never called from Studio's UI. Any new UI features in
+  preview/export must go into `build_gallery_html()`.
+
+- The modular overlay pattern (function returns css, html, js strings;
+  template interpolates them) is the right way to add UI elements to the
+  gallery HTML. Keeps each feature self-contained and toggleable.
+
+- Orbit hover text bloat was always there but invisible at scale. A
+  Mercury-only plot made it obvious because the bloat was 98% of the file.
+  Single info marker pattern is the established fix -- just hasn't been
+  applied to idealized orbits yet.
+
+- The `_link_data` extraction must run before the annotation visibility
+  toggle in `apply_config()`. Order matters: extract data, then decide
+  whether to show/hide annotations. The data is independent of the
+  presentation.
+
+
+**Dead code cleanup (same session):**
+
+Removed two orphaned functions from `gallery_studio.py`:
+- `build_social_html()` (~390 lines, line 3104) -- portrait HTML builder
+  never called by Studio. Legacy orrery GUI export path only.
+- `_preview_as_gallery()` (~245 lines, line 5036) -- alternate preview
+  builder never called. `_preview()` uses `build_gallery_html()`.
+
+5527 -> 5025 lines. Syntax verified. No callers existed for either function.

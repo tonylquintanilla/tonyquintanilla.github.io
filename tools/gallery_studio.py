@@ -1073,6 +1073,26 @@ def apply_config(fig_dict, config):
                     gt['font'] = gt_font
                     trace['legendgrouptitle'] = gt
 
+    # ---- Extract link data from URL annotations ----
+    # Scan all annotations for <a href> links (created by add_url_buttons).
+    # Store as _link_data for the gallery viewer's link icon dropdown.
+    # This runs BEFORE annotation visibility decisions so link data
+    # survives even when show_annotations is off.
+    raw_annotations = layout.get('annotations', [])
+    link_data = []
+    for ann in raw_annotations:
+        ann_text = ann.get('text', '')
+        if '<a href=' in ann_text:
+            href_match = re.search(r"<a\s+href=['\"]([^'\"]+)['\"]", ann_text)
+            name_match = re.search(r">([^<]+)</a>", ann_text)
+            if href_match and name_match:
+                link_data.append({
+                    'name': name_match.group(1).strip(),
+                    'url': href_match.group(1)
+                })
+    if link_data:
+        layout['_link_data'] = link_data
+
     # ---- Annotations ----
     toggle_btn = config.get('annotation_toggle_button', False)
 
@@ -1138,10 +1158,25 @@ def apply_config(fig_dict, config):
     # ---- Trace visibility ----
     visibility = config.get('trace_visibility', {})
     if visibility:
+        # Build set of hidden legendgroups so unnamed companion traces
+        # (e.g. info markers with name='') toggle with their parent shell.
+        hidden_legendgroups = set()
+        for trace in fig.get('data', []):
+            tname = trace.get('name', '')
+            if tname in visibility and visibility[tname] is False:
+                lg = trace.get('legendgroup', '')
+                if lg:
+                    hidden_legendgroups.add(lg)
+
         for trace in fig.get('data', []):
             tname = trace.get('name', '')
             if tname in visibility:
                 trace['visible'] = visibility[tname]
+            elif not tname and hidden_legendgroups:
+                # Unnamed trace -- check if its legendgroup is hidden
+                lg = trace.get('legendgroup', '')
+                if lg and lg in hidden_legendgroups:
+                    trace['visible'] = False
     else:
         # All traces checked (empty dict) -- ensure none are stuck at
         # visible:False from a previous export. Without this, reloading
@@ -1153,11 +1188,27 @@ def apply_config(fig_dict, config):
 
     # Strip hidden traces if requested (reduces file size)
     if config.get('strip_hidden_traces', False) and visibility:
+        # Also use legendgroup to catch unnamed companion traces
+        hidden_lgs = set()
+        for t in fig.get('data', []):
+            tname = t.get('name', '')
+            if tname and visibility.get(tname) is False:
+                lg = t.get('legendgroup', '')
+                if lg:
+                    hidden_lgs.add(lg)
+
         original_data = fig.get('data', [])
-        keep_mask = [
-            visibility.get(t.get('name', ''), True) is not False
-            for t in original_data
-        ]
+        def _should_keep(t):
+            tname = t.get('name', '')
+            if tname and visibility.get(tname) is False:
+                return False
+            if not tname:
+                lg = t.get('legendgroup', '')
+                if lg and lg in hidden_lgs:
+                    return False
+            return True
+
+        keep_mask = [_should_keep(t) for t in original_data]
         fig['data'] = [t for t, keep in zip(original_data, keep_mask) if keep]
 
         # Remap frame trace indices to match new positions
@@ -1996,6 +2047,135 @@ document.addEventListener('DOMContentLoaded', function() {{
     return css, html, js
 
 
+def _build_link_overlay(fig_dict):
+    """Build CSS, HTML, and JS for the reference links button + dropdown.
+
+    Reads _link_data from the figure layout (extracted by apply_config
+    from URL annotations). Returns empty strings if no link data exists.
+
+    The button is always visible when link data is present. The dropdown
+    filters to links whose name matches a visible trace.
+
+    Parameters:
+        fig_dict: Transformed figure dict (may have layout._link_data)
+
+    Returns:
+        tuple: (css_str, html_str, js_str) - empty strings if no data
+    """
+    link_data = fig_dict.get('layout', {}).get('_link_data', [])
+    if not link_data:
+        return '', '', ''
+
+    link_json = json.dumps(link_data, separators=(',', ':'))
+
+    css = """
+  /* ===== LINK BUTTON + DROPDOWN ===== */
+  .link-btn {
+    position: absolute;
+    top: 12px;
+    left: 50px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #475569;
+    background: rgba(15, 23, 42, 0.85);
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    transition: all 0.2s ease;
+    padding: 0;
+  }
+  .link-btn:hover {
+    border-color: #1e90ff;
+    color: #1e90ff;
+    background: rgba(15, 23, 42, 0.95);
+  }
+  .link-dropdown {
+    position: absolute;
+    top: 50px;
+    left: 50px;
+    min-width: 160px;
+    max-width: 260px;
+    max-height: 50vh;
+    overflow-y: auto;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #475569;
+    border-radius: 8px;
+    padding: 6px 0;
+    z-index: 250;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+  .link-dropdown.open { display: block; }
+  .link-dropdown a {
+    display: block;
+    padding: 8px 14px;
+    color: #1e90ff;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background 0.15s;
+  }
+  .link-dropdown a:hover {
+    background: rgba(30, 144, 255, 0.12);
+  }
+"""
+
+    html = """
+<button class="link-btn" id="link-btn" title="Reference links" aria-label="Reference links">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+  </svg>
+</button>
+<div class="link-dropdown" id="link-dropdown"></div>
+"""
+
+    js = f"""
+// ===== LINK BUTTON =====
+var _linkData = {link_json};
+var _linkBtn = document.getElementById('link-btn');
+var _linkDrop = document.getElementById('link-dropdown');
+
+if (_linkBtn) {{
+  _linkBtn.addEventListener('click', function() {{
+    if (!_linkDrop) return;
+    if (_linkDrop.classList.contains('open')) {{
+      _linkDrop.classList.remove('open');
+      return;
+    }}
+    _linkDrop.innerHTML = '';
+    _linkData.forEach(function(ld) {{
+      var a = document.createElement('a');
+      a.href = ld.url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.textContent = ld.name;
+      _linkDrop.appendChild(a);
+    }});
+    _linkDrop.classList.add('open');
+  }});
+}}
+document.addEventListener('click', function(e) {{
+  if (_linkDrop && !_linkDrop.contains(e.target) &&
+      _linkBtn && !_linkBtn.contains(e.target)) {{
+    _linkDrop.classList.remove('open');
+  }}
+}});
+document.addEventListener('keydown', function(e) {{
+  if (e.key === 'Escape' && _linkDrop) _linkDrop.classList.remove('open');
+}});
+"""
+
+    return css, html, js
+
+
 # ============================================================================
 # HTML BUILDER
 # ============================================================================
@@ -2039,7 +2219,10 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
         layout_for_json['_encyclopedia'] = layout_dict['_encyclopedia']
     # Preserve _mobile_briefing for studio mobile briefing swap
     if '_mobile_briefing' in layout_dict:
-        layout_for_json['_mobile_briefing'] = layout_dict['_mobile_briefing']        
+        layout_for_json['_mobile_briefing'] = layout_dict['_mobile_briefing']
+    # Preserve _link_data for link icon dropdown
+    if '_link_data' in layout_dict:
+        layout_for_json['_link_data'] = layout_dict['_link_data']
     layout_json = json.dumps(layout_for_json, separators=(',', ':'))
     frames = fig_dict.get('frames', [])
     frames_json = json.dumps(frames, separators=(',', ':'))
@@ -2492,6 +2675,9 @@ function flyToTarget(name) {{
     # Encyclopedia card overlay
     enc_css, enc_html, enc_js = _build_encyclopedia_overlay(fig_dict)
 
+    # Link button overlay
+    link_css, link_html, link_js = _build_link_overlay(fig_dict)
+
     # Encyclopedia event wiring for gallery (click to show "i" button)
     enc_event_js = ""
     if enc_js:
@@ -2849,6 +3035,7 @@ function toggleAnnotations() {{
 {nav_css}
 {flyto_css}
 {enc_css}
+{link_css}
 {toggle_css}
 {infocard_css}
 </style>
@@ -2860,12 +3047,14 @@ function toggleAnnotations() {{
 {nav_html}
 {flyto_html}
 {enc_html}
+{link_html}
 {toggle_html}
 </div>
 <script>
 {nav_js}
 {flyto_js}
 {enc_js}
+{link_js}
 {toggle_js}
 document.addEventListener('DOMContentLoaded', function() {{
   var data = {data_json};
@@ -2906,396 +3095,6 @@ document.addEventListener('DOMContentLoaded', function() {{
     Plotly.Plots.resize('plotly-graph');
   }});
 }});
-</script>
-</body>
-</html>"""
-    return html
-
-
-def build_social_html(fig_dict, config, title="Paloma's Orrery"):
-    """
-    Build a 9:16 portrait HTML with info panel for social media.
-
-    Layout:
-      - Top 60%: Interactive 3D Plotly scene (stripped of UI chrome)
-      - Bottom 40%: Persistent info panel (displays customdata on click)
-      - Branding watermark in bottom-right
-
-    This is the portrait counterpart to build_gallery_html().
-    The figure dict should already have hover data routed to customdata
-    via apply_config() with route_hover_to_panel=True.
-
-    Parameters:
-        fig_dict: Transformed Plotly figure dict
-        config: Studio configuration dict
-        title: Page title
-
-    Returns:
-        str: Complete HTML document
-    """
-    data_json = json.dumps(fig_dict.get('data', []), separators=(',', ':'))
-    # Strip internal keys before serializing layout for Plotly
-    layout_for_json = {k: v for k, v in fig_dict.get('layout', {}).items()
-                       if not k.startswith('_')}
-    # Preserve _kmz_handoff for web gallery handoff button
-    if '_kmz_handoff' in fig_dict.get('layout', {}):
-        layout_for_json['_kmz_handoff'] = fig_dict['layout']['_kmz_handoff']
-    # Preserve _studio and _studio_config for lossless round-trip re-export
-    portrait_layout = fig_dict.get('layout', {})
-    if '_studio' in portrait_layout:
-        layout_for_json['_studio'] = portrait_layout['_studio']
-    if '_studio_config' in portrait_layout:
-        layout_for_json['_studio_config'] = portrait_layout['_studio_config']
-    if '_studio_nav' in portrait_layout:
-        layout_for_json['_studio_nav'] = portrait_layout['_studio_nav']
-    if '_hover_mode' in portrait_layout:
-        layout_for_json['_hover_mode'] = portrait_layout['_hover_mode']
-    if '_mobile_briefing' in portrait_layout:
-        layout_for_json['_mobile_briefing'] = portrait_layout['_mobile_briefing']        
-    layout_json = json.dumps(layout_for_json, separators=(',', ':'))
-    frames = fig_dict.get('frames', [])
-    frames_json = json.dumps(frames, separators=(',', ':'))
-    has_frames = len(frames) > 0
-
-    branding = config.get('info_panel_branding', "Paloma's Orrery")
-    bg_color = config.get('bg_color', '#000000')
-
-    # Encyclopedia card overlay
-    enc_css, enc_html, enc_js = _build_encyclopedia_overlay(fig_dict)
-
-    # Extract routing log for JS debug output
-    routing_log = fig_dict.get('layout', {}).get('_routing_log', [])
-    routing_log_js = ''
-    if routing_log:
-        for entry in routing_log:
-            safe = entry.replace("'", "\\'").replace('\n', ' ')
-            routing_log_js += f"  console.log('{safe}');\n"
-
-    # In portrait, hook into the panel update to show/hide "i" button
-    enc_hook = ""
-    if enc_js:
-        enc_hook = """
-      if (typeof encLock === 'function') encLock(parsed.name);"""
-
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title} - Social Media View</title>
-<script src="{PLOTLY_CDN}"></script>
-<style>
-  /* ===== RESET & BASE ===== */
-  *, *::before, *::after {{ margin: 0; padding: 0; box-sizing: border-box; }}
-
-  html, body {{
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    background: {bg_color};
-    color: #f8fafc;
-    font-family: 'Consolas', 'SF Mono', 'Fira Code', 'Courier New', monospace;
-    -webkit-font-smoothing: antialiased;
-  }}
-
-  /* ===== LAYOUT: 60/40 split, locked to 9:16 portrait ===== */
-  .container {{
-    height: 100vh;
-    width: min(100vw, calc(100vh * 9 / 16));
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    background: {bg_color};
-  }}
-
-  /* ===== 3D SCENE (top 60%) ===== */
-  .scene-area {{
-    flex: 6;
-    position: relative;
-    min-height: 0;
-  }}
-
-  #plotly-scene {{
-    width: 100%;
-    height: 100%;
-  }}
-
-  /* ===== DIVIDER ===== */
-  .divider {{
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      #334155 15%,
-      #64748b 50%,
-      #334155 85%,
-      transparent 100%
-    );
-    flex-shrink: 0;
-  }}
-
-  /* ===== INFO PANEL (bottom 40%) ===== */
-  .info-panel {{
-    flex: 4;
-    display: flex;
-    flex-direction: column;
-    padding: 28px 40px 20px 40px;
-    position: relative;
-    overflow: hidden;
-    min-height: 0;
-  }}
-
-  .panel-header {{
-    flex-shrink: 0;
-    margin-bottom: 16px;
-    min-height: 60px;
-  }}
-
-  .object-name {{
-    font-size: clamp(28px, 4vw, 42px);
-    font-weight: 700;
-    color: #f8fafc;
-    letter-spacing: 1px;
-    line-height: 1.2;
-    transition: opacity 0.18s ease;
-  }}
-
-  .object-subtitle {{
-    font-size: clamp(16px, 2.2vw, 22px);
-    font-weight: 400;
-    color: #f8fafc;
-    margin-top: 4px;
-    font-style: italic;
-    line-height: 1.3;
-    transition: opacity 0.18s ease;
-  }}
-
-  .panel-body {{
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    font-size: clamp(16px, 2.4vw, 24px);
-    line-height: 1.5;
-    color: #f8fafc;
-    padding-right: 8px;
-    transition: opacity 0.18s ease;
-    scrollbar-width: thin;
-    scrollbar-color: #334155 transparent;
-  }}
-
-  .panel-body::-webkit-scrollbar {{ width: 4px; }}
-  .panel-body::-webkit-scrollbar-track {{ background: transparent; }}
-  .panel-body::-webkit-scrollbar-thumb {{ background: #334155; border-radius: 2px; }}
-  .panel-body b {{ color: #f8fafc; font-weight: 600; }}
-  .panel-body i {{ color: #cbd5e1; }}
-  .panel-body br + br {{ display: block; content: ''; margin-top: 8px; }}
-
-  .branding {{
-    position: absolute;
-    bottom: 16px;
-    right: 40px;
-    font-size: 16px;
-    color: #334155;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-weight: 600;
-  }}
-
-  .panel-empty-state {{
-    color: #475569;
-    font-size: clamp(16px, 2.2vw, 22px);
-    font-style: italic;
-    margin-top: 40px;
-    text-align: center;
-  }}
-
-  .fading {{ opacity: 0.3; }}
-  .modebar-container {{ display: none !important; }}
-{enc_css}
-</style>
-</head>
-<body>
-
-<div class="container">
-  <div class="scene-area">
-    <div id="plotly-scene"></div>
-  </div>
-  <div class="divider"></div>
-  <div class="info-panel">
-    <div class="panel-header">
-      <div class="object-name" id="obj-name">{branding}</div>
-      <div class="object-subtitle" id="obj-subtitle">Tap an object to explore</div>
-    </div>
-    <div class="panel-body" id="obj-body">
-      <div class="panel-empty-state">
-        Point at any planet, moon, or orbit to see its data here.
-      </div>
-    </div>
-    <div class="branding">{branding}</div>
-  </div>
-</div>
-{enc_html}
-<script>
-{enc_js}
-document.addEventListener('DOMContentLoaded', function() {{
-
-  var data = {data_json};
-  var layout = {layout_json};
-  var frames = {frames_json};
-
-  var config = {{
-    displayModeBar: false,
-    scrollZoom: true,
-    responsive: true,
-    doubleClick: false
-  }};
-
-  layout.autosize = true;
-
-  Plotly.newPlot('plotly-scene', data, layout, config).then(function() {{
-    if (frames && frames.length > 0) {{
-      Plotly.addFrames('plotly-scene', frames);
-
-      // Camera preservation for animations
-      var plotDiv = document.getElementById('plotly-scene');
-      var lastCamera = null;
-
-      setInterval(function() {{
-        try {{
-          var scene = plotDiv._fullLayout.scene._scene;
-          if (scene) {{ lastCamera = scene.getCamera(); }}
-        }} catch(e) {{}}
-      }}, 100);
-
-      plotDiv.on('plotly_animatingframe', function(eventData) {{
-        if (lastCamera) {{
-          try {{
-            plotDiv._fullLayout.scene.camera = lastCamera;
-            plotDiv.layout.scene.camera = lastCamera;
-          }} catch(e) {{}}
-        }}
-      }});
-
-      plotDiv.on('plotly_afterplot', function() {{
-        if (lastCamera) {{
-          try {{
-            var scene = plotDiv._fullLayout.scene._scene;
-            if (scene) {{ scene.setCamera(lastCamera); }}
-          }} catch(e) {{}}
-        }}
-      }});
-    }}
-    initEventListeners();
-{routing_log_js}
-  }});
-
-  // Resize handler
-  var resizeTimer = null;
-  window.addEventListener('resize', function() {{
-    if (resizeTimer) clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function() {{
-      var plotDiv = document.getElementById('plotly-scene');
-      try {{
-        Plotly.relayout(plotDiv, {{
-          'scene.camera': plotDiv._fullLayout.scene._scene.getCamera()
-        }});
-      }} catch(e) {{
-        Plotly.Plots.resize(plotDiv);
-      }}
-    }}, 250);
-  }});
-
-}});
-
-// ===== PANEL UPDATE LOGIC =====
-var hoverTimer = null;
-var currentObjectData = null;
-var HOVER_DELAY = 800;
-var nameEl, subtitleEl, bodyEl;
-
-function initEventListeners() {{
-  nameEl = document.getElementById('obj-name');
-  subtitleEl = document.getElementById('obj-subtitle');
-  bodyEl = document.getElementById('obj-body');
-
-  var plotlyDiv = document.getElementById('plotly-scene');
-
-  // Debug: verify events are wired and check trace customdata
-  console.log('[STUDIO v2] initEventListeners wired');
-  var traceCount = 0, cdCount = 0;
-  if (plotlyDiv.data) {{
-    traceCount = plotlyDiv.data.length;
-    plotlyDiv.data.forEach(function(t, i) {{
-      if (t.customdata && t.customdata.length > 0) cdCount++;
-    }});
-  }}
-  console.log('[STUDIO v2] Traces: ' + traceCount + ', with customdata: ' + cdCount);
-
-  // Hover: throttled panel update
-  plotlyDiv.on('plotly_hover', function(data) {{
-    var point = data.points[0];
-    if (!point.customdata) return;
-    var objectData = point.customdata;
-    if (objectData === currentObjectData) return;
-    if (hoverTimer) clearTimeout(hoverTimer);
-    hoverTimer = setTimeout(function() {{
-      currentObjectData = objectData;
-      updatePanel(objectData);
-    }}, HOVER_DELAY);
-  }});
-
-  plotlyDiv.on('plotly_unhover', function() {{
-    if (hoverTimer) {{ clearTimeout(hoverTimer); hoverTimer = null; }}
-  }});
-
-  // Click: immediate panel update
-  plotlyDiv.on('plotly_click', function(data) {{
-    var point = data.points[0];
-    if (!point.customdata) return;
-    if (hoverTimer) {{ clearTimeout(hoverTimer); hoverTimer = null; }}
-    var objectData = point.customdata;
-    currentObjectData = objectData;
-    updatePanel(objectData);
-  }});
-}}
-
-function updatePanel(data) {{
-  try {{
-    var parsed = (typeof data === 'string') ? JSON.parse(data) : data;
-
-    nameEl.classList.add('fading');
-    subtitleEl.classList.add('fading');
-    bodyEl.classList.add('fading');
-
-    setTimeout(function() {{
-      nameEl.textContent = parsed.name || '';
-      subtitleEl.textContent = parsed.subtitle || '';
-      bodyEl.innerHTML = parsed.body || '';
-      autoSizeFont();
-{enc_hook}
-      nameEl.classList.remove('fading');
-      subtitleEl.classList.remove('fading');
-      bodyEl.classList.remove('fading');
-    }}, 180);
-
-  }} catch(e) {{
-    bodyEl.innerHTML = String(data);
-  }}
-}}
-
-function autoSizeFont() {{
-  var baseFontSize = 24;
-  var minFontSize = 16;
-  var fontSize = baseFontSize;
-  bodyEl.style.fontSize = fontSize + 'px';
-  var panelEl = bodyEl.parentElement;
-  var headerEl = document.querySelector('.panel-header');
-  var maxHeight = panelEl.offsetHeight - headerEl.offsetHeight - 80;
-  while (bodyEl.scrollHeight > maxHeight && fontSize > minFontSize) {{
-    fontSize -= 1;
-    bodyEl.style.fontSize = fontSize + 'px';
-  }}
-}}
 </script>
 </body>
 </html>"""
@@ -4840,181 +4639,6 @@ class GalleryStudio:
             targets.append(target_entry)
 
         return targets
-
-    def _preview_as_gallery(self):
-        """Preview how this plot will look in the gallery (index.html).
-
-        Runs json_converter logic in memory: extracts figure data,
-        strips internal keys, then renders with a minimal viewer
-        that applies NO content transforms -- just like the
-        refactored index.html.
-        """
-        if self.fig_dict is None:
-            messagebox.showinfo("Preview", "Load an HTML file first.")
-            return
-
-        try:
-            self._collect_config()
-            transformed = apply_config(self.fig_dict, self.config)
-
-            # Simulate json_converter: strip internal keys, template
-            import copy
-            sim = json.loads(json.dumps(transformed))
-            layout = sim.get('layout', {})
-
-            # Remove _studio, _studio_nav, _routing_log (converter preserves
-            # _studio and _studio_nav but index reads and deletes them)
-            layout.pop('_studio', None)
-            layout.pop('_studio_nav', None)
-            layout.pop('_routing_log', None)
-
-            # Template already stripped by apply_config if strip_template=True
-
-            # Remove fixed dimensions (index does this)
-            layout.pop('width', None)
-            layout.pop('height', None)
-            layout['autosize'] = True
-
-            sim['layout'] = layout
-
-            # Build minimal gallery preview HTML
-            data_json = json.dumps(sim.get('data', []),
-                                   separators=(',', ':'))
-            layout_for_json = {k: v for k, v in layout.items()
-                               if not k.startswith('_')}
-            # But keep _encyclopedia if present for info card
-            if '_encyclopedia' in layout:
-                layout_for_json['_encyclopedia'] = layout['_encyclopedia']
-            # Keep _kmz_handoff for web gallery handoff button
-            if '_kmz_handoff' in layout:
-                layout_for_json['_kmz_handoff'] = layout['_kmz_handoff']
-            # Keep _mobile_briefing for studio mobile briefing swap
-            if '_mobile_briefing' in layout:
-                layout_for_json['_mobile_briefing'] = layout['_mobile_briefing']                
-            layout_json = json.dumps(layout_for_json,
-                                     separators=(',', ':'))
-
-            title = self.config.get('custom_title', '').strip()
-            if not title:
-                title = os.path.splitext(
-                    os.path.basename(self.source_path or 'preview')
-                )[0]
-
-            # Minimal gallery viewer -- renders exactly as index.html
-            # would after the WYSIWYG refactor (no content transforms)
-            html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title} - Gallery Preview</title>
-<script src="{PLOTLY_CDN}"></script>
-<style>
-  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-  html, body {{ height: 100%; overflow: hidden; background: #0a0a0f; }}
-  #banner {{
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: rgba(201, 168, 76, 0.9); color: #000;
-    padding: 6px 16px; font: 600 13px 'Segoe UI', sans-serif;
-    text-align: center;
-  }}
-  #plotly-graph {{
-    width: 100%; height: calc(100vh - 28px); margin-top: 28px;
-  }}
-  /* Info card (portrait mode simulation) */
-  #info-card {{
-    display: none; position: fixed; bottom: 0; left: 0; right: 0;
-    background: #0f172a; border-top: 1px solid #334155;
-    padding: 16px 20px; max-height: 45vh; overflow-y: auto;
-    z-index: 50; font-family: monospace; color: #e8e6e3;
-  }}
-  #info-card h3 {{ font-size: 1.3rem; margin-bottom: 8px;
-    font-family: Georgia, serif; color: #c9a84c; }}
-  #info-card .body {{ font-size: 0.82rem; line-height: 1.5;
-    white-space: pre-wrap; }}
-  #dismiss {{ color: #666; font-size: 0.75rem; text-align: center;
-    margin-top: 8px; }}
-</style>
-</head>
-<body>
-<div id="banner">GALLERY PREVIEW -- This is how index.html will render this plot (no content transforms)</div>
-<div id="plotly-graph"></div>
-<div id="info-card">
-  <h3 id="card-name"></h3>
-  <div id="card-body" class="body"></div>
-  <div id="dismiss">Tap elsewhere to dismiss</div>
-</div>
-<script>
-var data = {data_json};
-var layout = {layout_json};
-var config = {{
-  displayModeBar: true,
-  displaylogo: true,
-  responsive: true,
-  modeBarButtonsToRemove: ['lasso2d', 'select2d']
-}};
-Plotly.newPlot('plotly-graph', data, layout, config).then(function() {{
-  setTimeout(function() {{ Plotly.Plots.resize('plotly-graph'); }}, 100);
-}});
-
-// Wire click -> info card (simulating index portrait mode)
-var graphDiv = document.getElementById('plotly-graph');
-graphDiv.on('plotly_click', function(evtData) {{
-  if (!evtData || !evtData.points || !evtData.points.length) return;
-  var pt = evtData.points[0];
-  var cd = null;
-  if (pt.customdata) {{
-    try {{
-      cd = typeof pt.customdata === 'string' ? JSON.parse(pt.customdata) : pt.customdata;
-    }} catch(e) {{}}
-  }}
-  if (!cd && pt.data && pt.data.text) {{
-    var tv = Array.isArray(pt.data.text) ? (pt.data.text[pt.pointIndex] || '') : (pt.data.text || '');
-    if (tv) {{
-      var nm = tv.match(/<b>([^<]+)<\\/b>/);
-      cd = {{ name: nm ? nm[1] : (pt.data.name || 'Object'), subtitle: '', body: tv }};
-    }}
-  }}
-  if (!cd && pt.data && pt.data.name) {{
-    cd = {{ name: pt.data.name, subtitle: '', body: '' }};
-  }}
-  if (cd) {{
-    var card = document.getElementById('info-card');
-    document.getElementById('card-name').textContent = cd.name || '';
-    var bodyEl = document.getElementById('card-body');
-    var bodyText = (cd.body || '').replace(/<br\\s*\\/?>/gi, '\\n').replace(/<[^>]+>/g, '');
-    bodyEl.textContent = bodyText;
-    card.style.display = 'block';
-  }}
-}});
-document.addEventListener('click', function(e) {{
-  var card = document.getElementById('info-card');
-  if (card.style.display === 'block' &&
-      !card.contains(e.target) &&
-      !document.getElementById('plotly-graph').contains(e.target)) {{
-    card.style.display = 'none';
-  }}
-}});
-</script>
-</body>
-</html>"""
-
-            # Write temp file
-            fd, temp_path = tempfile.mkstemp(
-                suffix='.html', prefix='gallery_preview_')
-            os.close(fd)
-            with open(temp_path, 'w', encoding='utf-8') as f:
-                f.write(html)
-
-            webbrowser.open('file://' + os.path.abspath(temp_path))
-            self._log_status("Gallery preview opened in browser")
-
-        except Exception as e:
-            self._log_status(f"Gallery preview error: {e}")
-            import traceback
-            traceback.print_exc()
-            messagebox.showerror("Preview Error",
-                                 f"Could not generate gallery preview:\n\n{e}")
 
     def _apply_portrait_preset(self):
         """Apply the portrait/social media preset."""
