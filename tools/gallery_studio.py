@@ -25,6 +25,8 @@ Usage:
 
 Author: Tony Quintanilla / Paloma's Orrery
 Module updated: April 2026 with Anthropic's Claude Opus 4.6
+Module updated: April 17, 2026 with Anthropic's Claude Opus 4.7
+(provenance audit; 2 hardcoded AU-in-km values replaced with KM_PER_AU)
 """
 
 import os
@@ -957,10 +959,13 @@ def apply_config(fig_dict, config):
             if scene_axis_range > 0 and scene_dtick <= 0:
                 effective_dtick = _calculate_grid_dtick(scene_axis_range * 2)
 
+            # Import conversion constant once for this branch
+            from constants_new import KM_PER_AU
+
             # Build km-equivalent suffix for axis titles at small scales
             suffix = ""
             if effective_dtick > 0:
-                dtick_km = effective_dtick * 149597870.7
+                dtick_km = effective_dtick * KM_PER_AU
                 if effective_dtick < 0.01:
                     suffix = f" (grid: {dtick_km:,.0f} km)"
                 elif effective_dtick < 0.1:
@@ -976,7 +981,7 @@ def apply_config(fig_dict, config):
                 scene[axis_key] = axis
 
             print(f"[Studio] 3D axis override: range=+/-{scene_axis_range}, "
-                  f"dtick={effective_dtick} ({effective_dtick * 149597870.7:,.0f} km)")
+                  f"dtick={effective_dtick} ({effective_dtick * KM_PER_AU:,.0f} km)")
 
         # 3D aspect mode
         aspect = config.get('scene_aspectmode', 'auto')
