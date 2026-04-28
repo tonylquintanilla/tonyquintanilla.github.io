@@ -27,6 +27,8 @@ Author: Tony Quintanilla / Paloma's Orrery
 Module updated: April 2026 with Anthropic's Claude Opus 4.6
 Module updated: April 17, 2026 with Anthropic's Claude Opus 4.7
 (provenance audit; 2 hardcoded AU-in-km values replaced with KM_PER_AU)
+
+Updated with Claude Opus 4.6 4-28-2026
 """
 
 import os
@@ -3879,8 +3881,12 @@ class GalleryStudio:
                 "portrait, enables hover routing to info panel, "
                 "strips legend/annotations/axes, boosts markers +4. "
                 "Adjust individual settings afterward.\n\n"
+
                 "Note: routing is destructive -- hover text is parsed "
-                "into customdata. Reload reverts route to OFF.")
+                "into customdata. Reload reverts route to OFF.\n\n"
+                "In portrait mode: if both Full Mission and Plotted "
+                "Period 'Closest Plotted Point' are selected, only "
+                "the second will display.")
 
         generator_btn = tk.Button(
             preset_row, text="Generator",
