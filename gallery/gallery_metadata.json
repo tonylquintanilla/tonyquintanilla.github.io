@@ -2255,8 +2255,30 @@
       "featured": false,
       "subcategory": "comets",
       "subcategory_label": "Comets"
+    },
+    {
+      "id": "panstarrs_perigee_geocentric_mobile",
+      "title": "Comet PanSTARRS at Perigee 4-26-26",
+      "filename": "panstarrs_perigee_geocentric_mobile.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet PanSTARRS at Perigee 4-26-26",
+      "size_kb": 2110.5,
+      "converted": "2026-04-28 03:47",
+      "mode": "portrait"
+    },
+    {
+      "id": "panstarrs_perigee_geocentric_gallery",
+      "title": "Comet PanSTARRS at Perigee 4-26-26",
+      "filename": "panstarrs_perigee_geocentric_gallery.json",
+      "category": "solar_system",
+      "category_label": "Solar System",
+      "description": "Comet PanSTARRS at Perigee 4-26-26",
+      "size_kb": 1492.2,
+      "converted": "2026-04-28 03:48",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-17 01:41",
-  "total_count": 181
+  "last_updated": "2026-04-28 03:48",
+  "total_count": 183
 }
