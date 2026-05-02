@@ -4929,7 +4929,7 @@ class GalleryStudio:
                  width=12).grid(row=r, column=0, sticky='w', pady=2)
         var_status = tk.StringVar(value='completed')
         ttk.Combobox(manual_frame, textvariable=var_status,
-                     values=['completed', 'planned', 'canceled'],
+                     values=['completed', 'ongoing', 'planned', 'canceled'],
                      width=18, state='readonly'
                      ).grid(row=r, column=1, sticky='w', pady=2)
         r += 1
