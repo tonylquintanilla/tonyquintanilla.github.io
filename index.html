@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<!-- index.html - Gallery Viewer for Paloma's Orrery
+     Author: Tony Quintanilla / Paloma's Orrery
+     Updated: May 2, 2026 with Anthropic's Claude Opus 4.6
+       - Nav controls 2D/3D split: standalone reset button for 3D,
+         full D-pad for 2D, avoids blocking animation slider -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1049,6 +1054,45 @@
             margin-top: 6px;
         }
 
+        /* Standalone reset button (3D studio-nav: no D-pad, just reset) */
+        /* Positioned to the left of zoom +/- buttons (right:16, width:44)
+           so the cluster reads [Reset] [+/-] at bottom-right */
+        .reset-standalone {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 68px;
+            z-index: 350;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(18, 18, 26, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            padding: 0;
+        }
+        .reset-standalone.visible {
+            display: flex;
+        }
+        .reset-standalone:active {
+            background: rgba(18, 18, 26, 0.95);
+            border-color: var(--accent-dim);
+            color: var(--accent);
+            transform: scale(0.93);
+        }
+
         /* ================================================================
            FLOATING INFO CARD (portrait mode - slides up from bottom)
            ================================================================ */
@@ -1575,6 +1619,12 @@
         </div>
     </div>
 
+    <!-- Standalone reset button (3D studio-nav plots: no D-pad arrows,
+         just reset + zoom controls) -->
+    <button class="reset-standalone" id="resetStandalone" aria-label="Reset view" title="Reset view">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="7" r="3"/></svg>
+    </button>
+
     <!-- Fly-to navigation buttons (studio-curated, bottom-left) -->
     <div class="flyto-controls" id="flytoControls"></div>
 
@@ -1710,6 +1760,7 @@
         var panResetBtn    = document.getElementById('panReset');
         var panZoomInBtn   = document.getElementById('panZoomIn');
         var panZoomOutBtn  = document.getElementById('panZoomOut');
+        var resetStandalone = document.getElementById('resetStandalone');
         var panOrigRanges  = null;  // Captured on first pan/zoom for reset
         var annToggleBtn   = document.getElementById('annToggleBtn');
         var annStored      = null;  // Toggle annotations from JSON
@@ -2375,15 +2426,29 @@
                     : figDict.layout.mapbox ? 'mapbox' : '2d';
 
                 if (hasStudioNav) {
-                    zoomControls.classList.remove('visible');
-                    panControls.classList.add('visible');
-                    panControls.setAttribute('data-scene', sceneType);
+                    if (sceneType === '3d') {
+                        // 3D: directional arrows have no effect; show zoom
+                        // controls + standalone reset.  Avoids D-pad blocking
+                        // the animation frame slider on animated plots.
+                        panControls.classList.remove('visible');
+                        zoomControls.classList.add('visible');
+                        zoomControls.setAttribute('data-scene', sceneType);
+                        resetStandalone.classList.add('visible');
+                    } else {
+                        // 2D/polar: full D-pad with arrows + zoom
+                        zoomControls.classList.remove('visible');
+                        resetStandalone.classList.remove('visible');
+                        panControls.classList.add('visible');
+                        panControls.setAttribute('data-scene', sceneType);
+                    }
                 } else if (sceneType === 'mapbox') {
                     // Mapbox has built-in scroll/pinch zoom; our buttons don't work
                     zoomControls.classList.remove('visible');
                     panControls.classList.remove('visible');
+                    resetStandalone.classList.remove('visible');
                 } else {
                     panControls.classList.remove('visible');
+                    resetStandalone.classList.remove('visible');
                     zoomControls.classList.add('visible');
                     zoomControls.setAttribute('data-scene', sceneType);
                 }
@@ -2843,6 +2908,16 @@
                 resetPanZoom();
             });
 
+            // Standalone reset button (3D studio-nav plots)
+            resetStandalone.addEventListener('touchstart', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                resetPanZoom();
+            }, { passive: false });
+            resetStandalone.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                resetPanZoom();
+            });
+
             // Pan zoom buttons
             panZoomInBtn.addEventListener('touchstart', function(e) {
                 e.preventDefault(); e.stopPropagation();
@@ -3229,6 +3304,7 @@
             dismissInfoCard();
             zoomControls.classList.remove('visible');
             panControls.classList.remove('visible');
+            resetStandalone.classList.remove('visible');
             flytoControls.classList.remove('visible');
             flytoControls.innerHTML = '';           
             annToggleBtn.classList.remove('visible');

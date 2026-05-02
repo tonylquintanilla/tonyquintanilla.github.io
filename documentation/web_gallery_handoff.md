@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5 - April 11, 2026 | Claude Opus 4.6
+## Session Handoff | February 5 - May 2, 2026 | Claude Opus 4.6
 
 ---
 
@@ -4722,4 +4722,114 @@ cleanly. Not a code bug; old exports need re-generation to pick up the fix.
 **Next steps for next session:**
 - Test link icon end-to-end through full pipeline (Studio -> json_converter -> index.html)
 - Verify link icon positioning with enc-btn and KMZ button coexistence
+- Orbit hover bloat fix deferred to plotting consolidation Ring 2
+
+
+### Session 36 (May 2, 2026): Nav Controls 2D/3D Split
+
+---
+
+**Problem:** When Studio portrait preset exports an animated 3D plot with
+"Show pan/zoom arrows" enabled, the D-pad navigation buttons (position:
+fixed, bottom-right) overlap the Plotly animation frame slider. The slider
+handle cannot be dragged through the button area -- it stops or jumps past
+them, making animation scrubbing broken.
+
+**Root cause:** The full D-pad (up/down/left/right/reset/zoom) was emitted
+identically for both 2D and 3D plots. In 3D, the directional arrows had
+no detectable effect (the `pan3D()` function shifted `camera.eye` and
+`camera.center` by fixed increments via `scene.setCamera()`, but this
+never produced visible results). The arrows were dead UI occupying space
+that the slider needs.
+
+**Design decision:** Separate navigation controls by scene type.
+
+| Scene type | Controls shown | Rationale |
+|------------|---------------|-----------|
+| 2D/polar + studio nav | Full D-pad: arrows + zoom + reset (bottom-right) | Arrows essential -- `Plotly.relayout` on axis ranges is the only way to pan on touch devices |
+| 3D + studio nav | Zoom +/- (raised to bottom: 70px) + standalone reset dot (bottom: 24px) | Native touch-drag handles 3D pan/rotate; arrows were ineffective; compact layout clears the slider |
+| 3D without studio nav | Zoom +/- only (bottom-right, unchanged) | Default mobile 3D behavior, no reset needed |
+| Mapbox | No controls | Built-in scroll/pinch handles everything |
+
+**Implementation (Option A -- 2D/3D split, cleanest):**
+
+`gallery_studio.py` (2 edits):
+1. **nav_html split** (~line 2364): `if has_scene:` emits reset + zoom
+   buttons only (no arrow rows). `else:` emits full D-pad. Both paths
+   keep `class="nav-controls"` and `function panPlot` so json_converter
+   detection is preserved.
+2. **3D nav_js simplified** (~line 2408): `panPlot()` early-returns on
+   anything except `'reset'`. Removed dead directional camera shifting
+   code. `zoomPlot()` unchanged (synthetic wheel events).
+3. **Tooltip updated** (~line 3582): Now explains 2D gets full D-pad,
+   3D gets reset + zoom only.
+
+`index.html` (7 edits):
+1. **CSS**: `.reset-standalone` -- same visual treatment as `.pan-btn`,
+   positioned `bottom: 120px; right: 16px` (above the zoom +/- cluster
+   at bottom: 24px, clearing the animation slider).
+2. **HTML**: Standalone reset button added after `panControls` div.
+3. **JS variable**: `resetStandalone` element reference added.
+4. **Control visibility logic**: `hasStudioNav && sceneType === '3d'`
+   shows `zoomControls` (default position) + `resetStandalone` (above
+   zoom cluster). `hasStudioNav && !3d` shows full D-pad as before.
+5. **Event handler**: `resetStandalone` wired to `resetPanZoom()` (both
+   touchstart + mousedown, matching existing button pattern).
+6. **Cleanup branches**: `resetStandalone` hidden in mapbox, default,
+   and goHome paths.
+
+`json_converter.py` -- **not modified**. Detection logic (`class="nav-controls"`
++ `function panPlot`) works for both 2D and 3D nav_html paths.
+
+**Result:**
+- 3D animated plots: slider has clear space. User gets a reset dot
+  above the zoom +/- cluster (stacked vertically, bottom-right).
+  Native touch-drag handles pan/rotate.
+- 2D plots: completely unchanged (no animation sliders, full D-pad).
+- No preset changes needed -- `has_scene` check at export time gates the
+  arrows regardless of which preset was used.
+
+**Dead code noted (not removed):** `pan3D()` function in `index.html`
+(~line 2619) is now unreachable -- only called by `doPan()` which is
+triggered by D-pad arrow buttons, which are hidden for 3D. The native
+Plotly right-click-drag / shift-drag handles 3D panning. Flagged for
+opportunistic removal.
+
+---
+
+**Files modified:**
+- `gallery_studio.py` -- nav_html 2D/3D split, 3D nav_js simplified,
+  tooltip updated
+- `index.html` -- standalone reset button (CSS, HTML, JS var, visibility
+  logic, event handler, cleanup)
+
+**Files NOT modified:**
+- `json_converter.py` -- detection logic unchanged, works for both paths
+
+---
+
+**Technical Lessons Learned:**
+
+- Directional arrow buttons for 3D scenes were dead UI since their
+  introduction. The `scene.setCamera()` approach (fixed step on
+  `camera.eye` + `camera.center`) produced no visible effect. Native
+  Plotly touch-drag and mouse-drag handle 3D navigation. Testing UI
+  elements in their actual target context matters.
+
+- Animation frame sliders and fixed-position overlays are a fundamental
+  conflict on mobile: the slider is a full-width Plotly element that
+  needs unobstructed drag across the bottom. Any `position: fixed` control
+  in the same zone will eat pointer events. The fix is architectural
+  (remove the conflicting controls) not positional (move them higher).
+
+- Scene type detection (`has_scene`, `has_polar`) was already available
+  in all three pipeline stages (Studio, converter, viewer). The
+  infrastructure to do per-type control selection existed -- it just
+  wasn't used for nav controls until now.
+
+**Next steps for next session:**
+- Test link icon end-to-end through full pipeline (Studio -> json_converter -> index.html)
+- Verify link icon positioning with enc-btn and KMZ button coexistence
+- Test nav controls split: export a 3D animated plot and a 2D plot, verify
+  slider scrubs freely on 3D and full D-pad still works on 2D
 - Orbit hover bloat fix deferred to plotting consolidation Ring 2

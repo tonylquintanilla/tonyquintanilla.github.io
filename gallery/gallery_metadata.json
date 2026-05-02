@@ -2311,8 +2311,52 @@
       "subcategory": "comets",
       "subcategory_label": "Comets",
       "featured": true
+    },
+    {
+      "id": "16_psyche_20231014_animated_months_mobile",
+      "title": "Psyche Mission to 16 Psyche",
+      "filename": "16_psyche_20231014_animated_months_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Psyche Mission to 16 Psyche",
+      "size_kb": 5669.9,
+      "converted": "2026-05-02 01:16",
+      "mode": "portrait"
+    },
+    {
+      "id": "16_psyche_20231014_animated_months_gallery",
+      "title": "Psyche Mission to 16 Psyche",
+      "filename": "16_psyche_20231014_animated_months_gallery.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Psyche Mission to 16 Psyche",
+      "size_kb": 11995.4,
+      "converted": "2026-05-02 01:16",
+      "mode": "landscape"
+    },
+    {
+      "id": "16_psyche_20231014_0000_mobile",
+      "title": "Psyche Mission to 16 Psyche",
+      "filename": "16_psyche_20231014_0000_mobile.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Psyche Mission to 16 Psyche",
+      "size_kb": 95.3,
+      "converted": "2026-05-02 01:17",
+      "mode": "portrait"
+    },
+    {
+      "id": "16_psyche_20231014_0000_gallery",
+      "title": "Psyche Mission to 16 Psyche",
+      "filename": "16_psyche_20231014_0000_gallery.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Psyche Mission to 16 Psyche",
+      "size_kb": 191.3,
+      "converted": "2026-05-02 01:17",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-04-28 04:16",
-  "total_count": 185
+  "last_updated": "2026-05-02 01:17",
+  "total_count": 189
 }

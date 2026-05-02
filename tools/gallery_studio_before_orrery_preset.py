@@ -24,11 +24,6 @@ Usage:
     python gallery_studio.py
 
 Author: Tony Quintanilla / Paloma's Orrery
-Module updated: May 2, 2026 with Anthropic's Claude Opus 4.6
-  - Nav controls 2D/3D split (directional arrows for 2D only,
-    reset+zoom for 3D to avoid blocking animation slider)
-  - Encounter export: Orrery preset mode, Export Encounter dialog,
-    auto-extraction from figure, Python dict code generation
 """
 
 import os
@@ -2375,7 +2370,8 @@ def build_gallery_html(fig_dict, config, title="Paloma's Orrery"):
 <div class="nav-controls">
   <div class="nav-row">
     <button class="nav-btn" onclick="panPlot('reset')" title="Reset view">&#8226;</button>
-    <div style="width:6px"></div>
+  </div>
+  <div class="nav-row nav-zoom">
     <button class="nav-btn" onclick="zoomPlot('in')" title="Zoom in">+</button>
     <div style="width:2px"></div>
     <button class="nav-btn" onclick="zoomPlot('out')" title="Zoom out">&minus;</button>
@@ -3126,7 +3122,6 @@ class GalleryStudio:
         self._prev_config = None  # Set after first _collect_config; avoids noisy initial diff
         self.temp_file = None
         self._last_load_dir = ''       # Remembers last folder used in file browser
-        self._orrery_mode = False      # Orrery preset mode (grays out post-production)
 
         self._build_ui()
         self._log_status("Gallery Studio ready -- load an HTML file to begin")
@@ -3249,20 +3244,6 @@ class GalleryStudio:
                 "Destructive transforms (routing, strip hidden traces) "
                 "are baked in. Reload restores hover text and resets "
                 "route to OFF so you can re-curate safely.")
-
-        self._encounter_btn = tk.Button(
-            action_frame, text="Export Encounter...",
-            command=self._export_encounter, width=18,
-            state='disabled', fg='#2d5a2d')
-        self._encounter_btn.pack(side='left', padx=3)
-        ToolTip(self._encounter_btn,
-                "Export orrery encounter preset as a Python dict.\n"
-                "Only active in Orrery preset mode.\n\n"
-                "Captures view parameters (camera, axis range, dtick,\n"
-                "trace selection) from the current figure plus any\n"
-                "Orrery-mode adjustments. Opens a dialog for science\n"
-                "metadata (type, date, distance, velocity, note).\n\n"
-                "Output: a .py file to paste into spacecraft_encounters.py.")
 
         reset_btn = tk.Button(action_frame, text="Reset Defaults",
                               command=self._reset_defaults, width=14)
@@ -3920,34 +3901,6 @@ class GalleryStudio:
                 "title bar). Green background, tight margins,\n"
                 "colorbar and modebar on. Does not set KMZ link\n"
                 "(set that separately per scenario).")
-
-        # Orrery preset row (separate row -- distinct from gallery presets)
-        orrery_row = tk.Frame(sec)
-        orrery_row.pack(fill='x', pady=(0, 4))
-
-        self._orrery_btn = tk.Button(
-            orrery_row, text="Orrery",
-            command=self._toggle_orrery_mode,
-            width=10, bg='#2d5a2d', fg='white',
-            activebackground='#3d7a3d', activeforeground='white')
-        self._orrery_btn.pack(side='left', padx=2)
-        ToolTip(self._orrery_btn,
-                "Orrery preset mode: grays out post-production controls "
-                "(margins, fonts, legend, annotations, routing, etc.) "
-                "that have no orrery equivalent.\n\n"
-                "What stays active:\n"
-                "  3D Scene: camera, axis range, dtick\n"
-                "  Trace Visibility: drives select_also list\n"
-                "  Show Axes / Show Grid\n\n"
-                "Use this mode before Export Encounter to ensure "
-                "only orrery-native parameters are captured.\n"
-                "Click again or choose another preset to exit.")
-
-        # Save refs so Orrery mode can keep preset buttons enabled
-        self._preset_buttons = [
-            original_btn, landscape_btn, portrait_btn,
-            generator_btn, gen_mobile_btn, self._orrery_btn,
-        ]
 
         # Output format
         row = tk.Frame(sec)
@@ -4688,609 +4641,8 @@ class GalleryStudio:
 
         return targets
 
-    # ---- Orrery Mode ----
-
-    def _set_widget_state_recursive(self, widget, state):
-        """Recursively set state on all child widgets in a container.
-
-        Skips widgets that don't support the 'state' option (Frames,
-        plain Labels, Separators). Used by Orrery mode to gray out
-        post-production sections.
-        """
-        for child in widget.winfo_children():
-            try:
-                child.configure(state=state)
-            except (tk.TclError, AttributeError):
-                pass
-            self._set_widget_state_recursive(child, state)
-
-    def _toggle_orrery_mode(self):
-        """Toggle Orrery preset mode on/off."""
-        if self._orrery_mode:
-            self._exit_orrery_mode()
-        else:
-            self._enter_orrery_mode()
-
-    def _enter_orrery_mode(self):
-        """Enter Orrery mode: gray out post-production controls.
-
-        Only 3D Scene and Trace Visibility sections remain active.
-        These are the orrery-native parameters that translate to
-        Go button presets. Everything else (margins, fonts, legend,
-        annotations, routing, etc.) is post-production and would
-        break the orrery pipeline if exported as a preset.
-        """
-        self._orrery_mode = True
-
-        # Sections that stay active -- everything else gets disabled
-        active_sections = {'3D Scene', 'Trace Visibility', 'Status Log'}
-
-        for col in [self.col_left, self.col_right,
-                    self.col_portrait, self.col_3d]:
-            for child in col.winfo_children():
-                if isinstance(child, tk.LabelFrame):
-                    section_name = child.cget('text')
-                    if section_name in active_sections:
-                        continue
-                    self._set_widget_state_recursive(child, 'disabled')
-
-        # Re-enable preset buttons so user can exit Orrery mode
-        for btn in self._preset_buttons:
-            try:
-                btn.configure(state='normal')
-            except (tk.TclError, AttributeError):
-                pass
-
-        # Visual feedback on the Orrery button
-        self._orrery_btn.configure(relief='sunken', bg='#1a4a1a')
-
-        # Enable Export Encounter
-        self._encounter_btn.configure(state='normal', fg='#2d7a2d')
-
-        self._log_status(
-            "Orrery mode ON -- post-production controls disabled. "
-            "Active: 3D Scene, Trace Visibility. "
-            "Click Export Encounter to capture view parameters.")
-
-    def _exit_orrery_mode(self):
-        """Exit Orrery mode: re-enable all controls."""
-        if not self._orrery_mode:
-            return
-        self._orrery_mode = False
-
-        # Re-enable all sections
-        for col in [self.col_left, self.col_right,
-                    self.col_portrait, self.col_3d]:
-            for child in col.winfo_children():
-                if isinstance(child, tk.LabelFrame):
-                    self._set_widget_state_recursive(child, 'normal')
-
-        # Reset Orrery button appearance
-        self._orrery_btn.configure(relief='raised', bg='#2d5a2d')
-
-        # Disable Export Encounter
-        self._encounter_btn.configure(state='disabled', fg='#2d5a2d')
-
-        # Status log ScrolledText is disabled (read-only) by design;
-        # the bulk re-enable above would have set it to normal.
-        self.status_log.configure(state='disabled')
-
-        self._log_status("Orrery mode OFF -- all controls re-enabled")
-
-    def _export_encounter(self):
-        """Open the Export Encounter dialog.
-
-        Extracts view parameters from the current figure and
-        Orrery-mode settings, presents them alongside manual
-        science metadata fields, and generates a Python dict
-        entry for spacecraft_encounters.py.
-        """
-        if not self._orrery_mode:
-            return
-        if self.fig_dict is None:
-            self._log_status("No figure loaded")
-            return
-
-        extracted = self._extract_encounter_data()
-
-        # ---- Build dialog ----
-        dlg = tk.Toplevel(self.root)
-        dlg.title("Export Encounter")
-        dlg.geometry("820x640")
-        dlg.transient(self.root)
-        dlg.grab_set()
-        dlg.resizable(True, True)
-
-        # Main content panes
-        panes = tk.PanedWindow(dlg, orient='horizontal', sashwidth=4)
-        panes.pack(fill='both', expand=True, padx=8, pady=(8, 0))
-
-        # ---- Left: auto-extracted (read-only) ----
-        left = tk.LabelFrame(panes, text="View Parameters (auto-extracted)",
-                             padx=8, pady=6)
-        panes.add(left, width=380)
-
-        def add_ro_field(parent, label, value, row):
-            """Add a read-only label + value pair."""
-            tk.Label(parent, text=label, anchor='w',
-                     width=16, font=('TkDefaultFont', 9, 'bold')
-                     ).grid(row=row, column=0, sticky='w', pady=2)
-            val_label = tk.Label(parent, text=str(value), anchor='w',
-                                 wraplength=220, justify='left')
-            val_label.grid(row=row, column=1, sticky='w', padx=(4, 0), pady=2)
-            return val_label
-
-        fields_frame = tk.Frame(left)
-        fields_frame.pack(fill='x', pady=4)
-
-        add_ro_field(fields_frame, "Spacecraft:",
-                     extracted.get('spacecraft', '(not detected)'), 0)
-        add_ro_field(fields_frame, "Center:",
-                     extracted.get('center', '(not detected)'), 1)
-        add_ro_field(fields_frame, "select_also:",
-                     ', '.join(extracted.get('select_also', [])) or '(none)', 2)
-        add_ro_field(fields_frame, "plot_scale_au:",
-                     extracted.get('plot_scale_au', 'auto'), 3)
-        add_ro_field(fields_frame, "plot_days:",
-                     extracted.get('plot_days', '(not detected)'), 4)
-        add_ro_field(fields_frame, "scene_dtick:",
-                     extracted.get('scene_dtick', 'auto'), 5)
-        add_ro_field(fields_frame, "Date range:",
-                     extracted.get('date_range', '(not detected)'), 6)
-
-        # Hint text
-        hint = tk.Label(left,
-                        text="These values come from the loaded figure and "
-                             "Orrery-mode settings. To change them, close "
-                             "this dialog and adjust in Studio.",
-                        wraplength=350, fg='gray50',
-                        font=('TkDefaultFont', 8), justify='left')
-        hint.pack(anchor='w', pady=(8, 0))
-
-        # ---- Right: manual entry ----
-        right = tk.LabelFrame(panes, text="Science Metadata (manual entry)",
-                              padx=8, pady=6)
-        panes.add(right, width=380)
-
-        manual_frame = tk.Frame(right)
-        manual_frame.pack(fill='both', expand=True, pady=4)
-
-        r = 0  # grid row counter
-
-        # Type dropdown
-        tk.Label(manual_frame, text="Type:", anchor='w',
-                 width=12).grid(row=r, column=0, sticky='w', pady=2)
-        var_type = tk.StringVar(value='flyby')
-        type_om = ttk.Combobox(manual_frame, textvariable=var_type,
-                               values=['full_mission', 'flyby',
-                                       'gravity_assist', 'orbit_insertion',
-                                       'orbit', 'landing', 'sample',
-                                       'sample_return', 'end_of_mission',
-                                       'planned'],
-                               width=18, state='readonly')
-        type_om.grid(row=r, column=1, sticky='w', pady=2)
-        r += 1
-
-        # Target
-        tk.Label(manual_frame, text="Target:", anchor='w',
-                 width=12).grid(row=r, column=0, sticky='w', pady=2)
-        var_target = tk.StringVar(
-            value=extracted.get('target_suggestion', ''))
-        tk.Entry(manual_frame, textvariable=var_target,
-                 width=24).grid(row=r, column=1, sticky='w', pady=2)
-        r += 1
-
-        # Label
-        tk.Label(manual_frame, text="Label:", anchor='w',
-                 width=12).grid(row=r, column=0, sticky='w', pady=2)
-        var_label = tk.StringVar()
-        tk.Entry(manual_frame, textvariable=var_label,
-                 width=24).grid(row=r, column=1, sticky='w', pady=2)
-        r += 1
-
-        # Date (UTC)
-        tk.Label(manual_frame, text="Date (UTC):", anchor='w',
-                 width=12).grid(row=r, column=0, sticky='w', pady=2)
-        var_date = tk.StringVar()
-        tk.Entry(manual_frame, textvariable=var_date,
-                 width=24).grid(row=r, column=1, sticky='w', pady=2)
-        r += 1
-
-        # dist_km (pre-filled if detected)
-        tk.Label(manual_frame, text="dist_km:", anchor='w',
-                 width=12).grid(row=r, column=0, sticky='w', pady=2)
-        var_dist = tk.StringVar(
-            value=extracted.get('dist_km_suggestion', ''))
-        tk.Entry(manual_frame, textvariable=var_dist,
-                 width=24).grid(row=r, column=1, sticky='w', pady=2)
-        r += 1
-
-        # v_kms (pre-filled if detected)
-        tk.Label(manual_frame, text="v_kms:", anchor='w',
-                 width=12).grid(row=r, column=0, sticky='w', pady=2)
-        var_vel = tk.StringVar(
-            value=extracted.get('v_kms_suggestion', ''))
-        tk.Entry(manual_frame, textvariable=var_vel,
-                 width=24).grid(row=r, column=1, sticky='w', pady=2)
-        r += 1
-
-        # date_source dropdown
-        tk.Label(manual_frame, text="Date source:", anchor='w',
-                 width=12).grid(row=r, column=0, sticky='w', pady=2)
-        var_dsrc = tk.StringVar(value='authoritative')
-        ttk.Combobox(manual_frame, textvariable=var_dsrc,
-                     values=['authoritative', 'horizons', 'planning'],
-                     width=18, state='readonly'
-                     ).grid(row=r, column=1, sticky='w', pady=2)
-        r += 1
-
-        # Status dropdown
-        tk.Label(manual_frame, text="Status:", anchor='w',
-                 width=12).grid(row=r, column=0, sticky='w', pady=2)
-        var_status = tk.StringVar(value='completed')
-        ttk.Combobox(manual_frame, textvariable=var_status,
-                     values=['completed', 'planned', 'canceled'],
-                     width=18, state='readonly'
-                     ).grid(row=r, column=1, sticky='w', pady=2)
-        r += 1
-
-        # Source
-        tk.Label(manual_frame, text="Source:", anchor='w',
-                 width=12).grid(row=r, column=0, sticky='w', pady=2)
-        var_source = tk.StringVar(value='NASA/JPL')
-        tk.Entry(manual_frame, textvariable=var_source,
-                 width=24).grid(row=r, column=1, sticky='w', pady=2)
-        r += 1
-
-        # Note (multi-line)
-        tk.Label(manual_frame, text="Note:", anchor='w',
-                 width=12).grid(row=r, column=0, sticky='nw', pady=2)
-        note_text = tk.Text(manual_frame, width=30, height=5,
-                            wrap='word')
-        note_text.grid(row=r, column=1, sticky='we', pady=2)
-        r += 1
-
-        # ---- Bottom: action buttons ----
-        btn_frame = tk.Frame(dlg)
-        btn_frame.pack(fill='x', padx=8, pady=8)
-
-        def do_generate():
-            """Collect fields and generate Python code."""
-            # Gather manual fields
-            manual = {
-                'type': var_type.get(),
-                'target': var_target.get().strip(),
-                'label': var_label.get().strip(),
-                'date': var_date.get().strip(),
-                'dist_km': var_dist.get().strip(),
-                'v_kms': var_vel.get().strip(),
-                'date_source': var_dsrc.get(),
-                'status': var_status.get(),
-                'source': var_source.get().strip(),
-                'note': note_text.get('1.0', 'end').strip(),
-            }
-            code = self._generate_encounter_code(extracted, manual)
-            self._save_encounter_code(dlg, code, extracted, manual)
-
-        gen_btn = tk.Button(btn_frame, text="Generate Python...",
-                            command=do_generate,
-                            bg='#2d5a2d', fg='white',
-                            activebackground='#3d7a3d',
-                            activeforeground='white',
-                            width=20)
-        gen_btn.pack(side='left', padx=4)
-
-        cancel_btn = tk.Button(btn_frame, text="Cancel",
-                               command=dlg.destroy, width=10)
-        cancel_btn.pack(side='right', padx=4)
-
-        self._log_status("Export Encounter dialog opened")
-
-    def _extract_encounter_data(self):
-        """Extract encounter parameters from loaded figure.
-
-        Returns a dict with auto-detected values from the figure's
-        traces, layout, and Studio's Orrery-mode settings.
-        """
-        fig = self.fig_dict
-        traces = fig.get('data', [])
-        layout = fig.get('layout', {})
-        result = {}
-
-        # ---- Spacecraft: trace with diamond-open marker ----
-        for trace in traces:
-            marker = trace.get('marker', {})
-            if marker.get('symbol') == 'diamond-open':
-                name = trace.get('name', '')
-                for suffix in (' Full Mission', ' Plotted Period',
-                               ' Trajectory', ' Close Approach'):
-                    if name.endswith(suffix):
-                        name = name[:-len(suffix)]
-                result['spacecraft'] = name.strip()
-                break
-
-        # ---- select_also: visible traces ----
-        visible = []
-        spacecraft_name = result.get('spacecraft', '')
-        for tname, var in getattr(self, 'trace_vars', {}).items():
-            if var.get() and tname and tname != spacecraft_name:
-                # Skip non-object traces (orbits, markers, etc.)
-                skip_words = ('Orbit', 'orbit', 'Keplerian', 'Mean',
-                              'Closest', 'marker', 'Marker', 'Grid',
-                              'Sphere', 'shell', 'Shell', 'Ring',
-                              'Magnetosphere', 'Belt', 'info')
-                if any(w in tname for w in skip_words):
-                    continue
-                # Strip common suffixes to get base object name
-                clean = tname
-                for sfx in (' Full Mission', ' Plotted Period',
-                            ' Trajectory'):
-                    if clean.endswith(sfx):
-                        clean = clean[:-len(sfx)]
-                if clean.strip():
-                    visible.append(clean.strip())
-        # Deduplicate preserving order, exclude spacecraft itself
-        seen = set()
-        deduped = []
-        for v in visible:
-            if v not in seen and v != spacecraft_name:
-                seen.add(v)
-                deduped.append(v)
-        result['select_also'] = deduped
-
-        # ---- Center: parse from title ----
-        title = layout.get('title', {})
-        if isinstance(title, dict):
-            title_text = title.get('text', '')
-        else:
-            title_text = str(title)
-        # Common patterns: "around X", "centered on X", "X system"
-        center_match = re.search(
-            r'(?:around|centered on|center[: ]+)\s*(\w+)',
-            title_text, re.IGNORECASE)
-        if center_match:
-            result['center'] = center_match.group(1)
-        else:
-            # Fallback: if "Sun" in select_also, center is Sun
-            if 'Sun' in deduped:
-                result['center'] = 'Sun'
-
-        # ---- plot_scale_au: from Studio axis range ----
-        scale = self.var_scene_axis_range.get()
-        if scale and scale > 0:
-            result['plot_scale_au'] = scale
-        else:
-            # Try to read from figure's scene axis range
-            scene = layout.get('scene', {})
-            for ax_name in ('xaxis', 'yaxis', 'zaxis'):
-                ax = scene.get(ax_name, {})
-                rng = ax.get('range', [])
-                if rng and len(rng) == 2:
-                    result['plot_scale_au'] = abs(rng[1])
-                    break
-
-        # ---- scene_dtick: from Studio setting ----
-        dtick = self.var_scene_dtick.get()
-        if dtick and dtick > 0:
-            result['scene_dtick'] = dtick
-
-        # ---- plot_days: parse from title date range ----
-        # Pattern: "YYYY-MM-DD ... through YYYY-MM-DD"
-        date_match = re.findall(r'(\d{4}-\d{2}-\d{2})', title_text)
-        if len(date_match) >= 2:
-            result['date_range'] = f"{date_match[0]} to {date_match[-1]}"
-            try:
-                d1 = datetime.strptime(date_match[0], '%Y-%m-%d')
-                d2 = datetime.strptime(date_match[-1], '%Y-%m-%d')
-                result['plot_days'] = abs((d2 - d1).days)
-            except ValueError:
-                pass
-
-        # ---- dist_km / v_kms: from closest plotted point trace ----
-        for trace in traces:
-            tname = trace.get('name', '')
-            if 'closest' in tname.lower() and 'point' in tname.lower():
-                text_list = trace.get('text', [])
-                if isinstance(text_list, str):
-                    text_list = [text_list]
-                for txt in text_list:
-                    if not txt:
-                        continue
-                    txt_str = str(txt)
-                    # Distance pattern: "12,345 km" or "12345.6 km"
-                    dist_match = re.search(
-                        r'([\d,]+\.?\d*)\s*km', txt_str)
-                    if dist_match and 'dist_km_suggestion' not in result:
-                        val = dist_match.group(1).replace(',', '')
-                        result['dist_km_suggestion'] = val
-                    # Velocity pattern: "13.78 km/s"
-                    vel_match = re.search(
-                        r'([\d.]+)\s*km/s', txt_str)
-                    if vel_match and 'v_kms_suggestion' not in result:
-                        result['v_kms_suggestion'] = vel_match.group(1)
-                break
-
-        # ---- Target suggestion ----
-        # For encounters: first item in select_also that isn't Earth/Sun
-        for obj in deduped:
-            if obj not in ('Earth', 'Sun', spacecraft_name):
-                result['target_suggestion'] = obj
-                break
-
-        return result
-
-    def _generate_encounter_code(self, extracted, manual):
-        """Generate Python dict code from extracted + manual values.
-
-        Returns a string containing valid Python code for pasting
-        into spacecraft_encounters.py.
-        """
-        enc_type = manual.get('type', 'flyby')
-        spacecraft = extracted.get('spacecraft', 'Unknown')
-        is_full_mission = (enc_type == 'full_mission')
-
-        lines = []
-        lines.append(f"# Generated by Gallery Studio encounter export")
-        lines.append(f"# Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        lines.append(f"# Source file: {self.source_path or '(unknown)'}")
-        lines.append("")
-
-        if is_full_mission:
-            # SPACECRAFT_FULL_MISSION entry
-            lines.append(f"# Add to SPACECRAFT_FULL_MISSION dict:")
-            lines.append(f"'{spacecraft}': {{")
-
-            center = extracted.get('center', 'Sun')
-            lines.append(f"    'center': '{center}',")
-
-            sel = extracted.get('select_also', [])
-            sel_str = ', '.join(f"'{s}'" for s in sel)
-            lines.append(f"    'select_also': [{sel_str}],")
-
-            date_range = extracted.get('date_range', '')
-            if date_range and ' to ' in date_range:
-                start, end = date_range.split(' to ', 1)
-                lines.append(f"    'start_date': '{start.strip()}',")
-                lines.append(f"    'end_date': '{end.strip()}',")
-            else:
-                lines.append(f"    'start_date': '',  # TODO: fill in")
-                lines.append(f"    'end_date': '',  # TODO: fill in")
-
-            scale = extracted.get('plot_scale_au')
-            if scale:
-                lines.append(f"    'plot_scale_au': {scale},")
-            else:
-                lines.append(f"    'plot_scale_au': None,")
-
-            lines.append(f"    'fetch_step': '6h',")
-
-            label = manual.get('label') or 'Full Mission'
-            lines.append(f"    'label': '{label}',")
-
-            lines.append(f"}},")
-
-        else:
-            # SPACECRAFT_ENCOUNTERS list entry
-            lines.append(f"# Add to SPACECRAFT_ENCOUNTERS['{spacecraft}'] list:")
-            lines.append(f"{{")
-
-            target = manual.get('target', '')
-            lines.append(f"    'target': '{target}',")
-
-            date = manual.get('date', '')
-            lines.append(f"    'date': '{date}',")
-
-            lines.append(f"    'type': '{enc_type}',")
-
-            dist_str = manual.get('dist_km', '')
-            if dist_str:
-                try:
-                    dist_val = float(dist_str.replace(',', ''))
-                    lines.append(
-                        f"    'dist_km': {dist_val:.0f},"
-                        f"        # {dist_val:,.0f} km")
-                    lines.append(
-                        f"    'dist_au': {dist_val:.0f} / AU_KM,"
-                        f"  # ~{dist_val / 149597870.7:.7f} AU")
-                except ValueError:
-                    lines.append(f"    'dist_km': 0,  # TODO: fill in")
-                    lines.append(f"    'dist_au': 0 / AU_KM,")
-            else:
-                lines.append(f"    'dist_km': 0,  # TODO: fill in")
-                lines.append(f"    'dist_au': 0 / AU_KM,")
-
-            vel_str = manual.get('v_kms', '')
-            if vel_str:
-                try:
-                    vel_val = float(vel_str)
-                    lines.append(f"    'v_kms': {vel_val},")
-                except ValueError:
-                    lines.append(f"    'v_kms': None,  # TODO")
-            else:
-                lines.append(f"    'v_kms': None,")
-
-            label = manual.get('label', '')
-            lines.append(f"    'label': '{label}',")
-
-            note = manual.get('note', '')
-            if note:
-                # Wrap note in parenthesized string for readability
-                escaped = note.replace("'", "\\'")
-                lines.append(f"    'note': ('{escaped}'),")
-            else:
-                lines.append(f"    'note': '',  # TODO: educational note")
-
-            status = manual.get('status', 'completed')
-            lines.append(f"    'status': '{status}',")
-
-            source = manual.get('source', 'NASA/JPL')
-            lines.append(f"    'source': '{source}',")
-
-            date_source = manual.get('date_source', 'authoritative')
-            lines.append(f"    'date_source': '{date_source}',")
-
-            center = extracted.get('center', 'Sun')
-            lines.append(f"    'center': '{center}',")
-
-            sel = extracted.get('select_also', [])
-            sel_str = ', '.join(f"'{s}'" for s in sel)
-            lines.append(f"    'select_also': [{sel_str}],")
-
-            plot_days = extracted.get('plot_days')
-            if plot_days:
-                lines.append(f"    'plot_days': {plot_days},")
-            else:
-                lines.append(f"    'plot_days': 28,  # TODO: adjust")
-
-            scale = extracted.get('plot_scale_au')
-            if scale:
-                lines.append(f"    'plot_scale_au': {scale},")
-            else:
-                lines.append(f"    'plot_scale_au': None,")
-
-            lines.append(f"}},")
-
-        return '\n'.join(lines)
-
-    def _save_encounter_code(self, parent, code, extracted, manual):
-        """Save generated encounter code to a .py file.
-
-        Offers a file save dialog. Falls back to clipboard copy
-        if the user cancels.
-        """
-        spacecraft = extracted.get('spacecraft', 'encounter')
-        enc_type = manual.get('type', 'encounter')
-        default_name = f"{spacecraft}_{enc_type}.py".replace(' ', '_').lower()
-
-        path = filedialog.asksaveasfilename(
-            parent=parent,
-            title="Save Encounter Code",
-            defaultextension='.py',
-            initialfile=default_name,
-            filetypes=[('Python files', '*.py'), ('All files', '*.*')]
-        )
-        if path:
-            try:
-                with open(path, 'w', encoding='utf-8') as f:
-                    f.write(code)
-                    f.write('\n')
-                self._log_status(f"Encounter code saved to {path}")
-                parent.destroy()
-            except OSError as e:
-                messagebox.showerror("Save Error", str(e), parent=parent)
-        else:
-            # User canceled file dialog -- offer clipboard
-            try:
-                self.root.clipboard_clear()
-                self.root.clipboard_append(code)
-                self._log_status("Encounter code copied to clipboard")
-                parent.destroy()
-            except Exception:
-                self._log_status("Save canceled")
-
     def _apply_portrait_preset(self):
         """Apply the portrait/social media preset."""
-        self._exit_orrery_mode()
         self._apply_config_to_gui(PORTRAIT_CONFIG)
         self._log_status("Portrait preset applied - adjust as needed")
 
@@ -5304,7 +4656,6 @@ class GalleryStudio:
         - Show axes
         - Show grid
         """
-        self._exit_orrery_mode()
         self._apply_config_to_gui(DEFAULT_CONFIG)
 
         # Override the five landscape-specific settings
@@ -5322,7 +4673,6 @@ class GalleryStudio:
         Preserves the current KMZ link and custom title since those
         are per-scenario values that the preset should not wipe.
         """
-        self._exit_orrery_mode()
         # Stash per-scenario values
         current_kmz = self.var_kmz_link.get()
         current_title = self.var_custom_title.get()
@@ -5343,7 +4693,6 @@ class GalleryStudio:
         Preserves the current KMZ link and custom title since those
         are per-scenario values that the preset should not wipe.
         """
-        self._exit_orrery_mode()
         # Stash per-scenario values
         current_kmz = self.var_kmz_link.get()
         current_title = self.var_custom_title.get()
@@ -5371,7 +4720,6 @@ class GalleryStudio:
 
         Press Preview after to see the result.
         """
-        self._exit_orrery_mode()
         if self.fig_dict is None:
             messagebox.showinfo("Original", "Load an HTML file first.")
             return
@@ -5633,7 +4981,6 @@ class GalleryStudio:
 
     def _reset_defaults(self):
         """Reset all config options to defaults."""
-        self._exit_orrery_mode()
         self._apply_config_to_gui(DEFAULT_CONFIG)
         self._log_status("Reset to defaults")
 
