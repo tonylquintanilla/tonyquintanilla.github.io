@@ -1,6 +1,6 @@
 # Paloma's Orrery - Web Gallery Initiative
 
-## Session Handoff | February 5 - May 2, 2026 | Claude Opus 4.6
+## Session Handoff | February 5 - May 5, 2026 | Claude Opus 4.6
 
 ---
 
@@ -4827,9 +4827,222 @@ opportunistic removal.
   infrastructure to do per-type control selection existed -- it just
   wasn't used for nav controls until now.
 
+- Position: fixed elements need testing in BOTH Studio preview and
+  gallery viewer -- they have separate nav implementations. A fix in
+  one doesn't propagate to the other (parallel pipeline lesson again).
+
+- Section-level gray-out is too coarse when a section mixes orrery-native
+  and post-production controls. Trace Visibility has visibility checkboxes
+  (orrery-native) alongside strip-hidden, featured labels, and fly-to
+  buttons (post-production). Solution: bulk section disable plus
+  per-widget re-enable/disable for mixed sections.
+
+
+### Session 36b (May 2, 2026): Encounter Export Implementation
+
+---
+
+**Implements:** ENCOUNTER_EXPORT_HANDOFF.md (design session May 1, 2026)
+
+**Feature:** New export path in Gallery Studio that captures spacecraft
+encounter visualizations as Python dict entries for `spacecraft_encounters.py`.
+Studio already captures curation work for the gallery (Fork 1: Export HTML).
+This adds Fork 2: the same curation work, exported as an orrery encounter
+preset.
+
+**Three phases, built and tested in one session:**
+
+**Phase 1 -- Orrery mode infrastructure (153 lines):**
+- Green "Orrery" toggle button on its own row below existing presets
+- `_enter_orrery_mode()`: recursively disables 12 post-production
+  sections, keeps 3D Scene and Trace Visibility active. Within Trace
+  Visibility, selectively disables strip-hidden, featured (gold), and
+  fly-to (green) checkboxes while leaving visibility checkboxes active.
+  Re-enables preset buttons so user can always exit.
+- `_exit_orrery_mode()`: re-enables all controls. Called by every other
+  preset method + Reset Defaults. Preserves status log read-only state.
+- Export Encounter button in action bar: `state='disabled'` by default,
+  `'normal'` in Orrery mode.
+- Verified: 12 sections disabled, 2 active, 3 post-production controls
+  within Trace Visibility individually disabled, all re-enable on exit.
+
+**Phase 2 -- Export Encounter dialog (335 lines):**
+- `_export_encounter()`: two-pane Toplevel modal dialog
+- Left pane (read-only verification): spacecraft, center, select_also,
+  plot_scale_au, plot_days, scene_dtick, date_range -- auto-extracted
+  from figure + Studio Orrery-mode settings
+- Right pane (manual entry): type dropdown (full_mission, flyby,
+  gravity_assist, orbit_insertion, orbit, landing, sample, sample_return,
+  end_of_mission, planned), target, label, date, dist_km (pre-filled),
+  v_kms (pre-filled), date_source, status (completed/ongoing/planned/
+  canceled), source, note textarea
+- `_extract_encounter_data()`: parses loaded figure traces for spacecraft
+  (diamond-open marker symbol), visible traces (select_also), title
+  (center + date range), closest plotted point hover text (dist_km/v_kms
+  suggestions). Filters spacecraft name from select_also.
+
+**Phase 3 -- Output generation (166 lines):**
+- `_generate_encounter_code()`: produces valid Python dict code matching
+  `spacecraft_encounters.py` format
+- `full_mission` type -> `SPACECRAFT_FULL_MISSION` dict entry
+- All other types -> `SPACECRAFT_ENCOUNTERS` list entry
+- `dist_au` computed as `dist_km / AU_KM` (never hardcoded)
+- Comment header with generation date and source file
+- `_save_encounter_code()`: file save dialog -> .py file, clipboard
+  fallback if canceled
+
+**Additional fixes during session:**
+- Nav controls: 3D preview changed from vertical stack (reset above zoom)
+  to horizontal row `[Reset] [+] [-]` to avoid blocking animation slider
+- Nav controls: gallery viewer reset button positioned at `right: 68px`
+  (left of zoom cluster) for same reason
+- Redundant `import re` and `from datetime import datetime as _dt`
+  removed (both already at module level)
+- `ongoing` added to status dropdown values
+- Credit lines added to gallery_studio.py docstring and index.html header
+
+---
+
+**Files modified:**
+- `gallery_studio.py` -- Orrery mode, Export Encounter dialog,
+  auto-extraction, code generation, nav controls horizontal row,
+  status dropdown, credit line (5026 -> ~5700 lines)
+- `index.html` -- standalone reset button, credit line
+
+**Files NOT modified:**
+- `json_converter.py` -- unchanged
+- `spacecraft_encounters.py` -- user pastes generated code manually
+  (note: line 58 status comment needs `ongoing` added)
+
+---
+
+**Full pipeline tested by Tony:**
+1. Nav controls split: 3D animated plot slider scrubs freely
+2. Orrery mode toggle: controls gray out/restore correctly
+3. Export Encounter dialog: auto-extraction, manual entry, code
+   generation all working
+
 **Next steps for next session:**
 - Test link icon end-to-end through full pipeline (Studio -> json_converter -> index.html)
 - Verify link icon positioning with enc-btn and KMZ button coexistence
-- Test nav controls split: export a 3D animated plot and a 2D plot, verify
-  slider scrubs freely on 3D and full D-pad still works on 2D
+- Add `ongoing` to spacecraft_encounters.py status comment (line 58)
 - Orbit hover bloat fix deferred to plotting consolidation Ring 2
+- Test encounter export with various mission types (full_mission vs encounter)
+- Consider camera capture in encounter export (currently not extracted)
+
+
+### Session 37 (May 4-5, 2026): Object Encyclopedia + Encounter Export Design Refinement
+
+---
+
+**Two tracks in one session: encyclopedia build + design iteration.**
+
+**Track 1 -- Object Encyclopedia in save_utils.py:**
+
+Moved "Embed Object Encyclopedia" from post-production (Studio-only)
+to orrery-native (always-on in every HTML output). The encyclopedia
+overlay is now injected by `save_utils.py` at the `_write_html()` choke
+point -- every temp preview and saved HTML gets the "i" button and info
+cards automatically.
+
+Implementation:
+- `_load_info_dictionary()` -- imports INFO with path fallbacks
+- `_strip_plotting_suggestions()` -- removes `***ALL CAPS***` lines
+  meant for the desktop GUI, not HTML output
+- `_extract_encyclopedia(fig)` -- matches trace names against INFO keys
+- `_build_encyclopedia_overlay(encyclopedia)` -- generates self-contained
+  CSS/HTML/JS overlay (~5.5KB) with click/hover events, card UI,
+  Escape dismiss, click-outside dismiss
+- `_inject_encyclopedia(fig, html_str)` -- inserts before `</body>`
+- `_write_html()` modified: `fig.to_html()` -> `_inject_encyclopedia()`
+  -> binary write (replaces direct `fig.write_html()`)
+- Plotly event wiring uses polling (`_encWaitForPlotly`) instead of
+  `DOMContentLoaded` to handle async Plotly initialization timing.
+  `DOMContentLoaded` can fire before `Plotly.newPlot()` completes,
+  leaving the graph div without the `.on()` method
+- No-op when no INFO entries match trace names (HTML unchanged)
+
+Studio keeps its own independent encyclopedia injection for its HTML
+pipeline (Studio strips the orrery wrapper during figure extraction
+and rebuilds HTML from scratch). Studio toggle defaults to on, remains
+available for curation. Orrery has no toggle -- always on.
+
+**Track 2 -- Encounter Export Design Refinement:**
+
+Design session (zero-code) refining the encounter export architecture.
+Key insight surfaced: Studio post-production edits (margins, font scaling,
+annotations) have no orrery equivalent. Exporting them as encounter
+presets would break the orrery pipeline.
+
+Design decisions confirmed:
+- `_enter_orrery_mode()` should reset to `DEFAULT_CONFIG` before graying
+  out controls (same pattern as all other presets). One-line fix:
+  `self._apply_config_to_gui(DEFAULT_CONFIG)` after setting the flag,
+  before the gray-out logic. Without this, switching from a heavily
+  edited landscape mode to Orrery carries over post-production values
+  in the GUI variables even though controls are grayed out.
+- Auto-extracted fields (left pane) are read-only verification. If
+  wrong, close dialog, fix in Studio, re-export. The figure is the
+  source of truth for view parameters.
+- dist_km and v_kms straddle auto/manual: pre-filled from hover text
+  when parseable, but must be verified against mission docs.
+- `full_mission` as a type in the dropdown -- the natural starting
+  point for any mission visualization.
+- Output is a standalone .py artifact, not direct file modification.
+  Preserves manual workflow independence from Claude.
+
+**Track 3 -- Project file staleness lesson:**
+
+During the session, a complete `gallery_studio.py` was built from the
+`/mnt/project/` snapshot (stale from session start) instead of from
+the uploaded current file. This would have silently overwritten the
+existing Orrery mode and Export Encounter implementation. Caught by
+Tony before deployment.
+
+Protocol v3.21 updated with:
+- Context Priority staleness warning
+- Anti-pattern: "Return complete file from stale base"
+- Process lesson documenting the incident
+- Quotable: "A bad snippet is localized. A complete file from a stale
+  base is destructive."
+
+Rule formalized: `/mnt/project/` is a read-only snapshot from session
+start. When both an uploaded file and a project file exist for the same
+filename, ALWAYS use the upload.
+
+---
+
+**Files modified:**
+- `save_utils.py` -- Object Encyclopedia injection (6 new functions,
+  `_write_html()` rewritten, `json` and `re` imports added, module
+  docstring updated)
+- `README.md` -- Object Encyclopedia added to Key Capabilities,
+  version bumped to v2.9.0
+- `ADDING_OBJECTS_GUIDE.md` -- INFO entries documented as enabling
+  Object Encyclopedia, bumped to v1.1
+- `project_instructions_v3_21.md` -- staleness rule, anti-pattern,
+  lesson, quotable, version history
+
+**Files NOT modified:**
+- `gallery_studio.py` -- one-line fix identified but not applied
+  (Tony applies manually: add `self._apply_config_to_gui(DEFAULT_CONFIG)`
+  to `_enter_orrery_mode()` after line 4730)
+- `index.html` -- unchanged
+- `json_converter.py` -- unchanged
+
+---
+
+**Handoff artifacts produced:**
+- `ENCOUNTER_EXPORT_HANDOFF.md` v3.0 -- complete design document with
+  Orrery preset mode, Fork 1/Fork 2 architecture, post-production
+  boundary, completed encyclopedia section
+- `project_instructions_general.md` -- distilled protocol for Discord
+  posting (Anthropic community)
+
+**Next steps for next session:**
+- Apply one-line fix to `_enter_orrery_mode()` (reset to DEFAULT_CONFIG)
+- Test link icon end-to-end through full pipeline (carried from Session 36b)
+- Add `ongoing` to spacecraft_encounters.py status comment (carried)
+- Test encounter export with various mission types (carried)
+- Consider camera capture in encounter export (carried)
+

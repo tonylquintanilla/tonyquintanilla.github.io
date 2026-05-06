@@ -3718,6 +3718,7 @@ class GalleryStudio:
         cb = tk.Checkbutton(btn_row, text="Strip hidden",
                             variable=self.var_strip_hidden)
         cb.pack(side='left', padx=6)
+        self._strip_hidden_cb = cb
         ToolTip(cb, "Remove hidden traces from the exported file "
                 "entirely (reduces file size). If unchecked, hidden "
                 "traces stay in the data with visible:false -- they "
@@ -3742,6 +3743,8 @@ class GalleryStudio:
         trace_sb.pack(side='right', fill='y')
         self.trace_vars = {}  # Will be populated on file load
         self.featured_vars = {}  # Will be populated on file load
+        self._featured_cbs = []  # Widget refs for Orrery mode disable
+        self._flyto_cbs = []     # Widget refs for Orrery mode disable
 
         # ---- Trace Appearance ----
         sec = tk.LabelFrame(right, text="Trace Appearance", padx=6, pady=4)
@@ -4444,6 +4447,8 @@ class GalleryStudio:
         self.featured_vars = {}
         self.flyto_vars = {}  # {trace_name: BooleanVar} for fly-to target checkboxes
         self.label_vars = {}  # {trace_name: StringVar} for custom label overrides
+        self._featured_cbs = []
+        self._flyto_cbs = []
 
         if self.fig_dict is None:
             return
@@ -4482,6 +4487,7 @@ class GalleryStudio:
                     "gold label on load. Label disappears when the "
                     "user taps the trace.")
             self.featured_vars[name] = feat_var
+            self._featured_cbs.append(feat_cb)
             # Fly-to target checkbox (green border)
 
             flyto_var = tk.BooleanVar(value=(name in saved_flyto))
@@ -4498,7 +4504,8 @@ class GalleryStudio:
                     "Creates a compact navigation button that flies the "
                     "camera to this object's position with tight axis ranges. "
                     "Maximum 4 targets.")
-            self.flyto_vars[name] = flyto_var            
+            self.flyto_vars[name] = flyto_var
+            self._flyto_cbs.append(flyto_cb)            
 
             # Visibility checkbox
             vis_var = tk.BooleanVar(value=saved_vis.get(name, True))
@@ -4722,6 +4729,10 @@ class GalleryStudio:
         """
         self._orrery_mode = True
 
+        # Reset to clean config -- same pattern as other presets
+        self._apply_config_to_gui(DEFAULT_CONFIG)
+        self.var_encyclopedia.set(True)  # Encyclopedia is orrery-native
+
         # Sections that stay active -- everything else gets disabled
         active_sections = {'3D Scene', 'Trace Visibility', 'Status Log'}
 
@@ -4738,6 +4749,23 @@ class GalleryStudio:
         for btn in self._preset_buttons:
             try:
                 btn.configure(state='normal')
+            except (tk.TclError, AttributeError):
+                pass
+
+        # Disable post-production controls within Trace Visibility
+        # (the section itself stays active for trace selection checkboxes)
+        try:
+            self._strip_hidden_cb.configure(state='disabled')
+        except (tk.TclError, AttributeError):
+            pass
+        for cb in self._featured_cbs:
+            try:
+                cb.configure(state='disabled')
+            except (tk.TclError, AttributeError):
+                pass
+        for cb in self._flyto_cbs:
+            try:
+                cb.configure(state='disabled')
             except (tk.TclError, AttributeError):
                 pass
 
@@ -4774,6 +4802,22 @@ class GalleryStudio:
         # Status log ScrolledText is disabled (read-only) by design;
         # the bulk re-enable above would have set it to normal.
         self.status_log.configure(state='disabled')
+
+        # Re-enable post-production controls in Trace Visibility
+        try:
+            self._strip_hidden_cb.configure(state='normal')
+        except (tk.TclError, AttributeError):
+            pass
+        for cb in self._featured_cbs:
+            try:
+                cb.configure(state='normal')
+            except (tk.TclError, AttributeError):
+                pass
+        for cb in self._flyto_cbs:
+            try:
+                cb.configure(state='normal')
+            except (tk.TclError, AttributeError):
+                pass
 
         self._log_status("Orrery mode OFF -- all controls re-enabled")
 
