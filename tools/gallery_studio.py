@@ -29,6 +29,9 @@ Module updated: May 2, 2026 with Anthropic's Claude Opus 4.6
     reset+zoom for 3D to avoid blocking animation slider)
   - Encounter export: Orrery preset mode, Export Encounter dialog,
     auto-extraction from figure, Python dict code generation
+
+Module updated: May 8, 2026 with Anthropic's Claude 4.6 and 4.7
+- Extraction rewrite (center, date, distance, surface), dialog pre-fill, date normalization, center field, mission date lookup    
 """
 
 import os
@@ -3127,6 +3130,7 @@ class GalleryStudio:
         self.temp_file = None
         self._last_load_dir = ''       # Remembers last folder used in file browser
         self._orrery_mode = False      # Orrery preset mode (grays out post-production)
+        self._studio_prefs = self._load_studio_prefs()
 
         self._build_ui()
         self._log_status("Gallery Studio ready -- load an HTML file to begin")
@@ -3140,6 +3144,39 @@ class GalleryStudio:
         """Retired -- settings are now embedded in each exported HTML file.
         Kept as a stub to avoid errors if called from old code paths."""
         pass
+
+    # ---- Persistent preferences (studio_config.json) ----
+
+#    STUDIO_PREFS_FILE = 'studio_config.json'
+    STUDIO_PREFS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'studio_config.json')    
+
+    def _load_studio_prefs(self):
+        """Load persistent Studio preferences (file dialog paths, etc.)."""
+        try:
+            if os.path.exists(self.STUDIO_PREFS_FILE):
+                with open(self.STUDIO_PREFS_FILE, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"[GALLERY STUDIO] Could not load prefs: {e}", flush=True)
+        return {}
+
+    def _save_studio_prefs(self):
+        """Save persistent Studio preferences."""
+        try:
+            with open(self.STUDIO_PREFS_FILE, 'w') as f:
+                json.dump(self._studio_prefs, f, indent=2)
+        except Exception as e:
+            print(f"[GALLERY STUDIO] Could not save prefs: {e}", flush=True)
+
+    def _get_last_dir(self, key):
+        """Get last-used directory for a file dialog, or None."""
+        d = self._studio_prefs.get(key, '')
+        return d if d and os.path.isdir(d) else None
+
+    def _set_last_dir(self, key, filepath):
+        """Save directory of filepath for next dialog open."""
+        self._studio_prefs[key] = os.path.dirname(os.path.abspath(filepath))
+        self._save_studio_prefs()
 
     def _build_ui(self):
         """Build the studio interface with two-column layout."""
@@ -3263,14 +3300,6 @@ class GalleryStudio:
                 "Orrery-mode adjustments. Opens a dialog for science\n"
                 "metadata (type, date, distance, velocity, note).\n\n"
                 "Output: a .py file to paste into spacecraft_encounters.py.")
-
-        reset_btn = tk.Button(action_frame, text="Reset Defaults",
-                              command=self._reset_defaults, width=14)
-        reset_btn.pack(side='right', padx=3)
-        ToolTip(reset_btn, "Reset all settings to built-in defaults.\n"
-                "Resets layout, hover, routing, presets -- everything "
-                "except trace visibility and featured traces, which "
-                "are tied to the loaded figure's trace list.")
 
         # Spacer to push status bar down and give tooltip room
         spacer = tk.Frame(self.root, height=40)
@@ -3946,10 +3975,23 @@ class GalleryStudio:
                 "only orrery-native parameters are captured.\n"
                 "Click again or choose another preset to exit.")
 
+        reset_btn = tk.Button(
+            orrery_row, text="Reset Defaults",
+            command=self._reset_defaults,
+            width=14)
+        reset_btn.pack(side='left', padx=6)
+        ToolTip(reset_btn, "Reset all settings to built-in defaults.\n"
+                "Resets layout, hover, routing, presets -- everything "
+                "except trace visibility and featured traces, which "
+                "are tied to the loaded figure's trace list.\n\n"
+                "Unlike Original, this ignores the figure's own\n"
+                "background color and margins.")
+
         # Save refs so Orrery mode can keep preset buttons enabled
         self._preset_buttons = [
             original_btn, landscape_btn, portrait_btn,
             generator_btn, gen_mobile_btn, self._orrery_btn,
+            reset_btn,
         ]
 
         # Output format
@@ -4731,7 +4773,8 @@ class GalleryStudio:
 
         # Reset to clean config -- same pattern as other presets
         self._apply_config_to_gui(DEFAULT_CONFIG)
-        self.var_encyclopedia.set(True)  # Encyclopedia is orrery-native
+        self.var_encyclopedia.set(True)   # Encyclopedia is orrery-native
+        self.var_show_modebar.set(True)   # Modebar is orrery-native (zoom/pan/rotate)
 
         # Sections that stay active -- everything else gets disabled
         active_sections = {'3D Scene', 'Trace Visibility', 'Status Log'}
@@ -4873,10 +4916,33 @@ class GalleryStudio:
                      extracted.get('center', '(not detected)'), 1)
         add_ro_field(fields_frame, "select_also:",
                      ', '.join(extracted.get('select_also', [])) or '(none)', 2)
-        add_ro_field(fields_frame, "plot_scale_au:",
-                     extracted.get('plot_scale_au', 'auto'), 3)
-        add_ro_field(fields_frame, "plot_days:",
-                     extracted.get('plot_days', '(not detected)'), 4)
+        # plot_scale_au: editable, pre-filled from extraction
+        tk.Label(fields_frame, text="plot_scale_au:", anchor='w',
+                 width=16, font=('TkDefaultFont', 9, 'bold')
+                 ).grid(row=3, column=0, sticky='w', pady=2)
+        var_scale = tk.StringVar(
+            value=str(extracted.get('plot_scale_au', '')))
+        tk.Entry(fields_frame, textvariable=var_scale,
+                 width=24).grid(row=3, column=1, sticky='w',
+                                padx=(4, 0), pady=2)
+
+        # plot_days: editable, pre-filled from extraction
+        tk.Label(fields_frame, text="plot_days:", anchor='w',
+                 width=16, font=('TkDefaultFont', 9, 'bold')
+                 ).grid(row=4, column=0, sticky='w', pady=2)
+        var_plot_days = tk.StringVar(
+            value=str(extracted.get('plot_days', '')))
+        pd_entry = tk.Entry(fields_frame, textvariable=var_plot_days,
+                            width=24)
+        pd_entry.grid(row=4, column=1, sticky='w',
+                      padx=(4, 0), pady=2)
+        ToolTip(pd_entry,
+                "Plot window around encounter.\n"
+                "Days: 28, 7, 1\n"
+                "H:MM for sub-day: 1:00 (1 hour), 0:30 (30 min)\n\n"
+                "Only used as fallback when v_kms is missing.\n"
+                "With v_kms, adaptive resolution computes\n"
+                "its own window from velocity and scale.")
         add_ro_field(fields_frame, "scene_dtick:",
                      extracted.get('scene_dtick', 'auto'), 5)
         add_ro_field(fields_frame, "Date range:",
@@ -4884,9 +4950,9 @@ class GalleryStudio:
 
         # Hint text
         hint = tk.Label(left,
-                        text="These values come from the loaded figure and "
-                             "Orrery-mode settings. To change them, close "
-                             "this dialog and adjust in Studio.",
+                        text="Auto-extracted from loaded figure. "
+                             "plot_scale_au and plot_days are editable -- "
+                             "your entry overrides the extracted value.",
                         wraplength=350, fg='gray50',
                         font=('TkDefaultFont', 8), justify='left')
         hint.pack(anchor='w', pady=(8, 0))
@@ -4924,7 +4990,17 @@ class GalleryStudio:
                  width=24).grid(row=r, column=1, sticky='w', pady=2)
         r += 1
 
+        # Center body (pre-filled from hover detection, editable)
+        tk.Label(manual_frame, text="Center:", anchor='w',
+                 width=12).grid(row=r, column=0, sticky='w', pady=2)
+        var_center = tk.StringVar(
+            value=extracted.get('center', ''))
+        tk.Entry(manual_frame, textvariable=var_center,
+                 width=24).grid(row=r, column=1, sticky='w', pady=2)
+        r += 1
+
         # Label
+
         tk.Label(manual_frame, text="Label:", anchor='w',
                  width=12).grid(row=r, column=0, sticky='w', pady=2)
         var_label = tk.StringVar()
@@ -4935,7 +5011,9 @@ class GalleryStudio:
         # Date (UTC)
         tk.Label(manual_frame, text="Date (UTC):", anchor='w',
                  width=12).grid(row=r, column=0, sticky='w', pady=2)
-        var_date = tk.StringVar()
+        var_date = tk.StringVar(
+            value=extracted.get('date_suggestion', ''))
+
         tk.Entry(manual_frame, textvariable=var_date,
                  width=24).grid(row=r, column=1, sticky='w', pady=2)
         r += 1
@@ -5001,6 +5079,7 @@ class GalleryStudio:
         def do_generate():
             """Collect fields and generate Python code."""
             # Gather manual fields
+
             manual = {
                 'type': var_type.get(),
                 'target': var_target.get().strip(),
@@ -5012,7 +5091,11 @@ class GalleryStudio:
                 'status': var_status.get(),
                 'source': var_source.get().strip(),
                 'note': note_text.get('1.0', 'end').strip(),
+                'center': var_center.get().strip(),
+                'plot_scale_au': var_scale.get().strip(),
+                'plot_days': var_plot_days.get().strip(),
             }
+
             code = self._generate_encounter_code(extracted, manual)
             self._save_encounter_code(dlg, code, extracted, manual)
 
@@ -5050,10 +5133,28 @@ class GalleryStudio:
                                ' Trajectory', ' Close Approach'):
                     if name.endswith(suffix):
                         name = name[:-len(suffix)]
+
                 result['spacecraft'] = name.strip()
                 break
 
+        # ---- Mission dates: from celestial_objects.py ----
+        if result.get('spacecraft'):
+            try:
+                from celestial_objects import OBJECT_DEFINITIONS
+                for obj in OBJECT_DEFINITIONS:
+                    if obj.get('name') == result['spacecraft']:
+                        sd = obj.get('start_date')
+                        ed = obj.get('end_date')
+                        if sd:
+                            result['mission_start_date'] = sd.strftime('%Y-%m-%d')
+                        if ed:
+                            result['mission_end_date'] = ed.strftime('%Y-%m-%d')
+                        break
+            except ImportError:
+                pass  # celestial_objects not available in this context
+
         # ---- select_also: visible traces ----
+
         visible = []
         spacecraft_name = result.get('spacecraft', '')
         for tname, var in getattr(self, 'trace_vars', {}).items():
@@ -5082,22 +5183,16 @@ class GalleryStudio:
                 deduped.append(v)
         result['select_also'] = deduped
 
-        # ---- Center: parse from title ----
+        # Title text is needed by the date-range parser further down.
         title = layout.get('title', {})
         if isinstance(title, dict):
             title_text = title.get('text', '')
         else:
             title_text = str(title)
-        # Common patterns: "around X", "centered on X", "X system"
-        center_match = re.search(
-            r'(?:around|centered on|center[: ]+)\s*(\w+)',
-            title_text, re.IGNORECASE)
-        if center_match:
-            result['center'] = center_match.group(1)
-        else:
-            # Fallback: if "Sun" in select_also, center is Sun
-            if 'Sun' in deduped:
-                result['center'] = 'Sun'
+
+        # ---- Center: detected from closest plotted point hover text ----
+        # Set after the closest-point loop below. If hover detection
+        # fails, the dialog provides a manual entry field.
 
         # ---- plot_scale_au: from Studio axis range ----
         scale = self.var_scene_axis_range.get()
@@ -5130,36 +5225,103 @@ class GalleryStudio:
             except ValueError:
                 pass
 
-        # ---- dist_km / v_kms: from closest plotted point trace ----
+        # ---- Closest plotted point: date, distance, center body ----
+        # Prefer "Closest Plotted Period Point" (encounter distance)
+        # over "Closest Full Mission Point" (full-trajectory distance).
+        # Fall back to "Closest Plotted Point" for older HTML files
+        # or non-spacecraft objects.
+        spacecraft_name = result.get('spacecraft', '')
+        cpp_trace = None
+
+        # Priority 1: Plotted Period point (encounter)
         for trace in traces:
             tname = trace.get('name', '')
-            if 'closest' in tname.lower() and 'point' in tname.lower():
-                text_list = trace.get('text', [])
-                if isinstance(text_list, str):
-                    text_list = [text_list]
-                for txt in text_list:
-                    if not txt:
-                        continue
-                    txt_str = str(txt)
-                    # Distance pattern: "12,345 km" or "12345.6 km"
-                    dist_match = re.search(
-                        r'([\d,]+\.?\d*)\s*km', txt_str)
-                    if dist_match and 'dist_km_suggestion' not in result:
-                        val = dist_match.group(1).replace(',', '')
-                        result['dist_km_suggestion'] = val
-                    # Velocity pattern: "13.78 km/s"
-                    vel_match = re.search(
-                        r'([\d.]+)\s*km/s', txt_str)
-                    if vel_match and 'v_kms_suggestion' not in result:
-                        result['v_kms_suggestion'] = vel_match.group(1)
+            if tname == f"{spacecraft_name} Closest Plotted Period Point":
+                cpp_trace = trace
                 break
 
+        # Priority 2: generic Closest Plotted Point (backward compat)
+        if cpp_trace is None:
+            for trace in traces:
+                tname = trace.get('name', '')
+                if tname == f"{spacecraft_name} Closest Plotted Point":
+                    cpp_trace = trace
+                    break
+
+        # Extract data from chosen closest plotted point
+        if cpp_trace is not None:
+            text_list = cpp_trace.get('text', [])
+            if isinstance(text_list, str):
+                text_list = [text_list]
+            for txt in text_list:
+                if not txt:
+                    continue
+                txt_str = str(txt)
+                # Date pattern: "Date: 2026-05-15 19:51:00 UTC"
+                date_match = re.search(
+                    r'Date:\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s*UTC',
+                    txt_str)
+                if date_match and 'date_suggestion' not in result:
+                    result['date_suggestion'] = date_match.group(1)
+                # Distance from center (km)
+                dist_match = re.search(
+                    r'Distance from center:\s*([\d,]+\.?\d*)\s*km',
+                    txt_str)
+                if dist_match and 'dist_km_suggestion' not in result:
+                    result['dist_km_suggestion'] = dist_match.group(1).replace(',', '')
+                # Distance from surface (km)
+                surf_match = re.search(
+                    r'Distance from surface:\s*([\d,]+\.?\d*)\s*km',
+                    txt_str)
+                if surf_match and 'dist_surface_km' not in result:
+                    result['dist_surface_km'] = surf_match.group(1).replace(',', '')
+                # Center body: "Phobos radius: 11 km"
+                center_match = re.search(
+                    r'(\w[\w\s-]*?)\s+radius:\s*[\d,]+',
+                    txt_str)
+                if center_match and 'center_from_hover' not in result:
+                    result['center_from_hover'] = center_match.group(1).strip()
+                # Velocity pattern: "13.78 km/s"
+                vel_match = re.search(
+                    r'([\d.]+)\s*km/s', txt_str)
+                if vel_match and 'v_kms_suggestion' not in result:
+                    result['v_kms_suggestion'] = vel_match.group(1)
+
+        # ---- Center: from hover text detection ----
+        if 'center_from_hover' in result:
+            result['center'] = result['center_from_hover']
+
+        # ---- v_kms fallback: Horizons encounter markers ----
+        # The CPP trace has distance but often not velocity.
+        # The Horizons 2-pass marker has "Velocity relative to X: Y km/s"
+        if 'v_kms_suggestion' not in result:
+            for trace in traces:
+                tname = trace.get('name', '')
+                if '(Horizons)' in tname and 'Animated' not in tname:
+                    text_list = trace.get('text', [])
+                    if isinstance(text_list, str):
+                        text_list = [text_list]
+                    for txt in text_list:
+                        if not txt:
+                            continue
+                        vel_match = re.search(
+                            r'Velocity[^:]*:\s*([\d.]+)\s*km/s',
+                            str(txt))
+                        if vel_match:
+                            result['v_kms_suggestion'] = vel_match.group(1)
+                            break
+                    if 'v_kms_suggestion' in result:
+                        break
+
         # ---- Target suggestion ----
-        # For encounters: first item in select_also that isn't Earth/Sun
-        for obj in deduped:
-            if obj not in ('Earth', 'Sun', spacecraft_name):
-                result['target_suggestion'] = obj
-                break
+        # Default to center body; user can change in dialog
+        if result.get('center'):
+            result['target_suggestion'] = result['center']
+        else:
+            for obj in deduped:
+                if obj not in ('Earth', 'Sun', spacecraft_name):
+                    result['target_suggestion'] = obj
+                    break
 
         return result
 
@@ -5184,7 +5346,7 @@ class GalleryStudio:
             lines.append(f"# Add to SPACECRAFT_FULL_MISSION dict:")
             lines.append(f"'{spacecraft}': {{")
 
-            center = extracted.get('center', 'Sun')
+            center = manual.get('center') or extracted.get('center', 'Sun')
             lines.append(f"    'center': '{center}',")
 
             sel = extracted.get('select_also', [])
@@ -5197,10 +5359,28 @@ class GalleryStudio:
                 lines.append(f"    'start_date': '{start.strip()}',")
                 lines.append(f"    'end_date': '{end.strip()}',")
             else:
-                lines.append(f"    'start_date': '',  # TODO: fill in")
-                lines.append(f"    'end_date': '',  # TODO: fill in")
+                # Pull from celestial_objects.py mission dates
+                mission_start = extracted.get('mission_start_date', '')
+                mission_end = extracted.get('mission_end_date', '')
+                if mission_start:
+                    lines.append(f"    'start_date': '{mission_start}',")
+                else:
+                    lines.append(f"    'start_date': '',  # TODO: fill in")
+                if mission_end:
+                    lines.append(f"    'end_date': '{mission_end}',")
+                else:
+                    lines.append(f"    'end_date': '',  # TODO: fill in")
 
-            scale = extracted.get('plot_scale_au')
+            # plot_scale_au: manual entry overrides extracted
+            scale = None
+            sc_str = manual.get('plot_scale_au', '')
+            if sc_str:
+                try:
+                    scale = float(sc_str)
+                except ValueError:
+                    pass
+            if not scale:
+                scale = extracted.get('plot_scale_au')
             if scale:
                 lines.append(f"    'plot_scale_au': {scale},")
             else:
@@ -5222,7 +5402,20 @@ class GalleryStudio:
             lines.append(f"    'target': '{target}',")
 
             date = manual.get('date', '')
-            lines.append(f"    'date': '{date}',")
+            # Normalize to YYYY-MM-DD HH:MM:SS
+            normalized_date = None
+            for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M',
+                        '%Y-%m-%d', '%Y-%m-%d %H:%M:%S UTC'):
+                try:
+                    dt = datetime.strptime(date.strip(), fmt)
+                    normalized_date = dt.strftime('%Y-%m-%d %H:%M:%S')
+                    break
+                except ValueError:
+                    continue
+            if normalized_date:
+                lines.append(f"    'date': '{normalized_date}',")
+            else:
+                lines.append(f"    'date': '{date}',  # WARNING: could not normalize format")
 
             lines.append(f"    'type': '{enc_type}',")
 
@@ -5273,20 +5466,57 @@ class GalleryStudio:
             date_source = manual.get('date_source', 'authoritative')
             lines.append(f"    'date_source': '{date_source}',")
 
-            center = extracted.get('center', 'Sun')
+            center = manual.get('center') or extracted.get('center', 'Sun')
             lines.append(f"    'center': '{center}',")
 
             sel = extracted.get('select_also', [])
             sel_str = ', '.join(f"'{s}'" for s in sel)
             lines.append(f"    'select_also': [{sel_str}],")
 
-            plot_days = extracted.get('plot_days')
+            # plot_days: manual entry overrides extracted
+            # Accepts whole days (28) or H:MM for sub-day (1:00, 0:30)
+            plot_days = None
+            pd_str = manual.get('plot_days', '')
+            if pd_str:
+                if ':' in pd_str:
+                    # H:MM format -> fractional days
+                    try:
+                        parts = pd_str.split(':')
+                        hours = int(parts[0])
+                        minutes = int(parts[1]) if len(parts) > 1 else 0
+                        total_min = hours * 60 + minutes
+                        plot_days = total_min / 1440  # fractional days
+                    except (ValueError, IndexError):
+                        pass
+                else:
+                    try:
+                        plot_days = int(float(pd_str))
+                    except ValueError:
+                        pass
+            if not plot_days:
+                plot_days = extracted.get('plot_days')
             if plot_days:
-                lines.append(f"    'plot_days': {plot_days},")
+                if isinstance(plot_days, float) and plot_days < 1:
+                    # Sub-day: output as minutes/1440 for readability
+                    total_min = round(plot_days * 1440)
+                    lines.append(
+                        f"    'plot_days': {total_min} / 1440,"
+                        f"  # {total_min // 60}:{total_min % 60:02d}")
+                else:
+                    lines.append(f"    'plot_days': {plot_days},")
             else:
                 lines.append(f"    'plot_days': 28,  # TODO: adjust")
 
-            scale = extracted.get('plot_scale_au')
+            # plot_scale_au: manual entry overrides extracted
+            scale = None
+            sc_str = manual.get('plot_scale_au', '')
+            if sc_str:
+                try:
+                    scale = float(sc_str)
+                except ValueError:
+                    pass
+            if not scale:
+                scale = extracted.get('plot_scale_au')
             if scale:
                 lines.append(f"    'plot_scale_au': {scale},")
             else:
@@ -5306,19 +5536,23 @@ class GalleryStudio:
         enc_type = manual.get('type', 'encounter')
         default_name = f"{spacecraft}_{enc_type}.py".replace(' ', '_').lower()
 
+        enc_dir = self._get_last_dir('last_dir_export_encounter')
         path = filedialog.asksaveasfilename(
             parent=parent,
             title="Save Encounter Code",
+            initialdir=enc_dir,
             defaultextension='.py',
             initialfile=default_name,
             filetypes=[('Python files', '*.py'), ('All files', '*.*')]
         )
+
         if path:
             try:
                 with open(path, 'w', encoding='utf-8') as f:
                     f.write(code)
                     f.write('\n')
                 self._log_status(f"Encounter code saved to {path}")
+                self._set_last_dir('last_dir_export_encounter', path)
                 parent.destroy()
             except OSError as e:
                 messagebox.showerror("Save Error", str(e), parent=parent)
@@ -5454,14 +5688,16 @@ class GalleryStudio:
 
     def _load_file(self):
         """Open file dialog and load an HTML file."""
-        initial_dir = getattr(self, '_last_load_dir', '')
-        if not initial_dir or not os.path.isdir(initial_dir):
-            initial_dir = "."
-            for candidate in ["images", os.path.join("..", "images"),
-                              os.path.expanduser("~/Documents")]:
-                if os.path.isdir(candidate):
-                    initial_dir = candidate
-                    break
+        initial_dir = self._get_last_dir('last_dir_load_html')
+        if not initial_dir:
+            initial_dir = getattr(self, '_last_load_dir', '') or ''
+            if not initial_dir or not os.path.isdir(initial_dir):
+                initial_dir = "."
+                for candidate in ["images", os.path.join("..", "images"),
+                                  os.path.expanduser("~/Documents")]:
+                    if os.path.isdir(candidate):
+                        initial_dir = candidate
+                        break
 
         path = filedialog.askopenfilename(
             parent=self.root,
@@ -5564,6 +5800,7 @@ class GalleryStudio:
 
         # Remember this directory for next Load HTML dialog
         self._last_load_dir = os.path.dirname(os.path.abspath(path))
+        self._set_last_dir('last_dir_load_html', path)
 
     def _reload_file(self):
         """Reload the current source file."""
@@ -5646,10 +5883,12 @@ class GalleryStudio:
             base = base.replace(suffix, '')
         default_name = f"{base}_gallery.html"
 
-        # Initial directory: same as source or images folder
-        initial_dir = os.path.dirname(self.source_path or '.')
-        if not os.path.isdir(initial_dir):
-            initial_dir = '.'
+        # Initial directory: persisted > source file dir > fallback
+        initial_dir = self._get_last_dir('last_dir_export_html')
+        if not initial_dir:
+            initial_dir = os.path.dirname(self.source_path or '.')
+            if not os.path.isdir(initial_dir):
+                initial_dir = '.'
 
         save_path = filedialog.asksaveasfilename(
             parent=self.root,
@@ -5673,6 +5912,7 @@ class GalleryStudio:
             f"Exported: {os.path.basename(save_path)} ({size_kb:.0f} KB)")
 
         print(f"[GALLERY STUDIO] Exported: {save_path} ({size_kb:.0f} KB)")
+        self._set_last_dir('last_dir_export_html', save_path)
         print(f"[GALLERY STUDIO] Settings embedded in file. Next step: run json_converter.py")
 
     def _reset_defaults(self):
