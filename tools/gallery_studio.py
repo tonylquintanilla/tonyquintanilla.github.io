@@ -5214,8 +5214,32 @@ class GalleryStudio:
             result['scene_dtick'] = dtick
 
         # ---- plot_days: parse from title date range ----
-        # Pattern: "YYYY-MM-DD ... through YYYY-MM-DD"
+        # Pattern 1: "YYYY-MM-DD ... through YYYY-MM-DD"
         date_match = re.findall(r'(\d{4}-\d{2}-\d{2})', title_text)
+        if len(date_match) < 2:
+            # Pattern 2: "Month DD, YYYY HH:MM through Month DD, YYYY HH:MM"
+            written = re.findall(
+                r'([A-Z][a-z]+ \d{1,2}, \d{4} \d{2}:\d{2})', title_text)
+            if len(written) >= 2:
+                try:
+                    d1 = datetime.strptime(written[0], '%B %d, %Y %H:%M')
+                    d2 = datetime.strptime(written[-1], '%B %d, %Y %H:%M')
+                    date_match = [d1.strftime('%Y-%m-%d'),
+                                  d2.strftime('%Y-%m-%d')]
+                except ValueError:
+                    pass
+            if len(date_match) < 2:
+                # Pattern 3: "Month DD, YYYY" (no time)
+                written = re.findall(
+                    r'([A-Z][a-z]+ \d{1,2}, \d{4})', title_text)
+                if len(written) >= 2:
+                    try:
+                        d1 = datetime.strptime(written[0], '%B %d, %Y')
+                        d2 = datetime.strptime(written[-1], '%B %d, %Y')
+                        date_match = [d1.strftime('%Y-%m-%d'),
+                                      d2.strftime('%Y-%m-%d')]
+                    except ValueError:
+                        pass
         if len(date_match) >= 2:
             result['date_range'] = f"{date_match[0]} to {date_match[-1]}"
             try:
