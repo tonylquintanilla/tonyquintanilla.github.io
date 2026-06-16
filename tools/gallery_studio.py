@@ -76,8 +76,8 @@ DEFAULT_CONFIG = {
     "margin_right": 20,
 
     # Scene (3D plots)
-    "show_axes": False,
-    "show_grid": False,
+    "show_axes": True,
+    "show_grid": True,
     "scene_bgcolor": "#000000",
 
     # Legend
@@ -117,7 +117,7 @@ DEFAULT_CONFIG = {
     "line_width_min": 2,
 
     # Chrome
-    "show_modebar": False,
+    "show_modebar": True,
     "show_colorbar": True,
     "strip_template": True,
     "strip_updatemenus": False,
