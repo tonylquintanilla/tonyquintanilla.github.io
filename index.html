@@ -3,7 +3,8 @@
      Author: Tony Quintanilla / Paloma's Orrery
      Updated: May 2, 2026 with Anthropic's Claude Opus 4.6
        - Nav controls 2D/3D split: standalone reset button for 3D,
-         full D-pad for 2D, avoids blocking animation slider -->
+         full D-pad for 2D, avoids blocking animation slider
+     Updated: June 26, 2026 with Opus 4.8 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1883,8 +1884,21 @@
                 setMode('portrait');
             }
 
-            // Check URL hash for deep link
-            handleHash();
+            // Studio preview: ?preview=<file> loads one draft card straight
+            // from gallery/, bypassing the manifest. Dormant for real visitors
+            // (no param -> normal hash deep-link behavior is unchanged).
+            var previewFile = new URLSearchParams(window.location.search).get('preview');
+            if (previewFile) {
+                vizLookup['__preview__'] = {
+                    id: '__preview__',
+                    filename: previewFile,
+                    title: 'Studio Preview'
+                };
+                loadVisualization('__preview__');
+            } else {
+                // Check URL hash for deep link
+                handleHash();
+            }
         }
 
         // ---- Update welcome screen visualization count ----

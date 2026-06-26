@@ -1,21 +1,9 @@
-# Python cache
+# Python cache (tools/)
 __pycache__/
 *.pyc
 
-# Data files
-*.vot 
-*.pkl
-*.csv
-
-# Plot outputs
-# *.html -- removed to allow tracking of certain html files used for visualization
-*.png
-
-# Backup files added json backup 
+# JSON backups written by the gallery tools (json_converter / editor)
 *.json.bak
-*.backup
-*.backup_old
-*_backup
-data/*verify_backup*
 
-
+# Studio preview throwaway (live WYSIWYG preview card)
+gallery/_studio_preview.json
