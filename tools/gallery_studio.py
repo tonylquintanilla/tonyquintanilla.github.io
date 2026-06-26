@@ -31,7 +31,13 @@ Module updated: May 2, 2026 with Anthropic's Claude Opus 4.6
     auto-extraction from figure, Python dict code generation
 
 Module updated: May 8, 2026 with Anthropic's Claude 4.6 and 4.7
-- Extraction rewrite (center, date, distance, surface), dialog pre-fill, date normalization, center field, mission date lookup    
+- Extraction rewrite (center, date, distance, surface), dialog pre-fill, date normalization, center field, mission date lookup 
+
+Module updated: June 2026 with Anthropic's Claude Opus 4.8
+- WYSIWYG preview: Preview now renders through the real index.html viewer
+  over a localhost server (build_gallery_html -> json_converter extractor ->
+  gallery/_studio_preview.json -> ?preview= in the genuine gallery), so the
+  GE button / link icon appear exactly as the live gallery will show them.
 """
 
 import os
@@ -42,6 +48,10 @@ import copy
 import tempfile
 import webbrowser
 import platform
+import http.server
+import socketserver
+import threading
+import functools
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk, colorchooser, scrolledtext
 from datetime import datetime
@@ -5902,8 +5912,36 @@ class GalleryStudio:
         else:
             self._log_status("No file to reload")
 
+    def _repo_root(self):
+        """Gallery repo root (parent of tools/), where index.html and
+        gallery/ live. Used to serve the real viewer for WYSIWYG preview."""
+        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    def _ensure_preview_server(self, root):
+        """Lazily start a localhost-only static server rooted at the gallery
+        repo, so the real index.html, gallery_config.json, and assets/ are
+        served as-is. Returns the port. Daemon thread -- dies with the Studio.
+        """
+        if getattr(self, '_preview_httpd', None) is not None:
+            return self._preview_port
+        handler = functools.partial(
+            http.server.SimpleHTTPRequestHandler, directory=root)
+        # Port 0 -> OS picks a free ephemeral port; bind localhost only.
+        httpd = socketserver.TCPServer(('127.0.0.1', 0), handler)
+        self._preview_port = httpd.server_address[1]
+        self._preview_httpd = httpd
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        return self._preview_port
+
     def _preview(self):
-        """Generate a preview and open in browser."""
+        """Generate a WYSIWYG preview in the real gallery viewer.
+
+        Builds the export HTML, runs it through the real json_converter
+        extractor (the same transform that produces the pushed JSON), writes
+        a throwaway gallery/_studio_preview.json, and opens it in the genuine
+        index.html over a localhost server -- so figure AND chrome (GE button,
+        link icon) render exactly as the live gallery will.
+        """
         if self.fig_dict is None:
             messagebox.showinfo("Preview", "Load an HTML file first.")
             return
@@ -5920,23 +5958,51 @@ class GalleryStudio:
 
             html = build_gallery_html(transformed, self.config, title)
 
-            # Write to temp file
+            # Export HTML to a throwaway temp file (the extractor reads a
+            # path). Clean up the prior one.
             try:
                 if self.temp_file and os.path.exists(self.temp_file):
                     os.remove(self.temp_file)
             except OSError:
                 pass
-
             fd, self.temp_file = tempfile.mkstemp(
                 suffix='.html', prefix='gallery_studio_preview_')
             os.close(fd)
-
             with open(self.temp_file, 'w', encoding='utf-8',
                       newline='\n') as f:
                 f.write(html)
 
-            webbrowser.open('file://' + os.path.abspath(self.temp_file))
-            self._log_status("Preview opened in browser")
+            # Run the REAL converter extractor on that HTML -- same parse that
+            # produces the pushed gallery JSON, so the preview is faithful to
+            # production, not a lookalike.
+            import json_converter
+            fig_json = json_converter.extract_plotly_json_from_html(
+                self.temp_file)
+            if not fig_json:
+                raise RuntimeError(
+                    "json_converter could not extract a figure from the "
+                    "export HTML.")
+
+            # Locate the repo root and write the throwaway preview card into
+            # the served gallery dir (.gitignore covers _studio_preview.json).
+            root = self._repo_root()
+            if not os.path.exists(os.path.join(root, 'index.html')):
+                raise RuntimeError(
+                    "Could not locate index.html at the repo root (%s). "
+                    "Run gallery_studio.py from its tools/ folder." % root)
+            preview_path = os.path.join(
+                root, 'gallery', '_studio_preview.json')
+            with open(preview_path, 'w', encoding='utf-8',
+                      newline='\n') as f:
+                json.dump(fig_json, f)
+
+            # Serve the real repo root and open the genuine viewer pointed at
+            # the throwaway card.
+            port = self._ensure_preview_server(root)
+            url = ('http://127.0.0.1:%d/index.html'
+                   '?preview=_studio_preview.json' % port)
+            webbrowser.open(url)
+            self._log_status("Preview opened in gallery viewer: %s" % url)
 
         except Exception as e:
             self._log_status(f"Preview error: {e}")
