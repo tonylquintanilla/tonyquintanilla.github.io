@@ -1,0 +1,28 @@
+{
+  "visualizations": [
+    {
+      "id": "europe_2026_teaser_mobile",
+      "title": "European Heat Dome 6-21-2026",
+      "filename": "europe_2026_teaser_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "European Heat Dome 6-21-2026",
+      "size_kb": 10.0,
+      "converted": "2026-06-26 22:18",
+      "mode": "landscape"
+    },
+    {
+      "id": "europe_2026_teaser_gallery",
+      "title": "European Heat Dome 6-21-2026",
+      "filename": "europe_2026_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "European Heat Dome 6-21-2026",
+      "size_kb": 10.5,
+      "converted": "2026-06-26 22:19",
+      "mode": "landscape"
+    }
+  ],
+  "last_updated": "2026-06-26 22:19",
+  "total_count": 2
+}
