@@ -1509,6 +1509,18 @@
       "featured": true
     },
     {
+      "id": "mars_system_animation_psyche_flyby_shells_gallery",
+      "title": "Psyche - Mars Gravitational Assist 5-15-26 animated",
+      "filename": "mars_system_animation_psyche_flyby_shells_gallery.json",
+      "category": "missions",
+      "category_label": "Missions",
+      "description": "Psyche - Mars Gravitational Assist 5-15-26",
+      "size_kb": 140002.3,
+      "converted": "2026-05-05 20:29",
+      "mode": "landscape",
+      "featured": true
+    },
+    {
       "id": "artemis_ii_20260402-0411_mission_mobile",
       "title": "Artemis II Mission April 6, 2026",
       "filename": "artemis_ii_20260402-0411_mission_mobile.json",
@@ -1815,9 +1827,7 @@
       "description": "Europe Dry Dome 6-21-2026",
       "size_kb": 10.5,
       "converted": "2026-06-27 11:36",
-      "mode": "landscape",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)"
+      "mode": "landscape"
     },
     {
       "id": "europe_2026_teaser_mobile",
@@ -1828,11 +1838,9 @@
       "description": "Europe Dry Dome 6-21-2026",
       "size_kb": 10.0,
       "converted": "2026-06-27 11:37",
-      "mode": "portrait",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)"
+      "mode": "portrait"
     }
   ],
-  "last_updated": "2026-06-27 13:51",
-  "total_count": 145
+  "last_updated": "2026-06-27 11:37",
+  "total_count": 146
 }
