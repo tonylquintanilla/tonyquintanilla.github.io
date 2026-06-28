@@ -1831,8 +1831,30 @@
       "mode": "portrait",
       "subcategory": "heating",
       "subcategory_label": "Extreme Heating Events (landscape mode)"
+    },
+    {
+      "id": "food_insecurity_sdn_teaser_mobile",
+      "title": "Sudan Food Insecurity Feb-May 2016",
+      "filename": "food_insecurity_sdn_teaser_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Sudan Food Insecurity Feb-May 2016",
+      "size_kb": 137.4,
+      "converted": "2026-06-28 16:56",
+      "mode": "portrait"
+    },
+    {
+      "id": "food_insecurity_sdn_teaser_gallery",
+      "title": "Sudan Food Insecurity Feb-May 2016",
+      "filename": "food_insecurity_sdn_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Sudan Food Insecurity Feb-May 2016",
+      "size_kb": 137.6,
+      "converted": "2026-06-28 16:56",
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-06-27 13:51",
-  "total_count": 145
+  "last_updated": "2026-06-28 16:56",
+  "total_count": 147
 }
