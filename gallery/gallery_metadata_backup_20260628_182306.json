@@ -10,7 +10,7 @@
       "size_kb": 10082.0,
       "converted": "2026-02-17 23:25",
       "mode": "landscape",
-      "featured": false,
+      "featured": true,
       "subcategory": "general",
       "subcategory_label": "General"
     },
@@ -26,7 +26,7 @@
       "mode": "landscape",
       "subcategory": "comets",
       "subcategory_label": "Comets",
-      "featured": false
+      "featured": true
     },
     {
       "id": "orbital_transformation_mercury_20260208",
@@ -50,7 +50,7 @@
       "size_kb": 3074.8,
       "converted": "2026-04-17 01:36",
       "mode": "landscape",
-      "featured": false,
+      "featured": true,
       "subcategory": "comets",
       "subcategory_label": "Comets"
     },
@@ -64,7 +64,7 @@
       "size_kb": 3126.2,
       "converted": "2026-04-10 17:52",
       "mode": "landscape",
-      "featured": false,
+      "featured": true,
       "subcategory": "comets",
       "subcategory_label": "Comets"
     },
@@ -80,7 +80,7 @@
       "mode": "landscape",
       "subcategory": "comets",
       "subcategory_label": "Comets",
-      "featured": false
+      "featured": true
     },
     {
       "id": "solar_system_20250318_1901",
@@ -117,7 +117,7 @@
       "size_kb": 4280.1,
       "converted": "2026-03-10 00:16",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "earth_heliocentric_20260207_0659",
@@ -220,7 +220,7 @@
       "size_kb": 10857.8,
       "converted": "2026-02-17 23:24",
       "mode": "portrait",
-      "featured": false,
+      "featured": true,
       "subcategory": "general",
       "subcategory_label": "General"
     },
@@ -262,7 +262,7 @@
       "mode": "portrait",
       "subcategory": "comets",
       "subcategory_label": "Comets",
-      "featured": false
+      "featured": true
     },
     {
       "id": "panstarrs_20260417_portrait",
@@ -274,7 +274,7 @@
       "size_kb": 3908.9,
       "converted": "2026-04-17 01:36",
       "mode": "portrait",
-      "featured": false,
+      "featured": true,
       "subcategory": "comets",
       "subcategory_label": "Comets"
     },
@@ -290,7 +290,7 @@
       "mode": "portrait",
       "subcategory": "comets",
       "subcategory_label": "Comets",
-      "featured": false
+      "featured": true
     },
     {
       "id": "3iatlas_jupiter_20260316_1222_mobile",
@@ -304,7 +304,7 @@
       "mode": "portrait",
       "subcategory": "comets",
       "subcategory_label": "Comets",
-      "featured": false
+      "featured": true
     },
     {
       "id": "current_comets_social_view_20260210_2331",
@@ -376,7 +376,7 @@
       "size_kb": 5827.7,
       "converted": "2026-03-10 00:16",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "near_earth_asteroids_social_view_20260211_0024",
@@ -443,6 +443,19 @@
       "subcategory_label": "Narrative"
     },
     {
+      "id": "energy_imbalance_mobile",
+      "title": "Energy Imbalance, 2005 - 2025",
+      "filename": "energy_imbalance_mobile.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Earth's energy imbalance",
+      "size_kb": 29.5,
+      "converted": "2026-02-23 00:17",
+      "mode": "portrait",
+      "subcategory": "climate",
+      "subcategory_label": "Climate Change"
+    },
+    {
       "id": "keeling_curve_co2_concentration_copy",
       "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
       "filename": "keeling_curve_co2_concentration.json",
@@ -453,19 +466,6 @@
       "converted": "2026-02-09 00:12",
       "mode": "portrait",
       "featured": true,
-      "subcategory": "climate",
-      "subcategory_label": "Climate Change"
-    },
-    {
-      "id": "energy_imbalance_mobile",
-      "title": "Energy Imbalance, 2005 - 2025",
-      "filename": "energy_imbalance_mobile.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Earth's energy imbalance",
-      "size_kb": 29.5,
-      "converted": "2026-02-23 00:17",
-      "mode": "portrait",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
     },
@@ -620,7 +620,7 @@
       "converted": "2026-02-08 23:35",
       "subcategory": "climate",
       "subcategory_label": "Climate Change",
-      "featured": false
+      "featured": true
     },
     {
       "id": "western_heatwave_march_14_teaser_mobile",
@@ -800,7 +800,7 @@
       "mode": "portrait",
       "subcategory": "heatdome",
       "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": false
+      "featured": true
     },
     {
       "id": "western_heatwave_march_22_teaser_gallery",
@@ -814,7 +814,7 @@
       "mode": "landscape",
       "subcategory": "heatdome",
       "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": false
+      "featured": true
     },
     {
       "id": "western_heatwave_march_25_teaser_mobile",
@@ -843,47 +843,6 @@
       "subcategory": "heatdome",
       "subcategory_label": "Western Heat Dome (landscape mode)",
       "featured": false
-    },
-    {
-      "id": "paleoclimate_wet_bulb_copy",
-      "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
-      "filename": "paleoclimate_wet_bulb.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Graphic showing extreme heating events since the 1930s.",
-      "size_kb": 129.3,
-      "converted": "2026-02-08 23:35",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)",
-      "featured": true
-    },
-    {
-      "id": "europe_2026_teaser_mobile",
-      "title": "Europe Dry Dome 6-21-2026",
-      "filename": "europe_2026_teaser_mobile.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Europe Dry Dome 6-21-2026",
-      "size_kb": 10.0,
-      "converted": "2026-06-27 11:37",
-      "mode": "portrait",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)",
-      "featured": true
-    },
-    {
-      "id": "europe_2026_teaser_gallery",
-      "title": "Europe Dry Dome 6-21-2026",
-      "filename": "europe_2026_teaser_gallery.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Europe Dry Dome 6-21-2026",
-      "size_kb": 10.5,
-      "converted": "2026-06-27 11:36",
-      "mode": "landscape",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)",
-      "featured": true
     },
     {
       "id": "nyc_1948_teaser_gallery",
@@ -1185,6 +1144,58 @@
       "subcategory_label": "Extreme Heating Events (landscape mode)"
     },
     {
+      "id": "pakistan_2025_teaser_gallery",
+      "title": "Pakistan 2025",
+      "filename": "pakistan_2025_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Pakistan 2025",
+      "size_kb": 4.5,
+      "converted": "2026-03-21 01:38",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events (landscape mode)"
+    },
+    {
+      "id": "us_grid_2025_teaser_gallery",
+      "title": "US 2025",
+      "filename": "us_grid_2025_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "US 2025",
+      "size_kb": 8.1,
+      "converted": "2026-03-21 01:38",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events (landscape mode)"
+    },
+    {
+      "id": "australia_heat_dome_teaser_gallery",
+      "title": "Australia",
+      "filename": "australia_heat_dome_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Australia",
+      "size_kb": 76.3,
+      "converted": "2026-03-21 01:39",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events (landscape mode)"
+    },
+    {
+      "id": "amazon_drought_2025_teaser_gallery",
+      "title": "Amazon 2025",
+      "filename": "amazon_drought_2025_teaser_gallery.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Amazon 2025",
+      "size_kb": 9.3,
+      "converted": "2026-03-21 01:39",
+      "mode": "both",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events (landscape mode)"
+    },
+    {
       "id": "florida_coral_2023_teaser_gallery",
       "title": "Florida Coral 2023",
       "filename": "florida_coral_2023_teaser_gallery.json",
@@ -1229,7 +1240,7 @@
       "size_kb": 95.3,
       "converted": "2026-05-02 01:17",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "16_psyche_20231014_animated_months_mobile",
@@ -1241,7 +1252,7 @@
       "size_kb": 5669.9,
       "converted": "2026-05-02 01:16",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "mars_system_static_psyche_gravitational_assist_mobile",
@@ -1253,7 +1264,7 @@
       "size_kb": 14444.0,
       "converted": "2026-05-06 00:16",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "pluto_barycenter_system_20260208_1957",
@@ -1379,7 +1390,7 @@
       "size_kb": 191.3,
       "converted": "2026-05-02 01:17",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "16_psyche_20231014_animated_months_gallery",
@@ -1391,7 +1402,7 @@
       "size_kb": 11995.4,
       "converted": "2026-05-02 01:16",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "western_heatwave_march_26_teaser_mobile",
@@ -1471,7 +1482,7 @@
       "size_kb": 98450.3,
       "converted": "2026-05-05 20:28",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "mars_system_static_psyche_gravitational_assist_gallery",
@@ -1483,7 +1494,7 @@
       "size_kb": 8480.5,
       "converted": "2026-05-06 00:17",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "mars_system_animation_psyche_phobos_flyby_mobile",
@@ -1495,7 +1506,7 @@
       "size_kb": 745.5,
       "converted": "2026-05-05 20:27",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "artemis_ii_20260402-0411_mission_mobile",
@@ -1507,7 +1518,7 @@
       "size_kb": 10992.3,
       "converted": "2026-04-05 04:00",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "mars_system_animation_psyche_phobos_flyby_gallery",
@@ -1519,7 +1530,7 @@
       "size_kb": 537.2,
       "converted": "2026-05-05 20:27",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "artemis_ii_20260402-0411_mission_moon_center2_mobile",
@@ -1531,7 +1542,7 @@
       "size_kb": 11242.3,
       "converted": "2026-04-05 03:59",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "artemis_ii_20260402-0411_mission_gallery",
@@ -1543,7 +1554,7 @@
       "size_kb": 6412.2,
       "converted": "2026-04-05 04:01",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "artemis_ii_20260407_moon_2306_close_encounter_mobile",
@@ -1555,7 +1566,7 @@
       "size_kb": 788.3,
       "converted": "2026-04-06 00:59",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "artemis_ii_20260402-0411_mission_moon_center2_gallery",
@@ -1567,7 +1578,7 @@
       "size_kb": 6276.1,
       "converted": "2026-04-05 04:00",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "western_heatwave_march_30_teaser_mobile",
@@ -1581,7 +1592,7 @@
       "mode": "portrait",
       "subcategory": "heatdome",
       "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": false
+      "featured": true
     },
     {
       "id": "western_heatwave_march_30_teaser_gallery",
@@ -1595,7 +1606,7 @@
       "mode": "landscape",
       "subcategory": "heatdome",
       "subcategory_label": "Western Heat Dome (landscape mode)",
-      "featured": false
+      "featured": true
     },
     {
       "id": "c2025k1bcd_perihelion_20251008_mobile",
@@ -1609,7 +1620,7 @@
       "mode": "portrait",
       "subcategory": "comets",
       "subcategory_label": "Comets",
-      "featured": false
+      "featured": true
     },
     {
       "id": "3iatlas_perihelion_20251029",
@@ -1648,7 +1659,7 @@
       "size_kb": 5459.4,
       "converted": "2026-03-30 08:14",
       "mode": "landscape",
-      "featured": false,
+      "featured": true,
       "subcategory": "comets",
       "subcategory_label": "Comets"
     },
@@ -1690,7 +1701,7 @@
       "size_kb": 11826.2,
       "converted": "2026-04-06 17:49",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "artemis_ii_20260407_moon_2306_close_encounter_gallery",
@@ -1702,7 +1713,7 @@
       "size_kb": 913.1,
       "converted": "2026-04-06 00:59",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "artemis_moon_animation_20260406_mobile",
@@ -1714,7 +1725,7 @@
       "size_kb": 14906.2,
       "converted": "2026-04-07 02:41",
       "mode": "portrait",
-      "featured": false
+      "featured": true
     },
     {
       "id": "artemis_ii_20260407_moon_2306_close_encounter2_gallery",
@@ -1726,7 +1737,7 @@
       "size_kb": 7554.9,
       "converted": "2026-04-06 17:49",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "voyager1_2_social_view_20260210_2337",
@@ -1749,7 +1760,7 @@
       "size_kb": 11496.9,
       "converted": "2026-04-07 02:31",
       "mode": "landscape",
-      "featured": false
+      "featured": true
     },
     {
       "id": "new_horizons_full_mission_20060120_20200101_mobile",
@@ -1796,28 +1807,28 @@
       "mode": "landscape"
     },
     {
-      "id": "pakistan_2025_teaser_gallery",
-      "title": "Pakistan 2025",
-      "filename": "pakistan_2025_teaser_gallery.json",
+      "id": "europe_2026_teaser_gallery",
+      "title": "Europe Dry Dome 6-21-2026",
+      "filename": "europe_2026_teaser_gallery.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Pakistan 2025",
-      "size_kb": 4.5,
-      "converted": "2026-03-21 01:38",
-      "mode": "both",
+      "description": "Europe Dry Dome 6-21-2026",
+      "size_kb": 10.5,
+      "converted": "2026-06-27 11:36",
+      "mode": "landscape",
       "subcategory": "heating",
       "subcategory_label": "Extreme Heating Events (landscape mode)"
     },
     {
-      "id": "us_grid_2025_teaser_gallery",
-      "title": "US 2025",
-      "filename": "us_grid_2025_teaser_gallery.json",
+      "id": "europe_2026_teaser_mobile",
+      "title": "Europe Dry Dome 6-21-2026",
+      "filename": "europe_2026_teaser_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "US 2025",
-      "size_kb": 8.1,
-      "converted": "2026-03-21 01:38",
-      "mode": "both",
+      "description": "Europe Dry Dome 6-21-2026",
+      "size_kb": 10.0,
+      "converted": "2026-06-27 11:37",
+      "mode": "portrait",
       "subcategory": "heating",
       "subcategory_label": "Extreme Heating Events (landscape mode)"
     },
@@ -1830,23 +1841,7 @@
       "description": "Sudan Food Insecurity Feb-May 2016",
       "size_kb": 137.4,
       "converted": "2026-06-28 16:56",
-      "mode": "portrait",
-      "subcategory": "food",
-      "subcategory_label": "Food Insecurity",
-      "featured": true
-    },
-    {
-      "id": "australia_heat_dome_teaser_gallery",
-      "title": "Australia",
-      "filename": "australia_heat_dome_teaser_gallery.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Australia",
-      "size_kb": 76.3,
-      "converted": "2026-03-21 01:39",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)"
+      "mode": "portrait"
     },
     {
       "id": "food_insecurity_sdn_teaser_gallery",
@@ -1857,25 +1852,9 @@
       "description": "Sudan Food Insecurity Feb-May 2016",
       "size_kb": 137.6,
       "converted": "2026-06-28 16:56",
-      "mode": "landscape",
-      "subcategory": "food",
-      "subcategory_label": "Food Insecurity",
-      "featured": true
-    },
-    {
-      "id": "amazon_drought_2025_teaser_gallery",
-      "title": "Amazon 2025",
-      "filename": "amazon_drought_2025_teaser_gallery.json",
-      "category": "climate",
-      "category_label": "Earth System",
-      "description": "Amazon 2025",
-      "size_kb": 9.3,
-      "converted": "2026-03-21 01:39",
-      "mode": "both",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)"
+      "mode": "landscape"
     }
   ],
-  "last_updated": "2026-06-28 18:23",
-  "total_count": 148
+  "last_updated": "2026-06-28 16:56",
+  "total_count": 147
 }
