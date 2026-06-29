@@ -859,31 +859,25 @@
     },
     {
       "id": "europe_2026_teaser_mobile",
-      "title": "Europe Dry Dome 6-21-2026",
+      "title": "Europe heat dome 6-21-2026",
       "filename": "europe_2026_teaser_mobile.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Europe Dry Dome 6-21-2026",
+      "description": "Europe heat dome 6-21-2026",
       "size_kb": 10.0,
-      "converted": "2026-06-27 11:37",
-      "mode": "portrait",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)",
-      "featured": true
+      "converted": "2026-06-29 08:25",
+      "mode": "portrait"
     },
     {
       "id": "europe_2026_teaser_gallery",
-      "title": "Europe Dry Dome 6-21-2026",
+      "title": "Europe heat dome 6-21-2026",
       "filename": "europe_2026_teaser_gallery.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Europe Dry Dome 6-21-2026",
+      "description": "Europe heat dome 6-21-2026",
       "size_kb": 10.5,
-      "converted": "2026-06-27 11:36",
-      "mode": "landscape",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)",
-      "featured": true
+      "converted": "2026-06-29 08:26",
+      "mode": "landscape"
     },
     {
       "id": "europe_2026_balloon_test",
@@ -1890,6 +1884,6 @@
       "subcategory_label": "Extreme Heating Events (landscape mode)"
     }
   ],
-  "last_updated": "2026-06-28 22:19",
+  "last_updated": "2026-06-29 08:26",
   "total_count": 149
 }
