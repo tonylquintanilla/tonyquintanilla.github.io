@@ -886,6 +886,20 @@
       "featured": true
     },
     {
+      "id": "europe_2026_balloon_test",
+      "title": "Europe Dry Dome 6-21-2026 [BALLOON TEST]",
+      "filename": "europe_2026_balloon_test.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Balloon-card test: full GE blockbuster + tappable info balloon (throwaway)",
+      "size_kb": 10.5,
+      "converted": "2026-06-28 12:00",
+      "mode": "landscape",
+      "subcategory": "heating",
+      "subcategory_label": "Extreme Heating Events (landscape mode)",
+      "featured": false
+    }   
+    {
       "id": "nyc_1948_teaser_gallery",
       "title": "New York 1948",
       "filename": "nyc_1948_teaser_gallery.json",
