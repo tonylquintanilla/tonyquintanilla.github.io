@@ -390,15 +390,15 @@
       "converted": "2026-02-11 00:39"
     },
     {
-      "id": "keeling_curve_co2_concentration",
-      "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
-      "filename": "keeling_curve_co2_concentration.json",
+      "id": "energy_imbalance_desktop",
+      "title": "Energy Imbalance, 2005 - 2025",
+      "filename": "energy_imbalance_desktop.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Graphic showing atmospheric CO2 from 1958 to 2025.",
-      "size_kb": 17.3,
-      "converted": "2026-02-09 00:12",
-      "featured": true,
+      "description": "Earth's energy imbalance",
+      "size_kb": 30.7,
+      "converted": "2026-02-23 01:24",
+      "mode": "landscape",
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
     },
@@ -417,15 +417,15 @@
       "subcategory_label": "Narrative"
     },
     {
-      "id": "energy_imbalance_desktop",
-      "title": "Energy Imbalance, 2005 - 2025",
-      "filename": "energy_imbalance_desktop.json",
+      "id": "keeling_curve_co2_concentration",
+      "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
+      "filename": "keeling_curve_co2_concentration.json",
       "category": "climate",
       "category_label": "Earth System",
-      "description": "Earth's energy imbalance",
-      "size_kb": 30.7,
-      "converted": "2026-02-23 01:24",
-      "mode": "landscape",
+      "description": "Graphic showing atmospheric CO2 from 1958 to 2025.",
+      "size_kb": 17.3,
+      "converted": "2026-02-09 00:12",
+      "featured": true,
       "subcategory": "climate",
       "subcategory_label": "Climate Change"
     },
@@ -866,10 +866,7 @@
       "description": "Europe heat dome 6-21-2026",
       "size_kb": 10.0,
       "converted": "2026-06-29 08:25",
-      "mode": "portrait",
-      "subcategory": "heating",
-      "subcategory_label": "Extreme Heating Events (landscape mode)",
-      "featured": true
+      "mode": "portrait"
     },
     {
       "id": "europe_2026_teaser_gallery",
@@ -880,6 +877,17 @@
       "description": "Europe heat dome 6-21-2026",
       "size_kb": 10.5,
       "converted": "2026-06-29 08:26",
+      "mode": "landscape"
+    },
+    {
+      "id": "europe_2026_balloon_test",
+      "title": "Europe Dry Dome 6-21-2026 [BALLOON TEST]",
+      "filename": "europe_2026_balloon_test.json",
+      "category": "climate",
+      "category_label": "Earth System",
+      "description": "Balloon-card test: full GE blockbuster + tappable info balloon (throwaway)",
+      "size_kb": 10.5,
+      "converted": "2026-06-28 12:00",
       "mode": "landscape",
       "subcategory": "heating",
       "subcategory_label": "Extreme Heating Events (landscape mode)",
@@ -1876,6 +1884,6 @@
       "subcategory_label": "Extreme Heating Events (landscape mode)"
     }
   ],
-  "last_updated": "2026-06-30 15:20",
-  "total_count": 148
+  "last_updated": "2026-06-29 08:26",
+  "total_count": 149
 }
