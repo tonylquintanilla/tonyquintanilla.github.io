@@ -599,6 +599,7 @@ async function initPyodide() {
         status.textContent = 'Loading NumPy\u2026';
 
         await pyodide.loadPackage('numpy');
+        await pyodide.loadPackage('plotly');
 
         bar.style.width = '85%';
         status.textContent = 'Initializing computation engine\u2026';
