@@ -305,6 +305,62 @@
             border-top: 1px solid var(--border);
         }
 
+        /* --- Consent gate --- */
+        .consent-gate {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-void);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 110;
+            padding: 24px;
+        }
+        .consent-gate.hidden { display: none; }
+        .consent-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+        .consent-body {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .consent-body strong {
+            color: var(--text-primary);
+        }
+        .consent-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .consent-btn {
+            border-radius: 8px;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .consent-btn:hover { opacity: 0.85; }
+        .consent-launch {
+            background: var(--interactive);
+            color: #fff;
+            border: none;
+        }
+        .consent-back {
+            background: none;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
         /* --- Error state --- */
         .error-msg {
             color: var(--error);
@@ -366,11 +422,27 @@
                 </div>
             </div>
 
-            <!-- Loading overlay -->
-            <div class="loading-overlay" id="loading-overlay">
+            <!-- Consent gate (one-time) -->
+            <div class="consent-gate" id="consent-gate">
+                <div class="consent-title">Paloma's Orrery</div>
+                <div class="consent-body">
+                    This exhibit uses <strong>Pyodide</strong> &mdash;
+                    a Python computation engine that runs entirely in your
+                    browser via WebAssembly.<br><br>
+                    No data leaves your device. First load downloads
+                    approximately 10 MB.
+                </div>
+                <div class="consent-buttons">
+                    <a href="index.html" class="consent-btn consent-back">Back to Gallery</a>
+                    <button class="consent-btn consent-launch" id="consent-launch">Launch Exhibit</button>
+                </div>
+            </div>
+
+            <!-- Loading overlay (shown after consent) -->
+            <div class="loading-overlay hidden" id="loading-overlay">
                 <div class="loading-title">Paloma's Orrery</div>
                 <div class="loading-sub">
-                    Loading the computation engine&hellip;<br>
+                    Loading Pyodide &mdash; Python computation engine&hellip;<br>
                     First visit takes about 10 seconds.
                 </div>
                 <div class="loading-bar-track">
@@ -847,19 +919,38 @@ function buildLayout(range, dateDisplay) {
 }
 
 // ====================================================================
-// INIT
+// CONSENT GATE + INIT
 // ====================================================================
+const CONSENT_KEY = 'palomas_orrery_pyodide_consent';
+
+function loadPyodideRuntime() {
+    // Show loading overlay, hide consent gate
+    document.getElementById('consent-gate').classList.add('hidden');
+    document.getElementById('loading-overlay').classList.remove('hidden');
+
+    const pyodideScript = document.createElement('script');
+    pyodideScript.src = 'https://cdn.jsdelivr.net/pyodide/v314.0.2/full/pyodide.js';
+    pyodideScript.onload = () => initPyodide();
+    pyodideScript.onerror = () => {
+        document.getElementById('loading-status').textContent = 'Failed to load Pyodide runtime.';
+        document.getElementById('loading-bar').style.background = 'var(--error)';
+    };
+    document.head.appendChild(pyodideScript);
+}
+
 initControls();
 
-// Load Pyodide via script tag (deferred)
-const pyodideScript = document.createElement('script');
-pyodideScript.src = 'https://cdn.jsdelivr.net/pyodide/v314.0.2/full/pyodide.js';
-pyodideScript.onload = () => initPyodide();
-pyodideScript.onerror = () => {
-    document.getElementById('loading-status').textContent = 'Failed to load Pyodide runtime.';
-    document.getElementById('loading-bar').style.background = 'var(--error)';
-};
-document.head.appendChild(pyodideScript);
+// Check for prior consent
+if (localStorage.getItem(CONSENT_KEY) === 'yes') {
+    // Returning user — skip consent, go straight to loading
+    loadPyodideRuntime();
+} else {
+    // First visit — show consent gate
+    document.getElementById('consent-launch').addEventListener('click', () => {
+        localStorage.setItem(CONSENT_KEY, 'yes');
+        loadPyodideRuntime();
+    });
+}
 </script>
 </body>
 </html>
