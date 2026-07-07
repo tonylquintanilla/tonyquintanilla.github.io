@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<!-- measure_plotly.html — Architecture B cold-start measurement
+     Loads Pyodide + NumPy + plotly via micropip, times each step.
+     The one unmeasured quantity: WASM multiplier on plotly import.
+     Result determines A vs B′ for Phase 2.
+     Author: Tony Quintanilla / Paloma's Orrery
+     Created: July 6, 2026 with Anthropic's Claude Opus 4.6 -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paloma's Orrery — B′ Measurement</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060a12; --panel: #111827; --border: #2a2a3a;
+            --text: #e8e6e3; --dim: #5a5a6a; --accent: #c9a84c;
+            --ok: #4ade80; --warn: #fbbf24; --fail: #f87171;
+            --blue: #6d8cff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg); color: var(--text);
+            font-family: 'DM Sans', system-ui, sans-serif;
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 24px;
+        }
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px; font-weight: 600; margin-bottom: 6px;
+        }
+        .subtitle { font-size: 13px; color: var(--dim); margin-bottom: 24px; }
+        .card {
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 12px; padding: 20px; width: 100%;
+            max-width: 440px; margin-bottom: 16px;
+        }
+        .step {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .step:last-child { border-bottom: none; }
+        .step-label { color: var(--dim); }
+        .step-time { font-weight: 600; font-variant-numeric: tabular-nums; }
+        .step-time.pending { color: var(--dim); }
+        .step-time.done { color: var(--ok); }
+        .step-time.slow { color: var(--warn); }
+        .step-time.fail { color: var(--fail); }
+        .total {
+            display: flex; justify-content: space-between;
+            padding: 12px 0 0; font-size: 15px; font-weight: 600;
+        }
+        .total-time { font-variant-numeric: tabular-nums; }
+        .verdict {
+            text-align: center; padding: 12px 0; font-size: 14px;
+            font-weight: 600;
+        }
+        .btn {
+            display: block; width: 100%; max-width: 440px;
+            background: var(--blue); color: #fff; border: none;
+            border-radius: 8px; padding: 12px; font-size: 14px;
+            font-weight: 600; cursor: pointer;
+            font-family: 'DM Sans', system-ui, sans-serif;
+        }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn:hover:not(:disabled) { opacity: 0.85; }
+        .note {
+            font-size: 11px; color: var(--dim); text-align: center;
+            margin-top: 12px; max-width: 440px; line-height: 1.5;
+        }
+        .back { color: var(--dim); text-decoration: none; font-size: 13px;
+                 margin-top: 16px; }
+        .back:hover { color: var(--accent); }
+    </style>
+</head>
+<body>
+    <h1>B&prime; Cold-Start Measurement</h1>
+    <div class="subtitle">Architecture decision gate — Phase 2</div>
+
+    <div class="card">
+        <div class="step">
+            <span class="step-label">1. Pyodide runtime</span>
+            <span class="step-time pending" id="t1">—</span>
+        </div>
+        <div class="step">
+            <span class="step-label">2. NumPy</span>
+            <span class="step-time pending" id="t2">—</span>
+        </div>
+        <div class="step">
+            <span class="step-label">3. micropip + plotly install</span>
+            <span class="step-time pending" id="t3">—</span>
+        </div>
+        <div class="step">
+            <span class="step-label">4. import plotly.graph_objects</span>
+            <span class="step-time pending" id="t4">—</span>
+        </div>
+        <div class="step">
+            <span class="step-label">5. Build figure + to_json()</span>
+            <span class="step-time pending" id="t5">—</span>
+        </div>
+        <div class="total">
+            <span>Total cold start</span>
+            <span class="total-time" id="ttotal">—</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="verdict" id="verdict">Press Run to begin measurement</div>
+    </div>
+
+    <button class="btn" id="run-btn" onclick="runMeasurement()">Run Measurement</button>
+
+    <div class="note">
+        Acceptance: ≤15 s cold on phone WiFi → B&prime; (shared engines).<br>
+        &gt;15 s → A with convention-duplication discipline.<br>
+        Stock plotly from PyPI. B&prime; slim wheel will be faster.
+    </div>
+
+    <a href="interactive.html" class="back">← Back to Solar System Explorer</a>
+
+<script>
+function fmt(ms) {
+    return ms < 1000 ? ms.toFixed(0) + ' ms' : (ms / 1000).toFixed(1) + ' s';
+}
+
+function setStep(id, ms, threshold) {
+    const el = document.getElementById(id);
+    el.textContent = fmt(ms);
+    el.className = 'step-time ' + (ms > (threshold || 5000) ? 'slow' : 'done');
+}
+
+async function runMeasurement() {
+    const btn = document.getElementById('run-btn');
+    btn.disabled = true;
+    btn.textContent = 'Running…';
+
+    const verdict = document.getElementById('verdict');
+    verdict.textContent = 'Measuring…';
+    verdict.style.color = 'var(--dim)';
+
+    const t0 = performance.now();
+    let t1, t2, t3, t4, t5;
+
+    try {
+        // Step 1: Load Pyodide
+        const s1 = performance.now();
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/pyodide/v314.0.2/full/pyodide.js';
+        await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Failed to load Pyodide'));
+            document.head.appendChild(script);
+        });
+        const pyodide = await loadPyodide({
+            indexURL: 'https://cdn.jsdelivr.net/pyodide/v314.0.2/full/'
+        });
+        t1 = performance.now() - s1;
+        setStep('t1', t1);
+
+        // Step 2: NumPy
+        const s2 = performance.now();
+        await pyodide.loadPackage('numpy');
+        t2 = performance.now() - s2;
+        setStep('t2', t2);
+
+        // Step 3: micropip + plotly install
+        const s3 = performance.now();
+        await pyodide.loadPackage('micropip');
+        const micropip = pyodide.pyimport('micropip');
+        await micropip.install('plotly');
+        t3 = performance.now() - s3;
+        setStep('t3', t3, 8000);
+
+        // Step 4: import plotly.graph_objects
+        const s4 = performance.now();
+        await pyodide.runPythonAsync('import plotly.graph_objects as go');
+        t4 = performance.now() - s4;
+        setStep('t4', t4, 3000);
+
+        // Step 5: Build figure + to_json
+        const s5 = performance.now();
+        await pyodide.runPythonAsync(`
+import numpy as np
+import json
+
+theta = np.linspace(0, 2*np.pi, 360)
+r = 1.0 * (1 - 0.0167**2) / (1 + 0.0167 * np.cos(theta))
+x = (r * np.cos(theta)).tolist()
+y = (r * np.sin(theta)).tolist()
+z = [0.0] * 360
+
+fig = go.Figure()
+fig.add_trace(go.Scatter3d(
+    x=x, y=y, z=z,
+    mode='lines',
+    line=dict(color='rgb(0,102,204)', width=2),
+    name='Earth',
+    legendgroup='Earth',
+    hoverinfo='skip'
+))
+fig.add_trace(go.Scatter3d(
+    x=[1.0], y=[0.0], z=[0.0],
+    mode='markers',
+    marker=dict(size=6, color='rgb(0,102,204)'),
+    name='Earth',
+    legendgroup='Earth',
+    hovertemplate='<b>Earth</b><br>1.0000 AU<extra></extra>'
+))
+result_json = fig.to_json()
+`);
+        t5 = performance.now() - s5;
+        setStep('t5', t5, 2000);
+
+        // Total
+        const total = performance.now() - t0;
+        const totalEl = document.getElementById('ttotal');
+        totalEl.textContent = fmt(total);
+
+        // Verdict
+        if (total <= 15000) {
+            verdict.textContent = '✓ PASS — ' + fmt(total) + ' (≤15 s). B′ is viable.';
+            verdict.style.color = 'var(--ok)';
+        } else if (total <= 25000) {
+            verdict.textContent = '⚠ MARGINAL — ' + fmt(total) + '. B′ slim wheel may pass.';
+            verdict.style.color = 'var(--warn)';
+        } else {
+            verdict.textContent = '✗ FAIL — ' + fmt(total) + ' (>25 s). A recommended.';
+            verdict.style.color = 'var(--fail)';
+        }
+
+    } catch (err) {
+        verdict.textContent = '✗ ERROR: ' + err.message;
+        verdict.style.color = 'var(--fail)';
+        console.error(err);
+    }
+
+    btn.textContent = 'Run Again (warm cache)';
+    btn.disabled = false;
+}
+</script>
+</body>
+</html>
