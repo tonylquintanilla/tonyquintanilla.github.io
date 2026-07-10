@@ -7,3 +7,7 @@ __pycache__/
 
 # Studio preview throwaway (live WYSIWYG preview card)
 gallery/_studio_preview.json
+
+# Gallery cache builder (L-098): staging workspace + in-tree backup mirror
+data/solar-system/.staging/
+data/solar-system/backup/
