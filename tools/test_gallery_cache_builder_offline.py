@@ -7,6 +7,8 @@ MONITOR path (warn + keep, never reject). Run: python3 this_file.py
 """
 import json
 import math
+import os
+import shutil
 import sys
 import tempfile
 from datetime import datetime, timedelta, timezone
@@ -25,40 +27,42 @@ ELEMS = {
 }
 
 
-def fake_elements(horizons_id, id_type, center, epoch_jd):
+def fake_elements(horizons_id, id_type, center, epoch_jd, hkwargs=None):
     a, e = ELEMS[horizons_id]
     return {'a': a, 'e': e, 'i': 5.0, 'omega': 100.0, 'Omega': 50.0,
             'MA': 100.0, 'TA': None, 'TP': float(epoch_jd) - 3.0,
             'epoch_jd': float(epoch_jd)}
 
 
-def _daterange(start_dt, stop_dt):
-    d = start_dt
-    while d <= stop_dt:
-        yield d
-        d += timedelta(days=1)
+def _step_days(step):
+    s = str(step).strip().lower()
+    if s.endswith('d'):
+        return max(1, int(s[:-1]))
+    if s.endswith('h'):
+        return max(1, int(s[:-1])) / 24.0
+    return 1
 
 
 def fake_vectors(horizons_id, id_type, center, start_dt, stop_dt, step='1d'):
     out = {}
-    if horizons_id == '-31':  # spacecraft: arc growing 1 -> ~160 AU
-        days = max(1, (stop_dt - start_dt).days)
-        i = 0
-        for d in _daterange(start_dt, stop_dt):
-            r = 1.0 + 159.0 * (i / days)
+    stride = _step_days(step)
+    total = max((stop_dt - start_dt).days, 1)
+    d = start_dt
+    while d <= stop_dt:
+        if horizons_id == '-31':  # spacecraft: straight arc growing 1 -> ~160 AU
+            r = 1.0 + 159.0 * (min((d - start_dt).days, total) / total)
             out[d.strftime('%Y-%m-%d')] = {'jd': b._dt_to_jd(d), 'x': r, 'y': 0.0, 'z': 0.0}
-            i += 1
-        return out
-    a, e = ELEMS[horizons_id]
-    for d in _daterange(start_dt, stop_dt):
-        out[d.strftime('%Y-%m-%d')] = {'jd': b._dt_to_jd(d), 'x': a, 'y': 0.0, 'z': 0.0}
+        else:
+            a, e = ELEMS[horizons_id]
+            out[d.strftime('%Y-%m-%d')] = {'jd': b._dt_to_jd(d), 'x': a, 'y': 0.0, 'z': 0.0}
+        d += timedelta(days=stride)
     return out
 
 
-def fake_solution_tp(name, horizons_id=None, id_type='smallbody'):
+def fake_solution_tp(name, horizons_id=None, id_type='smallbody', hkwargs=None):
     if horizons_id == '2P':
-        return b._dt_to_jd(datetime(2023, 10, 22, tzinfo=timezone.utc))
-    return None
+        return ('found', b._dt_to_jd(datetime(2023, 10, 22, tzinfo=timezone.utc)))
+    return ('not_present', None)
 
 
 def install_mocks():
@@ -70,7 +74,12 @@ def install_mocks():
 
 def main():
     install_mocks()
-    cfg = b.load_config(str(Path(__file__).with_name('objects_config.json')))
+    # A-8: config lives at data/solar-system/ in the repo, not next to this test
+    # in tools/. Resolve the repo path, with a flat-dir fallback.
+    cfg_path = Path(__file__).resolve().parents[1] / 'data' / 'solar-system' / 'objects_config.json'
+    if not cfg_path.exists():
+        cfg_path = Path(__file__).with_name('objects_config.json')
+    cfg = b.load_config(str(cfg_path))
     failures = []
 
     total = [0]
@@ -116,6 +125,10 @@ def main():
         check((out / v['positions']['file']).exists(), "voyager_1 position file on disk")
         pf = json.load(open(out / v['positions']['file']))
         check(pf['unit'] == 'km', "position file unit km")
+        check(idx.get('serving_base') and
+              idx.get('scene_features') == ['asteroid_belt', 'kuiper_belt', 'heliosphere'],
+              "B-3: serving_base + scene_features restored for v0.6 parity")
+        check('step_hours' in v['positions'], "B-3: positions block carries step_hours")
 
         # as_of_today in km (earth |r| ~ KM_PER_AU, not ~1)
         r_km = math.sqrt(sum(e['as_of_today'][k] ** 2 for k in 'xyz'))
@@ -166,6 +179,137 @@ def main():
     w_sc = b.guard_monitor('voyager_1', 'spacecraft',
                            {'d': {'jd': 1.0, 'x': 250.0, 'y': 0, 'z': 0}}, None, None, 2.0, None)
     check(len(w_sc) == 1, "guard: spacecraft |r|>200 AU -> sanity warning")
+
+    # --- A-1/N1: a crash mid whole-generation swap must not lose the archive ---
+    with tempfile.TemporaryDirectory() as td:
+        (Path(td) / 'data').mkdir(parents=True)
+        out = Path(td) / 'data' / 'solar-system'
+        b.run_build(cfg, out, mode='first-build', do_commit=False)
+        prev = out.parent / (out.name + '.prev')
+        full = sum(len(json.load(open(p)).get('points', {}))
+                   for p in (out / 'raw' / 'vectors').glob('*.json'))
+        os.replace(out, prev)   # N1: crash after live->.prev, before staging->live (whole dir)
+        rm = b.run_build(cfg, out, mode='nightly', do_commit=False)
+        check(out.exists(), "A-1/N1: nightly recovered the whole generation from .prev after a crash")
+        recovered = sum(len(json.load(open(p)).get('points', {}))
+                        for p in (out / 'raw' / 'vectors').glob('*.json'))
+        check(recovered >= full, "A-1: archive not thinned by recovery (%d >= %d)" % (recovered, full))
+        check(rm['structural_validation'] == 'pass', "A-1: recovered nightly validates")
+        shutil.rmtree(out)                                  # true unrecovered loss
+        p2 = out.parent / (out.name + '.prev')
+        if p2.exists():
+            shutil.rmtree(p2)
+        rm2 = b.run_build(cfg, out, mode='nightly', do_commit=False)
+        check(str(rm2['structural_validation']).startswith('fail'),
+              "A-1: nightly with no generation ABORTS instead of committing thin")
+
+    # --- A-2: main() exit code reflects structural pass/fail ---
+    _orig = b.run_build
+    try:
+        b.run_build = lambda *a, **k: {'structural_validation': 'fail: induced'}
+        rc_fail = b.main(['--nightly', '--config', str(cfg_path)])
+        b.run_build = lambda *a, **k: {'structural_validation': 'pass'}
+        rc_ok = b.main(['--nightly', '--config', str(cfg_path)])
+    finally:
+        b.run_build = _orig
+    check(rc_fail == 1, "A-2: main() exits nonzero on structural abort")
+    check(rc_ok == 0, "A-2: main() exits 0 on pass")
+
+    # --- A-4: id_type normalization (majorbody/id -> None) ---
+    check(b._norm_id_type('majorbody') is None and b._norm_id_type('id') is None,
+          "A-4: majorbody/id -> None")
+    check(b._norm_id_type('smallbody') == 'smallbody' and b._norm_id_type(None) is None,
+          "A-4: smallbody/None pass through unchanged")
+
+    # --- Douglas-Peucker: drop straight runs, keep bends ---
+    straight = {"2020-01-%02d" % (i + 1): {'jd': float(i), 'x': float(i), 'y': 0.0, 'z': 0.0}
+                for i in range(9)}
+    check(len(b.douglas_peucker(straight, 0.01)) == 2, "DP: straight line -> 2 endpoints")
+    bent = dict(straight)
+    bent["2020-01-05"] = {'jd': 4.0, 'x': 4.0, 'y': 5.0, 'z': 0.0}   # off-line spike
+    dp2 = b.douglas_peucker(bent, 0.01)
+    check("2020-01-05" in dp2 and len(dp2) >= 3, "DP: keeps the bend")
+
+    # --- A-3: a failed fetch serves last-good conic with as_of_today NULLED ---
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / 'data' / 'solar-system'; out.mkdir(parents=True)
+        b.run_build(cfg, out, mode='first-build', do_commit=False)   # seeds elements history
+        _oe = b.fetch_elements
+        def failing_elements(hid, *a, **k):
+            if hid == '606':   # Titan
+                raise RuntimeError("simulated Horizons outage")
+            return _oe(hid, *a, **k)
+        b.fetch_elements = failing_elements
+        try:
+            rm = b.run_build(cfg, out, mode='nightly', do_commit=False)
+        finally:
+            b.fetch_elements = _oe
+        idx = json.load(open(out / 'coverage_index.json'))
+        t = idx['objects'].get('titan')
+        check(t is not None, "A-3: failed Titan still SERVED (not vanished)")
+        check(t and t['osculating'] is not None, "A-3: Titan conic served from last-good")
+        check(t and t['as_of_today'] is None, "A-3: Titan as_of_today NULLED (no stale marker)")
+        check(rm['structural_validation'] == 'pass', "A-3: run validates with a stale object")
+
+    # --- N4/#B3: served km must equal raw AU x KM_PER_AU (convert/serialize) ---
+    with tempfile.TemporaryDirectory() as td:
+        st = Path(td) / 'stg'; (st / 'raw' / 'vectors').mkdir(parents=True)
+        tjd = b._dt_to_jd(FIXED_NOW)
+        json.dump({'points': {'2026-07-09': {'jd': tjd, 'x': 1.0, 'y': 0.0, 'z': 0.0}}},
+                  open(st / 'raw' / 'vectors' / 'x.json', 'w'))
+        def mk(xkm):
+            return {'generated': FIXED_NOW.isoformat(),
+                    'objects': {'x': {'category': 'planet', 'stored_center': 'sun',
+                                      'osculating': {'center': 'sun'}, 'positions': None,
+                                      'as_of_today': {'t': tjd, 'x': xkm, 'y': 0.0, 'z': 0.0}}}}
+        try:
+            b.assert_structural(mk(1.0 * b.KM_PER_AU), st); ok_b3 = True
+        except b.ValidationAbort:
+            ok_b3 = False
+        check(ok_b3, "N4/#B3: correct km conversion passes")
+        raised = False
+        try:
+            b.assert_structural(mk(1.0), st)
+        except b.ValidationAbort as e:
+            raised = '#B3' in str(e)
+        check(raised, "N4/#B3: un-converted (AU-valued) served point ABORTS")
+
+    # --- N3: dropping a previously-served object ABORTS ---
+    with tempfile.TemporaryDirectory() as td:
+        (Path(td) / 'data').mkdir(parents=True)
+        out = Path(td) / 'data' / 'solar-system'
+        b.run_build(cfg, out, mode='first-build', do_commit=False)
+        reduced = dict(cfg); reduced['objects'] = [o for o in cfg['objects'] if o['slug'] != 'titan']
+        rmn = b.run_build(reduced, out, mode='nightly', do_commit=False)
+        check(str(rmn['structural_validation']).startswith('fail: N3') and 'titan' in str(rmn['structural_validation']),
+              "N3: dropping a served object (titan) ABORTS the publication")
+
+    # --- N5: an operational solution-TP failure serves last-good, not today-anchor ---
+    with tempfile.TemporaryDirectory() as td:
+        (Path(td) / 'data').mkdir(parents=True)
+        out = Path(td) / 'data' / 'solar-system'
+        b.run_build(cfg, out, mode='first-build', do_commit=False)   # seeds Encke last-good
+        _os = b.fetch_solution_tp
+        b.fetch_solution_tp = lambda *a, **k: ('request_failed', None)
+        try:
+            rm5 = b.run_build(cfg, out, mode='nightly', do_commit=False)
+        finally:
+            b.fetch_solution_tp = _os
+        check(rm5['structural_validation'] == 'pass' and 'served last-good' in str(rm5['objects'].get('encke', '')),
+              "N5: solution-TP request failure serves last-good (not silent today-anchor)")
+
+    # --- N2: git_commit distinguishes committed_local from pushed_remote ---
+    with tempfile.TemporaryDirectory() as td:
+        import subprocess as _sp
+        r = Path(td)
+        _sp.run(['git', '-C', str(r), 'init', '-q'], check=True)
+        _sp.run(['git', '-C', str(r), 'config', 'user.email', 't@t'], check=True)
+        _sp.run(['git', '-C', str(r), 'config', 'user.name', 't'], check=True)
+        (r / 'data').mkdir()
+        (r / 'data' / 'f.txt').write_text('x')
+        st2 = b.git_commit(r, 'data', '2026-07-10')
+        check(st2['committed_local'] and not st2['pushed_remote'] and st2['sha'],
+              "N2: local commit succeeds but no-remote push is NOT reported as pushed")
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))

@@ -5,11 +5,12 @@ web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool.
 
 Nightly: read objects_config.json -> fetch fresh from JPL Horizons per object
 with the explicit canonical center -> validate on write (structural invariants
-and the shrink gate ABORT; Guard v2 and the B3 magnitude check WARN, they are
-monitors) -> build raw cache + derived served files in STAGING -> atomic swap ->
-single commit. No orrery imports; hard-won fetch specifics are COPIED WITH
-PROVENANCE from the orrery and kept in sync on change (see per-function
-comments). See GALLERY_BUILDER_MANIFEST v2 + GALLERY_DATA_SOURCE_HANDOFF v0.4.
+and #B3 conversion-consistency and the shrink gate ABORT; Guard v2 WARNs as a
+monitor -- warn + keep, never reject) -> build raw cache + derived served files
+in STAGING -> whole-generation atomic swap -> single verified commit. No orrery
+imports; hard-won fetch specifics are COPIED WITH PROVENANCE from the orrery and
+kept in sync on change (see per-function comments). See GALLERY_BUILDER_MANIFEST
+v2 + GALLERY_DATA_SOURCE_HANDOFF v0.4.
 
 Provenance base: orrery HEAD 4e2629c (copy sources), gallery HEAD 4b086a6
 (deploy target). Re-pin both on change.
@@ -50,7 +51,7 @@ KM_TO_AU = 1.0 / KM_PER_AU
 
 _UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
-# Source: export_orbit_cache.py:199-210 (orrery 4e2629c) -- Horizons center
+# Source: export_orbit_cache.py:198-208 (orrery 4e2629c) -- Horizons center
 # (@-id or name) -> served schema slug; covers both conventions so an osculating
 # center and a served position center resolve to the same slug (center-match).
 CENTER_SLUG_MAP = {
@@ -137,6 +138,14 @@ def _normalize_center(center_id):
     return location
 
 
+def _norm_id_type(id_type):
+    """A-4: astroquery 0.4.11 deprecates id_type 'majorbody' and 'id' (warns,
+    maps to None -- None is the modern value that resolves major bodies and
+    spacecraft). Map here so the nightly log stays clean. Source: astroquery
+    jplhorizons HorizonsClass.__init__ (0.4.11)."""
+    return None if id_type in ('majorbody', 'id') else id_type
+
+
 # ===========================================================================
 # FETCH LAYER (module-level so the offline smoke test can monkeypatch it).
 # These are the only functions that touch the network.
@@ -162,7 +171,7 @@ def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1
         'stop': utc_to_tdb(stop_dt).strftime('%Y-%m-%d %H:%M'),
         'step': step,
     }
-    obj = Horizons(id=horizons_id, id_type=id_type, location=location, epochs=epochs)
+    obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type), location=location, epochs=epochs)
     eph = obj.vectors(refplane='ecliptic')
     out = {}
     for row in eph:
@@ -174,16 +183,16 @@ def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1
     return out
 
 
-def fetch_elements(horizons_id, id_type, center, epoch_jd):
+def fetch_elements(horizons_id, id_type, center, epoch_jd, hkwargs=None):
     """Fetch osculating elements at a JD epoch; return a normalized dict in
     AU/deg with keys a,e,i,omega,Omega,MA,TA,TP,epoch_jd. Source: the defensive
     column mapping + q-based km/AU detection at orbit_data_manager.py:~1800-1878
-    (orrery 4e2629c). Column-name variants and the near-parabolic guard are
-    preserved verbatim in intent."""
+    (orrery 4e2629c). hkwargs (A-5) passes comet apparition options
+    (closest_apparition, no_fragments) through to .elements()."""
     _require_astro()
     location = _normalize_center(center)
-    obj = Horizons(id=horizons_id, id_type=id_type, location=location, epochs=epoch_jd)
-    el = obj.elements()
+    obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type), location=location, epochs=epoch_jd)
+    el = obj.elements(**(hkwargs or {}))
     if len(el) == 0:
         raise ValueError("No elements returned for %s" % horizons_id)
     row = el[0]
@@ -219,26 +228,32 @@ def fetch_elements(horizons_id, id_type, center, epoch_jd):
     }
 
 
-def fetch_solution_tp(name, horizons_id=None, id_type='smallbody'):
+def fetch_solution_tp(name, horizons_id=None, id_type='smallbody', hkwargs=None):
     """Solution-level TP from the Horizons raw response header (comets/asteroids
     only; None for planets/satellites). Source: osculating_cache_manager.py:459
     fetch_solution_tp (orrery 4e2629c) -- uses vectors_async().text (the elements
-    table is sometimes unavailable) and matches only the JD form of TP=."""
+    table is sometimes unavailable) and matches only the JD form of TP=. hkwargs
+    (A-5) passes closest_apparition/no_fragments through to disambiguate an
+    apparition (e.g. 2P/Encke)."""
     _require_astro()
     query_id = horizons_id if horizons_id else name
     try:
         epoch_jd = Time('2025-01-01').jd
-        obj = Horizons(id=query_id, id_type=id_type, location='@sun', epochs=epoch_jd)
-        raw = obj.vectors_async().text
+        obj = Horizons(id=query_id, id_type=_norm_id_type(id_type), location='@sun', epochs=epoch_jd)
+        raw = obj.vectors_async(**(hkwargs or {})).text
+    except Exception as e:
+        print("[SOLUTION TP] request failed for %s: %s" % (name, e), flush=True)
+        return ('request_failed', None)
+    try:
         for line in raw.split('\n'):
             if 'TP=' in line and 'TP_TYPE' not in line:
                 m = re.search(r'TP=\s*(2\d{6}\.\d+)', line)
                 if m:
-                    return float(m.group(1))
-        return None
+                    return ('found', float(m.group(1)))
+        return ('not_present', None)
     except Exception as e:
-        print("[SOLUTION TP] fetch failed for %s: %s" % (name, e), flush=True)
-        return None
+        print("[SOLUTION TP] parse failed for %s: %s" % (name, e), flush=True)
+        return ('parse_failed', None)
 
 
 # ===========================================================================
@@ -264,7 +279,7 @@ def guard_monitor(slug, category, points, a, e, k, max_distance_au):
             prev_jd = p['jd']
         return warnings
 
-    q = abs(a) * (1.0 - e)
+    q = abs(a) * abs(1.0 - e)   # periapsis; abs(1-e) keeps it positive for e>=1
     if e < 1.0:
         lo, hi = q / k, k * abs(a) * (1.0 + e)
     else:  # hyperbolic
@@ -345,19 +360,31 @@ def resolve_comet_conic(obj, warn):
     lean on the orrery osculating cache, which the standalone builder does not
     share -- so this collapses to a live solution-TP fetch, re-resolved nightly
     (a republished JPL solution is picked up; leading edge is provisional)."""
-    sol_tp = fetch_solution_tp(obj['name'], horizons_id=obj['horizons_id'],
-                               id_type=obj['id_type'])
-    if sol_tp is None:
-        # Not a comet/asteroid with a header TP, or fetch failed: fall back to
-        # elements at today (still a valid conic, just not perihelion-anchored).
-        warn("%s: no solution TP; comet conic anchored at today" % obj['slug'])
+    # A-5: apparition disambiguation options from config (-> CAP;/NOFRAG;).
+    cfg = obj.get('overrides', {}).get('comet', {})
+    hk = {}
+    if cfg.get('closest_apparition'):
+        hk['closest_apparition'] = True
+    if cfg.get('no_fragments'):
+        hk['no_fragments'] = True
+    status, sol_tp = fetch_solution_tp(obj['name'], horizons_id=obj['horizons_id'],
+                                       id_type=obj['id_type'], hkwargs=hk)
+    if status in ('request_failed', 'parse_failed'):
+        # N5: an OPERATIONAL failure must not silently degrade to a today-anchored
+        # conic (that turns a fetch failure into a model change). Raise so the
+        # object serves last-good (A-3), visible as a failure not a model switch.
+        raise RuntimeError("solution-TP %s for %s" % (status, obj['slug']))
+    if status == 'not_present':
+        # Genuine absence of a header TP: a today-anchored conic is a valid
+        # (weaker) fallback -- self-consistent, just not perihelion-anchored.
+        warn("%s: no solution TP in header; comet conic anchored at today" % obj['slug'])
         els = fetch_elements(obj['horizons_id'], obj['id_type'],
-                             obj['canonical_center'], _dt_to_jd(_utcnow()))
+                             obj['canonical_center'], _dt_to_jd(_utcnow()), hkwargs=hk)
         return els, None
-    # Fetch osculating elements AT the perihelion epoch; the set's own TP is the
+    # found: osculating elements AT the perihelion epoch; the set's own TP is the
     # converged anchor. residual (sol_tp - els['TP']) is the non-grav shift.
     els = fetch_elements(obj['horizons_id'], obj['id_type'],
-                         obj['canonical_center'], sol_tp)
+                         obj['canonical_center'], sol_tp, hkwargs=hk)
     return els, sol_tp
 
 
@@ -432,8 +459,11 @@ def build_position_file(root, slug, obj, raw_points):
     outp.parent.mkdir(parents=True, exist_ok=True)
     with open(outp, 'w') as f:
         json.dump(payload, f)
+    deltas = sorted(t[i + 1] - t[i] for i in range(len(t) - 1)) if len(t) > 1 else [0.0]
+    step_hours = round(deltas[len(deltas) // 2] * 24.0, 3)   # B-3: median cadence (arc is non-uniform)
     return {'file': "positions/%s.json" % slug, 'start': dates[0], 'end': dates[-1],
-            'n_points': len(t), 'size_kb': int(round(outp.stat().st_size / 1024.0))}
+            'step_hours': step_hours, 'n_points': len(t),
+            'size_kb': int(round(outp.stat().st_size / 1024.0))}
 
 
 def as_of_today_km(raw_points):
@@ -457,7 +487,7 @@ def _utcnow():
     return _NOW_OVERRIDE if _NOW_OVERRIDE is not None else datetime.now(timezone.utc)
 
 
-def process_object(root, obj, defaults, mode, run_manifest, warn):
+def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacecraft=False):
     """Fetch + guard + persist raw for one object; return (osc_block_inputs).
     mode: 'first-build' or 'nightly'. Returns a dict the derive step consumes."""
     slug = obj['slug']
@@ -492,10 +522,25 @@ def process_object(root, obj, defaults, mode, run_manifest, warn):
     points = raw['points']
 
     if is_spacecraft:
-        if mode == 'first-build' or not points:
-            start = _discover_spacecraft_start(obj, warn)
+        sc = obj.get('overrides', {}).get('spacecraft', {})
+        if refresh_spacecraft:
+            points.clear()                          # A-10: force a full re-backfill
+        if mode == 'first-build' or refresh_spacecraft or not points:
+            start = _spacecraft_start(obj)          # authoritative curated start (no probe)
+            step = sc.get('fetch_step', '7d')       # coarse glide cadence -> dissolves A-6
             new = fetch_vectors_range(obj['horizons_id'], obj['id_type'],
-                                      obj['canonical_center'], start, today, '1d')
+                                      obj['canonical_center'], start, today, step)
+            # Densify KNOWN event windows (flybys) at daily cadence BEFORE any
+            # thinning -- you cannot thin toward an event you never sampled.
+            for win in sc.get('event_windows', []):
+                w0, w1 = _parse_calendar(win[0]), _parse_calendar(win[1])
+                new.update(fetch_vectors_range(obj['horizons_id'], obj['id_type'],
+                                               obj['canonical_center'], w0, w1, '1d'))
+            tol = sc.get('thin_tol_au')             # optional DP prune of straight glides
+            if tol:
+                before = len(new)
+                new = douglas_peucker(new, float(tol))
+                warn("%s: DP thin %d -> %d points (tol=%s AU)" % (slug, before, len(new), tol))
             points.update(new)
             run_manifest['objects'][slug] = 'backfilled(%d)' % len(new)
         else:
@@ -528,23 +573,102 @@ def process_object(root, obj, defaults, mode, run_manifest, warn):
     return result
 
 
-def _discover_spacecraft_start(obj, warn):
-    """F5/F7: config 'start' is a HINT; the real ephemeris start is what Horizons
-    actually returns. Attempt from the hint; on an empty/clipped leading edge,
-    read the first available epoch and begin there."""
-    hint = obj.get('overrides', {}).get('spacecraft', {}).get('start', '1970-01-01')
-    start_dt = _parse_calendar(hint)
-    try:
-        probe = fetch_vectors_range(obj['horizons_id'], obj['id_type'],
-                                    obj['canonical_center'], start_dt,
-                                    start_dt + timedelta(days=30), '1d')
-        if probe:
-            first = sorted(probe.keys())[0]
-            return _parse_calendar(first)
-    except Exception as e:
-        warn("%s: start probe from hint %s failed (%s); using hint"
-             % (obj['slug'], hint, e))
-    return start_dt
+def _spacecraft_start(obj):
+    """Authoritative flown-arc start from config. The date is curated at object
+    creation to be one Horizons accepts (the 'day after launch' convention avoids
+    Horizons' invalid-date error), so no probe -- use it directly. If Horizons
+    later rejects it, the fetch error propagates and is logged with the object's
+    name so the curated date can be fixed at source (non-blocking)."""
+    sc = obj.get('overrides', {}).get('spacecraft', {})
+    return _parse_calendar(sc.get('start', '1970-01-01'))
+
+
+def douglas_peucker(points_dict, tol_au):
+    """Prune points on near-straight trajectory segments -- 'skip points along
+    the line' at BUILD time, not just at plot time. Iterative 3D Ramer-Douglas-
+    Peucker: keep endpoints and any point whose perpendicular distance from its
+    local chord exceeds tol_au. points_dict: {date: {jd,x,y,z}}."""
+    items = sorted(points_dict.items(), key=lambda kv: kv[1]['jd'])
+    n = len(items)
+    if n < 3:
+        return points_dict
+    P = [(kv[1]['x'], kv[1]['y'], kv[1]['z']) for kv in items]
+    keep = [False] * n
+    keep[0] = keep[n - 1] = True
+    stack = [(0, n - 1)]
+    while stack:
+        lo, hi = stack.pop()
+        ax, ay, az = P[lo]
+        bx, by, bz = P[hi]
+        ux, uy, uz = bx - ax, by - ay, bz - az
+        u2 = ux * ux + uy * uy + uz * uz
+        dmax, idx = -1.0, -1
+        for i in range(lo + 1, hi):
+            px, py, pz = P[i]
+            if u2 == 0.0:
+                d = math.sqrt((px - ax) ** 2 + (py - ay) ** 2 + (pz - az) ** 2)
+            else:
+                t = ((px - ax) * ux + (py - ay) * uy + (pz - az) * uz) / u2
+                cx, cy, cz = ax + t * ux, ay + t * uy, az + t * uz
+                d = math.sqrt((px - cx) ** 2 + (py - cy) ** 2 + (pz - cz) ** 2)
+            if d > dmax:
+                dmax, idx = d, i
+        if dmax > tol_au and idx != -1:
+            keep[idx] = True
+            stack.append((lo, idx))
+            stack.append((idx, hi))
+    return {items[i][0]: items[i][1] for i in range(n) if keep[i]}
+
+
+def last_good_elements(root, slug):
+    """A-3: most recent osculating element set from the JSONL history."""
+    p = root / 'raw' / 'elements' / ("%s.jsonl" % slug)
+    if not p.exists():
+        return None
+    last = None
+    with open(p) as f:
+        for line in f:
+            if line.strip():
+                last = line
+    if not last:
+        return None
+    rec = json.loads(last)
+    return {'a': rec.get('a'), 'e': rec.get('e'), 'i': rec.get('i'),
+            'omega': rec.get('omega'), 'Omega': rec.get('Omega'),
+            'MA': rec.get('MA'), 'TA': rec.get('TA'), 'TP': rec.get('TP'),
+            'epoch_jd': rec.get('epoch_jd')}
+
+
+def serve_last_good(root, obj, warn):
+    """A-3: on a failed nightly fetch, serve the object's ORBIT from last-good so
+    it does not vanish -- but NULL the as_of_today point (never a stale marker;
+    a fast moon would be placed significantly wrong). Returns a result dict, or
+    None if there is no last-good (then the object is dropped + warned)."""
+    slug = obj['slug']
+    if obj['category'] == 'spacecraft':
+        raw = load_raw_vectors(root, slug)
+        if not raw or not raw['points']:
+            return None
+        pos = build_position_file(root, slug, obj, raw['points'])
+        return {'slug': slug, 'obj': obj, 'osc_block': None, 'positions': pos,
+                'as_of_today': None, 'orbit_type': None, 'comet': None, 'stale': True}
+    els = last_good_elements(root, slug)
+    if not els:
+        return None
+    osc = build_osculating_block(els, obj['center_slug'], obj, warn)
+    e = els.get('e')
+    return {'slug': slug, 'obj': obj, 'osc_block': osc, 'positions': None,
+            'as_of_today': None,
+            'orbit_type': 'hyperbolic' if (e is not None and e >= 1.0) else 'elliptical',
+            'comet': None, 'stale': True}
+
+
+def _iso_to_jd(iso_str):
+    """ISO-8601 UTC timestamp -> JD (for the #T freshness check)."""
+    dt = datetime.fromisoformat(iso_str.replace('Z', '+00:00'))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return _dt_to_jd(dt)
 
 
 def derive_served(staging, results, defaults):
@@ -572,12 +696,13 @@ def derive_served(staging, results, defaults):
 
     index = {
         'schema_version': SCHEMA_VERSION,
-        'generated': datetime.now(timezone.utc).isoformat(),
+        'generated': _utcnow().isoformat(),
         'generator': GENERATOR,
         'attribution': ATTRIBUTION,
+        'serving_base': 'data/solar-system',            # B-3: v0.6 parity
         'served_window': None,          # derive param: null = full raw window
         'feature_configs': 'feature_configs.json',
-        'scene_features': [],
+        'scene_features': ['asteroid_belt', 'kuiper_belt', 'heliosphere'],  # B-3: v0.6 parity
         'model': {'orbit_source': 'osculating-primary',
                   'positions': 'direct-horizons-arc (spacecraft only)',
                   'subtraction': 'not-used'},
@@ -600,6 +725,7 @@ class ValidationAbort(Exception):
 
 def assert_structural(index, staging):
     """Structural invariants (builder-correctness gates): abort on failure."""
+    gen_jd = _iso_to_jd(index['generated'])
     for slug, o in index['objects'].items():
         if o['category'] == 'spacecraft':
             if o['osculating'] is not None or o['positions'] is None:
@@ -615,9 +741,25 @@ def assert_structural(index, staging):
         # #U unit sanity: as_of_today magnitude must be km-scale, not AU-scale.
         aot = o.get('as_of_today')
         if aot is not None:
-            r_km = math.sqrt(aot['x'] ** 2 + aot['y'] ** 2 + aot['z'] ** 2)
-            if o['category'] != 'spacecraft' and r_km < 1000.0:
-                raise ValidationAbort("#U %s: as_of_today |r|=%.3g looks like AU, not km" % (slug, r_km))
+            served_km = math.sqrt(aot['x'] ** 2 + aot['y'] ** 2 + aot['z'] ** 2)
+            # #B3 conversion-consistency (replaces the absolute #U threshold that
+            # false-rejected close-centered objects AND let a large wrong-AU value
+            # pass): the served km point must equal the raw AU point at the same
+            # epoch x KM_PER_AU. Tests the convert + serialize path.
+            raw = load_raw_vectors(staging, slug)
+            rp = None
+            if raw:
+                for p in raw['points'].values():
+                    if abs(p['jd'] - aot['t']) < 1e-6:
+                        rp = p
+                        break
+            if rp is not None:
+                raw_km = math.sqrt(rp['x'] ** 2 + rp['y'] ** 2 + rp['z'] ** 2) * KM_PER_AU
+                if raw_km > 0 and abs(served_km - raw_km) / raw_km > 1e-6:
+                    raise ValidationAbort("#B3 %s: served |r|=%.6g km != raw*AU=%.6g km "
+                                          "(convert/serialize mismatch)" % (slug, served_km, raw_km))
+            if abs(aot['t'] - gen_jd) > 2.0:            # #T: within 48h of generated
+                raise ValidationAbort("#T %s: as_of_today.t not within 48h of generated" % slug)
 
 
 def shrink_gate(staging_root, live_root, warn):
@@ -650,26 +792,65 @@ def shrink_gate(staging_root, live_root, warn):
 # ATOMICITY + COMMIT
 # ===========================================================================
 
-def atomic_swap(staging, live):
-    """Rename live -> .prev, staging -> live (os.replace, same filesystem)."""
+def atomic_swap_dir(staging, live):
+    """N1: swap the WHOLE generation directory as one unit -- live -> .prev,
+    staging -> live. A filesystem rename is all-or-nothing, so a crash can only
+    ever leave a COMPLETE .prev (recovered next run) or a COMPLETE live, never a
+    mixed generation. Does NOT delete .prev: it is the retained one-generation
+    rollback, cleared at the next run's start once live is confirmed healthy."""
     prev = live.parent / (live.name + '.prev')
     if prev.exists():
-        shutil.rmtree(prev)
+        raise RuntimeError("stale %s at swap entry -- run-start recovery should "
+                           "have cleared it; aborting to avoid data loss" % prev)
     if live.exists():
         os.replace(live, prev)
     os.replace(staging, live)
-    if prev.exists():
-        shutil.rmtree(prev)
+
+
+def recover_incomplete_swap(out_dir):
+    """Run-start crash recovery (A-1 + N1) for the whole-generation swap. If a
+    crash left the live generation MISSING with .prev holding the only copy,
+    restore it. If both exist, the prior run completed and .prev is the retained
+    one-generation rollback -- drop it so the next swap starts clean."""
+    prev = out_dir.parent / (out_dir.name + '.prev')
+    if not prev.exists():
+        return
+    if not out_dir.exists():
+        print("[RECOVER] restoring %s from %s (crash mid-swap)" % (out_dir, prev), flush=True)
+        os.replace(prev, out_dir)
+    else:
+        shutil.rmtree(prev, ignore_errors=True)
 
 
 def git_commit(repo_root, data_rel, today_str):
+    """Commit + push the served tree. Returns a status dict
+    {'staged','committed_local','pushed_remote','sha'} (N2). A failed or absent
+    push is NOT reported as committed: push runs check=True and the remote branch
+    is confirmed to CONTAIN the new SHA before pushed_remote is set. This is the
+    exact failure mode that let a local commit never reach GitHub Pages."""
+    st = {'staged': False, 'committed_local': False, 'pushed_remote': False, 'sha': None}
     try:
         subprocess.run(['git', '-C', str(repo_root), 'add', data_rel], check=True)
+        st['staged'] = True
         subprocess.run(['git', '-C', str(repo_root), 'commit', '-m',
                         'data: nightly %s' % today_str], check=True)
-        subprocess.run(['git', '-C', str(repo_root), 'push'], check=False)
-    except Exception as e:
-        print("[commit] skipped/failed (commit locally next run): %s" % e, flush=True)
+        st['committed_local'] = True
+        st['sha'] = subprocess.run(['git', '-C', str(repo_root), 'rev-parse', 'HEAD'],
+                                   check=True, capture_output=True, text=True).stdout.strip()
+    except subprocess.CalledProcessError as e:
+        print("[commit] local commit failed (%s); will retry next run" % e, flush=True)
+        return st
+    try:
+        subprocess.run(['git', '-C', str(repo_root), 'push'], check=True)
+        remote = subprocess.run(['git', '-C', str(repo_root), 'branch', '-r', '--contains', st['sha']],
+                                check=True, capture_output=True, text=True).stdout
+        st['pushed_remote'] = bool(remote.strip())
+        if not st['pushed_remote']:
+            print("[commit] PUSH returned OK but remote does NOT contain %s -- "
+                  "committed locally only" % st['sha'], flush=True)
+    except subprocess.CalledProcessError as e:
+        print("[commit] PUSH FAILED (%s) -- committed locally only; remote is STALE" % e, flush=True)
+    return st
 
 
 # ===========================================================================
@@ -681,7 +862,8 @@ def load_config(path):
         return json.load(f)
 
 
-def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=False):
+def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=False,
+              refresh_spacecraft=False):
     out_dir = Path(out_dir)
     defaults = config['defaults']
     run_id = _utcnow().strftime('%Y%m%dT%H%M%SZ')
@@ -691,7 +873,21 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     warnings_log = []
     warn = warnings_log.append
 
-    staging = out_dir / '.staging' / run_id
+    # Run-start crash recovery (A-1): restore any live subtree a crash left in
+    # .prev, BEFORE copy-forward reads live raw.
+    recover_incomplete_swap(out_dir)
+    # A nightly run with no live raw archive is the unrecovered-crash signature;
+    # refuse to build a thin cache over a lost archive (A-1).
+    if mode == 'nightly' and not (out_dir / 'raw').exists():
+        run_manifest['structural_validation'] = ('fail: nightly run but no live '
+            'raw archive (possible unrecovered crash) -- refusing to build a '
+            'thin cache')
+        print("[ABORT] %s" % run_manifest['structural_validation'], flush=True)
+        return run_manifest
+
+    # N1: staging is a SIBLING of the live dir so the whole generation can be
+    # renamed into place as one unit.
+    staging = out_dir.parent / ('.staging_%s_%s' % (out_dir.name, run_id))
     if staging.exists():
         shutil.rmtree(staging)
     staging.mkdir(parents=True, exist_ok=True)
@@ -709,19 +905,57 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     results = []
     for obj in objects:
         try:
-            r = process_object(staging, obj, defaults, mode, run_manifest, warn)
+            r = process_object(staging, obj, defaults, mode, run_manifest, warn,
+                               refresh_spacecraft=refresh_spacecraft)
             if not (obj['category'] == 'spacecraft'):
                 r['osc_block'] = build_osculating_block(r['_els'], obj['center_slug'], obj, warn)
             if obj['trace_policy'] == 'full-arc':
                 r['positions'] = build_position_file(staging, obj['slug'], obj, r['_raw_points'])
             results.append(r)
         except Exception as e:
-            warn("%s: FETCH FAILED (%s); carrying last-good raw" % (obj['slug'], e))
-            run_manifest['objects'][obj['slug']] = 'failed: %s' % e
+            # A-3: serve the orbit from last-good (as_of_today NULLED -- never a
+            # stale marker) rather than let the object vanish; drop only if there
+            # is no last-good to serve.
+            stale = serve_last_good(staging, obj, warn)
+            if stale is not None:
+                results.append(stale)
+                warn("%s: FETCH FAILED (%s); served last-good orbit, as_of_today nulled" % (obj['slug'], e))
+                run_manifest['objects'][obj['slug']] = 'failed: %s (served last-good)' % e
+            else:
+                warn("%s: FETCH FAILED (%s); no last-good -- object dropped this run" % (obj['slug'], e))
+                run_manifest['objects'][obj['slug']] = 'failed: %s (dropped)' % e
 
     index = derive_served(staging, results, defaults)
 
-    # validation
+    # N3: object-set continuity -- a run must not silently DROP an object the
+    # prior generation served (a first appearance on first-build is fine). This
+    # guards the one moment the set changes: when Tony adds an object.
+    prior_idx_path = out_dir / 'coverage_index.json'
+    if prior_idx_path.exists():
+        try:
+            prior_objs = json.load(open(prior_idx_path)).get('objects', {})
+        except Exception:
+            prior_objs = {}
+        dropped = [s for s in prior_objs if s not in index['objects']]
+        if dropped:
+            run_manifest['structural_validation'] = 'fail: N3 object(s) dropped from a served set: %s' % dropped
+            _write_run_manifest(staging, run_manifest)
+            print("[ABORT] %s" % run_manifest['structural_validation'], flush=True)
+            return run_manifest
+    # N3: first-build minimum -- reject a clipped tiny non-spacecraft backfill
+    # (spacecraft counts are DP-variable, so they are exempt here).
+    if mode == 'first-build':
+        floor = int(0.5 * defaults['backfill_days'])
+        for r in results:
+            if r['obj']['category'] != 'spacecraft':
+                rr = load_raw_vectors(staging, r['slug'])
+                n = len(rr['points']) if rr else 0
+                if n < floor:
+                    run_manifest['structural_validation'] = ('fail: N3 %s first-build only %d '
+                        'points (< %d floor) -- clipped response?' % (r['slug'], n, floor))
+                    _write_run_manifest(staging, run_manifest)
+                    print("[ABORT] %s" % run_manifest['structural_validation'], flush=True)
+                    return run_manifest
     try:
         assert_structural(index, staging)
         shrink_gate(staging, out_dir if (out_dir / 'raw').exists() else None, warn)
@@ -739,17 +973,21 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
         run_manifest['dry_run'] = True
         return run_manifest
 
-    # promote staged raw + served into the live tree (atomic per subtree)
-    for sub in ('raw', 'positions', 'coverage_index.json', 'feature_configs.json'):
-        s = staging / sub
-        if not s.exists():
-            continue
-        atomic_swap(s, out_dir / sub) if s.is_dir() else _replace_file(s, out_dir / sub)
-    shutil.rmtree(out_dir / '.staging', ignore_errors=True)
+    # N1: promote the WHOLE generation as ONE directory swap. A crash can leave
+    # only a complete old generation or a complete new one -- never a mix.
+    atomic_swap_dir(staging, out_dir)
 
     if do_commit:
-        git_commit(_repo_root(out_dir), str(out_dir), _utcnow().strftime('%Y-%m-%d'))
-        run_manifest['committed'] = True
+        st = git_commit(_repo_root(out_dir), str(out_dir), _utcnow().strftime('%Y-%m-%d'))
+        run_manifest['committed_local'] = st['committed_local']
+        run_manifest['pushed_remote'] = st['pushed_remote']
+        run_manifest['commit_sha'] = st['sha']
+        # N2: 'committed' now means TRULY PUBLISHED (reached the remote), not just
+        # a local commit -- a silent push failure no longer reads as success.
+        run_manifest['committed'] = st['pushed_remote']
+        if st['committed_local'] and not st['pushed_remote']:
+            warn("commit landed LOCALLY but did NOT reach the remote -- GitHub "
+                 "Pages is STALE until the next successful push")
     for wmsg in warnings_log:
         print("[warn]", wmsg, flush=True)
     print("[done] run %s (%s): %d objects" % (run_id, mode, len(results)), flush=True)
@@ -796,10 +1034,13 @@ def main(argv=None):
     config = load_config(args.config)
     mode = 'first-build' if args.first_build else 'nightly'
     if args.dry_run:
-        return 0 if run_build(config, args.output_dir, mode, only_slug=args.object,
-                              dry_run=True) else 1
-    run_build(config, args.output_dir, mode, do_commit=args.commit)
-    return 0
+        rm = run_build(config, args.output_dir, mode, only_slug=args.object, dry_run=True)
+    else:
+        rm = run_build(config, args.output_dir, mode, do_commit=args.commit,
+                       refresh_spacecraft=args.refresh_spacecraft)
+    # A-2: a structural ABORT must surface as a nonzero exit (Task Scheduler
+    # history is the monitoring channel manifest S8 relies on).
+    return 1 if str(rm.get('structural_validation') or '').startswith('fail') else 0
 
 
 if __name__ == '__main__':

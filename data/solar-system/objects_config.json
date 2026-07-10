@@ -71,16 +71,21 @@
       "category": "spacecraft", "availability": "spacecraft", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "arc-natural",
       "trajectory_of": null, "trace_policy": "full-arc", "features": [],
-      "overrides": { "spacecraft": { "start": "1977-09-05" } },
-      "notes": "start is a HINT (launch date); real arc start is discovered from Horizons at first build. No future fetched; nightly appends today's point."
+      "overrides": { "spacecraft": {
+        "start": "1977-09-06",
+        "fetch_step": "7d",
+        "event_windows": [["1979-02-15", "1979-03-25"], ["1980-10-25", "1980-11-25"]],
+        "thin_tol_au": 0.02
+      } },
+      "notes": "start is AUTHORITATIVE (curated, day-after-launch so Horizons accepts it) -- confirm against the object definition. Coarse 7d glide backbone + daily densify inside the Jupiter (1979) and Saturn (1980) flyby windows + DP-prune of straight glides. No future fetched; nightly appends today's point."
     },
     {
       "slug": "encke", "name": "2P/Encke", "horizons_id": "2P", "id_type": "smallbody",
       "category": "comet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
-      "overrides": { "comet": { "anchor": "Tp", "max_distance_au": 100 } },
-      "notes": "Tp-anchored conic via solution-Tp resolution; exact Horizons record verified at dry-run (multiple apparitions resolve under '2P' -- pick current)."
+      "overrides": { "comet": { "anchor": "Tp", "max_distance_au": 100, "closest_apparition": true } },
+      "notes": "Tp-anchored conic via solution-Tp resolution; closest_apparition (CAP;) picks the current apparition for '2P'. Verify the header carries TP= at the dry-run."
     }
   ]
 }
