@@ -158,12 +158,14 @@ def _require_astro():
             "with the fetch functions monkeypatched.")
 
 
-def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1d'):
+def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1d', hkwargs=None):
     """Fetch a daily range of position vectors in the object's canonical center.
     Returns {date_str 'YYYY-MM-DD': {'jd': float, 'x','y','z': AU}}.
     Source pattern: orbit_data_manager.py:~676-690 (range query, TDB epochs,
     '@'-center) + spacecraft_encounters.py:632 (refplane='ecliptic') (orrery
-    4e2629c). Raw stays in AU as fetched; the derive step converts to km."""
+    4e2629c). Raw stays in AU as fetched; the derive step converts to km.
+    hkwargs (P2-4) passes comet apparition options (closest_apparition/
+    no_fragments) so a periodic comet's nightly position fetch can disambiguate."""
     _require_astro()
     location = _normalize_center(center)
     epochs = {
@@ -172,7 +174,7 @@ def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1
         'step': step,
     }
     obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type), location=location, epochs=epochs)
-    eph = obj.vectors(refplane='ecliptic')
+    eph = obj.vectors(refplane='ecliptic', **(hkwargs or {}))
     out = {}
     for row in eph:
         jd = float(row['datetime_jd'])
@@ -369,18 +371,14 @@ def resolve_comet_conic(obj, warn):
         hk['no_fragments'] = True
     status, sol_tp = fetch_solution_tp(obj['name'], horizons_id=obj['horizons_id'],
                                        id_type=obj['id_type'], hkwargs=hk)
-    if status in ('request_failed', 'parse_failed'):
-        # N5: an OPERATIONAL failure must not silently degrade to a today-anchored
-        # conic (that turns a fetch failure into a model change). Raise so the
-        # object serves last-good (A-3), visible as a failure not a model switch.
+    if status != 'found':
+        # N5 (settled): any comet Horizons serves carries at least an approximate
+        # Tp, so 'not_present' cannot legitimately occur -- treat it, like
+        # request_failed/parse_failed, as evidence something is wrong (wrong
+        # target, malformed header, unresolved apparition). Raise so the object
+        # serves last-good (A-3): visible, never a silent downgrade. No
+        # today-anchored fallback branch.
         raise RuntimeError("solution-TP %s for %s" % (status, obj['slug']))
-    if status == 'not_present':
-        # Genuine absence of a header TP: a today-anchored conic is a valid
-        # (weaker) fallback -- self-consistent, just not perihelion-anchored.
-        warn("%s: no solution TP in header; comet conic anchored at today" % obj['slug'])
-        els = fetch_elements(obj['horizons_id'], obj['id_type'],
-                             obj['canonical_center'], _dt_to_jd(_utcnow()), hkwargs=hk)
-        return els, None
     # found: osculating elements AT the perihelion epoch; the set's own TP is the
     # converged anchor. residual (sol_tp - els['TP']) is the non-grav shift.
     els = fetch_elements(obj['horizons_id'], obj['id_type'],
@@ -521,6 +519,16 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
         'center_slug': obj['center_slug'], 'unit': 'au', 'epoch_type': 'JD', 'points': {}}
     points = raw['points']
 
+    # P2-4: comet apparition options also gate the position-vector fetch (Encke's
+    # nightly point), not only elements/solution-TP.
+    hk_v = {}
+    if is_comet:
+        _c = obj.get('overrides', {}).get('comet', {})
+        if _c.get('closest_apparition'):
+            hk_v['closest_apparition'] = True
+        if _c.get('no_fragments'):
+            hk_v['no_fragments'] = True
+
     if is_spacecraft:
         sc = obj.get('overrides', {}).get('spacecraft', {})
         if refresh_spacecraft:
@@ -528,19 +536,25 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
         if mode == 'first-build' or refresh_spacecraft or not points:
             start = _spacecraft_start(obj)          # authoritative curated start (no probe)
             step = sc.get('fetch_step', '7d')       # coarse glide cadence -> dissolves A-6
-            new = fetch_vectors_range(obj['horizons_id'], obj['id_type'],
-                                      obj['canonical_center'], start, today, step)
-            # Densify KNOWN event windows (flybys) at daily cadence BEFORE any
-            # thinning -- you cannot thin toward an event you never sampled.
+            glide = fetch_vectors_range(obj['horizons_id'], obj['id_type'],
+                                        obj['canonical_center'], start, today, step)
+            tol = sc.get('thin_tol_au')             # DP the GLIDE ONLY; windows are pinned
+            if tol:
+                before = len(glide)
+                glide = douglas_peucker(glide, float(tol))
+                warn("%s: DP thin glide %d -> %d points (tol=%s AU)" % (slug, before, len(glide), tol))
+            new = dict(glide)
+            # Densify KNOWN event windows (flybys) at daily cadence -- merged AFTER
+            # DP so a sub-tolerance flyby deflection cannot be thinned away (P2-Q1).
             for win in sc.get('event_windows', []):
                 w0, w1 = _parse_calendar(win[0]), _parse_calendar(win[1])
                 new.update(fetch_vectors_range(obj['horizons_id'], obj['id_type'],
                                                obj['canonical_center'], w0, w1, '1d'))
-            tol = sc.get('thin_tol_au')             # optional DP prune of straight glides
-            if tol:
-                before = len(new)
-                new = douglas_peucker(new, float(tol))
-                warn("%s: DP thin %d -> %d points (tol=%s AU)" % (slug, before, len(new), tol))
+            # P2-1: append the fresh daily tail so the arc ENDS today (as_of_today
+            # honest, #T passes) -- unpruned, like the nightly append.
+            new.update(fetch_vectors_range(obj['horizons_id'], obj['id_type'],
+                                           obj['canonical_center'],
+                                           today - timedelta(days=freeze), today, '1d'))
             points.update(new)
             run_manifest['objects'][slug] = 'backfilled(%d)' % len(new)
         else:
@@ -553,7 +567,7 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
         start = today - timedelta(days=defaults['backfill_days']) if mode == 'first-build' \
             else today - timedelta(days=freeze)
         new = fetch_vectors_range(obj['horizons_id'], obj['id_type'],
-                                  obj['canonical_center'], start, today, '1d')
+                                  obj['canonical_center'], start, today, '1d', hkwargs=hk_v)
         points.update(new)  # overwrite-by-date on the refresh window; past frozen
         run_manifest['objects'][slug] = ('backfilled(%d)' % len(new)
                                          if mode == 'first-build' else 'nightly(%d)' % len(new))
@@ -639,11 +653,14 @@ def last_good_elements(root, slug):
             'epoch_jd': rec.get('epoch_jd')}
 
 
-def serve_last_good(root, obj, warn):
+def serve_last_good(root, obj, warn, prior_index=None):
     """A-3: on a failed nightly fetch, serve the object's ORBIT from last-good so
     it does not vanish -- but NULL the as_of_today point (never a stale marker;
-    a fast moon would be placed significantly wrong). Returns a result dict, or
-    None if there is no last-good (then the object is dropped + warned)."""
+    a fast moon would be placed significantly wrong). For a comet, the comet block
+    (Tp_jd/solution_Tp_jd/max_distance_au) is CARRIED FORWARD from the prior
+    published index (P2-9) -- the conic already draws from that Tp, so nulling it
+    would discard data already in use. Returns a result dict, or None if there is
+    no last-good (then the object is dropped + warned)."""
     slug = obj['slug']
     if obj['category'] == 'spacecraft':
         raw = load_raw_vectors(root, slug)
@@ -657,10 +674,13 @@ def serve_last_good(root, obj, warn):
         return None
     osc = build_osculating_block(els, obj['center_slug'], obj, warn)
     e = els.get('e')
+    comet = None
+    if obj['category'] == 'comet' and prior_index:
+        comet = prior_index.get('objects', {}).get(slug, {}).get('comet')
     return {'slug': slug, 'obj': obj, 'osc_block': osc, 'positions': None,
             'as_of_today': None,
             'orbit_type': 'hyperbolic' if (e is not None and e >= 1.0) else 'elliptical',
-            'comet': None, 'stale': True}
+            'comet': comet, 'stale': True}
 
 
 def _iso_to_jd(iso_str):
@@ -738,14 +758,10 @@ def assert_structural(index, staging):
         if o['positions'] is not None:
             if not (staging / o['positions']['file']).exists():
                 raise ValidationAbort("#8 %s: positions file missing %s" % (slug, o['positions']['file']))
-        # #U unit sanity: as_of_today magnitude must be km-scale, not AU-scale.
+        # #B3 conversion-consistency: as_of_today magnitude/components must equal
+        # the raw AU point at the same epoch x KM_PER_AU.
         aot = o.get('as_of_today')
         if aot is not None:
-            served_km = math.sqrt(aot['x'] ** 2 + aot['y'] ** 2 + aot['z'] ** 2)
-            # #B3 conversion-consistency (replaces the absolute #U threshold that
-            # false-rejected close-centered objects AND let a large wrong-AU value
-            # pass): the served km point must equal the raw AU point at the same
-            # epoch x KM_PER_AU. Tests the convert + serialize path.
             raw = load_raw_vectors(staging, slug)
             rp = None
             if raw:
@@ -753,11 +769,16 @@ def assert_structural(index, staging):
                     if abs(p['jd'] - aot['t']) < 1e-6:
                         rp = p
                         break
-            if rp is not None:
-                raw_km = math.sqrt(rp['x'] ** 2 + rp['y'] ** 2 + rp['z'] ** 2) * KM_PER_AU
-                if raw_km > 0 and abs(served_km - raw_km) / raw_km > 1e-6:
-                    raise ValidationAbort("#B3 %s: served |r|=%.6g km != raw*AU=%.6g km "
-                                          "(convert/serialize mismatch)" % (slug, served_km, raw_km))
+            # A served point with no matching raw point is itself an anomaly.
+            if rp is None:
+                raise ValidationAbort("#B3 %s: as_of_today has no matching raw point at t=%s" % (slug, aot['t']))
+            # Component-wise (not just magnitude) so a swapped axis or sign flip is
+            # caught; abs+rel tolerance so a near-zero component does not blow up.
+            for ax in ('x', 'y', 'z'):
+                exp = rp[ax] * KM_PER_AU
+                if abs(aot[ax] - exp) > 1.0 + 1e-6 * abs(exp):
+                    raise ValidationAbort("#B3 %s: served %s=%.6g km != raw*AU=%.6g km "
+                                          "(convert/serialize/component mismatch)" % (slug, ax, aot[ax], exp))
             if abs(aot['t'] - gen_jd) > 2.0:            # #T: within 48h of generated
                 raise ValidationAbort("#T %s: as_of_today.t not within 48h of generated" % slug)
 
@@ -792,7 +813,7 @@ def shrink_gate(staging_root, live_root, warn):
 # ATOMICITY + COMMIT
 # ===========================================================================
 
-def atomic_swap_dir(staging, live):
+def atomic_swap_dir(staging, live, run_id=None):
     """N1: swap the WHOLE generation directory as one unit -- live -> .prev,
     staging -> live. A filesystem rename is all-or-nothing, so a crash can only
     ever leave a COMPLETE .prev (recovered next run) or a COMPLETE live, never a
@@ -800,8 +821,12 @@ def atomic_swap_dir(staging, live):
     rollback, cleared at the next run's start once live is confirmed healthy."""
     prev = live.parent / (live.name + '.prev')
     if prev.exists():
-        raise RuntimeError("stale %s at swap entry -- run-start recovery should "
-                           "have cleared it; aborting to avoid data loss" % prev)
+        # A stale .prev means run-start recovery could not clear it (e.g. a
+        # Windows file lock held by a backup or AV process). QUARANTINE it and
+        # proceed rather than wedge every future run; the sweep reaps quarantines.
+        q = live.parent / ('%s.quarantine_%s' % (live.name, run_id or _utcnow().strftime('%Y%m%dT%H%M%S')))
+        print("[SWAP] stale %s (suspected file lock) -> quarantining as %s" % (prev, q), flush=True)
+        os.replace(prev, q)
     if live.exists():
         os.replace(live, prev)
     os.replace(staging, live)
@@ -819,7 +844,26 @@ def recover_incomplete_swap(out_dir):
         print("[RECOVER] restoring %s from %s (crash mid-swap)" % (out_dir, prev), flush=True)
         os.replace(prev, out_dir)
     else:
-        shutil.rmtree(prev, ignore_errors=True)
+        try:
+            shutil.rmtree(prev)     # do NOT ignore_errors: a silent lock would wedge the next swap
+        except OSError as e:
+            print("[RECOVER] could not remove retained %s (%s); swap will quarantine it" % (prev, e), flush=True)
+
+
+def _sweep_siblings(out_dir, keep_days=3):
+    """Reap stale sibling crash remnants older than keep_days: .staging_* (pre-swap
+    staging) and .quarantine_* (locked-.prev quarantines). Recent ones stay as
+    autopsies (A-11)."""
+    import time
+    parent = out_dir.parent
+    cutoff = time.time() - keep_days * 86400
+    for pat in ('.staging_%s_*' % out_dir.name, '%s.quarantine_*' % out_dir.name):
+        for d in parent.glob(pat):
+            try:
+                if d.stat().st_mtime < cutoff:
+                    shutil.rmtree(d, ignore_errors=True)
+            except OSError:
+                pass
 
 
 def git_commit(repo_root, data_rel, today_str):
@@ -873,12 +917,21 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     warnings_log = []
     warn = warnings_log.append
 
-    # Run-start crash recovery (A-1): restore any live subtree a crash left in
-    # .prev, BEFORE copy-forward reads live raw.
+    # Run-start crash recovery (A-1) + sweep stale sibling remnants.
     recover_incomplete_swap(out_dir)
+    _sweep_siblings(out_dir)
+    # Prior published index (P2-9 comet carry-forward; N3 continuity).
+    prior_index = None
+    pidx = out_dir / 'coverage_index.json'
+    if pidx.exists():
+        try:
+            prior_index = json.load(open(pidx))
+        except Exception:
+            prior_index = None
     # A nightly run with no live raw archive is the unrecovered-crash signature;
-    # refuse to build a thin cache over a lost archive (A-1).
-    if mode == 'nightly' and not (out_dir / 'raw').exists():
+    # refuse to build a thin cache over a lost archive (A-1). A dry-run publishes
+    # nothing, so the guard does not apply to it (P2-2).
+    if mode == 'nightly' and not dry_run and not (out_dir / 'raw').exists():
         run_manifest['structural_validation'] = ('fail: nightly run but no live '
             'raw archive (possible unrecovered crash) -- refusing to build a '
             'thin cache')
@@ -916,7 +969,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
             # A-3: serve the orbit from last-good (as_of_today NULLED -- never a
             # stale marker) rather than let the object vanish; drop only if there
             # is no last-good to serve.
-            stale = serve_last_good(staging, obj, warn)
+            stale = serve_last_good(staging, obj, warn, prior_index=prior_index)
             if stale is not None:
                 results.append(stale)
                 warn("%s: FETCH FAILED (%s); served last-good orbit, as_of_today nulled" % (obj['slug'], e))
@@ -929,13 +982,11 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
 
     # N3: object-set continuity -- a run must not silently DROP an object the
     # prior generation served (a first appearance on first-build is fine). This
-    # guards the one moment the set changes: when Tony adds an object.
-    prior_idx_path = out_dir / 'coverage_index.json'
-    if prior_idx_path.exists():
-        try:
-            prior_objs = json.load(open(prior_idx_path)).get('objects', {})
-        except Exception:
-            prior_objs = {}
+    # guards the one moment the set changes: when Tony adds an object. Skipped for
+    # a scoped/dry run (only_slug makes the whole-set comparison meaningless; a
+    # dry-run publishes nothing) -- P2-2.
+    if prior_index is not None and not (only_slug or dry_run):
+        prior_objs = prior_index.get('objects', {})
         dropped = [s for s in prior_objs if s not in index['objects']]
         if dropped:
             run_manifest['structural_validation'] = 'fail: N3 object(s) dropped from a served set: %s' % dropped
@@ -975,7 +1026,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
 
     # N1: promote the WHOLE generation as ONE directory swap. A crash can leave
     # only a complete old generation or a complete new one -- never a mix.
-    atomic_swap_dir(staging, out_dir)
+    atomic_swap_dir(staging, out_dir, run_id)
 
     if do_commit:
         st = git_commit(_repo_root(out_dir), str(out_dir), _utcnow().strftime('%Y-%m-%d'))
@@ -988,6 +1039,10 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
         if st['committed_local'] and not st['pushed_remote']:
             warn("commit landed LOCALLY but did NOT reach the remote -- GitHub "
                  "Pages is STALE until the next successful push")
+        # Persist the FINAL publish status into the PROMOTED manifest -- the staged
+        # copy was written pre-swap with committed=false and would otherwise be a
+        # standing lie about publication (GPT).
+        _write_run_manifest(out_dir, run_manifest)
     for wmsg in warnings_log:
         print("[warn]", wmsg, flush=True)
     print("[done] run %s (%s): %d objects" % (run_id, mode, len(results)), flush=True)

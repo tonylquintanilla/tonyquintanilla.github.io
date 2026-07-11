@@ -43,7 +43,7 @@ def _step_days(step):
     return 1
 
 
-def fake_vectors(horizons_id, id_type, center, start_dt, stop_dt, step='1d'):
+def fake_vectors(horizons_id, id_type, center, start_dt, stop_dt, step='1d', hkwargs=None):
     out = {}
     stride = _step_days(step)
     total = max((stop_dt - start_dt).days, 1)
@@ -310,6 +310,79 @@ def main():
         st2 = b.git_commit(r, 'data', '2026-07-10')
         check(st2['committed_local'] and not st2['pushed_remote'] and st2['sha'],
               "N2: local commit succeeds but no-remote push is NOT reported as pushed")
+
+    # --- P2-2: --dry-run --object is runnable in BOTH repo states ---
+    with tempfile.TemporaryDirectory() as td:
+        (Path(td) / 'data').mkdir(parents=True)
+        out = Path(td) / 'data' / 'solar-system'
+        b.run_build(cfg, out, mode='first-build', do_commit=False)
+        rmd = b.run_build(cfg, out, mode='nightly', only_slug='earth', dry_run=True)
+        check(rmd['structural_validation'] == 'pass' and rmd.get('dry_run') is True,
+              "P2-2: --dry-run --object clears N3 + no-raw against an existing generation")
+    with tempfile.TemporaryDirectory() as td:
+        (Path(td) / 'data').mkdir(parents=True)
+        out = Path(td) / 'data' / 'solar-system'
+        rmd2 = b.run_build(cfg, out, mode='nightly', only_slug='earth', dry_run=True)
+        check(rmd2['structural_validation'] == 'pass',
+              "P2-2: --dry-run --object works on a clean machine (no raw archive)")
+
+    # --- P2-1: spacecraft arc ENDS today regardless of stride phase (adversarial NOW) ---
+    _save = b._NOW_OVERRIDE
+    b._NOW_OVERRIDE = datetime(2026, 7, 3, tzinfo=timezone.utc)
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td) / 'data').mkdir(parents=True)
+            out = Path(td) / 'data' / 'solar-system'
+            rmp = b.run_build(cfg, out, mode='first-build', do_commit=False)
+            idxp = json.load(open(out / 'coverage_index.json'))
+            aot = idxp['objects']['voyager_1']['as_of_today']
+            today_jd = b._dt_to_jd(datetime(2026, 7, 3, tzinfo=timezone.utc))
+            check(rmp['structural_validation'] == 'pass',
+                  "P2-1: spacecraft first-build passes #T (arc ends today, not a stale stride point)")
+            check(aot is not None and abs(aot['t'] - today_jd) < 2.0,
+                  "P2-1: spacecraft as_of_today is fresh regardless of stride phase")
+    finally:
+        b._NOW_OVERRIDE = _save
+
+    # --- #B3 component-wise: a swapped axis (magnitude-preserving) is caught ---
+    with tempfile.TemporaryDirectory() as td:
+        stg = Path(td) / 'stg'; (stg / 'raw' / 'vectors').mkdir(parents=True)
+        tjd = b._dt_to_jd(FIXED_NOW)
+        json.dump({'points': {'2026-07-09': {'jd': tjd, 'x': 1.0, 'y': 2.0, 'z': 0.0}}},
+                  open(stg / 'raw' / 'vectors' / 'x.json', 'w'))
+        AU = b.KM_PER_AU
+        def mkc(x, y):
+            return {'generated': FIXED_NOW.isoformat(),
+                    'objects': {'x': {'category': 'planet', 'stored_center': 'sun',
+                                      'osculating': {'center': 'sun'}, 'positions': None,
+                                      'as_of_today': {'t': tjd, 'x': x, 'y': y, 'z': 0.0}}}}
+        try:
+            b.assert_structural(mkc(1.0 * AU, 2.0 * AU), stg); okc = True
+        except b.ValidationAbort:
+            okc = False
+        check(okc, "#B3: correct per-component conversion passes")
+        swapped = False
+        try:
+            b.assert_structural(mkc(2.0 * AU, 1.0 * AU), stg)
+        except b.ValidationAbort as e:
+            swapped = '#B3' in str(e)
+        check(swapped, "#B3: swapped axes (magnitude-preserving) ABORTS component-wise")
+
+    # --- P2-9: a stale comet carries its comet block forward, not nulled ---
+    with tempfile.TemporaryDirectory() as td:
+        (Path(td) / 'data').mkdir(parents=True)
+        out = Path(td) / 'data' / 'solar-system'
+        b.run_build(cfg, out, mode='first-build', do_commit=False)
+        _os2 = b.fetch_solution_tp
+        b.fetch_solution_tp = lambda *a, **k: ('request_failed', None)
+        try:
+            b.run_build(cfg, out, mode='nightly', do_commit=False)
+        finally:
+            b.fetch_solution_tp = _os2
+        idxc = json.load(open(out / 'coverage_index.json'))
+        ecb = idxc['objects']['encke'].get('comet')
+        check(ecb is not None and 'Tp_jd' in ecb,
+              "P2-9: stale comet carries its comet block forward (not nulled)")
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
