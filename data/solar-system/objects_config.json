@@ -84,7 +84,8 @@
       "category": "comet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
-      "overrides": { "comet": { "anchor": "Tp", "max_distance_au": 100, "closest_apparition": true } },
+      "overrides": { "comet": { "anchor": "Tp", "max_distance_au": 100 } },
       "notes": "Tp-anchored conic. horizons_id is the specific Horizons record number (Rec #90000091, 2022-epoch solution), matching the orrery's proven Halley pattern (id='90000030') -- not the bare 'DES=2P' designation, which resolves ambiguously across 61 historical apparitions and is incompatible with closest_apparition under id_type='smallbody'. Verified live 2026-07-11. NOTE: this record is pinned -- won't auto-track a future JPL solution update; recheck periodically, same as Halley's pinned id."
+    }  
   ]
 }
