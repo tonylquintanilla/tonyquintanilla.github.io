@@ -1,0 +1,433 @@
+{
+  "schema_version": "1.0",
+  "generated": "2026-07-11T23:26:47.557512+00:00",
+  "generator": "gallery_cache_builder/1.0",
+  "attribution": "Data: JPL/NASA Horizons",
+  "serving_base": "data/solar-system",
+  "served_window": null,
+  "feature_configs": "feature_configs.json",
+  "scene_features": [
+    "asteroid_belt",
+    "kuiper_belt",
+    "heliosphere"
+  ],
+  "model": {
+    "orbit_source": "osculating-primary",
+    "positions": "direct-horizons-arc (spacecraft only)",
+    "subtraction": "not-used"
+  },
+  "objects": {
+    "earth": {
+      "name": "Earth",
+      "horizons_id": "399",
+      "category": "planet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2461232.5,
+        "a_au": 1.000656504994683,
+        "e": 0.01598446906095304,
+        "i_deg": 0.003278357888081839,
+        "node_deg": 174.8710049188543,
+        "peri_deg": 288.9580364539351,
+        "M0_deg": 184.6869962303741,
+        "source": {
+          "query_target": "399",
+          "center": "@sun",
+          "epoch": 2461232.5,
+          "retrieved": "2026-07-11T23:26:47.126018+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": [
+        "van_allen_belts",
+        "atmosphere_shell"
+      ],
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": 47928583.23251304,
+        "y": -144331299.74955276,
+        "z": 7980.136899717153
+      },
+      "event_link": null
+    },
+    "jupiter": {
+      "name": "Jupiter",
+      "horizons_id": "599",
+      "category": "planet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2461232.5,
+        "a_au": 5.203482665541062,
+        "e": 0.04829585120132369,
+        "i_deg": 1.303397598813778,
+        "node_deg": 100.5141384619468,
+        "peri_deg": 273.7946696854432,
+        "M0_deg": 104.9960265692115,
+        "source": {
+          "query_target": "599",
+          "center": "@sun",
+          "epoch": 2461232.5,
+          "retrieved": "2026-07-11T23:26:47.171825+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": [
+        "magnetosphere",
+        "ring_system"
+      ],
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": -447969682.6460184,
+        "y": 650447909.1901653,
+        "z": 7320747.991267949
+      },
+      "event_link": null
+    },
+    "saturn": {
+      "name": "Saturn",
+      "horizons_id": "699",
+      "category": "planet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2461232.5,
+        "a_au": 9.53821689304421,
+        "e": 0.05528016882625119,
+        "i_deg": 2.487035611872224,
+        "node_deg": 113.5598246073839,
+        "peri_deg": 339.0454301901819,
+        "M0_deg": 281.6945311918797,
+        "source": {
+          "query_target": "699",
+          "center": "@sun",
+          "epoch": 2461232.5,
+          "retrieved": "2026-07-11T23:26:47.215078+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": [
+        "ring_system"
+      ],
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": 1400130349.4042945,
+        "y": 196956550.14478615,
+        "z": -59163727.2667607
+      },
+      "event_link": null
+    },
+    "moon": {
+      "name": "Moon",
+      "horizons_id": "301",
+      "category": "moon",
+      "availability": "analytic",
+      "parent": "earth",
+      "stored_center": "earth",
+      "canonical_frame": "parent-relative",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "earth",
+        "epoch_jd": 2461232.5,
+        "a_au": 0.00256000455768964,
+        "e": 0.06351027388896305,
+        "i_deg": 5.15147178535857,
+        "node_deg": 330.2170152021764,
+        "peri_deg": 129.6144598736076,
+        "M0_deg": 325.0407640112158,
+        "source": {
+          "query_target": "301",
+          "center": "@399",
+          "epoch": 2461232.5,
+          "retrieved": "2026-07-11T23:26:47.260733+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": [],
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": 178707.8946911792,
+        "y": 314946.2142116877,
+        "z": 32645.6492047994
+      },
+      "event_link": null
+    },
+    "io": {
+      "name": "Io",
+      "horizons_id": "501",
+      "category": "moon",
+      "availability": "analytic",
+      "parent": "jupiter",
+      "stored_center": "jupiter",
+      "canonical_frame": "parent-relative",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "jupiter",
+        "epoch_jd": 2461232.5,
+        "a_au": 0.00282103829927205,
+        "e": 0.003828109000658978,
+        "i_deg": 2.221976234908484,
+        "node_deg": 338.4672618500157,
+        "peri_deg": 96.28723892875698,
+        "M0_deg": 242.7077122682586,
+        "source": {
+          "query_target": "501",
+          "center": "@599",
+          "epoch": 2461232.5,
+          "retrieved": "2026-07-11T23:26:47.305211+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": [],
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": 310306.0084099441,
+        "y": -287060.63137583755,
+        "z": -5941.62317939631
+      },
+      "event_link": null
+    },
+    "titan": {
+      "name": "Titan",
+      "horizons_id": "606",
+      "category": "moon",
+      "availability": "analytic",
+      "parent": "saturn",
+      "stored_center": "saturn",
+      "canonical_frame": "parent-relative",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "saturn",
+        "epoch_jd": 2461232.5,
+        "a_au": 0.008168279312212826,
+        "e": 0.02881107311721353,
+        "i_deg": 27.70683001803563,
+        "node_deg": 169.0798408163386,
+        "peri_deg": 178.2317886594957,
+        "M0_deg": 344.2204920297259,
+        "source": {
+          "query_target": "606",
+          "center": "@699",
+          "epoch": 2461232.5,
+          "retrieved": "2026-07-11T23:26:47.350158+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": [],
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": 1043499.1742734661,
+        "y": -540570.8294815768,
+        "z": 174932.47821636935
+      },
+      "event_link": null
+    },
+    "pluto": {
+      "name": "Pluto",
+      "horizons_id": "999",
+      "category": "dwarf_planet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "pluto_barycenter",
+      "canonical_frame": "barycenter-relative",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "pluto_barycenter",
+        "epoch_jd": 2461232.5,
+        "a_au": 1.424480850013132e-05,
+        "e": 8.595370633072742e-05,
+        "i_deg": 112.8877906518744,
+        "node_deg": 227.3930396796712,
+        "peri_deg": 259.3070900485778,
+        "M0_deg": 133.9608715393201,
+        "source": {
+          "query_target": "999",
+          "center": "@9",
+          "epoch": 2461232.5,
+          "retrieved": "2026-07-11T23:26:47.396282+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": [],
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": -1540.6745781121112,
+        "y": -1002.605516435236,
+        "z": 1078.321665491847
+      },
+      "event_link": null
+    },
+    "charon": {
+      "name": "Charon",
+      "horizons_id": "901",
+      "category": "moon",
+      "availability": "analytic",
+      "parent": "pluto",
+      "stored_center": "pluto_barycenter",
+      "canonical_frame": "barycenter-relative",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "pluto_barycenter",
+        "epoch_jd": 2461232.5,
+        "a_au": 0.0001167428481306036,
+        "e": 0.0001687736152810959,
+        "i_deg": 112.8877817233272,
+        "node_deg": 227.3930568002183,
+        "peri_deg": 172.4793781105058,
+        "M0_deg": 40.78632940214482,
+        "source": {
+          "query_target": "901",
+          "center": "@9",
+          "epoch": 2461232.5,
+          "retrieved": "2026-07-11T23:26:47.443719+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": [],
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": 12624.043922867573,
+        "y": 8214.658587654876,
+        "z": -8836.4653303287
+      },
+      "event_link": null
+    },
+    "apophis": {
+      "name": "Apophis",
+      "horizons_id": "99942",
+      "category": "asteroid",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2461232.5,
+        "a_au": 0.9223470159963625,
+        "e": 0.191164690216624,
+        "i_deg": 3.341043885753181,
+        "node_deg": 203.8928324037914,
+        "peri_deg": 126.6811827120756,
+        "M0_deg": 210.9344215447586,
+        "source": {
+          "query_target": "99942",
+          "center": "@sun",
+          "epoch": 2461232.5,
+          "retrieved": "2026-07-11T23:26:47.491652+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": [],
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": -160116215.59937528,
+        "y": 21773886.330905657,
+        "z": -4948117.508754655
+      },
+      "event_link": null
+    },
+    "voyager_1": {
+      "name": "Voyager 1",
+      "horizons_id": "-31",
+      "category": "spacecraft",
+      "availability": "spacecraft",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/voyager_1.json",
+        "start": "1977-09-06",
+        "end": "2026-07-11",
+        "step_hours": 24.0,
+        "n_points": 105,
+        "size_kb": 8
+      },
+      "presets": null,
+      "features": [],
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": -4796851906.266964,
+        "y": -20372235493.742863,
+        "z": 14739816263.263248
+      },
+      "event_link": null
+    },
+    "encke": {
+      "name": "2P/Encke",
+      "horizons_id": "90000091",
+      "category": "comet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2460239.6495185494,
+        "a_au": 2.218614770346867,
+        "e": 0.8469329318387274,
+        "i_deg": 11.3365090321158,
+        "node_deg": 334.0187285812073,
+        "peri_deg": 187.2883080287473,
+        "M0_deg": 359.8870361969876,
+        "source": {
+          "query_target": "90000091",
+          "center": "@sun",
+          "epoch": 2460239.6495185494,
+          "retrieved": "2026-07-11T23:26:47.557408+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": [],
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461232.500694444,
+        "x": 423316970.1959564,
+        "y": 27554725.436634418,
+        "z": 42187328.99285443
+      },
+      "event_link": null,
+      "comet": {
+        "Tp_jd": 2460240.028273294,
+        "solution_Tp_jd": 2460239.6495185494,
+        "max_distance_au": 100
+      }
+    }
+  }
+}

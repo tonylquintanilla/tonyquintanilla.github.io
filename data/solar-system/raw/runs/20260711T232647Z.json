@@ -1,0 +1,22 @@
+{
+  "run_id": "20260711T232647Z",
+  "started": "2026-07-11T23:26:47.010104+00:00",
+  "mode": "nightly",
+  "objects": {
+    "earth": "nightly(8)",
+    "jupiter": "nightly(8)",
+    "saturn": "nightly(8)",
+    "moon": "nightly(8)",
+    "io": "nightly(8)",
+    "titan": "nightly(8)",
+    "pluto": "nightly(8)",
+    "charon": "nightly(8)",
+    "apophis": "nightly(8)",
+    "voyager_1": "nightly(8)",
+    "encke": "nightly(8)"
+  },
+  "guard_warnings": [],
+  "structural_validation": "pass",
+  "committed": false,
+  "finished": "2026-07-11T23:26:47.705583+00:00"
+}
