@@ -23,7 +23,7 @@ ELEMS = {
     '399': (1.000, 0.017), '599': (5.204, 0.049), '699': (9.583, 0.056),
     '301': (0.00257, 0.055), '501': (0.002819, 0.004), '606': (0.00817, 0.0288),
     '999': (1.39e-5, 0.001), '901': (1.17e-4, 0.0002),
-    '99942': (0.922, 0.191), '2P': (2.215, 0.848),
+    '99942': (0.922, 0.191), '90000091': (2.215, 0.848),
 }
 
 
@@ -60,7 +60,7 @@ def fake_vectors(horizons_id, id_type, center, start_dt, stop_dt, step='1d', hkw
 
 
 def fake_solution_tp(name, horizons_id=None, id_type='smallbody', hkwargs=None):
-    if horizons_id == '2P':
+    if horizons_id == '90000091':
         return ('found', b._dt_to_jd(datetime(2023, 10, 22, tzinfo=timezone.utc)))
     return ('not_present', None)
 
