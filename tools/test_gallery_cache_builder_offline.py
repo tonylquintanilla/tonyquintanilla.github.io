@@ -74,9 +74,9 @@ def install_mocks():
 
 def main():
     install_mocks()
-    # A-8: config lives at data/solar-system/ in the repo, not next to this test
-    # in tools/. Resolve the repo path, with a flat-dir fallback.
-    cfg_path = Path(__file__).resolve().parents[1] / 'data' / 'solar-system' / 'objects_config.json'
+    # A-8 (updated L-114): config lives at data/objects_config.json -- a sibling
+    # outside the swap dir, not next to this test in tools/. Fallback kept defensive.
+    cfg_path = Path(__file__).resolve().parents[1] / 'data' / 'objects_config.json'
     if not cfg_path.exists():
         cfg_path = Path(__file__).with_name('objects_config.json')
     cfg = b.load_config(str(cfg_path))

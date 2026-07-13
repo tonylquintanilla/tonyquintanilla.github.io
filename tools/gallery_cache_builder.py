@@ -3,19 +3,35 @@
 gallery_cache_builder.py -- standalone nightly builder for the Paloma's Orrery
 web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool.
 
-Nightly: read objects_config.json -> fetch fresh from JPL Horizons per object
-with the explicit canonical center -> validate on write (structural invariants
-and #B3 conversion-consistency and the shrink gate ABORT; Guard v2 WARNs as a
-monitor -- warn + keep, never reject) -> build raw cache + derived served files
-in STAGING -> whole-generation atomic swap -> single verified commit. No orrery
-imports; hard-won fetch specifics are COPIED WITH PROVENANCE from the orrery and
-kept in sync on change (see per-function comments). See GALLERY_BUILDER_MANIFEST
-v2 + GALLERY_DATA_SOURCE_HANDOFF v0.4.
+Nightly: read data/objects_config.json -> fetch fresh from JPL Horizons per
+object with the explicit canonical center -> validate on write (structural
+invariants and #B3 conversion-consistency and the shrink gate ABORT; Guard v2
+WARNs as a monitor -- warn + keep, never reject) -> build raw cache + derived
+served files in STAGING -> whole-generation atomic swap -> single verified
+commit. No orrery imports; hard-won fetch specifics are COPIED WITH PROVENANCE
+from the orrery and kept in sync on change (see per-function comments). See
+GALLERY_BUILDER_MANIFEST v2 + GALLERY_DATA_SOURCE_HANDOFF v0.4.
+
+Operational notes (read before hand-editing anything under data/):
+    - objects_config.json lives at data/objects_config.json -- a SIBLING of,
+      and deliberately OUTSIDE, data/solar-system/. The atomic swap replaces
+      the whole data/solar-system/ directory wholesale, so a config kept
+      inside it gets swapped away on every real build (this was L-114).
+      Keeping it outside also lets load_config() run before
+      recover_incomplete_swap() without depending on the very directory a
+      crash may have left mid-swap. Do NOT move the config back inside
+      data/solar-system/.
+    - data/solar-system.prev/ is a NORMAL, self-healing artifact: the
+      one-generation rollback the swap retains. recover_incomplete_swap()
+      clears it on the next successful build. Do not delete it by hand.
+    - data/.staging_solar-system_<timestamp>/ folders are throwaway per-run
+      workspaces; safe to delete (cleanup_stale_siblings() reaps stale ones).
 
 Provenance base: orrery HEAD 4e2629c (copy sources), gallery HEAD 4b086a6
 (deploy target). Re-pin both on change.
 
-Model updated: July 2026 with Anthropic's Claude Opus 4.8.
+Module updated: July 2026 with Anthropic's Claude Opus 4.8 (L-114: config
+moved out of the swap dir).
 """
 
 import argparse
@@ -1082,7 +1098,7 @@ def main(argv=None):
     ap.add_argument('--dry-run', action='store_true', help="one object, validate, write nothing outside .staging")
     ap.add_argument('--object', help="slug for --dry-run")
     ap.add_argument('--output-dir', default='data/solar-system')
-    ap.add_argument('--config', default='data/solar-system/objects_config.json')
+    ap.add_argument('--config', default='data/objects_config.json')
     ap.add_argument('--commit', action='store_true', help="git commit+push after a successful swap")
     args = ap.parse_args(argv)
 
