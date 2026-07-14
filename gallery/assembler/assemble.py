@@ -80,7 +80,8 @@ def assemble_scene(scene_dict: Dict[str, Any], catalog: Catalog,
         title = "%s -- %s (epoch %s)" % (
             names, center_name, scene_spec.epoch)
 
-    layout = presentation.build_layout(title, scene_spec.axes)
+    half_range = presentation.data_half_range(ordered)
+    layout = presentation.build_layout(title, scene_spec.axes, half_range)
 
     # Feature dispatch report (data only; JS draws the traces).
     report = {

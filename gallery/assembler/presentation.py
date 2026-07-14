@@ -65,28 +65,57 @@ def order_traces(traces_with_roles: List[Any]) -> List[Dict[str, Any]]:
     return [t for _role, t in ordered]
 
 
-def _axis(scale_mode: str, half_range: float, dtick: float) -> Dict[str, Any]:
-    ax: Dict[str, Any] = {"showgrid": True, "zeroline": True}
-    if scale_mode == "manual" and half_range is not None:
-        ax["range"] = [-half_range, half_range]
-        if dtick is not None:
-            ax["dtick"] = dtick
-    # auto: leave range unset -> Plotly fits to data extent.
+def data_half_range(traces: List[Dict[str, Any]], buffer: float = 1.1) -> float:
+    """Max absolute coordinate across all trace x/y/z, times a buffer.
+    Drives the symmetric cube range so the scene fits the data with margin."""
+    m = 0.0
+    for t in traces:
+        for k in ("x", "y", "z"):
+            for v in (t.get(k) or []):
+                if isinstance(v, (int, float)):
+                    a = abs(v)
+                    if a > m:
+                        m = a
+    return m * buffer if m > 0 else 1.0
+
+
+def _axis(title: str, half_range: float, dtick: float) -> Dict[str, Any]:
+    ax: Dict[str, Any] = {"title": title, "range": [-half_range, half_range],
+                          "showgrid": True, "zeroline": True}
+    if dtick is not None:
+        ax["dtick"] = dtick
     return ax
 
 
-def build_layout(title: str, axes_spec: Dict[str, Any]) -> Dict[str, Any]:
+def build_layout(title: str, axes_spec: Dict[str, Any],
+                 data_half_range: float = None) -> Dict[str, Any]:
+    """Build the layout. Axis policy follows the orrery's build_scene
+    convention (visualization_utils.build_scene): aspectmode 'cube' with the
+    SAME symmetric range [-R, R] on all three axes, so a near-planar orbit
+    renders as a visible flat ellipse rather than collapsing edge-on. This is
+    the assembler-side slice of L-040.
+
+      - auto  (default): R = data extent (+10% buffer), fit to the scene.
+      - manual: R = manual_half_range_au; optional dtick_au tick spacing.
+    """
     scale_mode = (axes_spec or {}).get("scale_mode", "auto")
-    half_range = (axes_spec or {}).get("manual_half_range_au")
+    manual_hr = (axes_spec or {}).get("manual_half_range_au")
     dtick = (axes_spec or {}).get("dtick_au")
-    axis = _axis(scale_mode, half_range, dtick)
+
+    if scale_mode == "manual" and manual_hr is not None:
+        half_range = float(manual_hr)
+    elif data_half_range:
+        half_range = float(data_half_range)
+    else:
+        half_range = 1.0
+
     return {
         "title": {"text": title},
         "scene": {
-            "xaxis": dict(axis, title="x (AU)"),
-            "yaxis": dict(axis, title="y (AU)"),
-            "zaxis": dict(axis, title="z (AU)"),
-            "aspectmode": "data",
+            "xaxis": _axis("x (AU)", half_range, dtick),
+            "yaxis": _axis("y (AU)", half_range, dtick),
+            "zaxis": _axis("z (AU)", half_range, dtick),
+            "aspectmode": "cube",
         },
         "showlegend": True,
         "annotations": [{"text": "Data: JPL/NASA Horizons",
