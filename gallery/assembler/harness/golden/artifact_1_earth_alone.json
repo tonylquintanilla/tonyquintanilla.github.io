@@ -1,0 +1,56 @@
+{
+  "artifact_id": "artifact_1_earth_alone",
+  "scene_spec_hash": "abbd01094852b57f",
+  "cache_snapshot_id": "2026-07-11T23:26:47.557512+00:00",
+  "resolved_epoch_jd": 2461234.5,
+  "resolved_center": "sun",
+  "resolved_frame": "heliocentric",
+  "object_slugs": [
+    "earth"
+  ],
+  "trace_role_counts": {
+    "orbit": 1,
+    "orbit_info": 1,
+    "object_marker": 1,
+    "label": 1,
+    "center_marker": 1
+  },
+  "feature_keys": [
+    "atmosphere_shell",
+    "van_allen_belts"
+  ],
+  "legend_groups": [
+    "center",
+    "earth"
+  ],
+  "coordinate_bounds": {
+    "x": [
+      -0.996712209,
+      1.004346989
+    ],
+    "y": [
+      -1.016156625,
+      0.985117539
+    ],
+    "z": [
+      -5.6389e-05,
+      5.8119e-05
+    ]
+  },
+  "position_samples": {
+    "Earth": [
+      0.35229586,
+      -0.953548867,
+      5.254e-05
+    ],
+    "Sun": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "position_tolerance": 0.001,
+  "warnings": [
+    "served_window is null in the served cache; propagation bound is unenforced (populate via the F1 builder change)."
+  ]
+}
