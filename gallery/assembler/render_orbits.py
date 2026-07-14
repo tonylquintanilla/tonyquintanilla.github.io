@@ -131,13 +131,16 @@ def build_orbit_traces(name: str, osc: Dict[str, Any], color: str,
     carrying the full hover text, in the same legendgroup)."""
     xs, ys, zs = sweep_conic(osc, n_points)
     kind = "mean orbit" if is_mean else "osculating orbit"
-    dash = "dot" if is_mean else "solid"
+    # scatter3d line has no 'dash' attribute (2D-only); distinguish the mean
+    # conic by width instead, which 3D supports. (Refine under Mode 5 at
+    # artifact 4, where mean orbits are first drawn.)
+    width = 1.5 if is_mean else 2
 
     polyline = {
         "type": "scatter3d",
         "mode": "lines",
         "x": xs, "y": ys, "z": zs,
-        "line": {"color": color, "width": 2, "dash": dash},
+        "line": {"color": color, "width": width},
         "name": "%s %s" % (name, kind),
         "legendgroup": legendgroup,
         "hoverinfo": "skip",
