@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<!--
+  solar_system_earth_test.html - Phase 2 artifact 1 (Earth alone) Mode 5 render harness.
+
+  THROWAWAY DEV PAGE, not the shipped exhibit. Runs the `assembler` package in
+  the browser via Pyodide, fetches the REAL served cache
+  (../data/solar-system/coverage_index.json, ../data/objects_config.json),
+  calls assemble_scene at the date chosen in the picker, and renders the
+  resulting Plotly figure dict with Plotly.js. The in-browser L-080 fingerprint
+  is shown for comparison against the CPython golden
+  (artifact_1_earth_alone.json -> abbd01094852b57f, at epoch 2026-07-13).
+
+  Dark theme + cube axes + orthographic top-down camera come from the figure
+  layout (assembler presentation.build_layout), matching palomas_orrery.py's
+  build_scene. Feature rendering stays JavaScript (none yet -> no shells drawn;
+  that is artifact 2 / F1). Pyodide loads lazily on the button (master plan
+  S5/S7 consent/lazy gate). Assembler is pure stdlib: no numpy, no plotly-Python.
+
+  MUST BE SERVED OVER HTTP (not file://) so fetch() of local assembler/ and
+  data/ works. From the repo root:
+      python -m http.server 8000
+  then open  http://localhost:8000/gallery/solar_system_earth_test.html
+
+  Page created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paloma's Orrery - Solar System (Earth test)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  :root { --bg:#000; --panel:#0d1016; --ink:#f4f6fb; --muted:#9aa0a6;
+          --line:#2a2f3a; --accent:#3b7ddd; }
+  html, body { background: var(--bg); }
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+         color: var(--ink); margin: 0; padding: 24px; max-width: 1150px; }
+  h1 { font-size: 22px; margin: 0 0 2px; letter-spacing: .2px; }
+  .sub { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+  .controls { display: flex; gap: 14px; align-items: flex-end;
+              flex-wrap: wrap; margin-bottom: 12px; }
+  label { display: block; font-size: 12px; color: var(--muted);
+          margin-bottom: 4px; }
+  input[type="date"] { font: inherit; padding: 8px 10px; border-radius: 6px;
+          border: 1px solid var(--line); background: var(--panel);
+          color: var(--ink); color-scheme: dark; }
+  button { font: inherit; padding: 9px 18px; border: 1px solid var(--accent);
+           background: var(--accent); color: #fff; border-radius: 6px;
+           cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  #plot { width: 100%; height: 640px; margin-top: 14px; background: var(--bg);
+          border: 1px solid var(--line); border-radius: 8px; }
+  #log { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+         color: var(--muted); white-space: pre-wrap; margin-top: 14px;
+         border-top: 1px solid var(--line); padding-top: 10px; }
+  .ok { color: #57d18a; } .err { color: #ff6b6b; }
+  details { margin-top: 12px; font-size: 12px; color: var(--muted); }
+  pre { background: var(--panel); padding: 10px; border-radius: 6px;
+        overflow: auto; color: var(--ink); }
+</style>
+</head>
+<body>
+  <h1>Paloma's Orrery</h1>
+  <p class="sub">Solar System - Earth test (Phase 2 artifact 1). Renders the
+     assembler's figure dict in the browser. Dev harness, not the shipped page.</p>
+
+  <div class="controls">
+    <div>
+      <label for="epoch">Date (UTC)</label>
+      <input type="date" id="epoch" value="2026-07-13">
+    </div>
+    <button id="run">Render Earth</button>
+  </div>
+
+  <div id="plot"></div>
+  <div id="log"></div>
+  <details id="fpwrap" hidden>
+    <summary>In-browser L-080 fingerprint (matches golden abbd01094852b57f at 2026-07-13)</summary>
+    <pre id="fp"></pre>
+  </details>
+
+<script>
+const ASSEMBLER_FILES = [
+  "assembler/__init__.py",
+  "assembler/errors.py",
+  "assembler/models.py",
+  "assembler/catalog.py",
+  "assembler/cache_reader.py",
+  "assembler/render_orbits.py",
+  "assembler/render_objects.py",
+  "assembler/render_spacecraft.py",
+  "assembler/render_events.py",
+  "assembler/resolver.py",
+  "assembler/presentation.py",
+  "assembler/assemble.py",
+  "assembler/harness/__init__.py",
+  "assembler/harness/fingerprint.py",
+];
+
+// Match the Pyodide version already confirmed working in measure_plotly.html.
+const PYODIDE_BASE = "https://cdn.jsdelivr.net/pyodide/v314.0.2/full/";
+let PY = null;  // cache the runtime across re-renders (date changes)
+
+const logEl = document.getElementById("log");
+function log(msg, cls) {
+  const line = document.createElement("div");
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  logEl.appendChild(line);
+}
+
+function loadPyodideScript() {
+  return new Promise((resolve, reject) => {
+    if (window.loadPyodide) { resolve(); return; }
+    const s = document.createElement("script");
+    s.src = PYODIDE_BASE + "pyodide.js";
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Failed to load pyodide.js from " + PYODIDE_BASE));
+    document.head.appendChild(s);
+  });
+}
+
+async function fetchText(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("fetch " + url + " -> HTTP " + r.status);
+  return await r.text();
+}
+
+const DRIVER = `
+import json
+import sys
+sys.path.insert(0, "/home/pyodide")
+
+from assembler.catalog import Catalog
+from assembler.cache_reader import CacheReader
+from assembler.assemble import assemble_scene
+from assembler.harness import fingerprint as fp
+
+cov = json.loads(COV_JSON)
+cfg = json.loads(CFG_JSON)
+
+scene = {
+    "spec_version": "1.0", "domain": "solar_system", "content_type": "static",
+    "objects": ["earth"], "center": "sun", "epoch": EPOCH,
+}
+result = assemble_scene(scene, Catalog(cfg), CacheReader(cov))
+golden = fp.fingerprint("artifact_1_earth_alone", result)
+
+json.dumps({
+    "figure": result.figure,
+    "fingerprint": golden,
+    "warnings": result.report["warnings"],
+    "features": result.report["features"],
+})
+`;
+
+async function ensureRuntime() {
+  if (PY) return PY;
+  log("Loading Pyodide runtime (from CDN)...");
+  await loadPyodideScript();
+  PY = await loadPyodide({ indexURL: PYODIDE_BASE });
+  log("Pyodide ready.", "ok");
+
+  log("Fetching assembler package (" + ASSEMBLER_FILES.length + " files)...");
+  PY.FS.mkdirTree("/home/pyodide/assembler/harness");
+  for (const rel of ASSEMBLER_FILES) {
+    PY.FS.writeFile("/home/pyodide/" + rel, await fetchText(rel));
+  }
+  log("Assembler written to Pyodide FS.", "ok");
+
+  log("Fetching served cache (../data/) ...");
+  PY.globals.set("COV_JSON", await fetchText("../data/solar-system/coverage_index.json"));
+  PY.globals.set("CFG_JSON", await fetchText("../data/objects_config.json"));
+  log("Served cache loaded.", "ok");
+  return PY;
+}
+
+async function run() {
+  const btn = document.getElementById("run");
+  btn.disabled = true;
+  try {
+    const py = await ensureRuntime();
+
+    const date = document.getElementById("epoch").value || "2026-07-13";
+    const epoch = date + "T00:00:00Z";
+    py.globals.set("EPOCH", epoch);
+
+    log("Running assemble_scene(earth, " + epoch + ") in the browser...");
+    const payload = JSON.parse(await py.runPythonAsync(DRIVER));
+    log("Assembly complete: " + payload.figure.data.length + " traces.", "ok");
+
+    Plotly.newPlot("plot", payload.figure.data, payload.figure.layout,
+                   {responsive: true});
+    log("Rendered. This is the Mode 5 gate - your eyes decide.", "ok");
+
+    document.getElementById("fpwrap").hidden = false;
+    document.getElementById("fp").textContent =
+      JSON.stringify(payload.fingerprint, null, 2);
+    if (payload.warnings && payload.warnings.length) {
+      payload.warnings.forEach(w => log("warning: " + w));
+    }
+  } catch (e) {
+    log("ERROR: " + e.message, "err");
+    log("If this is a fetch/CORS error, serve over http "
+        + "(python -m http.server) rather than opening the file directly.");
+  } finally {
+    btn.disabled = false;
+  }
+}
+document.getElementById("run").addEventListener("click", run);
+</script>
+</body>
+</html>
