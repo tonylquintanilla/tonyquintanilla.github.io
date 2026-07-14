@@ -175,6 +175,21 @@ python -m assembler.tests.test_artifact1_earth
 (from the gallery/ directory so `assembler` imports; the test self-locates the
 repo root and reads the real data/ files).
 
+**Serving locality (important):** artifact 1 is served from Tony's own machine,
+NOT from GitHub Pages. `python -m http.server 8000` starts a local server;
+`localhost:8000` resolves to 127.0.0.1, so the page, the assembler package, and
+the data/ files are all read from local disk -- no internet round-trip for
+project files. Two edges to that:
+- The page still fetches two assets from public CDNs: Pyodide
+  (cdn.jsdelivr.net, v314.0.2) and Plotly.js (cdn.plot.ly, 2.35.2). Only project
+  files are local; the runtime and plotting library come from CDNs. (F4, the
+  ship gate, deploys the slim self-hosted plotly wheel to remove that dependency
+  for the public page.)
+- Committed/pushed to the repo is separate from served. The files are pushed
+  (that is how the SHA round-trips work), but GitHub Pages is NOT rendering this
+  page to the public. It stays a local-only render until deployed as a real page
+  -- deliberately downstream of the local Mode 5 render, at the F4 ship gate.
+
 ---
 
 ## 8. Manifest deviations (2, both intentional)
