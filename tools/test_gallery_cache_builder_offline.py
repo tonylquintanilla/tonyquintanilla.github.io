@@ -188,6 +188,50 @@ def main():
         check(feats['encke'] == {} and feats['halley'] == {},
               "M1: encke/halley present with empty {}")
 
+        # --- M1: _validate_feature_shapes + the derive_served list-guard
+        # actually ABORT on malformed input (manifest v2 M1 sec 4.3). These
+        # paths were verified manually in the build session; this is the
+        # permanent regression coverage that was missing. ---
+        ring_bad = False
+        try:
+            b._validate_feature_shapes(
+                'test', {'inner_radius_km': 5000, 'outer_radius_km': 4000})
+        except b.ValidationAbort:
+            ring_bad = True
+        check(ring_bad, "M1: inverted ring (inner >= outer) ABORTS")
+
+        color_bad = False
+        try:
+            b._validate_feature_shapes('test', {'color': 'blue'})
+        except b.ValidationAbort:
+            color_bad = True
+        check(color_bad, "M1: malformed color string ABORTS")
+
+        colors_bad = False
+        try:
+            b._validate_feature_shapes(
+                'test', {'colors': ['rgb(1, 2, 3)', 'not-a-color']})
+        except b.ValidationAbort:
+            colors_bad = True
+        check(colors_bad, "M1: malformed colors-list entry ABORTS")
+
+        with tempfile.TemporaryDirectory() as td_shape:
+            list_bad = False
+            fake_result = [{
+                'obj': {'name': 'Test', 'horizons_id': '0', 'category': 'planet',
+                        'availability': 'analytic', 'parent': None,
+                        'center_slug': 'sun', 'canonical_frame': 'heliocentric',
+                        'features': ['not', 'a', 'dict']},
+                'slug': 'test', 'osc_block': None, 'positions': None,
+                'orbit_type': 'elliptical', 'as_of_today': None, 'comet': None,
+            }]
+            try:
+                b.derive_served(Path(td_shape), fake_result, {})
+            except b.ValidationAbort:
+                list_bad = True
+            check(list_bad,
+                  "M1: a surviving features list (post-migration) ABORTS in derive_served")
+
         # --- nightly re-run: shrink gate must pass, frozen dates stable ---
         earth_before = json.load(open(out / 'raw' / 'vectors' / 'earth.json'))['points']
         old_date = sorted(earth_before)[0]
