@@ -28,11 +28,19 @@ ELEMS = {
 }
 
 
+_MOCK_K_GAUSS = 0.01720209895  # mirrors render_orbits.py K_GAUSS; used ONLY to
+                               # synthesize a self-consistent mock n column
+                               # (M2 sec 5.6: "K_GAUSS-derived for heliocentric
+                               # mocks is fine -- what matters is the code path
+                               # reads n_deg_per_day from the block").
+
+
 def fake_elements(horizons_id, id_type, center, epoch_jd, hkwargs=None):
     a, e = ELEMS[horizons_id]
+    n_deg_per_day = math.degrees(_MOCK_K_GAUSS / (a ** 1.5))
     return {'a': a, 'e': e, 'i': 5.0, 'omega': 100.0, 'Omega': 50.0,
             'MA': 100.0, 'TA': None, 'TP': float(epoch_jd) - 3.0,
-            'epoch_jd': float(epoch_jd)}
+            'epoch_jd': float(epoch_jd), 'n': n_deg_per_day}
 
 
 def _step_days(step):
@@ -44,7 +52,41 @@ def _step_days(step):
     return 1
 
 
-def fake_vectors(horizons_id, id_type, center, start_dt, stop_dt, step='1d', hkwargs=None):
+def fake_vectors(horizons_id, id_type, center, start_dt, stop_dt, step='1d',
+                 hkwargs=None, epoch_jds=None):
+    # M2 (Option B): a SEPARATE, additive branch for the trust measurement's
+    # check-vector fetch, genuinely Kepler-consistent with fake_elements' own
+    # i=5/omega=100/Omega=50/M0=100 convention and mocked n -- so the
+    # measured error is 0 by construction, making window_days == cap
+    # deterministic (FLAG-6). The static-point branch below (date-range
+    # calling convention) is completely unchanged -- this is a new `if`
+    # branch, not a modification of existing lines.
+    if epoch_jds is not None:
+        a, e = ELEMS[horizons_id]
+        i = math.radians(5.0); node = math.radians(50.0); peri = math.radians(100.0)
+        m0 = math.radians(100.0)
+        n = _MOCK_K_GAUSS / (a ** 1.5)     # rad/day (same value fake_elements
+                                            # reports in deg/day, pre-conversion)
+        # The measurement epoch is the midpoint of the two requested check
+        # epochs (epoch_jd -/+ delta average back to epoch_jd exactly) --
+        # NOT always "today": Tp-anchored comets (Halley/Encke) are measured
+        # at their solution-TP epoch via resolve_comet_conic's own
+        # fetch_elements(..., sol_tp) call, which can be decades from
+        # FIXED_NOW. Hardcoding FIXED_NOW here was wrong and produced a
+        # large spurious error_rate for halley -- caught by sanity-checking
+        # the actual numbers before writing the assertions, not assumed.
+        epoch_jds = list(epoch_jds)
+        epoch_jd = sum(epoch_jds) / len(epoch_jds)
+        out = {}
+        for idx, t_jd in enumerate(epoch_jds):
+            mean_anom = m0 + n * (t_jd - epoch_jd)
+            ecc_anom = b.solve_kepler(mean_anom, e)
+            nu = 2.0 * math.atan2(math.sqrt(1.0 + e) * math.sin(ecc_anom / 2.0),
+                                  math.sqrt(1.0 - e) * math.cos(ecc_anom / 2.0))
+            x, y, z = b._elements_to_xyz_au(a, e, i, node, peri, nu)
+            out[idx] = {'jd': t_jd, 'x': x, 'y': y, 'z': z}
+        return out
+
     out = {}
     stride = _step_days(step)
     total = max((stop_dt - start_dt).days, 1)
@@ -231,6 +273,69 @@ def main():
                 list_bad = True
             check(list_bad,
                   "M1: a surviving features list (post-migration) ABORTS in derive_served")
+
+        # --- M2: trust measurement + served_window (manifest v2 sec 5) ---
+        for slug2, block2 in objs.items():
+            tr = block2.get('trust')
+            check(tr is not None, "M2: %s serves a trust block" % slug2)
+            if slug2 == 'voyager_1':
+                check(tr.get('method') == 'fetched_positions',
+                      "M2: voyager_1 trust method == fetched_positions")
+                check(tr.get('window') is None, "M2: voyager_1 trust window is null")
+            else:
+                check(tr.get('method') == 'two_body_rate_v1',
+                      "M2: %s trust method == two_body_rate_v1" % slug2)
+                check(isinstance(tr.get('window_days'), float) and tr['window_days'] > 0,
+                      "M2: %s has a finite positive window_days" % slug2)
+
+        sw = idx.get('served_window')
+        check(sw is not None, "M2: top-level served_window is non-null")
+        as_of_jd = b._dt_to_jd(FIXED_NOW)
+        check(bool(sw) and sw['start_jd'] < as_of_jd < sw['end_jd'],
+              "M2: served_window brackets as_of (start < as_of < end)")
+
+        # FLAG-6 determinism: the mocked error rate is ~0 for every category
+        # (Option B's dedicated Kepler-consistent check-vector branch), so
+        # window_days == that category's cap, exactly, per sec 5.6.
+        def _mock_period_days(horizons_id):
+            a_mock, _e_mock = ELEMS[horizons_id]
+            n_mock = math.degrees(_MOCK_K_GAUSS / (a_mock ** 1.5))
+            return 360.0 / n_mock
+
+        earth_p = _mock_period_days('399')
+        check(abs(objs['earth']['trust']['window_days'] - earth_p) < 1e-6,
+              "M2: earth's window == its period cap (planet, cap=P)")
+        moon_p = _mock_period_days('301')
+        check(abs(objs['moon']['trust']['window_days'] - moon_p / 8.0) < 1e-9,
+              "M2: moon's window == P/8 (moon cap)")
+        halley_p = _mock_period_days('90000030')
+        check(abs(objs['halley']['trust']['window_days'] - halley_p / 2.0) < 1e-6,
+              "M2: halley's window == P/2 (comet cap)")
+
+        # --- M2 failure path: a check-vector fetch failure nulls that
+        # object's trust and the global served_window (FLAG-3, EXERCISED
+        # through the real dispatch, not just asserted from the design) ---
+        with tempfile.TemporaryDirectory() as td_m2fail:
+            out_m2fail = Path(td_m2fail) / 'data' / 'solar-system'
+            _fv_current = b.fetch_vectors_range
+
+            def flaky_vectors(hid, idt, ctr, start_dt, stop_dt, step='1d',
+                              hkwargs=None, epoch_jds=None):
+                if epoch_jds is not None and hid == '599':      # jupiter check-vector only
+                    raise RuntimeError("simulated check-vector outage")
+                return _fv_current(hid, idt, ctr, start_dt, stop_dt, step,
+                                   hkwargs, epoch_jds=epoch_jds)
+
+            b.fetch_vectors_range = flaky_vectors
+            try:
+                b.run_build(cfg, out_m2fail, mode='first-build', do_commit=False)
+            finally:
+                b.fetch_vectors_range = _fv_current
+            idx_fail = json.load(open(out_m2fail / 'coverage_index.json'))
+            check('error' in idx_fail['objects']['jupiter']['trust'],
+                  "M2: forced check-vector failure -> jupiter trust carries 'error'")
+            check(idx_fail['served_window'] is None,
+                  "M2: forced check-vector failure -> served_window null (FLAG-3, exercised)")
 
         # --- nightly re-run: shrink gate must pass, frozen dates stable ---
         earth_before = json.load(open(out / 'raw' / 'vectors' / 'earth.json'))['points']

@@ -1,0 +1,413 @@
+--- tools/gallery_cache_builder.py	2026-07-17 02:39:28.173523170 +0000
++++ /home/claude/gallery/tools/gallery_cache_builder.py	2026-07-17 01:53:22.415659618 +0000
+@@ -35,6 +35,9 @@
+ Module updated: July 2026 with Anthropic's Claude Opus 4.8 (F1/M1: features
+ flat-list -> per-feature-config dict; feature_configs.json assembled from
+ config with ABORT-class shape validation).
++Module updated: July 2026 with Anthropic's Claude Sonnet 5 (F1/M2: trust
++measurement + served_window; fetch_elements n capture; FLAG-2 planetocentric
++mean-motion correction).
+ """
+ 
+ import argparse
+@@ -48,6 +51,19 @@
+ from datetime import datetime, timedelta, timezone
+ from pathlib import Path
+ 
++# M2 (F1a trust measurement, manifest v2 sec 5.3): import the two PURE
++# functions needed to propagate a two-body position from osculating
++# elements. This is a same-repo (gallery) import, not an orrery import --
++# the module docstring's "no orrery imports" rule is unaffected.
++# render_orbits.py itself carries ZERO edits (manifest v2 sec 1, out of
++# scope); propagate_marker is never called (its solar-GM K_GAUSS assumption
++# is correct for its own heliocentric-marker job and stays untouched -- see
++# FLAG-2).
++_REPO_ROOT = Path(__file__).resolve().parents[1]
++if str(_REPO_ROOT) not in sys.path:
++    sys.path.insert(0, str(_REPO_ROOT))
++from gallery.assembler.render_orbits import solve_kepler, _elements_to_xyz_au
++
+ # astroquery/astropy are imported lazily so the module stays importable (and the
+ # offline smoke test can run) on a machine without them; the fetch functions
+ # raise a clear error if called without them.
+@@ -105,6 +121,14 @@
+     return 2440587.5 + (dt - _UNIX_EPOCH).total_seconds() / 86400.0
+ 
+ 
++def _jd_to_dt(jd):
++    """Inverse of _dt_to_jd. M2: converts a measurement epoch (JD) back to a
++    UTC datetime for logging/diagnostics; the check-vector fetch itself uses
++    the epoch_jds list form (exact JD), not this conversion, to avoid
++    day-granularity loss for sub-day Delta (fast bodies)."""
++    return _UNIX_EPOCH + timedelta(days=(jd - 2440587.5))
++
++
+ def _parse_calendar(s):
+     """Source: export_orbit_cache.py:_parse_calendar (orrery 4e2629c)."""
+     for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d'):
+@@ -177,16 +201,36 @@
+             "with the fetch functions monkeypatched.")
+ 
+ 
+-def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1d', hkwargs=None):
++def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1d',
++                        hkwargs=None, epoch_jds=None):
+     """Fetch a daily range of position vectors in the object's canonical center.
+     Returns {date_str 'YYYY-MM-DD': {'jd': float, 'x','y','z': AU}}.
+     Source pattern: orbit_data_manager.py:~676-690 (range query, TDB epochs,
+     '@'-center) + spacecraft_encounters.py:632 (refplane='ecliptic') (orrery
+     4e2629c). Raw stays in AU as fetched; the derive step converts to km.
+     hkwargs (P2-4) passes comet apparition options (closest_apparition/
+-    no_fragments) so a periodic comet's nightly position fetch can disambiguate."""
++    no_fragments) so a periodic comet's nightly position fetch can disambiguate.
++
++    epoch_jds (M2, manifest v2 sec 5.2 point 2 -- 'epoch-list call'): optional
++    list of explicit JD floats. When given, start_dt/stop_dt/step are ignored
++    and this is an ADDITIVE, separate code path -- Horizons is queried at
++    exactly these epochs (the same epochs-as-list mechanism fetch_elements
++    already uses for .elements()), and the return is INDEX-keyed
++    ({0: {...}, 1: {...}, ...}, in request order) rather than date-keyed,
++    because two requested epochs can land in the same calendar day for a
++    fast-moving object (Io-class Delta is hours, not days) and date-string
++    keys would silently collide. The existing date-range mode above is
++    completely unchanged by this addition -- same code, same output shape,
++    for every caller that does not pass epoch_jds."""
+     _require_astro()
+     location = _normalize_center(center)
++    if epoch_jds is not None:
++        obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type),
++                       location=location, epochs=list(epoch_jds))
++        eph = obj.vectors(refplane='ecliptic', **(hkwargs or {}))
++        return {i: {'jd': float(row['datetime_jd']), 'x': float(row['x']),
++                    'y': float(row['y']), 'z': float(row['z'])}
++                for i, row in enumerate(eph)}
+     epochs = {
+         'start': utc_to_tdb(start_dt).strftime('%Y-%m-%d %H:%M'),
+         'stop': utc_to_tdb(stop_dt).strftime('%Y-%m-%d %H:%M'),
+@@ -236,6 +280,13 @@
+     ma_val = get_col(['MA', 'M', 'meanAnomaly'], required=False)
+     ta_val = get_col(['TA', 'nu', 'trueAnomaly'], required=False)
+     q_val = get_col(['q', 'QR'], required=False)
++    # M2 (FLAG-2, manifest v2 sec 5.3): Horizons' own osculating mean motion,
++    # deg/day. Additive, backward-compatible -- None when the column is
++    # absent (render_orbits.py's solar-GM K_GAUSS derivation is correct only
++    # for heliocentric bodies; planetocentric objects, e.g. the four moons,
++    # MUST use this real column rather than that fallback -- see
++    # build_osculating_block and measure_trust).
++    n_val = get_col(['n', 'N'], required=False)
+ 
+     # q-based unit detection (orbit_data_manager.py:~1854): q > 10000 => km.
+     if q_val is not None and abs(q_val) > 10000:
+@@ -246,6 +297,7 @@
+     return {
+         'a': a_val, 'e': e_val, 'i': i_val, 'omega': w_val, 'Omega': om_val,
+         'TP': tp_val, 'MA': ma_val, 'TA': ta_val, 'epoch_jd': float(epoch_jd),
++        'n': n_val,
+     }
+ 
+ 
+@@ -278,6 +330,158 @@
+ 
+ 
+ # ===========================================================================
++# M2 -- F1a TRUST MEASUREMENT (manifest v2 sec 5). New code; render_orbits.py
++# is imported FROM (solve_kepler, _elements_to_xyz_au) and never modified or
++# called via propagate_marker (FLAG-2, out-of-scope per sec 1).
++# ===========================================================================
++
++TRUST_SCHEMA_VERSION = 1
++TRUST_TOLERANCE_DEG = 0.5    # per handoff SS6; adopted estimate, to be visually
++                             # checked once Wave 1 renders -- do not re-derive
++TRUST_GUARD_K = 2.0          # per handoff SS6
++
++# FLAG-5 cap table: cap = P for planet/dwarf_planet/asteroid; P/8 for moon;
++# P/2 for comet (window centered on the Tp-anchored epoch never reaches the
++# adjacent apparition's aphelion).
++_TRUST_CAP_DIVISOR = {'planet': 1.0, 'dwarf_planet': 1.0, 'asteroid': 1.0,
++                      'moon': 8.0, 'comet': 2.0}
++
++# FLAG-3/sec 5.5: participants in the GLOBAL served_window are every object
++# whose category is not moon (excluded by Tony's pinned rule) and not
++# spacecraft (produces no propagation window at all -- fetched_positions
++# instead).
++TRUST_WINDOW_EXCLUDED_CATEGORIES = {'moon', 'spacecraft'}
++
++
++def _two_body_position(osc, n_deg_per_day, t_jd):
++    """Two-body position (AU) at Julian date t_jd, propagated from an
++    osculating block using the OBJECT'S OWN mean motion (n_deg_per_day, from
++    Horizons) rather than render_orbits.py's solar-GM derivation (FLAG-2:
++    K_GAUSS/a**1.5 is wrong by ~3 orders of magnitude for planetocentric
++    elements -- independently re-derived: Moon a=0.00257 AU gives
++    n~132 rad/day, a ~68-minute period vs the real 27.3-day sidereal month).
++    Uses the SAME pure math render_orbits.py uses; propagate_marker itself is
++    neither called nor modified -- its solar-GM assumption is correct for its
++    own heliocentric-marker job.
++    # Source: adapted from gallery/assembler/render_orbits.py propagate_marker
++    (lines 84-94), substituting the mean-motion line for the object's own
++    Horizons-reported n (manifest v2 sec 5.3)."""
++    a = float(osc['a_au'])
++    e = float(osc['e'])
++    i = math.radians(float(osc['i_deg']))
++    node = math.radians(float(osc['node_deg']))
++    peri = math.radians(float(osc['peri_deg']))
++    m0 = math.radians(float(osc['M0_deg']))
++    epoch_jd = float(osc['epoch_jd'])
++    n = math.radians(float(n_deg_per_day))          # deg/day -> rad/day
++    mean_anom = m0 + n * (t_jd - epoch_jd)
++    ecc_anom = solve_kepler(mean_anom, e)
++    nu = 2.0 * math.atan2(
++        math.sqrt(1.0 + e) * math.sin(ecc_anom / 2.0),
++        math.sqrt(1.0 - e) * math.cos(ecc_anom / 2.0))
++    return _elements_to_xyz_au(a, e, i, node, peri, nu)
++
++
++def _angle_between_deg(r1, r2):
++    """Angle (degrees) between two position vectors as seen from their
++    shared origin: atan2(|r1 x r2|, r1.r2) -- stable near 0 and 180 degrees,
++    unlike acos(dot / (|r1| |r2|))."""
++    x1, y1, z1 = r1
++    x2, y2, z2 = r2
++    cx = y1 * z2 - z1 * y2
++    cy = z1 * x2 - x1 * z2
++    cz = x1 * y2 - y1 * x2
++    cross_mag = math.sqrt(cx * cx + cy * cy + cz * cz)
++    dot = x1 * x2 + y1 * y2 + z1 * z2
++    return math.degrees(math.atan2(cross_mag, dot))
++
++
++def _fetch_check_vectors(obj, epoch_jd, delta_days):
++    """Fetch the object's true position at epoch_jd +/- delta_days (manifest
++    v2 sec 5.2 point 2), via the epoch-list calling mode added to
++    fetch_vectors_range -- the SAME injectable symbol the offline suite mocks
++    for the raw arc fetch, just a second, additive calling convention on it
++    (no new production fetch symbol). Exact-epoch precision regardless of
++    period (Io-class Delta is hours; Earth-class is ~30 days). Returns
++    (point_minus, point_plus), each {'jd','x','y','z'}."""
++    t_minus_jd = epoch_jd - delta_days
++    t_plus_jd = epoch_jd + delta_days
++    pts = fetch_vectors_range(obj['horizons_id'], obj['id_type'], obj['canonical_center'],
++                              None, None, epoch_jds=[t_minus_jd, t_plus_jd])
++    if not pts or 0 not in pts or 1 not in pts:
++        raise ValueError("check-vector fetch returned %d/2 points" % len(pts or {}))
++    return pts[0], pts[1]
++
++
++def measure_trust(obj, osc, warn):
++    """The two-body error-rate measurement and served `trust` block (manifest
++    v2 sec 5.2 + 5.4). Never raises -- any Horizons failure or physics guard
++    trip (e >= 1.0, missing mean motion for a planetocentric object) is a
++    WARN, not an ABORT: a check-vector hiccup must not kill the nightly. The
++    knock-on for the global served_window is FLAG-3, handled by the caller
++    (which sees window_days == None here and excludes this object from the
++    minimum, or nulls the whole served_window per the pinned rule)."""
++    slug = obj['slug']
++    category = obj['category']
++    try:
++        e = float(osc['e'])
++        if e >= 1.0:
++            raise ValueError("eccentricity %.3f >= 1.0 (hyperbolic/parabolic; "
++                             "two-body period math not applicable)" % e)
++        n_deg_per_day = osc.get('n_deg_per_day')
++        if n_deg_per_day is None:
++            raise ValueError("no n_deg_per_day (Horizons mean-motion column "
++                             "absent this run) -- FLAG-2: planetocentric "
++                             "objects must not fall back to the solar-GM "
++                             "derivation, so this takes the WARN/null path")
++        period_days = 360.0 / float(n_deg_per_day)
++        delta_days = min(abs(period_days) / 8.0, 30.0)
++        epoch_jd = float(osc['epoch_jd'])
++
++        pt_minus, pt_plus = _fetch_check_vectors(obj, epoch_jd, delta_days)
++        samples = []
++        for sign, pt in ((-1.0, pt_minus), (+1.0, pt_plus)):
++            t_jd = epoch_jd + sign * delta_days
++            r_fetched = (pt['x'], pt['y'], pt['z'])
++            r_prop = _two_body_position(osc, n_deg_per_day, t_jd)
++            theta = _angle_between_deg(r_prop, r_fetched)
++            samples.append({'offset_days': sign * delta_days, 'error_deg': theta})
++
++        error_rate = max(s['error_deg'] for s in samples) / delta_days   # worse of the two, per handoff
++        cap_days = abs(period_days) / _TRUST_CAP_DIVISOR.get(category, 1.0)
++
++        if error_rate < 1e-12:                                # FLAG-6
++            window_days = cap_days
++            cap_applied = cap_days
++        else:
++            window_days = TRUST_TOLERANCE_DEG / (TRUST_GUARD_K * error_rate)
++            if window_days >= cap_days:                       # FLAG-5
++                window_days = cap_days
++                cap_applied = cap_days
++            else:
++                cap_applied = None
++
++        return {
++            'schema_version': TRUST_SCHEMA_VERSION, 'method': 'two_body_rate_v1',
++            'element_epoch_jd': epoch_jd, 'delta_days': delta_days,
++            'samples': samples, 'error_rate_deg_per_day': error_rate,
++            'tolerance_deg': TRUST_TOLERANCE_DEG, 'guard_k': TRUST_GUARD_K,
++            'window_days': window_days, 'cap_applied': cap_applied,
++            'window': {'start_jd': epoch_jd - window_days, 'end_jd': epoch_jd + window_days},
++        }
++    except Exception as exc:
++        warn("%s: trust measurement failed (%s); served null window" % (slug, exc))
++        return {
++            'schema_version': TRUST_SCHEMA_VERSION, 'method': 'two_body_rate_v1',
++            'element_epoch_jd': osc.get('epoch_jd') if osc else None,
++            'delta_days': None, 'samples': [], 'error_rate_deg_per_day': None,
++            'tolerance_deg': TRUST_TOLERANCE_DEG, 'guard_k': TRUST_GUARD_K,
++            'window_days': None, 'cap_applied': None, 'window': None,
++            'error': str(exc),
++        }
++
++
++# ===========================================================================
+ # GUARD v2 -- MONITOR (F8): warn on either bound, never reject/discard.
+ # ===========================================================================
+ 
+@@ -363,7 +567,8 @@
+     rec = {'run_id': run_id, 'epoch_jd': els.get('epoch_jd'), 'a': els.get('a'),
+            'e': els.get('e'), 'i': els.get('i'), 'omega': els.get('omega'),
+            'Omega': els.get('Omega'), 'MA': els.get('MA'), 'TA': els.get('TA'),
+-           'TP': els.get('TP'), 'retrieved': datetime.now(timezone.utc).isoformat()}
++           'TP': els.get('TP'), 'n': els.get('n'),
++           'retrieved': datetime.now(timezone.utc).isoformat()}
+     with open(p, 'a') as f:
+         f.write(json.dumps(rec) + "\n")
+ 
+@@ -440,6 +645,7 @@
+         'node_deg': float(els['Omega']),
+         'peri_deg': float(els['omega']),
+         'M0_deg': m0,
++        'n_deg_per_day': float(els['n']) if els.get('n') is not None else None,
+         'source': {
+             'query_target': obj['horizons_id'],
+             'center': obj['canonical_center'],
+@@ -669,7 +875,7 @@
+     return {'a': rec.get('a'), 'e': rec.get('e'), 'i': rec.get('i'),
+             'omega': rec.get('omega'), 'Omega': rec.get('Omega'),
+             'MA': rec.get('MA'), 'TA': rec.get('TA'), 'TP': rec.get('TP'),
+-            'epoch_jd': rec.get('epoch_jd')}
++            'epoch_jd': rec.get('epoch_jd'), 'n': rec.get('n')}
+ 
+ 
+ def serve_last_good(root, obj, warn, prior_index=None):
+@@ -687,7 +893,9 @@
+             return None
+         pos = build_position_file(root, slug, obj, raw['points'])
+         return {'slug': slug, 'obj': obj, 'osc_block': None, 'positions': pos,
+-                'as_of_today': None, 'orbit_type': None, 'comet': None, 'stale': True}
++                'as_of_today': None, 'orbit_type': None, 'comet': None, 'stale': True,
++                'trust': {'schema_version': TRUST_SCHEMA_VERSION,
++                         'method': 'fetched_positions', 'window': None}}
+     els = last_good_elements(root, slug)
+     if not els:
+         return None
+@@ -696,10 +904,22 @@
+     comet = None
+     if obj['category'] == 'comet' and prior_index:
+         comet = prior_index.get('objects', {}).get(slug, {}).get('comet')
++    # M2: not re-measured this run (a fresh check-vector fetch would very
++    # likely hit the same outage that triggered this A-3 fallback in the
++    # first place) -- served as a WARN/null trust, same disposition as any
++    # other measurement failure (FLAG-3 excludes it from the global window).
++    stale_trust = {
++        'schema_version': TRUST_SCHEMA_VERSION, 'method': 'two_body_rate_v1',
++        'element_epoch_jd': osc.get('epoch_jd'), 'delta_days': None,
++        'samples': [], 'error_rate_deg_per_day': None,
++        'tolerance_deg': TRUST_TOLERANCE_DEG, 'guard_k': TRUST_GUARD_K,
++        'window_days': None, 'cap_applied': None, 'window': None,
++        'error': 'stale generation (last-good elements served; trust not re-measured this run)',
++    }
+     return {'slug': slug, 'obj': obj, 'osc_block': osc, 'positions': None,
+             'as_of_today': None,
+             'orbit_type': 'hyperbolic' if (e is not None and e >= 1.0) else 'elliptical',
+-            'comet': comet, 'stale': True}
++            'comet': comet, 'stale': True, 'trust': stale_trust}
+ 
+ 
+ def _iso_to_jd(iso_str):
+@@ -772,9 +992,13 @@
+             _validate_feature_shapes(slug, val)
+ 
+ 
+-def derive_served(staging, results, defaults):
++def derive_served(staging, results, defaults, warn=None):
+     """Assemble coverage_index.json (v0.6 schema parity + conic additions) and
+-    write it under the staging tree."""
++    write it under the staging tree. warn (M2, optional): callback for
++    FLAG-3 served_window-null warnings; defaults to a no-op so existing
++    callers (e.g. the shape-validator regression test) are unaffected."""
++    if warn is None:
++        warn = lambda msg: None
+     objects = {}
+     for r in results:
+         obj = r['obj']
+@@ -790,18 +1014,46 @@
+             # conic-model additions (manifest v2 S6):
+             'orbit_type': r['orbit_type'], 'as_of_today': r['as_of_today'],
+             'event_link': None,
++            'trust': r.get('trust'),   # M2 sec 5.4, additive
+         }
+         if r['comet']:
+             block['comet'] = r['comet']
+         objects[slug] = block
+ 
++    # M2 sec 5.5: global served_window. Participants are every object whose
++    # category is not moon/spacecraft (TRUST_WINDOW_EXCLUDED_CATEGORIES).
++    # Any participant missing a measured window -> served_window null,
++    # named in a warning (FLAG-3: the conservative, honest default -- a
++    # survivors-only minimum could silently under/over-state the true bound
++    # with no visible sign anything degraded).
++    as_of_jd = _dt_to_jd(_utcnow())
++    participant_windows = []
++    missing = []
++    for slug, block in objects.items():
++        if block['category'] in TRUST_WINDOW_EXCLUDED_CATEGORIES:
++            continue
++        wd = (block.get('trust') or {}).get('window_days')
++        if wd is None:
++            missing.append(slug)
++        else:
++            participant_windows.append(wd)
++    if missing:
++        served_window = None
++        warn("served_window: null -- trust measurement missing/failed for %s "
++            "(FLAG-3: null-on-any-failure is the conservative default)" % missing)
++    elif participant_windows:
++        w_min = min(participant_windows)
++        served_window = {'start_jd': as_of_jd - w_min, 'end_jd': as_of_jd + w_min}
++    else:
++        served_window = None   # no participants at all (e.g. an empty catalog)
++
+     index = {
+         'schema_version': SCHEMA_VERSION,
+         'generated': _utcnow().isoformat(),
+         'generator': GENERATOR,
+         'attribution': ATTRIBUTION,
+         'serving_base': 'data/solar-system',            # B-3: v0.6 parity
+-        'served_window': None,          # derive param: null = full raw window
++        'served_window': served_window,          # M2 sec 5.5 (was: None literal)
+         'feature_configs': 'feature_configs.json',
+         'scene_features': ['asteroid_belt', 'kuiper_belt', 'heliosphere'],  # B-3: v0.6 parity
+         'model': {'orbit_source': 'osculating-primary',
+@@ -1056,6 +1308,10 @@
+                                refresh_spacecraft=refresh_spacecraft)
+             if not (obj['category'] == 'spacecraft'):
+                 r['osc_block'] = build_osculating_block(r['_els'], obj['center_slug'], obj, warn)
++                r['trust'] = measure_trust(obj, r['osc_block'], warn)
++            else:
++                r['trust'] = {'schema_version': TRUST_SCHEMA_VERSION,
++                             'method': 'fetched_positions', 'window': None}
+             if obj['trace_policy'] == 'full-arc':
+                 r['positions'] = build_position_file(staging, obj['slug'], obj, r['_raw_points'])
+             results.append(r)
+@@ -1072,7 +1328,7 @@
+                 warn("%s: FETCH FAILED (%s); no last-good -- object dropped this run" % (obj['slug'], e))
+                 run_manifest['objects'][obj['slug']] = 'failed: %s (dropped)' % e
+ 
+-    index = derive_served(staging, results, defaults)
++    index = derive_served(staging, results, defaults, warn)
+ 
+     # N3: object-set continuity -- a run must not silently DROP an object the
+     # prior generation served (a first appearance on first-build is fine). This
