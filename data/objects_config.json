@@ -14,63 +14,106 @@
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
-      "features": ["van_allen_belts", "atmosphere_shell"]
+      "features": {
+        "atmosphere_shell": {
+          "atmosphere": {
+            "name": "Lower Atmosphere", "radius_fraction": 1.05,
+            "color": "rgb(150, 200, 255)", "opacity": 0.5, "n_points": 20
+          },
+          "upper_atmosphere": {
+            "name": "Upper Atmosphere", "radius_fraction": 1.25,
+            "color": "rgb(100, 150, 255)", "opacity": 0.3, "n_points": 20
+          }
+        },
+        "van_allen_belts": {
+          "inner_belt_distance": 1.5,
+          "outer_belt_distance": 4.5,
+          "belt_thickness": 0.5,
+          "n_rings": 5,
+          "n_points": 80,
+          "colors": ["rgb(255, 100, 100)", "rgb(100, 200, 255)"],
+          "names": ["Inner Radiation Belt", "Outer Radiation Belt"]
+        }
+      }
     },
     {
       "slug": "jupiter", "name": "Jupiter", "horizons_id": "599", "id_type": "majorbody",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
-      "features": ["magnetosphere", "ring_system"]
+      "features": {
+        "ring_system": {
+          "main_ring": { "inner_radius_km": 122500, "outer_radius_km": 129000, "thickness_km": 30 },
+          "halo_ring": { "inner_radius_km": 100000, "outer_radius_km": 122500, "thickness_km": 12500 },
+          "amalthea_gossamer": { "inner_radius_km": 129000, "outer_radius_km": 182000, "thickness_km": 2000 },
+          "thebe_gossamer": { "inner_radius_km": 129000, "outer_radius_km": 226000, "thickness_km": 8600 }
+        },
+        "radiation_belts": {
+          "belt_distances": [1.5, 3.0, 6.0],
+          "belt_thickness": 0.5,
+          "n_rings": 5,
+          "n_points": 80
+        }
+      }
     },
     {
       "slug": "saturn", "name": "Saturn", "horizons_id": "699", "id_type": "majorbody",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
-      "features": ["ring_system"]
+      "features": {
+        "ring_system": {
+          "d_ring": { "inner_radius_km": 66900,  "outer_radius_km": 74500 },
+          "c_ring": { "inner_radius_km": 74658,  "outer_radius_km": 92000 },
+          "b_ring": { "inner_radius_km": 92000,  "outer_radius_km": 117500 },
+          "a_ring": { "inner_radius_km": 122340, "outer_radius_km": 136800 },
+          "f_ring": { "inner_radius_km": 140210, "outer_radius_km": 140420 },
+          "g_ring": { "inner_radius_km": 166000, "outer_radius_km": 175000 },
+          "e_ring": { "inner_radius_km": 180000, "outer_radius_km": 480000 }
+        }
+      }
     },
     {
       "slug": "moon", "name": "Moon", "horizons_id": "301", "id_type": "majorbody",
       "category": "moon", "availability": "analytic", "parent": "earth",
       "canonical_center": "@399", "center_slug": "earth", "canonical_frame": "parent-relative",
-      "trajectory_of": null, "trace_policy": "none", "features": []
+      "trajectory_of": null, "trace_policy": "none", "features": {}
     },
     {
       "slug": "io", "name": "Io", "horizons_id": "501", "id_type": "majorbody",
       "category": "moon", "availability": "analytic", "parent": "jupiter",
       "canonical_center": "@599", "center_slug": "jupiter", "canonical_frame": "parent-relative",
-      "trajectory_of": null, "trace_policy": "none", "features": []
+      "trajectory_of": null, "trace_policy": "none", "features": {}
     },
     {
       "slug": "titan", "name": "Titan", "horizons_id": "606", "id_type": "majorbody",
       "category": "moon", "availability": "analytic", "parent": "saturn",
       "canonical_center": "@699", "center_slug": "saturn", "canonical_frame": "parent-relative",
-      "trajectory_of": null, "trace_policy": "none", "features": []
+      "trajectory_of": null, "trace_policy": "none", "features": {}
     },
     {
       "slug": "pluto", "name": "Pluto", "horizons_id": "999", "id_type": "majorbody",
       "category": "dwarf_planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@9", "center_slug": "pluto_barycenter", "canonical_frame": "barycenter-relative",
-      "trajectory_of": null, "trace_policy": "none", "features": []
+      "trajectory_of": null, "trace_policy": "none", "features": {}
     },
     {
       "slug": "charon", "name": "Charon", "horizons_id": "901", "id_type": "majorbody",
       "category": "moon", "availability": "analytic", "parent": "pluto",
       "canonical_center": "@9", "center_slug": "pluto_barycenter", "canonical_frame": "barycenter-relative",
-      "trajectory_of": null, "trace_policy": "none", "features": []
+      "trajectory_of": null, "trace_policy": "none", "features": {}
     },
     {
       "slug": "apophis", "name": "Apophis", "horizons_id": "99942", "id_type": "smallbody",
       "category": "asteroid", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
-      "trajectory_of": null, "trace_policy": "none", "features": []
+      "trajectory_of": null, "trace_policy": "none", "features": {}
     },
     {
       "slug": "voyager_1", "name": "Voyager 1", "horizons_id": "-31", "id_type": "id",
       "category": "spacecraft", "availability": "spacecraft", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "arc-natural",
-      "trajectory_of": null, "trace_policy": "full-arc", "features": [],
+      "trajectory_of": null, "trace_policy": "full-arc", "features": {},
       "overrides": { "spacecraft": {
         "start": "1977-09-06",
         "fetch_step": "7d",
@@ -85,7 +128,8 @@
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
       "overrides": { "comet": { "anchor": "Tp", "max_distance_au": 100 } },
-      "notes": "Tp-anchored conic. horizons_id is the specific Horizons record number (Rec #90000091, 2022-epoch solution), matching the orrery's proven Halley pattern (id='90000030') -- not the bare 'DES=2P' designation, which resolves ambiguously across 61 historical apparitions and is incompatible with closest_apparition under id_type='smallbody'. Verified live 2026-07-11. NOTE: this record is pinned -- won't auto-track a future JPL solution update; recheck periodically, same as Halley's pinned id."
+      "notes": "Tp-anchored conic. horizons_id is the specific Horizons record number (Rec #90000091, 2022-epoch solution), matching the orrery's proven Halley pattern (id='90000030') -- not the bare 'DES=2P' designation, which resolves ambiguously across 61 historical apparitions and is incompatible with closest_apparition under id_type='smallbody'. Verified live 2026-07-11. NOTE: this record is pinned -- won't auto-track a future JPL solution update; recheck periodically, same as Halley's pinned id.",
+      "features": {}
     },
     {
       "slug": "halley",
@@ -106,7 +150,8 @@
           "max_distance_au": 100
         }
       },
-      "notes": "id='90000030' pinned to a specific Horizons record (1P/Halley), matching the pattern already proven for Encke (id='90000091'). Verified this session: Halley's ~76-year period means only one apparition is ever current (unlike Encke's ~3.3-year cadence, where a new record supersedes the last every few years) -- no live disambiguation search needed, this record is necessarily the current one. The orrery's own data-arc comment (1835-08-21 to 1994-01-11, celestial_objects.py) describes the observational fit-arc used to derive the elements, not a hard propagation cutoff -- Halley is an exceptionally well-characterized orbit. NOT yet live-verified against a 2026-epoch dry-run (no Horizons access from this session) -- run the routine --dry-run --object halley check before --first-build, same as any newly added object."
+      "notes": "id='90000030' pinned to a specific Horizons record (1P/Halley), matching the pattern already proven for Encke (id='90000091'). Verified this session: Halley's ~76-year period means only one apparition is ever current (unlike Encke's ~3.3-year cadence, where a new record supersedes the last every few years) -- no live disambiguation search needed, this record is necessarily the current one. The orrery's own data-arc comment (1835-08-21 to 1994-01-11, celestial_objects.py) describes the observational fit-arc used to derive the elements, not a hard propagation cutoff -- Halley is an exceptionally well-characterized orbit. NOT yet live-verified against a 2026-epoch dry-run (no Horizons access from this session) -- run the routine --dry-run --object halley check before --first-build, same as any newly added object.",
+      "features": {}
     }    
   ]
 }

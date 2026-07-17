@@ -159,6 +159,35 @@ def main():
         run_files = list((out / 'raw' / 'runs').glob('*.json'))
         check(len(run_files) == 1, "run manifest written")
 
+        # --- M1: feature_configs.json assembled from config (manifest v2 sec 4.4) ---
+        fc = json.load(open(out / 'feature_configs.json'))
+        feats = fc['features']
+        check(fc['schema_version'] == b.SCHEMA_VERSION,
+              "M1: feature_configs schema_version present")
+        check(set(feats) == set(objs), "M1: feature_configs has all 12 object slugs")
+        check(all(isinstance(v, dict) for v in feats.values()),
+              "M1: every served feature entry is a dict (no lists survive)")
+        ef = feats['earth']
+        check('van_allen_belts' in ef and 'atmosphere_shell' in ef,
+              "M1: earth has van_allen_belts + atmosphere_shell")
+        check(ef['van_allen_belts']['inner_belt_distance'] == 1.5,
+              "M1: earth van_allen_belts.inner_belt_distance == 1.5")
+        check('atmosphere' in ef['atmosphere_shell']
+              and 'upper_atmosphere' in ef['atmosphere_shell'],
+              "M1: earth atmosphere_shell has atmosphere + upper_atmosphere")
+        jf = feats['jupiter']
+        check('radiation_belts' in jf and 'magnetosphere' not in jf,
+              "M1: jupiter has radiation_belts and NOT magnetosphere")
+        check(set(jf['ring_system'])
+              == {'main_ring', 'halo_ring', 'amalthea_gossamer', 'thebe_gossamer'},
+              "M1: jupiter ring_system has all four ring slugs")
+        sf = feats['saturn']
+        check(set(sf['ring_system'])
+              == {'d_ring', 'c_ring', 'b_ring', 'a_ring', 'f_ring', 'g_ring', 'e_ring'},
+              "M1: saturn ring_system has all seven ring slugs")
+        check(feats['encke'] == {} and feats['halley'] == {},
+              "M1: encke/halley present with empty {}")
+
         # --- nightly re-run: shrink gate must pass, frozen dates stable ---
         earth_before = json.load(open(out / 'raw' / 'vectors' / 'earth.json'))['points']
         old_date = sorted(earth_before)[0]

@@ -32,6 +32,9 @@ Provenance base: orrery HEAD 4e2629c (copy sources), gallery HEAD 4b086a6
 
 Module updated: July 2026 with Anthropic's Claude Opus 4.8 (L-114: config
 moved out of the swap dir).
+Module updated: July 2026 with Anthropic's Claude Opus 4.8 (F1/M1: features
+flat-list -> per-feature-config dict; feature_configs.json assembled from
+config with ABORT-class shape validation).
 """
 
 import argparse
@@ -707,6 +710,68 @@ def _iso_to_jd(iso_str):
     return _dt_to_jd(dt)
 
 
+_RGB_RE = re.compile(r'^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$')
+
+
+def _validate_feature_shapes(slug, node):
+    """Structural validation of a served feature subtree (manifest v2 M1 sec
+    4.3), ABORT disposition. Shapes are recognized by FIELD PRESENCE, not a
+    'kind' tag (the schema carries none):
+        ring       -> inner_radius_km < outer_radius_km
+        shell      -> radius_fraction > 1.0
+        belt(pair) -> 0 < inner_belt_distance < outer_belt_distance
+        belt(list) -> belt_distances all > 0 and strictly ascending
+        belt_thick -> belt_thickness > 0 where present
+        color(s)   -> match rgb(int, int, int)
+    Recurses into dict-valued children so nested slugs (ring dict-of-slugs,
+    atmosphere sibling shells) are reached. Cheap; catches a mistyped port at
+    build time instead of render time."""
+    if not isinstance(node, dict):
+        return
+    if 'inner_radius_km' in node and 'outer_radius_km' in node:
+        if not (node['inner_radius_km'] < node['outer_radius_km']):
+            raise ValidationAbort(
+                "feature-shape (%s): inner_radius_km >= outer_radius_km (%r >= %r)"
+                % (slug, node['inner_radius_km'], node['outer_radius_km']))
+    if 'radius_fraction' in node:
+        if not (node['radius_fraction'] > 1.0):
+            raise ValidationAbort(
+                "feature-shape (%s): radius_fraction <= 1.0 (%r)"
+                % (slug, node['radius_fraction']))
+    if 'inner_belt_distance' in node and 'outer_belt_distance' in node:
+        inn, out = node['inner_belt_distance'], node['outer_belt_distance']
+        if not (0 < inn < out):
+            raise ValidationAbort(
+                "feature-shape (%s): belt distances not 0 < inner < outer (%r, %r)"
+                % (slug, inn, out))
+    if 'belt_distances' in node:
+        bd = node['belt_distances']
+        if not (all(x > 0 for x in bd)
+                and all(bd[k] < bd[k + 1] for k in range(len(bd) - 1))):
+            raise ValidationAbort(
+                "feature-shape (%s): belt_distances not all-positive "
+                "strictly-ascending (%r)" % (slug, bd))
+    if 'belt_thickness' in node:
+        if not (node['belt_thickness'] > 0):
+            raise ValidationAbort(
+                "feature-shape (%s): belt_thickness <= 0 (%r)"
+                % (slug, node['belt_thickness']))
+    if isinstance(node.get('color'), str):
+        if not _RGB_RE.match(node['color']):
+            raise ValidationAbort(
+                "feature-shape (%s): color not rgb(int, int, int): %r"
+                % (slug, node['color']))
+    if isinstance(node.get('colors'), list):
+        for col in node['colors']:
+            if not (isinstance(col, str) and _RGB_RE.match(col)):
+                raise ValidationAbort(
+                    "feature-shape (%s): colors entry not rgb(int, int, int): %r"
+                    % (slug, col))
+    for val in node.values():
+        if isinstance(val, dict):
+            _validate_feature_shapes(slug, val)
+
+
 def derive_served(staging, results, defaults):
     """Assemble coverage_index.json (v0.6 schema parity + conic additions) and
     write it under the staging tree."""
@@ -721,7 +786,7 @@ def derive_served(staging, results, defaults):
             'canonical_frame': obj['canonical_frame'],
             'trajectory_of': obj.get('trajectory_of'),
             'osculating': r['osc_block'], 'positions': r['positions'],
-            'presets': None, 'features': obj.get('features', []),
+            'presets': None, 'features': obj.get('features', {}),
             # conic-model additions (manifest v2 S6):
             'orbit_type': r['orbit_type'], 'as_of_today': r['as_of_today'],
             'event_link': None,
@@ -746,8 +811,21 @@ def derive_served(staging, results, defaults):
     }
     with open(staging / 'coverage_index.json', 'w') as f:
         json.dump(index, f, indent=2)
+    features_out = {}
+    for r in results:
+        slug = r['slug']
+        feats = r['obj'].get('features', {})
+        if isinstance(feats, list):
+            raise ValidationAbort(
+                "features for '%s' is a list; the flat-list -> dict migration "
+                "(manifest v2 M1, objects_config.json) is atomic with this code "
+                "-- a mixed state is a config error, not something to paper over"
+                % slug)
+        _validate_feature_shapes(slug, feats)
+        features_out[slug] = feats
     with open(staging / 'feature_configs.json', 'w') as f:
-        json.dump({'schema_version': SCHEMA_VERSION, 'features': {}}, f, indent=2)
+        json.dump({'schema_version': SCHEMA_VERSION, 'features': features_out},
+                  f, indent=2)
     return index
 
 
