@@ -346,11 +346,18 @@ TRUST_GUARD_K = 2.0          # per handoff SS6
 _TRUST_CAP_DIVISOR = {'planet': 1.0, 'dwarf_planet': 1.0, 'asteroid': 1.0,
                       'moon': 8.0, 'comet': 2.0}
 
-# FLAG-3/sec 5.5: participants in the GLOBAL served_window are every object
-# whose category is not moon (excluded by Tony's pinned rule) and not
-# spacecraft (produces no propagation window at all -- fetched_positions
-# instead).
-TRUST_WINDOW_EXCLUDED_CATEGORIES = {'moon', 'spacecraft'}
+# FLAG-3/sec 5.5, corrected L-149: participants in the GLOBAL served_window
+# are objects whose OWN served orbit is heliocentric -- keyed on
+# canonical_frame (what the orbit actually is), not category (a label that
+# can diverge from it: Pluto's category is dwarf_planet, but its served
+# orbit is barycenter-relative -- the same fast local motion as Charon's,
+# which was excluded, so Pluto's tiny window was wrongly gating the whole
+# site). Moons (parent-relative) and spacecraft (arc-natural, no
+# propagation window at all -- fetched_positions instead) are excluded the
+# same as before, now for the reason that actually matters, and the rule
+# generalizes to future barycenter-relative onboards (Orcus/Vanth,
+# Patroclus/Menoetius) without a further code change.
+TRUST_WINDOW_PARTICIPANT_FRAME = 'heliocentric'
 
 
 def _two_body_position(osc, n_deg_per_day, t_jd):
@@ -1030,7 +1037,7 @@ def derive_served(staging, results, defaults, warn=None):
     participant_windows = []
     missing = []
     for slug, block in objects.items():
-        if block['category'] in TRUST_WINDOW_EXCLUDED_CATEGORIES:
+        if block['canonical_frame'] != TRUST_WINDOW_PARTICIPANT_FRAME:
             continue
         wd = (block.get('trust') or {}).get('window_days')
         if wd is None:
