@@ -1284,9 +1284,13 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
         print("[ABORT] %s" % run_manifest['structural_validation'], flush=True)
         return run_manifest
 
-    # N1: staging is a SIBLING of the live dir so the whole generation can be
+     # N1: staging is a SIBLING of the live dir so the whole generation can be
     # renamed into place as one unit.
-    staging = out_dir.parent / ('.staging_%s_%s' % (out_dir.name, run_id))
+    # L-148: fold only_slug into the name so a single-object dry-run is
+    # findable by name, not by guessing from a timestamp. Multi-object runs
+    # (only_slug=None) keep the original shape unchanged.
+    _stage_tag = ('%s_%s' % (out_dir.name, only_slug)) if only_slug else out_dir.name
+    staging = out_dir.parent / ('.staging_%s_%s' % (_stage_tag, run_id))
     if staging.exists():
         shutil.rmtree(staging)
     staging.mkdir(parents=True, exist_ok=True)
