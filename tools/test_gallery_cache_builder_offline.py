@@ -312,9 +312,44 @@ def main():
         check(abs(objs['halley']['trust']['window_days'] - halley_p / 2.0) < 1e-6,
               "M2: halley's window == P/2 (comet cap)")
 
-        halley_p = _mock_period_days('90000030')
-        check(abs(objs['halley']['trust']['window_days'] - halley_p / 2.0) < 1e-6,
-              "M2: halley's window == P/2 (comet cap)")
+        # L-149: served_window must be controlled by a heliocentric
+        # participant's window, never by pluto's (canonical_frame ==
+        # barycenter-relative, excluded). Uses each object's OWN reported
+        # window_days -- no hand-derived expectation to get wrong.
+        helio_slugs = ('earth', 'jupiter', 'saturn', 'apophis', 'halley', 'encke')
+        expected_min = min(objs[s]['trust']['window_days'] for s in helio_slugs)
+        sw_half = (sw['end_jd'] - sw['start_jd']) / 2.0
+        check(abs(sw_half - expected_min) < 1e-6,
+              "L-149: served_window half-width == min of heliocentric participants")
+        check(objs['pluto']['trust']['window_days'] < expected_min,
+              "L-149: pluto's own window is smaller than the controlling one (sanity -- "
+              "proves the exclusion is doing real work, not vacuously true)")
+
+        # --- M2 failure path: a check-vector fetch failure nulls that
+        # object's trust and the global served_window (FLAG-3, EXERCISED
+        # through the real dispatch, not just asserted from the design) ---
+        with tempfile.TemporaryDirectory() as td_m2fail:
+            out_m2fail = Path(td_m2fail) / 'data' / 'solar-system'
+            _fv_current = b.fetch_vectors_range
+
+            def flaky_vectors(hid, idt, ctr, start_dt, stop_dt, step='1d',
+                              hkwargs=None, epoch_jds=None):
+                if epoch_jds is not None and hid == '599':      # jupiter check-vector only
+                    raise RuntimeError("simulated check-vector outage")
+                return _fv_current(hid, idt, ctr, start_dt, stop_dt, step,
+                                   hkwargs, epoch_jds=epoch_jds)
+
+            b.fetch_vectors_range = flaky_vectors
+            try:
+                b.run_build(cfg, out_m2fail, mode='first-build', do_commit=False)
+            finally:
+                b.fetch_vectors_range = _fv_current
+            idx_fail = json.load(open(out_m2fail / 'coverage_index.json'))
+            check('error' in idx_fail['objects']['jupiter']['trust'],
+                  "M2: forced check-vector failure -> jupiter trust carries 'error'")
+            check(idx_fail['served_window'] is None,
+                  "M2: forced check-vector failure -> served_window null (FLAG-3, exercised)")
+
         # L-149: the same failure-injection pattern, aimed at pluto instead
         # of jupiter. Before the fix this would ALSO have nulled
         # served_window (pluto counted as a participant); after the fix it

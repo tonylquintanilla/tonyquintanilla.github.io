@@ -1027,12 +1027,13 @@ def derive_served(staging, results, defaults, warn=None):
             block['comet'] = r['comet']
         objects[slug] = block
 
-    # M2 sec 5.5: global served_window. Participants are every object whose
-    # category is not moon/spacecraft (TRUST_WINDOW_EXCLUDED_CATEGORIES).
-    # Any participant missing a measured window -> served_window null,
-    # named in a warning (FLAG-3: the conservative, honest default -- a
-    # survivors-only minimum could silently under/over-state the true bound
-    # with no visible sign anything degraded).
+    # M2 sec 5.5, corrected L-149: global served_window. Participants are
+    # every object whose canonical_frame is TRUST_WINDOW_PARTICIPANT_FRAME
+    # (heliocentric) -- see the constant's definition for why this replaced
+    # the category-based check. Any participant missing a measured window ->
+    # served_window null, named in a warning (FLAG-3: the conservative,
+    # honest default -- a survivors-only minimum could silently under/over-
+    # state the true bound with no visible sign anything degraded).
     as_of_jd = _dt_to_jd(_utcnow())
     participant_windows = []
     missing = []
