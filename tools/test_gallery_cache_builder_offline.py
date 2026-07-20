@@ -315,31 +315,34 @@ def main():
         halley_p = _mock_period_days('90000030')
         check(abs(objs['halley']['trust']['window_days'] - halley_p / 2.0) < 1e-6,
               "M2: halley's window == P/2 (comet cap)")
-        # --- M2 failure path: a check-vector fetch failure nulls that
-        # object's trust and the global served_window (FLAG-3, EXERCISED
-        # through the real dispatch, not just asserted from the design) ---
-        with tempfile.TemporaryDirectory() as td_m2fail:
-            out_m2fail = Path(td_m2fail) / 'data' / 'solar-system'
-            _fv_current = b.fetch_vectors_range
+        # L-149: the same failure-injection pattern, aimed at pluto instead
+        # of jupiter. Before the fix this would ALSO have nulled
+        # served_window (pluto counted as a participant); after the fix it
+        # must not, since pluto is excluded (canonical_frame ==
+        # barycenter-relative). This is the test that would have caught
+        # tonight's live-Horizons finding before it ever needed live Horizons.
+        with tempfile.TemporaryDirectory() as td_l149:
+            out_l149 = Path(td_l149) / 'data' / 'solar-system'
+            _fv_current2 = b.fetch_vectors_range
 
-            def flaky_vectors(hid, idt, ctr, start_dt, stop_dt, step='1d',
-                              hkwargs=None, epoch_jds=None):
-                if epoch_jds is not None and hid == '599':      # jupiter check-vector only
+            def flaky_pluto_vectors(hid, idt, ctr, start_dt, stop_dt, step='1d',
+                                     hkwargs=None, epoch_jds=None):
+                if epoch_jds is not None and hid == '999':      # pluto check-vector only
                     raise RuntimeError("simulated check-vector outage")
-                return _fv_current(hid, idt, ctr, start_dt, stop_dt, step,
-                                   hkwargs, epoch_jds=epoch_jds)
+                return _fv_current2(hid, idt, ctr, start_dt, stop_dt, step,
+                                     hkwargs, epoch_jds=epoch_jds)
 
-            b.fetch_vectors_range = flaky_vectors
+            b.fetch_vectors_range = flaky_pluto_vectors
             try:
-                b.run_build(cfg, out_m2fail, mode='first-build', do_commit=False)
+                b.run_build(cfg, out_l149, mode='first-build', do_commit=False)
             finally:
-                b.fetch_vectors_range = _fv_current
-            idx_fail = json.load(open(out_m2fail / 'coverage_index.json'))
-            check('error' in idx_fail['objects']['jupiter']['trust'],
-                  "M2: forced check-vector failure -> jupiter trust carries 'error'")
-            check(idx_fail['served_window'] is None,
-                  "M2: forced check-vector failure -> served_window null (FLAG-3, exercised)")
-
+                b.fetch_vectors_range = _fv_current2
+            idx_l149 = json.load(open(out_l149 / 'coverage_index.json'))
+            check('error' in idx_l149['objects']['pluto']['trust'],
+                  "L-149: forced pluto check-vector failure -> pluto trust carries 'error'")
+            check(idx_l149['served_window'] is not None,
+                  "L-149: forced pluto check-vector failure -> served_window STAYS non-null "
+                  "(pluto excluded from participation, so its failure can't gate the site)")
         # --- nightly re-run: shrink gate must pass, frozen dates stable ---
         earth_before = json.load(open(out / 'raw' / 'vectors' / 'earth.json'))['points']
         old_date = sorted(earth_before)[0]
