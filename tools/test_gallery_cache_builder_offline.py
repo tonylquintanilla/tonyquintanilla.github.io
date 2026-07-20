@@ -312,6 +312,9 @@ def main():
         check(abs(objs['halley']['trust']['window_days'] - halley_p / 2.0) < 1e-6,
               "M2: halley's window == P/2 (comet cap)")
 
+        halley_p = _mock_period_days('90000030')
+        check(abs(objs['halley']['trust']['window_days'] - halley_p / 2.0) < 1e-6,
+              "M2: halley's window == P/2 (comet cap)")
         # --- M2 failure path: a check-vector fetch failure nulls that
         # object's trust and the global served_window (FLAG-3, EXERCISED
         # through the real dispatch, not just asserted from the design) ---
