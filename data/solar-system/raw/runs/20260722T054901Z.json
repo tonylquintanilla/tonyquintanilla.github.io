@@ -1,6 +1,6 @@
 {
-  "run_id": "20260722T054856Z",
-  "started": "2026-07-22T05:48:56.805042+00:00",
+  "run_id": "20260722T054901Z",
+  "started": "2026-07-22T05:49:01.030233+00:00",
   "mode": "nightly",
   "objects": {
     "earth": "nightly(8)",
@@ -18,9 +18,6 @@
   },
   "guard_warnings": [],
   "structural_validation": "pass",
-  "committed": true,
-  "finished": "2026-07-22T05:49:00.342698+00:00",
-  "committed_local": true,
-  "pushed_remote": true,
-  "commit_sha": "d59e2b673e19a850995dc33427f3e3f585eff97c"
+  "committed": false,
+  "finished": "2026-07-22T05:49:01.941682+00:00"
 }
