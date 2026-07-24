@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0",
+  "features": {
+    "earth": {
+      "atmosphere_shell": {
+        "atmosphere": {
+          "name": "Lower Atmosphere",
+          "radius_fraction": 1.05,
+          "color": "rgb(150, 200, 255)",
+          "opacity": 0.5,
+          "n_points": 20
+        },
+        "upper_atmosphere": {
+          "name": "Upper Atmosphere",
+          "radius_fraction": 1.25,
+          "color": "rgb(100, 150, 255)",
+          "opacity": 0.3,
+          "n_points": 20
+        }
+      },
+      "van_allen_belts": {
+        "inner_belt_distance": 1.5,
+        "outer_belt_distance": 4.5,
+        "belt_thickness": 0.5,
+        "n_rings": 5,
+        "n_points": 80,
+        "colors": [
+          "rgb(255, 100, 100)",
+          "rgb(100, 200, 255)"
+        ],
+        "names": [
+          "Inner Radiation Belt",
+          "Outer Radiation Belt"
+        ]
+      }
+    },
+    "jupiter": {
+      "ring_system": {
+        "main_ring": {
+          "inner_radius_km": 122500,
+          "outer_radius_km": 129000,
+          "thickness_km": 30
+        },
+        "halo_ring": {
+          "inner_radius_km": 100000,
+          "outer_radius_km": 122500,
+          "thickness_km": 12500
+        },
+        "amalthea_gossamer": {
+          "inner_radius_km": 129000,
+          "outer_radius_km": 182000,
+          "thickness_km": 2000
+        },
+        "thebe_gossamer": {
+          "inner_radius_km": 129000,
+          "outer_radius_km": 226000,
+          "thickness_km": 8600
+        }
+      },
+      "radiation_belts": {
+        "belt_distances": [
+          1.5,
+          3.0,
+          6.0
+        ],
+        "belt_thickness": 0.5,
+        "n_rings": 5,
+        "n_points": 80
+      }
+    },
+    "saturn": {
+      "ring_system": {
+        "d_ring": {
+          "inner_radius_km": 66900,
+          "outer_radius_km": 74500
+        },
+        "c_ring": {
+          "inner_radius_km": 74658,
+          "outer_radius_km": 92000
+        },
+        "b_ring": {
+          "inner_radius_km": 92000,
+          "outer_radius_km": 117500
+        },
+        "a_ring": {
+          "inner_radius_km": 122340,
+          "outer_radius_km": 136800
+        },
+        "f_ring": {
+          "inner_radius_km": 140210,
+          "outer_radius_km": 140420
+        },
+        "g_ring": {
+          "inner_radius_km": 166000,
+          "outer_radius_km": 175000
+        },
+        "e_ring": {
+          "inner_radius_km": 180000,
+          "outer_radius_km": 480000
+        }
+      }
+    },
+    "moon": {},
+    "io": {},
+    "titan": {},
+    "pluto": {},
+    "charon": {},
+    "apophis": {},
+    "voyager_1": {},
+    "encke": {},
+    "halley": {}
+  }
+}
