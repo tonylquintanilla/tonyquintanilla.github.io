@@ -23,6 +23,9 @@ Checks:
   T5  first golden L-080 fingerprint produced and round-trips.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: devtool
+Domain: dev_tools
 """
 
 import json

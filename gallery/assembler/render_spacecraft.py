@@ -11,6 +11,9 @@ STATUS: Not exercised by artifact 1 (Earth). Stubbed with a clear marker so
 the module layout matches the manifest; wired at artifact 5.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: rendering
+Domain: assembler
 """
 
 from typing import Any, Dict, List

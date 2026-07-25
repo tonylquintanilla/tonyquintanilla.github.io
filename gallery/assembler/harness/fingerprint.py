@@ -17,6 +17,9 @@ Position tolerance for numeric samples is a Section 9 decision for Tony
 so comparison is a parameter, not a hardcoded constant.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: devtool
+Domain: dev_tools
 """
 
 import hashlib

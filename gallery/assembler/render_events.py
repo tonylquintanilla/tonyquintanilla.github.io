@@ -12,6 +12,9 @@ Perihelion-marker default-on for comets is a Section 9 Mode-5 call for Tony,
 not decided here.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: rendering
+Domain: assembler
 """
 
 from typing import Any, Dict, List

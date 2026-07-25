@@ -8,6 +8,9 @@ failure invariants: an unsupported scene must fail BEFORE any partial trace
 is built; a missing cache payload must name the offending object.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: utility
+Domain: assembler
 """
 
 

@@ -10,6 +10,9 @@ Run from tools/:
     python gallery_cleanup.py
 
 Module created: July 2026 with Anthropic's Claude Opus 4.6
+
+Role: devtool
+Domain: cache_builder
 """
 
 import os

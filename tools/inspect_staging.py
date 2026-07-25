@@ -51,6 +51,9 @@ WHY THE DATES SHOULD MATCH THE BUILDER'S OWN NUMBERS
     builder itself computed. (Horizons runs on TDB, about 69 seconds ahead
     of UTC -- the same negligible-for-display gap the builder's own code
     already accepts, per its _dt_to_jd() docstring.)
+
+Role: devtool
+Domain: dev_tools
 """
 import json
 import sys

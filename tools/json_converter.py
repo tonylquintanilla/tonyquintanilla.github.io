@@ -22,6 +22,9 @@ Output:
     gallery_metadata.json index file for the gallery viewer to consume.
 
 Author: Tony Quintanilla / Paloma's Orrery
+
+Role: pipeline
+Domain: gallery_pipeline
 """
 
 import os

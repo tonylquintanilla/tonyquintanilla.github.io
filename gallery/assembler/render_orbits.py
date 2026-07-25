@@ -30,6 +30,9 @@ mechanism. Not exercised by artifact 1 (Earth has no mean block served yet);
 first exercised at artifact 4 (Halley).
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: rendering
+Domain: assembler
 """
 
 import math

@@ -38,6 +38,10 @@ Usage:
         python gallery_json_fixer.py --batch --folder /path/to/gallery
 
 Author: Tony Quintanilla / Paloma's Orrery
+
+Role: pipeline
+Domain: gallery_pipeline
+
 Module updated: April 2026 with Anthropic's Claude Opus 4.6
 """
 

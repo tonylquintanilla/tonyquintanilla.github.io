@@ -9,6 +9,9 @@ json_converter.py and index.html). Display order matches
 the gallery exactly -- derived from JSON sequence.
 
 Usage: python gallery_editor.py  (from tools/ directory)
+
+Role: gui
+Domain: gallery_pipeline
 """
 
 import tkinter as tk

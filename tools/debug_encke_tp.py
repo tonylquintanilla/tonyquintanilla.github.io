@@ -29,6 +29,9 @@ HOW TO USE IT
 
 WHAT TO DO WITH THE OUTPUT
     Paste the full output back, especially the third query's result.
+
+Role: devtool
+Domain: dev_tools
 """
 from astroquery.jplhorizons import Horizons
 from astropy.time import Time

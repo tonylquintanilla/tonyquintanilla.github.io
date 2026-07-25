@@ -4,6 +4,9 @@ Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer
 (no network) and exercises the pipeline: first-build -> derive -> structural
 validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2
 MONITOR path (warn + keep, never reject). Run: python3 this_file.py
+
+Role: devtool
+Domain: dev_tools
 """
 import json
 import math

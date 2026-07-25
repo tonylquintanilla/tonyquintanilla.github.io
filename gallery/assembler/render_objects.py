@@ -9,6 +9,9 @@ center marker of a barycenter view uses square-open per the barycenter rule
 convention).
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: rendering
+Domain: assembler
 """
 
 import math

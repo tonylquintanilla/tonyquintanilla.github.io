@@ -15,6 +15,9 @@ tracked with F1. Until then served_window() returns None and the resolver
 treats the propagation bound as unenforced-but-warned rather than rejecting.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: cache
+Domain: assembler
 """
 
 from typing import Any, Dict, Optional

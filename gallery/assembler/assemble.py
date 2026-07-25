@@ -16,6 +16,9 @@ ring trace. (This was a real merge error in synthesis v1, caught and
 reversed -- manifest v2 Section 0. Internalized, not just complied with.)
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: pipeline
+Domain: assembler
 """
 
 from typing import Any, Dict, List, Tuple

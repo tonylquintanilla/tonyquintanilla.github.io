@@ -12,6 +12,9 @@ canonical_center/frame, features). The live orbital numbers live in the
 served cache, read by cache_reader; the resolver composes the two.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: data
+Domain: assembler
 """
 
 from typing import Any, Dict

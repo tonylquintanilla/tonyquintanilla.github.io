@@ -19,6 +19,9 @@ Known-unimplemented scene-spec fields fail loudly (UnsupportedInPhase2Error);
 unrecognized fields only warn (forward compatibility) -- manifest v2 Section 3.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: computation
+Domain: assembler
 """
 
 from typing import Any, Dict, List, Tuple

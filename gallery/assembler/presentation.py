@@ -12,6 +12,9 @@ event marker -> object marker -> center marker -> label. Center and object
 markers stay above everything Python emits so they remain interactable.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+
+Role: rendering
+Domain: assembler
 """
 
 import math

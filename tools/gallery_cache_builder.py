@@ -38,6 +38,9 @@ config with ABORT-class shape validation).
 Module updated: July 2026 with Anthropic's Claude Sonnet 5 (F1/M2: trust
 measurement + served_window; fetch_elements n capture; FLAG-2 planetocentric
 mean-motion correction).
+
+Role: cache
+Domain: cache_builder
 """
 
 import argparse

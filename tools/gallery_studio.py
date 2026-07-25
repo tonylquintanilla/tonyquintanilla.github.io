@@ -38,6 +38,9 @@ Module updated: June 2026 with Anthropic's Claude Opus 4.8
   over a localhost server (build_gallery_html -> json_converter extractor ->
   gallery/_studio_preview.json -> ?preview= in the genuine gallery), so the
   GE button / link icon appear exactly as the live gallery will show them.
+
+Role: gui
+Domain: gallery_pipeline
 """
 
 import os
