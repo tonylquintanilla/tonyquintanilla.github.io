@@ -39,7 +39,7 @@ Usage:
 
 Author: Tony Quintanilla / Paloma's Orrery
 
-Role: pipeline
+Role: devtool
 Domain: gallery_pipeline
 
 Module updated: April 2026 with Anthropic's Claude Opus 4.6

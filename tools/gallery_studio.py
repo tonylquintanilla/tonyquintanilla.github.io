@@ -39,7 +39,7 @@ Module updated: June 2026 with Anthropic's Claude Opus 4.8
   gallery/_studio_preview.json -> ?preview= in the genuine gallery), so the
   GE button / link icon appear exactly as the live gallery will show them.
 
-Role: gui
+Role: devtool
 Domain: gallery_pipeline
 """
 

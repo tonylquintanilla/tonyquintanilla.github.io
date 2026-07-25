@@ -23,7 +23,7 @@ Output:
 
 Author: Tony Quintanilla / Paloma's Orrery
 
-Role: pipeline
+Role: devtool
 Domain: gallery_pipeline
 """
 

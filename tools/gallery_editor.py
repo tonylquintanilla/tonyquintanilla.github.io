@@ -10,7 +10,7 @@ the gallery exactly -- derived from JSON sequence.
 
 Usage: python gallery_editor.py  (from tools/ directory)
 
-Role: gui
+Role: devtool
 Domain: gallery_pipeline
 """
 
