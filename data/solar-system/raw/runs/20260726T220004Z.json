@@ -18,6 +18,9 @@
   },
   "guard_warnings": [],
   "structural_validation": "pass",
-  "committed": false,
-  "finished": "2026-07-26T22:00:25.255271+00:00"
+  "committed": true,
+  "finished": "2026-07-26T22:00:29.340678+00:00",
+  "committed_local": true,
+  "pushed_remote": true,
+  "commit_sha": "ba2d1c059e8f1e98492bb2616cfb719633c97e51"
 }
