@@ -85,6 +85,9 @@ hand-editing it directly, or use the tag sweep above to add just the
 two classification lines -- this legacy mode replaces the WHOLE
 docstring.
 
+Role: devtool
+Domain: dev_tools
+
 Module updated: July 2026 with Anthropic's Claude Sonnet 5
 """
 
