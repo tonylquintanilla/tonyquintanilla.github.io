@@ -38,6 +38,9 @@ config with ABORT-class shape validation).
 Module updated: July 2026 with Anthropic's Claude Sonnet 5 (F1/M2: trust
 measurement + served_window; fetch_elements n capture; FLAG-2 planetocentric
 mean-motion correction).
+Module updated: July 2026 with Anthropic's Claude Sonnet 5 (L-165/Option 3:
+post-swap completeness guard -- verify_promoted_data(); never commit an
+unverified promotion).
 
 Role: cache
 Domain: cache_builder
@@ -1188,6 +1191,34 @@ def atomic_swap_dir(staging, live, run_id=None):
         os.replace(live, prev)
     os.replace(staging, live)
 
+def verify_promoted_data(out_dir, expected_index):
+    """L-165/Option 3: confirm the swap actually landed before ever committing.
+    Reads coverage_index.json FRESH from disk (not the in-memory copy built
+    this run) so a partial or failed promotion is caught even when
+    atomic_swap_dir() itself did not raise. Returns None on success, a short
+    human-readable failure reason otherwise.
+
+    Origin: 2026-07-24, a scheduled (Task Scheduler batch-logon) run's swap
+    failed to complete its second half, leaving out_dir empty. Nothing here
+    caught it at the time; a human saw the resulting mass deletion in git and
+    reasonably mistook it for routine cleanup. This is the guard for that
+    class of failure specifically -- never commit an unverified promotion."""
+    promoted_path = out_dir / 'coverage_index.json'
+    try:
+        promoted = json.load(open(promoted_path))
+    except Exception as e:
+        return "coverage_index.json unreadable at %s (%s)" % (promoted_path, e)
+    expected_slugs = set(expected_index['objects'].keys())
+    promoted_slugs = set(promoted.get('objects', {}).keys())
+    if promoted_slugs != expected_slugs:
+        missing = sorted(expected_slugs - promoted_slugs)
+        extra = sorted(promoted_slugs - expected_slugs)
+        return "object set mismatch after swap (missing=%s extra=%s)" % (missing, extra)
+    if promoted.get('generated') != expected_index.get('generated'):
+        return ("promoted generated=%r does not match this run's %r -- stale "
+                "data landed instead of this run's build" %
+                (promoted.get('generated'), expected_index.get('generated')))
+    return None
 
 def recover_incomplete_swap(out_dir):
     """Run-start crash recovery (A-1 + N1) for the whole-generation swap. If a
@@ -1391,7 +1422,30 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
 
     # N1: promote the WHOLE generation as ONE directory swap. A crash can leave
     # only a complete old generation or a complete new one -- never a mix.
-    atomic_swap_dir(staging, out_dir, run_id)
+    try:
+        atomic_swap_dir(staging, out_dir, run_id)
+    except OSError as e:
+        # L-165/Option 3: the swap can raise partway through under some
+        # execution contexts (observed: Task Scheduler's batch-logon session,
+        # likely an OneDrive file lock) -- live gets renamed to .prev but
+        # staging never lands in its place. Recovery for THIS is
+        # recover_incomplete_swap() at the START of the next run, not here;
+        # the only job here is to never commit/push whatever (nothing, or a
+        # partial state) is left at out_dir right now.
+        run_manifest['structural_validation'] = ('fail: swap raised: %s -- '
+            'no commit; next run will self-heal' % e)
+        print("[ABORT] %s" % run_manifest['structural_validation'], flush=True)
+        return run_manifest
+
+    promo_fail = verify_promoted_data(out_dir, index)
+    if promo_fail:
+        # Defense in depth: the swap call itself didn't raise, but what
+        # actually landed at out_dir doesn't match what was just built and
+        # validated in staging. Never commit an unverified promotion.
+        run_manifest['structural_validation'] = ('fail: post-swap '
+            'verification: %s -- no commit' % promo_fail)
+        print("[ABORT] %s" % run_manifest['structural_validation'], flush=True)
+        return run_manifest
 
     if do_commit:
         st = git_commit(_repo_root(out_dir), str(out_dir), _utcnow().strftime('%Y-%m-%d'))

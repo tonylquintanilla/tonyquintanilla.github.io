@@ -381,6 +381,58 @@ def main():
             check(idx_l149['served_window'] is not None,
                   "L-149: forced pluto check-vector failure -> served_window STAYS non-null "
                   "(pluto excluded from participation, so its failure can't gate the site)")
+        # --- L-165/Option 3: swap raises partway through (the 2026-07-24
+        # failure mode) -> no commit attempted, no crash, clean ABORT record.
+        # This is the test that would have caught that incident before it
+        # ever needed a human to notice a mass deletion in git. ---
+        with tempfile.TemporaryDirectory() as td_swapfail:
+            out_swapfail = Path(td_swapfail) / 'data' / 'solar-system'
+            _swap_current = b.atomic_swap_dir
+
+            def raising_swap(staging, live, run_id=None):
+                raise OSError("simulated: file lock during promotion (e.g. OneDrive)")
+
+            b.atomic_swap_dir = raising_swap
+            try:
+                rm_swapfail = b.run_build(cfg, out_swapfail, mode='first-build', do_commit=True)
+            finally:
+                b.atomic_swap_dir = _swap_current
+            check(rm_swapfail['structural_validation'].startswith('fail: swap raised'),
+                  "L-165: swap raising is caught, not propagated as an uncaught exception")
+            check(rm_swapfail['committed'] is False,
+                  "L-165: swap failure -> commit never attempted (committed stays False)")
+            check(not out_swapfail.exists(),
+                  "L-165: swap failure leaves out_dir exactly as atomic_swap_dir left it -- "
+                  "missing, not half-written -- so next run's recover_incomplete_swap() "
+                  "restores cleanly from .prev, not from a hand-patched state")
+
+        # --- L-165/Option 3: swap call itself doesn't raise, but what's
+        # actually sitting at out_dir afterward doesn't match this run's
+        # build (defense in depth beyond the try/except above) ---
+        with tempfile.TemporaryDirectory() as td_mismatch:
+            out_mismatch = Path(td_mismatch) / 'data' / 'solar-system'
+            _swap_current2 = b.atomic_swap_dir
+
+            def swap_then_corrupt(staging, live, run_id=None):
+                _swap_current2(staging, live, run_id)  # real promotion happens
+                stale = json.load(open(live / 'coverage_index.json'))
+                stale['generated'] = '2000-01-01T00:00:00+00:00'  # pretend it's old
+                json.dump(stale, open(live / 'coverage_index.json', 'w'))
+
+            b.atomic_swap_dir = swap_then_corrupt
+            try:
+                rm_mismatch = b.run_build(cfg, out_mismatch, mode='first-build', do_commit=True)
+            finally:
+                b.atomic_swap_dir = _swap_current2
+            check(rm_mismatch['structural_validation'].startswith('fail: post-swap verification'),
+                  "L-165: post-swap content mismatch caught even though the swap call itself "
+                  "did not raise")
+            check(rm_mismatch['committed'] is False,
+                  "L-165: post-swap mismatch -> commit never attempted")
+            check(out_mismatch.exists() and (out_mismatch / 'coverage_index.json').exists(),
+                  "L-165: unlike the raised-exception case, the (bad) promoted data is left in "
+                  "place here, not deleted -- verify_promoted_data only refuses to commit it")
+
         # --- nightly re-run: shrink gate must pass, frozen dates stable ---
         earth_before = json.load(open(out / 'raw' / 'vectors' / 'earth.json'))['points']
         old_date = sorted(earth_before)[0]
