@@ -38,7 +38,7 @@ config with ABORT-class shape validation).
 Module updated: July 2026 with Anthropic's Claude Sonnet 5 (F1/M2: trust
 measurement + served_window; fetch_elements n capture; FLAG-2 planetocentric
 mean-motion correction).
-Module updated: July 2026 with Anthropic's Claude Sonnet 5 (L-165/Option 3:
+Module updated: July 2026 with Anthropic's Claude Sonnet 5 (L-173/Option 3:
 post-swap completeness guard -- verify_promoted_data(); never commit an
 unverified promotion).
 
@@ -1192,7 +1192,7 @@ def atomic_swap_dir(staging, live, run_id=None):
     os.replace(staging, live)
 
 def verify_promoted_data(out_dir, expected_index):
-    """L-165/Option 3: confirm the swap actually landed before ever committing.
+    """L-173/Option 3: confirm the swap actually landed before ever committing.
     Reads coverage_index.json FRESH from disk (not the in-memory copy built
     this run) so a partial or failed promotion is caught even when
     atomic_swap_dir() itself did not raise. Returns None on success, a short
@@ -1425,7 +1425,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     try:
         atomic_swap_dir(staging, out_dir, run_id)
     except OSError as e:
-        # L-165/Option 3: the swap can raise partway through under some
+        # L-173/Option 3: the swap can raise partway through under some
         # execution contexts (observed: Task Scheduler's batch-logon session,
         # likely an OneDrive file lock) -- live gets renamed to .prev but
         # staging never lands in its place. Recovery for THIS is

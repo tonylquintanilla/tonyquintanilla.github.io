@@ -381,7 +381,7 @@ def main():
             check(idx_l149['served_window'] is not None,
                   "L-149: forced pluto check-vector failure -> served_window STAYS non-null "
                   "(pluto excluded from participation, so its failure can't gate the site)")
-        # --- L-165/Option 3: swap raises partway through (the 2026-07-24
+        # --- L-173/Option 3: swap raises partway through (the 2026-07-24
         # failure mode) -> no commit attempted, no crash, clean ABORT record.
         # This is the test that would have caught that incident before it
         # ever needed a human to notice a mass deletion in git. ---
@@ -398,15 +398,15 @@ def main():
             finally:
                 b.atomic_swap_dir = _swap_current
             check(rm_swapfail['structural_validation'].startswith('fail: swap raised'),
-                  "L-165: swap raising is caught, not propagated as an uncaught exception")
+                  "L-173: swap raising is caught, not propagated as an uncaught exception")
             check(rm_swapfail['committed'] is False,
-                  "L-165: swap failure -> commit never attempted (committed stays False)")
+                  "L-173: swap failure -> commit never attempted (committed stays False)")
             check(not out_swapfail.exists(),
-                  "L-165: swap failure leaves out_dir exactly as atomic_swap_dir left it -- "
+                  "L-173: swap failure leaves out_dir exactly as atomic_swap_dir left it -- "
                   "missing, not half-written -- so next run's recover_incomplete_swap() "
                   "restores cleanly from .prev, not from a hand-patched state")
 
-        # --- L-165/Option 3: swap call itself doesn't raise, but what's
+        # --- L-173/Option 3: swap call itself doesn't raise, but what's
         # actually sitting at out_dir afterward doesn't match this run's
         # build (defense in depth beyond the try/except above) ---
         with tempfile.TemporaryDirectory() as td_mismatch:
@@ -425,12 +425,12 @@ def main():
             finally:
                 b.atomic_swap_dir = _swap_current2
             check(rm_mismatch['structural_validation'].startswith('fail: post-swap verification'),
-                  "L-165: post-swap content mismatch caught even though the swap call itself "
+                  "L-173: post-swap content mismatch caught even though the swap call itself "
                   "did not raise")
             check(rm_mismatch['committed'] is False,
-                  "L-165: post-swap mismatch -> commit never attempted")
+                  "L-173: post-swap mismatch -> commit never attempted")
             check(out_mismatch.exists() and (out_mismatch / 'coverage_index.json').exists(),
-                  "L-165: unlike the raised-exception case, the (bad) promoted data is left in "
+                  "L-173: unlike the raised-exception case, the (bad) promoted data is left in "
                   "place here, not deleted -- verify_promoted_data only refuses to commit it")
 
         # --- nightly re-run: shrink gate must pass, frozen dates stable ---
