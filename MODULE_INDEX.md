@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** July 26, 2026 by `module_atlas.py`  
+**Generated:** August 06, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -11,8 +11,8 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 24  
-**Total Lines of Code (non-blank):** 13,215  
-**Total Public Functions/Classes:** 137
+**Total Lines of Code (non-blank):** 13,313  
+**Total Public Functions/Classes:** 138
 
 ## Classification Coverage
 
@@ -55,7 +55,7 @@ All 24 modules declare a valid `Role:` and `Domain:` tag in their docstring.
 | Module | Description |
 |--------|-------------|
 | `cache_reader.py` | Reads the served gallery cache. (56 lines) |
-| `gallery_cache_builder.py` | - standalone nightly builder for the Paloma's Orrery web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool. (1,305 lines) |
+| `gallery_cache_builder.py` | - standalone nightly builder for the Paloma's Orrery web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool. (1,357 lines) |
 
 ---
 
@@ -90,7 +90,7 @@ All 24 modules declare a valid `Role:` and `Domain:` tag in their docstring.
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (624 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (818 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (120 lines) |
-| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (557 lines) |
+| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (603 lines) |
 
 ---
 
