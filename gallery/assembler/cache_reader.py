@@ -10,9 +10,13 @@ governing rule, Section 2 boundary rule). It operates on an already-parsed
 dict supplied by the caller.
 
 served_window note: coverage_index.json carries a top-level served_window
-field that is currently null at HEAD. Populating it is a small builder change
-tracked with F1. Until then served_window() returns None and the resolver
-treats the propagation bound as unenforced-but-warned rather than rejecting.
+field, POPULATED by the builder since F1 (L-118) closed on 2026-07-22.
+served_window() returns that {start_jd, end_jd} mapping. It still returns
+None for a cache that carries no window, in which case the resolver treats
+the propagation bound as unenforced-but-warned rather than rejecting --
+that path is the exception now, not the norm. (This note said the field
+was currently null at HEAD until 2026-08-23, a month after it stopped
+being true.)
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
 

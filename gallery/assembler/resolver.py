@@ -11,9 +11,14 @@ transformed. (Pluto's two views are named via view_id and are out of
 artifact 1 scope.)
 
 Date policy (handoff v0.3 Section 9): propagate via Kepler from the served
-osculating snapshot. The bound is the cache's served_window; while that field
-is null at HEAD the resolver warns rather than rejects, since it has no bound
-to enforce. Populating served_window is a small builder change tracked with F1.
+osculating snapshot. The bound is the cache's served_window, which the
+builder has POPULATED since F1 (L-118) closed on 2026-07-22 -- it is a
+real {start_jd, end_jd} pair in coverage_index.json, and the resolver
+enforces it as ONE bound for the entire scene rather than per object.
+The null-window path still exists and still warns rather than rejects,
+because a cache with no window is a cache the resolver cannot bound; it
+is no longer the normal case. (This paragraph said the field was null at
+HEAD until 2026-08-23, a month after it stopped being true.)
 
 Known-unimplemented scene-spec fields fail loudly (UnsupportedInPhase2Error);
 unrecognized fields only warn (forward compatibility) -- manifest v2 Section 3.
@@ -130,7 +135,23 @@ def resolve(scene_spec: SceneSpec, catalog: Catalog,
                 % (slug, stored_center, center, stored_center)
             )
 
-        features = tuple(rec.get("features") or ())
+        # The served record's `features` is a MAPPING of feature key ->
+        # parameters, e.g. {'ring_system': {'main_ring':
+        # {'inner_radius_km': 122500, ...}}}. Keep the mapping: the
+        # parameters are what the client renderers draw from, and until
+        # 2026-08-23 this line reduced it to its keys and threw them
+        # away (L-154).
+        feature_map = rec.get("features") or {}
+        if not isinstance(feature_map, dict):
+            raise ValueError(
+                "Object '%s' carries a `features` value of type %s; the "
+                "served schema is a mapping of feature key -> parameter "
+                "dict. Refusing to guess -- fix the builder or the "
+                "served cache rather than silently dropping the "
+                "parameters here."
+                % (slug, type(feature_map).__name__)
+            )
+        features = tuple(feature_map)
         resolved.append(ResolvedObject(
             slug=slug,
             name=rec.get("name", cfg.get("name", slug)),
@@ -146,7 +167,17 @@ def resolve(scene_spec: SceneSpec, catalog: Catalog,
         ))
         frame_labels.add(frame)
         for fk in features:
-            feature_reqs.append(FeatureRequest(object_slug=slug, feature_key=fk))
+            params = feature_map.get(fk)
+            if not isinstance(params, dict):
+                raise ValueError(
+                    "Object '%s' feature '%s' carries parameters of type "
+                    "%s; a parameter dict is required. Same reasoning as "
+                    "above: announce it rather than render a feature "
+                    "with no numbers behind it."
+                    % (slug, fk, type(params).__name__)
+                )
+            feature_reqs.append(FeatureRequest(
+                object_slug=slug, feature_key=fk, params=params))
 
     frame = sorted(frame_labels)[0] if len(frame_labels) == 1 else "mixed"
 
