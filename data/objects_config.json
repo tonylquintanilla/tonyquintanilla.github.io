@@ -23,6 +23,11 @@
           "upper_atmosphere": {
             "name": "Upper Atmosphere", "radius_fraction": 1.25,
             "color": "rgb(100, 150, 255)", "opacity": 0.3, "n_points": 20
+          },
+          "planet_radius": {
+            "value": 6378.1366, "unit": "km",
+            "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
+            "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
           }
         },
         "van_allen_belts": {
@@ -32,7 +37,12 @@
           "n_rings": 5,
           "n_points": 80,
           "colors": ["rgb(255, 100, 100)", "rgb(100, 200, 255)"],
-          "names": ["Inner Radiation Belt", "Outer Radiation Belt"]
+          "names": ["Inner Radiation Belt", "Outer Radiation Belt"],
+          "planet_radius": {
+            "value": 6378.1366, "unit": "km",
+            "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
+            "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
+          }
         }
       }
     },
@@ -52,7 +62,21 @@
           "belt_distances": [1.5, 3.0, 6.0],
           "belt_thickness": 0.5,
           "n_rings": 5,
-          "n_points": 80
+          "n_points": 80,
+          "planet_radius": {
+            "value": 71492.0, "unit": "km",
+            "source": "IAU 2015 Resolution B3 -- nominal jovian equatorial radius",
+            "orrery_constant": "constants_new.py::JUPITER_EQUATORIAL_RADIUS_KM"
+          }
+        },
+        "orientation": {
+          "pole": {
+            "ra": { "value": 268.05, "unit": "deg" },
+            "dec": { "value": 64.49, "unit": "deg" },
+            "frame": "ICRF/J2000 equatorial",
+            "source": "IAU WGCCRE, Archinal et al. 2018, Celest. Mech. Dyn. Astron. 130:22, Table 1",
+            "orrery_constant": "idealized_orbits.py::planet_poles['Jupiter']"
+          }
         }
       }
     },
@@ -70,6 +94,15 @@
           "f_ring": { "inner_radius_km": 140210, "outer_radius_km": 140420 },
           "g_ring": { "inner_radius_km": 166000, "outer_radius_km": 175000 },
           "e_ring": { "inner_radius_km": 180000, "outer_radius_km": 480000 }
+        },
+        "orientation": {
+          "pole": {
+            "ra": { "value": 40.58, "unit": "deg" },
+            "dec": { "value": 83.54, "unit": "deg" },
+            "frame": "ICRF/J2000 equatorial",
+            "source": "IAU WGCCRE, Archinal et al. 2018, Celest. Mech. Dyn. Astron. 130:22, Table 1",
+            "orrery_constant": "idealized_orbits.py::planet_poles['Saturn']"
+          }
         }
       }
     },

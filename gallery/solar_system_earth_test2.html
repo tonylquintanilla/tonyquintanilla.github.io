@@ -12,8 +12,14 @@
 
   Dark theme + cube axes + orthographic top-down camera come from the figure
   layout (assembler presentation.build_layout), matching palomas_orrery.py's
-  build_scene. Feature rendering stays JavaScript (none yet -> no shells drawn;
-  that is artifact 2 / F1). Pyodide loads lazily on the button (master plan
+  build_scene. Feature rendering stays JavaScript and now EXISTS: the report's
+  feature dispatch is drawn by feature_renderers.js (L-154, August 2026), so
+  Earth's atmosphere and belts, and Jupiter's and Saturn's rings, render here.
+  The scene selector chooses artifact 1 (Earth alone, the fingerprinted one)
+  or the artifact 2 candidate (Jupiter + Saturn), UNFINGERPRINTED -- drawing is
+  not locking. The "Frame on" control ranges the axes around one body, because
+  a ring system is three orders of magnitude smaller than the orbit it rides on.
+  Pyodide loads lazily on the button (master plan
   S5/S7 consent/lazy gate). Assembler is pure stdlib: no numpy, no plotly-Python.
 
   MUST BE SERVED OVER HTTP (not file://) so fetch() of local assembler/ and
@@ -29,6 +35,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Paloma's Orrery - Solar System (Earth test)</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<!-- L-154: client-side feature renderers (rings, belts, shells). -->
+<script src="feature_renderers.js"></script>
 <style>
   :root { --bg:#000; --panel:#0d1016; --ink:#f4f6fb; --muted:#9aa0a6;
           --line:#2a2f3a; --accent:#3b7ddd; }
@@ -69,7 +77,20 @@
       <label for="epoch">Date (UTC)</label>
       <input type="date" id="epoch" value="2026-07-13">
     </div>
-    <button id="run">Render Earth</button>
+    <div>
+      <label for="scene">Scene</label>
+      <select id="scene">
+        <option value="earth" selected>Earth alone (artifact 1)</option>
+        <option value="jupiter,saturn">Jupiter + Saturn (artifact 2 candidate)</option>
+      </select>
+    </div>
+    <div>
+      <label for="frame">Frame on</label>
+      <select id="frame">
+        <option value="" selected>Whole scene</option>
+      </select>
+    </div>
+    <button id="run">Render</button>
   </div>
 
   <div id="plot"></div>
@@ -120,6 +141,64 @@ function loadPyodideScript() {
   });
 }
 
+/* Axis framing. Ranges stay equal-span on all three axes so aspectmode
+   "cube" still shows undistorted geometry, and gridDtick mirrors the
+   assembler's calculate_grid_dtick (1/2/5 x 10^n, about six gridlines). */
+function gridDtick(span) {
+  if (span <= 0) return 1;
+  const raw = span / 6;
+  const exp = Math.floor(Math.log10(raw));
+  const mant = raw / Math.pow(10, exp);
+  const clean = mant < 1.5 ? 1 : mant < 3.5 ? 2 : mant < 7.5 ? 5 : 10;
+  return clean * Math.pow(10, exp);
+}
+
+function rebuildFrameOptions(bodies) {
+  const sel = document.getElementById("frame");
+  const keep = sel.value;
+  sel.innerHTML = "";
+  const whole = document.createElement("option");
+  whole.value = ""; whole.textContent = "Whole scene";
+  sel.appendChild(whole);
+  Object.keys(bodies).forEach(function (slug) {
+    const o = document.createElement("option");
+    o.value = slug; o.textContent = bodies[slug].name;
+    sel.appendChild(o);
+  });
+  sel.value = bodies[keep] ? keep : "";
+}
+
+function frameLayout(layout, featureTraces, bodies, slug) {
+  if (!slug || !bodies[slug]) return layout;
+  const c = bodies[slug].position;
+  const prefix = bodies[slug].name + ":";
+  let half = 0;
+  featureTraces.forEach(function (t) {
+    if (!t.name || t.name.indexOf(prefix) !== 0 || !t.x) return;
+    for (let i = 0; i < t.x.length; i++) {
+      half = Math.max(half, Math.abs(t.x[i] - c[0]), Math.abs(t.y[i] - c[1]),
+                      Math.abs(t.z[i] - c[2]));
+    }
+  });
+  if (half <= 0) {
+    log("Frame on " + bodies[slug].name + ": no feature geometry to frame; "
+        + "left at whole-scene range.");
+    return layout;
+  }
+  half *= 1.2;
+  const out = JSON.parse(JSON.stringify(layout));
+  const dtick = gridDtick(2 * half);
+  ["xaxis", "yaxis", "zaxis"].forEach(function (ax, i) {
+    out.scene[ax].range = [c[i] - half, c[i] + half];
+    out.scene[ax].dtick = dtick;
+    out.scene[ax].autorange = false;
+  });
+  out.scene.aspectmode = "cube";
+  log("Framed on " + bodies[slug].name + ": half-span "
+      + half.toPrecision(3) + " AU, dtick " + dtick.toPrecision(3) + " AU.");
+  return out;
+}
+
 async function fetchText(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error("fetch " + url + " -> HTTP " + r.status);
@@ -135,22 +214,41 @@ from assembler.catalog import Catalog
 from assembler.cache_reader import CacheReader
 from assembler.assemble import assemble_scene
 from assembler.harness import fingerprint as fp
+from assembler import render_orbits
 
 cov = json.loads(COV_JSON)
 cfg = json.loads(CFG_JSON)
 
+slugs = [s for s in OBJECTS.split(",") if s]
 scene = {
     "spec_version": "1.0", "domain": "solar_system", "content_type": "static",
-    "objects": ["earth"], "center": "sun", "epoch": EPOCH,
+    "objects": slugs, "center": "sun", "epoch": EPOCH,
 }
 result = assemble_scene(scene, Catalog(cfg), CacheReader(cov))
-golden = fp.fingerprint("artifact_1_earth_alone", result)
+
+artifact_id = ("artifact_1_earth_alone" if slugs == ["earth"]
+               else "artifact_2_candidate_" + "_".join(slugs))
+golden = fp.fingerprint(artifact_id, result)
+
+# Where each object sits at the resolved epoch. The feature renderers need a
+# centre to offset to; assemble.py already computes this for the position
+# marker but does not report it, so it is recomputed here through the same
+# function rather than scraped back out of the figure.
+bodies = {}
+for o in result.context.objects:
+    if not o.osculating:
+        continue
+    px, py, pz = render_orbits.propagate_marker(
+        o.osculating, result.context.resolved_epoch_jd)
+    bodies[o.slug] = {"name": o.name, "position": [px, py, pz]}
 
 json.dumps({
     "figure": result.figure,
     "fingerprint": golden,
+    "artifact_id": artifact_id,
     "warnings": result.report["warnings"],
     "features": result.report["features"],
+    "bodies": bodies,
 })
 `;
 
@@ -183,15 +281,32 @@ async function run() {
 
     const date = document.getElementById("epoch").value || "2026-07-13";
     const epoch = date + "T00:00:00Z";
+    const objects = document.getElementById("scene").value;
     py.globals.set("EPOCH", epoch);
+    py.globals.set("OBJECTS", objects);
 
-    log("Running assemble_scene(earth, " + epoch + ") in the browser...");
+    log("Running assemble_scene(" + objects + ", " + epoch + ") in the browser...");
     const payload = JSON.parse(await py.runPythonAsync(DRIVER));
-    log("Assembly complete: " + payload.figure.data.length + " traces.", "ok");
+    log("Assembly complete: " + payload.figure.data.length + " orbit traces.", "ok");
 
-    Plotly.newPlot("plot", payload.figure.data, payload.figure.layout,
-                   {responsive: true});
+    const feat = GalleryFeatures.buildFeatureTraces(payload.features,
+                                                    payload.bodies);
+    feat.warnings.forEach(w => log("feature: " + w, "err"));
+    log("Features: " + feat.traces.length + " traces from "
+        + payload.features.length + " requests.",
+        feat.warnings.length ? "err" : "ok");
+
+    rebuildFrameOptions(payload.bodies);
+    const layout = frameLayout(payload.figure.layout, feat.traces,
+                               payload.bodies,
+                               document.getElementById("frame").value);
+
+    Plotly.newPlot("plot", payload.figure.data.concat(feat.traces),
+                   layout, {responsive: true});
     log("Rendered. This is the Mode 5 gate - your eyes decide.", "ok");
+    log("Rings and belts are thousands of times smaller than the orbits. "
+        + "At whole-scene range they are sub-pixel: pick a body under "
+        + "Frame on and re-render to put the axes around it.");
 
     document.getElementById("fpwrap").hidden = false;
     document.getElementById("fp").textContent =
