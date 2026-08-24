@@ -71,21 +71,55 @@ def jd_to_calendar(jd):
     return dt.strftime("%Y-%m-%d %H:%M UTC")
 
 
+def ask_for_staging_path():
+    """Prompt for the staging folder when none was given on the command line.
+
+    Added 2026-08-24 (L-233). The dashboard launches this tool with no
+    argument, so the argv-only version could only ever print usage and
+    exit -- a button that cannot do its job. Prompting here rather than
+    special-casing the dashboard also covers the VS Code Run button,
+    which supplies no arguments either.
+    """
+    print("Which staging folder should I read?")
+    print()
+    print("That path is the LAST thing gallery_cache_builder.py printed when")
+    print("you ran it with --dry-run, e.g.:")
+    print("    [dry-run] validated; wrote nothing outside <this part is the path>")
+    print()
+    print("Paste it below, or press Enter alone to quit.")
+    print()
+    try:
+        answer = input("Staging folder: ").strip()
+    except EOFError:
+        return None
+    # Windows "Copy as path" wraps the path in double quotes.
+    answer = answer.strip('"').strip("'")
+    return answer or None
+
+
 def main():
-    if len(sys.argv) != 2 or sys.argv[1].startswith("-"):
-        if len(sys.argv) == 2 and sys.argv[1].startswith("-"):
+    if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1].startswith("-")):
+        if len(sys.argv) == 2:
             print("'%s' looks like a gallery_cache_builder.py flag, not a folder path." % sys.argv[1])
             print("This script doesn't take flags -- it only takes a staging folder path.")
-            print()
+        else:
+            print("Too many arguments: this script takes exactly one folder path.")
+        print()
         print("Usage:")
         print("    python tools\\inspect_staging.py <path-to-staging-folder>")
         print()
-        print("Get that path from the LAST line gallery_cache_builder.py printed")
-        print("when you ran it with --dry-run, e.g.:")
-        print("    [dry-run] validated; wrote nothing outside <this part is the path>")
+        print("Or run it with no arguments and it will ask for the path.")
         return
 
-    staging = Path(sys.argv[1])
+    if len(sys.argv) == 2:
+        given = sys.argv[1]
+    else:
+        given = ask_for_staging_path()
+        if not given:
+            print("Nothing to inspect. Quitting.")
+            return
+
+    staging = Path(given)
     if not staging.exists():
         print("No such folder: %s" % staging)
         print("Double-check you copied the exact path from the builder's own output.")
