@@ -42,6 +42,27 @@
           }
         },
         "solar_atmosphere": {
+          "streamer_belt": {
+            "name": "Streamer Belt (helmet and stalk)", "shape": "streamer_band",
+            "color": "rgb(255, 200, 80)",
+            "cusp_radius": { "value": 4.0, "unit": "R_sun",
+              "source": "Suess and Nerney (2004) -- extent of the closed-field helmet, not of the streamer as a whole",
+              "orrery_constant": "constants_new.py::HELMET_CUSP_RADII" },
+            "fade_radius": { "value": 19.7, "unit": "R_sun",
+              "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- the band dissolves across the Alfven surface",
+              "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII" },
+            "drawing": {
+              "_declared": "Every value in this block is a drawing choice, not a measurement. Nobody has sourced the warp amplitude, the lobe count or the widths, and the hover says so to the reader. Copied from planet_visualization_utilities.py::STREAMER_BAND_DEFAULTS.",
+              "base_radius": 1.0, "outer_radius": 20.0,
+              "base_half_width_deg": 38.0, "cusp_half_width_deg": 9.0,
+              "helmet_exponent": 1.7, "stalk_taper": 0.45, "fade_exponent": 1.8,
+              "warp_amp_deg": 15.0, "warp_lobes": 2,
+              "n_radial_helmet": 12, "n_radial_stalk": 30, "n_lon": 32, "n_lat": 5,
+              "jitter": 0.42, "seed": 20260822,
+              "max_alpha": 0.55, "base_marker_size": 3.2, "tip_marker_size": 1.4
+            },
+            "note": "One configuration near solar minimum. That the belt is organized about the solar equator AT ALL is a drawing choice, not a sourced boundary: the pole is sourced, anchoring the band to it is ours."
+          },
           "chromosphere": {
             "name": "Chromosphere (2,000 km skin)", "radius": { "value": 1.0028748, "unit": "R_sun" },
             "color": "rgb(30, 144, 255)", "opacity": 0.5, "n_points": 25, "marker_size": 3.0,
@@ -117,6 +138,15 @@
             "source": "Oort (1950); Weissman (1996)",
             "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
           }
+        },
+        "orientation": {
+          "pole": {
+            "ra": { "value": 286.13, "unit": "deg" },
+            "dec": { "value": 63.87, "unit": "deg" }
+          },
+          "source": "IAU 2018 (Archinal et al.), solar north pole in ICRF equatorial coordinates",
+          "orrery_constant": "idealized_orbits.py::planet_poles['Sun']",
+          "note": "Read by the same poleBasis() the gas giants use; the solar equator sits about 7.25 degrees off the ecliptic."
         },
         "hill_sphere": {
           "gravitational": {

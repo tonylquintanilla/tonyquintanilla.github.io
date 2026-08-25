@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-08-25T02:09:32.064058+00:00",
+  "generated": "2026-08-25T13:45:50.197241+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2460954.047628893,
-    "end_jd": 2461601.132279997
+    "start_jd": 2460954.531172101,
+    "end_jd": 2461601.615823205
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -81,6 +81,45 @@
           }
         },
         "solar_atmosphere": {
+          "streamer_belt": {
+            "name": "Streamer Belt (helmet and stalk)",
+            "shape": "streamer_band",
+            "color": "rgb(255, 200, 80)",
+            "cusp_radius": {
+              "value": 4.0,
+              "unit": "R_sun",
+              "source": "Suess and Nerney (2004) -- extent of the closed-field helmet, not of the streamer as a whole",
+              "orrery_constant": "constants_new.py::HELMET_CUSP_RADII"
+            },
+            "fade_radius": {
+              "value": 19.7,
+              "unit": "R_sun",
+              "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- the band dissolves across the Alfven surface",
+              "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
+            },
+            "drawing": {
+              "_declared": "Every value in this block is a drawing choice, not a measurement. Nobody has sourced the warp amplitude, the lobe count or the widths, and the hover says so to the reader. Copied from planet_visualization_utilities.py::STREAMER_BAND_DEFAULTS.",
+              "base_radius": 1.0,
+              "outer_radius": 20.0,
+              "base_half_width_deg": 38.0,
+              "cusp_half_width_deg": 9.0,
+              "helmet_exponent": 1.7,
+              "stalk_taper": 0.45,
+              "fade_exponent": 1.8,
+              "warp_amp_deg": 15.0,
+              "warp_lobes": 2,
+              "n_radial_helmet": 12,
+              "n_radial_stalk": 30,
+              "n_lon": 32,
+              "n_lat": 5,
+              "jitter": 0.42,
+              "seed": 20260822,
+              "max_alpha": 0.55,
+              "base_marker_size": 3.2,
+              "tip_marker_size": 1.4
+            },
+            "note": "One configuration near solar minimum. That the belt is organized about the solar equator AT ALL is a drawing choice, not a sourced boundary: the pole is sourced, anchoring the band to it is ours."
+          },
           "chromosphere": {
             "name": "Chromosphere (2,000 km skin)",
             "radius": {
@@ -229,6 +268,21 @@
             "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
           }
         },
+        "orientation": {
+          "pole": {
+            "ra": {
+              "value": 286.13,
+              "unit": "deg"
+            },
+            "dec": {
+              "value": 63.87,
+              "unit": "deg"
+            }
+          },
+          "source": "IAU 2018 (Archinal et al.), solar north pole in ICRF equatorial coordinates",
+          "orrery_constant": "idealized_orbits.py::planet_poles['Sun']",
+          "note": "Read by the same poleBasis() the gas giants use; the solar equator sits about 7.25 degrees off the ecliptic."
+        },
         "hill_sphere": {
           "gravitational": {
             "name": "Gravitational Influence",
@@ -277,7 +331,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T02:09:17.029556+00:00"
+          "retrieved": "2026-08-25T13:45:48.763916+00:00"
         }
       },
       "positions": null,
@@ -384,7 +438,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T02:09:18.450692+00:00"
+          "retrieved": "2026-08-25T13:45:48.875528+00:00"
         }
       },
       "positions": null,
@@ -501,7 +555,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T02:09:19.892254+00:00"
+          "retrieved": "2026-08-25T13:45:49.128017+00:00"
         }
       },
       "positions": null,
@@ -610,7 +664,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T02:09:21.320602+00:00"
+          "retrieved": "2026-08-25T13:45:49.239637+00:00"
         }
       },
       "positions": null,
@@ -673,7 +727,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T02:09:22.799775+00:00"
+          "retrieved": "2026-08-25T13:45:49.349926+00:00"
         }
       },
       "positions": null,
@@ -736,7 +790,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T02:09:24.492168+00:00"
+          "retrieved": "2026-08-25T13:45:49.452167+00:00"
         }
       },
       "positions": null,
@@ -799,7 +853,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T02:09:25.781282+00:00"
+          "retrieved": "2026-08-25T13:45:49.563677+00:00"
         }
       },
       "positions": null,
@@ -862,7 +916,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T02:09:27.145146+00:00"
+          "retrieved": "2026-08-25T13:45:49.689093+00:00"
         }
       },
       "positions": null,
@@ -925,7 +979,7 @@
           "query_target": "99942",
           "center": "@sun",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T02:09:28.642440+00:00"
+          "retrieved": "2026-08-25T13:45:49.841963+00:00"
         }
       },
       "positions": null,
@@ -1022,7 +1076,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460239.681188389,
-          "retrieved": "2026-08-25T02:09:31.046453+00:00"
+          "retrieved": "2026-08-25T13:45:50.032852+00:00"
         }
       },
       "positions": null,
@@ -1090,7 +1144,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-08-25T02:09:32.025450+00:00"
+          "retrieved": "2026-08-25T13:45:50.167352+00:00"
         }
       },
       "positions": null,

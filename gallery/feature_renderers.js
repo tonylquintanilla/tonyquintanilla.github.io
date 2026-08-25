@@ -175,6 +175,20 @@
     return null;
   }
 
+  /* A radius that must be in solar radii, for shapes that have no AU form. */
+  function measuredRadiusRsun(node, where, warn) {
+    if (!isDict(node) || typeof node.value !== "number") {
+      warn(where + ": expected a measured radius {value, unit}");
+      return null;
+    }
+    if (node.unit !== "R_sun") {
+      warn(where + ": unit is " + JSON.stringify(node.unit) +
+           ", expected \"R_sun\"");
+      return null;
+    }
+    return node.value;
+  }
+
   function fmtKm(km) {
     return km.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km";
   }
@@ -521,6 +535,178 @@
 
 
   /*
+   * mulberry32: a small seeded generator, so the band is the same cloud on
+   * every render rather than re-rolling. The orrery seeds a numpy
+   * RandomState with the same number; the sequences differ and cannot be
+   * made to agree, so the two instruments draw the same SHAPE from the same
+   * parameters with different individual points. Nothing downstream depends
+   * on the points: the golden fingerprint records feature keys, and these
+   * are drawn in the browser.
+   */
+  function seededRandom(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      var t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t = t ^ (t + Math.imul(t ^ (t >>> 7), t | 61));
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /*
+   * Point cloud for a helmet-and-stalk streamer band, in SOLAR RADII in the
+   * body frame. Port of create_streamer_band_shape (L-224); the caller
+   * rotates into the ecliptic with the solar pole basis.
+   *
+   * Below the cusp the band is a closed arcade -- wide, dense, bounded.
+   * Above it, an open stalk that thins into the slow wind and has no outer
+   * edge. One object whose character changes with radius, which is what it
+   * is.
+   *
+   * NO VISIBLE EDGE, BY CONSTRUCTION: alpha is evaluated at each point's OWN
+   * jittered radius, never at the radius of the shell it was sampled from. A
+   * point jittered past the fade radius would otherwise carry a non-zero
+   * alpha from inside it and draw a stray rim.
+   */
+  function streamerBandPoints(cuspR, fadeR, d) {
+    var baseR = d.base_radius, outR = d.outer_radius;
+    var baseW = d.base_half_width_deg * Math.PI / 180;
+    var cuspW = d.cusp_half_width_deg * Math.PI / 180;
+    var warp = d.warp_amp_deg * Math.PI / 180;
+    var rand = seededRandom(d.seed);
+    var span = Math.max(1e-9, fadeR - cuspR);
+    var nH = d.n_radial_helmet, nS = d.n_radial_stalk;
+
+    function fadeFraction(r) {
+      return Math.min(1, Math.max(0, (r - cuspR) / span));
+    }
+    function alphaAt(r) {
+      if (r <= cuspR) return d.max_alpha;
+      return d.max_alpha * Math.pow(1 - fadeFraction(r), d.fade_exponent);
+    }
+    function sizeAt(r) {
+      if (r <= cuspR) return d.base_marker_size;
+      return d.base_marker_size +
+        (d.tip_marker_size - d.base_marker_size) * fadeFraction(r);
+    }
+
+    var dH = (cuspR - baseR) / Math.max(1, nH - 1);
+    var dS = (outR - cuspR) / Math.max(1, nS - 1);
+    var shells = [], i;
+    for (i = 0; i < nH; i++) shells.push([baseR + dH * i, true]);
+    for (i = 1; i < nS; i++) shells.push([cuspR + dS * i, false]);
+
+    var out = {x: [], y: [], z: [], alpha: [], size: []};
+    for (var s = 0; s < shells.length; s++) {
+      var rShell = shells[s][0], inHelmet = shells[s][1];
+      var halfW, nLon, nLat, step;
+      if (inHelmet) {
+        var t = (cuspR === baseR) ? 0 : (rShell - baseR) / (cuspR - baseR);
+        t = Math.min(1, Math.max(0, t));
+        halfW = cuspW + (baseW - cuspW) * Math.pow(1 - t, d.helmet_exponent);
+        nLon = d.n_lon; nLat = d.n_lat; step = dH;
+      } else {
+        var u = Math.min(1, Math.max(0,
+          (rShell - cuspR) / Math.max(1e-9, outR - cuspR)));
+        halfW = cuspW * (1 - d.stalk_taper * u);
+        // Density thins outward as well as alpha. Opacity alone reads as a
+        // uniform sheet turned down; thinning reads as a sheet coming apart,
+        // which is what happens.
+        nLon = Math.max(10, Math.round(d.n_lon * (1 - 0.70 * u)));
+        nLat = Math.max(3, Math.round(d.n_lat * (1 - 0.45 * u)));
+        step = dS;
+      }
+      var latJit = halfW * d.jitter / Math.max(1, nLat - 1);
+      for (var j = 0; j < nLon; j++) {
+        var lon = 2 * Math.PI * j / nLon;
+        var lam0 = warp * Math.sin(d.warp_lobes * lon);
+        for (var k = 0; k < nLat; k++) {
+          var off = (nLat === 1) ? 0
+            : -halfW + (2 * halfW) * k / (nLat - 1);
+          var rPt = Math.min(outR, Math.max(baseR,
+            rShell + d.jitter * step * (rand() * 2 - 1)));
+          var lam = lam0 + off + latJit * (rand() * 2 - 1);
+          var cosLam = Math.cos(lam);
+          out.x.push(rPt * cosLam * Math.cos(lon));
+          out.y.push(rPt * cosLam * Math.sin(lon));
+          out.z.push(rPt * Math.sin(lam));
+          out.alpha.push(alphaAt(rPt));
+          out.size.push(sizeAt(rPt));
+        }
+      }
+    }
+    return out;
+  }
+
+  function renderStreamerBand(slug, bodyName, cfg, where, center, basis,
+                              starRadiusKm, warn) {
+    if (typeof starRadiusKm !== "number") {
+      warn(where + ": a streamer band is measured in R_sun but no star " +
+           "radius was served for this group -- nothing drawn");
+      return [];
+    }
+    var cuspR = measuredRadiusRsun(cfg.cusp_radius, where + "/cusp_radius", warn);
+    var fadeR = measuredRadiusRsun(cfg.fade_radius, where + "/fade_radius", warn);
+    var d = cfg.drawing;
+    if (cuspR === null || fadeR === null || !isDict(d)) {
+      warn(where + ": needs cusp_radius, fade_radius and a drawing block " +
+           "-- nothing drawn");
+      return [];
+    }
+    if (basis === null) {
+      // Reported rather than drawn flat. A band in the ecliptic instead of
+      // the solar equator is the L-229 defect, and it looks plausible, which
+      // is why it went unnoticed in the orrery for weeks.
+      warn(where + ": no solar pole served, so the band would lie in the " +
+           "ecliptic rather than the solar equator (L-229) -- not drawn");
+      return [];
+    }
+
+    var pts = streamerBandPoints(cuspR, fadeR, d);
+    var scale = starRadiusKm / KM_PER_AU;
+    var xs = [], ys = [], zs = [], colors = [];
+    var base = (cfg.color || "rgb(255, 200, 80)")
+      .replace("rgb(", "").replace(")", "");
+    for (var i = 0; i < pts.x.length; i++) {
+      var p = applyBasis(basis, pts.x[i] * scale, pts.y[i] * scale,
+                         pts.z[i] * scale);
+      xs.push(center[0] + p[0]);
+      ys.push(center[1] + p[1]);
+      zs.push(center[2] + p[2]);
+      colors.push("rgba(" + base + ", " + pts.alpha[i].toFixed(4) + ")");
+    }
+
+    var label = bodyName + ": " + (cfg.name || "Streamer Belt");
+    var traces = [{
+      type: "scatter3d", mode: "markers", x: xs, y: ys, z: zs,
+      marker: {size: pts.size, color: colors},
+      name: label, legendgroup: label, showlegend: true, hoverinfo: "skip"
+    }];
+
+    // The info marker sits just outside the band's edge AT THE CUSP -- the
+    // pinch is where the eye goes and where the physics is. Deliberately not
+    // at a pole: this is a band, and the poles are empty by design.
+    var m = applyBasis(basis, cuspR * scale * 1.12, 0, 0);
+    var hover = label + "<br><br>" +
+      "Cusp: " + cuspR + " solar radii<br>= " +
+      kmAndAu(cuspR * starRadiusKm) + "<br>" +
+      "Fades to nothing by: " + fadeR + " solar radii<br>= " +
+      kmAndAu(fadeR * starRadiusKm);
+    if (cfg.cusp_radius.source) {
+      hover += "<br><br>" + wrapHover("Cusp: " + cfg.cusp_radius.source);
+    }
+    if (cfg.fade_radius.source) {
+      hover += "<br><br>" + wrapHover("Fade: " + cfg.fade_radius.source);
+    }
+    if (cfg.note) hover += "<br><br>" + wrapHover(cfg.note);
+    traces.push(infoMarker(center[0] + m[0], center[1] + m[1],
+                           center[2] + m[2],
+                           cfg.color || "rgb(255, 200, 80)", hover, label));
+    return traces;
+  }
+
+  /*
    * A SHELL SET: concentric spheres around one body, each with its own
    * radius, name, colour and opacity. The Sun's five groups are all this
    * shape; so, structurally, is Earth's atmosphere_shell, which keeps its
@@ -533,7 +719,7 @@
    * angle within a group rather than stacking at the north pole.
    */
   function renderShellSet(slug, bodyName, featureKey, params, center,
-                          halfRangeAu, warn) {
+                          basis, halfRangeAu, warn) {
     var traces = [];
     var where = slug + "/" + featureKey;
     var starRadiusKm = null;
@@ -548,7 +734,27 @@
       var key = keys[i];
       if (RESERVED_KEYS.indexOf(key) !== -1) continue;
       var cfg = params[key];
-      if (!isDict(cfg) || cfg.radius === undefined) {
+      if (!isDict(cfg)) {
+        warn(where + "/" + key + ": not a shell -- not drawn");
+        continue;
+      }
+      // A group member may be custom geometry rather than a sphere.
+      // The Sun's streamer belt belongs to Solar Atmosphere Structures
+      // in the orrery's own panel, so it lives in that group here
+      // rather than in a key of its own, and declares its shape.
+      if (cfg.shape !== undefined) {
+        if (cfg.shape === "streamer_band") {
+          traces = traces.concat(renderStreamerBand(
+            slug, bodyName, cfg, where + "/" + key, center, basis,
+            starRadiusKm, warn));
+          drawn += 1;
+        } else {
+          warn(where + "/" + key + ": unknown shape " +
+               JSON.stringify(cfg.shape) + " -- not drawn");
+        }
+        continue;
+      }
+      if (cfg.radius === undefined) {
         warn(where + "/" + key +
              ": not a shell (needs a measured radius) -- not drawn");
         continue;
@@ -664,7 +870,7 @@
           if (SHELL_SET_KEYS.indexOf(fr.feature) !== -1) {
             traces = traces.concat(renderShellSet(
               slug, bodyName, fr.feature, params, center,
-              halfRangeAu, warn));
+              orientations[slug] || null, halfRangeAu, warn));
             break;
           }
           warn(slug + "/" + fr.feature +

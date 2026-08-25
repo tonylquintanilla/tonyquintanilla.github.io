@@ -17,8 +17,10 @@ const r = GF.buildFeatureTraces(features, bodies, {sceneHalfRangeAu: 1.1});
 check("no unread inputs", r.warnings.length === 0, r.warnings.join(" | "));
 const geo = r.traces.filter(t => t.showlegend === true);
 const info = r.traces.filter(t => t.showlegend === false);
-check("14 geometry traces", geo.length === 14, "got " + geo.length);
-check("14 info markers, one per shell", info.length === 14, "got " + info.length);
+check("15 geometry traces (14 spheres + the streamer band)",
+      geo.length === 15, "got " + geo.length);
+check("15 info markers, one per geometry trace",
+      info.length === 15, "got " + info.length);
 
 function radiusOf(t){ return Math.max(...t.x.map(Math.abs), ...t.z.map(Math.abs)); }
 const byName = {}; geo.forEach(t => byName[t.name] = t);
@@ -40,7 +42,7 @@ check("chromosphere is ABOVE the photosphere",
 const hidden = geo.filter(t => t.visible === "legendonly").map(t=>t.name).sort();
 const shown  = geo.filter(t => t.visible !== "legendonly").map(t=>t.name).sort();
 check("everything beyond 1.1 AU starts hidden",
-      hidden.length === 6 && shown.length === 8, hidden.length+" hidden / "+shown.length+" shown");
+      hidden.length === 6 && shown.length === 9, hidden.length+" hidden / "+shown.length+" shown");
 console.log("       hidden: " + hidden.join(", "));
 
 // marker separation: photosphere vs chromosphere markers must not coincide
@@ -69,7 +71,45 @@ check("stripped sun_radius is reported, not silently skipped",
       r4.warnings.length > 0, r4.warnings[0] ? r4.warnings[0].slice(0,70) : "");
 const r5 = GF.buildFeatureTraces(features, {}, {sceneHalfRangeAu:1.1});
 check("missing body position reported",
-      r5.warnings.length === 5 && r5.traces.length === 0);
+      r5.warnings.length === 6 && r5.traces.length === 0,
+      r5.warnings.length + " warnings");
+
+// --- the streamer band ------------------------------------------------
+// The band is the reason the Sun needed a pole. Measured off the DRAWN
+// points by fitting the plane of the helmet, independent of poleBasis, so
+// this check can disagree with the renderer instead of echoing it (L-229).
+const band = geo.find(t => t.name.indexOf("Streamer") !== -1);
+check("streamer band drawn", !!band && band.x.length > 1000,
+      band ? band.x.length + " points" : "MISSING");
+check("band fades via per-point rgba, not a scalar opacity",
+      !!band && Array.isArray(band.marker.color));
+const cuspAu = 4.0 * RSUN_KM / AU;
+const P = [];
+for (let i = 0; band && i < band.x.length; i++) {
+  if (Math.hypot(band.x[i], band.y[i], band.z[i]) <= cuspAu)
+    P.push([band.x[i], band.y[i], band.z[i]]);
+}
+let C = [[0,0,0],[0,0,0],[0,0,0]];
+P.forEach(p => { for (let a=0;a<3;a++) for (let b=0;b<3;b++) C[a][b] += p[a]*p[b]; });
+let v = [0.3, 0.4, 0.87];
+for (let it = 0; it < 400; it++) {
+  const tr = C[0][0] + C[1][1] + C[2][2];
+  const w = [0,0,0];
+  for (let a=0;a<3;a++) { w[a] = tr*v[a]; for (let b=0;b<3;b++) w[a] -= C[a][b]*v[b]; }
+  const n = Math.hypot(w[0],w[1],w[2]); v = w.map(x => x/n);
+}
+const tilt = Math.acos(Math.abs(v[2])) * 180 / Math.PI;
+check("band sits in the SOLAR equator, not the ecliptic (7.25 deg)",
+      Math.abs(tilt - 7.25) < 0.15, tilt.toFixed(3) + " deg from " + P.length + " helmet points");
+
+// A band with no pole must be REFUSED, not drawn flat -- that is the L-229
+// defect and it looks perfectly plausible on screen.
+const noPole = features.filter(f => f.feature !== "orientation");
+const r6 = GF.buildFeatureTraces(noPole, bodies, {sceneHalfRangeAu:1.1});
+check("no pole -> band refused and reported, spheres still drawn",
+      r6.warnings.some(w => w.indexOf("L-229") !== -1) &&
+      r6.traces.filter(t => t.showlegend === true).length === 14,
+      r6.warnings.filter(w => w.indexOf("L-229") !== -1)[0] || "no L-229 warning");
 
 console.log(fail ? "FAILURES: " + fail : "ALL CHECKS PASSED");
 process.exit(fail ? 1 : 0);
