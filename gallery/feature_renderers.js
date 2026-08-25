@@ -41,7 +41,14 @@
   // Reserved child keys inside a slug-keyed feature node. Anything else that
   // is a dict is treated as a drawable member; anything unrecognized is
   // REPORTED, never silently skipped.
-  var RESERVED_KEYS = ["planet_radius", "orientation"];
+  var RESERVED_KEYS = ["planet_radius", "orientation", "sun_radius"];
+
+  // Feature keys whose params are a set of concentric spheres (L-234).
+  // A list rather than a switch case each, so a new group added to
+  // objects_config.json draws without a code change here -- while an
+  // unrecognized key still falls through to the dispatcher's warning.
+  var SHELL_SET_KEYS = ["sun_structures", "solar_atmosphere",
+                        "solar_wind", "oort_cloud", "hill_sphere"];
 
   // --- DECLARED style (see header) ---------------------------------------
 
@@ -109,6 +116,63 @@
       return null;
     }
     return node.value;
+  }
+
+
+  /*
+   * Break a long hover run into lines. The convention (L-227,
+   * orrery-coding-conventions 1.5) is that a hover string carries its own
+   * breaks: a source citation is one sentence in the config and would
+   * otherwise render as a single run off the side of the viewport. Breaks
+   * on word boundaries at HOVER_WIDTH, so a long DOI or URL overruns rather
+   * than being cut in half.
+   */
+  var HOVER_WIDTH = 70;
+
+  function wrapHover(text) {
+    var words = String(text).split(" ");
+    var lines = [], cur = "";
+    for (var i = 0; i < words.length; i++) {
+      if (cur && (cur + " " + words[i]).length > HOVER_WIDTH) {
+        lines.push(cur);
+        cur = words[i];
+      } else {
+        cur = cur ? cur + " " + words[i] : words[i];
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines.join("<br>");
+  }
+
+  /*
+   * A shell radius is {value, unit} in either solar radii or AU (L-234).
+   * Both are served because both are what the constant states: the corona
+   * is 3 R_sun in the literature and the termination shock is 94 AU, and
+   * converting either one before it is served would put arithmetic between
+   * the number and the paper it came from.
+   *
+   * An unrecognized unit is REPORTED and the shell is not drawn. Guessing a
+   * conversion is how a shell ends up in the wrong place looking plausible.
+   */
+  function measuredRadiusAu(node, where, starRadiusKm, warn) {
+    if (!isDict(node) || typeof node.value !== "number") {
+      warn(where + ": expected a measured radius {value, unit}");
+      return null;
+    }
+    if (node.unit === "au") {
+      return node.value;
+    }
+    if (node.unit === "R_sun") {
+      if (typeof starRadiusKm !== "number") {
+        warn(where + ": radius is in R_sun but no star radius was served " +
+             "for this group -- nothing drawn");
+        return null;
+      }
+      return node.value * starRadiusKm / KM_PER_AU;
+    }
+    warn(where + ": unit is " + JSON.stringify(node.unit) +
+         ", expected \"R_sun\" or \"au\" -- refusing to guess a conversion");
+    return null;
   }
 
   function fmtKm(km) {
@@ -455,6 +519,84 @@
     return traces;
   }
 
+
+  /*
+   * A SHELL SET: concentric spheres around one body, each with its own
+   * radius, name, colour and opacity. The Sun's five groups are all this
+   * shape; so, structurally, is Earth's atmosphere_shell, which keeps its
+   * own renderer only because its radii are expressed as fractions of the
+   * planet radius rather than as measured entries.
+   *
+   * Two behaviours worth knowing about are described at length in the patch
+   * that introduced this function: shells larger than the scene are created
+   * visible:"legendonly", and info markers step 20 degrees apart in polar
+   * angle within a group rather than stacking at the north pole.
+   */
+  function renderShellSet(slug, bodyName, featureKey, params, center,
+                          halfRangeAu, warn) {
+    var traces = [];
+    var where = slug + "/" + featureKey;
+    var starRadiusKm = null;
+    if (params.sun_radius !== undefined) {
+      starRadiusKm = measured(params.sun_radius, "km",
+                              where + "/sun_radius", warn);
+    }
+
+    var keys = Object.keys(params);
+    var drawn = 0;
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (RESERVED_KEYS.indexOf(key) !== -1) continue;
+      var cfg = params[key];
+      if (!isDict(cfg) || cfg.radius === undefined) {
+        warn(where + "/" + key +
+             ": not a shell (needs a measured radius) -- not drawn");
+        continue;
+      }
+      var radiusAu = measuredRadiusAu(cfg.radius, where + "/" + key,
+                                      starRadiusKm, warn);
+      if (radiusAu === null || !(radiusAu > 0)) continue;
+
+      var label = bodyName + ": " + (cfg.name || key);
+      var color = cfg.color || "rgb(200, 200, 200)";
+      var opacity = (typeof cfg.opacity === "number") ? cfg.opacity : 0.4;
+      var size = (typeof cfg.marker_size === "number") ? cfg.marker_size : 2.5;
+      var nPoints = cfg.n_points || 20;
+
+      var pts = spherePoints(radiusAu, nPoints);
+      var built = geometryTrace(pts, center, null, label, color, opacity, size);
+      if (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
+          radiusAu > halfRangeAu) {
+        built.trace.visible = "legendonly";
+      }
+      traces.push(built.trace);
+
+      // Info marker: 20 degrees of polar angle per shell within the group,
+      // at that shell's own radius. Separating angularly rather than
+      // radially is the only thing that works when two shells are a
+      // fraction of a percent apart, as the photosphere and chromosphere
+      // are (orrery-coding-conventions 1.5).
+      var polar = (Math.PI / 180) * 20 * drawn;
+      var mx = center[0] + radiusAu * 1.05 * Math.sin(polar);
+      var my = center[1];
+      var mz = center[2] + radiusAu * 1.05 * Math.cos(polar);
+
+      var hover = label + "<br><br>";
+      if (cfg.radius.unit === "R_sun") {
+        hover += "Radius: " + cfg.radius.value + " solar radii<br>";
+      }
+      hover += "= " + kmAndAu(radiusAu * KM_PER_AU);
+      if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + cfg.source);
+      if (cfg.note) hover += "<br>" + wrapHover(cfg.note);
+      traces.push(infoMarker(mx, my, mz, color, hover, label));
+      drawn += 1;
+    }
+    if (drawn === 0) {
+      warn(where + ": no shell in this group could be drawn");
+    }
+    return traces;
+  }
+
   // --- Entry point --------------------------------------------------------
 
   /*
@@ -466,8 +608,10 @@
    * read is REPORTED rather than dropped -- silence about something
    * unexamined is the failure mode.
    */
-  function buildFeatureTraces(featureRequests, bodies) {
+  function buildFeatureTraces(featureRequests, bodies, opts) {
     var warnings = [];
+    var halfRangeAu = (opts && typeof opts.sceneHalfRangeAu === "number")
+      ? opts.sceneHalfRangeAu : null;
     function warn(msg) { warnings.push(msg); }
 
     var traces = [];
@@ -517,6 +661,12 @@
             slug, bodyName, params, center, warn));
           break;
         default:
+          if (SHELL_SET_KEYS.indexOf(fr.feature) !== -1) {
+            traces = traces.concat(renderShellSet(
+              slug, bodyName, fr.feature, params, center,
+              halfRangeAu, warn));
+            break;
+          }
           warn(slug + "/" + fr.feature +
                ": no renderer for this feature key -- nothing drawn");
       }

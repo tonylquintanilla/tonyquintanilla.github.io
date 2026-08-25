@@ -36,8 +36,13 @@ check("no unread inputs reported for jupiter+saturn",
 
 const geo2 = r2.traces.filter(t => t.showlegend === true);
 const marks2 = r2.traces.filter(t => t.showlegend === false);
+// L-234: the scene CENTRE contributes features too, so this sun-centred
+// scene also carries the Sun's fourteen shells. The assertion was always
+// about the two gas giants; it counted the whole scene only because they
+// were the whole scene.
+const geoGiants = geo2.filter(t => t.name.indexOf("Sun:") !== 0);
 check("11 geometry traces (7 Saturn rings + 4 Jupiter rings) + 3 belts = 14",
-      geo2.length === 14, "got " + geo2.length);
+      geoGiants.length === 14, "got " + geoGiants.length);
 check("one info marker per geometry trace",
       marks2.length === geo2.length, geo2.length + " vs " + marks2.length);
 check("every geometry trace skips hover",
@@ -105,8 +110,13 @@ const p1 = JSON.parse(fs.readFileSync(path.join(__dirname, "payload_earth.json")
 const r1 = GF.buildFeatureTraces(p1.features, p1.bodies);
 check("no unread inputs reported for earth", r1.warnings.length === 0, r1.warnings.join(" | "));
 const geo1 = r1.traces.filter(t => t.showlegend === true);
-check("2 atmosphere shells + 2 Van Allen belts = 4 geometry traces",
-      geo1.length === 4, "got " + geo1.length);
+const geoEarth = geo1.filter(t => t.name.indexOf("Earth:") === 0);
+check("2 atmosphere shells + 2 Van Allen belts = 4 Earth geometry traces",
+      geoEarth.length === 4, "got " + geoEarth.length);
+// L-234: same reasoning as above, from the other side.
+const geoSun = geo1.filter(t => t.name.indexOf("Sun:") === 0);
+check("the scene centre contributes 14 solar shells",
+      geoSun.length === 14, "got " + geoSun.length);
 const lower = geo1.find(t => t.name === "Earth: Lower Atmosphere");
 const ePos = p1.bodies.earth.position;
 let sr = 0;

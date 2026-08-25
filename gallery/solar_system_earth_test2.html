@@ -175,6 +175,10 @@ function frameLayout(layout, featureTraces, bodies, slug) {
   let half = 0;
   featureTraces.forEach(function (t) {
     if (!t.name || t.name.indexOf(prefix) !== 0 || !t.x) return;
+    // L-234: a shell hidden behind a legend click is not part of what
+    // is on screen, so it must not set the frame. Framing on the Sun
+    // would otherwise range the axes to the Oort cloud.
+    if (t.visible === "legendonly") return;
     for (let i = 0; i < t.x.length; i++) {
       half = Math.max(half, Math.abs(t.x[i] - c[0]), Math.abs(t.y[i] - c[1]),
                       Math.abs(t.z[i] - c[2]));
@@ -242,6 +246,18 @@ for o in result.context.objects:
         o.osculating, result.context.resolved_epoch_jd)
     bodies[o.slug] = {"name": o.name, "position": [px, py, pz]}
 
+# L-234: the scene CENTER is not in context.objects -- it has no orbit in
+# its own frame -- so it never reached the bodies map and every feature
+# dispatched for it warned "no propagated position available". It sits at
+# the origin by definition.
+center_slug = result.context.center
+if center_slug not in bodies:
+    center_cfg = next((o for o in cfg["objects"]
+                       if o["slug"] == center_slug), None)
+    if center_cfg is not None:
+        bodies[center_slug] = {"name": center_cfg["name"],
+                               "position": [0.0, 0.0, 0.0]}
+
 json.dumps({
     "figure": result.figure,
     "fingerprint": golden,
@@ -289,8 +305,14 @@ async function run() {
     const payload = JSON.parse(await py.runPythonAsync(DRIVER));
     log("Assembly complete: " + payload.figure.data.length + " orbit traces.", "ok");
 
+    // The scene half-range decides which shells start hidden: anything
+    // bigger than the scene is created visible:"legendonly" (L-234).
+    const sceneRange = ((payload.figure.layout.scene || {}).xaxis || {}).range;
+    const halfRangeAu = Array.isArray(sceneRange)
+      ? Math.max(Math.abs(sceneRange[0]), Math.abs(sceneRange[1])) : null;
     const feat = GalleryFeatures.buildFeatureTraces(payload.features,
-                                                    payload.bodies);
+                                                    payload.bodies,
+                                                    {sceneHalfRangeAu: halfRangeAu});
     feat.warnings.forEach(w => log("feature: " + w, "err"));
     log("Features: " + feat.traces.length + " traces from "
         + payload.features.length + " requests.",
