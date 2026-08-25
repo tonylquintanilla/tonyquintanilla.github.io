@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-08-25T14:02:41.501340+00:00",
+  "generated": "2026-08-25T18:19:47.745204+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2460954.5428770096,
-    "end_jd": 2461601.627528114
+    "start_jd": 2460954.721421499,
+    "end_jd": 2461601.806072603
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -413,7 +413,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T14:02:40.838426+00:00"
+          "retrieved": "2026-08-25T18:19:47.298824+00:00"
         }
       },
       "positions": null,
@@ -520,7 +520,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T14:02:40.891855+00:00"
+          "retrieved": "2026-08-25T18:19:47.340151+00:00"
         }
       },
       "positions": null,
@@ -637,7 +637,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T14:02:41.008515+00:00"
+          "retrieved": "2026-08-25T18:19:47.378322+00:00"
         }
       },
       "positions": null,
@@ -746,7 +746,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T14:02:41.062053+00:00"
+          "retrieved": "2026-08-25T18:19:47.419727+00:00"
         }
       },
       "positions": null,
@@ -809,7 +809,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T14:02:41.112834+00:00"
+          "retrieved": "2026-08-25T18:19:47.457161+00:00"
         }
       },
       "positions": null,
@@ -872,7 +872,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T14:02:41.186589+00:00"
+          "retrieved": "2026-08-25T18:19:47.514120+00:00"
         }
       },
       "positions": null,
@@ -935,7 +935,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T14:02:41.248641+00:00"
+          "retrieved": "2026-08-25T18:19:47.555158+00:00"
         }
       },
       "positions": null,
@@ -998,7 +998,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T14:02:41.311525+00:00"
+          "retrieved": "2026-08-25T18:19:47.599005+00:00"
         }
       },
       "positions": null,
@@ -1061,7 +1061,7 @@
           "query_target": "99942",
           "center": "@sun",
           "epoch": 2461277.5,
-          "retrieved": "2026-08-25T14:02:41.370592+00:00"
+          "retrieved": "2026-08-25T18:19:47.639092+00:00"
         }
       },
       "positions": null,
@@ -1158,7 +1158,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460239.681188389,
-          "retrieved": "2026-08-25T14:02:41.446029+00:00"
+          "retrieved": "2026-08-25T18:19:47.699874+00:00"
         }
       },
       "positions": null,
@@ -1226,7 +1226,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-08-25T14:02:41.492745+00:00"
+          "retrieved": "2026-08-25T18:19:47.738454+00:00"
         }
       },
       "positions": null,
