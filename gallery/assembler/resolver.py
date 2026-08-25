@@ -24,6 +24,9 @@ Known-unimplemented scene-spec fields fail loudly (UnsupportedInPhase2Error);
 unrecognized fields only warn (forward compatibility) -- manifest v2 Section 3.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+Module updated: August 2026 with Anthropic's Claude Opus 5 (L-234: the
+scene CENTER's features are dispatched too -- a center body is not in
+scene_spec.objects, so its shells were unreachable by construction).
 
 Role: computation
 Domain: assembler
@@ -33,7 +36,9 @@ from typing import Any, Dict, List, Tuple
 
 from .catalog import Catalog
 from .cache_reader import CacheReader
-from .errors import FrameRejectionError, UnsupportedInPhase2Error
+from .errors import (
+    FrameRejectionError, UnknownObjectError, UnsupportedInPhase2Error,
+)
 from .models import (
     AssemblyContext, FeatureRequest, ResolvedObject, SceneSpec,
 )
@@ -78,6 +83,31 @@ def _iso_to_jd(iso: str) -> float:
 
 def _norm_center(s: str) -> str:
     return (s or "").lstrip("@").strip().lower()
+
+
+def _feature_requests_for(slug, feature_map):
+    """FeatureRequests for one body's served `features` mapping.
+
+    ONE definition, called by both the object loop and the center step
+    (L-234). Two copies of this check would be two answers to one
+    question: a params guard that fired for an orbiting body and not for
+    a scene center is exactly the kind of asymmetry nobody would notice
+    until a feature rendered with no numbers behind it.
+    """
+    reqs = []
+    for fk in feature_map:
+        params = feature_map.get(fk)
+        if not isinstance(params, dict):
+            raise ValueError(
+                "Object '%s' feature '%s' carries parameters of type "
+                "%s; a parameter dict is required. Same reasoning as "
+                "above: announce it rather than render a feature "
+                "with no numbers behind it."
+                % (slug, fk, type(params).__name__)
+            )
+        reqs.append(FeatureRequest(
+            object_slug=slug, feature_key=fk, params=params))
+    return reqs
 
 
 def resolve(scene_spec: SceneSpec, catalog: Catalog,
@@ -166,18 +196,39 @@ def resolve(scene_spec: SceneSpec, catalog: Catalog,
             event_link=rec.get("event_link"),
         ))
         frame_labels.add(frame)
-        for fk in features:
-            params = feature_map.get(fk)
-            if not isinstance(params, dict):
+        feature_reqs.extend(_feature_requests_for(slug, feature_map))
+
+    # 4b. CENTER features (L-234). The scene center is not in
+    # scene_spec.objects -- it has no orbit to draw in its own frame --
+    # but it owns shell geometry drawn around the origin. It is read
+    # from the SAME served record every object's features come from, so
+    # there is one store and one path.
+    #
+    # This is not Sun-specific. A Moon-around-Earth scene centers on
+    # Earth, and Earth's atmosphere shells reach the client by this step
+    # and no other.
+    if center not in {o.slug for o in resolved} and catalog.has(center):
+        try:
+            center_rec = cache.record(center)
+        except UnknownObjectError:
+            center_rec = None
+            warnings.append(
+                "Scene center '%s' is in the object catalog but has no "
+                "record in the served cache, so its features are not "
+                "drawn. A cache built before the center entry was added "
+                "will do this; re-run the nightly builder." % center
+            )
+        if center_rec is not None:
+            center_features = center_rec.get("features") or {}
+            if not isinstance(center_features, dict):
                 raise ValueError(
-                    "Object '%s' feature '%s' carries parameters of type "
-                    "%s; a parameter dict is required. Same reasoning as "
-                    "above: announce it rather than render a feature "
-                    "with no numbers behind it."
-                    % (slug, fk, type(params).__name__)
+                    "Scene center '%s' carries a `features` value of type "
+                    "%s; the served schema is a mapping of feature key -> "
+                    "parameter dict."
+                    % (center, type(center_features).__name__)
                 )
-            feature_reqs.append(FeatureRequest(
-                object_slug=slug, feature_key=fk, params=params))
+            feature_reqs.extend(
+                _feature_requests_for(center, center_features))
 
     frame = sorted(frame_labels)[0] if len(frame_labels) == 1 else "mixed"
 
