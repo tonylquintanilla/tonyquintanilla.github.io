@@ -17,10 +17,10 @@ const r = GF.buildFeatureTraces(features, bodies, {sceneHalfRangeAu: 1.1});
 check("no unread inputs", r.warnings.length === 0, r.warnings.join(" | "));
 const geo = r.traces.filter(t => t.showlegend === true);
 const info = r.traces.filter(t => t.showlegend === false);
-check("15 geometry traces (14 spheres + the streamer band)",
-      geo.length === 15, "got " + geo.length);
-check("15 info markers, one per geometry trace",
-      info.length === 15, "got " + info.length);
+check("18 geometry traces (14 spheres + band + 3 Oort shapes)",
+      geo.length === 18, "got " + geo.length);
+check("18 info markers, one per geometry trace",
+      info.length === 18, "got " + info.length);
 
 function radiusOf(t){ return Math.max(...t.x.map(Math.abs), ...t.z.map(Math.abs)); }
 const byName = {}; geo.forEach(t => byName[t.name] = t);
@@ -42,7 +42,7 @@ check("chromosphere is ABOVE the photosphere",
 const hidden = geo.filter(t => t.visible === "legendonly").map(t=>t.name).sort();
 const shown  = geo.filter(t => t.visible !== "legendonly").map(t=>t.name).sort();
 check("everything beyond 1.1 AU starts hidden",
-      hidden.length === 6 && shown.length === 9, hidden.length+" hidden / "+shown.length+" shown");
+      hidden.length === 9 && shown.length === 9, hidden.length+" hidden / "+shown.length+" shown");
 console.log("       hidden: " + hidden.join(", "));
 
 // marker separation: photosphere vs chromosphere markers must not coincide
@@ -108,8 +108,48 @@ const noPole = features.filter(f => f.feature !== "orientation");
 const r6 = GF.buildFeatureTraces(noPole, bodies, {sceneHalfRangeAu:1.1});
 check("no pole -> band refused and reported, spheres still drawn",
       r6.warnings.some(w => w.indexOf("L-229") !== -1) &&
-      r6.traces.filter(t => t.showlegend === true).length === 14,
+      r6.traces.filter(t => t.showlegend === true).length === 17,
       r6.warnings.filter(w => w.indexOf("L-229") !== -1)[0] || "no L-229 warning");
+
+// --- the three Oort shapes -------------------------------------------
+// Measured off the drawn points. The torus SURFACE sits at the mid-radius,
+// not at the cloud bounds: 2,000 and 20,000 AU bound the cloud, and a torus
+// built from them draws a ring at 11,000. Checking the bounds here would
+// pass for the wrong reason.
+function radAt(t, i) { return Math.hypot(t.x[i], t.y[i], t.z[i]); }
+function span(t) {
+  let lo = Infinity, hi = 0;
+  for (let i = 0; i < t.x.length; i++) { const q = radAt(t, i); lo = Math.min(lo, q); hi = Math.max(hi, q); }
+  return [lo, hi];
+}
+const torus = geo.find(t => t.name.indexOf("Hills Cloud") !== -1);
+const clumps = geo.find(t => t.name.indexOf("clumps") !== -1);
+const tide = geo.find(t => t.name.indexOf("Galactic Tide") !== -1);
+check("all three Oort shapes drawn", !!torus && !!clumps && !!tide);
+const [tl, th] = span(torus);
+check("torus ring sits at the mid-radius, not at the cloud bounds",
+      tl > 4000 && th < 18000 && (tl + th) / 2 > 9000 && (tl + th) / 2 < 13000,
+      Math.round(tl) + " - " + Math.round(th) + " AU");
+const [cl, ch] = span(clumps);
+check("clumps stay inside the outer bound", ch <= 100000 && cl >= 20000,
+      Math.round(cl) + " - " + Math.round(ch) + " AU");
+const [dl, dh] = span(tide);
+check("tide clipped to 0.5-1.5 of 50,000 AU",
+      Math.abs(dl - 25000) < 1 && Math.abs(dh - 75000) < 1,
+      Math.round(dl) + " - " + Math.round(dh) + " AU");
+let nearPlane = 0;
+for (let i = 0; i < tide.x.length; i++) {
+  if (Math.abs(Math.asin(tide.z[i] / radAt(tide, i)) * 180 / Math.PI) < 15) nearPlane++;
+}
+const uniform = tide.x.length * Math.sin(15 * Math.PI / 180);
+check("tide is genuinely thinned at the galactic plane",
+      nearPlane < 0.7 * uniform,
+      nearPlane + " points vs ~" + Math.round(uniform) + " for a uniform shell");
+const again = GF.buildFeatureTraces(features, bodies, {sceneHalfRangeAu: 1.1});
+const clumps2 = again.traces.filter(t => t.showlegend === true)
+  .find(t => t.name.indexOf("clumps") !== -1);
+check("seeded: two runs give identical geometry",
+      JSON.stringify(clumps.x) === JSON.stringify(clumps2.x));
 
 console.log(fail ? "FAILURES: " + fail : "ALL CHECKS PASSED");
 process.exit(fail ? 1 : 0);

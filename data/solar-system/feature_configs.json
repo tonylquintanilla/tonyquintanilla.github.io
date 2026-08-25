@@ -197,6 +197,88 @@
         }
       },
       "oort_cloud": {
+        "hills_cloud_torus": {
+          "name": "Hills Cloud (torus)",
+          "shape": "torus",
+          "color": "rgb(180, 160, 255)",
+          "inner_radius": {
+            "value": 2000,
+            "unit": "au",
+            "source": "Hills (1981); Oort (1950) -- inner edge estimate",
+            "orrery_constant": "constants_new.py::INNER_LIMIT_OORT_CLOUD_AU"
+          },
+          "outer_radius": {
+            "value": 20000,
+            "unit": "au",
+            "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+            "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
+          },
+          "drawing": {
+            "_declared": "Drawing choices, not measurements. Copied from solar_visualization_shells.py::create_sun_hills_cloud_torus defaults.",
+            "thickness_ratio": 0.3,
+            "n_points": 60,
+            "noise_factor": 0.1,
+            "z_flatten": 0.5,
+            "seed": 20260825,
+            "opacity": 0.28,
+            "marker_size": 1.6
+          },
+          "note": "Disk-like rather than spherical: the inner Oort cloud is flattened toward the ecliptic, unlike the outer cloud. The thickness is a drawing choice."
+        },
+        "outer_oort_clumpy": {
+          "name": "Outer Oort Cloud (clumps)",
+          "shape": "clump_field",
+          "color": "rgb(200, 200, 255)",
+          "inner_radius": {
+            "value": 20000,
+            "unit": "au",
+            "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+            "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
+          },
+          "outer_radius": {
+            "value": 100000,
+            "unit": "au",
+            "source": "Oort (1950); Weissman (1996)",
+            "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
+          },
+          "drawing": {
+            "_declared": "Drawing choices, not measurements. No survey has resolved individual Oort clumps; the count, sizes and concentration are illustrative of the fact that the cloud is not smooth. Copied from solar_visualization_shells.py::create_sun_outer_oort_clumpy defaults.",
+            "n_clumps": 15,
+            "points_min": 50,
+            "points_max": 200,
+            "clump_size_min": 5000,
+            "clump_size_max": 15000,
+            "beta_a": 2,
+            "beta_b": 5,
+            "seed": 20260825,
+            "opacity": 0.3,
+            "marker_size": 1.2
+          },
+          "note": "The clumping is illustrative. That the cloud is lumpy is expected from stellar perturbations; where the lumps are is not known and is not claimed here."
+        },
+        "galactic_tide": {
+          "name": "Galactic Tide (thinned at the plane)",
+          "shape": "tide_field",
+          "color": "rgb(140, 200, 200)",
+          "typical_radius": {
+            "value": 50000,
+            "unit": "au",
+            "source": "DECLARED -- a mid-cloud distance between the Hills cloud and the outer edge, chosen for the illustration. Not a measurement.",
+            "orrery_constant": "solar_visualization_shells.py::create_sun_galactic_tide default"
+          },
+          "drawing": {
+            "_declared": "Drawing choices, not measurements. The radial spread, the clip and the strength of the plane asymmetry are all illustrative.",
+            "n_points": 2000,
+            "radial_spread": 0.3,
+            "clip_low": 0.5,
+            "clip_high": 1.5,
+            "asymmetry": 0.5,
+            "seed": 20260825,
+            "opacity": 0.3,
+            "marker_size": 1.2
+          },
+          "note": "Objects are drawn thinned near the galactic plane, where the Milky Way's tide is most disruptive. The shape of the asymmetry is illustrative, not fitted to a survey."
+        },
         "inner_oort_limit": {
           "name": "Inner Limit of Oort Cloud",
           "radius": {

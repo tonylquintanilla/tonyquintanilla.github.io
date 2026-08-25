@@ -707,6 +707,182 @@
   }
 
   /*
+   * AU alongside km, in that order for the far shells: at 100,000 AU the km
+   * figure is 15 digits and unreadable, so AU leads here while kmAndAu()
+   * keeps leading with km for everything inside the corona.
+   */
+  function fmtAu(au) {
+    return au.toLocaleString("en-US", {maximumFractionDigits: 0}) + " AU (" +
+      (au * KM_PER_AU).toPrecision(3) + " km)";
+  }
+
+  /*
+   * Sampling the three Oort shapes need. All seeded: the orrery's own Oort
+   * builders draw from the global numpy RNG and re-roll every render, which
+   * the streamer band's docstring already declines to copy.
+   */
+  function gaussian(rand) {
+    // Box-Muller. Guard u away from zero so the log cannot blow up.
+    var u = 1 - rand(), v = rand();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  function betaSample(rand, a, b) {
+    // For INTEGER a and b, Beta(a, b) is the a-th smallest of a+b-1
+    // uniforms. Exact, and it needs no gamma function.
+    var n = a + b - 1, u = [];
+    for (var i = 0; i < n; i++) u.push(rand());
+    u.sort(function (p, q) { return p - q; });
+    return u[a - 1];
+  }
+
+  function measuredAu(node, where, warn) {
+    if (!isDict(node) || typeof node.value !== "number") {
+      warn(where + ": expected a measured radius {value, unit}");
+      return null;
+    }
+    if (node.unit !== "au") {
+      warn(where + ": unit is " + JSON.stringify(node.unit) +
+           ", expected \"au\"");
+      return null;
+    }
+    return node.value;
+  }
+
+  function cloudTrace(xs, ys, zs, center, label, color, opacity, size) {
+    var X = [], Y = [], Z = [];
+    for (var i = 0; i < xs.length; i++) {
+      X.push(center[0] + xs[i]);
+      Y.push(center[1] + ys[i]);
+      Z.push(center[2] + zs[i]);
+    }
+    return {
+      type: "scatter3d", mode: "markers", x: X, y: Y, z: Z,
+      marker: {size: size, color: color, opacity: opacity},
+      name: label, legendgroup: label, showlegend: true, hoverinfo: "skip"
+    };
+  }
+
+  /* A torus: the Hills cloud, flattened toward the ecliptic. */
+  function torusPoints(innerAu, outerAu, d) {
+    var major = (innerAu + outerAu) / 2;
+    var minor = (outerAu - innerAu) / 2 * d.thickness_ratio;
+    var rand = seededRandom(d.seed);
+    var n = d.n_points;
+    var xs = [], ys = [], zs = [];
+    for (var i = 0; i < n; i++) {
+      var u = 2 * Math.PI * i / n;
+      for (var j = 0; j < n; j++) {
+        var v = 2 * Math.PI * j / n;
+        var wobble = 1 + d.noise_factor * gaussian(rand);
+        var ring = major + minor * Math.cos(u);
+        xs.push(ring * Math.cos(v) * wobble);
+        ys.push(ring * Math.sin(v) * wobble);
+        zs.push(minor * Math.sin(u) * wobble * d.z_flatten);
+      }
+    }
+    return {x: xs, y: ys, z: zs};
+  }
+
+  /* Density clumps scattered through a spherical shell. */
+  function clumpFieldPoints(innerAu, outerAu, d) {
+    var rand = seededRandom(d.seed);
+    var xs = [], ys = [], zs = [];
+    for (var c = 0; c < d.n_clumps; c++) {
+      var cr = innerAu + (outerAu - innerAu) * rand();
+      var th = 2 * Math.PI * rand();
+      var ph = Math.PI * (rand() - 0.5);
+      var cx = cr * Math.cos(ph) * Math.cos(th);
+      var cy = cr * Math.cos(ph) * Math.sin(th);
+      var cz = cr * Math.sin(ph);
+      var count = d.points_min +
+        Math.floor(rand() * (d.points_max - d.points_min));
+      var size = d.clump_size_min +
+        rand() * (d.clump_size_max - d.clump_size_min);
+      for (var k = 0; k < count; k++) {
+        // Beta(2,5) concentrates points toward the clump centre.
+        var r = size * betaSample(rand, d.beta_a, d.beta_b);
+        var t2 = 2 * Math.PI * rand();
+        var p2 = Math.PI * (rand() - 0.5);
+        xs.push(cx + r * Math.cos(p2) * Math.cos(t2));
+        ys.push(cy + r * Math.cos(p2) * Math.sin(t2));
+        zs.push(cz + r * Math.sin(p2));
+      }
+    }
+    return {x: xs, y: ys, z: zs};
+  }
+
+  /*
+   * A shell thinned near the galactic plane. The orrery draws latitudes
+   * from a weighted choice over a hundred bins; this inverts the same
+   * weight by rejection, which needs no cumulative table and gives the
+   * same distribution.
+   */
+  function tideFieldPoints(radiusAu, d) {
+    var rand = seededRandom(d.seed);
+    var xs = [], ys = [], zs = [];
+    var wMax = 1 + d.asymmetry;
+    for (var i = 0; i < d.n_points; i++) {
+      var r = radiusAu + radiusAu * d.radial_spread * gaussian(rand);
+      r = Math.min(radiusAu * d.clip_high,
+                   Math.max(radiusAu * d.clip_low, r));
+      var th = 2 * Math.PI * rand();
+      var ph, tries = 0;
+      do {
+        ph = Math.PI * (rand() - 0.5);
+        tries++;
+      } while (rand() * wMax > 1 + d.asymmetry * Math.abs(Math.sin(ph)) &&
+               tries < 50);
+      xs.push(r * Math.cos(ph) * Math.cos(th));
+      ys.push(r * Math.cos(ph) * Math.sin(th));
+      zs.push(r * Math.sin(ph));
+    }
+    return {x: xs, y: ys, z: zs};
+  }
+
+  function renderOortShape(shape, bodyName, cfg, where, center, warn) {
+    var d = cfg.drawing;
+    if (!isDict(d)) {
+      warn(where + ": no drawing block -- not drawn");
+      return [];
+    }
+    var pts, marker, label = bodyName + ": " + (cfg.name || shape);
+    var hover = label + "<br><br>";
+    if (shape === "torus" || shape === "clump_field") {
+      var lo = measuredAu(cfg.inner_radius, where + "/inner_radius", warn);
+      var hi = measuredAu(cfg.outer_radius, where + "/outer_radius", warn);
+      if (lo === null || hi === null) return [];
+      pts = (shape === "torus") ? torusPoints(lo, hi, d)
+                                : clumpFieldPoints(lo, hi, d);
+      marker = [hi * 1.02, 0, 0];
+      hover += "From " + fmtAu(lo) + " to " + fmtAu(hi) + "<br>";
+      if (cfg.inner_radius.source) {
+        hover += "<br>" + wrapHover("Inner: " + cfg.inner_radius.source);
+      }
+      if (cfg.outer_radius.source) {
+        hover += "<br>" + wrapHover("Outer: " + cfg.outer_radius.source);
+      }
+    } else {
+      var rr = measuredAu(cfg.typical_radius, where + "/typical_radius", warn);
+      if (rr === null) return [];
+      pts = tideFieldPoints(rr, d);
+      marker = [rr * 1.02, 0, 0];
+      hover += "Typical distance " + fmtAu(rr) + "<br>";
+      if (cfg.typical_radius.source) {
+        hover += "<br>" + wrapHover(cfg.typical_radius.source);
+      }
+    }
+    if (cfg.note) hover += "<br><br>" + wrapHover(cfg.note);
+    var color = cfg.color || "rgb(200, 200, 255)";
+    return [
+      cloudTrace(pts.x, pts.y, pts.z, center, label, color,
+                 d.opacity, d.marker_size),
+      infoMarker(center[0] + marker[0], center[1] + marker[1],
+                 center[2] + marker[2], color, hover, label)
+    ];
+  }
+
+  /*
    * A SHELL SET: concentric spheres around one body, each with its own
    * radius, name, colour and opacity. The Sun's five groups are all this
    * shape; so, structurally, is Earth's atmosphere_shell, which keeps its
@@ -747,6 +923,22 @@
           traces = traces.concat(renderStreamerBand(
             slug, bodyName, cfg, where + "/" + key, center, basis,
             starRadiusKm, warn));
+          drawn += 1;
+        } else if (cfg.shape === "torus" ||
+                   cfg.shape === "clump_field" ||
+                   cfg.shape === "tide_field") {
+          // These three are measured in AU and carry no tilt: the
+          // Oort cloud is not organized about the solar equator, and
+          // the galactic-plane asymmetry is drawn in the ecliptic
+          // frame as the orrery draws it. Both are drawing choices
+          // and the hovers say so.
+          var oortTraces = renderOortShape(
+            cfg.shape, bodyName, cfg, where + "/" + key, center, warn);
+          if (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
+              oortTraces.length) {
+            oortTraces[0].visible = "legendonly";
+          }
+          traces = traces.concat(oortTraces);
           drawn += 1;
         } else {
           warn(where + "/" + key + ": unknown shape " +
