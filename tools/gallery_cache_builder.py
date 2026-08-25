@@ -41,6 +41,9 @@ mean-motion correction).
 Module updated: July 2026 with Anthropic's Claude Sonnet 5 (L-173/Option 3:
 post-swap completeness guard -- verify_promoted_data(); never commit an
 unverified promotion).
+Module updated: August 2026 with Anthropic's Claude Opus 5 (L-234:
+features_only_result() and the serve_positions:false skip -- an entry
+may be served for its shell geometry with no orbit fetched for it).
 
 Role: cache
 Domain: cache_builder
@@ -364,6 +367,15 @@ _TRUST_CAP_DIVISOR = {'planet': 1.0, 'dwarf_planet': 1.0, 'asteroid': 1.0,
 # generalizes to future barycenter-relative onboards (Orcus/Vanth,
 # Patroclus/Menoetius) without a further code change.
 TRUST_WINDOW_PARTICIPANT_FRAME = 'heliocentric'
+
+# L-234: the canonical_frame of an entry served for its FEATURES with no
+# ephemeris -- the scene origin of the cache (the Sun). Deliberately not
+# 'heliocentric': an object stored heliocentrically participates in the
+# global served_window above, and a participant with no trust
+# measurement nulls that window for the whole cache. A frame origin has
+# no orbit and so no window, and this label says so where the rule can
+# see it.
+FEATURES_ONLY_FRAME = 'frame-origin'
 
 
 def _two_body_position(osc, n_deg_per_day, t_jd):
@@ -1107,6 +1119,18 @@ def assert_structural(index, staging):
     """Structural invariants (builder-correctness gates): abort on failure."""
     gen_jd = _iso_to_jd(index['generated'])
     for slug, o in index['objects'].items():
+        if o['canonical_frame'] == FEATURES_ONLY_FRAME:
+            # L-234: invariants #2/#3/#C/#B3 are all about an orbit
+            # this entry does not have. Assert the absence POSITIVELY
+            # rather than skipping in silence -- a features-only entry
+            # that somehow acquired orbital data is a real defect and
+            # this is the only place that would notice.
+            if (o['osculating'] is not None or o['positions'] is not None
+                    or o.get('as_of_today') is not None):
+                raise ValidationAbort(
+                    "#FO %s: features-only entry carries orbital data"
+                    % slug)
+            continue
         if o['category'] == 'spacecraft':
             if o['osculating'] is not None or o['positions'] is None:
                 raise ValidationAbort("#2 %s: spacecraft must have positions, no osculating" % slug)
@@ -1294,6 +1318,33 @@ def load_config(path):
         return json.load(f)
 
 
+def features_only_result(obj):
+    """A served block for an entry that carries features but no ephemeris.
+
+    A frame origin -- the Sun in a heliocentric cache -- has no orbit to
+    fetch, because it IS the center. It still owns shell geometry the
+    client draws, so it gets a coverage_index block whose orbital fields
+    are all null and its features copied through like any other object's.
+
+    It is kept out of the global served_window by its canonical_frame
+    ('frame-origin', not 'heliocentric'), which is the same rule that
+    already excludes moons and spacecraft -- see
+    TRUST_WINDOW_PARTICIPANT_FRAME. That matters: a participant with no
+    trust measurement nulls served_window for the WHOLE cache.
+    """
+    return {
+        'obj': obj,
+        'slug': obj['slug'],
+        'osc_block': None,
+        'positions': None,
+        'orbit_type': None,
+        'as_of_today': None,
+        'comet': None,
+        'trust': {'schema_version': TRUST_SCHEMA_VERSION,
+                  'method': 'not_applicable', 'window': None},
+    }
+
+
 def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=False,
               refresh_spacecraft=False):
     out_dir = Path(out_dir)
@@ -1349,6 +1400,18 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
 
     results = []
     for obj in objects:
+        # L-234: an entry served for its features only (a frame
+        # origin) has no ephemeris to fetch. Skip before the try,
+        # so a features-only entry can never fall into the
+        # serve_last_good path and report a fetch failure it never
+        # attempted.
+        if obj.get('serve_positions') is False:
+            results.append(features_only_result(obj))
+            run_manifest['objects'][obj['slug']] = (
+                'features-only (frame origin; no ephemeris fetched)')
+            warn("%s: features-only entry; no Horizons fetch"
+                 % obj['slug'])
+            continue
         try:
             r = process_object(staging, obj, defaults, mode, run_manifest, warn,
                                refresh_spacecraft=refresh_spacecraft)
@@ -1394,7 +1457,10 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     if mode == 'first-build':
         floor = int(0.5 * defaults['backfill_days'])
         for r in results:
-            if r['obj']['category'] != 'spacecraft':
+            # L-234: features-only entries fetch nothing, so the
+            # backfill floor does not apply to them.
+            if (r['obj']['category'] != 'spacecraft'
+                    and r['obj'].get('serve_positions') is not False):
                 rr = load_raw_vectors(staging, r['slug'])
                 n = len(rr['points']) if rr else 0
                 if n < floor:

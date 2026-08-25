@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** August 06, 2026 by `module_atlas.py`  
+**Generated:** August 24, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,13 +10,19 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 24  
-**Total Lines of Code (non-blank):** 13,313  
-**Total Public Functions/Classes:** 138
+**Total Python Files:** 26  
+**Total Lines of Code (non-blank):** 13,903  
+**Total Public Functions/Classes:** 144
 
 ## Classification Coverage
 
-All 24 modules declare a valid `Role:` and `Domain:` tag in their docstring.
+**Undetermined role (1).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+
+- `patch_L234_1_sun_features_only.py`
+
+**Undetermined domain (1).** No valid `Domain:` tag.
+
+- `patch_L234_1_sun_features_only.py`
 
 
 ---
@@ -37,7 +43,7 @@ All 24 modules declare a valid `Role:` and `Domain:` tag in their docstring.
 
 | Module | Description |
 |--------|-------------|
-| `resolver.py` | SceneSpec -> AssemblyContext. (138 lines) |
+| `resolver.py` | SceneSpec -> AssemblyContext. (169 lines) |
 
 ---
 
@@ -54,8 +60,8 @@ All 24 modules declare a valid `Role:` and `Domain:` tag in their docstring.
 
 | Module | Description |
 |--------|-------------|
-| `cache_reader.py` | Reads the served gallery cache. (56 lines) |
-| `gallery_cache_builder.py` | - standalone nightly builder for the Paloma's Orrery web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool. (1,357 lines) |
+| `cache_reader.py` | Reads the served gallery cache. (60 lines) |
+| `gallery_cache_builder.py` | - standalone nightly builder for the Paloma's Orrery web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool. (1,418 lines) |
 
 ---
 
@@ -86,11 +92,20 @@ All 24 modules declare a valid `Role:` and `Domain:` tag in their docstring.
 | `gallery_editor.py` | Gallery Metadata Editor for Paloma's Orrery GUI to edit visualization titles, descriptions, categories, reorder items and categories, and copy/move visualizations within the gallery_metadata.json file. (1,340 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,457 lines) |
-| `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (101 lines) |
+| `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (624 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (818 lines) |
+| `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (120 lines) |
 | `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (603 lines) |
+
+---
+
+## Undetermined -- Needs a Role: Tag
+
+| Module | Description |
+|--------|-------------|
+| `patch_L234_1_sun_features_only.py` | - serve the Sun's shell geometry. (357 lines) |
 
 ---
 

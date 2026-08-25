@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "attribution": "Data: JPL/NASA Horizons",
-  "_comment": "Single authority for the gallery cache builder (L-098 Phase 1b). Seed = the 11-object tranche. slug/horizons_id/id_type/canonical_center/center_slug/parent/canonical_frame/features carried from export_orbit_cache.py TEST_OBJECTS @ orrery 4e2629c; trace_policy is MODEL-derived (conic model: none for every non-spacecraft, full-arc only for spacecraft) and is NOT the retired Stage-2 serve/none field. canonical_center is the Horizons fetch center; center_slug (== stored_center) is the served frame slug.",
+  "_comment": "Single authority for the gallery cache builder (L-098 Phase 1b). Seed = the 11-object tranche. slug/horizons_id/id_type/canonical_center/center_slug/parent/canonical_frame/features carried from export_orbit_cache.py TEST_OBJECTS @ orrery 4e2629c; trace_policy is MODEL-derived (conic model: none for every non-spacecraft, full-arc only for spacecraft) and is NOT the retired Stage-2 serve/none field. canonical_center is the Horizons fetch center; center_slug (== stored_center) is the served frame slug. An entry may carry \"serve_positions\": false (L-234, 2026-08-24): it is served for its features only, no Horizons fetch is made for it, and its canonical_frame keeps it out of the served_window participants. The Sun is the first such entry.",
   "defaults": {
     "cadence_hours": 24,
     "guard_k": 2.0,
@@ -9,6 +9,125 @@
     "backfill_days": 365
   },
   "objects": [
+    {
+      "slug": "sun", "name": "Sun", "horizons_id": "10", "id_type": "majorbody",
+      "category": "star", "availability": "analytic", "parent": null,
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "frame-origin",
+      "trajectory_of": null, "trace_policy": "none", "serve_positions": false,
+      "_comment": "The scene origin of a heliocentric cache: no orbit is fetched for it, and it is excluded from the served_window participants by canonical_frame. It is here for its shell geometry. Groups mirror the orrery GUI panel (Sun Structures / Solar Atmosphere Structures / Solar Wind Structures / Oort Cloud Structures / Hill Sphere Structure). Custom geometry -- streamer belt, Hills cloud torus, clumpy outer Oort, galactic tide -- is NOT here; it needs the solar pole first (L-229) and its own renderers.",
+      "features": {
+        "sun_structures": {
+          "core": {
+            "name": "Core", "radius": { "value": 0.2, "unit": "R_sun" },
+            "color": "rgb(70, 130, 180)", "opacity": 1.0, "n_points": 25, "marker_size": 10,
+            "source": "Bahcall, Pinsonneault & Basu (2001), ApJ 555:990 (radial profiles); drawn at the low end of the conventional 0.2-0.25 R_sun core range",
+            "orrery_constant": "constants_new.py::CORE_AU"
+          },
+          "radiative": {
+            "name": "Radiative Zone", "radius": { "value": 0.7, "unit": "R_sun" },
+            "color": "rgb(30, 144, 255)", "opacity": 1.0, "n_points": 25, "marker_size": 7,
+            "source": "Christensen-Dalsgaard, Gough & Thompson (1991), ApJ 378:413; rounds the helioseismic tachocline at about 0.713 R_sun",
+            "orrery_constant": "constants_new.py::RADIATIVE_ZONE_AU"
+          },
+          "photosphere": {
+            "name": "Photosphere", "radius": { "value": 1.0, "unit": "R_sun" },
+            "color": "rgb(255, 244, 214)", "opacity": 1.0, "n_points": 25, "marker_size": 7.0,
+            "source": "IAU 2015 Resolution B3 -- nominal solar radius",
+            "orrery_constant": "constants_new.py::SOLAR_RADIUS_AU"
+          },
+          "sun_radius": {
+            "value": 695700.0, "unit": "km",
+            "source": "IAU 2015 Resolution B3 -- nominal solar radius",
+            "orrery_constant": "constants_new.py::SUN_RADIUS_KM"
+          }
+        },
+        "solar_atmosphere": {
+          "chromosphere": {
+            "name": "Chromosphere (2,000 km skin)", "radius": { "value": 1.0028748, "unit": "R_sun" },
+            "color": "rgb(30, 144, 255)", "opacity": 0.5, "n_points": 25, "marker_size": 3.0,
+            "source": "Carroll & Ostlie, An Introduction to Modern Astrophysics, Ch. 11 -- chromosphere extends about 2000 km above the photosphere",
+            "orrery_constant": "constants_new.py::CHROMOSPHERE_PHYSICAL_RADII",
+            "note": "Derived: 1 + 2000 km / 695700 km. The sourced claim is the 2000 km thickness, not the ratio. Drawn at true physical scale since 2026-08-16."
+          },
+          "inner_corona": {
+            "name": "Inner Corona", "radius": { "value": 3, "unit": "R_sun" },
+            "color": "rgb(0, 0, 255)", "opacity": 0.45, "n_points": 20, "marker_size": 3.0,
+            "source": "Golub & Pasachoff, The Solar Corona (2010); visualization boundary for the inner (K-)corona, physical extent 2-3 R_sun",
+            "orrery_constant": "constants_new.py::INNER_CORONA_RADII"
+          },
+          "roche_limit": {
+            "name": "Roche Limit (Comets)", "radius": { "value": 3.45, "unit": "R_sun" },
+            "color": "rgb(200, 60, 60)", "opacity": 0.5, "n_points": 20, "marker_size": 3.0,
+            "source": "Murray & Dermott, Solar System Dynamics (1999), Sec. 4.6",
+            "orrery_constant": "constants_new.py::ROCHE_LIMIT_RADII"
+          },
+          "alfven_surface": {
+            "name": "Alfven Surface", "radius": { "value": 19.7, "unit": "R_sun" },
+            "color": "rgb(0, 200, 200)", "opacity": 0.35, "n_points": 20, "marker_size": 3.5,
+            "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- first Parker Solar Probe crossing, 28 April 2021",
+            "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
+          },
+          "outer_corona": {
+            "name": "Outer Corona", "radius": { "value": 50, "unit": "R_sun" },
+            "color": "rgb(25, 25, 112)", "opacity": 0.5, "n_points": 20, "marker_size": 3.5,
+            "source": "Mann et al. (2004), A&A 414:1127; F-corona envelope, not a sharp physical edge",
+            "orrery_constant": "constants_new.py::OUTER_CORONA_RADII"
+          },
+          "sun_radius": {
+            "value": 695700.0, "unit": "km",
+            "source": "IAU 2015 Resolution B3 -- nominal solar radius",
+            "orrery_constant": "constants_new.py::SUN_RADIUS_KM"
+          }
+        },
+        "solar_wind": {
+          "termination_shock": {
+            "name": "Termination Shock", "radius": { "value": 94, "unit": "au" },
+            "color": "rgb(240, 244, 255)", "opacity": 0.4, "n_points": 20, "marker_size": 3.0,
+            "source": "Stone et al. (2005), Science 309:2017 -- Voyager 1 crossing at 94 AU",
+            "orrery_constant": "constants_new.py::TERMINATION_SHOCK_AU"
+          },
+          "heliopause": {
+            "name": "Heliopause", "radius": { "value": 26148, "unit": "R_sun" },
+            "color": "rgb(135, 206, 250)", "opacity": 0.4, "n_points": 20, "marker_size": 3.0,
+            "source": "Gurnett et al. (2013), Science 341:1489",
+            "orrery_constant": "constants_new.py::HELIOPAUSE_RADII"
+          },
+          "sun_radius": {
+            "value": 695700.0, "unit": "km",
+            "source": "IAU 2015 Resolution B3 -- nominal solar radius",
+            "orrery_constant": "constants_new.py::SUN_RADIUS_KM"
+          }
+        },
+        "oort_cloud": {
+          "inner_oort_limit": {
+            "name": "Inner Limit of Oort Cloud", "radius": { "value": 2000, "unit": "au" },
+            "color": "rgb(255, 255, 255)", "opacity": 0.35, "n_points": 20, "marker_size": 3.0,
+            "source": "Hills (1981); Oort (1950) -- inner edge estimate",
+            "orrery_constant": "constants_new.py::INNER_LIMIT_OORT_CLOUD_AU"
+          },
+          "inner_oort": {
+            "name": "Inner Oort Cloud", "radius": { "value": 20000, "unit": "au" },
+            "color": "rgb(255, 255, 255)", "opacity": 0.35, "n_points": 20, "marker_size": 3.0,
+            "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+            "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
+          },
+          "outer_oort": {
+            "name": "Outer Oort Cloud", "radius": { "value": 100000, "unit": "au" },
+            "color": "rgb(255, 255, 255)", "opacity": 0.3, "n_points": 20, "marker_size": 3.0,
+            "source": "Oort (1950); Weissman (1996)",
+            "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
+          }
+        },
+        "hill_sphere": {
+          "gravitational": {
+            "name": "Gravitational Influence", "radius": { "value": 150000, "unit": "au" },
+            "color": "rgb(102, 187, 106)", "opacity": 0.3, "n_points": 20, "marker_size": 3.0,
+            "source": "Approximate Hill sphere of the Sun in the Milky Way (model-dependent); literature estimates range 100,000-200,000 AU",
+            "orrery_constant": "constants_new.py::GRAVITATIONAL_INFLUENCE_AU"
+          }
+        }
+      }
+    },
     {
       "slug": "earth", "name": "Earth", "horizons_id": "399", "id_type": "majorbody",
       "category": "planet", "availability": "analytic", "parent": "sun",

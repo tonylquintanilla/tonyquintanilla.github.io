@@ -129,6 +129,7 @@ ROLE_MAP = {
     'inspect_staging':                     'devtool',
     'json_converter':                      'devtool',
     'module_atlas':                        'devtool',
+    'serve_gallery':                       'devtool',
     'test_artifact1_earth':                'devtool',
     'test_gallery_cache_builder_offline':  'devtool',
 }
