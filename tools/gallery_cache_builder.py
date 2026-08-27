@@ -38,6 +38,8 @@ config with ABORT-class shape validation).
 Module updated: July 2026 with Anthropic's Claude Sonnet 5 (F1/M2: trust
 measurement + served_window; fetch_elements n capture; FLAG-2 planetocentric
 mean-motion correction).
+Module updated: August 2026 with Anthropic's Claude Opus 5 (L-238: the
+shell invariant admits interior shells).
 Module updated: July 2026 with Anthropic's Claude Sonnet 5 (L-173/Option 3:
 post-swap completeness guard -- verify_promoted_data(); never commit an
 unverified promotion).
@@ -963,7 +965,7 @@ def _validate_feature_shapes(slug, node):
     4.3), ABORT disposition. Shapes are recognized by FIELD PRESENCE, not a
     'kind' tag (the schema carries none):
         ring       -> inner_radius_km < outer_radius_km
-        shell      -> radius_fraction > 1.0
+        shell      -> radius_fraction > 0  (interior shells are < 1)
         belt(pair) -> 0 < inner_belt_distance < outer_belt_distance
         belt(list) -> belt_distances all > 0 and strictly ascending
         belt_thick -> belt_thickness > 0 where present
@@ -979,9 +981,15 @@ def _validate_feature_shapes(slug, node):
                 "feature-shape (%s): inner_radius_km >= outer_radius_km (%r >= %r)"
                 % (slug, node['inner_radius_km'], node['outer_radius_km']))
     if 'radius_fraction' in node:
-        if not (node['radius_fraction'] > 1.0):
+        # L-238, 2026-08-26. This was > 1.0, which asserts "the shell is
+        # above the surface". That held for every shell served so far and
+        # holds for no INTERIOR shell in the orrery -- Earth's inner core
+        # is 0.19 of the surface radius. Positive-and-nonzero still refuses
+        # a missing key arriving as 0 and a sign error. No ceiling: the
+        # Sun's outer shells run to thousands of solar radii.
+        if not (node['radius_fraction'] > 0.0):
             raise ValidationAbort(
-                "feature-shape (%s): radius_fraction <= 1.0 (%r)"
+                "feature-shape (%s): radius_fraction <= 0 (%r)"
                 % (slug, node['radius_fraction']))
     if 'inner_belt_distance' in node and 'outer_belt_distance' in node:
         inn, out = node['inner_belt_distance'], node['outer_belt_distance']

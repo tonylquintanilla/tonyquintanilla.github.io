@@ -7,6 +7,9 @@ MONITOR path (warn + keep, never reject). Run: python3 this_file.py
 
 Role: devtool
 Domain: dev_tools
+
+Module updated: August 2026 with Anthropic's Claude Opus 5 (L-238: the
+shell invariant admits interior shells).
 """
 import json
 import math
@@ -259,6 +262,29 @@ def main():
         except b.ValidationAbort:
             colors_bad = True
         check(colors_bad, "M1: malformed colors-list entry ABORTS")
+
+        # --- L-238: the shell invariant admits interior shells. This branch
+        # had no coverage at all before the relaxation, which is when it is
+        # least affordable: a check loosened too far and a check that works
+        # print the same green line. The ABORT half is the load-bearing one.
+        interior_ok = True
+        try:
+            b._validate_feature_shapes('test', {'radius_fraction': 0.19151})
+        except b.ValidationAbort:
+            interior_ok = False
+        check(interior_ok,
+              "M1/L-238: interior shell (radius_fraction 0.19) PASSES")
+
+        rf_aborts = []
+        for bad_rf in (0.0, -0.5):
+            aborted = False
+            try:
+                b._validate_feature_shapes('test', {'radius_fraction': bad_rf})
+            except b.ValidationAbort:
+                aborted = True
+            rf_aborts.append(aborted)
+        check(all(rf_aborts),
+              "M1/L-238: radius_fraction 0.0 and -0.5 both ABORT")
 
         with tempfile.TemporaryDirectory() as td_shape:
             list_bad = False
