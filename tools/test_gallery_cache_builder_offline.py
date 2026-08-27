@@ -8,6 +8,9 @@ MONITOR path (warn + keep, never reject). Run: python3 this_file.py
 Role: devtool
 Domain: dev_tools
 
+Module updated: August 2026 with Anthropic's Claude Opus 5 (L-256: expectations
+brought forward to the Sun's features-only entry).
+
 Module updated: August 2026 with Anthropic's Claude Opus 5 (L-238: the
 shell invariant admits interior shells).
 """
@@ -153,7 +156,14 @@ def main():
 
         idx = json.load(open(out / 'coverage_index.json'))
         objs = idx['objects']
-        check(len(objs) == 12, "12 objects served (%d)" % len(objs))
+        # L-256: was a hardcoded 12, stale the moment the Sun landed. The
+        # config is the thing being asked for and the index is what came
+        # back, so comparing them tests the real invariant and cannot go
+        # stale again. All config entries are served, including the
+        # features-only frame origin, so there is no exception to carve.
+        n_cfg = len(cfg['objects'])
+        check(len(objs) == n_cfg,
+              "every configured object served (%d of %d)" % (len(objs), n_cfg))
         check(idx['attribution'] == 'Data: JPL/NASA Horizons', "attribution present")
         check('served_window' in idx, "served_window field present")
 
@@ -311,6 +321,20 @@ def main():
                 check(tr.get('method') == 'fetched_positions',
                       "M2: voyager_1 trust method == fetched_positions")
                 check(tr.get('window') is None, "M2: voyager_1 trust window is null")
+            elif block2.get('canonical_frame') == b.FEATURES_ONLY_FRAME:
+                # L-256: a frame origin has no orbit because it IS the
+                # centre, so features_only_result() serves 'not_applicable'
+                # with a null window by design. Keyed on the frame rather
+                # than on the slug 'sun', so this holds for any future
+                # frame origin. Asserted rather than skipped: an origin
+                # that acquired a real trust window is a defect and this
+                # is the only place that would see it.
+                check(tr.get('method') == 'not_applicable',
+                      "M2/L-256: %s (frame origin) trust method == "
+                      "not_applicable" % slug2)
+                check(tr.get('window') is None and tr.get('window_days') is None,
+                      "M2/L-256: %s (frame origin) serves no trust window"
+                      % slug2)
             else:
                 check(tr.get('method') == 'two_body_rate_v1',
                       "M2: %s trust method == two_body_rate_v1" % slug2)
@@ -568,6 +592,7 @@ def main():
         def mk(xkm):
             return {'generated': FIXED_NOW.isoformat(),
                     'objects': {'x': {'category': 'planet', 'stored_center': 'sun',
+                                      'canonical_frame': 'heliocentric',
                                       'osculating': {'center': 'sun'}, 'positions': None,
                                       'as_of_today': {'t': tjd, 'x': xkm, 'y': 0.0, 'z': 0.0}}}}
         try:
@@ -662,6 +687,7 @@ def main():
         def mkc(x, y):
             return {'generated': FIXED_NOW.isoformat(),
                     'objects': {'x': {'category': 'planet', 'stored_center': 'sun',
+                                      'canonical_frame': 'heliocentric',
                                       'osculating': {'center': 'sun'}, 'positions': None,
                                       'as_of_today': {'t': tjd, 'x': x, 'y': y, 'z': 0.0}}}}
         try:
