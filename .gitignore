@@ -10,6 +10,6 @@ gallery/_studio_preview.json
 
 # Gallery cache builder (L-098): staging workspace + in-tree backup mirror
 data/.staging_*/
-data/solar-system.prev/
+data/solar-system.prev*/
 data/solar-system.quarantine_*/
 data/_backup/
