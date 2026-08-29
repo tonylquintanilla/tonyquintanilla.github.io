@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-08-29T17:41:50.346292+00:00",
+  "generated": "2026-08-29T17:53:55.864804+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2460958.6952534947,
-    "end_jd": 2461605.7795230397
+    "start_jd": 2460958.7036506995,
+    "end_jd": 2461605.7879202445
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -50,14 +50,14 @@
           "radiative": {
             "name": "Radiative Zone",
             "radius": {
-              "value": 0.7,
+              "value": 0.713,
               "unit": "R_sun"
             },
             "color": "rgb(30, 144, 255)",
             "opacity": 1.0,
             "n_points": 25,
             "marker_size": 7,
-            "source": "Christensen-Dalsgaard, Gough & Thompson (1991), ApJ 378:413; rounds the helioseismic tachocline at about 0.713 R_sun",
+            "source": "Christensen-Dalsgaard, Gough & Thompson (1991), ApJ 378:413, \"The depth of the solar convection zone\" -- convection-zone depth measured at 0.287 +/- 0.003 solar radii, so the base of the zone sits at 1 - 0.287 = 0.713 R_sun",
             "orrery_constant": "constants_new.py::RADIATIVE_ZONE_AU"
           },
           "photosphere": {
@@ -144,7 +144,7 @@
             "opacity": 0.45,
             "n_points": 20,
             "marker_size": 3.0,
-            "source": "Golub & Pasachoff, The Solar Corona (2010); visualization boundary for the inner (K-)corona, physical extent 2-3 R_sun",
+            "source": "Lamy, Gilardy, Llebaria, Quemerais & Ernandez, \"Coronal Photopolarimetry with the LASCO-C3 Coronagraph over 24 Years [1996-2019]\", Solar Physics (arXiv:2009.04820) -- the inner solar corona taken as extending to about 3 R_sun from the center of the solar disk. A stated convention, not a measurement: the inner (K-)corona has no sharp edge, and 3 R_sun is the top of the 2-3 R_sun band across which the F-corona overtakes it in brightness",
             "orrery_constant": "constants_new.py::INNER_CORONA_RADII"
           },
           "roche_limit": {
@@ -413,7 +413,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461281.5,
-          "retrieved": "2026-08-29T17:41:49.460279+00:00"
+          "retrieved": "2026-08-29T17:53:55.427619+00:00"
         }
       },
       "positions": null,
@@ -520,7 +520,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461281.5,
-          "retrieved": "2026-08-29T17:41:49.545707+00:00"
+          "retrieved": "2026-08-29T17:53:55.463012+00:00"
         }
       },
       "positions": null,
@@ -637,7 +637,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461281.5,
-          "retrieved": "2026-08-29T17:41:49.626559+00:00"
+          "retrieved": "2026-08-29T17:53:55.513724+00:00"
         }
       },
       "positions": null,
@@ -746,7 +746,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461281.5,
-          "retrieved": "2026-08-29T17:41:49.721440+00:00"
+          "retrieved": "2026-08-29T17:53:55.555931+00:00"
         }
       },
       "positions": null,
@@ -809,7 +809,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461281.5,
-          "retrieved": "2026-08-29T17:41:49.805138+00:00"
+          "retrieved": "2026-08-29T17:53:55.591704+00:00"
         }
       },
       "positions": null,
@@ -872,7 +872,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461281.5,
-          "retrieved": "2026-08-29T17:41:49.900399+00:00"
+          "retrieved": "2026-08-29T17:53:55.626808+00:00"
         }
       },
       "positions": null,
@@ -935,7 +935,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461281.5,
-          "retrieved": "2026-08-29T17:41:49.979610+00:00"
+          "retrieved": "2026-08-29T17:53:55.661422+00:00"
         }
       },
       "positions": null,
@@ -998,7 +998,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461281.5,
-          "retrieved": "2026-08-29T17:41:50.065626+00:00"
+          "retrieved": "2026-08-29T17:53:55.700974+00:00"
         }
       },
       "positions": null,
@@ -1061,7 +1061,7 @@
           "query_target": "99942",
           "center": "@sun",
           "epoch": 2461281.5,
-          "retrieved": "2026-08-29T17:41:50.149373+00:00"
+          "retrieved": "2026-08-29T17:53:55.749798+00:00"
         }
       },
       "positions": null,
@@ -1158,7 +1158,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460239.797748443,
-          "retrieved": "2026-08-29T17:41:50.266422+00:00"
+          "retrieved": "2026-08-29T17:53:55.819418+00:00"
         }
       },
       "positions": null,
@@ -1226,7 +1226,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-08-29T17:41:50.338543+00:00"
+          "retrieved": "2026-08-29T17:53:55.858274+00:00"
         }
       },
       "positions": null,

@@ -19,14 +19,14 @@
         "radiative": {
           "name": "Radiative Zone",
           "radius": {
-            "value": 0.7,
+            "value": 0.713,
             "unit": "R_sun"
           },
           "color": "rgb(30, 144, 255)",
           "opacity": 1.0,
           "n_points": 25,
           "marker_size": 7,
-          "source": "Christensen-Dalsgaard, Gough & Thompson (1991), ApJ 378:413; rounds the helioseismic tachocline at about 0.713 R_sun",
+          "source": "Christensen-Dalsgaard, Gough & Thompson (1991), ApJ 378:413, \"The depth of the solar convection zone\" -- convection-zone depth measured at 0.287 +/- 0.003 solar radii, so the base of the zone sits at 1 - 0.287 = 0.713 R_sun",
           "orrery_constant": "constants_new.py::RADIATIVE_ZONE_AU"
         },
         "photosphere": {
@@ -113,7 +113,7 @@
           "opacity": 0.45,
           "n_points": 20,
           "marker_size": 3.0,
-          "source": "Golub & Pasachoff, The Solar Corona (2010); visualization boundary for the inner (K-)corona, physical extent 2-3 R_sun",
+          "source": "Lamy, Gilardy, Llebaria, Quemerais & Ernandez, \"Coronal Photopolarimetry with the LASCO-C3 Coronagraph over 24 Years [1996-2019]\", Solar Physics (arXiv:2009.04820) -- the inner solar corona taken as extending to about 3 R_sun from the center of the solar disk. A stated convention, not a measurement: the inner (K-)corona has no sharp edge, and 3 R_sun is the top of the 2-3 R_sun band across which the F-corona overtakes it in brightness",
           "orrery_constant": "constants_new.py::INNER_CORONA_RADII"
         },
         "roche_limit": {
