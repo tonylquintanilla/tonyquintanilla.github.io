@@ -1043,51 +1043,8 @@ function reportSunNotes(notes) {
     info.appendChild(box);
 }
 
-// The largest |x|, |y| or |z| this trace reaches, in AU. Computed once
-// per trace at plot time rather than on every legend click, because the
-// Oort clump field alone carries a few thousand points.
-function sunTraceExtentAu(trace) {
-    let maxR = 0;
-    const axes = [trace.x, trace.y, trace.z];
-    for (let a = 0; a < axes.length; a++) {
-        const arr = axes[a];
-        if (!Array.isArray(arr)) { continue; }
-        for (let i = 0; i < arr.length; i++) {
-            const v = Math.abs(arr[i]);
-            if (isFinite(v) && v > maxR) { maxR = v; }
-        }
-    }
-    return maxR;
-}
-
-// Refit the frame to whatever is currently drawn.
-//
-// One half-range applied to all three axes, so a sphere stays a sphere.
-// Plotly's own autorange fits each axis separately and would draw these
-// as ellipsoids.
-//
-// The floor is SUN_HALF_RANGE_AU: turning shells off never zooms in
-// past the arrival view, so deselecting everything cannot collapse the
-// frame onto the core.
-function sunRefitFrame(gd, extents) {
-    let maxR = 0;
-    for (let i = 0; i < gd.data.length; i++) {
-        const vis = gd.data[i].visible;
-        if (vis === "legendonly" || vis === false) { continue; }
-        const e = extents[i] || 0;
-        if (e > maxR) { maxR = e; }
-    }
-
-    const r = Math.max(maxR * 1.1, SUN_HALF_RANGE_AU);
-    Plotly.relayout(gd, {
-        "scene.xaxis.range": [-r, r],
-        "scene.yaxis.range": [-r, r],
-        "scene.zaxis.range": [-r, r],
-    });
-}
-
-function buildSunLayout(halfRangeAu) {
-    const r = halfRangeAu || SUN_HALF_RANGE_AU;
+function buildSunLayout() {
+    const r = SUN_HALF_RANGE_AU;
     const axisTemplate = {
         range: [-r, r],
         showgrid: true,
@@ -1182,24 +1139,10 @@ async function initSunExhibit() {
         }
         if (notes.length) { reportSunNotes(notes); }
 
-        const traces = payload.figure.data.concat(built.traces);
-
-        // Measure every trace once. Index i belongs to trace i, and
-        // the legend never reorders traces, so the two stay aligned.
-        const extents = traces.map(sunTraceExtentAu);
-        let arrivalR = 0;
-        for (let i = 0; i < traces.length; i++) {
-            const vis = traces[i].visible;
-            if (vis === "legendonly" || vis === false) { continue; }
-            if (extents[i] > arrivalR) { arrivalR = extents[i]; }
-        }
-        arrivalR = Math.max(arrivalR * 1.1, SUN_HALF_RANGE_AU);
-
-        const gd = document.getElementById("plotly-container");
-        await Plotly.newPlot(
-            gd,
-            traces,
-            buildSunLayout(arrivalR),
+        Plotly.newPlot(
+            "plotly-container",
+            payload.figure.data.concat(built.traces),
+            buildSunLayout(),
             {
                 responsive: true,
                 displayModeBar: window.innerWidth > 768,
@@ -1207,12 +1150,6 @@ async function initSunExhibit() {
                 displaylogo: false,
             }
         );
-
-        // plotly_restyle fires AFTER a legend click has applied the
-        // visibility change, which plotly_legendclick does not.
-        // Plotly.relayout emits plotly_relayout, not plotly_restyle,
-        // so this cannot re-enter itself.
-        gd.on("plotly_restyle", () => sunRefitFrame(gd, extents));
 
         bar.style.width = "100%";
         status.textContent = "Ready";

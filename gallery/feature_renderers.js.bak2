@@ -936,13 +936,7 @@
             cfg.shape, bodyName, cfg, where + "/" + key, center, warn);
           if (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
               oortTraces.length) {
-            // Every trace in the group, not just oortTraces[0]. The
-            // info marker is a separate trace and would otherwise be
-            // drawn alone, out at the shell radius, with nothing
-            // around it.
-            for (var oi = 0; oi < oortTraces.length; oi++) {
-              oortTraces[oi].visible = "legendonly";
-            }
+            oortTraces[0].visible = "legendonly";
           }
           traces = traces.concat(oortTraces);
           drawn += 1;
@@ -969,9 +963,8 @@
 
       var pts = spherePoints(radiusAu, nPoints);
       var built = geometryTrace(pts, center, null, label, color, opacity, size);
-      var beyondFrame = (typeof halfRangeAu === "number" &&
-                         halfRangeAu > 0 && radiusAu > halfRangeAu);
-      if (beyondFrame) {
+      if (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
+          radiusAu > halfRangeAu) {
         built.trace.visible = "legendonly";
       }
       traces.push(built.trace);
@@ -993,14 +986,7 @@
       hover += "= " + kmAndAu(radiusAu * KM_PER_AU);
       if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + cfg.source);
       if (cfg.note) hover += "<br>" + wrapHover(cfg.note);
-      var marker = infoMarker(mx, my, mz, color, hover, label);
-      if (beyondFrame) {
-        // Without this the marker is drawn while its shell is not:
-        // one stray hoverable point at the shell radius, with
-        // nothing around it to say what it belongs to.
-        marker.visible = "legendonly";
-      }
-      traces.push(marker);
+      traces.push(infoMarker(mx, my, mz, color, hover, label));
       drawn += 1;
     }
     if (drawn === 0) {
