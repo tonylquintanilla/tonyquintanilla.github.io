@@ -1007,10 +1007,7 @@ const SUN_INFO_HTML = [
     "<p>The computation runs in your browser via <strong>Pyodide</strong>,",
     " using the same Python the desktop orrery uses. No server.</p>",
     "<div class=\"info-note\">Part of Paloma's Orrery &mdash; named for the",
-    " inventor's daughter. The shell radii are drawn from the published",
-    " sources named in each hover. This scene renders no orbit, so it",
-    " uses no ephemeris; exhibits with orbiting bodies carry orbital",
-    " elements from JPL Horizons and credit them there.</div>"
+    " inventor's daughter. Data: JPL/NASA.</div>"
 ].join("");
 
 // Chrome changes that do not need Pyodide, so they run immediately.
@@ -1205,19 +1202,9 @@ async function initSunExhibit() {
             buildSunLayout(arrivalR),
             {
                 responsive: true,
-                // Full menu. Nothing removed: the camera button is a
-                // PNG download of whatever the visitor has framed,
-                // and the Plotly logo is a credit, which belongs on
-                // for the same reason every shell carries its source.
-                // The 768 px breakpoint is the gallery's existing
-                // mobile convention, not a judgement about the menu.
                 displayModeBar: window.innerWidth > 768,
-                displaylogo: true,
-                toImageButtonOptions: {
-                    format: "png",
-                    filename: "palomas_orrery_sun",
-                    scale: 2,
-                },
+                modeBarButtonsToRemove: ["toImage", "resetCameraLastSave3d"],
+                displaylogo: false,
             }
         );
 
