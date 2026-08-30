@@ -20,6 +20,9 @@
 
     <!-- Plotly.js — same version as the gallery viewer -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+    <!-- Client-side feature renderers (shells, rings, belts). Used by
+         the Sun exhibit; harmless for the Solar System Explorer. -->
+    <script src="gallery/feature_renderers.js"></script>
 
     <!-- Fonts — match gallery viewer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -383,7 +386,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                 Gallery
             </a>
-            <div class="top-title">Solar System Explorer</div>
+            <div class="top-title" id="top-title">Solar System Explorer</div>
             <div class="top-right">
                 <button class="info-btn" id="info-toggle" aria-label="Show info">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
@@ -453,7 +456,7 @@
         </div>
 
         <!-- Controls -->
-        <div class="controls">
+        <div class="controls" id="controls-panel">
             <div class="control-row">
                 <div class="control-label">Planets</div>
                 <div class="planet-toggles" id="planet-toggles"></div>
@@ -920,6 +923,324 @@ function buildLayout(range, dateDisplay) {
 }
 
 // ====================================================================
+// SUN EXHIBIT  --  interactive.html?exhibit=sun
+// ====================================================================
+// View-only.  No controls, per Tony's ruling of 2026-08-28: the GUI
+// harness is a later step.  That costs the visitor nothing, because
+// feature_renderers.js sends any shell larger than the frame to the
+// LEGEND rather than dropping it, so all nineteen stay reachable.
+//
+// This exhibit runs the shared `assembler` package in Pyodide against
+// the served cache -- architecture B', the same Python the desktop
+// orrery runs.  Python assembles the scene; JavaScript draws the
+// features (master plan Section 3a, "feature rendering always JS").
+//
+// Added August 2026 with Anthropic's Claude Opus 5.
+
+const EXHIBIT = (new URLSearchParams(window.location.search)
+                     .get("exhibit") || "solar-system-explorer").toLowerCase();
+
+// Half-range of the arrival view, in AU.  Tony's ruling, 2026-08-29:
+// core through outer corona (0.2325 AU), with the whole streamer belt
+// (20 R_sun = 0.0929 AU) in frame.  The termination shock at 94 AU and
+// everything beyond it is larger than this, and feature_renderers.js
+// serves those to the legend.
+const SUN_HALF_RANGE_AU = 0.25;
+
+// The assembler is stdlib-only -- math, json, typing, dataclasses,
+// hashlib -- so this exhibit loads no NumPy at all.  harness/ is the
+// golden-artifact fingerprint machinery and is deliberately not loaded.
+const SUN_ASSEMBLER_MODULES = [
+    "__init__.py", "errors.py", "models.py", "catalog.py",
+    "cache_reader.py", "render_orbits.py", "render_objects.py",
+    "render_spacecraft.py", "render_events.py", "resolver.py",
+    "presentation.py", "assemble.py"
+];
+
+const SUN_DRIVER = `
+import json
+import sys
+sys.path.insert(0, "/home/pyodide")
+
+from assembler.catalog import Catalog
+from assembler.cache_reader import CacheReader
+from assembler.assemble import assemble_scene
+
+result = assemble_scene(
+    {
+        "spec_version": "1.0",
+        "domain": "solar_system",
+        "content_type": "static",
+        "objects": ["sun"],
+        "center": "sun",
+        "epoch": EPOCH_ISO,
+    },
+    Catalog(json.loads(CFG_JSON)),
+    CacheReader(json.loads(COV_JSON)),
+)
+
+json.dumps({
+    "figure": result.figure,
+    "features": result.report["features"],
+    "warnings": result.report["warnings"],
+})
+`;
+
+// No shell COUNT appears in the visitor copy below, deliberately. The
+// served cache yields 18 drawable shells at gallery 833daa9a (measured,
+// not recalled: 18 named traces plus 18 info-marker companions). A count
+// written into prose goes stale the first time a shell is added and
+// nothing watches it. The legend shows the number anyway.
+const SUN_INFO_HTML = [
+    "<h3>The Sun</h3>",
+    "<p>The Sun's shells, drawn from measured radii held in the orrery's",
+    " own constant store. Each shell carries its source in its hover",
+    " text, so you can see where every number came from.</p>",
+    "<p>This view spans a quarter of an astronomical unit &mdash; the core",
+    " out through the outer corona, with the streamer belt in frame.",
+    " Shells larger than that are listed in the legend rather than",
+    " dropped. Tap one and it draws; the view rescales to hold it.</p>",
+    "<p>Some of what you see is a drawing choice rather than a",
+    " measurement &mdash; the streamer belt's warp, the clumping of the",
+    " Oort cloud, the thinning at the galactic plane. Nobody has measured",
+    " those. Where that is so, the hover text says so.</p>",
+    "<p>The computation runs in your browser via <strong>Pyodide</strong>,",
+    " using the same Python the desktop orrery uses. No server.</p>",
+    "<div class=\"info-note\">Part of Paloma's Orrery &mdash; named for the",
+    " inventor's daughter. The shell radii are drawn from the published",
+    " sources named in each hover. This scene renders no orbit, so it",
+    " uses no ephemeris; exhibits with orbiting bodies carry orbital",
+    " elements from JPL Horizons and credit them there.</div>"
+].join("");
+
+// Chrome changes that do not need Pyodide, so they run immediately.
+function applySunChrome() {
+    document.title = "Paloma's Orrery - The Sun";
+    const title = document.getElementById("top-title");
+    if (title) { title.textContent = "The Sun"; }
+    const controls = document.getElementById("controls-panel");
+    if (controls) { controls.style.display = "none"; }
+    const info = document.getElementById("info-panel");
+    if (info) { info.innerHTML = SUN_INFO_HTML; }
+}
+
+async function fetchTextOrThrow(url) {
+    const r = await fetch(url);
+    if (!r.ok) { throw new Error(url + " -> HTTP " + r.status); }
+    return await r.text();
+}
+
+// Anything the assembler or the renderers could not read is REPORTED,
+// not dropped.  Silence about something unexamined is the failure mode.
+function reportSunNotes(notes) {
+    const info = document.getElementById("info-panel");
+    if (!info) { return; }
+    const box = document.createElement("div");
+    box.className = "info-note";
+    let html = "<strong>" + notes.length
+             + " item(s) this page could not draw:</strong><br>";
+    for (let i = 0; i < notes.length; i++) {
+        html += "&bull; " + notes[i] + "<br>";
+    }
+    box.innerHTML = html;
+    info.appendChild(box);
+}
+
+// The largest |x|, |y| or |z| this trace reaches, in AU. Computed once
+// per trace at plot time rather than on every legend click, because the
+// Oort clump field alone carries a few thousand points.
+function sunTraceExtentAu(trace) {
+    let maxR = 0;
+    const axes = [trace.x, trace.y, trace.z];
+    for (let a = 0; a < axes.length; a++) {
+        const arr = axes[a];
+        if (!Array.isArray(arr)) { continue; }
+        for (let i = 0; i < arr.length; i++) {
+            const v = Math.abs(arr[i]);
+            if (isFinite(v) && v > maxR) { maxR = v; }
+        }
+    }
+    return maxR;
+}
+
+// Refit the frame to whatever is currently drawn.
+//
+// One half-range applied to all three axes, so a sphere stays a sphere.
+// Plotly's own autorange fits each axis separately and would draw these
+// as ellipsoids.
+//
+// The floor is SUN_HALF_RANGE_AU: turning shells off never zooms in
+// past the arrival view, so deselecting everything cannot collapse the
+// frame onto the core.
+function sunRefitFrame(gd, extents) {
+    let maxR = 0;
+    for (let i = 0; i < gd.data.length; i++) {
+        const vis = gd.data[i].visible;
+        if (vis === "legendonly" || vis === false) { continue; }
+        const e = extents[i] || 0;
+        if (e > maxR) { maxR = e; }
+    }
+
+    const r = Math.max(maxR * 1.1, SUN_HALF_RANGE_AU);
+    Plotly.relayout(gd, {
+        "scene.xaxis.range": [-r, r],
+        "scene.yaxis.range": [-r, r],
+        "scene.zaxis.range": [-r, r],
+    });
+}
+
+function buildSunLayout(halfRangeAu) {
+    const r = halfRangeAu || SUN_HALF_RANGE_AU;
+    const axisTemplate = {
+        range: [-r, r],
+        showgrid: true,
+        gridcolor: "rgba(255,255,255,0.06)",
+        zerolinecolor: "rgba(255,255,255,0.1)",
+        showbackground: true,
+        backgroundcolor: "#060a12",
+        title: { text: "", font: { size: 1 } },
+        tickfont: { size: 9, color: "#5a5a6a" },
+        showspikes: false,
+    };
+
+    return {
+        scene: {
+            xaxis: { ...axisTemplate },
+            yaxis: { ...axisTemplate },
+            // 1:1:1, unlike the Explorer's flattened z.  These shells are
+            // spheres; squashing z would draw every one of them as a
+            // pancake and the render would be lying.
+            zaxis: { ...axisTemplate },
+            camera: {
+                eye: { x: 1.25, y: -1.25, z: 0.75 },
+                center: { x: 0, y: 0, z: 0 },
+            },
+            aspectmode: "manual",
+            aspectratio: { x: 1, y: 1, z: 1 },
+        },
+        paper_bgcolor: "#060a12",
+        plot_bgcolor: "#060a12",
+        font: { family: "DM Sans, system-ui", color: "#e8e6e3" },
+        title: {
+            text: "Paloma's Orrery \u2014 The Sun",
+            font: { family: "Cormorant Garamond, serif", size: 16,
+                    color: "#e8e6e3" },
+            x: 0.5, xanchor: "center", y: 0.97,
+        },
+        legend: {
+            font: { size: 11, color: "#9a9a9a" },
+            bgcolor: "rgba(17,24,39,0.85)",
+            bordercolor: "#2a2a3a",
+            borderwidth: 1,
+            x: 0.01, y: 0.99,
+            xanchor: "left", yanchor: "top",
+        },
+        margin: { l: 0, r: 0, t: 32, b: 0 },
+    };
+}
+
+async function initSunExhibit() {
+    const bar = document.getElementById("loading-bar");
+    const status = document.getElementById("loading-status");
+
+    try {
+        status.textContent = "Loading Pyodide runtime\u2026";
+        bar.style.width = "15%";
+        pyodide = await loadPyodide({
+            indexURL: "https://cdn.jsdelivr.net/pyodide/v314.0.2/full/"
+        });
+
+        status.textContent = "Loading the assembler\u2026";
+        bar.style.width = "45%";
+        pyodide.FS.mkdirTree("/home/pyodide/assembler");
+        for (const name of SUN_ASSEMBLER_MODULES) {
+            const text = await fetchTextOrThrow("gallery/assembler/" + name);
+            pyodide.FS.writeFile("/home/pyodide/assembler/" + name, text);
+        }
+
+        status.textContent = "Reading the served cache\u2026";
+        bar.style.width = "70%";
+        const cov = await fetchTextOrThrow(
+            "data/solar-system/coverage_index.json");
+        const cfg = await fetchTextOrThrow("data/objects_config.json");
+        pyodide.globals.set("COV_JSON", cov);
+        pyodide.globals.set("CFG_JSON", cfg);
+        pyodide.globals.set(
+            "EPOCH_ISO",
+            new Date().toISOString().slice(0, 10) + "T00:00:00Z");
+
+        status.textContent = "Assembling the scene\u2026";
+        bar.style.width = "90%";
+        const payload = JSON.parse(await pyodide.runPythonAsync(SUN_DRIVER));
+
+        const built = GalleryFeatures.buildFeatureTraces(
+            payload.features,
+            { sun: { name: "Sun", position: [0, 0, 0] } },
+            { sceneHalfRangeAu: SUN_HALF_RANGE_AU }
+        );
+
+        const notes = (payload.warnings || []).concat(built.warnings || []);
+        for (let i = 0; i < notes.length; i++) {
+            console.warn("sun exhibit: " + notes[i]);
+        }
+        if (notes.length) { reportSunNotes(notes); }
+
+        const traces = payload.figure.data.concat(built.traces);
+
+        // Measure every trace once. Index i belongs to trace i, and
+        // the legend never reorders traces, so the two stay aligned.
+        const extents = traces.map(sunTraceExtentAu);
+        let arrivalR = 0;
+        for (let i = 0; i < traces.length; i++) {
+            const vis = traces[i].visible;
+            if (vis === "legendonly" || vis === false) { continue; }
+            if (extents[i] > arrivalR) { arrivalR = extents[i]; }
+        }
+        arrivalR = Math.max(arrivalR * 1.1, SUN_HALF_RANGE_AU);
+
+        const gd = document.getElementById("plotly-container");
+        await Plotly.newPlot(
+            gd,
+            traces,
+            buildSunLayout(arrivalR),
+            {
+                responsive: true,
+                // Full menu. Nothing removed: the camera button is a
+                // PNG download of whatever the visitor has framed,
+                // and the Plotly logo is a credit, which belongs on
+                // for the same reason every shell carries its source.
+                // The 768 px breakpoint is the gallery's existing
+                // mobile convention, not a judgement about the menu.
+                displayModeBar: window.innerWidth > 768,
+                displaylogo: true,
+                toImageButtonOptions: {
+                    format: "png",
+                    filename: "palomas_orrery_sun",
+                    scale: 2,
+                },
+            }
+        );
+
+        // plotly_restyle fires AFTER a legend click has applied the
+        // visibility change, which plotly_legendclick does not.
+        // Plotly.relayout emits plotly_relayout, not plotly_restyle,
+        // so this cannot re-enter itself.
+        gd.on("plotly_restyle", () => sunRefitFrame(gd, extents));
+
+        bar.style.width = "100%";
+        status.textContent = "Ready";
+        setTimeout(() => {
+            document.getElementById("loading-overlay").classList.add("hidden");
+        }, 300);
+
+    } catch (err) {
+        status.textContent = "Failed to load: " + err.message;
+        bar.style.background = "var(--error)";
+        console.error("Sun exhibit failed:", err);
+    }
+}
+
+// ====================================================================
 // CONSENT GATE + INIT
 // ====================================================================
 const CONSENT_KEY = 'palomas_orrery_pyodide_consent';
@@ -931,7 +1252,9 @@ function loadPyodideRuntime() {
 
     const pyodideScript = document.createElement('script');
     pyodideScript.src = 'https://cdn.jsdelivr.net/pyodide/v314.0.2/full/pyodide.js';
-    pyodideScript.onload = () => initPyodide();
+    pyodideScript.onload = () => (EXHIBIT === "sun"
+                                  ? initSunExhibit()
+                                  : initPyodide());
     pyodideScript.onerror = () => {
         document.getElementById('loading-status').textContent = 'Failed to load Pyodide runtime.';
         document.getElementById('loading-bar').style.background = 'var(--error)';
@@ -939,7 +1262,11 @@ function loadPyodideRuntime() {
     document.head.appendChild(pyodideScript);
 }
 
-initControls();
+if (EXHIBIT === "sun") {
+    applySunChrome();
+} else {
+    initControls();
+}
 
 // Check for prior consent
 if (localStorage.getItem(CONSENT_KEY) === 'yes') {

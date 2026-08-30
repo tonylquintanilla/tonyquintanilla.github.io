@@ -125,6 +125,7 @@ ROLE_MAP = {
     'gallery_cleanup':                     'devtool',
     'gallery_editor':                      'devtool',
     'gallery_json_fixer':                  'devtool',
+    'gallery_maintenance_run':             'devtool',
     'gallery_studio':                      'devtool',
     'inspect_staging':                     'devtool',
     'json_converter':                      'devtool',

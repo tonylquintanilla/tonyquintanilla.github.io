@@ -64,7 +64,7 @@
             "note": "One configuration near solar minimum. That the belt is organized about the solar equator AT ALL is a drawing choice, not a sourced boundary: the pole is sourced, anchoring the band to it is ours."
           },
           "chromosphere": {
-            "name": "Chromosphere (2,000 km skin)", "radius": { "value": 1.0028748, "unit": "R_sun" },
+            "name": "Chromosphere (2,000 km skin)", "radius": { "value": 1.002874802357338, "unit": "R_sun" },
             "color": "rgb(30, 144, 255)", "opacity": 0.5, "n_points": 25, "marker_size": 3.0,
             "source": "Carroll & Ostlie, An Introduction to Modern Astrophysics, Ch. 11 -- chromosphere extends about 2000 km above the photosphere",
             "orrery_constant": "constants_new.py::CHROMOSPHERE_PHYSICAL_RADII",

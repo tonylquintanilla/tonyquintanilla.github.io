@@ -1098,19 +1098,28 @@ function buildSunLayout(halfRangeAu) {
         zerolinecolor: "rgba(255,255,255,0.1)",
         showbackground: true,
         backgroundcolor: "#060a12",
-        title: { text: "", font: { size: 1 } },
         tickfont: { size: 9, color: "#5a5a6a" },
         showspikes: false,
     };
 
+    // The axes state their unit.  Every hover on this page gives
+    // km AND AU; the axes were the one surface that did not, and
+    // this frame runs from 0.26 AU to 173,250 AU, so a bare "0.2"
+    // tells a visitor nothing.  Wording matches the desktop
+    // orrery's build_scene_axes in visualization_utils.py -- the
+    // established language carrying over, not a new one.  L-260.
+    const axisTitle = function (label) {
+        return { text: label, font: { size: 10, color: "#7a7a8a" } };
+    };
+
     return {
         scene: {
-            xaxis: { ...axisTemplate },
-            yaxis: { ...axisTemplate },
+            xaxis: { ...axisTemplate, title: axisTitle("X (AU)") },
+            yaxis: { ...axisTemplate, title: axisTitle("Y (AU)") },
             // 1:1:1, unlike the Explorer's flattened z.  These shells are
             // spheres; squashing z would draw every one of them as a
             // pancake and the render would be lying.
-            zaxis: { ...axisTemplate },
+            zaxis: { ...axisTemplate, title: axisTitle("Z (AU)") },
             camera: {
                 eye: { x: 1.25, y: -1.25, z: 0.75 },
                 center: { x: 0, y: 0, z: 0 },
