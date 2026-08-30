@@ -11,18 +11,18 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 27  
-**Total Lines of Code (non-blank):** 14,548  
+**Total Lines of Code (non-blank):** 14,504  
 **Total Public Functions/Classes:** 166
 
 ## Classification Coverage
 
 **Undetermined role (1).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `patch_gallery_axis_titles_and_chromosphere_20260829.py`
+- `patch_gallery_runner_crlf_compare_20260829.py`
 
 **Undetermined domain (1).** No valid `Domain:` tag.
 
-- `patch_gallery_axis_titles_and_chromosphere_20260829.py`
+- `patch_gallery_runner_crlf_compare_20260829.py`
 
 
 ---
@@ -91,11 +91,11 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (177 lines) |
 | `gallery_editor.py` | Gallery Metadata Editor for Paloma's Orrery GUI to edit visualization titles, descriptions, categories, reorder items and categories, and copy/move visualizations within the gallery_metadata.json file. (1,340 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (670 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (689 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,457 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (624 lines) |
-| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (819 lines) |
+| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (820 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (120 lines) |
 | `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (651 lines) |
@@ -106,7 +106,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `patch_gallery_axis_titles_and_chromosphere_20260829.py` | Two small fixes on the gallery side, both found by looking rather than by a check. (228 lines) |
+| `patch_gallery_runner_crlf_compare_20260829.py` | The served-reachability check compares the site's bytes against the working copy's bytes, and reports two files stale on every run, forever. They are not stale. This makes the comparison read content instead. (164 lines) |
 
 ---
 

@@ -285,24 +285,6 @@ def fetch(url):
         return None, b"", str(exc)
 
 
-def same_content(left, right):
-    """True when two files differ only in their line endings.
-
-    .gitattributes normalises this repo to LF on commit, so Pages
-    serves LF. Any tool writing in text mode on Windows leaves the
-    WORKING COPY as CRLF -- gallery_cache_builder.py writes
-    coverage_index.json and feature_configs.json with open(path,
-    'w'), which is why exactly those two reported stale on every
-    live run while everything else matched.
-
-    The content is identical and the deploy is current. Comparing
-    raw bytes called that stale forever, on the one check whose
-    whole value is being believed.
-    """
-    return left.replace(b"\r\n", b"\n") == right.replace(b"\r\n",
-                                                            b"\n")
-
-
 def check_served(root):
     """Fetch each critical-path file from the live site and judge it."""
     print("")
@@ -337,11 +319,6 @@ def check_served(root):
             verdict, detail = "SERVED", "no local copy to compare"
         elif local == body:
             verdict, detail = "SERVED", "matches the working copy"
-        elif same_content(local, body):
-            # Reported rather than swallowed: the row still says the
-            # bytes differ, and says why they are not a difference.
-            verdict, detail = "SERVED", ("matches (the working copy "
-                                         "is CRLF)")
         else:
             verdict, detail = "STALE", "differs from the working copy"
 
