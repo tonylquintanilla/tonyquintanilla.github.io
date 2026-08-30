@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 """
-maintenance_run.py - one pass over the gallery's generators and checkers.
+gallery_maintenance_run.py - one pass over the gallery's generators
+and checkers.
+
+THE OTHER RUNNER
+The orrery repo has its own, orrery_maintenance_run.py (L-188), and
+it is a different program: four generators and eleven checkers over
+the orrery's files. Both were called maintenance_run.py until
+2026-08-29, when that cost the orrery's copy three commits of not
+existing -- this one was downloaded, that one was displaced, and the
+dashboard button reported a file that was not there. Renamed under
+L-264.
 
 Role: devtool
 Domain: dev_tools
@@ -20,8 +30,8 @@ work that way. The Jekyll failure was invisible on Tony's machine and
 invisible in the repository. It existed only on the live site, and only
 after a push.
 
-    python maintenance_run.py            before you commit
-    python maintenance_run.py --live     after you push
+    python gallery_maintenance_run.py           before you commit
+    python gallery_maintenance_run.py --live    after you push
 
 The default pass is offline and deterministic. The --live pass adds the
 two checks that can only mean something once GitHub Pages has deployed,
@@ -747,7 +757,8 @@ def main():
     live = "--live" in sys.argv[1:]
     unknown = [arg for arg in sys.argv[1:] if arg != "--live"]
     if unknown:
-        print("maintenance_run.py takes one optional flag, --live.")
+        print("gallery_maintenance_run.py takes one optional flag, "
+              "--live.")
         print("Not understood: %s" % ", ".join(unknown))
         return 2
 
@@ -776,9 +787,9 @@ def main():
 
     print("")
     if live:
-        print("  Offline pass: python maintenance_run.py")
+        print("  Offline pass: python gallery_maintenance_run.py")
     else:
-        print("  After you push: python maintenance_run.py --live")
+        print("  After you push: python gallery_maintenance_run.py --live")
     return code
 
 
