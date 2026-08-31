@@ -9,6 +9,7 @@
             "value": 0.2,
             "unit": "R_sun"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(70, 130, 180)",
           "opacity": 1.0,
           "n_points": 25,
@@ -22,6 +23,7 @@
             "value": 0.713,
             "unit": "R_sun"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(30, 144, 255)",
           "opacity": 1.0,
           "n_points": 25,
@@ -35,6 +37,7 @@
             "value": 1.0,
             "unit": "R_sun"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(255, 244, 214)",
           "opacity": 1.0,
           "n_points": 25,
@@ -53,6 +56,7 @@
         "streamer_belt": {
           "name": "Streamer Belt (helmet and stalk)",
           "shape": "streamer_band",
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(255, 200, 80)",
           "cusp_radius": {
             "value": 4.0,
@@ -95,6 +99,7 @@
             "value": 1.002874802357338,
             "unit": "R_sun"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(30, 144, 255)",
           "opacity": 0.5,
           "n_points": 25,
@@ -109,6 +114,7 @@
             "value": 3,
             "unit": "R_sun"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(0, 0, 255)",
           "opacity": 0.45,
           "n_points": 20,
@@ -122,6 +128,7 @@
             "value": 3.45,
             "unit": "R_sun"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(200, 60, 60)",
           "opacity": 0.5,
           "n_points": 20,
@@ -135,6 +142,7 @@
             "value": 19.7,
             "unit": "R_sun"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(0, 200, 200)",
           "opacity": 0.35,
           "n_points": 20,
@@ -148,6 +156,7 @@
             "value": 50,
             "unit": "R_sun"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(25, 25, 112)",
           "opacity": 0.5,
           "n_points": 20,
@@ -169,6 +178,7 @@
             "value": 94,
             "unit": "au"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(240, 244, 255)",
           "opacity": 0.4,
           "n_points": 20,
@@ -182,6 +192,7 @@
             "value": 26148,
             "unit": "R_sun"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(135, 206, 250)",
           "opacity": 0.4,
           "n_points": 20,
@@ -200,6 +211,7 @@
         "hills_cloud_torus": {
           "name": "Hills Cloud (torus)",
           "shape": "torus",
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(180, 160, 255)",
           "inner_radius": {
             "value": 2000,
@@ -228,6 +240,7 @@
         "outer_oort_clumpy": {
           "name": "Outer Oort Cloud (clumps)",
           "shape": "clump_field",
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(200, 200, 255)",
           "inner_radius": {
             "value": 20000,
@@ -259,6 +272,7 @@
         "galactic_tide": {
           "name": "Galactic Tide (thinned at the plane)",
           "shape": "tide_field",
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(140, 200, 200)",
           "typical_radius": {
             "value": 50000,
@@ -285,6 +299,7 @@
             "value": 2000,
             "unit": "au"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(255, 255, 255)",
           "opacity": 0.35,
           "n_points": 20,
@@ -298,6 +313,7 @@
             "value": 20000,
             "unit": "au"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(255, 255, 255)",
           "opacity": 0.35,
           "n_points": 20,
@@ -311,6 +327,7 @@
             "value": 100000,
             "unit": "au"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(255, 255, 255)",
           "opacity": 0.3,
           "n_points": 20,
@@ -341,6 +358,7 @@
             "value": 150000,
             "unit": "au"
           },
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(102, 187, 106)",
           "opacity": 0.3,
           "n_points": 20,
@@ -355,6 +373,7 @@
         "atmosphere": {
           "name": "Lower Atmosphere",
           "radius_fraction": 1.05,
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(150, 200, 255)",
           "opacity": 0.5,
           "n_points": 20
@@ -362,6 +381,7 @@
         "upper_atmosphere": {
           "name": "Upper Atmosphere",
           "radius_fraction": 1.25,
+          "info_url": "https://www.nasa.gov/",
           "color": "rgb(100, 150, 255)",
           "opacity": 0.3,
           "n_points": 20
@@ -386,6 +406,10 @@
         "names": [
           "Inner Radiation Belt",
           "Outer Radiation Belt"
+        ],
+        "info_urls": [
+          "https://www.nasa.gov/",
+          "https://www.nasa.gov/"
         ],
         "planet_radius": {
           "value": 6378.1366,

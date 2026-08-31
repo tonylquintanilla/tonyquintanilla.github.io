@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-08-31T02:10:41.668277+00:00",
+  "generated": "2026-08-31T13:25:22.439646+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2460960.0487057776,
-    "end_jd": 2461607.132814321
+    "start_jd": 2460960.517233224,
+    "end_jd": 2461607.6013417677
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -40,6 +40,7 @@
               "value": 0.2,
               "unit": "R_sun"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(70, 130, 180)",
             "opacity": 1.0,
             "n_points": 25,
@@ -53,6 +54,7 @@
               "value": 0.713,
               "unit": "R_sun"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(30, 144, 255)",
             "opacity": 1.0,
             "n_points": 25,
@@ -66,6 +68,7 @@
               "value": 1.0,
               "unit": "R_sun"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(255, 244, 214)",
             "opacity": 1.0,
             "n_points": 25,
@@ -84,6 +87,7 @@
           "streamer_belt": {
             "name": "Streamer Belt (helmet and stalk)",
             "shape": "streamer_band",
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(255, 200, 80)",
             "cusp_radius": {
               "value": 4.0,
@@ -126,6 +130,7 @@
               "value": 1.002874802357338,
               "unit": "R_sun"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(30, 144, 255)",
             "opacity": 0.5,
             "n_points": 25,
@@ -140,6 +145,7 @@
               "value": 3,
               "unit": "R_sun"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(0, 0, 255)",
             "opacity": 0.45,
             "n_points": 20,
@@ -153,6 +159,7 @@
               "value": 3.45,
               "unit": "R_sun"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(200, 60, 60)",
             "opacity": 0.5,
             "n_points": 20,
@@ -166,6 +173,7 @@
               "value": 19.7,
               "unit": "R_sun"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(0, 200, 200)",
             "opacity": 0.35,
             "n_points": 20,
@@ -179,6 +187,7 @@
               "value": 50,
               "unit": "R_sun"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(25, 25, 112)",
             "opacity": 0.5,
             "n_points": 20,
@@ -200,6 +209,7 @@
               "value": 94,
               "unit": "au"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(240, 244, 255)",
             "opacity": 0.4,
             "n_points": 20,
@@ -213,6 +223,7 @@
               "value": 26148,
               "unit": "R_sun"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(135, 206, 250)",
             "opacity": 0.4,
             "n_points": 20,
@@ -231,6 +242,7 @@
           "hills_cloud_torus": {
             "name": "Hills Cloud (torus)",
             "shape": "torus",
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(180, 160, 255)",
             "inner_radius": {
               "value": 2000,
@@ -259,6 +271,7 @@
           "outer_oort_clumpy": {
             "name": "Outer Oort Cloud (clumps)",
             "shape": "clump_field",
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(200, 200, 255)",
             "inner_radius": {
               "value": 20000,
@@ -290,6 +303,7 @@
           "galactic_tide": {
             "name": "Galactic Tide (thinned at the plane)",
             "shape": "tide_field",
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(140, 200, 200)",
             "typical_radius": {
               "value": 50000,
@@ -316,6 +330,7 @@
               "value": 2000,
               "unit": "au"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(255, 255, 255)",
             "opacity": 0.35,
             "n_points": 20,
@@ -329,6 +344,7 @@
               "value": 20000,
               "unit": "au"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(255, 255, 255)",
             "opacity": 0.35,
             "n_points": 20,
@@ -342,6 +358,7 @@
               "value": 100000,
               "unit": "au"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(255, 255, 255)",
             "opacity": 0.3,
             "n_points": 20,
@@ -372,6 +389,7 @@
               "value": 150000,
               "unit": "au"
             },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(102, 187, 106)",
             "opacity": 0.3,
             "n_points": 20,
@@ -413,7 +431,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461283.5,
-          "retrieved": "2026-08-31T02:10:32.308567+00:00"
+          "retrieved": "2026-08-31T13:25:21.133498+00:00"
         }
       },
       "positions": null,
@@ -423,6 +441,7 @@
           "atmosphere": {
             "name": "Lower Atmosphere",
             "radius_fraction": 1.05,
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(150, 200, 255)",
             "opacity": 0.5,
             "n_points": 20
@@ -430,6 +449,7 @@
           "upper_atmosphere": {
             "name": "Upper Atmosphere",
             "radius_fraction": 1.25,
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(100, 150, 255)",
             "opacity": 0.3,
             "n_points": 20
@@ -454,6 +474,10 @@
           "names": [
             "Inner Radiation Belt",
             "Outer Radiation Belt"
+          ],
+          "info_urls": [
+            "https://www.nasa.gov/",
+            "https://www.nasa.gov/"
           ],
           "planet_radius": {
             "value": 6378.1366,
@@ -520,7 +544,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461283.5,
-          "retrieved": "2026-08-31T02:10:33.294596+00:00"
+          "retrieved": "2026-08-31T13:25:21.248142+00:00"
         }
       },
       "positions": null,
@@ -637,7 +661,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461283.5,
-          "retrieved": "2026-08-31T02:10:34.298449+00:00"
+          "retrieved": "2026-08-31T13:25:21.360696+00:00"
         }
       },
       "positions": null,
@@ -746,7 +770,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461283.5,
-          "retrieved": "2026-08-31T02:10:35.281129+00:00"
+          "retrieved": "2026-08-31T13:25:21.475764+00:00"
         }
       },
       "positions": null,
@@ -809,7 +833,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461283.5,
-          "retrieved": "2026-08-31T02:10:36.285210+00:00"
+          "retrieved": "2026-08-31T13:25:21.595682+00:00"
         }
       },
       "positions": null,
@@ -872,7 +896,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461283.5,
-          "retrieved": "2026-08-31T02:10:37.214082+00:00"
+          "retrieved": "2026-08-31T13:25:21.721023+00:00"
         }
       },
       "positions": null,
@@ -935,7 +959,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461283.5,
-          "retrieved": "2026-08-31T02:10:38.207603+00:00"
+          "retrieved": "2026-08-31T13:25:21.840500+00:00"
         }
       },
       "positions": null,
@@ -998,7 +1022,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461283.5,
-          "retrieved": "2026-08-31T02:10:39.196045+00:00"
+          "retrieved": "2026-08-31T13:25:21.958452+00:00"
         }
       },
       "positions": null,
@@ -1061,7 +1085,7 @@
           "query_target": "99942",
           "center": "@sun",
           "epoch": 2461283.5,
-          "retrieved": "2026-08-31T02:10:40.159054+00:00"
+          "retrieved": "2026-08-31T13:25:22.082457+00:00"
         }
       },
       "positions": null,
@@ -1158,7 +1182,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460239.797748443,
-          "retrieved": "2026-08-31T02:10:41.165134+00:00"
+          "retrieved": "2026-08-31T13:25:22.273735+00:00"
         }
       },
       "positions": null,
@@ -1226,7 +1250,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-08-31T02:10:41.631974+00:00"
+          "retrieved": "2026-08-31T13:25:22.410535+00:00"
         }
       },
       "positions": null,

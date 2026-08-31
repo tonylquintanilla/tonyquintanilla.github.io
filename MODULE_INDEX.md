@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** August 30, 2026 by `module_atlas.py`  
+**Generated:** August 31, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,22 +10,18 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 29  
-**Total Lines of Code (non-blank):** 14,948  
-**Total Public Functions/Classes:** 172
+**Total Python Files:** 27  
+**Total Lines of Code (non-blank):** 14,574  
+**Total Public Functions/Classes:** 168
 
 ## Classification Coverage
 
-**Undetermined role (3).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (1).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `patch_L262_1_smoke_framing_repoint.py`
-- `patch_L265_info_url_placeholder.py`
 - `sweep_collapsed_features.py`
 
-**Undetermined domain (3).** No valid `Domain:` tag.
+**Undetermined domain (1).** No valid `Domain:` tag.
 
-- `patch_L262_1_smoke_framing_repoint.py`
-- `patch_L265_info_url_placeholder.py`
 - `sweep_collapsed_features.py`
 
 
@@ -110,8 +106,6 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `patch_L262_1_smoke_framing_repoint.py` | Run:  python patch_L262_1_smoke_framing_repoint.py From: the GALLERY repo root (the folder holding gallery_maintenance_run.py and interactive.html). In VS Code: open this file from that folder and click Run. (150 lines) |
-| `patch_L265_info_url_placeholder.py` | Adds an `info_url` field to every DRAWABLE FEATURE in data/objects_config.json, seeded with the NASA front page as an obvious placeholder for Tony to replace with curated links. (224 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 
 ---
