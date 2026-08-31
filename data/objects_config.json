@@ -19,18 +19,21 @@
         "sun_structures": {
           "core": {
             "name": "Core", "radius": { "value": 0.2, "unit": "R_sun" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(70, 130, 180)", "opacity": 1.0, "n_points": 25, "marker_size": 10,
             "source": "Bahcall, Pinsonneault & Basu (2001), ApJ 555:990 (radial profiles); drawn at the low end of the conventional 0.2-0.25 R_sun core range",
             "orrery_constant": "constants_new.py::CORE_AU"
           },
           "radiative": {
             "name": "Radiative Zone", "radius": { "value": 0.713, "unit": "R_sun" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(30, 144, 255)", "opacity": 1.0, "n_points": 25, "marker_size": 7,
             "source": "Christensen-Dalsgaard, Gough & Thompson (1991), ApJ 378:413, \"The depth of the solar convection zone\" -- convection-zone depth measured at 0.287 +/- 0.003 solar radii, so the base of the zone sits at 1 - 0.287 = 0.713 R_sun",
             "orrery_constant": "constants_new.py::RADIATIVE_ZONE_AU"
           },
           "photosphere": {
             "name": "Photosphere", "radius": { "value": 1.0, "unit": "R_sun" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(255, 244, 214)", "opacity": 1.0, "n_points": 25, "marker_size": 7.0,
             "source": "IAU 2015 Resolution B3 -- nominal solar radius",
             "orrery_constant": "constants_new.py::SOLAR_RADIUS_AU"
@@ -44,6 +47,7 @@
         "solar_atmosphere": {
           "streamer_belt": {
             "name": "Streamer Belt (helmet and stalk)", "shape": "streamer_band",
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(255, 200, 80)",
             "cusp_radius": { "value": 4.0, "unit": "R_sun",
               "source": "Suess and Nerney (2004) -- extent of the closed-field helmet, not of the streamer as a whole",
@@ -65,6 +69,7 @@
           },
           "chromosphere": {
             "name": "Chromosphere (2,000 km skin)", "radius": { "value": 1.002874802357338, "unit": "R_sun" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(30, 144, 255)", "opacity": 0.5, "n_points": 25, "marker_size": 3.0,
             "source": "Carroll & Ostlie, An Introduction to Modern Astrophysics, Ch. 11 -- chromosphere extends about 2000 km above the photosphere",
             "orrery_constant": "constants_new.py::CHROMOSPHERE_PHYSICAL_RADII",
@@ -72,24 +77,28 @@
           },
           "inner_corona": {
             "name": "Inner Corona", "radius": { "value": 3, "unit": "R_sun" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(0, 0, 255)", "opacity": 0.45, "n_points": 20, "marker_size": 3.0,
             "source": "Lamy, Gilardy, Llebaria, Quemerais & Ernandez, \"Coronal Photopolarimetry with the LASCO-C3 Coronagraph over 24 Years [1996-2019]\", Solar Physics (arXiv:2009.04820) -- the inner solar corona taken as extending to about 3 R_sun from the center of the solar disk. A stated convention, not a measurement: the inner (K-)corona has no sharp edge, and 3 R_sun is the top of the 2-3 R_sun band across which the F-corona overtakes it in brightness",
             "orrery_constant": "constants_new.py::INNER_CORONA_RADII"
           },
           "roche_limit": {
             "name": "Roche Limit (Comets)", "radius": { "value": 3.45, "unit": "R_sun" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(200, 60, 60)", "opacity": 0.5, "n_points": 20, "marker_size": 3.0,
             "source": "Murray & Dermott, Solar System Dynamics (1999), Sec. 4.6",
             "orrery_constant": "constants_new.py::ROCHE_LIMIT_RADII"
           },
           "alfven_surface": {
             "name": "Alfven Surface", "radius": { "value": 19.7, "unit": "R_sun" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(0, 200, 200)", "opacity": 0.35, "n_points": 20, "marker_size": 3.5,
             "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- first Parker Solar Probe crossing, 28 April 2021",
             "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
           },
           "outer_corona": {
             "name": "Outer Corona", "radius": { "value": 50, "unit": "R_sun" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(25, 25, 112)", "opacity": 0.5, "n_points": 20, "marker_size": 3.5,
             "source": "Mann et al. (2004), A&A 414:1127; F-corona envelope, not a sharp physical edge",
             "orrery_constant": "constants_new.py::OUTER_CORONA_RADII"
@@ -103,12 +112,14 @@
         "solar_wind": {
           "termination_shock": {
             "name": "Termination Shock", "radius": { "value": 94, "unit": "au" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(240, 244, 255)", "opacity": 0.4, "n_points": 20, "marker_size": 3.0,
             "source": "Stone et al. (2005), Science 309:2017 -- Voyager 1 crossing at 94 AU",
             "orrery_constant": "constants_new.py::TERMINATION_SHOCK_AU"
           },
           "heliopause": {
             "name": "Heliopause", "radius": { "value": 26148, "unit": "R_sun" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(135, 206, 250)", "opacity": 0.4, "n_points": 20, "marker_size": 3.0,
             "source": "Gurnett et al. (2013), Science 341:1489",
             "orrery_constant": "constants_new.py::HELIOPAUSE_RADII"
@@ -122,6 +133,7 @@
         "oort_cloud": {
           "hills_cloud_torus": {
             "name": "Hills Cloud (torus)", "shape": "torus",
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(180, 160, 255)",
             "inner_radius": { "value": 2000, "unit": "au",
               "source": "Hills (1981); Oort (1950) -- inner edge estimate",
@@ -139,6 +151,7 @@
           },
           "outer_oort_clumpy": {
             "name": "Outer Oort Cloud (clumps)", "shape": "clump_field",
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(200, 200, 255)",
             "inner_radius": { "value": 20000, "unit": "au",
               "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
@@ -157,6 +170,7 @@
           },
           "galactic_tide": {
             "name": "Galactic Tide (thinned at the plane)", "shape": "tide_field",
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(140, 200, 200)",
             "typical_radius": { "value": 50000, "unit": "au",
               "source": "DECLARED -- a mid-cloud distance between the Hills cloud and the outer edge, chosen for the illustration. Not a measurement.",
@@ -172,18 +186,21 @@
           },
           "inner_oort_limit": {
             "name": "Inner Limit of Oort Cloud", "radius": { "value": 2000, "unit": "au" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(255, 255, 255)", "opacity": 0.35, "n_points": 20, "marker_size": 3.0,
             "source": "Hills (1981); Oort (1950) -- inner edge estimate",
             "orrery_constant": "constants_new.py::INNER_LIMIT_OORT_CLOUD_AU"
           },
           "inner_oort": {
             "name": "Inner Oort Cloud", "radius": { "value": 20000, "unit": "au" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(255, 255, 255)", "opacity": 0.35, "n_points": 20, "marker_size": 3.0,
             "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
             "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
           },
           "outer_oort": {
             "name": "Outer Oort Cloud", "radius": { "value": 100000, "unit": "au" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(255, 255, 255)", "opacity": 0.3, "n_points": 20, "marker_size": 3.0,
             "source": "Oort (1950); Weissman (1996)",
             "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
@@ -201,6 +218,7 @@
         "hill_sphere": {
           "gravitational": {
             "name": "Gravitational Influence", "radius": { "value": 150000, "unit": "au" },
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(102, 187, 106)", "opacity": 0.3, "n_points": 20, "marker_size": 3.0,
             "source": "Approximate Hill sphere of the Sun in the Milky Way (model-dependent); literature estimates range 100,000-200,000 AU",
             "orrery_constant": "constants_new.py::GRAVITATIONAL_INFLUENCE_AU"
@@ -217,10 +235,12 @@
         "atmosphere_shell": {
           "atmosphere": {
             "name": "Lower Atmosphere", "radius_fraction": 1.05,
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(150, 200, 255)", "opacity": 0.5, "n_points": 20
           },
           "upper_atmosphere": {
             "name": "Upper Atmosphere", "radius_fraction": 1.25,
+            "info_url": "https://www.nasa.gov/",
             "color": "rgb(100, 150, 255)", "opacity": 0.3, "n_points": 20
           },
           "planet_radius": {
@@ -237,6 +257,10 @@
           "n_points": 80,
           "colors": ["rgb(255, 100, 100)", "rgb(100, 200, 255)"],
           "names": ["Inner Radiation Belt", "Outer Radiation Belt"],
+          "info_urls": [
+            "https://www.nasa.gov/",
+            "https://www.nasa.gov/"
+          ],
           "planet_radius": {
             "value": 6378.1366, "unit": "km",
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",

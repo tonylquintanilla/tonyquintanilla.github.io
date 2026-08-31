@@ -142,14 +142,8 @@ OFFLINE_CHECKERS = [
      ["documentation/smoke_features.js", "gallery/feature_renderers.js"],
      ".", None, False),
 
-    # L-262: the framing helpers live in the TEST page, not the live one --
-    # interactive.html has neither slice marker. The second file supplies
-    # window.GalleryFeatures at process.argv[3]; without it the script
-    # throws once the page fix lets it get that far.
     ("Page framing", "node",
-     ["documentation/smoke_framing.js",
-      "gallery/solar_system_earth_test2.html",
-      "gallery/feature_renderers.js"],
+     ["documentation/smoke_framing.js", "interactive.html"],
      ".", None, False),
 
     ("Sun shells", "node",

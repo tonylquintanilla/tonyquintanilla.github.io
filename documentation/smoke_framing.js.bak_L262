@@ -29,10 +29,7 @@ function check(n, ok, d) {
   if (!ok) failures++;
 }
 
-// L-262: read relative to the repo root, which is the runner's cwd for
-// this check. The payload lives beside this script in documentation/.
-const p = JSON.parse(
-  fs.readFileSync("documentation/payload_jupiter_saturn.json", "utf8"));
+const p = JSON.parse(fs.readFileSync("payload_jupiter_saturn.json", "utf8"));
 const feat = g.GalleryFeatures.buildFeatureTraces(p.features, p.bodies);
 
 const baseLayout = { scene: { xaxis: { range: [-10, 10] }, yaxis: { range: [-10, 10] },
