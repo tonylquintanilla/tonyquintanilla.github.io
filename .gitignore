@@ -2,8 +2,14 @@
 __pycache__/
 *.pyc
 
-# JSON backups written by the gallery tools (json_converter / editor)
-*.json.bak
+# Backups. The orrery repo has had a plain *.bak rule all along; this
+# repo only ignored *.json.bak, so every non-JSON backup got committed --
+# including three copies of interactive.html served publicly from the
+# site root. Widened 2026-08-31, L-271. Covers the three shapes the
+# patch scripts write: plain, numbered, and handle-suffixed.
+*.bak
+*.bak[0-9]
+*.bak_*
 
 # Studio preview throwaway (live WYSIWYG preview card)
 gallery/_studio_preview.json
