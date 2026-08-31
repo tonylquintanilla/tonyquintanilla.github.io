@@ -92,7 +92,7 @@
         "chromosphere": {
           "name": "Chromosphere (2,000 km skin)",
           "radius": {
-            "value": 1.0028748,
+            "value": 1.002874802357338,
             "unit": "R_sun"
           },
           "color": "rgb(30, 144, 255)",
