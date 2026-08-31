@@ -55,17 +55,10 @@ quotes them in the passing and the failing branch alike so a red
 report-only row cannot hide behind a green run. Anything added later
 gates by default, which is the safe direction.
 
-    (Artifact 1 assembler used to sit here. It does not any more: it
-    now runs documentation/pin_artifact1_known_failure.py and GATES.
-    The old exemption was written for T5, which compares the fingerprint
-    against itself and so cannot fail -- but the row was failing on T3,
-    a different check and a real one. An exemption for one thing does
-    not cover a failure in another, and a row that fails identically
-    every run hides the next real change behind the known one. The pin
-    compares the five verdicts and T3's feature set against the
-    2026-08-31 state, so the row means "nothing moved" and can say so
-    falsely. T5's self-comparison is still not load-bearing; that is
-    still L-237's to fix.)
+    Artifact 1 assembler   its T5 check reads fp.compare(golden, golden)
+                           -- the fingerprint against itself, not against
+                           the stored file. It passes whatever the golden
+                           says. Not load-bearing until L-237 lands.
     Store drift            a report, not a gate. It moves nothing and
                            fixes nothing; it converts a silent hole into
                            a loud one. It is NOT the cross-repo transport
@@ -164,13 +157,8 @@ OFFLINE_CHECKERS = [
       "data/objects_config.json"],
      ".", None, False),
 
-    # L-237: this used to call the test directly and print FAIL every
-    # run, which made a real regression indistinguishable from the known
-    # one. The pin runs the same test and compares its five verdicts, and
-    # T3's feature set, against the 2026-08-31 state. It GATES, so a
-    # green run is now a claim that can be false.
     ("Artifact 1 assembler", "python",
-     ["documentation/pin_artifact1_known_failure.py"], ".", "===", False),
+     ["-m", "assembler.tests.test_artifact1_earth"], "gallery", "===", True),
 ]
 
 # ---- live: what the site must actually serve -------------------------
