@@ -1,6 +1,6 @@
 # Paloma's Orrery -- Module Atlas
 
-Generated: August 31, 2026
+Generated: September 01, 2026
 Modules: 27 | Functions: 168 | Lines: 14,586
 
 ## Classification Coverage
