@@ -1252,6 +1252,52 @@ def verify_promoted_data(out_dir, expected_index):
                 (promoted.get('generated'), expected_index.get('generated')))
     return None
 
+def _rmtree_force(path):
+    """shutil.rmtree that survives the Windows read-only attribute.
+
+    Returns the number of entries that needed the read-only bit cleared.
+    0 means the plain delete worked and this recovery never fired.
+
+    WHY (L-274). Every directory in the served tree carries
+    FILE_ATTRIBUTE_READONLY -- the live one included, set by OneDrive.
+    Windows permits RENAMING a read-only directory, which is why the
+    nightly swap (os.replace) has never failed on it. Windows refuses to
+    DELETE one, which is why every rmtree in this module failed with
+    [WinError 5] Access is denied at the first subdirectory it tried to
+    remove, usually raw/elements. The files inside are not read-only;
+    only the directories are.
+
+    The count is returned rather than discarded so a caller can report
+    whether this path was actually exercised. A silent recovery is how
+    the original failure hid for six weeks.
+    """
+    import stat as _stat
+
+    cleared = [0]
+
+    def _retry(func, target, exc):
+        # Called for each entry rmtree could not remove. Add the write
+        # bit rather than replacing the mode, so this is correct on
+        # POSIX as well as Windows.
+        if not os.path.lexists(target):
+            return                      # already gone; nothing to recover
+        try:
+            mode = os.stat(target).st_mode
+            os.chmod(target, mode | _stat.S_IWRITE | _stat.S_IWUSR)
+        except OSError:
+            raise
+        cleared[0] += 1
+        func(target)
+
+    # onexc is 3.12+; onerror is the older spelling and is deprecated
+    # there. Feature-detect rather than pin a version.
+    try:
+        shutil.rmtree(path, onexc=_retry)
+    except TypeError:
+        shutil.rmtree(path, onerror=lambda f, p, e: _retry(f, p, e))
+    return cleared[0]
+
+
 def recover_incomplete_swap(out_dir):
     """Run-start crash recovery (A-1 + N1) for the whole-generation swap. If a
     crash left the live generation MISSING with .prev holding the only copy,
@@ -1265,25 +1311,124 @@ def recover_incomplete_swap(out_dir):
         os.replace(prev, out_dir)
     else:
         try:
-            shutil.rmtree(prev)     # do NOT ignore_errors: a silent lock would wedge the next swap
+            # L-274: _rmtree_force, not shutil.rmtree. Every directory here
+            # carries the Windows read-only attribute, which blocks delete
+            # but not rename -- so the swap succeeded and this cleanup did
+            # not, which is how .prev came to be quarantined night after
+            # night. Still does NOT ignore errors: a silent lock would
+            # wedge the next swap.
+            n = _rmtree_force(prev)
+            if n:
+                print("[RECOVER] removed retained %s (cleared read-only on %d entr%s)"
+                      % (prev, n, "y" if n == 1 else "ies"), flush=True)
         except OSError as e:
             print("[RECOVER] could not remove retained %s (%s); swap will quarantine it" % (prev, e), flush=True)
 
 
-def _sweep_siblings(out_dir, keep_days=3):
+_SIBLING_RUNID_RE = re.compile(r'(\d{8}T\d{6})Z?$')
+
+
+def _sibling_age_seconds(name, now_utc=None):
+    """Age of a sibling directory, in seconds, from the run id in its NAME.
+
+    Returns (seconds, source) where source is 'name' or None. None means
+    the name carried no parseable run id and the caller must fall back.
+
+    THE NAME IS USED BECAUSE st_mtime IS NOT A MEASURE OF ANYTHING HERE
+    (L-274). A rename preserves mtime, so a quarantine minted today
+    inherits solar-system.prev's timestamp from days ago. And OneDrive
+    refreshes mtime on sync, so directories a week old report as touched
+    minutes ago and never age out. Both were measured on 2026-09-01. The
+    run id is in the name, and neither a rename nor a sync can alter it.
+
+    Accepts both shapes the builder actually mints:
+      solar-system.quarantine_20260901T180026Z   (run_id, with Z)
+      solar-system.quarantine_20260901T180026    (the run_id=None
+                                                  fallback at the
+                                                  quarantine call site)
+    and tolerates an interposed object slug, because a single-object
+    dry-run stages as .staging_solar-system_<slug>_<runid> (L-148). The
+    match is anchored at the END of the name for exactly that reason.
+    """
+    m = _SIBLING_RUNID_RE.search(name)
+    if not m:
+        return None, None
+    try:
+        stamp = datetime.strptime(m.group(1), '%Y%m%dT%H%M%S').replace(
+            tzinfo=timezone.utc)
+    except ValueError:
+        return None, None
+    now = now_utc or _utcnow()
+    return (now - stamp).total_seconds(), 'name'
+
+
+def _sweep_siblings(out_dir, keep_days=3, now_utc=None):
     """Reap stale sibling crash remnants older than keep_days: .staging_* (pre-swap
     staging) and .quarantine_* (locked-.prev quarantines). Recent ones stay as
-    autopsies (A-11)."""
+    autopsies (A-11).
+
+    Ages by the run id in each directory's own name; see
+    _sibling_age_seconds for why mtime is not trusted (L-274). mtime is
+    still the fallback for a name that carries no run id, and every such
+    fallback is REPORTED rather than taken silently -- a sweep that goes
+    quiet is how this one failed for six weeks.
+
+    Prints what it reaped and what it kept, by name. A count alone cannot
+    distinguish a sweep that found nothing from a sweep that could not
+    read anything.
+    """
     import time
     parent = out_dir.parent
-    cutoff = time.time() - keep_days * 86400
+    cutoff_s = keep_days * 86400
+    reaped, kept, fell_back, failed = [], [], [], []
+    cleared_total = [0]
+
     for pat in ('.staging_%s_*' % out_dir.name, '%s.quarantine_*' % out_dir.name):
-        for d in parent.glob(pat):
+        for d in sorted(parent.glob(pat)):
+            if not d.is_dir():
+                continue
+            age, source = _sibling_age_seconds(d.name, now_utc)
+            if source is None:
+                fell_back.append(d.name)
+                try:
+                    age = time.time() - d.stat().st_mtime
+                except OSError:
+                    failed.append(d.name)
+                    continue
+            if age < cutoff_s:
+                kept.append(d.name)
+                continue
             try:
-                if d.stat().st_mtime < cutoff:
-                    shutil.rmtree(d, ignore_errors=True)
-            except OSError:
-                pass
+                # L-274: read-only directories refuse delete but allow
+                # rename, which is why this failed on all 70 siblings
+                # while the swap beside it kept working.
+                cleared_total[0] += _rmtree_force(d)
+                reaped.append(d.name)
+            except OSError as e:
+                failed.append('%s (%s)' % (d.name, e))
+
+    if reaped:
+        print("[sweep] reaped %d sibling(s) older than %d day(s):"
+              % (len(reaped), keep_days), flush=True)
+        for n in reaped:
+            print("           %s" % n, flush=True)
+        # L-274: report whether the read-only recovery actually fired. A
+        # reap list alone cannot distinguish "the fix worked" from "the
+        # attribute was never the problem".
+        if cleared_total[0]:
+            print("[sweep] cleared the read-only attribute on %d entr%s to do it"
+                  % (cleared_total[0], "y" if cleared_total[0] == 1 else "ies"),
+                  flush=True)
+    if kept:
+        print("[sweep] kept %d recent sibling(s) as autopsies: %s"
+              % (len(kept), ', '.join(kept)), flush=True)
+    if fell_back:
+        print("[sweep] NO RUN ID IN NAME, aged by mtime (unreliable here): %s"
+              % ', '.join(fell_back), flush=True)
+    if failed:
+        print("[sweep] COULD NOT REMOVE: %s" % '; '.join(failed), flush=True)
+    if not (reaped or kept or fell_back or failed):
+        print("[sweep] no sibling directories present", flush=True)
 
 
 def git_commit(repo_root, data_rel, today_str):
@@ -1393,7 +1538,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     _stage_tag = ('%s_%s' % (out_dir.name, only_slug)) if only_slug else out_dir.name
     staging = out_dir.parent / ('.staging_%s_%s' % (_stage_tag, run_id))
     if staging.exists():
-        shutil.rmtree(staging)
+        _rmtree_force(staging)      # L-274: read-only dirs refuse plain rmtree
     staging.mkdir(parents=True, exist_ok=True)
     # copy-forward existing raw so overwrite-by-date and the frozen past survive
     live_raw = out_dir / 'raw'

@@ -718,6 +718,72 @@ def main():
         check(ecb is not None and 'Tp_jd' in ecb,
               "P2-9: stale comet carries its comet block forward (not nulled)")
 
+    # --- L-274: the sibling sweep ages by NAME, not by mtime ---------
+    # The sweep ran at every build start for six weeks and reaped
+    # nothing, because st_mtime is wrong in both directions here: a
+    # rename preserves it, and OneDrive refreshes it. These pin the
+    # parser against the name shapes the builder actually mints, and pin
+    # the reap decision against an mtime that is lying.
+    now274 = datetime(2026, 9, 1, 18, 0, 0, tzinfo=timezone.utc)
+
+    # Expected age is built from the timestamp read off the NAME by hand,
+    # so this pins that the parser extracted those digits correctly --
+    # not that two identical expressions agree.
+    want274 = (now274 - datetime(2026, 8, 29, 17, 41, 49,
+                                 tzinfo=timezone.utc)).total_seconds()
+    age, src = b._sibling_age_seconds('solar-system.quarantine_20260829T174149Z',
+                                      now274)
+    check(src == 'name' and abs(age - want274) < 2,
+          "L-274: run id with Z parses from the name (%s)" % src)
+
+    age, src = b._sibling_age_seconds('solar-system.quarantine_20260901T170000',
+                                      now274)
+    check(src == 'name' and abs(age - 3600) < 2,
+          "L-274: run id WITHOUT Z parses -- the run_id=None fallback shape")
+
+    age, src = b._sibling_age_seconds(
+        '.staging_solar-system_voyager_1_20260830T180000Z', now274)
+    check(src == 'name' and abs(age - 2 * 86400) < 2,
+          "L-274: an interposed object slug does not defeat the parser (L-148)")
+
+    age, src = b._sibling_age_seconds('solar-system.quarantine_nonsense', now274)
+    check(src is None and age is None,
+          "L-274: an unparseable name returns None so the caller falls back")
+
+    age, src = b._sibling_age_seconds('solar-system.quarantine_20261301T180000Z',
+                                      now274)
+    check(src is None and age is None,
+          "L-274: a well-shaped but impossible date is refused, not accepted")
+
+    with tempfile.TemporaryDirectory() as td:
+        out274 = Path(td) / 'data' / 'solar-system'
+        out274.mkdir(parents=True)
+        par = out274.parent
+
+        old = par / 'solar-system.quarantine_20260820T120000Z'
+        recent = par / 'solar-system.quarantine_20260901T120000Z'
+        stg = par / '.staging_solar-system_20260810T120000Z'
+        for d in (old, recent, stg):
+            d.mkdir()
+            (d / 'marker.txt').write_text('x')
+
+        # The case that started this: mtime says "touched seconds ago" on
+        # a directory whose name says it is twelve days old. Before
+        # L-274 this survived every sweep forever.
+        os.utime(old, None)
+        os.utime(stg, None)
+
+        b._sweep_siblings(out274, keep_days=3, now_utc=now274)
+
+        check(not old.exists(),
+              "L-274: a 12-day-old quarantine is reaped even though mtime is now")
+        check(not stg.exists(),
+              "L-274: a stale .staging sibling is reaped on the same rule")
+        check(recent.exists(),
+              "L-274: a same-day quarantine is KEPT as an autopsy (A-11)")
+        check(out274.exists(),
+              "L-274: the live served directory is never a sweep target")
+
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
     return 1 if failures else 0

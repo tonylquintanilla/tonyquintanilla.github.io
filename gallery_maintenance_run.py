@@ -171,6 +171,14 @@ OFFLINE_CHECKERS = [
     # green run is now a claim that can be false.
     ("Artifact 1 assembler", "python",
      ["documentation/pin_artifact1_known_failure.py"], ".", "===", False),
+
+    # L-274: report-only by design. Siblings accumulating is not a reason
+    # to refuse a commit -- they are gitignored and harmless. It is a
+    # reason to LOOK, because the builder's sweep failed silently for six
+    # weeks and nothing in this runner would have said so. The row makes
+    # the next silence visible in a day rather than in six weeks.
+    ("Cache siblings", "python",
+     ["documentation/check_cache_siblings.py"], ".", None, True),
 ]
 
 # ---- live: what the site must actually serve -------------------------
