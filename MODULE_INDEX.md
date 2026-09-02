@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** September 01, 2026 by `module_atlas.py`  
+**Generated:** September 02, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,21 +10,20 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 29  
-**Total Lines of Code (non-blank):** 15,207  
-**Total Public Functions/Classes:** 174
+**Total Python Files:** 28  
+**Total Lines of Code (non-blank):** 15,284  
+**Total Public Functions/Classes:** 171
 
 ## Classification Coverage
 
-**Undetermined role (3).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (2).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `diag_L274_why_denied.py`
-- `patch_L274_3_readonly_rmtree.py`
+- `patch_L267_2_sun_stage_b.py`
 - `sweep_collapsed_features.py`
 
 **Undetermined domain (2).** No valid `Domain:` tag.
 
-- `diag_L274_why_denied.py`
+- `patch_L267_2_sun_stage_b.py`
 - `sweep_collapsed_features.py`
 
 
@@ -109,8 +108,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `diag_L274_why_denied.py` | - READ ONLY. Why does rmtree get Access Denied? (148 lines) |
-| `patch_L274_3_readonly_rmtree.py` | - L-274. Delete past the Windows read-only attribute, at all three deletion sites. (285 lines) |
+| `patch_L267_2_sun_stage_b.py` | - Sun exhibit GUI, Stage B (L-267). (510 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 
 ---
