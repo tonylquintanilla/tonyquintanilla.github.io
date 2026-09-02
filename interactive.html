@@ -232,6 +232,31 @@
             flex: 1; overflow: hidden; text-overflow: ellipsis;
             white-space: nowrap;
         }
+        /* L-267 Stage B. Red, and always visible rather than on hover
+           only: the cross markers are outlined in red and GO does the
+           same job they do -- move the camera -- so the colour is the
+           link between them, not a third accent for its own sake. */
+        .sun-row .go {
+            color: #f0594a; font-size: 12px; font-weight: 600;
+            letter-spacing: 0.6px; text-transform: uppercase;
+            flex-shrink: 0; opacity: 0.75; transition: opacity 0.15s;
+        }
+        .sun-row:hover .go { opacity: 1; }
+        /* The focused row and the focus label name the same thing, so
+           they are shown to be the same thing. Tony's G1, 2026-08-30. */
+        .sun-row.focused {
+            background: rgba(201,168,76,0.10);
+            box-shadow: inset 3px 0 0 var(--accent);
+        }
+        .sun-row.focused .rname {
+            color: var(--accent); font-weight: 500;
+        }
+        .drawer-btn .fswatch {
+            width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+        }
+        .drawer-btn .dname {
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
         @media (prefers-reduced-motion: reduce) {
             .sun-drawer, .sun-scrim { transition: none; }
         }
@@ -569,6 +594,7 @@
             <div class="drawer-bar sun-chrome">
                 <button class="drawer-btn" type="button" id="sun-drawer-btn"
                         aria-expanded="false" aria-controls="sun-drawer">
+                    <span class="fswatch" id="sun-focus-swatch"></span>
                     <span class="dname" id="sun-drawer-label">In this scene</span>
                     <span class="chev">&#9660;</span>
                 </button>
@@ -1195,24 +1221,78 @@ function sunTraceExtentAu(trace) {
 // Plotly's own autorange fits each axis separately and would draw these
 // as ellipsoids.
 //
-// The floor is SUN_HALF_RANGE_AU: turning shells off never zooms in
-// past the arrival view, so deselecting everything cannot collapse the
-// frame onto the core.
-function sunRefitFrame(gd, extents) {
+// L-267 Stage B: THE FRAME FOLLOWS THE FOCUS, AND CARRIES NO FLOOR.
+//
+// Stage A floored this at SUN_HALF_RANGE_AU, which was right while the
+// frame only ever widened from a fixed arrival view. It becomes wrong
+// the moment the frame follows a chosen object: fifteen of the eighteen
+// shells are smaller than 0.25 AU, so a floor makes framing on the core,
+// the radiative zone or the chromosphere all produce the identical
+// 0.25 AU cube -- which is why adding them changed nothing on screen in
+// the first Mode 5 round, 2026-08-30.
+//
+// Arrival keeps the floor. See the newPlot call, which is unchanged.
+
+// Radius to frame on: the widest thing in the group, which is the info
+// marker at r * 1.05 for a sphere shell. Times 1.1 for margin.
+function sunGroupRadius(k) {
+    const grp = sunGroups[k];
+    if (!grp) { return 0; }
     let maxR = 0;
-    for (let i = 0; i < gd.data.length; i++) {
-        const vis = gd.data[i].visible;
-        if (vis === "legendonly" || vis === false) { continue; }
-        const e = extents[i] || 0;
+    for (let j = 0; j < grp.indices.length; j++) {
+        const e = sunExtents[grp.indices[j]] || 0;
         if (e > maxR) { maxR = e; }
     }
+    return maxR;
+}
 
-    const r = Math.max(maxR * 1.1, SUN_HALF_RANGE_AU);
-    Plotly.relayout(gd, {
-        "scene.xaxis.range": [-r, r],
-        "scene.yaxis.range": [-r, r],
-        "scene.zaxis.range": [-r, r],
+// Tick spacing, 1/2/5 per decade. Without it the grid keeps whatever
+// spacing it had when the range was six orders of magnitude different.
+function sunGridDtick(span) {
+    if (span <= 0) { return 1; }
+    const raw = span / 6;
+    const exp = Math.floor(Math.log10(raw));
+    const mant = raw / Math.pow(10, exp);
+    const clean = mant < 1.5 ? 1 : mant < 3.5 ? 2 : mant < 7.5 ? 5 : 10;
+    return clean * Math.pow(10, exp);
+}
+
+// One half-range on all three axes, so a sphere stays a sphere. Plotly's
+// own autorange fits each axis separately and would draw ellipsoids.
+function sunFrameOn(k) {
+    if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
+    const rad = sunGroupRadius(k);
+    const r = rad > 0 ? rad * 1.1 : SUN_HALF_RANGE_AU;
+    const d = sunGridDtick(2 * r);
+    return Plotly.relayout(sunPlotDiv, {
+        "scene.xaxis.range": [-r, r], "scene.xaxis.dtick": d,
+        "scene.yaxis.range": [-r, r], "scene.yaxis.dtick": d,
+        "scene.zaxis.range": [-r, r], "scene.zaxis.dtick": d,
+        "scene.xaxis.tick0": 0, "scene.yaxis.tick0": 0, "scene.zaxis.tick0": 0
     });
+}
+
+function sunOutermostShown() {
+    let best = -1, bestR = -1;
+    for (let i = 0; i < sunGroups.length; i++) {
+        if (!sunGroups[i].shown) { continue; }
+        const r = sunGroupRadius(i);
+        if (r > bestR) { best = i; bestR = r; }
+    }
+    return best;
+}
+
+// Focusing moves the camera and NOTHING ELSE. It does not switch a
+// hidden shell on -- that would be the same conflation the rows had,
+// one gesture quietly doing two jobs. Sending the camera to something
+// you chose not to draw gives an empty frame at that scale, which is an
+// honest answer rather than a bug. Tony's G2 ruling, 2026-08-30.
+function sunFocusOn(k) {
+    if (k < 0 || k >= sunGroups.length) { return Promise.resolve(); }
+    sunFocusIdx = k;
+    setSunDrawer(false);
+    renderSunDrawer();
+    return sunFrameOn(k);
 }
 
 function buildSunLayout(halfRangeAu) {
@@ -1364,11 +1444,22 @@ async function initSunExhibit() {
             }
         );
 
-        // plotly_restyle fires AFTER a legend click has applied the
-        // visibility change, which plotly_legendclick does not.
-        // Plotly.relayout emits plotly_relayout, not plotly_restyle,
-        // so this cannot re-enter itself.
-        gd.on("plotly_restyle", () => sunRefitFrame(gd, extents));
+        // L-267 Stage B. Stage A listened on plotly_restyle and refit to
+        // the outermost thing drawn. sunApplyVisibility now chains the
+        // frame off its own restyle instead, so that listener is gone --
+        // leaving it would have it fight every focus move.
+        sunExtents = extents;
+
+        // Cross-marker navigation, keyed on curveNumber rather than
+        // customdata: Plotly does not reliably carry customdata into a
+        // gl3d click event, which is why the markers did not respond at
+        // all in Tony's Mode 5 report, 2026-08-30. curveNumber is the
+        // trace index and is always present.
+        gd.on("plotly_click", function (ev) {
+            if (!ev || !ev.points || !ev.points.length) { return; }
+            const k = sunTraceGroup[ev.points[0].curveNumber];
+            if (typeof k === "number") { sunFocusOn(k); }
+        });
 
         // The drawer is built from the traces that were actually
         // plotted, not from the config, so a shell the renderers
@@ -1376,6 +1467,11 @@ async function initSunExhibit() {
         // is not there.
         sunPlotDiv = gd;
         buildSunDrawer(traces);
+        // Arrival names its focus without reframing: newPlot has already
+        // set the arrival view, floor and all, and that is the one frame
+        // the floor is right for.
+        sunFocusIdx = sunOutermostShown();
+        renderSunDrawer();
 
         bar.style.width = "100%";
         status.textContent = "Ready";
@@ -1407,6 +1503,13 @@ async function initSunExhibit() {
 // visitor was choosing before this patch either.
 let sunGroups = [];      // [{ name, color, indices: [...], shown }]
 let sunPlotDiv = null;
+
+// L-267 Stage B. The two states are INDEPENDENT and are allowed to
+// disagree. What is drawn is the drawer. Where the camera is, is the
+// focus. -1 means nothing is focused.
+let sunFocusIdx = -1;
+let sunExtents = [];     // trace index -> extent in AU, measured once
+let sunTraceGroup = {};  // trace index -> group index, for marker clicks
 
 // "legendonly", never false. sunRefitFrame tests for exactly that string
 // when it decides what the frame has to hold, so a different word here
@@ -1444,6 +1547,15 @@ function buildSunDrawer(traces) {
         }
     }
 
+    // trace index -> group index, so a click anywhere in a group's
+    // geometry or on its cross marker focuses that group.
+    sunTraceGroup = {};
+    for (let g = 0; g < sunGroups.length; g++) {
+        for (let j = 0; j < sunGroups[g].indices.length; j++) {
+            sunTraceGroup[sunGroups[g].indices[j]] = g;
+        }
+    }
+
     const list = document.getElementById("sun-drawer-list");
     list.innerHTML = "";
     sunGroups.forEach(function (grp, k) {
@@ -1453,15 +1565,27 @@ function buildSunDrawer(traces) {
         row.innerHTML =
             '<span class="box"></span>' +
             '<span class="swatch"></span>' +
-            '<span class="rname"></span>';
+            '<span class="rname"></span>' +
+            '<span class="go">go</span>';
         row.querySelector(".swatch").style.background = grp.color;
         row.querySelector(".rname").textContent = grp.name;
-        // Stage A: the whole row does the one job the legend row did.
-        // Stage B splits it -- the box draws, everything else moves the
-        // camera -- and that split needs the camera to exist first.
-        row.onclick = function () {
-            grp.shown = !grp.shown;
-            sunApplyVisibility();
+        // L-267 Stage B. ONE JOB PER CONTROL. The box decides whether a
+        // shell is drawn; everything else on the row moves the camera to
+        // it. Before this, clicking anywhere toggled the shell, so
+        // reaching for a name made the object vanish. Tony's G2 ruling,
+        // 2026-08-30: "let the row selection just identify the object
+        // being targeted, with the box selecting the object and the go
+        // moving the camera separately."
+        row.onclick = function (ev) {
+            const t = ev.target;
+            const onBox = t && t.className
+                && String(t.className).indexOf("box") >= 0;
+            if (onBox) {
+                grp.shown = !grp.shown;
+                sunApplyVisibility(false);
+            } else {
+                sunFocusOn(k);
+            }
         };
         list.appendChild(row);
     });
@@ -1475,16 +1599,38 @@ function renderSunDrawer() {
     for (let i = 0; i < rows.length && i < sunGroups.length; i++) {
         const on = sunGroups[i].shown;
         rows[i].classList.toggle("on", on);
+        rows[i].classList.toggle("focused", i === sunFocusIdx);
         rows[i].querySelector(".box").innerHTML = on ? "&#10003;" : "";
         if (on) { n++; }
     }
-    const count = n + " of " + sunGroups.length;
-    document.getElementById("sun-drawer-count").textContent = count;
+    document.getElementById("sun-drawer-count").textContent =
+        n + " of " + sunGroups.length;
+
+    // L-267 Stage B. The handle stops reporting the count -- the drawer
+    // head above already does -- and names where the camera is. The
+    // focus may sit on a shell that is not drawn; the label says so
+    // rather than hiding a state the visitor put it in.
+    const grp = (sunFocusIdx >= 0) ? sunGroups[sunFocusIdx] : null;
+    const hiddenFocus = !!(grp && !grp.shown);
+    const swatch = document.getElementById("sun-focus-swatch");
+    swatch.style.background = grp ? grp.color : "transparent";
+    swatch.style.opacity = hiddenFocus ? "0.3" : "1";
     document.getElementById("sun-drawer-label").textContent =
-        "In this scene \u2014 " + count;
+        grp ? (grp.name + (hiddenFocus ? " (not drawn)" : ""))
+            : "Nothing drawn";
 }
 
-function sunApplyVisibility() {
+// keepFocus true pins the focus where it is. False -- the drawer's own
+// toggles -- sends it to the outermost thing drawn, so that turning the
+// outer corona off does not leave the camera framing a shell that is no
+// longer there.
+//
+// The frame is set AFTER the restyle settles. Firing both at once left
+// the scene showing the old cube until the modebar's reset camera forced
+// a redraw: the "nothing happens until I click reset" symptom in Tony's
+// Mode 5 report, 2026-08-30.
+function sunApplyVisibility(keepFocus) {
+    if (!keepFocus) { sunFocusIdx = sunOutermostShown(); }
     renderSunDrawer();
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
     const idx = [], vis = [];
@@ -1495,10 +1641,9 @@ function sunApplyVisibility() {
         }
     }
     if (!idx.length) { return Promise.resolve(); }
-    // This restyle emits plotly_restyle, which is what sunRefitFrame is
-    // already listening for -- the same event a legend click used to
-    // send. The frame still widens to hold whatever is drawn.
-    return Plotly.restyle(sunPlotDiv, { visible: vis }, idx);
+    const focusAt = sunFocusIdx;
+    return Plotly.restyle(sunPlotDiv, { visible: vis }, idx)
+        .then(function () { return sunFrameOn(focusAt); });
 }
 
 function setSunDrawer(open) {
@@ -1522,7 +1667,7 @@ function wireSunDrawer() {
     document.getElementById("sun-drawer-all").onclick = function () {
         const anyOff = sunGroups.some(function (g) { return !g.shown; });
         sunGroups.forEach(function (g) { g.shown = anyOff; });
-        sunApplyVisibility();
+        sunApplyVisibility(false);
     };
     document.addEventListener("keydown", function (ev) {
         if (ev.key === "Escape") { setSunDrawer(false); }
