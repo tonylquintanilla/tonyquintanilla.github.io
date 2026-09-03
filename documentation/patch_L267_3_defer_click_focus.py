@@ -33,7 +33,7 @@ WHAT IT FIXES
   clicks at natural speed, outer corona and Alfven surface included, ran
   without a hang. Tony, 2026-09-02.
 
-  Two lines change. Nothing else in Stage B is touched.
+  Two lines change. Nothing else in Stage B is touched. -- mode 5 test confirmed. 
 
 HOW TO RUN
   Open in VS Code from the GALLERY repo root (the folder holding
