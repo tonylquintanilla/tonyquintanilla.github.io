@@ -3,6 +3,9 @@
      First exhibit: Solar System Explorer (Pyodide + Plotly)
      Author: Tony Quintanilla / Paloma's Orrery
      Created: July 6, 2026 with Anthropic's Claude Opus 4.6
+     Updated: September 3, 2026 with Anthropic's Claude Fable 5.1
+       (L-267 Stage C: the Sun exhibit's i panel follows the focus and
+        carries the focused shell's link out)
      Architecture: Option C viewer (master plan v8 §2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -431,6 +434,37 @@
             padding-top: 12px;
             border-top: 1px solid var(--border);
         }
+        /* L-267 Stage C. The block at the top of the Sun panel that
+           follows the focus: swatch, name, link out. Same swatch as the
+           drawer handle so the two readouts visibly agree. */
+        .info-focus {
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .info-focus .info-focus-name {
+            display: flex; align-items: center; gap: 8px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px; font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .info-focus .info-focus-swatch {
+            width: 12px; height: 12px; border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .info-focus .info-focus-empty {
+            font-size: 13px; color: var(--text-dim); font-style: italic;
+        }
+        .info-focus a {
+            display: inline-block;
+            font-size: 13px;
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px solid var(--accent-dim);
+            margin-right: 12px;
+        }
+        .info-focus a:hover { color: var(--text-primary); }
 
         /* --- Consent gate --- */
         .consent-gate {
@@ -1138,6 +1172,8 @@ json.dumps({
 // written into prose goes stale the first time a shell is added and
 // nothing watches it. The legend shows the number anyway.
 const SUN_INFO_HTML = [
+    // L-267 Stage C. Filled by renderSunInfo on every focus change.
+    "<div class=\"info-focus\" id=\"sun-info-focus\"></div>",
     "<h3>The Sun</h3>",
     "<p>The Sun's shells, drawn from measured radii held in the orrery's",
     " own constant store. Each shell carries its source in its hover",
@@ -1548,6 +1584,7 @@ function buildSunDrawer(traces) {
             byName[g] = {
                 name: t.name || g,
                 color: sunSwatchColor(t),
+                link: sunLinkOf(t),
                 indices: [],
                 shown: t.visible !== SUN_HIDDEN && t.visible !== false,
             };
@@ -1557,6 +1594,7 @@ function buildSunDrawer(traces) {
         if (t.showlegend === true) {
             byName[g].name = t.name || g;
             byName[g].color = sunSwatchColor(t);
+            byName[g].link = sunLinkOf(t) || byName[g].link;
         }
     }
 
@@ -1631,6 +1669,83 @@ function renderSunDrawer() {
     document.getElementById("sun-drawer-label").textContent =
         grp ? (grp.name + (hiddenFocus ? " (not drawn)" : ""))
             : "Nothing drawn";
+
+    renderSunInfo(grp);
+}
+
+// L-267 Stage C. The link a shell carries, read off its trace. The
+// renderer stamps it in `meta` (feature_renderers.js, stampLink); this
+// side accepts both forms the config uses. Returns a list of URLs, or
+// null when the trace carries none.
+function sunLinkOf(trace) {
+    const m = trace && trace.meta;
+    if (!m) { return null; }
+    if (typeof m.info_url === "string" && m.info_url) {
+        return [m.info_url];
+    }
+    if (Array.isArray(m.info_urls) && m.info_urls.length) {
+        return m.info_urls.slice();
+    }
+    return null;
+}
+
+// Wording for a link, from its host. NASA and Wikipedia are the two
+// sources L-265 allows; anything else is named by its host so a stray
+// link is visible rather than mislabelled.
+function sunLinkLabel(url) {
+    let host = "";
+    try { host = new URL(url).hostname; } catch (e) { host = ""; }
+    if (/(^|\.)nasa\.gov$/.test(host)) { return "Read more at NASA"; }
+    if (/(^|\.)wikipedia\.org$/.test(host)) { return "Read more at Wikipedia"; }
+    return "Read more at " + (host || url);
+}
+
+// L-267 Stage C. The i panel's top block follows the focus, the same
+// way the drawer handle does. It carries the name and the link OUT and
+// nothing else: the cross marker's hover already has the radius and
+// the citation, and the panel is not a second copy of it. The i button
+// keeps one job -- open and close -- so this never opens the panel
+// itself; it only keeps the contents current for when it is opened.
+function renderSunInfo(grp) {
+    const box = document.getElementById("sun-info-focus");
+    if (!box) { return; }
+    box.innerHTML = "";
+    if (!grp) {
+        const empty = document.createElement("div");
+        empty.className = "info-focus-empty";
+        empty.textContent = "Focus a shell to see its link.";
+        box.appendChild(empty);
+        return;
+    }
+    const head = document.createElement("div");
+    head.className = "info-focus-name";
+    const sw = document.createElement("span");
+    sw.className = "info-focus-swatch";
+    sw.style.background = grp.color;
+    sw.style.opacity = grp.shown ? "1" : "0.3";
+    head.appendChild(sw);
+    head.appendChild(document.createTextNode(grp.name));
+    box.appendChild(head);
+
+    if (!grp.link) {
+        // A blind spot announces. A shell with no link on file says so
+        // rather than leaving an empty block that reads as "nothing to
+        // say" -- the served config should carry one for every shell
+        // (L-265 asserts zero placeholders), so seeing this is a finding.
+        const none = document.createElement("div");
+        none.className = "info-focus-empty";
+        none.textContent = "No link on file for this shell.";
+        box.appendChild(none);
+        return;
+    }
+    for (let i = 0; i < grp.link.length; i++) {
+        const a = document.createElement("a");
+        a.href = grp.link[i];
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = sunLinkLabel(grp.link[i]);
+        box.appendChild(a);
+    }
 }
 
 // keepFocus true pins the focus where it is. False -- the drawer's own

@@ -23,6 +23,10 @@
  * params DO carry colors and names, and those are used in preference.
  *
  * Module created: August 2026 with Anthropic's Claude Opus 5 (L-154).
+ * Module updated: September 3, 2026 with Anthropic's Claude Fable 5.1
+ *   (L-267 Stage C: renderShellSet stamps each shell's info link onto
+ *   its traces in `meta`, so the page's i panel can read it off the
+ *   trace instead of rebuilding the label to look it up).
  */
 
 (function (global) {
@@ -894,6 +898,31 @@
    * visible:"legendonly", and info markers step 20 degrees apart in polar
    * angle within a group rather than stacking at the north pole.
    */
+  /*
+   * L-267 Stage C. Carry a shell's curated link (L-265) on its traces in
+   * Plotly's `meta`, which Plotly ignores and passes through. The page
+   * groups traces by legendgroup to build its drawer; reading the link
+   * from the trace keeps ONE source for "which link belongs to this
+   * group" instead of a second copy of the label formula in the page.
+   * Two forms, matching the config: `info_url` (one page) and
+   * `info_urls` (a list, used by Earth's belts). Neither present: no
+   * meta, and the page says so in words.
+   */
+  function stampLink(traceList, cfg) {
+    var meta = null;
+    if (typeof cfg.info_url === "string" && cfg.info_url) {
+      meta = { info_url: cfg.info_url };
+    } else if (Array.isArray(cfg.info_urls) && cfg.info_urls.length) {
+      meta = { info_urls: cfg.info_urls.slice() };
+    }
+    if (meta) {
+      for (var i = 0; i < traceList.length; i++) {
+        traceList[i].meta = meta;
+      }
+    }
+    return traceList;
+  }
+
   function renderShellSet(slug, bodyName, featureKey, params, center,
                           basis, halfRangeAu, warn) {
     var traces = [];
@@ -920,9 +949,9 @@
       // rather than in a key of its own, and declares its shape.
       if (cfg.shape !== undefined) {
         if (cfg.shape === "streamer_band") {
-          traces = traces.concat(renderStreamerBand(
+          traces = traces.concat(stampLink(renderStreamerBand(
             slug, bodyName, cfg, where + "/" + key, center, basis,
-            starRadiusKm, warn));
+            starRadiusKm, warn), cfg));
           drawn += 1;
         } else if (cfg.shape === "torus" ||
                    cfg.shape === "clump_field" ||
@@ -944,7 +973,7 @@
               oortTraces[oi].visible = "legendonly";
             }
           }
-          traces = traces.concat(oortTraces);
+          traces = traces.concat(stampLink(oortTraces, cfg));
           drawn += 1;
         } else {
           warn(where + "/" + key + ": unknown shape " +
@@ -974,6 +1003,7 @@
       if (beyondFrame) {
         built.trace.visible = "legendonly";
       }
+      stampLink([built.trace], cfg);
       traces.push(built.trace);
 
       // Info marker: 20 degrees of polar angle per shell within the group,
@@ -1000,6 +1030,7 @@
         // nothing around it to say what it belongs to.
         marker.visible = "legendonly";
       }
+      stampLink([marker], cfg);
       traces.push(marker);
       drawn += 1;
     }
