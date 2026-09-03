@@ -1458,7 +1458,20 @@ async function initSunExhibit() {
         gd.on("plotly_click", function (ev) {
             if (!ev || !ev.points || !ev.points.length) { return; }
             const k = sunTraceGroup[ev.points[0].curveNumber];
-            if (typeof k === "number") { sunFocusOn(k); }
+            // L-267 click deferral, 2026-09-02. DO NOT call sunFocusOn
+            // straight from here. Its relayout re-enters Plotly's
+            // layoutReplot while this click dispatch has not returned,
+            // and the page dies with "Maximum call stack size exceeded"
+            // -- on a stack only ~25 frames deep, so a large array
+            // applied as arguments inside a half-finished replot, not
+            // recursion. The relayout itself is fine: it completed
+            // cleanly from the console with a tooltip up, with the
+            // tooltip dismissed, and on a timer over a hovered marker.
+            // The context was the whole bug. setTimeout 0 lets Plotly
+            // finish dispatching first. Confirmed live before patching.
+            if (typeof k === "number") {
+                setTimeout(function () { sunFocusOn(k); }, 0);
+            }
         });
 
         // The drawer is built from the traces that were actually
