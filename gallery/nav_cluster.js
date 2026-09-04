@@ -48,11 +48,13 @@
     var CSS = [
         '.nav-cluster {',
         '    position: absolute;',
-        '    right: 12px;',
-        /* Above the Sun room drawer handle, which sits centred in a
-           64 px bottom band; on the Explorer the band is empty and the
-           gap is harmless. */
-        '    bottom: calc(64px + env(safe-area-inset-bottom, 0px));',
+        /* Top-left, Tony's ruling 2026-09-04 after the live page showed
+           bottom-right under both the drawer and the info panel. The
+           drawer owns the bottom, the panel owns the right (desktop) or
+           the bottom (portrait), the title is centred: this corner is
+           the one nothing else claims, on either room. */
+        '    left: 12px;',
+        '    top: calc(12px + env(safe-area-inset-top, 0px));',
         '    z-index: 6;',
         '    display: flex;',
         '    flex-direction: column;',
