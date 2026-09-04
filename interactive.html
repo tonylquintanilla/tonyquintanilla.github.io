@@ -5,7 +5,8 @@
      Created: July 6, 2026 with Anthropic's Claude Opus 4.6
      Updated: September 3, 2026 with Anthropic's Claude Fable 5.1
        (L-267 Stage C: the Sun exhibit's i panel follows the focus and
-        carries the focused shell's link out)
+        carries the focused shell's link out; the i button is wired on
+        both exhibit paths -- on the Sun it had never been)
      Architecture: Option C viewer (master plan v8 §2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -723,10 +724,18 @@ function initControls() {
     // Update button
     document.getElementById('update-btn').addEventListener('click', () => recompute());
 
-    // Info toggle
-    document.getElementById('info-toggle').addEventListener('click', () => {
+    wireInfoToggle();
+}
+
+// The i button, wired ONCE here for every exhibit. It used to live
+// inside initControls(), which the Sun exhibit never calls -- so on the
+// Sun the button did nothing from Stage A until Tony's Mode 5 of
+// 2026-09-03 (L-267 Stage C). Both launch paths call this now.
+function wireInfoToggle() {
+    const btn = document.getElementById('info-toggle');
+    if (!btn) { return; }
+    btn.addEventListener('click', () => {
         const panel = document.getElementById('info-panel');
-        const btn = document.getElementById('info-toggle');
         panel.classList.toggle('open');
         btn.classList.toggle('active');
     });
@@ -1205,6 +1214,7 @@ function applySunChrome() {
     if (controls) { controls.style.display = "none"; }
     const info = document.getElementById("info-panel");
     if (info) { info.innerHTML = SUN_INFO_HTML; }
+    wireInfoToggle();
     // The Explorer shares this file and has no drawer rows, so the
     // chrome is revealed by class rather than shipped visible.
     document.body.classList.add("sun-exhibit");
