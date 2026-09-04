@@ -10,20 +10,18 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 28  
-**Total Lines of Code (non-blank):** 14,913  
-**Total Public Functions/Classes:** 171
+**Total Python Files:** 27  
+**Total Lines of Code (non-blank):** 14,774  
+**Total Public Functions/Classes:** 168
 
 ## Classification Coverage
 
-**Undetermined role (2).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (1).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `patch_L267_5_wire_sun_info_toggle.py`
 - `sweep_collapsed_features.py`
 
-**Undetermined domain (2).** No valid `Domain:` tag.
+**Undetermined domain (1).** No valid `Domain:` tag.
 
-- `patch_L267_5_wire_sun_info_toggle.py`
 - `sweep_collapsed_features.py`
 
 
@@ -108,7 +106,6 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `patch_L267_5_wire_sun_info_toggle.py` | - the Sun exhibit's i button was never wired (L-267 Stage C, follow-up). (139 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 
 ---

@@ -6,7 +6,8 @@
      Updated: September 3, 2026 with Anthropic's Claude Fable 5.1
        (L-267 Stage C: the Sun exhibit's i panel follows the focus and
         carries the focused shell's link out; the i button is wired on
-        both exhibit paths -- on the Sun it had never been)
+        both exhibit paths -- on the Sun it had never been; the panel
+        and the drawer share the height rather than overlap)
      Architecture: Option C viewer (master plan v8 §2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -414,6 +415,19 @@
             transition: transform 0.25s ease;
         }
         .info-panel.open { transform: translateX(0); }
+        /* L-267 Stage C, Tony's option C (2026-09-03): on the Sun
+           exhibit the panel and the drawer SHARE the height. While the
+           drawer is open the panel's bottom edge sits at the drawer's
+           top edge, so no row, GO or All / none is covered. The
+           drawer's height is measured (setSunDrawer, onSunResize) and
+           carried in --sun-drawer-h; nothing moves sideways. */
+        body.sun-exhibit .info-panel {
+            height: auto; bottom: 0;
+            transition: transform 0.25s ease, bottom 0.26s ease;
+        }
+        body.sun-exhibit.sun-drawer-open .info-panel {
+            bottom: var(--sun-drawer-h, 60%);
+        }
         .info-panel h3 {
             font-family: 'Cormorant Garamond', serif;
             font-size: 18px;
@@ -1784,9 +1798,20 @@ function sunApplyVisibility(keepFocus) {
         .then(function () { return sunFrameOn(focusAt); });
 }
 
+// The drawer's rendered height, handed to the i panel as a CSS
+// variable so the two share the height (option C). offsetHeight is
+// unaffected by the slide transform, so it is right even mid-slide.
+function sunMeasureDrawer() {
+    const d = document.getElementById("sun-drawer");
+    if (!d) { return; }
+    document.body.style.setProperty("--sun-drawer-h", d.offsetHeight + "px");
+}
+
 function setSunDrawer(open) {
     document.getElementById("sun-drawer").classList.toggle("open", open);
     document.getElementById("sun-scrim").classList.toggle("open", open);
+    document.body.classList.toggle("sun-drawer-open", open);
+    if (open) { sunMeasureDrawer(); }
     const b = document.getElementById("sun-drawer-btn");
     b.classList.toggle("open", open);
     b.setAttribute("aria-expanded", open ? "true" : "false");
@@ -1817,6 +1842,9 @@ let sunResizeTimer = null;
 function onSunResize() {
     if (sunResizeTimer) { clearTimeout(sunResizeTimer); }
     sunResizeTimer = setTimeout(function () {
+        if (document.body.classList.contains("sun-drawer-open")) {
+            sunMeasureDrawer();
+        }
         if (sunPlotDiv && window.Plotly) {
             Plotly.relayout(sunPlotDiv, { margin: sunMargins() });
         }
