@@ -28,6 +28,10 @@
     <!-- Client-side feature renderers (shells, rings, belts). Used by
          the Sun exhibit; harmless for the Solar System Explorer. -->
     <script src="gallery/feature_renderers.js"></script>
+    <!-- The three-button navigation cluster (+, -, Home). One control
+         set for the whole site; this page decides what the buttons do
+         (see navFrameZoom / navHome below). -->
+    <script src="gallery/nav_cluster.js"></script>
 
     <!-- Fonts — match gallery viewer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -152,6 +156,9 @@
            drawer it has no rows for. */
         .sun-chrome { display: none; }
         body.sun-exhibit .sun-chrome { display: block; }
+        /* L-267 step 7: the nav cluster (gallery/nav_cluster.js) sits
+           in the corner the open drawer covers, so it steps aside. */
+        body.sun-drawer-open .nav-cluster { display: none; }
 
         .drawer-bar {
             position: absolute; left: 0; right: 0; bottom: 0;
@@ -1065,6 +1072,7 @@ function buildPlot(data, dateStr) {
     });
 
     const layout = buildLayout(maxR * 1.15, dateDisplay);
+    navArrivalR = maxR * 1.15;   // what Home returns to
     const config = {
         responsive: true,
         displayModeBar: window.innerWidth > 768,
@@ -1355,6 +1363,106 @@ function sunFocusOn(k) {
     return sunFrameOn(k);
 }
 
+// ---- Navigation cluster: +, -, Home (L-267 step 7, 2026-09-04) ----
+//
+// +/- step the FRAME, not the camera. Tony's ruling 2026-09-03: the
+// Sun spans six orders of magnitude and a camera dolly cannot travel
+// that -- the near shells vanish into the perspective long before the
+// far ones arrive, and the grid labels never change. Frame zoom is the
+// mechanism the focus already uses (sunFrameOn); this is the same move
+// with a scaled radius. It also serves the Explorer, whose z-axis is
+// 0.3x its x/y: each axis scales about its own centre, so the aspect
+// survives. Neither button changes the focus or switches a shell.
+//
+// Home is the arrival view (Tony's ruling, reading 2): the layout's
+// starting camera -- in perspective the eye distance IS the zoom
+// level, so orientation and zoom reset together -- plus the arrival
+// frame, plus focus on the outermost shell shown. On the Explorer it
+// is camera and frame only; that room has no focus.
+//
+// Everything here is Plotly.relayout on public layout keys. No
+// synthetic wheel events, nothing reaching into gl-plot3d.
+
+const NAV_ZOOM_FACTOR = 1.6;          // about six taps per decade
+const NAV_HALF_RANGE_MIN_AU = 1e-5;   // ~1500 km: past the core's detail
+const NAV_HALF_RANGE_MAX_AU = 5e3;    // past the Sun's gravitational edge
+let navArrivalR = null;               // arrival half-range, either room
+
+// The camera each layout starts with. Read from the layout builders,
+// not recalled: buildSunLayout and buildLayout above.
+const NAV_SUN_CAMERA = {
+    eye: { x: 1.25, y: -1.25, z: 0.75 },
+    center: { x: 0, y: 0, z: 0 },
+    up: { x: 0, y: 0, z: 1 }
+};
+const NAV_EXPLORER_CAMERA = {
+    eye: { x: 0.8, y: -1.6, z: 0.6 },
+    center: { x: 0, y: 0, z: -0.05 },
+    up: { x: 0, y: 0, z: 1 }
+};
+
+function navPlotDiv() {
+    const gd = document.getElementById("plotly-container");
+    return (gd && gd.layout && gd.layout.scene) ? gd : null;
+}
+
+// direction: -1 zooms in (smaller range), +1 zooms out.
+function navFrameZoom(direction) {
+    const gd = navPlotDiv();
+    if (!gd || !window.Plotly) { return Promise.resolve(); }
+    const f = direction > 0 ? NAV_ZOOM_FACTOR : 1 / NAV_ZOOM_FACTOR;
+    const update = {};
+    let span = 0;
+    ["xaxis", "yaxis", "zaxis"].forEach(function (ax) {
+        const rng = gd.layout.scene[ax] && gd.layout.scene[ax].range;
+        if (!rng || rng.length < 2) { return; }
+        const c = (rng[0] + rng[1]) / 2;
+        let h = Math.abs(rng[1] - rng[0]) / 2 * f;
+        h = Math.max(NAV_HALF_RANGE_MIN_AU, Math.min(NAV_HALF_RANGE_MAX_AU, h));
+        update["scene." + ax + ".range"] = [c - h, c + h];
+        if (2 * h > span) { span = 2 * h; }
+    });
+    if (span > 0) {
+        const d = sunGridDtick(span);
+        update["scene.xaxis.dtick"] = d;
+        update["scene.yaxis.dtick"] = d;
+        update["scene.zaxis.dtick"] = d;
+    }
+    return Plotly.relayout(gd, update);
+}
+
+function navHome() {
+    const gd = navPlotDiv();
+    if (!gd || !window.Plotly) { return Promise.resolve(); }
+    const isSun = document.body.classList.contains("sun-exhibit");
+    const update = { "scene.camera": isSun ? NAV_SUN_CAMERA : NAV_EXPLORER_CAMERA };
+    if (navArrivalR) {
+        const r = navArrivalR;
+        const d = sunGridDtick(2 * r);
+        // The Explorer's z-axis is 0.3x its x/y (buildLayout); the Sun's
+        // three axes are equal (buildSunLayout). Match what arrival drew.
+        const rz = isSun ? r : r * 0.3;
+        update["scene.xaxis.range"] = [-r, r];   update["scene.xaxis.dtick"] = d;
+        update["scene.yaxis.range"] = [-r, r];   update["scene.yaxis.dtick"] = d;
+        update["scene.zaxis.range"] = [-rz, rz]; update["scene.zaxis.dtick"] = d;
+    }
+    if (isSun) {
+        sunFocusIdx = sunOutermostShown();
+        setSunDrawer(false);
+        renderSunDrawer();
+    }
+    return Plotly.relayout(gd, update);
+}
+
+function mountNavCluster() {
+    if (!window.GalleryNav) { return; }
+    GalleryNav.mount(document.querySelector(".viz-area"), {
+        zoomIn:  function () { navFrameZoom(-1); },
+        zoomOut: function () { navFrameZoom(+1); },
+        home:    function () { navHome(); }
+    });
+}
+
 function buildSunLayout(halfRangeAu) {
     const r = halfRangeAu || SUN_HALF_RANGE_AU;
     const axisTemplate = {
@@ -1480,6 +1588,7 @@ async function initSunExhibit() {
             if (extents[i] > arrivalR) { arrivalR = extents[i]; }
         }
         arrivalR = Math.max(arrivalR * 1.1, SUN_HALF_RANGE_AU);
+        navArrivalR = arrivalR;   // what Home returns to
 
         const gd = document.getElementById("plotly-container");
         await Plotly.newPlot(
@@ -1875,6 +1984,8 @@ if (EXHIBIT === "sun") {
 } else {
     initControls();
 }
+// Both rooms get the same three buttons (L-267 step 7).
+mountNavCluster();
 
 // Check for prior consent
 if (localStorage.getItem(CONSENT_KEY) === 'yes') {
