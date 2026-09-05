@@ -3,15 +3,15 @@
   "visualizations": [
     {
       "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy",
-      "title": "Inner Solar System Animation 2-4-2005 21 Years",
-      "description": "Animation of the inner solar system from 2005 for 21 years.",
+      "title": "Inner Solar System Animation",
+      "description": "Animation of the inner solar system from February 4, 2005 for 21 years.",
       "room": "solar_system",
       "shape": "16:9",
       "files": {
         "landscape": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape.json"
       },
       "live": null,
-      "featured": false,
+      "featured": true,
       "sources": [
         "JPL Horizons"
       ],
@@ -321,15 +321,15 @@
     },
     {
       "id": "inner_solar_system_animation_2-4-2005_21_years_social_copy2",
-      "title": "Inner Solar System Animation 2-4-2005 for 21 Years",
-      "description": "Animation of the inner solar system from 2005 for 21 years.",
+      "title": "Inner Solar System Animation",
+      "description": "Animation of the inner solar system from February 4, 2005 for 21 years.",
       "room": "solar_system",
       "shape": "9:16",
       "files": {
         "portrait": "inner_solar_system_animation_2-4-2005_21_years_social.json"
       },
       "live": null,
-      "featured": false,
+      "featured": true,
       "sources": [
         "JPL Horizons"
       ],
@@ -340,7 +340,7 @@
     },
     {
       "id": "paloma_social_view_2005_02_04",
-      "title": "Paloma's Orrery for 2-4-2005",
+      "title": "Inner Solar System",
       "description": "Inner planets on February 4, 2005.",
       "room": "solar_system",
       "shape": "9:16",
@@ -348,7 +348,7 @@
         "portrait": "paloma_social_view_2005_02_04.json"
       },
       "live": null,
-      "featured": false,
+      "featured": true,
       "sources": [
         "JPL Horizons"
       ],
@@ -1903,6 +1903,6 @@
       }
     }
   ],
-  "last_updated": "2026-09-04 23:14",
+  "last_updated": "2026-09-04 23:32",
   "total_count": 107
 }
