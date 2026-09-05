@@ -1544,20 +1544,18 @@
     },
     {
       "id": "inner_planets_comets_solar_corona_20260207_1748",
-      "title": "Current comets 2-7-2026",
-      "description": "Solar photosphere, corona, current comets and inner planets. Static plot.",
-      "room": "other",
-      "shape": "16:9",
-      "files": {
-        "landscape": "inner_planets_comets_solar_corona_20260207_1748.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
+      "title": "Solar Structures",
+      "description": "Solar body, atmosphere, magnetic, solar wind, and other structures to the edge of the solar system.",
+      "room": "solar_system/sun",
+      "shape": "9:16",
+      "files": {},
+      "live": "interactive.html?exhibit=sun",
+      "featured": true,
+      "sources": [
+        "See details in hovertext."
+      ],
       "converted": "2026-02-07 17:53",
-      "size_kb": {
-        "landscape": 31364.8
-      }
+      "size_kb": {}
     },
     {
       "id": "mars_system_animation_psyche_flyby_shells_mobile",
@@ -1905,6 +1903,6 @@
       }
     }
   ],
-  "last_updated": "2026-09-05 08:37",
+  "last_updated": "2026-09-05 09:18",
   "total_count": 107
 }
