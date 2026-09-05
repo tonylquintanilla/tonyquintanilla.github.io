@@ -23,6 +23,11 @@ Output:
 
 Author: Tony Quintanilla / Paloma's Orrery
 
+Module updated: September 4, 2026 with Anthropic's Claude Fable 5.1 (L-287):
+writes schema-v2 cards (room / files / shape) when gallery_metadata.json is
+version 2; new cards land in storage ("other") and are placed in the editor;
+the category prompt is skipped when gallery_config.json is version 2.
+
 Role: devtool
 Domain: gallery_pipeline
 """
@@ -89,6 +94,63 @@ def _load_categories(output_folder=None):
 
 # Module-level category dict (loaded lazily)
 CATEGORIES = _load_categories()
+
+
+def _config_is_v2(output_folder=None):
+    """True when gallery_config.json is the schema-v2 room tree (L-287)."""
+    candidates = []
+    if output_folder:
+        candidates.append(os.path.join(output_folder, CONFIG_FILE))
+    candidates.append(os.path.join('..', 'gallery', CONFIG_FILE))
+    candidates.append(os.path.join(DEFAULT_OUTPUT_FOLDER, CONFIG_FILE))
+    candidates.append(CONFIG_FILE)
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    return json.load(f).get('version') == 2
+            except (json.JSONDecodeError, IOError):
+                return False
+    return False
+
+
+def _v2_entry(metadata, safe_name, title, description, size_kb, mode):
+    """Build or update a schema-v2 card (L-287).
+
+    New card: room "other" (storage), one files slot keyed by mode
+    ("both" -> landscape), shape from the mode. If some card already lists
+    this filename, that slot is updated in place and the card keeps its
+    room, live, featured and sources. Returns (entry, replaced_index).
+    """
+    filename = f"{safe_name}.json"
+    slot = "portrait" if mode == "portrait" else "landscape"
+    viz_list = metadata.get("visualizations", [])
+    for i, v in enumerate(viz_list):
+        files = v.get("files") or {}
+        if filename in files.values() or v.get("id") == safe_name:
+            files[slot] = filename
+            sizes = v.get("size_kb") if isinstance(v.get("size_kb"), dict) else {}
+            sizes[slot] = round(size_kb, 1)
+            v["files"] = files
+            v["size_kb"] = sizes
+            v["converted"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+            if description:
+                v["description"] = description
+            return v, i
+    entry = {
+        "id": safe_name,
+        "title": title,
+        "description": description,
+        "room": "other",
+        "shape": "9:16" if slot == "portrait" else "16:9",
+        "files": {slot: filename},
+        "live": None,
+        "featured": False,
+        "sources": [],
+        "converted": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "size_kb": {slot: round(size_kb, 1)},
+    }
+    return entry, None
 
 
 # ============================================================================
@@ -534,6 +596,22 @@ def _update_metadata(output_folder, safe_name, display_name, category,
         except (json.JSONDecodeError, IOError):
             pass
 
+    if metadata.get("version") == 2:
+        title = description if description else _clean_title(display_name)
+        entry, idx = _v2_entry(metadata, safe_name, title, description, size_kb, mode)
+        viz_list = metadata.get("visualizations", [])
+        if idx is None:
+            viz_list.append(entry)
+            print(f"  metadata: new card {safe_name} in Storage; place it in the editor")
+        else:
+            print(f"  metadata: updated {entry['id']} ({', '.join(entry['files'])})")
+        metadata["visualizations"] = viz_list
+        metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+        metadata["total_count"] = len(viz_list)
+        with open(metadata_path, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=2)
+        return
+
     # Create/update entry
     entry = {
         "id": safe_name,
@@ -638,15 +716,20 @@ def run_interactive():
 
     os.makedirs(output_folder, exist_ok=True)
 
-    # Show category menu
-    print(f"\nAvailable categories:")
+    # Show category menu (schema v1 only; v2 rooms are assigned in the editor)
+    schema_v2 = _config_is_v2(output_folder)
     cat_keys = list(CATEGORIES.keys())
-    for i, (key, label) in enumerate(CATEGORIES.items()):
-        print(f"  {i + 1}. {label} ({key})")
+    if schema_v2:
+        print("\nSchema v2: new cards land in Storage. Place them in a room with gallery_editor.py.")
+        print()
+    else:
+        print(f"\nAvailable categories:")
+        for i, (key, label) in enumerate(CATEGORIES.items()):
+            print(f"  {i + 1}. {label} ({key})")
 
-    print(f"\nDefault category: other")
-    print(f"You can type a number or press Enter for 'other'")
-    print()
+        print(f"\nDefault category: other")
+        print(f"You can type a number or press Enter for 'other'")
+        print()
 
     # Convert each file
     success = 0
@@ -656,19 +739,21 @@ def run_interactive():
         basename = os.path.basename(html_path)
         print(f"\n--- {basename} ---")
 
-        # Ask for category
-        try:
-            cat_input = input(f"  Category [Enter=other]: ").strip()
-            if cat_input.isdigit() and 1 <= int(cat_input) <= len(cat_keys):
-                category = cat_keys[int(cat_input) - 1]
-            elif cat_input in CATEGORIES:
-                category = cat_input
-            else:
+        # Ask for category (skipped under schema v2)
+        category = "other"
+        if not schema_v2:
+            try:
+                cat_input = input(f"  Category [Enter=other]: ").strip()
+                if cat_input.isdigit() and 1 <= int(cat_input) <= len(cat_keys):
+                    category = cat_keys[int(cat_input) - 1]
+                elif cat_input in CATEGORIES:
+                    category = cat_input
+                else:
+                    category = "other"
+            except (EOFError, KeyboardInterrupt):
                 category = "other"
-        except (EOFError, KeyboardInterrupt):
-            category = "other"
 
-        print(f"  Category: {CATEGORIES.get(category, category)}")
+            print(f"  Category: {CATEGORIES.get(category, category)}")
 
         # Ask for description
         try:

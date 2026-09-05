@@ -10,6 +10,9 @@ Run from tools/:
     python gallery_cleanup.py
 
 Module created: July 2026 with Anthropic's Claude Opus 4.6
+Module updated: September 4, 2026 with Anthropic's Claude Fable 5.1 (L-287):
+reads schema-v2 cards, whose files live under "files" (landscape /
+portrait) rather than a single "filename".
 
 Role: devtool
 Domain: cache_builder
@@ -59,6 +62,10 @@ def load_metadata(gallery_dir):
         fn = v.get("filename", "")
         if fn:
             filenames.add(fn)
+        files = v.get("files") or {}          # schema v2 (L-287)
+        for fn in files.values():
+            if fn:
+                filenames.add(fn)
     return filenames
 
 

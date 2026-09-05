@@ -1496,7 +1496,7 @@
 
     <a id="kmz-handoff-btn" style="display: none; position: fixed; top: 94px; left: 62px; z-index: 200; background: #2d6a2d; border: 1px solid #4ade80; border-radius: 8px; padding: 8px 14px; color: #f8fafc; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; text-decoration: none; align-items: center; gap: 6px; transition: all 0.2s;" target="_blank" download>
 
-        <span style="font-size: 14px; line-height: 1;">🌍</span>
+        <span style="font-size: 14px; line-height: 1;">&#x1F30D;</span>
         <span class="share-text">Google Earth</span>
     </a>
 
@@ -1668,8 +1668,8 @@
                 <button class="about-card-close" id="about-close">&#10005;</button>
             </div>
             <div class="about-card-body">
-                <p>An interactive astronomy and Earth science explorer, built for my daughter Paloma — and for anyone curious about the universe and the planet we live on.</p>
-                <p>Explore the solar system in motion, from Mercury to the Kuiper Belt. Follow spacecraft on their missions. Map the stellar neighborhood out to 100 light-years. Watch how Earth's climate systems are changing — and why the data matters.</p>
+                <p>An interactive astronomy and Earth science explorer, built for my daughter Paloma &mdash; and for anyone curious about the universe and the planet we live on.</p>
+                <p>Explore the solar system in motion, from Mercury to the Kuiper Belt. Follow spacecraft on their missions. Map the stellar neighborhood out to 100 light-years. Watch how Earth's climate systems are changing &mdash; and why the data matters.</p>
                 <p>Built with real science: orbital positions from JPL Horizons, stellar catalogs from Gaia and Hipparcos, and climate datasets from NASA, NOAA, and the research community.</p>
                 <p style="color: #c9a84c; font-style: italic;">Data Preservation is Climate Action.</p>
                 <div class="about-links">
@@ -1700,6 +1700,9 @@
 
        Author: Tony Quintanilla / Paloma's Orrery
        Gallery v2 - February 2026
+       Schema v2 reader shim (rooms, two file slots) - September 4, 2026,
+       L-287, with Anthropic's Claude Fable 5.1. Transitional: L-282 /
+       L-286 replace this selector with the lobby and rooms.
        ==================================================================== */
 
     (function() {
@@ -1730,6 +1733,7 @@
         var activeCard = null;
         var currentMode = 'landscape';
         // Mode filtering deferred to Step 5 -- currently shows all
+        var ROOM_LABELS = {};   // schema v2: room path -> label (filled from config doors)
 
         // ---- DOM refs ----
         var navBtn         = document.getElementById('navBtn');
@@ -1817,6 +1821,66 @@
         var infoCardShown = false;
         var tapHintShown = false;
 
+        // ---- Schema v2 shim (L-287) ----
+        // gallery_config.json v2 is a tree of doors and rooms; the page
+        // still thinks in categories. Door key -> color, room path -> label.
+        function readRoomTree(cfg) {
+            var doors = cfg.doors || [];
+            function walk(list, prefix) {
+                for (var i = 0; i < list.length; i++) {
+                    var r = list[i];
+                    var path = prefix ? prefix + '/' + r.key : r.key;
+                    ROOM_LABELS[path] = r.label || r.key;
+                    if (r.rooms) walk(r.rooms, path);
+                }
+            }
+            walk(doors, '');
+            for (var d = 0; d < doors.length; d++) {
+                if (doors[d].key && doors[d].color) {
+                    CATEGORY_COLORS[doors[d].key] = doors[d].color;
+                }
+            }
+            if (cfg.storage && cfg.storage.key) {
+                ROOM_LABELS[cfg.storage.key] = cfg.storage.label || 'Storage';
+            }
+        }
+
+        // gallery_metadata.json v2 cards carry room / files / shape. Derive
+        // the category, subcategory and mode fields the existing code reads.
+        function normalizeSchemaV2(vizs) {
+            for (var i = 0; i < vizs.length; i++) {
+                var v = vizs[i];
+                var files = v.files || {};
+                var keys = Object.keys(files);
+                if (!v.mode) {
+                    v.mode = keys.length > 1 ? 'both' : (keys[0] || 'landscape');
+                }
+                if (!v.filename && keys.length) v.filename = files[keys[0]];
+                var room = v.room || 'other';
+                var seg = room.split('/');
+                if (!v.category) {
+                    v.category = seg[0] || 'other';
+                    v.category_label = ROOM_LABELS[seg[0]] || v.category;
+                }
+                if (!v.subcategory && seg.length > 1) {
+                    v.subcategory = seg[1];
+                    v.subcategory_label = ROOM_LABELS[seg[0] + '/' + seg[1]] || seg[1];
+                }
+            }
+        }
+
+        // Which file to open for this card in this mode. A one-file card
+        // serves its one file either way; a two-file card picks by mode.
+        function fileForMode(viz, mode) {
+            var files = viz.files;
+            if (files && Object.keys(files).length) {
+                if (files[mode]) return files[mode];
+                var k = Object.keys(files);
+                return files[k[0]];
+            }
+            return viz.filename;
+        }
+
         // ---- Initialize ----
         async function init() {
             // Load category config (colors) -- falls back to defaults above
@@ -1830,6 +1894,9 @@
                             CATEGORY_COLORS[cats[ci].key] = cats[ci].color;
                         }
                     }
+                    if (cfg.version === 2 && cfg.doors) {
+                        readRoomTree(cfg);
+                    }
                 }
             } catch (e) {
                 // Config load failed -- use defaults, no problem
@@ -1839,6 +1906,9 @@
                 var resp = await fetch(DATA_PATH + '/' + METADATA_FILE);
                 if (!resp.ok) throw new Error('Could not load gallery metadata');
                 metadata = await resp.json();
+                if (metadata && metadata.version === 2) {
+                    normalizeSchemaV2(metadata.visualizations || []);
+                }
             } catch (err) {
                 selectorNav.innerHTML =
                     '<div style="padding: 20px 8px; color: var(--cat-inner); font-size: 0.8rem;">' +
@@ -1937,7 +2007,7 @@
                     if (subHeader) subHeader.classList.add('expanded');
                 }
             }
-            // If no active viz, all stay collapsed — user sees category landscape
+            // If no active viz, all stay collapsed -- user sees category landscape
         }
 
         function renderNavList(vizs) {
@@ -2034,7 +2104,7 @@
                         html += '</div>'; // close .subcategory-items
                     }
                 } else {
-                    // No subcategories — flat card list
+                    // No subcategories -- flat card list
                     for (var j = 0; j < catData.items.length; j++) {
                         var item = catData.items[j];
                         html += '<div class="viz-card" data-viz-id="' + escapeHtml(item.id) + '">';
@@ -2133,8 +2203,9 @@
             encReset();
 
             try {
-                var resp = await fetch(DATA_PATH + '/' + viz.filename);
-                if (!resp.ok) throw new Error('Failed to load ' + viz.filename);
+                var vizFile = fileForMode(viz, currentMode);
+                var resp = await fetch(DATA_PATH + '/' + vizFile);
+                if (!resp.ok) throw new Error('Failed to load ' + vizFile);
                 var figDict = await resp.json();
 
                 figDict.layout = figDict.layout || {};
@@ -2830,11 +2901,11 @@
                         window.open(this.href, '_blank'); 
                     } else if (isFirefoxIOS) {
                         // Firefox on iOS flow
-                        alert("Firefox Tip:\n1. Tap 'Download Now'\n2. Tap the menu (≡) and select 'Downloads'\n3. Tap the file\n4. Tap the Share icon and select Google Earth");
+                        alert("Firefox Tip:\n1. Tap 'Download Now'\n2. Tap the menu (\u2261) and select 'Downloads'\n3. Tap the file\n4. Tap the Share icon and select Google Earth");
                         window.open(this.href, '_blank'); 
                     } else {
                         // Standard Safari flow
-                        alert("Safari Tip:\n1. Tap 'Download'\n2. Tap the down arrow (↓) in your address bar\n3. Tap 'Downloads'\n4. Tap the file name to open in Google Earth");
+                        alert("Safari Tip:\n1. Tap 'Download'\n2. Tap the down arrow (\u2193) in your address bar\n3. Tap 'Downloads'\n4. Tap the file name to open in Google Earth");
                         window.open(this.href, '_blank'); 
                     }
                 }

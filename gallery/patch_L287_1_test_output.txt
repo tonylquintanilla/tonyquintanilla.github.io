@@ -1,0 +1,80 @@
+gallery folder: /home/claude/t1/gallery
+ok  gallery_config.json matches e414af13
+ok  gallery_metadata.json matches e414af13
+
+gallery_config.json: 3 doors, 16 rooms, 1 storage room (3244 bytes)
+  solar_system  Orbital Mechanics, The Sun, Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto
+  earth_system  (no rooms yet)
+  stars         By Distance, By Magnitude, Exoplanets, The Galactic Center
+
+gallery_metadata.json: 148 cards in -> 110 cards out (54934 bytes)
+  merged landscape+portrait pairs: 38
+    Comet PanSTARRS at Perigee 4-26-26
+    Comet PANSTARRS near perihelion 4-19-2026
+    3I/ATLAS Closest Approach to Jupiter 3-16-2026
+    3I/ATLAS March 2025 to March 2026
+    Apophis Closest Approach, 4-13-2029
+    Comet C2024 E1 Wierzchos Perihelion, 1-20-2026
+    Keeling Curve: CO2 Concentration, 1958 - 2025
+    Energy Imbalance, 2005 - 2025
+    Global Temperature Anomalies, 1880 - 2025
+    Annual Temperature Anomalies by Month, 1885 - 2025
+    Global Mean Sea Level Rise, 1993 - 2025
+    Arctic Ice Extent, 1979 - 2025
+    Ocean Acidification pH Trend, 1991 - 2023
+    Western Heat Dome - March 14, 2026
+    Western Heat Dome - March 17, 2026
+    Western Heat Dome - March 18, 2026
+    Western Heat Dome - March 20, 2026
+    Western Heat Dome - March 21, 2026
+    Western Heat Dome - March 22, 2026
+    Western Heat Dome - March 25, 2026
+    Europe heat dome 6-21-2026
+    Psyche Mission to 16 Psyche 2023 - 2029 static
+    Psyche Mission to 16 Psyche 2023 - 2029 animated
+    Psyche - Mars Gravitational Assist 5-15-26 static
+    TOI Binary Exoplanet System
+    Western Heat Dome - March 26, 2026
+    3I/ATLAS Perihelion 10-29-2025
+    Psyche - Phobos Flyby 5-15-26 animated
+    Artemis II Mission April 6, 2026
+    Artemis II - Moon Flyby April 6, 2026
+    Western Heat Dome - March 30, 2026
+    Comet C/2025 K1 Breakup 10-16-2025
+    Comet Halley Perihelion 2-8-1986
+    Artemis II - Mission April 2-11, 2026
+    Artemis II - Moon Flyby April 2-11, 2026, animated
+    New Horizons mission 2006 to 2020
+    New Horizons Jupiter Gravity Assist 2-28-2007
+    Sudan Food Insecurity Feb-May 2016
+  landscape -> one landscape file: 3
+  mode absent -> one landscape file: 16
+  mode both -> one landscape file: 28
+  portrait -> one portrait file, 9:16: 16
+  all cards placed in room 'other' (storage); shape guessed from orientation
+
+descriptions differed within 5 merged pairs; the LANDSCAPE text was kept:
+    Comet C2024 E1 Wierzchos Perihelion, 1-20-2026
+      kept:    Comet Wierzchos, perihelion 1-20-2026.
+      dropped: Comet Wierzchos
+    Global Temperature Anomalies, 1880 - 2025
+      kept:    Graphic showing surface mean temperature anomalies from 1880 to 2025.
+      dropped: Global Temperature Anomalies
+    Global Mean Sea Level Rise, 1993 - 2025
+      kept:    Graphic showing mean sea level rise from 1993 to 2025.
+      dropped: Mean sea level rise, 1993 - 2025.
+    Arctic Ice Extent, 1979 - 2025
+      kept:    Graphic showing Arctic sea ice extent in September, minimum.
+      dropped: Arctic sea ice extent, September minimum, 1979 - 2025.
+    Ocean Acidification pH Trend, 1991 - 2023
+      kept:    Graphic showing ocean surface pH from 1988 to 2023.
+      dropped: Ocean acidification, surface pH.
+
+NOT merged, 4 titles duplicated in the same orientation (9 cards kept separate; sort in the editor):
+    Inner Solar System Animation 2-4-2005 21 Years
+      inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy (landscape)
+      inner_solar_system_animation_2-4-2005_21_years_gallery_landscape (landscape)
+    Paleoclimate and Extreme Heating Events, 1930s - 2025
+      paleoclimate_wet_bulb_copy_copy (landscape)
+      paleoclimate_wet_bulb (landscape)
+      paleoclimate_wet_bulb_copy (landscape)

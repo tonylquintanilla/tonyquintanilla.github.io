@@ -1,49 +1,150 @@
 {
-  "categories": [
+  "version": 2,
+  "doors": [
     {
       "key": "solar_system",
       "label": "Solar System",
-      "color": "#f4a261"
+      "short": "Solar",
+      "color": "#c9a44a",
+      "sentence": "",
+      "rooms": [
+        {
+          "key": "orbital_mechanics",
+          "label": "Orbital Mechanics",
+          "short": "Orbits",
+          "sentence": "",
+          "special": true,
+          "rooms": []
+        },
+        {
+          "key": "sun",
+          "label": "The Sun",
+          "short": "Sun",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "mercury",
+          "label": "Mercury",
+          "short": "Mercury",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "venus",
+          "label": "Venus",
+          "short": "Venus",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "earth",
+          "label": "Earth",
+          "short": "Earth",
+          "sentence": "",
+          "rooms": [
+            {
+              "key": "moon",
+              "label": "The Moon",
+              "short": "Moon",
+              "sentence": "",
+              "rooms": []
+            }
+          ]
+        },
+        {
+          "key": "mars",
+          "label": "Mars",
+          "short": "Mars",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "jupiter",
+          "label": "Jupiter",
+          "short": "Jupiter",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "saturn",
+          "label": "Saturn",
+          "short": "Saturn",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "uranus",
+          "label": "Uranus",
+          "short": "Uranus",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "neptune",
+          "label": "Neptune",
+          "short": "Neptune",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "pluto",
+          "label": "Pluto",
+          "short": "Pluto",
+          "sentence": "",
+          "rooms": []
+        }
+      ]
     },
     {
-      "key": "inner_planets",
-      "label": "Inner Planets",
-      "color": "#e76f51"
-    },
-    {
-      "key": "outer_planets",
-      "label": "Outer Planets",
-      "color": "#2a9d8f"
-    },
-    {
-      "key": "missions",
-      "label": "Missions",
-      "color": "#4a7c8f"
-    },
-    {
-      "key": "stellar",
-      "label": "Stellar Neighborhood",
-      "color": "#3498db"
-    },
-    {
-      "key": "exoplanets",
-      "label": "Exoplanets",
-      "color": "#1abc9c"
-    },
-    {
-      "key": "climate",
+      "key": "earth_system",
       "label": "Earth System",
-      "color": "#27ae60"
+      "short": "Earth",
+      "color": "#3f9a8a",
+      "sentence": "Data preservation is climate action.",
+      "rooms": []
     },
     {
-      "key": "other",
-      "label": "Other",
-      "color": "#7f8c8d"
-    },
-    {
-      "key": "featured",
-      "label": "Featured",
-      "color": "#f50ae3"
+      "key": "stars",
+      "label": "Stars",
+      "short": "Stars",
+      "color": "#7a6bb5",
+      "sentence": "",
+      "rooms": [
+        {
+          "key": "distance",
+          "label": "By Distance",
+          "short": "Distance",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "magnitude",
+          "label": "By Magnitude",
+          "short": "Magnitude",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "exoplanets",
+          "label": "Exoplanets",
+          "short": "Exoplanets",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "galactic_center",
+          "label": "The Galactic Center",
+          "short": "Galactic Center",
+          "sentence": "",
+          "rooms": []
+        }
+      ]
     }
-  ]
+  ],
+  "storage": {
+    "key": "other",
+    "label": "Storage",
+    "hidden": true
+  }
 }
