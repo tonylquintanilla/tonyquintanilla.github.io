@@ -516,6 +516,23 @@
             margin-top: 2px;
         }
 
+        .viz-card-sources {
+            font-size: 0.62rem;
+            color: var(--text-secondary);
+            opacity: 0.8;
+            margin-top: 3px;
+            word-break: break-all;
+        }
+        .viz-card-sources a { color: inherit; }
+
+        .category-sentence {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            padding: 4px 12px 6px 12px;
+            line-height: 1.4;
+        }
+
         .viz-card-size {
             font-size: 0.62rem;
             color: var(--text-dim);
@@ -1735,6 +1752,7 @@
         // Mode filtering deferred to Step 5 -- currently shows all
         var ROOM_LABELS = {};   // schema v2: room path -> label (filled from config doors)
         var STORAGE_KEY = 'other';   // the hidden room; never served (L-287)
+        var ROOM_SENTENCES = {};     // schema v2: room path -> placard sentence
 
         // ---- DOM refs ----
         var navBtn         = document.getElementById('navBtn');
@@ -1832,6 +1850,7 @@
                     var r = list[i];
                     var path = prefix ? prefix + '/' + r.key : r.key;
                     ROOM_LABELS[path] = r.label || r.key;
+                    if (r.sentence) ROOM_SENTENCES[path] = r.sentence;
                     if (r.rooms) walk(r.rooms, path);
                 }
             }
@@ -1857,6 +1876,11 @@
                     v.mode = keys.length > 1 ? 'both' : (keys[0] || 'landscape');
                 }
                 if (!v.filename && keys.length) v.filename = files[keys[0]];
+                if (v.size_kb && typeof v.size_kb === 'object') {
+                    var total = 0, sk = Object.keys(v.size_kb);
+                    for (var s = 0; s < sk.length; s++) total = Math.max(total, Number(v.size_kb[sk[s]]) || 0);
+                    v.size_kb = total;
+                }
                 var room = v.room || 'other';
                 var seg = room.split('/');
                 if (!v.category) {
@@ -1880,6 +1904,20 @@
                 return files[k[0]];
             }
             return viz.filename;
+        }
+
+        // Card sources (schema v2): one line, URLs clickable, each escaped.
+        function sourcesHtml(item) {
+            var src = item.sources;
+            if (!src || !src.length) return '';
+            var parts = [];
+            for (var i = 0; i < src.length; i++) {
+                var s = String(src[i]);
+                var e = escapeHtml(s);
+                parts.push(/^https?:\/\//.test(s)
+                    ? '<a href="' + e + '" target="_blank" rel="noopener">' + e + '</a>' : e);
+            }
+            return '<div class="viz-card-sources">Sources: ' + parts.join('; ') + '</div>';
         }
 
         // ---- Initialize ----
@@ -2055,6 +2093,9 @@
                 html += '<span class="category-chevron">&#9654;</span>';
                 html += '</div>';
                 html += '<div class="category-items" data-cat="' + catKey + '">';
+                if (ROOM_SENTENCES[catKey]) {
+                    html += '<div class="category-sentence">' + escapeHtml(ROOM_SENTENCES[catKey]) + '</div>';
+                }
 
                 // Check if any items have subcategories
                 var hasSubs = false;
@@ -2098,6 +2139,7 @@
                             if (item.description) {
                                 html += '<div class="viz-card-desc">' + escapeHtml(item.description) + '</div>';
                             }
+                            html += sourcesHtml(item);
                             if (item.size_kb) {
                                 html += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
                             }
@@ -2117,6 +2159,7 @@
                         if (item.description) {
                             html += '<div class="viz-card-desc">' + escapeHtml(item.description) + '</div>';
                         }
+                        html += sourcesHtml(item);
                         if (item.size_kb) {
                             html += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
                         }
