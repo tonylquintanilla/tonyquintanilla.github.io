@@ -1,25 +1,51 @@
 """
-Gallery Metadata Editor for Paloma's Orrery
-GUI to edit visualization titles, descriptions, categories,
-reorder items and categories, and copy/move visualizations
-within the gallery_metadata.json file.
+Gallery Editor for Paloma's Orrery -- schema version 2 (L-287).
 
-Categories are driven by gallery_config.json (shared with
-json_converter.py and index.html). Display order matches
-the gallery exactly -- derived from JSON sequence.
+Two panes. LEFT is the room tree: three doors (Solar System, Earth
+System, Stars), rooms under them up to four levels deep, cards under
+the rooms, and the hidden Storage room at the bottom. The tree IS
+gallery_config.json. RIGHT is the selected thing: a room (full name,
+short name, sentence, color for doors, special flag) or a card (title,
+placard, room, landscape and portrait file slots, shape, live URL,
+featured flag, sources). One card per exhibit; each card is one entry
+in gallery_metadata.json.
 
-Usage: python gallery_editor.py  (from tools/ directory)
+A new export from json_converter.py lands in Storage. Visitors never
+see Storage. You move the card into a room here.
+
+Save writes both files and prints what changed. Git is the backup; no
+.bak files are written. Undo is Discard Changes in GitHub Desktop.
+
+Usage: python gallery_editor.py  (from tools/, VS Code Run button)
+
+WHAT THE BUTTONS DO
+  New Room       adds a room under the selected door or room
+  Move to Room   moves the selected card (or room) somewhere else
+  Move Up/Down   reorders the selection among its siblings; the order
+                 in the tree is the order on the page
+  Featured       toggles the What's New flag on the selected card
+  Delete         removes a card from the index (its JSON file stays;
+                 gallery_cleanup.py removes orphans) or an EMPTY room
+  Save All       writes both files (Ctrl+S)
+Edits in the right pane are applied when you press Apply, when you
+click another item, or when you save.
+
+Schema v2 field rules live in HANDOFF_2026-09-04_ADDENDUM_L287_schemas.md.
+Four levels is the working ceiling; a fifth level is allowed but warned.
+
+Module rewritten: September 4, 2026 with Anthropic's Claude Fable 5.1
+(L-287). Replaces the schema-v1 editor (flat categories, one file per
+card, Desktop/Mobile sections) which no longer reads the index files.
 
 Role: devtool
 Domain: gallery_pipeline
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog, colorchooser
+from tkinter import ttk, messagebox, simpledialog, colorchooser, filedialog
 import json
 import os
 import re
-import shutil
 import copy
 from datetime import datetime
 
@@ -32,93 +58,91 @@ GALLERY_DIR = os.path.join('..', 'gallery')
 METADATA_FILE = os.path.join(GALLERY_DIR, 'gallery_metadata.json')
 CONFIG_FILE = os.path.join(GALLERY_DIR, 'gallery_config.json')
 
-
-# ============================================================
-# Config Management
-# ============================================================
-
-def load_config(filepath):
-    """Load gallery_config.json. Returns list of category dicts."""
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return data.get('categories', [])
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
-
-
-def save_config(filepath, categories):
-    """Save gallery_config.json."""
-    with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump({'categories': categories}, f, indent=2, ensure_ascii=False)
-    print(f"Config saved: {filepath}")
-
-
-def config_to_map(categories):
-    """Convert category list to key->label dict."""
-    return {c['key']: c['label'] for c in categories}
-
-
-def config_to_color_map(categories):
-    """Convert category list to key->color dict."""
-    return {c['key']: c.get('color', '#7f8c8d') for c in categories}
+STORAGE_KEY = 'other'
+DEPTH_CEILING = 4            # door = 1 ... encounter = 4 (L-286)
+SHAPES = ('16:9', '9:16')
+SLOTS = ('landscape', 'portrait')
 
 
 # ============================================================
-# Data Management
+# File I/O (line-ending preserving, ASCII output)
 # ============================================================
 
-def load_metadata(filepath):
-    """Load gallery_metadata.json and return the data dict."""
-    with open(filepath, 'r', encoding='utf-8') as f:
-        return json.load(f)
+def read_json(path):
+    """Return (data, was_crlf). Raises on missing or invalid file."""
+    with open(path, 'rb') as f:
+        raw = f.read()
+    was_crlf = b'\r\n' in raw
+    return json.loads(raw.decode('utf-8')), was_crlf
 
 
-def save_metadata(filepath, data):
-    """Save gallery_metadata.json with a backup first."""
-    if os.path.exists(filepath):
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup = filepath.replace('.json', f'_backup_{timestamp}.json')
-        shutil.copy2(filepath, backup)
-        print(f"Backup saved: {backup}")
-
-    data['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M')
-    data['total_count'] = len(data.get('visualizations', []))
-
-    with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"Saved: {filepath}")
+def write_json(path, data, was_crlf):
+    """Write JSON, 2-space indent, ASCII-escaped, same line endings as read."""
+    text = json.dumps(data, indent=2, ensure_ascii=True) + '\n'
+    payload = text.encode('ascii')
+    if was_crlf:
+        payload = payload.replace(b'\n', b'\r\n')
+    with open(path, 'wb') as f:
+        f.write(payload)
 
 
-def get_category_order(vizs, mode_key):
-    """Derive category display order from JSON sequence for a given mode.
-
-    Returns list of (cat_key, cat_label) in first-appearance order,
-    matching exactly what the gallery renders. Entries with mode='both'
-    appear in both landscape and portrait.
-    """
-    seen = set()
-    order = []
-    for viz in vizs:
-        viz_mode = viz.get('mode', 'landscape')
-        if viz_mode != mode_key and viz_mode != 'both':
-            continue
-        cat = viz.get('category', 'other')
-        if cat not in seen:
-            seen.add(cat)
-            label = viz.get('category_label', cat)
-            order.append((cat, label))
-    return order
-
-
-def make_label_to_key(label):
-    """Convert a category label to a snake_case key.
-    'Space Missions' -> 'space_missions'
-    """
+def make_key(label):
+    """'Heat Domes' -> 'heat_domes'. ASCII, lowercase, underscores."""
     key = label.lower().strip()
     key = re.sub(r'[^a-z0-9]+', '_', key)
-    key = key.strip('_')
-    return key
+    return key.strip('_') or 'room'
+
+
+# ============================================================
+# Tree helpers -- the config is a nested list of rooms
+# ============================================================
+
+def walk_rooms(rooms, prefix=''):
+    """Yield (path, room, depth) for every room, depth-first."""
+    for r in rooms:
+        path = prefix + '/' + r['key'] if prefix else r['key']
+        yield path, r, path.count('/') + 1
+        yield from walk_rooms(r.get('rooms', []), path)
+
+
+def find_room(config, path):
+    """Return (room dict, parent list) for a path, or (None, None)."""
+    if not path or path == STORAGE_KEY:
+        return None, None
+    parts = path.split('/')
+    siblings = config['doors']
+    room = None
+    for p in parts:
+        room = next((r for r in siblings if r['key'] == p), None)
+        if room is None:
+            return None, None
+        parent = siblings
+        siblings = room.setdefault('rooms', [])
+    return room, parent
+
+
+def parent_path(path):
+    return path.rsplit('/', 1)[0] if '/' in path else ''
+
+
+def room_label_chain(config, path):
+    """'solar_system/earth/moon' -> ['Solar', 'Earth', 'Moon'] (short names)."""
+    chain = []
+    parts = path.split('/')
+    siblings = config['doors']
+    for p in parts:
+        room = next((r for r in siblings if r['key'] == p), None)
+        if room is None:
+            chain.append('?' + p)
+            break
+        chain.append(room.get('short') or room.get('label') or p)
+        siblings = room.get('rooms', [])
+    return chain
+
+
+def door_of(config, path):
+    key = path.split('/')[0]
+    return next((d for d in config['doors'] if d['key'] == key), None)
 
 
 # ============================================================
@@ -129,1479 +153,873 @@ class GalleryEditor:
     def __init__(self, root):
         self.root = root
         self.root.title("Paloma's Orrery - Gallery Editor")
-        self.root.geometry("950x680")
-        self.root.minsize(750, 500)
+        self.root.geometry("1180x720")
+        self.root.minsize(900, 540)
 
-        # State
-        self.data = None
-        self.categories = []  # From gallery_config.json
+        self.config = None          # gallery_config.json (version 2)
+        self.data = None            # gallery_metadata.json (version 2)
+        self.cfg_crlf = False
+        self.meta_crlf = False
+        self.snapshot = None        # deep copies at load, for the save report
         self.dirty = False
-        self.config_dirty = False
-        self.filepath = self._find_file(METADATA_FILE)
-        self.config_path = self._find_file(CONFIG_FILE)
+        self.selected = None        # ('room', path) | ('card', id) | None
+        self.form_vars = {}
+        self.suspend_apply = False
 
-        # Build UI
+        self.meta_path = self._find_file(METADATA_FILE)
+        self.cfg_path = self._find_file(CONFIG_FILE)
+
         self._build_menu()
         self._build_toolbar()
-        self._build_tree()
+        self._build_panes()
         self._build_statusbar()
 
-        # Load data
-        self._load_config()
         self._load()
-
-        # Handle window close
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
-    def _find_file(self, path):
-        """Find a file, checking candidate paths."""
-        candidates = [path, os.path.join('..', path)]
-        for c in candidates:
+    @staticmethod
+    def _find_file(path):
+        for c in (path, os.path.join('..', path), os.path.basename(path),
+                  os.path.join('gallery', os.path.basename(path))):
             if os.path.exists(c):
                 return os.path.abspath(c)
         return os.path.abspath(path)
 
     # --------------------------------------------------------
-    # UI Construction
+    # UI construction
     # --------------------------------------------------------
 
     def _build_menu(self):
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
+        m = tk.Menu(menubar, tearoff=0)
+        m.add_command(label="Save All", command=self._save_all, accelerator="Ctrl+S")
+        m.add_command(label="Reload from disk", command=self._reload)
+        m.add_separator()
+        m.add_command(label="Quit", command=self._on_close)
+        menubar.add_cascade(label="File", menu=m)
 
-        file_menu = tk.Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Save All", command=self._save_all,
-                              accelerator="Ctrl+S")
-        file_menu.add_separator()
-        file_menu.add_command(label="Quit", command=self._on_close)
-        menubar.add_cascade(label="File", menu=file_menu)
+        r = tk.Menu(menubar, tearoff=0)
+        r.add_command(label="New Room...", command=self._new_room)
+        r.add_command(label="Move to Room...", command=self._move_to_room)
+        r.add_command(label="Set Door Color...", command=self._set_door_color)
+        r.add_separator()
+        r.add_command(label="Delete", command=self._delete_selected)
+        menubar.add_cascade(label="Rooms", menu=r)
 
-        cat_menu = tk.Menu(menubar, tearoff=0)
-        cat_menu.add_command(label="New Category...",
-                             command=self._new_category)
-        cat_menu.add_command(label="Rename Category...",
-                             command=self._rename_category)     
-        cat_menu.add_command(label="Edit Category Color...",
-                             command=self._edit_category_color)
-        cat_menu.add_separator()
-        cat_menu.add_command(label="Delete Category...",
-                             command=self._delete_category)
-        menubar.add_cascade(label="Categories", menu=cat_menu)
+        c = tk.Menu(menubar, tearoff=0)
+        c.add_command(label="Toggle Featured", command=self._toggle_featured)
+        c.add_command(label="Set Landscape File...", command=lambda: self._pick_file('landscape'))
+        c.add_command(label="Set Portrait File...", command=lambda: self._pick_file('portrait'))
+        c.add_command(label="Clear Landscape File", command=lambda: self._clear_file('landscape'))
+        c.add_command(label="Clear Portrait File", command=lambda: self._clear_file('portrait'))
+        menubar.add_cascade(label="Card", menu=c)
 
         self.root.bind('<Control-s>', lambda e: self._save_all())
 
-
     def _build_toolbar(self):
-        toolbar = ttk.Frame(self.root)
-        toolbar.pack(fill='x', padx=8, pady=(8, 4))
-
-        # -- Edit group --
-        b = ttk.Button(toolbar, text="Edit Title",
-                       command=self._edit_title)
-        b.pack(side='left', padx=2)
-        self._tip(b, "Edit title of selected visualization")
-
-        b = ttk.Button(toolbar, text="Edit Description",
-                       command=self._edit_description)
-        b.pack(side='left', padx=2)
-        self._tip(b, "Edit description of selected visualization")
-
-        b = ttk.Button(toolbar, text="Change Category",
-                       command=self._change_category)
-        b.pack(side='left', padx=2)
-        self._tip(b, "Move selected visualization to a different category")
-
-        b = ttk.Button(toolbar, text="Set Subcategory",
-                       command=self._set_subcategory)
-        b.pack(side='left', padx=2)
-        self._tip(b, "Set or clear subcategory for selected visualization")
-
-        b = ttk.Button(toolbar, text="Edit Labels",
-                       command=self._edit_labels)
-        b.pack(side='left', padx=2)
-        self._tip(b, "Edit category and subcategory display labels")
-
-        ttk.Separator(toolbar, orient='vertical').pack(
-            side='left', fill='y', padx=8, pady=2)
-
-        # -- Organize group --
-        b = ttk.Button(toolbar, text="Move Up",
-                       command=self._move_up)
-        b.pack(side='left', padx=2)
-        self._tip(b, "Move selected item up (works on vizs and categories)")
-
-        b = ttk.Button(toolbar, text="Move Down",
-                       command=self._move_down)
-        b.pack(side='left', padx=2)
-        self._tip(b, "Move selected item down (works on vizs and categories)")
-
-        ttk.Separator(toolbar, orient='vertical').pack(
-            side='left', fill='y', padx=8, pady=2)
-
-        # -- Actions group --
-        b = ttk.Button(toolbar, text="Copy To...",
-                       command=self._copy_viz)
-        b.pack(side='left', padx=2)
-        self._tip(b, "Duplicate visualization to another category/mode")
-
-        b = ttk.Button(toolbar, text="Toggle Featured",
-                       command=self._toggle_featured)
-        b.pack(side='left', padx=2)
-        self._tip(b, "Mark/unmark selected visualization as featured")
-
-        b = ttk.Button(toolbar, text="Delete",
-                       command=self._delete_selected)
-        b.pack(side='left', padx=2)
-        self._tip(b, "Delete selected visualization or empty category")
-
-        ttk.Separator(toolbar, orient='vertical').pack(
-            side='left', fill='y', padx=8, pady=2)
-
-        b = ttk.Button(toolbar, text="Save All",
-                       command=self._save_all)
+        tb = ttk.Frame(self.root)
+        tb.pack(fill='x', padx=8, pady=(8, 4))
+        for text, cmd, tip in (
+            ("New Room", self._new_room, "Add a room under the selected door or room"),
+            ("Move to Room...", self._move_to_room, "Move the selected card or room to another room"),
+            ("Move Up", lambda: self._move(-1), "Move selection up among its siblings"),
+            ("Move Down", lambda: self._move(1), "Move selection down among its siblings"),
+        ):
+            b = ttk.Button(tb, text=text, command=cmd)
+            b.pack(side='left', padx=2)
+            self._tip(b, tip)
+        ttk.Separator(tb, orient='vertical').pack(side='left', fill='y', padx=8, pady=2)
+        for text, cmd, tip in (
+            ("Featured", self._toggle_featured, "Toggle the What's New flag on the selected card"),
+            ("Delete", self._delete_selected, "Delete a card from the index, or an empty room"),
+        ):
+            b = ttk.Button(tb, text=text, command=cmd)
+            b.pack(side='left', padx=2)
+            self._tip(b, tip)
+        b = ttk.Button(tb, text="Save All", command=self._save_all)
         b.pack(side='right', padx=2)
-        self._tip(b, "Save metadata and config (Ctrl+S)")
-
+        self._tip(b, "Write both files and print what changed (Ctrl+S)")
 
     @staticmethod
     def _tip(widget, text):
-        """Add hover tooltip to a widget."""
-        tip = None
+        tip = {'w': None}
 
         def enter(e):
-            nonlocal tip
             x = widget.winfo_rootx() + 20
             y = widget.winfo_rooty() + widget.winfo_height() + 4
-            tip = tk.Toplevel(widget)
-            tip.wm_overrideredirect(True)
-            tip.wm_geometry(f"+{x}+{y}")
-            lbl = tk.Label(tip, text=text, background="#ffffe0",
-                           relief='solid', borderwidth=1,
-                           font=('TkDefaultFont', 9))
-            lbl.pack()
+            t = tk.Toplevel(widget)
+            t.wm_overrideredirect(True)
+            t.wm_geometry(f"+{x}+{y}")
+            tk.Label(t, text=text, background="#ffffe0", relief='solid',
+                     borderwidth=1, font=('TkDefaultFont', 9)).pack()
+            tip['w'] = t
 
         def leave(e):
-            nonlocal tip
-            if tip:
-                tip.destroy()
-                tip = None
+            if tip['w']:
+                tip['w'].destroy()
+                tip['w'] = None
 
         widget.bind('<Enter>', enter)
         widget.bind('<Leave>', leave)
 
+    def _build_panes(self):
+        panes = ttk.PanedWindow(self.root, orient='horizontal')
+        panes.pack(fill='both', expand=True, padx=8, pady=4)
 
-    def _build_tree(self):
-        """Build the treeview showing visualizations grouped by category."""
-        frame = ttk.Frame(self.root)
-        frame.pack(fill='both', expand=True, padx=8, pady=4)
-
-        columns = ('title', 'description', 'size')
-        self.tree = ttk.Treeview(frame, columns=columns,
-                                 show='tree headings', selectmode='browse')
-
-        self.tree.heading('#0', text='Mode / Category / ID', anchor='w')
-        self.tree.heading('title', text='Title', anchor='w')
-        self.tree.heading('description', text='Description', anchor='w')
-        self.tree.heading('size', text='Size (KB)', anchor='e')
-
-        self.tree.column('#0', width=240, minwidth=150)
-        self.tree.column('title', width=280, minwidth=150)
-        self.tree.column('description', width=280, minwidth=100)
-        self.tree.column('size', width=80, minwidth=60, anchor='e')
-
-        # Scrollbars
-        vsb = ttk.Scrollbar(frame, orient='vertical',
-                            command=self.tree.yview)
-        hsb = ttk.Scrollbar(frame, orient='horizontal',
-                            command=self.tree.xview)
-        self.tree.configure(yscrollcommand=vsb.set,
-                            xscrollcommand=hsb.set)
-
+        # ---- left: tree ----
+        left = ttk.Frame(panes)
+        panes.add(left, weight=2)
+        self.tree = ttk.Treeview(left, columns=('info',), show='tree headings',
+                                 selectmode='browse')
+        self.tree.heading('#0', text='Doors / Rooms / Cards', anchor='w')
+        self.tree.heading('info', text='', anchor='w')
+        self.tree.column('#0', width=360, minwidth=200)
+        self.tree.column('info', width=170, minwidth=80)
+        vsb = ttk.Scrollbar(left, orient='vertical', command=self.tree.yview)
+        self.tree.configure(yscrollcommand=vsb.set)
         self.tree.grid(row=0, column=0, sticky='nsew')
         vsb.grid(row=0, column=1, sticky='ns')
-        hsb.grid(row=1, column=0, sticky='ew')
-        frame.columnconfigure(0, weight=1)
-        frame.rowconfigure(0, weight=1)
+        left.columnconfigure(0, weight=1)
+        left.rowconfigure(0, weight=1)
+        self.tree.bind('<<TreeviewSelect>>', self._on_select)
+        self.tree.tag_configure('storage', foreground='#777777')
+        self.tree.tag_configure('deep', foreground='#b06000')
+        self.tree.tag_configure('special', font=('TkDefaultFont', 9, 'italic'))
 
-        # Double-click to edit title
-        self.tree.bind('<Double-1>', lambda e: self._edit_title())
+        # ---- right: form ----
+        right = ttk.Frame(panes)
+        panes.add(right, weight=3)
+        self.form = ttk.Frame(right)
+        self.form.pack(fill='both', expand=True, padx=8, pady=4)
+        self._show_nothing()
 
     def _build_statusbar(self):
         self.status_var = tk.StringVar(value="Ready")
-        status = ttk.Label(self.root, textvariable=self.status_var,
-                           relief='sunken', anchor='w')
-        status.pack(fill='x', padx=8, pady=(0, 8))
+        ttk.Label(self.root, textvariable=self.status_var, relief='sunken',
+                  anchor='w').pack(fill='x', padx=8, pady=(0, 8))
 
     # --------------------------------------------------------
-    # Data Loading / Display
+    # Load / refresh
     # --------------------------------------------------------
-
-    def _load_config(self):
-        """Load gallery_config.json."""
-        self.categories = load_config(self.config_path)
-        if not self.categories:
-            self.status_var.set(
-                "Warning: gallery_config.json not found or empty")
 
     def _load(self):
-        """Load metadata and populate the tree."""
         try:
-            self.data = load_metadata(self.filepath)
-        except FileNotFoundError:
-            messagebox.showerror("Error",
-                                 f"File not found:\n{self.filepath}")
+            self.config, self.cfg_crlf = read_json(self.cfg_path)
+            self.data, self.meta_crlf = read_json(self.meta_path)
+        except FileNotFoundError as e:
+            messagebox.showerror("Error", f"File not found:\n{e}")
             return
         except json.JSONDecodeError as e:
-            messagebox.showerror("Error",
-                                 f"Invalid JSON:\n{e}")
+            messagebox.showerror("Error", f"Invalid JSON:\n{e}")
             return
-
-        self._refresh_tree()
+        if self.config.get('version') != 2 or self.data.get('version') != 2:
+            messagebox.showerror(
+                "Wrong schema",
+                "These files are not schema version 2.\n\n"
+                "Run gallery/patch_L287_1_migrate_schema_v2.py first, then reopen.")
+            self.root.after(50, self.root.destroy)
+            return
+        self.config.setdefault('doors', [])
+        self.config.setdefault('storage', {'key': STORAGE_KEY, 'label': 'Storage', 'hidden': True})
+        self.snapshot = (copy.deepcopy(self.config), copy.deepcopy(self.data))
         self.dirty = False
-        self.status_var.set(
-            f"Loaded {len(self.data.get('visualizations', []))} "
-            f"visualizations from {os.path.basename(self.filepath)}")
+        self._update_title()
+        self._refresh_tree()
+        n = len(self.data.get('visualizations', []))
+        stored = sum(1 for c in self.data['visualizations'] if c.get('room', STORAGE_KEY) == STORAGE_KEY)
+        self.status_var.set(f"Loaded {n} cards ({stored} in Storage), "
+                            f"{sum(1 for _ in walk_rooms(self.config['doors']))} rooms")
 
-    def _refresh_tree(self):
-        """Rebuild the treeview from current data.
+    def _reload(self):
+        if self.dirty and not messagebox.askyesno(
+                "Reload", "Discard unsaved changes and reload from disk?"):
+            return
+        self.selected = None
+        self._load()
+        self._show_nothing()
 
-        Category order is derived from JSON sequence (first appearance),
-        matching exactly what the gallery renders. Empty categories
-        from the config are shown at the end.
-        """
+    def _cards_in(self, path):
+        return [c for c in self.data['visualizations'] if c.get('room', STORAGE_KEY) == path]
+
+    def _card_by_id(self, cid):
+        return next((c for c in self.data['visualizations'] if c['id'] == cid), None)
+
+    def _refresh_tree(self, keep=None):
+        """Rebuild the tree. `keep` is an iid to reselect afterwards."""
+        open_state = {iid: self.tree.item(iid, 'open') for iid in self._all_iids()}
         self.tree.delete(*self.tree.get_children())
+        known_paths = set()
 
-        vizs = self.data.get('visualizations', [])
-        cat_map = config_to_map(self.categories)
+        def add_room(parent_iid, path, room, depth):
+            known_paths.add(path)
+            cards = self._cards_in(path)
+            kids = room.get('rooms', [])
+            tags = []
+            if room.get('special'):
+                tags.append('special')
+            if depth > DEPTH_CEILING:
+                tags.append('deep')
+            info = []
+            if depth == 1 and room.get('color'):
+                info.append(room['color'])
+            info.append(f"{len(cards)} card{'s' if len(cards) != 1 else ''}")
+            if not cards and not kids:
+                info.append('under construction')
+            if depth > DEPTH_CEILING:
+                info.append(f'level {depth}!')
+            iid = 'room:' + path
+            text = room.get('label', room['key'])
+            if room.get('short') and room['short'] != text:
+                text += f"  ({room['short']})"
+            self.tree.insert(parent_iid, 'end', iid=iid, text=text,
+                             values=('  '.join(info),), tags=tags,
+                             open=open_state.get(iid, depth <= 2))
+            for c in cards:
+                add_card(iid, c, room.get('color') if depth == 1 else None)
+            for k in kids:
+                add_room(iid, path + '/' + k['key'], k, depth + 1)
 
-        MODE_LABELS = {
-            'landscape': 'Landscape (Desktop)',
-            'portrait': 'Portrait (Mobile)',
-        }
+        def add_card(parent_iid, c, _color):
+            star = "\u2605 " if c.get('featured') else ""
+            marks = []
+            if c.get('live'):
+                marks.append('live')
+            slots = [s for s in SLOTS if (c.get('files') or {}).get(s)]
+            marks.append('+'.join(s[0].upper() for s in slots) if slots else 'NO FILE')
+            marks.append(c.get('shape', ''))
+            self.tree.insert(parent_iid, 'end', iid='card:' + c['id'],
+                             text=star + c.get('title', c['id']),
+                             values=('  '.join(m for m in marks if m),))
 
-        for mode_key in ['landscape', 'portrait']:
-            # Get categories with vizs in JSON-derived order
-            cat_order = get_category_order(vizs, mode_key)
-            populated_keys = set(c[0] for c in cat_order)
+        for d in self.config['doors']:
+            add_room('', d['key'], d, 1)
 
-            # Add empty categories from config at the end
-            for cat_cfg in self.categories:
-                k = cat_cfg['key']
-                if k not in populated_keys and k != 'other':
-                    cat_order.append((k, cat_cfg['label']))
+        # Storage: the hidden room, plus any card whose room no longer exists.
+        stored = [c for c in self.data['visualizations']
+                  if c.get('room', STORAGE_KEY) == STORAGE_KEY
+                  or c.get('room') not in known_paths]
+        sto = self.config.get('storage', {})
+        siid = 'room:' + STORAGE_KEY
+        self.tree.insert('', 'end', iid=siid,
+                         text=sto.get('label', 'Storage') + "  (hidden from visitors)",
+                         values=(f"{len(stored)} card{'s' if len(stored) != 1 else ''}",),
+                         tags=('storage',), open=open_state.get(siid, True))
+        for c in stored:
+            add_card(siid, c, None)
+            if c.get('room') not in (STORAGE_KEY, None) and c.get('room') not in known_paths:
+                self.tree.item('card:' + c['id'],
+                               values=(f"room missing: {c['room']}",), tags=('deep',))
 
-            if not cat_order:
-                continue
+        if keep and self.tree.exists(keep):
+            self.tree.selection_set(keep)
+            self.tree.see(keep)
 
-            # Count total vizs in this mode (including 'both')
-            mode_count = sum(
-                1 for v in vizs
-                if v.get('mode', 'landscape') in (mode_key, 'both'))
-            mode_label = MODE_LABELS.get(mode_key, mode_key)
-            mode_node = self.tree.insert(
-                '', 'end', iid=f'mode_{mode_key}',
-                text=f"{mode_label} ({mode_count})",
-                open=True)
-
-            # Group vizs by category for this mode (including 'both')
-            groups = {}
-            for viz in vizs:
-                viz_mode = viz.get('mode', 'landscape')
-                if viz_mode != mode_key and viz_mode != 'both':
-                    continue
-                cat = viz.get('category', 'other')
-                groups.setdefault(cat, []).append(viz)
-
-            # Add categories
-            for cat_key, cat_label in cat_order:
-                items = groups.get(cat_key, [])
-                cat_iid = f'cat_{mode_key}_{cat_key}'
-                parent = self.tree.insert(
-                    mode_node, 'end', iid=cat_iid,
-                    text=f"{cat_label} ({len(items)})",
-                    open=True)
-
-                # Check if any items have subcategories
-                has_subs = any(v.get('subcategory') for v in items)
-
-                if has_subs:
-                    # Group by subcategory within this category
-                    sub_groups = {}
-                    sub_order = []
-                    for viz in items:
-                        sub = viz.get('subcategory', '')
-                        sub_label = viz.get('subcategory_label',
-                                            sub or 'Ungrouped')
-                        if sub not in sub_groups:
-                            sub_groups[sub] = []
-                            sub_order.append((sub, sub_label))
-                        sub_groups[sub].append(viz)
-
-                    for sub_key, sub_label in sub_order:
-                        sub_items = sub_groups[sub_key]
-                        sub_iid = (f'sub_{mode_key}_{cat_key}'
-                                   f'_{sub_key}')
-                        sub_parent = self.tree.insert(
-                            parent, 'end', iid=sub_iid,
-                            text=f"{sub_label} ({len(sub_items)})",
-                            open=True)
-                        for viz in sub_items:
-                            size = viz.get('size_kb', 0)
-                            star = "\u2605 " if viz.get('featured') else ""
-                            # Suffix iid for 'both' entries to avoid
-                            # collision across landscape/portrait sections
-                            viz_iid = viz['id']
-                            if viz.get('mode') == 'both':
-                                viz_iid = viz['id'] + '@@' + mode_key
-                            both_tag = " [both]" if viz.get('mode') == 'both' else ""
-                            self.tree.insert(
-                                sub_parent, 'end', iid=viz_iid,
-                                text=viz.get('id', '') + both_tag,
-                                values=(
-                                    star + viz.get('title', ''),
-                                    viz.get('description', '')[:80],
-                                    f"{size:,.1f}"
-                                ))
-                else:
-                    # No subcategories -- flat list as before
-                    for viz in items:
-                        size = viz.get('size_kb', 0)
-                        star = "\u2605 " if viz.get('featured') else ""
-                        viz_iid = viz['id']
-                        if viz.get('mode') == 'both':
-                            viz_iid = viz['id'] + '@@' + mode_key
-                        both_tag = " [both]" if viz.get('mode') == 'both' else ""
-                        self.tree.insert(
-                            parent, 'end', iid=viz_iid,
-                            text=viz.get('id', '') + both_tag,
-                            values=(
-                                star + viz.get('title', ''),
-                                viz.get('description', '')[:80],
-                                f"{size:,.1f}"
-                            ))
+    def _all_iids(self, parent=''):
+        out = []
+        for iid in self.tree.get_children(parent):
+            out.append(iid)
+            out.extend(self._all_iids(iid))
+        return out
 
     # --------------------------------------------------------
-    # Selection Helpers
+    # Selection and the right pane
     # --------------------------------------------------------
 
-    def _get_selected_viz(self):
-        """Get the selected visualization dict, or None."""
+    def _on_select(self, _event=None):
+        if self.suspend_apply:
+            return
+        self._apply_form()          # commit edits to the previous selection
         sel = self.tree.selection()
         if not sel:
-            messagebox.showinfo("No Selection",
-                                "Select a visualization first.")
-            return None
+            self.selected = None
+            self._show_nothing()
+            return
+        iid = sel[0]
+        kind, _, ident = iid.partition(':')
+        self.selected = (kind, ident)
+        if kind == 'card':
+            self._show_card(self._card_by_id(ident))
+        elif ident == STORAGE_KEY:
+            self._show_storage()
+        else:
+            room, _ = find_room(self.config, ident)
+            self._show_room(ident, room)
 
-        item_id = sel[0]
-        if (item_id.startswith('mode_') or item_id.startswith('cat_')
-                or item_id.startswith('sub_')):
-            messagebox.showinfo("Group Selected",
-                                "Select a visualization, not a group.")
-            return None
+    def _clear_form(self):
+        for w in self.form.winfo_children():
+            w.destroy()
+        self.form_vars = {}
 
-        # Strip @@mode suffix used for 'both' entries
-        real_id = item_id.split('@@')[0]
+    def _show_nothing(self):
+        self._clear_form()
+        ttk.Label(self.form, text="Select a door, room or card on the left.",
+                  foreground='#777777').pack(anchor='w', pady=20)
 
-        for viz in self.data.get('visualizations', []):
-            if viz['id'] == real_id:
-                return viz
+    def _row(self, parent, r, label, widget):
+        ttk.Label(parent, text=label).grid(row=r, column=0, sticky='nw', padx=(0, 10), pady=4)
+        widget.grid(row=r, column=1, sticky='ew', pady=4)
+
+    def _entry(self, parent, key, value, r, label):
+        v = tk.StringVar(value=value or '')
+        self.form_vars[key] = v
+        self._row(parent, r, label, ttk.Entry(parent, textvariable=v))
+
+    def _show_room(self, path, room):
+        self._clear_form()
+        if room is None:
+            ttk.Label(self.form, text=f"Room not found: {path}").pack(anchor='w')
+            return
+        depth = path.count('/') + 1
+        is_door = depth == 1
+        f = self.form
+        head = ("Door" if is_door else "Room") + f"  --  level {depth}"
+        ttk.Label(f, text=head, font=('TkDefaultFont', 11, 'bold')).grid(
+            row=0, column=0, columnspan=2, sticky='w', pady=(0, 2))
+        ttk.Label(f, text="breadcrumb:  " + ": ".join(room_label_chain(self.config, path)),
+                  foreground='#555555').grid(row=1, column=0, columnspan=2, sticky='w', pady=(0, 10))
+        self._entry(f, 'label', room.get('label'), 2, "Full name")
+        self._entry(f, 'short', room.get('short'), 3, "Short name")
+        ttk.Label(f, text="Sentence").grid(row=4, column=0, sticky='nw', padx=(0, 10), pady=4)
+        txt = tk.Text(f, height=3, wrap='word')
+        txt.insert('1.0', room.get('sentence', ''))
+        txt.grid(row=4, column=1, sticky='ew', pady=4)
+        self.form_vars['sentence'] = txt
+        if is_door:
+            self._entry(f, 'color', room.get('color'), 5, "Color (hex)")
+            ttk.Button(f, text="Pick...", command=self._set_door_color).grid(row=5, column=2, padx=4)
+        else:
+            d = door_of(self.config, path)
+            ttk.Label(f, text=f"inherits {d.get('label', '?') if d else '?'}'s accent",
+                      foreground='#777777').grid(row=5, column=1, sticky='w')
+            ttk.Label(f, text="Color").grid(row=5, column=0, sticky='w', padx=(0, 10))
+        sp = tk.BooleanVar(value=bool(room.get('special')))
+        self.form_vars['special'] = sp
+        ttk.Checkbutton(f, text="special exhibit (side gallery)", variable=sp).grid(
+            row=6, column=1, sticky='w', pady=4)
+        n_cards = len(self._cards_in(path))
+        n_rooms = len(room.get('rooms', []))
+        ttk.Label(f, text=f"{n_rooms} rooms, {n_cards} cards" +
+                  ("  --  shows as under construction" if not n_rooms and not n_cards else ""),
+                  foreground='#555555').grid(row=7, column=1, sticky='w', pady=(8, 0))
+        if depth >= DEPTH_CEILING:
+            ttk.Label(f, text=f"Level {depth}. A room below this exceeds the four-level "
+                              "ceiling; the content probably wants a special exhibit.",
+                      foreground='#b06000', wraplength=420, justify='left').grid(
+                row=8, column=1, sticky='w', pady=(8, 0))
+        ttk.Button(f, text="Apply", command=lambda: self._apply_form(refresh=True)).grid(
+            row=9, column=1, sticky='e', pady=(14, 0))
+        f.columnconfigure(1, weight=1)
+
+    def _show_storage(self):
+        self._clear_form()
+        n = len(self.tree.get_children('room:' + STORAGE_KEY))
+        ttk.Label(self.form, text="Storage", font=('TkDefaultFont', 11, 'bold')).pack(anchor='w')
+        ttk.Label(self.form, wraplength=440, justify='left', text=(
+            f"{n} cards are waiting here. Visitors never see this room. "
+            "Select a card and use Move to Room to place it. New exports from "
+            "json_converter.py land here.")).pack(anchor='w', pady=8)
+
+    def _show_card(self, c):
+        self._clear_form()
+        if c is None:
+            ttk.Label(self.form, text="Card not found.").pack(anchor='w')
+            return
+        f = self.form
+        ttk.Label(f, text="Card", font=('TkDefaultFont', 11, 'bold')).grid(
+            row=0, column=0, columnspan=3, sticky='w')
+        ttk.Label(f, text=f"id: {c['id']}", foreground='#555555').grid(
+            row=1, column=0, columnspan=3, sticky='w', pady=(0, 8))
+        self._entry(f, 'title', c.get('title'), 2, "Title")
+        ttk.Label(f, text="Placard").grid(row=3, column=0, sticky='nw', padx=(0, 10), pady=4)
+        txt = tk.Text(f, height=3, wrap='word')
+        txt.insert('1.0', c.get('description', ''))
+        txt.grid(row=3, column=1, columnspan=2, sticky='ew', pady=4)
+        self.form_vars['description'] = txt
+
+        room = c.get('room', STORAGE_KEY)
+        chain = "Storage (hidden)" if room == STORAGE_KEY else ": ".join(room_label_chain(self.config, room))
+        ttk.Label(f, text="Room").grid(row=4, column=0, sticky='w', padx=(0, 10), pady=4)
+        rf = ttk.Frame(f)
+        rf.grid(row=4, column=1, columnspan=2, sticky='ew')
+        ttk.Label(rf, text=chain).pack(side='left')
+        ttk.Button(rf, text="Move to Room...", command=self._move_to_room).pack(side='right')
+
+        files = c.get('files') or {}
+        for i, slot in enumerate(SLOTS):
+            r = 5 + i
+            ttk.Label(f, text=f"{slot.title()} file").grid(row=r, column=0, sticky='w', padx=(0, 10), pady=4)
+            sf = ttk.Frame(f)
+            sf.grid(row=r, column=1, columnspan=2, sticky='ew')
+            fn = files.get(slot)
+            size = (c.get('size_kb') or {}).get(slot) if isinstance(c.get('size_kb'), dict) else None
+            label = fn + (f"  ({size:,.0f} KB)" if isinstance(size, (int, float)) else "") \
+                if fn else "none -- page uses the other file"
+            ttk.Label(sf, text=label, foreground='#000000' if fn else '#777777').pack(side='left')
+            ttk.Button(sf, text="Clear" if fn else "", width=6 if fn else 0,
+                       command=lambda s=slot: self._clear_file(s)).pack(side='right', padx=2) if fn else None
+            ttk.Button(sf, text="Replace..." if fn else "Add...",
+                       command=lambda s=slot: self._pick_file(s)).pack(side='right', padx=2)
+
+        sh = tk.StringVar(value=c.get('shape', '16:9'))
+        self.form_vars['shape'] = sh
+        ttk.Label(f, text="Shape (phone only)").grid(row=7, column=0, sticky='w', padx=(0, 10), pady=4)
+        shf = ttk.Frame(f)
+        shf.grid(row=7, column=1, columnspan=2, sticky='w')
+        ttk.Radiobutton(shf, text="16:9  sweeps sideways (2D) / scales to fit (3D)",
+                        variable=sh, value='16:9').pack(anchor='w')
+        ttk.Radiobutton(shf, text="9:16  shows as today", variable=sh, value='9:16').pack(anchor='w')
+
+        self._entry(f, 'live', c.get('live') or '', 8, "Live scene URL")
+        ttk.Label(f, text="e.g. interactive.html?exhibit=sun -- empty means this card opens its file",
+                  foreground='#777777').grid(row=9, column=1, columnspan=2, sticky='w')
+
+        fe = tk.BooleanVar(value=bool(c.get('featured')))
+        self.form_vars['featured'] = fe
+        ttk.Checkbutton(f, text="featured (What's New)", variable=fe).grid(
+            row=10, column=1, sticky='w', pady=4)
+
+        ttk.Label(f, text="Sources").grid(row=11, column=0, sticky='nw', padx=(0, 10), pady=4)
+        st = tk.Text(f, height=4, wrap='word')
+        st.insert('1.0', '\n'.join(c.get('sources') or []))
+        st.grid(row=11, column=1, columnspan=2, sticky='ew', pady=4)
+        self.form_vars['sources'] = st
+        ttk.Label(f, text="one per line; empty is allowed", foreground='#777777').grid(
+            row=12, column=1, sticky='w')
+
+        ttk.Label(f, text=f"converted {c.get('converted', '?')}", foreground='#777777').grid(
+            row=13, column=1, sticky='w', pady=(8, 0))
+        ttk.Button(f, text="Apply", command=lambda: self._apply_form(refresh=True)).grid(
+            row=14, column=1, columnspan=2, sticky='e', pady=(14, 0))
+        f.columnconfigure(1, weight=1)
+
+    def _apply_form(self, refresh=False):
+        """Copy the right-pane fields into the selected object. Marks dirty if changed."""
+        if not self.selected or not self.form_vars:
+            return
+        kind, ident = self.selected
+        changed = False
+
+        def text_of(w):
+            return w.get('1.0', 'end-1c').strip()
+
+        if kind == 'card':
+            c = self._card_by_id(ident)
+            if c is None:
+                return
+            new = {
+                'title': self.form_vars['title'].get().strip(),
+                'description': text_of(self.form_vars['description']),
+                'shape': self.form_vars['shape'].get(),
+                'live': self.form_vars['live'].get().strip() or None,
+                'featured': bool(self.form_vars['featured'].get()),
+                'sources': [s.strip() for s in text_of(self.form_vars['sources']).splitlines() if s.strip()],
+            }
+            for k, v in new.items():
+                if c.get(k) != v:
+                    c[k] = v
+                    changed = True
+            keep = 'card:' + ident
+        elif ident != STORAGE_KEY:
+            room, _ = find_room(self.config, ident)
+            if room is None:
+                return
+            new = {
+                'label': self.form_vars['label'].get().strip() or room['key'],
+                'short': self.form_vars['short'].get().strip(),
+                'sentence': text_of(self.form_vars['sentence']),
+                'special': bool(self.form_vars['special'].get()),
+            }
+            if 'color' in self.form_vars:
+                col = self.form_vars['color'].get().strip()
+                if re.fullmatch(r'#[0-9a-fA-F]{6}', col):
+                    new['color'] = col
+                elif col:
+                    self.status_var.set(f"Color must look like #c9a44a; kept {room.get('color')}")
+            for k, v in new.items():
+                if k == 'special':
+                    if v and not room.get('special'):
+                        room['special'] = True
+                        changed = True
+                    elif not v and room.get('special'):
+                        room.pop('special', None)
+                        changed = True
+                elif room.get(k) != v:
+                    room[k] = v
+                    changed = True
+            keep = 'room:' + ident
+        else:
+            return
+
+        if changed:
+            self._mark_dirty()
+            if refresh:
+                self.suspend_apply = True
+                self._refresh_tree(keep=keep)
+                self.suspend_apply = False
+                self.status_var.set("Applied. Save All writes it to disk.")
+
+    # --------------------------------------------------------
+    # Room actions
+    # --------------------------------------------------------
+
+    def _selected_room_path(self):
+        if self.selected and self.selected[0] == 'room' and self.selected[1] != STORAGE_KEY:
+            return self.selected[1]
+        if self.selected and self.selected[0] == 'card':
+            c = self._card_by_id(self.selected[1])
+            if c and c.get('room', STORAGE_KEY) != STORAGE_KEY:
+                return c['room']
         return None
 
-    def _get_selected_type(self):
-        """Determine what is selected: 'viz', 'category', 'subcategory', 'mode', or None."""
-        sel = self.tree.selection()
-        if not sel:
-            return None, None
-        item_id = sel[0]
-        if item_id.startswith('mode_'):
-            return 'mode', item_id
-        elif item_id.startswith('cat_'):
-            return 'category', item_id
-        elif item_id.startswith('sub_'):
-            return 'subcategory', item_id
-        else:
-            return 'viz', item_id
-
-    def _parse_cat_iid(self, cat_iid):
-        """Parse 'cat_{mode}_{category}' into (mode_key, cat_key)."""
-        parts = cat_iid.split('_', 2)
-        if len(parts) >= 3:
-            return parts[1], parts[2]
-        return None, None
-
-    # --------------------------------------------------------
-    # Visualization Editing
-    # --------------------------------------------------------
-
-    def _edit_title(self):
-        """Edit the title of the selected visualization."""
-        viz = self._get_selected_viz()
-        if not viz:
-            return
-
-        current = viz.get('title', '')
-        new_title = simpledialog.askstring(
-            "Edit Title",
-            f"Title for: {viz['id']}\n\nNew title:",
-            initialvalue=current,
-            parent=self.root)
-
-        if new_title is not None and new_title != current:
-            viz['title'] = new_title.strip()
-            self._mark_dirty()
-            self._refresh_tree()
-            self._select_item(viz['id'])
-            self.status_var.set(f"Title updated: {viz['id']}")
-
-    def _edit_description(self):
-        """Edit the description of the selected visualization."""
-        viz = self._get_selected_viz()
-        if not viz:
-            return
-
-        current = viz.get('description', '')
-
-        dlg = tk.Toplevel(self.root)
-        dlg.title(f"Edit Description - {viz['id']}")
-        dlg.geometry("500x200")
-        dlg.transient(self.root)
-        dlg.grab_set()
-
-        ttk.Label(dlg, text="Description:").pack(
-            anchor='w', padx=8, pady=(8, 2))
-
-        text = tk.Text(dlg, height=6, wrap='word')
-        text.pack(fill='both', expand=True, padx=8, pady=4)
-        text.insert('1.0', current)
-        text.focus_set()
-
-        def on_ok():
-            new_desc = text.get('1.0', 'end-1c').strip()
-            if new_desc != current:
-                viz['description'] = new_desc
-                self._mark_dirty()
-                self._refresh_tree()
-                self._select_item(viz['id'])
-                self.status_var.set(
-                    f"Description updated: {viz['id']}")
-            dlg.destroy()
-
-        btn_frame = ttk.Frame(dlg)
-        btn_frame.pack(fill='x', padx=8, pady=(0, 8))
-        ttk.Button(btn_frame, text="OK", command=on_ok).pack(
-            side='right', padx=2)
-        ttk.Button(btn_frame, text="Cancel",
-                   command=dlg.destroy).pack(side='right', padx=2)
-        dlg.bind('<Escape>', lambda e: dlg.destroy())
-
-    def _change_category(self):
-        """Change the category of the selected visualization."""
-        viz = self._get_selected_viz()
-        if not viz:
-            return
-
-        current_cat = viz.get('category', 'other')
-        cat_map = config_to_map(self.categories)
-
-        # Build category list from config
-        all_cats = [(c['key'], c['label']) for c in self.categories]
-
-        # Add any categories from data not in config
-        seen = set(c['key'] for c in self.categories)
-        for v in self.data.get('visualizations', []):
-            cat = v.get('category', 'other')
-            if cat not in seen:
-                seen.add(cat)
-                all_cats.append((cat, v.get('category_label', cat)))
-
-        dlg = tk.Toplevel(self.root)
-        dlg.title(f"Change Category - {viz['id']}")
-        dlg.geometry("350x320")
-        dlg.transient(self.root)
-        dlg.grab_set()
-
-        cur_label = cat_map.get(current_cat, current_cat)
-        ttk.Label(dlg, text=f"Current: {cur_label}").pack(
-            anchor='w', padx=12, pady=(12, 4))
-        ttk.Label(dlg, text="Select new category:").pack(
-            anchor='w', padx=12, pady=(0, 4))
-
-        listbox = tk.Listbox(dlg, height=min(len(all_cats), 12))
-        listbox.pack(fill='both', expand=True, padx=12, pady=4)
-
-        for i, (key, label) in enumerate(all_cats):
-            listbox.insert('end', f"{label}  [{key}]")
-            if key == current_cat:
-                listbox.selection_set(i)
-                listbox.see(i)
-
-        def on_ok():
-            sel = listbox.curselection()
-            if sel:
-                new_cat_key, new_cat_label = all_cats[sel[0]]
-                if new_cat_key != current_cat:
-                    viz['category'] = new_cat_key
-                    viz['category_label'] = new_cat_label
-                    self._mark_dirty()
-                    self._refresh_tree()
-                    self._select_item(viz['id'])
-                    self.status_var.set(
-                        f"Category changed: {viz['id']} -> {new_cat_label}")
-            dlg.destroy()
-
-        btn_frame = ttk.Frame(dlg)
-        btn_frame.pack(fill='x', padx=12, pady=(0, 12))
-        ttk.Button(btn_frame, text="OK", command=on_ok).pack(
-            side='right', padx=2)
-        ttk.Button(btn_frame, text="Cancel",
-                   command=dlg.destroy).pack(side='right', padx=2)
-        listbox.bind('<Double-1>', lambda e: on_ok())
-        dlg.bind('<Escape>', lambda e: dlg.destroy())
-
-    def _set_subcategory(self):
-        """Set or change the subcategory of the selected visualization."""
-        viz = self._get_selected_viz()
-        if not viz:
-            return
-
-        current_sub = viz.get('subcategory', '')
-        current_sub_label = viz.get('subcategory_label', '')
-
-        # Collect existing subcategories from all vizs for suggestions
-        existing = {}
-        for v in self.data.get('visualizations', []):
-            s = v.get('subcategory', '')
-            sl = v.get('subcategory_label', '')
-            if s and s not in existing:
-                existing[s] = sl
-
-        # Build selection list
-        sub_list = [('', '(none -- remove subcategory)')]
-        for key in sorted(existing.keys()):
-            sub_list.append((key, existing[key]))
-
-        dlg = tk.Toplevel(self.root)
-        dlg.title(f"Set Subcategory - {viz['id']}")
-        dlg.geometry("400x380")
-        dlg.transient(self.root)
-        dlg.grab_set()
-
-        cur_text = (f"{current_sub_label} [{current_sub}]"
-                    if current_sub else "(none)")
-        ttk.Label(dlg, text=f"Current: {cur_text}").pack(
-            anchor='w', padx=12, pady=(12, 4))
-        ttk.Label(dlg, text="Select existing or enter new:").pack(
-            anchor='w', padx=12, pady=(0, 4))
-
-        listbox = tk.Listbox(dlg, height=min(len(sub_list), 8))
-        listbox.pack(fill='both', expand=True, padx=12, pady=4)
-
-        for i, (key, label) in enumerate(sub_list):
-            display = f"{label}  [{key}]" if key else label
-            listbox.insert('end', display)
-            if key == current_sub:
-                listbox.selection_set(i)
-                listbox.see(i)
-
-        # New subcategory entry
-        new_frame = ttk.LabelFrame(dlg, text="Or create new")
-        new_frame.pack(fill='x', padx=12, pady=4)
-
-        ttk.Label(new_frame, text="Key:").grid(
-            row=0, column=0, padx=4, pady=2, sticky='w')
-        key_entry = ttk.Entry(new_frame, width=20)
-        key_entry.grid(row=0, column=1, padx=4, pady=2, sticky='ew')
-
-        ttk.Label(new_frame, text="Label:").grid(
-            row=1, column=0, padx=4, pady=2, sticky='w')
-        label_entry = ttk.Entry(new_frame, width=20)
-        label_entry.grid(row=1, column=1, padx=4, pady=2, sticky='ew')
-        new_frame.columnconfigure(1, weight=1)
-
-        def on_ok():
-            # Check if new entry fields have content
-            new_key = key_entry.get().strip()
-            new_label = label_entry.get().strip()
-
-            if new_key and new_label:
-                # Use the new subcategory
-                viz['subcategory'] = new_key
-                viz['subcategory_label'] = new_label
-            else:
-                # Use listbox selection
-                sel = listbox.curselection()
-                if sel:
-                    chosen_key, chosen_label = sub_list[sel[0]]
-                    if chosen_key:
-                        viz['subcategory'] = chosen_key
-                        viz['subcategory_label'] = chosen_label
-                    else:
-                        # Remove subcategory
-                        viz.pop('subcategory', None)
-                        viz.pop('subcategory_label', None)
-                else:
-                    dlg.destroy()
-                    return
-
-            self._mark_dirty()
-            self._refresh_tree()
-            self._select_item(viz['id'])
-            sub_display = viz.get('subcategory_label', '(none)')
-            self.status_var.set(
-                f"Subcategory set: {viz['id']} -> {sub_display}")
-            dlg.destroy()
-
-        btn_frame = ttk.Frame(dlg)
-        btn_frame.pack(fill='x', padx=12, pady=(0, 12))
-        ttk.Button(btn_frame, text="OK", command=on_ok).pack(
-            side='right', padx=2)
-        ttk.Button(btn_frame, text="Cancel",
-                   command=dlg.destroy).pack(side='right', padx=2)
-        listbox.bind('<Double-1>', lambda e: on_ok())
-        dlg.bind('<Escape>', lambda e: dlg.destroy())
-
-    def _edit_labels(self):
-        """Edit category_label or subcategory_label for a selected group.
-
-        Select a category or subcategory node in the tree, then click
-        Edit Labels. The new label is applied to ALL visualizations
-        that share that category or subcategory key.
-        """
-        sel = self.tree.selection()
-        if not sel:
-            messagebox.showinfo("No Selection",
-                                "Select a category or subcategory node.")
-            return
-
-        item_id = sel[0]
-        vizs = self.data.get('visualizations', [])
-
-        if item_id.startswith('sub_'):
-            # Subcategory node: sub_{mode}_{cat}_{subcat}
-            parts = item_id.split('_', 3)
-            if len(parts) < 4:
-                return
-            old_key = parts[3]
-
-            # Find current label
-            current_label = ''
-            for v in vizs:
-                if v.get('subcategory') == old_key:
-                    current_label = v.get('subcategory_label', old_key)
-                    break
-
-            # Dialog with both key and label fields
-            dlg = tk.Toplevel(self.root)
-            dlg.title(f"Edit Subcategory - {old_key}")
-            dlg.geometry("400x220")
-            dlg.transient(self.root)
-            dlg.grab_set()
-
-            ttk.Label(dlg, text=f"Editing subcategory: {old_key}").pack(
-                anchor='w', padx=12, pady=(12, 8))
-
-            ttk.Label(dlg, text="Key:").pack(
-                anchor='w', padx=12, pady=(4, 0))
-            key_entry = ttk.Entry(dlg, width=30)
-            key_entry.pack(fill='x', padx=12, pady=(0, 4))
-            key_entry.insert(0, old_key)
-
-            ttk.Label(dlg, text="Label:").pack(
-                anchor='w', padx=12, pady=(4, 0))
-            label_entry = ttk.Entry(dlg, width=30)
-            label_entry.pack(fill='x', padx=12, pady=(0, 8))
-            label_entry.insert(0, current_label)
-
-            def on_ok():
-                new_key = key_entry.get().strip()
-                new_label = label_entry.get().strip()
-                if not new_key or not new_label:
-                    dlg.destroy()
-                    return
-
-                count = 0
-                for v in vizs:
-                    if v.get('subcategory') == old_key:
-                        v['subcategory'] = new_key
-                        v['subcategory_label'] = new_label
-                        count += 1
-
-                if count > 0:
-                    changes = []
-                    if new_key != old_key:
-                        changes.append(f"key: {old_key} -> {new_key}")
-                    if new_label != current_label:
-                        changes.append(
-                            f"label: {current_label} -> {new_label}")
-                    self._mark_dirty()
-                    self._refresh_tree()
-                    self.status_var.set(
-                        f"Subcategory updated: "
-                        f"{', '.join(changes)} ({count} entries)")
-                dlg.destroy()
-
-            btn_frame = ttk.Frame(dlg)
-            btn_frame.pack(fill='x', padx=12, pady=(0, 12))
-            ttk.Button(btn_frame, text="OK", command=on_ok).pack(
-                side='right', padx=2)
-            ttk.Button(btn_frame, text="Cancel",
-                       command=dlg.destroy).pack(side='right', padx=2)
-            dlg.bind('<Return>', lambda e: on_ok())
-            dlg.bind('<Escape>', lambda e: dlg.destroy())
-
-        elif item_id.startswith('cat_'):
-            # Category node: cat_{mode}_{cat}
-            parts = item_id.split('_', 2)
-            if len(parts) < 3:
-                return
-            cat_key = parts[2]
-
-            # Find current label
-            current_label = ''
-            for v in vizs:
-                if v.get('category') == cat_key:
-                    current_label = v.get('category_label', cat_key)
-                    break
-
-            new_label = simpledialog.askstring(
-                "Edit Category Label",
-                f"Category key: {cat_key}\n\n"
-                f"Current label: {current_label}\n\n"
-                f"New label (applied to all entries with this key):",
-                initialvalue=current_label,
-                parent=self.root)
-
-            if new_label and new_label.strip() != current_label:
-                new_label = new_label.strip()
-                count = 0
-                for v in vizs:
-                    if v.get('category') == cat_key:
-                        v['category_label'] = new_label
-                        count += 1
-                # Also update gallery_config.json
-                for c in self.categories:
-                    if c['key'] == cat_key:
-                        c['label'] = new_label
-                        break
-                self._mark_dirty()
-                self._refresh_tree()
-                self.status_var.set(
-                    f"Category label updated: {cat_key} -> "
-                    f"'{new_label}' ({count} entries + config)")
-        else:
-            messagebox.showinfo(
-                "Select a Group",
-                "Select a category or subcategory node to edit its label.\n"
-                "To edit a visualization title, use Edit Title.")
-
-    # --------------------------------------------------------
-    # Copy / Delete Visualizations
-    # --------------------------------------------------------
-
-    def _copy_viz(self):
-        """Copy a visualization to another category/subcategory/mode.
-
-        Creates a duplicate entry with a _copy suffix on the ID,
-        placed in the target category and subcategory. The original
-        stays in place.
-        """
-        viz = self._get_selected_viz()
-        if not viz:
-            return
-
-        cat_map = config_to_map(self.categories)
-        all_cats = [(c['key'], c['label']) for c in self.categories]
-        current_cat = viz.get('category', 'other')
-        current_mode = viz.get('mode', 'landscape')
-        current_sub = viz.get('subcategory', '')
-
-        # Collect existing subcategories
-        existing_subs = {}
-        for v in self.data.get('visualizations', []):
-            s = v.get('subcategory', '')
-            sl = v.get('subcategory_label', '')
-            if s and s not in existing_subs:
-                existing_subs[s] = sl
-        sub_list = [('', '(none)')]
-        for key in sorted(existing_subs.keys()):
-            sub_list.append((key, existing_subs[key]))
-
-        dlg = tk.Toplevel(self.root)
-        dlg.title(f"Copy To... - {viz['id']}")
-        dlg.geometry("380x520")
-        dlg.transient(self.root)
-        dlg.grab_set()
-
-        ttk.Label(dlg, text=f"Copy: {viz.get('title', viz['id'])}").pack(
-            anchor='w', padx=12, pady=(12, 8))
-
-        # Mode selection
-        mode_frame = ttk.LabelFrame(dlg, text="Target Mode")
-        mode_frame.pack(fill='x', padx=12, pady=(0, 4))
-
-        mode_var = tk.StringVar(
-            value='portrait' if current_mode == 'landscape' else 'landscape')
-        ttk.Radiobutton(mode_frame, text="Landscape (Desktop)",
-                        variable=mode_var, value='landscape').pack(
-            anchor='w', padx=8, pady=2)
-        ttk.Radiobutton(mode_frame, text="Portrait (Mobile)",
-                        variable=mode_var, value='portrait').pack(
-            anchor='w', padx=8, pady=2)
-
-        # Category selection
-        ttk.Label(dlg, text="Target category:").pack(
-            anchor='w', padx=12, pady=(8, 2))
-        cat_listbox = tk.Listbox(dlg, height=min(len(all_cats), 6),
-                                  exportselection=False)
-        cat_listbox.pack(fill='x', padx=12, pady=4)
-
-        for i, (key, label) in enumerate(all_cats):
-            cat_listbox.insert('end', f"{label}  [{key}]")
-            if key == current_cat:
-                cat_listbox.selection_set(i)
-
-        # Subcategory selection
-        ttk.Label(dlg, text="Target subcategory:").pack(
-            anchor='w', padx=12, pady=(8, 2))
-        sub_listbox = tk.Listbox(dlg, height=min(len(sub_list), 6),
-                                  exportselection=False)
-        sub_listbox.pack(fill='x', padx=12, pady=4)
-
-        for i, (key, label) in enumerate(sub_list):
-            display = f"{label}  [{key}]" if key else label
-            sub_listbox.insert('end', display)
-            if key == current_sub:
-                sub_listbox.selection_set(i)
-                sub_listbox.see(i)
-
-        def on_ok():
-            cat_sel = cat_listbox.curselection()
-            if not cat_sel:
-                return
-
-            target_cat_key, target_cat_label = all_cats[cat_sel[0]]
-            target_mode = mode_var.get()
-
-            # Create the copy
-            new_viz = copy.deepcopy(viz)
-            new_viz['category'] = target_cat_key
-            new_viz['category_label'] = target_cat_label
-
-            if target_mode != current_mode:
-                new_viz['mode'] = target_mode
-
-            # Apply subcategory selection
-            sub_sel = sub_listbox.curselection()
-            if sub_sel:
-                chosen_sub_key, chosen_sub_label = sub_list[sub_sel[0]]
-                if chosen_sub_key:
-                    new_viz['subcategory'] = chosen_sub_key
-                    new_viz['subcategory_label'] = chosen_sub_label
-                else:
-                    # (none) selected -- remove subcategory
-                    new_viz.pop('subcategory', None)
-                    new_viz.pop('subcategory_label', None)
-
-            # Generate unique ID
-            base_id = viz['id']
-            existing_ids = set(
-                v['id'] for v in self.data['visualizations'])
-            new_id = base_id + '_copy'
-            n = 2
-            while new_id in existing_ids:
-                new_id = f"{base_id}_copy{n}"
-                n += 1
-            new_viz['id'] = new_id
-
-            # Insert after the last item in the target category+mode
-            vizs = self.data['visualizations']
-            insert_idx = len(vizs)  # Default: end
-            for i in range(len(vizs) - 1, -1, -1):
-                v = vizs[i]
-                if (v.get('category', 'other') == target_cat_key
-                        and v.get('mode', 'landscape') == target_mode):
-                    insert_idx = i + 1
-                    break
-
-            vizs.insert(insert_idx, new_viz)
-
-            self._mark_dirty()
-            self._refresh_tree()
-            self._select_item(new_id)
-            sub_display = new_viz.get('subcategory_label', '')
-            sub_msg = f" / {sub_display}" if sub_display else ""
-            self.status_var.set(
-                f"Copied: {viz['id']} -> {new_id} "
-                f"in {target_cat_label}{sub_msg} ({target_mode})")
-            dlg.destroy()
-
-        btn_frame = ttk.Frame(dlg)
-        btn_frame.pack(fill='x', padx=12, pady=(0, 12))
-        ttk.Button(btn_frame, text="Copy", command=on_ok).pack(
-            side='right', padx=2)
-        ttk.Button(btn_frame, text="Cancel",
-                   command=dlg.destroy).pack(side='right', padx=2)
-        dlg.bind('<Escape>', lambda e: dlg.destroy())
-
-    def _delete_selected(self):
-        """Route Delete to viz or category based on tree selection."""
-        sel_type, sel_id = self._get_selected_type()
-        if sel_type == 'category':
-            self._delete_category()
-        elif sel_type == 'viz':
-            self._delete_viz()
-        else:
-            self.status_var.set("Select a visualization or category to delete")
-
-
-    def _delete_viz(self):
-        """Delete the selected visualization from the metadata."""
-        viz = self._get_selected_viz()
-        if not viz:
-            return
-
-        result = messagebox.askyesno(
-            "Delete Visualization",
-            f"Delete '{viz.get('title', viz['id'])}'?\n\n"
-            f"This removes it from the gallery metadata.\n"
-            f"The JSON data file is NOT deleted.",
-            parent=self.root)
-
-        if result:
-            self.data['visualizations'].remove(viz)
-            self._mark_dirty()
-            self._refresh_tree()
-            self.status_var.set(f"Deleted: {viz['id']}")
-
-    def _toggle_featured(self):
-        """Toggle the 'featured' flag on the selected visualization."""
-        viz = self._get_selected_viz()
-        if not viz:
-            return
-
-        current = viz.get('featured', False)
-        viz['featured'] = not current
-        self._mark_dirty()
-        self._refresh_tree()
-
-        state = "Featured" if viz['featured'] else "Unfeatured"
-        self.status_var.set(
-            f"{state}: {viz.get('title', viz['id'])}")
-
-    # --------------------------------------------------------
-    # Category Management
-    # --------------------------------------------------------
-
-    def _new_category(self):
-        """Create a new category in gallery_config.json."""
-        label = simpledialog.askstring(
-            "New Category",
-            "Category label (e.g. 'Space Missions'):",
-            parent=self.root)
-
+    def _new_room(self):
+        self._apply_form()
+        parent = self._selected_room_path()
+        where = ": ".join(room_label_chain(self.config, parent)) if parent else "the lobby (a new door)"
+        label = simpledialog.askstring("New Room", f"New room under {where}.\n\nFull name:",
+                                       parent=self.root)
         if not label or not label.strip():
             return
         label = label.strip()
-
-        key = make_label_to_key(label)
-
-        # Check for duplicate key
-        existing_keys = set(c['key'] for c in self.categories)
-        if key in existing_keys:
-            messagebox.showwarning(
-                "Duplicate",
-                f"Category key '{key}' already exists.",
-                parent=self.root)
+        short = simpledialog.askstring("New Room", "Short name for the breadcrumb:",
+                                       initialvalue=label, parent=self.root)
+        if short is None:
             return
-
-        # Ask for color via picker
-        result = colorchooser.askcolor(
-            color="#7f8c8d",
-            title=f"Color for '{label}'",
-            parent=self.root)
-
-        if result[1] is None:
+        key = make_key(label)
+        siblings = self.config['doors'] if not parent else find_room(self.config, parent)[0].setdefault('rooms', [])
+        base, n = key, 2
+        while any(r['key'] == key for r in siblings) or key == STORAGE_KEY:
+            key = f"{base}_{n}"
+            n += 1
+        depth = (parent.count('/') + 2) if parent else 1
+        if depth > DEPTH_CEILING and not messagebox.askyesno(
+                "Deep room", f"This would be level {depth}. Four is the working ceiling "
+                             "(L-286); a fifth level usually means the content wants a "
+                             "special exhibit.\n\nCreate it anyway?"):
             return
-        color = result[1]
-
-        self.categories.append({
-            'key': key,
-            'label': label,
-            'color': color,
-        })
-
-        self._mark_config_dirty()
-        self._refresh_tree()
-        self.status_var.set(f"New category: {label} [{key}] {color}")
-
-    def _rename_category(self):
-        """Rename a category (key + label) across config and all vizs."""
-        sel_type, sel_id = self._get_selected_type()
-
-        # Allow selecting a category node, or prompt
-        if sel_type == 'category':
-            _, old_key = self._parse_cat_iid(sel_id)
-        else:
-            old_key = self._ask_category("Rename Category",
-                                         "Select category to rename:")
-        if not old_key:
-            return
-
-        # Find current label
-        cat_map = config_to_map(self.categories)
-        old_label = cat_map.get(old_key, old_key)
-
-        # Ask for new label
-        new_label = simpledialog.askstring(
-            "Rename Category",
-            f"Current: {old_label} [{old_key}]\n\nNew label:",
-            initialvalue=old_label,
-            parent=self.root)
-
-        if not new_label or not new_label.strip() or new_label.strip() == old_label:
-            return
-        new_label = new_label.strip()
-        new_key = make_label_to_key(new_label)
-
-        # Check for key collision
-        existing_keys = set(c['key'] for c in self.categories)
-        if new_key != old_key and new_key in existing_keys:
-            messagebox.showwarning(
-                "Duplicate",
-                f"Category key '{new_key}' already exists.",
-                parent=self.root)
-            return
-
-        # Update config
-        for cat in self.categories:
-            if cat['key'] == old_key:
-                cat['key'] = new_key
-                cat['label'] = new_label
-                break
-
-        # Update all visualizations with old key
-        count = 0
-        for viz in self.data.get('visualizations', []):
-            if viz.get('category') == old_key:
-                viz['category'] = new_key
-                viz['category_label'] = new_label
-                count += 1
-
+        room = {'key': key, 'label': label, 'short': short.strip() or label,
+                'sentence': '', 'rooms': []}
+        if depth == 1:
+            room = {'key': key, 'label': label, 'short': short.strip() or label,
+                    'color': '#7f8c8d', 'sentence': '', 'rooms': []}
+        siblings.append(room)
+        path = (parent + '/' + key) if parent else key
         self._mark_dirty()
-        self._mark_config_dirty()
-        self._refresh_tree()
-        self.status_var.set(
-            f"Renamed: {old_label} -> {new_label} [{new_key}] "
-            f"({count} vizs updated)")
+        self._refresh_tree(keep='room:' + path)
+        self.status_var.set(f"New room {path}")
 
-    def _edit_category_color(self):
-        """Edit the color of a category."""
-        sel_type, sel_id = self._get_selected_type()
-
-        if sel_type == 'category':
-            _, cat_key = self._parse_cat_iid(sel_id)
-        else:
-            cat_key = self._ask_category("Edit Color",
-                                         "Select category:")
-        if not cat_key:
+    def _set_door_color(self):
+        path = self._selected_room_path()
+        if not path:
             return
-
-        # Find current color
-        color_map = config_to_color_map(self.categories)
-        current_color = color_map.get(cat_key, '#7f8c8d')
-        cat_map = config_to_map(self.categories)
-        cat_label = cat_map.get(cat_key, cat_key)
-
-        result = colorchooser.askcolor(
-            color=current_color,
-            title=f"Color for '{cat_label}'",
-            parent=self.root)
-
-        if result[1] is None:
+        door = door_of(self.config, path)
+        if door is None:
             return
-        new_color = result[1]
+        rgb, hexv = colorchooser.askcolor(color=door.get('color', '#7f8c8d'),
+                                          title=f"Accent for {door['label']}", parent=self.root)
+        if hexv:
+            if 'color' in self.form_vars and self.selected == ('room', door['key']):
+                self.form_vars['color'].set(hexv)
+            door['color'] = hexv
+            self._mark_dirty()
+            self._refresh_tree(keep='room:' + path)
 
-        for cat in self.categories:
-            if cat['key'] == cat_key:
-                cat['color'] = new_color
-                break
-
-        self._mark_config_dirty()
-        self.status_var.set(
-            f"Color updated: {cat_label} -> {new_color}")
-
-    def _delete_category(self):
-        """Delete a category from gallery_config.json (must be empty)."""
-        sel_type, sel_id = self._get_selected_type()
-
-        if sel_type == 'category':
-            _, cat_key = self._parse_cat_iid(sel_id)
-        else:
-            cat_key = self._ask_category("Delete Category",
-                                         "Select category to delete:")
-        if not cat_key:
-            return
-
-        # Check for visualizations using this category
-        cat_map = config_to_map(self.categories)
-        cat_label = cat_map.get(cat_key, cat_key)
-
-        viz_count = sum(1 for v in self.data.get('visualizations', [])
-                        if v.get('category') == cat_key)
-
-        if viz_count > 0:
-            messagebox.showwarning(
-                "Category Not Empty",
-                f"'{cat_label}' has {viz_count} visualization(s).\n\n"
-                f"Move or delete them first, then try again.",
-                parent=self.root)
-            return
-
-        result = messagebox.askyesno(
-            "Delete Category",
-            f"Delete category '{cat_label}' [{cat_key}]?\n\n"
-            f"This removes it from gallery_config.json.",
-            parent=self.root)
-
-        if result:
-            self.categories = [c for c in self.categories
-                               if c['key'] != cat_key]
-            self._mark_config_dirty()
-            self._refresh_tree()
-            self.status_var.set(f"Deleted category: {cat_label}")
-
-    def _ask_category(self, title, prompt):
-        """Show a dialog to pick a category. Returns the key or None."""
-        if not self.categories:
-            messagebox.showinfo("No Categories",
-                                "No categories defined.")
-            return None
-
+    def _pick_target_room(self, title, exclude_prefix=None, allow_storage=True):
+        """Dialog listing every room; returns a path, STORAGE_KEY, or None."""
+        options = []
+        if allow_storage:
+            options.append((STORAGE_KEY, "Storage  (hidden from visitors)"))
+        for path, room, depth in walk_rooms(self.config['doors']):
+            if exclude_prefix and (path == exclude_prefix or path.startswith(exclude_prefix + '/')):
+                continue
+            options.append((path, "    " * (depth - 1) + room.get('label', room['key'])))
         dlg = tk.Toplevel(self.root)
         dlg.title(title)
-        dlg.geometry("320x300")
+        dlg.geometry("420x480")
         dlg.transient(self.root)
         dlg.grab_set()
+        ttk.Label(dlg, text="Choose the destination:").pack(anchor='w', padx=12, pady=(12, 4))
+        lb = tk.Listbox(dlg)
+        lb.pack(fill='both', expand=True, padx=12, pady=4)
+        for _, text in options:
+            lb.insert('end', text)
+        result = {'path': None}
 
-        ttk.Label(dlg, text=prompt).pack(
-            anchor='w', padx=12, pady=(12, 4))
-
-        listbox = tk.Listbox(dlg, height=min(len(self.categories), 12))
-        listbox.pack(fill='both', expand=True, padx=12, pady=4)
-
-        for cat in self.categories:
-            listbox.insert('end',
-                           f"{cat['label']}  [{cat['key']}]")
-
-        result = [None]
-
-        def on_ok():
-            sel = listbox.curselection()
+        def ok(_e=None):
+            sel = lb.curselection()
             if sel:
-                result[0] = self.categories[sel[0]]['key']
+                result['path'] = options[sel[0]][0]
             dlg.destroy()
 
-        btn_frame = ttk.Frame(dlg)
-        btn_frame.pack(fill='x', padx=12, pady=(0, 12))
-        ttk.Button(btn_frame, text="OK", command=on_ok).pack(
-            side='right', padx=2)
-        ttk.Button(btn_frame, text="Cancel",
-                   command=dlg.destroy).pack(side='right', padx=2)
-        listbox.bind('<Double-1>', lambda e: on_ok())
+        bf = ttk.Frame(dlg)
+        bf.pack(fill='x', padx=12, pady=(0, 12))
+        ttk.Button(bf, text="OK", command=ok).pack(side='right', padx=2)
+        ttk.Button(bf, text="Cancel", command=dlg.destroy).pack(side='right', padx=2)
+        lb.bind('<Double-1>', ok)
         dlg.bind('<Escape>', lambda e: dlg.destroy())
+        self.root.wait_window(dlg)
+        return result['path']
 
-        dlg.wait_window()
-        return result[0]
-
-    # --------------------------------------------------------
-    # Move Operations (vizs and categories)
-    # --------------------------------------------------------
-
-    def _move_up(self):
-        self._move(-1)
-
-    def _move_down(self):
-        self._move(1)
+    def _move_to_room(self):
+        self._apply_form()
+        if not self.selected:
+            self.status_var.set("Select a card or room first.")
+            return
+        kind, ident = self.selected
+        if kind == 'card':
+            c = self._card_by_id(ident)
+            target = self._pick_target_room(f"Move '{c.get('title', ident)}' to...")
+            if target is None or target == c.get('room'):
+                return
+            c['room'] = target
+            self._mark_dirty()
+            self._refresh_tree(keep='card:' + ident)
+            self.status_var.set(f"Moved {ident} -> {target}")
+        elif ident != STORAGE_KEY:
+            room, parent_list = find_room(self.config, ident)
+            if room is None:
+                return
+            target = self._pick_target_room(f"Move room '{room['label']}' under...",
+                                            exclude_prefix=ident, allow_storage=False)
+            if target is None or target == parent_path(ident):
+                return
+            dest, _ = find_room(self.config, target)
+            dest_rooms = dest.setdefault('rooms', [])
+            if any(r['key'] == room['key'] for r in dest_rooms):
+                messagebox.showerror("Key clash", f"'{target}' already has a room keyed {room['key']}.")
+                return
+            new_path = target + '/' + room['key']
+            new_depth = new_path.count('/') + 1 + max((d for _, _, d in walk_rooms(room.get('rooms', []))), default=0)
+            if new_depth > DEPTH_CEILING and not messagebox.askyesno(
+                    "Deep room", f"After the move the deepest room here is level {new_depth}. "
+                                 "Four is the working ceiling. Move anyway?"):
+                return
+            parent_list.remove(room)
+            dest_rooms.append(room)
+            # Re-home every card whose room path lived under the moved room.
+            n = 0
+            for c in self.data['visualizations']:
+                r = c.get('room', '')
+                if r == ident or r.startswith(ident + '/'):
+                    c['room'] = new_path + r[len(ident):]
+                    n += 1
+            self._mark_dirty()
+            self._refresh_tree(keep='room:' + new_path)
+            self.status_var.set(f"Moved room {ident} -> {new_path} ({n} cards re-pathed)")
 
     def _move(self, direction):
-        """Move selected item. Works for vizs, subcategories, and categories."""
-        sel_type, sel_id = self._get_selected_type()
-
-        if sel_type == 'viz':
-            self._move_viz(sel_id, direction)
-        elif sel_type == 'subcategory':
-            self._move_subcategory(sel_id, direction)
-        elif sel_type == 'category':
-            self._move_category(sel_id, direction)
-        elif sel_type == 'mode':
-            pass  # Can't reorder modes
-        else:
-            messagebox.showinfo("No Selection", "Select an item first.")
-
-    def _move_viz(self, viz_id, direction):
-        """Move a visualization within its mode+category+subcategory group.
-
-        Uses extract-reorder-reinsert to handle non-contiguous entries
-        safely. The viz swaps position with its neighbor within the
-        same group, then all group entries are written back to their
-        original positions in the master list.
-        """
-        # Strip @@mode suffix used for 'both' entries in tree
-        tree_iid = viz_id
-        real_id = viz_id.split('@@')[0]
-
-        vizs = self.data['visualizations']
-        idx = next((i for i, v in enumerate(vizs) if v['id'] == real_id),
-                   None)
-        if idx is None:
-            self.status_var.set(f"Move failed: {real_id} not found")
+        """Reorder the selection among its siblings. Tree order is page order."""
+        self._apply_form()
+        if not self.selected:
             return
+        kind, ident = self.selected
+        if kind == 'card':
+            vizs = self.data['visualizations']
+            c = self._card_by_id(ident)
+            room = c.get('room', STORAGE_KEY)
+            idx = vizs.index(c)
+            sib = [i for i, v in enumerate(vizs) if v.get('room', STORAGE_KEY) == room]
+            pos = sib.index(idx)
+            if not (0 <= pos + direction < len(sib)):
+                return
+            j = sib[pos + direction]
+            vizs[idx], vizs[j] = vizs[j], vizs[idx]
+            self._mark_dirty()
+            self._refresh_tree(keep='card:' + ident)
+        elif ident != STORAGE_KEY:
+            room, parent_list = find_room(self.config, ident)
+            if room is None:
+                return
+            i = parent_list.index(room)
+            if not (0 <= i + direction < len(parent_list)):
+                return
+            parent_list[i], parent_list[i + direction] = parent_list[i + direction], parent_list[i]
+            self._mark_dirty()
+            self._refresh_tree(keep='room:' + ident)
 
-        viz = vizs[idx]
-        target_cat = viz.get('category', 'other')
-        target_mode = viz.get('mode', 'landscape')
-        target_sub = viz.get('subcategory', '')
-
-        # Collect indices of siblings visible in the same tree section.
-        # A viz is a sibling if it shares category + subcategory AND
-        # its mode matches the target mode OR is 'both' (which appears
-        # in both tree sections). This matches what _refresh_tree shows.
-        sibling_indices = [i for i, v in enumerate(vizs)
-                           if v.get('category', 'other') == target_cat
-                           and v.get('subcategory', '') == target_sub
-                           and (v.get('mode', 'landscape') == target_mode
-                                or v.get('mode') == 'both'
-                                or target_mode == 'both')]
-
-        # Find position within sibling group
-        pos = sibling_indices.index(idx)
-        new_pos = pos + direction
-
-        if new_pos < 0 or new_pos >= len(sibling_indices):
-            direction_word = "top" if direction < 0 else "bottom"
-            sub_info = f" / {target_sub}" if target_sub else ""
-            self.status_var.set(
-                f"Already at {direction_word} of "
-                f"{target_cat}{sub_info} ({target_mode})")
-            return  # Already at boundary
-
-        # Extract sibling vizs in current order
-        sibling_vizs = [vizs[i] for i in sibling_indices]
-
-        # Swap within the extracted list
-        sibling_vizs[pos], sibling_vizs[new_pos] = (
-            sibling_vizs[new_pos], sibling_vizs[pos])
-
-        # Write back to original positions
-        for i, si in enumerate(sibling_indices):
-            vizs[si] = sibling_vizs[i]
-
-        self._mark_dirty()
-        self._refresh_tree()
-        self._select_item(tree_iid)
-        self.status_var.set(f"Moved: {real_id}")
-
-    def _move_subcategory(self, sub_iid, direction):
-        """Move an entire subcategory within its mode+category.
-
-        Extracts all vizs for this mode+category, regroups by
-        subcategory, swaps subcategory order, then reinserts.
-        """
-        # Parse sub_{mode}_{cat}_{subcat}
-        parts = sub_iid.split('_', 3)
-        if len(parts) < 4:
+    def _delete_selected(self):
+        self._apply_form()
+        if not self.selected:
             return
-        mode_key = parts[1]
-        cat_key = parts[2]
-        sub_key = parts[3]
-
-        vizs = self.data['visualizations']
-
-        # Find all vizs in this mode+category
-        group_indices = [i for i, v in enumerate(vizs)
-                         if v.get('mode', 'landscape') == mode_key
-                         and v.get('category', 'other') == cat_key]
-
-        if not group_indices:
-            return
-
-        # Derive subcategory order from JSON sequence
-        sub_order = []
-        seen_subs = set()
-        for i in group_indices:
-            s = vizs[i].get('subcategory', '')
-            if s not in seen_subs:
-                seen_subs.add(s)
-                sub_order.append(s)
-
-        if sub_key not in sub_order:
-            return
-
-        pos = sub_order.index(sub_key)
-        new_pos = pos + direction
-
-        if new_pos < 0 or new_pos >= len(sub_order):
-            return
-
-        # Swap subcategory order
-        sub_order[pos], sub_order[new_pos] = (
-            sub_order[new_pos], sub_order[pos])
-
-        # Group vizs by subcategory
-        by_sub = {}
-        for i in group_indices:
-            s = vizs[i].get('subcategory', '')
-            by_sub.setdefault(s, []).append(vizs[i])
-
-        # Rebuild in new subcategory order
-        reordered = []
-        for sk in sub_order:
-            reordered.extend(by_sub.get(sk, []))
-
-        # Replace in master list
-        new_vizs = []
-        group_iter = iter(reordered)
-        group_set = set(group_indices)
-        for i, v in enumerate(vizs):
-            if i in group_set:
-                new_vizs.append(next(group_iter))
-            else:
-                new_vizs.append(v)
-
-        self.data['visualizations'] = new_vizs
-
-        self._mark_dirty()
-        self._refresh_tree()
-        self._select_item(sub_iid)
-        self.status_var.set(f"Moved subcategory: {sub_key}")
-
-    def _move_category(self, cat_iid, direction):
-        """Move an entire category within its mode.
-
-        Extracts all vizs for this mode, regroups by category,
-        swaps category order, then reinserts.
-        """
-        mode_key, cat_key = self._parse_cat_iid(cat_iid)
-        if not mode_key or not cat_key:
-            return
-
-        vizs = self.data['visualizations']
-
-        cat_order = get_category_order(vizs, mode_key)
-        cat_keys = [c[0] for c in cat_order]
-
-        # Include empty categories from config
-        populated = set(cat_keys)
-        for cat_cfg in self.categories:
-            k = cat_cfg['key']
-            if k not in populated and k != 'other':
-                cat_keys.append(k)
-
-        if cat_key not in cat_keys:
-            return
-
-        pos = cat_keys.index(cat_key)
-        new_pos = pos + direction
-
-        if new_pos < 0 or new_pos >= len(cat_keys):
-            return
-
-        cat_keys[pos], cat_keys[new_pos] = cat_keys[new_pos], cat_keys[pos]
-
-        # Extract all vizs for this mode, grouped by category
-        mode_indices = [i for i, v in enumerate(vizs)
-                        if v.get('mode', 'landscape') == mode_key]
-        mode_vizs_by_cat = {}
-        for i in mode_indices:
-            cat = vizs[i].get('category', 'other')
-            mode_vizs_by_cat.setdefault(cat, []).append(vizs[i])
-
-        # Rebuild in new order
-        reordered = []
-        for ck in cat_keys:
-            reordered.extend(mode_vizs_by_cat.get(ck, []))
-
-        # Replace mode vizs in master list
-        new_vizs = []
-        mode_iter = iter(reordered)
-        for i, v in enumerate(vizs):
-            if i in mode_indices:
-                new_vizs.append(next(mode_iter))
-            else:
-                new_vizs.append(v)
-
-        self.data['visualizations'] = new_vizs
-
-        self._mark_dirty()
-        self._refresh_tree()
-        self._select_item(cat_iid)
-        cat_map = config_to_map(self.categories)
-        cat_label = cat_map.get(cat_key, cat_key)
-        self.status_var.set(f"Moved category: {cat_label}")
+        kind, ident = self.selected
+        if kind == 'card':
+            c = self._card_by_id(ident)
+            if not messagebox.askyesno(
+                    "Delete card",
+                    f"Remove '{c.get('title', ident)}' from the index?\n\n"
+                    "Its JSON file(s) stay on disk; tools/gallery_cleanup.py removes orphans.",
+                    parent=self.root):
+                return
+            self.data['visualizations'].remove(c)
+            self.selected = None
+            self._mark_dirty()
+            self._refresh_tree()
+            self._show_nothing()
+            self.status_var.set(f"Deleted card {ident} from the index")
+        elif ident != STORAGE_KEY:
+            room, parent_list = find_room(self.config, ident)
+            if room is None:
+                return
+            if room.get('rooms') or self._cards_in(ident):
+                messagebox.showinfo("Not empty", "Move its cards and rooms out first.")
+                return
+            if not messagebox.askyesno("Delete room", f"Delete the empty room '{room['label']}'?",
+                                       parent=self.root):
+                return
+            parent_list.remove(room)
+            self.selected = None
+            self._mark_dirty()
+            self._refresh_tree()
+            self._show_nothing()
+            self.status_var.set(f"Deleted room {ident}")
 
     # --------------------------------------------------------
-    # Helpers
+    # Card actions
     # --------------------------------------------------------
 
-    def _select_item(self, item_id):
-        """Select and scroll to an item in the tree."""
-        try:
-            self.tree.selection_set(item_id)
-            self.tree.see(item_id)
-            self.tree.focus(item_id)
-        except tk.TclError:
-            pass
+    def _current_card(self):
+        if self.selected and self.selected[0] == 'card':
+            return self._card_by_id(self.selected[1])
+        self.status_var.set("Select a card first.")
+        return None
+
+    def _toggle_featured(self):
+        self._apply_form()
+        c = self._current_card()
+        if c is None:
+            return
+        c['featured'] = not bool(c.get('featured'))
+        if 'featured' in self.form_vars:
+            self.form_vars['featured'].set(c['featured'])
+        self._mark_dirty()
+        self._refresh_tree(keep='card:' + c['id'])
+        self.status_var.set(("Featured: " if c['featured'] else "Unfeatured: ") + c.get('title', c['id']))
+
+    def _pick_file(self, slot):
+        self._apply_form()
+        c = self._current_card()
+        if c is None:
+            return
+        gallery_dir = os.path.dirname(self.meta_path)
+        path = filedialog.askopenfilename(
+            title=f"{slot.title()} file for {c['id']}", initialdir=gallery_dir,
+            filetypes=[("Gallery JSON", "*.json")], parent=self.root)
+        if not path:
+            return
+        if os.path.abspath(os.path.dirname(path)) != os.path.abspath(gallery_dir):
+            messagebox.showerror("Wrong folder", "Pick a file inside the gallery/ folder.")
+            return
+        fn = os.path.basename(path)
+        files = c.setdefault('files', {})
+        sizes = c['size_kb'] if isinstance(c.get('size_kb'), dict) else {}
+        files[slot] = fn
+        sizes[slot] = round(os.path.getsize(path) / 1024, 1)
+        c['size_kb'] = sizes
+        self._mark_dirty()
+        self._refresh_tree(keep='card:' + c['id'])
+        self._show_card(c)
+        self.status_var.set(f"{slot} file for {c['id']}: {fn}")
+
+    def _clear_file(self, slot):
+        self._apply_form()
+        c = self._current_card()
+        if c is None:
+            return
+        files = c.get('files') or {}
+        if slot not in files:
+            return
+        if len(files) == 1:
+            messagebox.showinfo("Last file", "A card needs at least one file. Add the other slot first.")
+            return
+        files.pop(slot)
+        if isinstance(c.get('size_kb'), dict):
+            c['size_kb'].pop(slot, None)
+        self._mark_dirty()
+        self._refresh_tree(keep='card:' + c['id'])
+        self._show_card(c)
+        self.status_var.set(f"Cleared {slot} file on {c['id']}")
+
+    # --------------------------------------------------------
+    # Dirty state, save, close
+    # --------------------------------------------------------
 
     def _mark_dirty(self):
-        """Mark metadata has unsaved changes."""
         self.dirty = True
         self._update_title()
 
-    def _mark_config_dirty(self):
-        """Mark config has unsaved changes."""
-        self.config_dirty = True
-        self._update_title()
-
     def _update_title(self):
-        """Update window title with dirty indicator."""
         base = "Paloma's Orrery - Gallery Editor"
-        if self.dirty or self.config_dirty:
-            self.root.title(base + ' *')
-        else:
-            self.root.title(base)
+        self.root.title(base + (' *' if self.dirty else ''))
+
+    def _save_report(self):
+        """Name what changed since load: rooms and cards, by key and field."""
+        lines = []
+        old_cfg, old_meta = self.snapshot
+        old_rooms = {p: r for p, r, _ in walk_rooms(old_cfg['doors'])}
+        new_rooms = {p: r for p, r, _ in walk_rooms(self.config['doors'])}
+        for p in sorted(set(new_rooms) - set(old_rooms)):
+            lines.append(f"  room added    {p}")
+        for p in sorted(set(old_rooms) - set(new_rooms)):
+            lines.append(f"  room removed  {p}")
+        for p in sorted(set(old_rooms) & set(new_rooms)):
+            for k in ('label', 'short', 'sentence', 'color', 'special'):
+                a, b = old_rooms[p].get(k), new_rooms[p].get(k)
+                if a != b:
+                    lines.append(f"  room {p}: {k} {a!r} -> {b!r}")
+        old_cards = {c['id']: c for c in old_meta['visualizations']}
+        new_cards = {c['id']: c for c in self.data['visualizations']}
+        for i in sorted(set(old_cards) - set(new_cards)):
+            lines.append(f"  card removed  {i}")
+        for i in sorted(set(new_cards) - set(old_cards)):
+            lines.append(f"  card added    {i}")
+        for i in sorted(set(old_cards) & set(new_cards)):
+            for k in ('title', 'description', 'room', 'shape', 'files', 'live', 'featured', 'sources'):
+                a, b = old_cards[i].get(k), new_cards[i].get(k)
+                if a != b:
+                    lines.append(f"  card {i}: {k} {a!r} -> {b!r}")
+        old_order = [c['id'] for c in old_meta['visualizations']]
+        new_order = [c['id'] for c in self.data['visualizations']]
+        if old_order != new_order and set(old_order) == set(new_order):
+            lines.append("  card order changed")
+        door_order = [d['key'] for d in self.config['doors']]
+        if door_order != [d['key'] for d in old_cfg['doors']]:
+            lines.append(f"  door order now {door_order}")
+        return lines
 
     def _save_all(self):
-        """Save both metadata and config files."""
-        saved = []
+        self._apply_form()
+        if not self.dirty:
+            self.status_var.set("No changes to save")
+            return
         try:
-            if self.dirty and self.data:
-                save_metadata(self.filepath, self.data)
-                self.dirty = False
-                saved.append('metadata')
-
-            if self.config_dirty and self.categories:
-                save_config(self.config_path, self.categories)
-                self.config_dirty = False
-                saved.append('config')
-
-            self._update_title()
-
-            if saved:
-                self.status_var.set(
-                    f"Saved: {', '.join(saved)} "
-                    f"({len(self.data.get('visualizations', []))} vizs)")
-            else:
-                self.status_var.set("No changes to save")
-
+            report = self._save_report()
+            self.data['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+            self.data['total_count'] = len(self.data.get('visualizations', []))
+            write_json(self.cfg_path, self.config, self.cfg_crlf)
+            write_json(self.meta_path, self.data, self.meta_crlf)
         except Exception as e:
             messagebox.showerror("Save Error", str(e))
+            return
+        print(f"Saved {os.path.basename(self.cfg_path)} and {os.path.basename(self.meta_path)} "
+              f"({self.data['total_count']} cards). Changed:")
+        for line in report:
+            print(line)
+        print(f"  {len(report)} change{'s' if len(report) != 1 else ''}. "
+              "Git is the backup; undo is Discard Changes in GitHub Desktop.")
+        self.snapshot = (copy.deepcopy(self.config), copy.deepcopy(self.data))
+        self.dirty = False
+        self._update_title()
+        keep = None
+        if self.selected:
+            keep = ('card:' if self.selected[0] == 'card' else 'room:') + self.selected[1]
+        self._refresh_tree(keep=keep)
+        self.status_var.set(f"Saved both files; {len(report)} change(s) printed in the console")
 
     def _on_close(self):
-        """Handle window close with unsaved changes check."""
-        if self.dirty or self.config_dirty:
+        self._apply_form()
+        if self.dirty:
             result = messagebox.askyesnocancel(
-                "Unsaved Changes",
-                "You have unsaved changes.\n\nSave before closing?")
+                "Unsaved Changes", "You have unsaved changes.\n\nSave before closing?")
             if result is True:
                 self._save_all()
             elif result is None:
@@ -1610,7 +1028,7 @@ class GalleryEditor:
 
 
 # ============================================================
-# Entry Point
+# Entry point
 # ============================================================
 
 if __name__ == '__main__':

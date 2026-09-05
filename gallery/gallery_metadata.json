@@ -5,7 +5,7 @@
       "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy",
       "title": "Inner Solar System Animation 2-4-2005 21 Years",
       "description": "Animation of the inner solar system from 2005 for 21 years.",
-      "room": "other",
+      "room": "solar_system",
       "shape": "16:9",
       "files": {
         "landscape": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape.json"
@@ -1948,6 +1948,6 @@
       }
     }
   ],
-  "last_updated": "2026-09-04",
+  "last_updated": "2026-09-04 22:54",
   "total_count": 110
 }
