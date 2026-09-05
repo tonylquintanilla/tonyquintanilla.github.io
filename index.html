@@ -1734,6 +1734,7 @@
         var currentMode = 'landscape';
         // Mode filtering deferred to Step 5 -- currently shows all
         var ROOM_LABELS = {};   // schema v2: room path -> label (filled from config doors)
+        var STORAGE_KEY = 'other';   // the hidden room; never served (L-287)
 
         // ---- DOM refs ----
         var navBtn         = document.getElementById('navBtn');
@@ -1908,6 +1909,10 @@
                 metadata = await resp.json();
                 if (metadata && metadata.version === 2) {
                     normalizeSchemaV2(metadata.visualizations || []);
+                    // Storage is hidden from visitors (Tony's ruling, L-287):
+                    // only cards placed in a room are served.
+                    metadata.visualizations = (metadata.visualizations || []).filter(
+                        function (v) { return v.room && v.room !== STORAGE_KEY; });
                 }
             } catch (err) {
                 selectorNav.innerHTML =
