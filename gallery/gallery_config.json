@@ -144,6 +144,13 @@
           "short": "Food",
           "sentence": "",
           "rooms": []
+        },
+        {
+          "key": "coral_bleaching",
+          "label": "Coral Bleaching",
+          "short": "Coral",
+          "sentence": "",
+          "rooms": []
         }
       ]
     },
