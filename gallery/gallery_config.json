@@ -102,7 +102,15 @@
       "short": "Earth",
       "color": "#3f9a8a",
       "sentence": "Data preservation is climate action.\n\nNew gallery is being remodeled.",
-      "rooms": []
+      "rooms": [
+        {
+          "key": "extreme_heating_events",
+          "label": "Extreme Heating Events",
+          "short": "Heat",
+          "sentence": "",
+          "rooms": []
+        }
+      ]
     },
     {
       "key": "stars",

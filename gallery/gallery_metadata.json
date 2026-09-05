@@ -705,7 +705,7 @@
       "id": "western_heatwave_march_14_teaser_gallery",
       "title": "Western Heat Dome - March 14, 2026",
       "description": "Western Heat Dome - March 14, 2026",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "western_heatwave_march_14_teaser_gallery.json",
@@ -713,7 +713,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-25 23:16",
       "size_kb": {
         "landscape": 255.2,
@@ -724,7 +726,7 @@
       "id": "western_heatwave_march_17_teaser_gallery",
       "title": "Western Heat Dome - March 17, 2026",
       "description": "Western Heat Dome - March 17, 2026",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "western_heatwave_march_17_teaser_gallery.json",
@@ -732,7 +734,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-25 23:16",
       "size_kb": {
         "landscape": 256.1,
@@ -743,7 +747,7 @@
       "id": "western_heatwave_march_18_teaser_gallery",
       "title": "Western Heat Dome - March 18, 2026",
       "description": "Western Heat Dome - March 18, 2026",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "western_heatwave_march_18_teaser_gallery.json",
@@ -751,7 +755,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-25 23:15",
       "size_kb": {
         "landscape": 256.6,
@@ -762,7 +768,7 @@
       "id": "western_heatwave_march_20_teaser_gallery",
       "title": "Western Heat Dome - March 20, 2026",
       "description": "Western Heat Dome - March 20, 2026",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "western_heatwave_march_20_teaser_gallery.json",
@@ -770,7 +776,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-25 23:15",
       "size_kb": {
         "landscape": 782.6,
@@ -781,7 +789,7 @@
       "id": "western_heatwave_march_21_teaser_gallery",
       "title": "Western Heat Dome - March 21, 2026",
       "description": "Western Heat Dome - March 21, 2026",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "western_heatwave_march_21_teaser_gallery.json",
@@ -789,7 +797,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-26 00:18",
       "size_kb": {
         "landscape": 901.9,
@@ -800,7 +810,7 @@
       "id": "western_heatwave_march_22_teaser_gallery",
       "title": "Western Heat Dome - March 22, 2026",
       "description": "Western Heat Dome - March 22, 2026",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "western_heatwave_march_22_teaser_gallery.json",
@@ -808,7 +818,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-30 02:05",
       "size_kb": {
         "landscape": 1432.6,
@@ -819,7 +831,7 @@
       "id": "western_heatwave_march_25_teaser_gallery",
       "title": "Western Heat Dome - March 25, 2026",
       "description": "Western Heat Dome - March 25, 2026",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "western_heatwave_march_25_teaser_gallery.json",
@@ -827,7 +839,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-04-08 00:32",
       "size_kb": {
         "landscape": 1422.1,
@@ -1923,6 +1937,6 @@
       }
     }
   ],
-  "last_updated": "2026-09-05 09:43",
+  "last_updated": "2026-09-05 12:55",
   "total_count": 107
 }
