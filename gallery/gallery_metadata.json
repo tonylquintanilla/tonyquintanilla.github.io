@@ -24,7 +24,7 @@
       "id": "panstarrs_perigee_geocentric_gallery",
       "title": "Comet PanSTARRS at Perigee 4-26-26",
       "description": "Comet PanSTARRS at Perigee 4-26-26",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "16:9",
       "files": {
         "landscape": "panstarrs_perigee_geocentric_gallery.json",
@@ -43,7 +43,7 @@
       "id": "orbital_transformation_mercury_20260208",
       "title": "Orbital Transformation of Mercury 2-8-2026",
       "description": "Mercury's orbital elements in the Ecliptic Frame",
-      "room": "other",
+      "room": "solar_system/orbital_mechanics",
       "shape": "16:9",
       "files": {
         "landscape": "orbital_transformation_mercury_20260208.json"
@@ -60,7 +60,7 @@
       "id": "panstarrs_20260417_gallery",
       "title": "Comet PANSTARRS near perihelion 4-19-2026",
       "description": "Comet PANSTARRS near perihelion",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "16:9",
       "files": {
         "landscape": "panstarrs_20260417_gallery.json",
@@ -79,7 +79,7 @@
       "id": "maps_disintegration_20260403_07_structures_gallery",
       "title": "MAPS Disintegration April 4, 2026",
       "description": "MAPS Disintegration April 4, 2026",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "16:9",
       "files": {
         "landscape": "maps_disintegration_20260403_07_structures_gallery.json"
@@ -96,7 +96,7 @@
       "id": "3iatlas_jupiter_20260316_1222",
       "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "16:9",
       "files": {
         "landscape": "3iatlas_jupiter_20260316_1222.json",
@@ -115,7 +115,7 @@
       "id": "solar_system_20250318_1901",
       "title": "3I/ATLAS March 2025 to March 2026",
       "description": "3I/ATLAS March 2025 to March 2026",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "16:9",
       "files": {
         "landscape": "solar_system_20250318_1901.json",
@@ -134,7 +134,7 @@
       "id": "earth-apophis_20290401_29",
       "title": "Apophis Closest Approach, 4-13-2029",
       "description": "Apophis Closest Approach, 4-13-2029",
-      "room": "other",
+      "room": "solar_system/earth",
       "shape": "16:9",
       "files": {
         "landscape": "earth-apophis_20290401_29.json",
@@ -153,7 +153,7 @@
       "id": "earth_heliocentric_20260207_0659",
       "title": "Earth Heliocentric 20260207 0659",
       "description": "Static plot of Earth's heliocentric orbit.",
-      "room": "other",
+      "room": "solar_system/earth",
       "shape": "16:9",
       "files": {
         "landscape": "earth_heliocentric_20260207_0659.json"
@@ -170,7 +170,7 @@
       "id": "earth_barycenter_shells_20260207_1635",
       "title": "Earth Barycenter Shells 20260207 1635",
       "description": "Plot of Earth-Moon system with barycenter. Shows Earth's geological, atmospheric and magnetic structure.",
-      "room": "other",
+      "room": "solar_system/earth",
       "shape": "16:9",
       "files": {
         "landscape": "earth_barycenter_shells_20260207_1635.json"
@@ -187,7 +187,7 @@
       "id": "near_earth_asteroids_20260207_2114",
       "title": "Near Earth Asteroids 20260207 2114",
       "description": "Plot of near-Earth asteroids between Venus and Mars.",
-      "room": "other",
+      "room": "solar_system/earth",
       "shape": "16:9",
       "files": {
         "landscape": "near_earth_asteroids_20260207_2114.json"
@@ -223,7 +223,7 @@
       "id": "paleoclimate_540ma_to_present",
       "title": "Paleoclimate 540 Ma to Present",
       "description": "Graphic showing reconstructed temperature from 540 Ma to the present.",
-      "room": "other",
+      "room": "earth_system/paleoclimate",
       "shape": "16:9",
       "files": {
         "landscape": "paleoclimate_540ma_to_present.json"
@@ -240,7 +240,7 @@
       "id": "paleoclimate_cenozoic_66ma",
       "title": "Paleoclimate Cenozoic (66 Ma)",
       "description": "Graphic showing reconstructed temperature from the Ice Ages to the present.",
-      "room": "other",
+      "room": "earth_system/paleoclimate",
       "shape": "16:9",
       "files": {
         "landscape": "paleoclimate_cenozoic_66ma.json"
@@ -257,7 +257,7 @@
       "id": "paleoclimate_human_origins",
       "title": "Paleoclimate Human Origins",
       "description": "540 MY paleoclimate chart with human origins markers.",
-      "room": "other",
+      "room": "earth_system/paleoclimate",
       "shape": "16:9",
       "files": {
         "landscape": "paleoclimate_human_origins.json"
@@ -274,7 +274,7 @@
       "id": "paleoclimate_wet_bulb_copy_copy",
       "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
       "description": "Graphic showing extreme heating events since the 1930s.",
-      "room": "other",
+      "room": "earth_system/paleoclimate",
       "shape": "16:9",
       "files": {
         "landscape": "paleoclimate_wet_bulb.json"
@@ -291,7 +291,7 @@
       "id": "paleoclimate_wet_bulb",
       "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
       "description": "Graphic showing extreme heating events since the 1930s.",
-      "room": "other",
+      "room": "earth_system/paleoclimate",
       "shape": "16:9",
       "files": {
         "landscape": "paleoclimate_wet_bulb.json"
@@ -308,7 +308,7 @@
       "id": "paleoclimate_wet_bulb_copy",
       "title": "Paleoclimate and Extreme Heating Events, 1930s - 2025",
       "description": "Graphic showing extreme heating events since the 1930s.",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "paleoclimate_wet_bulb.json"
@@ -360,27 +360,10 @@
       }
     },
     {
-      "id": "planets_social_view_20260210_2327",
-      "title": "Planets on 2-10-2026",
-      "description": "Major planets.",
-      "room": "other",
-      "shape": "9:16",
-      "files": {
-        "portrait": "planets_social_view_20260210_2327.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
-      "converted": "2026-02-10 23:40",
-      "size_kb": {
-        "portrait": 1346.3
-      }
-    },
-    {
       "id": "maps_disintegration_20260403_07_structures_mobile",
       "title": "MAPS - Disintegration April 4, 2026",
       "description": "MAPS - Disintegration April 4, 2026",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "9:16",
       "files": {
         "portrait": "maps_disintegration_20260403_07_structures_mobile.json"
@@ -397,7 +380,7 @@
       "id": "current_comets_social_view_20260210_2331",
       "title": "Current Comets on 2-10-2026",
       "description": "Current comets and the inner solar system.",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "9:16",
       "files": {
         "portrait": "current_comets_social_view_20260210_2331.json"
@@ -414,7 +397,7 @@
       "id": "c2024_e1_wierzchos_20260225_0236_landscape",
       "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
       "description": "Comet Wierzchos, perihelion 1-20-2026.",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "16:9",
       "files": {
         "landscape": "c2024_e1_wierzchos_20260225_0236_landscape.json",
@@ -433,7 +416,7 @@
       "id": "earth_moon_shells_social_view_20260210_1643",
       "title": "Earth-Moon System on 2026 02 10 16:43",
       "description": "Earth-Moon system with crust, atmosphere, magenetosphere and gravitational shells.",
-      "room": "other",
+      "room": "solar_system/earth/moon",
       "shape": "9:16",
       "files": {
         "portrait": "earth_moon_shells_social_view_20260210_1643.json"
@@ -450,7 +433,7 @@
       "id": "near_earth_asteroids_social_view_20260211_0024",
       "title": "Near Earth Asteroids on 2026 02 11 00:24",
       "description": "Near-Earth asteroids.",
-      "room": "other",
+      "room": "solar_system/earth",
       "shape": "9:16",
       "files": {
         "portrait": "near_earth_asteroids_social_view_20260211_0024.json"
@@ -528,7 +511,7 @@
       "id": "paleoclimate_wet_bulb_gallery_copy",
       "title": "Paleoclimage and Extreme Heating Events, 1930s - 2025 (use landscape)",
       "description": "Paleoclimate history",
-      "room": "other",
+      "room": "earth_system/paleoclimate",
       "shape": "9:16",
       "files": {
         "portrait": "paleoclimate_wet_bulb_gallery.json"
@@ -545,7 +528,7 @@
       "id": "paleoclimate_wet_bulb_gallery",
       "title": "Paleoclimage and Extreme Heating Events, 1930s - 2025 (use landscape)",
       "description": "Paleoclimate history",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "9:16",
       "files": {
         "portrait": "paleoclimate_wet_bulb_gallery.json"
@@ -852,7 +835,7 @@
       "id": "europe_2026_teaser_gallery",
       "title": "Europe heat dome 6-21-2026",
       "description": "Europe heat dome 6-21-2026",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "europe_2026_teaser_gallery.json",
@@ -860,7 +843,9 @@
       },
       "live": null,
       "featured": true,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-06-29 08:26",
       "size_kb": {
         "landscape": 10.5,
@@ -871,14 +856,16 @@
       "id": "nyc_1948_teaser_gallery",
       "title": "New York 1948",
       "description": "New York 1948",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "nyc_1948_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:34",
       "size_kb": {
         "landscape": 7.0
@@ -888,14 +875,16 @@
       "id": "st_louis_1954_teaser_gallery",
       "title": "St Louis 1954",
       "description": "St Louis 1954",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "st_louis_1954_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:34",
       "size_kb": {
         "landscape": 6.2
@@ -905,14 +894,16 @@
       "id": "la_1955_teaser_gallery",
       "title": "Los Angeles 1955",
       "description": "Los Angeles 1955",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "la_1955_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:35",
       "size_kb": {
         "landscape": 3.8
@@ -922,14 +913,16 @@
       "id": "st_louis_nyc_1966_teaser_gallery",
       "title": "St Louis 1966",
       "description": "St Louis 1966",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "st_louis_nyc_1966_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:35",
       "size_kb": {
         "landscape": 5.4
@@ -939,14 +932,16 @@
       "id": "uk_1976_teaser_gallery",
       "title": "United Kingdom 1976",
       "description": "United Kingdom 1976",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "uk_1976_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:35",
       "size_kb": {
         "landscape": 6.3
@@ -956,14 +951,16 @@
       "id": "us_1980_teaser_gallery",
       "title": "US 1980",
       "description": "US 1980",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "us_1980_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:35",
       "size_kb": {
         "landscape": 4.8
@@ -973,14 +970,16 @@
       "id": "athens_1987_teaser_gallery",
       "title": "Athens 1987",
       "description": "Athens 1987",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "athens_1987_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:35",
       "size_kb": {
         "landscape": 4.6
@@ -990,14 +989,16 @@
       "id": "chicago_1995_teaser_gallery",
       "title": "Chicago 1995",
       "description": "Chicago 1995",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "chicago_1995_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:35",
       "size_kb": {
         "landscape": 7.9
@@ -1007,14 +1008,16 @@
       "id": "europe_2003_teaser_gallery",
       "title": "Europe 2003",
       "description": "Europe 2003",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "europe_2003_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:36",
       "size_kb": {
         "landscape": 6.4
@@ -1024,14 +1027,16 @@
       "id": "russia_2010_teaser_gallery",
       "title": "Russia 2010",
       "description": "Russia 2010",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "russia_2010_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:36",
       "size_kb": {
         "landscape": 8.7
@@ -1041,14 +1046,16 @@
       "id": "india_pak_2015_teaser_gallery",
       "title": "India-Pakistan 2015",
       "description": "India-Pakistan 2015",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "india_pak_2015_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:36",
       "size_kb": {
         "landscape": 18.7
@@ -1058,14 +1065,16 @@
       "id": "iran_2015_teaser_gallery",
       "title": "Iran 2015",
       "description": "Iran 2015",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "iran_2015_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:36",
       "size_kb": {
         "landscape": 10.9
@@ -1075,14 +1084,16 @@
       "id": "se_asia_2016_teaser_gallery",
       "title": "Souteast Asia 2016",
       "description": "Souteast Asia 2016",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "se_asia_2016_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:36",
       "size_kb": {
         "landscape": 6.1
@@ -1092,14 +1103,16 @@
       "id": "japan_2018_teaser_gallery",
       "title": "Japan 2018",
       "description": "Japan 2018",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "japan_2018_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:36",
       "size_kb": {
         "landscape": 4.7
@@ -1109,14 +1122,16 @@
       "id": "europe_2019_teaser_gallery",
       "title": "Europe 2019",
       "description": "Europe 2019",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "europe_2019_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:37",
       "size_kb": {
         "landscape": 5.3
@@ -1126,14 +1141,16 @@
       "id": "siberia_2020_teaser_gallery",
       "title": "Siberia 2020",
       "description": "Siberia 2020",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "siberia_2020_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:37",
       "size_kb": {
         "landscape": 6.0
@@ -1143,14 +1160,16 @@
       "id": "pnw_heat_dome_teaser_gallery",
       "title": "Pacific Northwest",
       "description": "Pacific Northwest",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "pnw_heat_dome_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:37",
       "size_kb": {
         "landscape": 9.4
@@ -1160,14 +1179,16 @@
       "id": "china_2022_teaser_gallery",
       "title": "China 2022",
       "description": "China 2022",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "china_2022_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:37",
       "size_kb": {
         "landscape": 5.2
@@ -1177,14 +1198,16 @@
       "id": "amazon_2023_teaser_gallery",
       "title": "Amazon 2023",
       "description": "Amazon 2023",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "amazon_2023_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:37",
       "size_kb": {
         "landscape": 5.4
@@ -1194,14 +1217,16 @@
       "id": "rio_2023_teaser_gallery",
       "title": "Rio 2023",
       "description": "Rio 2023",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "rio_2023_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:38",
       "size_kb": {
         "landscape": 4.4
@@ -1211,14 +1236,16 @@
       "id": "mali_2024_teaser_gallery",
       "title": "Mali 2024",
       "description": "Mali 2024",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "mali_2024_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:38",
       "size_kb": {
         "landscape": 25.5
@@ -1228,14 +1255,16 @@
       "id": "delhi_heat_wave_teaser_gallery",
       "title": "Delhi",
       "description": "Delhi",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "delhi_heat_wave_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:38",
       "size_kb": {
         "landscape": 14.4
@@ -1245,14 +1274,16 @@
       "id": "persian_gulf_2024_teaser_gallery",
       "title": "Persian Gulf 2024",
       "description": "Persian Gulf 2024",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "persian_gulf_2024_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:38",
       "size_kb": {
         "landscape": 6.2
@@ -1262,14 +1293,16 @@
       "id": "florida_coral_2023_teaser_gallery",
       "title": "Florida Coral 2023",
       "description": "Florida Coral 2023",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "florida_coral_2023_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:39",
       "size_kb": {
         "landscape": 626.5
@@ -1279,7 +1312,7 @@
       "id": "jupiter_system_social_view_20260211_0035",
       "title": "Jupiter System on 2026 02 11 00:35",
       "description": "Jupiter system.",
-      "room": "other",
+      "room": "solar_system/jupiter",
       "shape": "9:16",
       "files": {
         "portrait": "jupiter_system_social_view_20260211_0035.json"
@@ -1296,7 +1329,7 @@
       "id": "pluto_barycenter_social_view_20260211_0031",
       "title": "Pluto System - Barycenter View on 2026 02 11 00:31",
       "description": "Pluto barycenter system.",
-      "room": "other",
+      "room": "solar_system/pluto",
       "shape": "9:16",
       "files": {
         "portrait": "pluto_barycenter_social_view_20260211_0031.json"
@@ -1313,7 +1346,7 @@
       "id": "16_psyche_20231014_0000_gallery",
       "title": "Psyche Mission to 16 Psyche 2023 - 2029 static",
       "description": "Psyche Mission to 16 Psyche",
-      "room": "other",
+      "room": "solar_system/asteroids",
       "shape": "16:9",
       "files": {
         "landscape": "16_psyche_20231014_0000_gallery.json",
@@ -1332,7 +1365,7 @@
       "id": "16_psyche_20231014_animated_months_gallery",
       "title": "Psyche Mission to 16 Psyche 2023 - 2029 animated",
       "description": "Psyche Mission to 16 Psyche",
-      "room": "other",
+      "room": "solar_system/asteroids",
       "shape": "16:9",
       "files": {
         "landscape": "16_psyche_20231014_animated_months_gallery.json",
@@ -1351,7 +1384,7 @@
       "id": "mars_system_static_psyche_gravitational_assist_gallery",
       "title": "Psyche - Mars Gravitational Assist 5-15-26 static",
       "description": "Psyche - Mars Gravitational Assist 5-15-26",
-      "room": "other",
+      "room": "solar_system/asteroids",
       "shape": "16:9",
       "files": {
         "landscape": "mars_system_static_psyche_gravitational_assist_gallery.json",
@@ -1370,7 +1403,7 @@
       "id": "pluto_barycenter_system_20260208_1957",
       "title": "Pluto Barycenter System 20260208 1957",
       "description": "Plot of Pluto system centered on the barycenter.",
-      "room": "other",
+      "room": "solar_system/pluto",
       "shape": "16:9",
       "files": {
         "landscape": "pluto_barycenter_system_20260208_1957.json"
@@ -1387,7 +1420,7 @@
       "id": "trappist1_exoplanet_system_20260208_1957",
       "title": "Trappist1 Exoplanet System",
       "description": "Plot of the Trappist-1 exoplanet system.",
-      "room": "other",
+      "room": "stars/exoplanets",
       "shape": "16:9",
       "files": {
         "landscape": "trappist1_exoplanet_system_20260208_1957.json"
@@ -1404,7 +1437,7 @@
       "id": "toi_binary_20260217_gallery_landscape",
       "title": "TOI Binary Exoplanet System",
       "description": "Exoplanet binary system TOI 1338",
-      "room": "other",
+      "room": "stars/exoplanets",
       "shape": "16:9",
       "files": {
         "landscape": "toi_binary_20260217_gallery_landscape.json",
@@ -1423,7 +1456,7 @@
       "id": "3d_stars_distance_20ly",
       "title": "3D Stars Distance to 20 Light Years",
       "description": "3d plot of our stellar neighborhood to 20 LY.",
-      "room": "other",
+      "room": "stars/distance",
       "shape": "16:9",
       "files": {
         "landscape": "3d_stars_distance_20ly.json"
@@ -1440,7 +1473,7 @@
       "id": "hr_diagram_distance_20_0ly",
       "title": "HR Diagram Distance 20.0Ly (use landcape)",
       "description": "Hertzprung-Russell diagram of stars up to 20 LY distant.",
-      "room": "other",
+      "room": "stars/distance",
       "shape": "16:9",
       "files": {
         "landscape": "hr_diagram_distance_20_0ly.json"
@@ -1457,7 +1490,7 @@
       "id": "hr_diagram_magnitude_4_0",
       "title": "HR Diagram Magnitude 4.0 (use landscape)",
       "description": "Hertzprung-Russell diagram of stars up to visual magnitude 4.0.",
-      "room": "other",
+      "room": "stars/magnitude",
       "shape": "16:9",
       "files": {
         "landscape": "hr_diagram_magnitude_4_0.json"
@@ -1474,7 +1507,7 @@
       "id": "3d_stars_magnitude_4_0_social",
       "title": "3D Stars to Visual Magnitude 4.0",
       "description": "3D plot of stars to visual magnitude 4.0",
-      "room": "other",
+      "room": "stars/magnitude",
       "shape": "9:16",
       "files": {
         "portrait": "3d_stars_magnitude_4_0_social.json"
@@ -1491,7 +1524,7 @@
       "id": "3d_stars_magnitude_4_0_1400ly",
       "title": "3D Stars Magnitude 4.0 1400Ly",
       "description": "3D diagram of stars up to visual magnitude 4.0 and up to 1400 LY distant.",
-      "room": "other",
+      "room": "stars/magnitude",
       "shape": "16:9",
       "files": {
         "landscape": "3d_stars_magnitude_4_0_1400ly.json"
@@ -1508,7 +1541,7 @@
       "id": "3d_stars_distance_20ly_social",
       "title": "3D Stars to 20 light years",
       "description": "3D plot of stars to distance of 20 LY.",
-      "room": "other",
+      "room": "stars/distance",
       "shape": "9:16",
       "files": {
         "portrait": "3d_stars_distance_20ly_social.json"
@@ -1525,7 +1558,7 @@
       "id": "3d_stars_magnitude_4_0",
       "title": "3D Stars Magnitude 4.0",
       "description": "3D diagram of stars up to visual magnitude 4.0.",
-      "room": "other",
+      "room": "stars/magnitude",
       "shape": "16:9",
       "files": {
         "landscape": "3d_stars_magnitude_4_0.json"
@@ -1542,7 +1575,7 @@
       "id": "western_heatwave_march_26_teaser_gallery",
       "title": "Western Heat Dome - March 26, 2026",
       "description": "Western Heat Wave - March 26, 2026",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "western_heatwave_march_26_teaser_gallery.json",
@@ -1550,7 +1583,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-04-08 00:31",
       "size_kb": {
         "landscape": 1437.6,
@@ -1561,7 +1596,7 @@
       "id": "3iatlas_perihelion_20251029",
       "title": "3I/ATLAS Perihelion 10-29-2025",
       "description": "3I/ATLAS Perihelion 10-29-2025",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "16:9",
       "files": {
         "landscape": "3iatlas_perihelion_20251029.json",
@@ -1595,7 +1630,7 @@
       "id": "mars_system_animation_psyche_flyby_shells_mobile",
       "title": "Psyche - Mars Gravitational Assist 5-15-26 animated",
       "description": "Psyche - Mars Gravitational Assist 5-15-26",
-      "room": "other",
+      "room": "solar_system/asteroids",
       "shape": "9:16",
       "files": {
         "portrait": "mars_system_animation_psyche_flyby_shells_mobile.json"
@@ -1612,7 +1647,7 @@
       "id": "mars_system_animation_psyche_phobos_flyby_gallery",
       "title": "Psyche - Phobos Flyby 5-15-26 animated",
       "description": "Psyche - Mars Gravitational Assist 5-15-26",
-      "room": "other",
+      "room": "solar_system/asteroids",
       "shape": "16:9",
       "files": {
         "landscape": "mars_system_animation_psyche_phobos_flyby_gallery.json",
@@ -1631,7 +1666,7 @@
       "id": "artemis_ii_20260402-0411_mission_gallery",
       "title": "Artemis II Mission April 6, 2026",
       "description": "Artemis II Mission March 6, 2026",
-      "room": "other",
+      "room": "solar_system/earth/moon",
       "shape": "16:9",
       "files": {
         "landscape": "artemis_ii_20260402-0411_mission_gallery.json",
@@ -1650,7 +1685,7 @@
       "id": "artemis_ii_20260402-0411_mission_moon_center2_mobile",
       "title": "Artemis II - Earth to Moon Flyby April 6, 2026",
       "description": "Artemis II Moon Flyby March 6, 2026",
-      "room": "other",
+      "room": "solar_system/earth/moon",
       "shape": "9:16",
       "files": {
         "portrait": "artemis_ii_20260402-0411_mission_moon_center2_mobile.json"
@@ -1667,7 +1702,7 @@
       "id": "artemis_ii_20260407_moon_2306_close_encounter_gallery",
       "title": "Artemis II - Moon Flyby April 6, 2026",
       "description": "Artemis II - Moon Flyby April 6, 2026",
-      "room": "other",
+      "room": "solar_system/earth/moon",
       "shape": "16:9",
       "files": {
         "landscape": "artemis_ii_20260407_moon_2306_close_encounter_gallery.json",
@@ -1686,7 +1721,7 @@
       "id": "artemis_ii_20260402-0411_mission_moon_center2_gallery",
       "title": "Artemis II Moon Flyby April 6, 2026",
       "description": "Artemis II Moon Flyby March 6, 2026",
-      "room": "other",
+      "room": "solar_system/earth/moon",
       "shape": "16:9",
       "files": {
         "landscape": "artemis_ii_20260402-0411_mission_moon_center2_gallery.json"
@@ -1703,7 +1738,7 @@
       "id": "western_heatwave_march_30_teaser_gallery",
       "title": "Western Heat Dome - March 30, 2026",
       "description": "Western Heat Wave - March 30, 2026",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "western_heatwave_march_30_teaser_gallery.json",
@@ -1711,7 +1746,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic"
+      ],
       "converted": "2026-04-08 00:31",
       "size_kb": {
         "landscape": 1435.8,
@@ -1722,7 +1759,7 @@
       "id": "c2025k1bcd_perihelion_20251007_gallery_copy_copy",
       "title": "Comet C/2025 K1 Breakup 10-16-2025",
       "description": "Comet C/2025 K1 Breakup",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "16:9",
       "files": {
         "landscape": "c2025k1bcd_perihelion_20251007_gallery.json",
@@ -1741,7 +1778,7 @@
       "id": "halley_perihelion_19860208",
       "title": "Comet Halley Perihelion 2-8-1986",
       "description": "Comet Halley Perihelion 2-8-1986",
-      "room": "other",
+      "room": "solar_system/comets",
       "shape": "16:9",
       "files": {
         "landscape": "halley_perihelion_19860208.json",
@@ -1760,7 +1797,7 @@
       "id": "artemis_ii_20260407_moon_2306_close_encounter2_gallery",
       "title": "Artemis II - Mission April 2-11, 2026",
       "description": "Artemis II - Mission April 2-11, 2026",
-      "room": "other",
+      "room": "solar_system/earth/moon",
       "shape": "16:9",
       "files": {
         "landscape": "artemis_ii_20260407_moon_2306_close_encounter2_gallery.json",
@@ -1779,7 +1816,7 @@
       "id": "artemis_moon_animation_20260406_gallery",
       "title": "Artemis II - Moon Flyby April 2-11, 2026, animated",
       "description": "Artemis II - Moon Flyby April 2-11, 2026",
-      "room": "other",
+      "room": "solar_system/earth/moon",
       "shape": "16:9",
       "files": {
         "landscape": "artemis_moon_animation_20260406_gallery.json",
@@ -1798,7 +1835,7 @@
       "id": "voyager1_2_social_view_20260210_2337",
       "title": "Voyager 1 and 2 Missions on 2026 02 10 23:37",
       "description": "Voyager 1 and 2 mission from launch through the present.",
-      "room": "other",
+      "room": "solar_system/space_missions",
       "shape": "9:16",
       "files": {
         "portrait": "voyager1_2_social_view_20260210_2337.json"
@@ -1815,7 +1852,7 @@
       "id": "new_horizons_full_mission_20060120_20200101",
       "title": "New Horizons mission 2006 to 2020",
       "description": "New Horizons mission 2006 to 2020",
-      "room": "other",
+      "room": "solar_system/space_missions",
       "shape": "16:9",
       "files": {
         "landscape": "new_horizons_full_mission_20060120_20200101.json",
@@ -1834,7 +1871,7 @@
       "id": "new_horizons_jupiter__20070220_20070307",
       "title": "New Horizons Jupiter Gravity Assist 2-28-2007",
       "description": "New Horizons Jupiter Gravity Assist 2-28-2007",
-      "room": "other",
+      "room": "solar_system/jupiter",
       "shape": "16:9",
       "files": {
         "landscape": "new_horizons_jupiter__20070220_20070307.json",
@@ -1853,14 +1890,16 @@
       "id": "pakistan_2025_teaser_gallery",
       "title": "Pakistan 2025",
       "description": "Pakistan 2025",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "pakistan_2025_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:38",
       "size_kb": {
         "landscape": 4.5
@@ -1870,14 +1909,16 @@
       "id": "us_grid_2025_teaser_gallery",
       "title": "US 2025",
       "description": "US 2025",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "us_grid_2025_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:38",
       "size_kb": {
         "landscape": 8.1
@@ -1887,7 +1928,7 @@
       "id": "food_insecurity_sdn_teaser_gallery",
       "title": "Sudan Food Insecurity Feb-May 2016",
       "description": "Sudan Food Insecurity Feb-May 2016",
-      "room": "other",
+      "room": "earth_system/food_insecurity",
       "shape": "16:9",
       "files": {
         "landscape": "food_insecurity_sdn_teaser_gallery.json",
@@ -1906,14 +1947,16 @@
       "id": "australia_heat_dome_teaser_gallery",
       "title": "Australia",
       "description": "Australia",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "australia_heat_dome_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:39",
       "size_kb": {
         "landscape": 76.3
@@ -1923,20 +1966,22 @@
       "id": "amazon_drought_2025_teaser_gallery",
       "title": "Amazon 2025",
       "description": "Amazon 2025",
-      "room": "other",
+      "room": "earth_system/extreme_heating_events",
       "shape": "16:9",
       "files": {
         "landscape": "amazon_drought_2025_teaser_gallery.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-03-21 01:39",
       "size_kb": {
         "landscape": 9.3
       }
     }
   ],
-  "last_updated": "2026-09-05 12:55",
-  "total_count": 107
+  "last_updated": "2026-09-05 15:47",
+  "total_count": 106
 }

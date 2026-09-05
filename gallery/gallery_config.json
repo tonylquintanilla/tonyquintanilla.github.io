@@ -6,7 +6,7 @@
       "label": "Solar System",
       "short": "Solar",
       "color": "#c9a44a",
-      "sentence": "Gallery being remodeled. Tony Quintanilla 9/4/2026",
+      "sentence": "",
       "rooms": [
         {
           "key": "orbital_mechanics",
@@ -93,6 +93,27 @@
           "short": "Pluto",
           "sentence": "",
           "rooms": []
+        },
+        {
+          "key": "comets",
+          "label": "Comets",
+          "short": "Comets",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "asteroids",
+          "label": "Asteroids",
+          "short": "Asteroids",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "space_missions",
+          "label": "Space Missions",
+          "short": "Missions",
+          "sentence": "",
+          "rooms": []
         }
       ]
     },
@@ -101,12 +122,26 @@
       "label": "Earth System",
       "short": "Earth",
       "color": "#3f9a8a",
-      "sentence": "Data preservation is climate action.\n\nNew gallery is being remodeled.",
+      "sentence": "Data preservation is climate action.",
       "rooms": [
         {
           "key": "extreme_heating_events",
           "label": "Extreme Heating Events",
           "short": "Heat",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "paleoclimate",
+          "label": "Paleoclimate",
+          "short": "Paleoclimate",
+          "sentence": "",
+          "rooms": []
+        },
+        {
+          "key": "food_insecurity",
+          "label": "Food Insecurity",
+          "short": "Food",
           "sentence": "",
           "rooms": []
         }
