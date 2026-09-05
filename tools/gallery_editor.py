@@ -21,6 +21,9 @@ Usage: python gallery_editor.py  (from tools/, VS Code Run button)
 WHAT THE BUTTONS DO
   New Room       adds a room under the selected door or room
   Move to Room   moves the selected card (or room) somewhere else
+  Copy to Room   places a second card for the same exhibit in another
+                 room (same files, new id); the cross-link case, e.g.
+                 the Earth room's doorway into the Earth System wing
   Move Up/Down   reorders the selection among its siblings; the order
                  in the tree is the order on the page
   Featured       toggles the What's New flag on the selected card
@@ -49,7 +52,7 @@ card, Desktop/Mobile sections) which no longer reads the index files.
 Module updated: September 4, 2026 (L-287, same session): Preview button
 per file slot; live-scene URL picker read from interactive.html.
 Module updated: September 5, 2026 (L-287): Apply button removed, fields
-apply on focus-out; a live card may have no file.
+apply on focus-out; a live card may have no file; Copy to Room.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -252,6 +255,7 @@ class GalleryEditor:
         r = tk.Menu(menubar, tearoff=0)
         r.add_command(label="New Room...", command=self._new_room)
         r.add_command(label="Move to Room...", command=self._move_to_room)
+        r.add_command(label="Copy Card to Room...", command=self._copy_to_room)
         r.add_command(label="Set Door Color...", command=self._set_door_color)
         r.add_separator()
         r.add_command(label="Delete", command=self._delete_selected)
@@ -276,6 +280,7 @@ class GalleryEditor:
         for text, cmd, tip in (
             ("New Room", self._new_room, "Add a room under the selected door or room"),
             ("Move to Room...", self._move_to_room, "Move the selected card or room to another room"),
+            ("Copy to Room...", self._copy_to_room, "Put a second card for this exhibit in another room"),
             ("Move Up", lambda: self._move(-1), "Move selection up among its siblings"),
             ("Move Down", lambda: self._move(1), "Move selection down among its siblings"),
         ):
@@ -876,6 +881,35 @@ class GalleryEditor:
             self._mark_dirty()
             self._refresh_tree(keep='room:' + new_path)
             self.status_var.set(f"Moved room {ident} -> {new_path} ({n} cards re-pathed)")
+
+    def _copy_to_room(self):
+        """Duplicate the selected card into another room. Same files, new id."""
+        self._apply_form()
+        c = self._current_card()
+        if c is None:
+            return
+        target = self._pick_target_room(f"Copy '{c.get('title', c['id'])}' to...")
+        if target is None:
+            return
+        if target == c.get('room', STORAGE_KEY):
+            self.status_var.set("That is the card's own room; pick another.")
+            return
+        suffix = STORAGE_KEY if target == STORAGE_KEY else target.rsplit('/', 1)[-1]
+        base = f"{c['id']}__{suffix}"
+        new_id, n = base, 2
+        while self._card_by_id(new_id):
+            new_id = f"{base}_{n}"
+            n += 1
+        dup = copy.deepcopy(c)
+        dup['id'] = new_id
+        dup['room'] = target
+        dup['featured'] = False
+        vizs = self.data['visualizations']
+        vizs.insert(vizs.index(c) + 1, dup)
+        self._mark_dirty()
+        self._refresh_tree(keep='card:' + new_id)
+        self.tree.selection_set('card:' + new_id)
+        self.status_var.set(f"Copied {c['id']} -> {new_id} in {target}")
 
     def _move(self, direction):
         """Reorder the selection among its siblings. Tree order is page order."""

@@ -467,7 +467,7 @@
       "id": "keeling_curve_co2_concentration",
       "title": "Keeling Curve: CO2 Concentration, 1958 - 2025",
       "description": "Graphic showing atmospheric CO2 from 1958 to 2025.",
-      "room": "other",
+      "room": "earth_system",
       "shape": "16:9",
       "files": {
         "landscape": "keeling_curve_co2_concentration.json",
@@ -475,7 +475,9 @@
       },
       "live": null,
       "featured": true,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-02-09 00:12",
       "size_kb": {
         "landscape": 17.3,
@@ -486,14 +488,16 @@
       "id": "planetary_boundaries_mobile",
       "title": "Planetary Boundaries 2025 (Stockholm Resilience Centre)",
       "description": "Planetary Boundaries (Stockholm Resilience Centre)",
-      "room": "other",
+      "room": "earth_system",
       "shape": "9:16",
       "files": {
         "portrait": "planetary_boundaries_mobile.json"
       },
       "live": null,
       "featured": true,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-02-19 23:56",
       "size_kb": {
         "portrait": 11.1
@@ -503,7 +507,7 @@
       "id": "energy_imbalance_desktop",
       "title": "Energy Imbalance, 2005 - 2025",
       "description": "Earth's energy imbalance",
-      "room": "other",
+      "room": "earth_system",
       "shape": "16:9",
       "files": {
         "landscape": "energy_imbalance_desktop.json",
@@ -511,7 +515,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-02-23 01:24",
       "size_kb": {
         "landscape": 30.7,
@@ -556,7 +562,7 @@
       "id": "global_temperature_anomalies",
       "title": "Global Temperature Anomalies, 1880 - 2025",
       "description": "Graphic showing surface mean temperature anomalies from 1880 to 2025.",
-      "room": "other",
+      "room": "earth_system",
       "shape": "16:9",
       "files": {
         "landscape": "global_temperature_anomalies.json",
@@ -564,7 +570,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-02-20 00:40",
       "size_kb": {
         "landscape": 43.0,
@@ -575,7 +583,7 @@
       "id": "monthly_temperature_lines",
       "title": "Annual Temperature Anomalies by Month, 1885 - 2025",
       "description": "Annual temperature anomalies by month, 1885 - 2025",
-      "room": "other",
+      "room": "earth_system",
       "shape": "16:9",
       "files": {
         "landscape": "monthly_temperature_lines.json",
@@ -583,7 +591,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-02-21 23:29",
       "size_kb": {
         "landscape": 60.3,
@@ -594,14 +604,16 @@
       "id": "warming_stripes_mobile",
       "title": "Warming Stripes (Ed Hawkins) 1880 - 2025",
       "description": "Warming stripes (Ed Hawkins)",
-      "room": "other",
+      "room": "earth_system",
       "shape": "9:16",
       "files": {
         "portrait": "warming_stripes_mobile.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-02-22 00:12",
       "size_kb": {
         "portrait": 13.4
@@ -611,7 +623,7 @@
       "id": "sea_level_rise",
       "title": "Global Mean Sea Level Rise, 1993 - 2025",
       "description": "Graphic showing mean sea level rise from 1993 to 2025.",
-      "room": "other",
+      "room": "earth_system",
       "shape": "16:9",
       "files": {
         "landscape": "sea_level_rise.json",
@@ -619,7 +631,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-02-19 00:45",
       "size_kb": {
         "landscape": 92.5,
@@ -630,7 +644,7 @@
       "id": "arctic_ice_extent",
       "title": "Arctic Ice Extent, 1979 - 2025",
       "description": "Graphic showing Arctic sea ice extent in September, minimum.",
-      "room": "other",
+      "room": "earth_system",
       "shape": "16:9",
       "files": {
         "landscape": "arctic_ice_extent.json",
@@ -638,7 +652,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-02-18 21:52",
       "size_kb": {
         "landscape": 5.2,
@@ -649,7 +665,7 @@
       "id": "ocean_acidification_ph_trend",
       "title": "Ocean Acidification pH Trend, 1991 - 2023",
       "description": "Graphic showing ocean surface pH from 1988 to 2023.",
-      "room": "other",
+      "room": "earth_system",
       "shape": "16:9",
       "files": {
         "landscape": "ocean_acidification_ph_trend.json",
@@ -657,7 +673,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-02-18 22:09",
       "size_kb": {
         "landscape": 16.9,
@@ -668,14 +686,16 @@
       "id": "warming_stripes",
       "title": "Warming Stripes (Ed Hawkins), 1880 - 2025",
       "description": "Warming stripes (Ed Hawkins)",
-      "room": "other",
+      "room": "earth_system",
       "shape": "16:9",
       "files": {
         "landscape": "warming_stripes.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "See notes in graphic."
+      ],
       "converted": "2026-02-22 00:12",
       "size_kb": {
         "landscape": 13.6
@@ -1903,6 +1923,6 @@
       }
     }
   ],
-  "last_updated": "2026-09-05 09:18",
+  "last_updated": "2026-09-05 09:43",
   "total_count": 107
 }
