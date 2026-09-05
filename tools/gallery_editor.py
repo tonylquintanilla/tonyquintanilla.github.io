@@ -27,8 +27,18 @@ WHAT THE BUTTONS DO
   Delete         removes a card from the index (its JSON file stays;
                  gallery_cleanup.py removes orphans) or an EMPTY room
   Save All       writes both files (Ctrl+S)
-Edits in the right pane are applied when you press Apply, when you
-click another item, or when you save.
+  Preview        (beside each file slot) opens the card in your browser
+                 through index.html?preview=<file>: on the local server
+                 if tools/serve_gallery.py is running, otherwise on
+                 palomasorrery.com (pushed files only)
+  Pick...        (beside Live scene URL) lists the live scenes that
+                 interactive.html actually serves, read from its source
+Edits in the right pane take effect as soon as you leave the field
+(click elsewhere, Tab, or save); there is no Apply step.
+
+A LIVE card is any card with a Live scene URL: on the page it opens that
+scene instead of a file, so it may have no file at all. Set the URL
+with Pick... beside "Live scene URL" (e.g. interactive.html?exhibit=sun).
 
 Schema v2 field rules live in HANDOFF_2026-09-04_ADDENDUM_L287_schemas.md.
 Four levels is the working ceiling; a fifth level is allowed but warned.
@@ -36,6 +46,10 @@ Four levels is the working ceiling; a fifth level is allowed but warned.
 Module rewritten: September 4, 2026 with Anthropic's Claude Fable 5.1
 (L-287). Replaces the schema-v1 editor (flat categories, one file per
 card, Desktop/Mobile sections) which no longer reads the index files.
+Module updated: September 4, 2026 (L-287, same session): Preview button
+per file slot; live-scene URL picker read from interactive.html.
+Module updated: September 5, 2026 (L-287): Apply button removed, fields
+apply on focus-out; a live card may have no file.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -47,6 +61,8 @@ import json
 import os
 import re
 import copy
+import webbrowser
+import urllib.request
 from datetime import datetime
 
 
@@ -62,6 +78,40 @@ STORAGE_KEY = 'other'
 DEPTH_CEILING = 4            # door = 1 ... encounter = 4 (L-286)
 SHAPES = ('16:9', '9:16')
 SLOTS = ('landscape', 'portrait')
+LOCAL_SERVER = 'http://localhost:8000/'       # tools/serve_gallery.py
+LIVE_SITE = 'https://palomasorrery.com/'
+
+
+def preview_base():
+    """Local server if it answers within half a second, else the live site."""
+    try:
+        urllib.request.urlopen(LOCAL_SERVER, timeout=0.5).close()
+        return LOCAL_SERVER, 'local server'
+    except Exception:
+        return LIVE_SITE, 'palomasorrery.com (pushed files only)'
+
+
+def live_scene_urls(repo_root):
+    """The ?exhibit= values interactive.html serves, read from its source.
+
+    Returns a list of (url, note). The default exhibit comes from the
+    `.get("exhibit") || "..."` fallback; the rest from `EXHIBIT === "..."`.
+    """
+    path = os.path.join(repo_root, 'interactive.html')
+    urls = []
+    try:
+        with open(path, 'r', encoding='utf-8', errors='replace') as f:
+            src = f.read()
+    except OSError:
+        return urls
+    m = re.search(r'get\(["\']exhibit["\']\)\s*\|\|\s*["\']([a-z0-9_-]+)["\']', src)
+    if m:
+        urls.append(('interactive.html', f'default exhibit: {m.group(1)}'))
+    for key in sorted(set(re.findall(r'EXHIBIT\s*===?\s*["\']([a-z0-9_-]+)["\']', src))):
+        if m and key == m.group(1):
+            continue
+        urls.append((f'interactive.html?exhibit={key}', key))
+    return urls
 
 
 # ============================================================
@@ -213,6 +263,9 @@ class GalleryEditor:
         c.add_command(label="Set Portrait File...", command=lambda: self._pick_file('portrait'))
         c.add_command(label="Clear Landscape File", command=lambda: self._clear_file('landscape'))
         c.add_command(label="Clear Portrait File", command=lambda: self._clear_file('portrait'))
+        c.add_separator()
+        c.add_command(label="Preview in Browser", command=lambda: self._preview(None))
+        c.add_command(label="Pick Live Scene URL...", command=self._pick_live)
         menubar.add_cascade(label="Card", menu=c)
 
         self.root.bind('<Control-s>', lambda e: self._save_all())
@@ -231,6 +284,7 @@ class GalleryEditor:
             self._tip(b, tip)
         ttk.Separator(tb, orient='vertical').pack(side='left', fill='y', padx=8, pady=2)
         for text, cmd, tip in (
+            ("Preview", lambda: self._preview(None), "Open the selected card in your browser (index.html?preview=)"),
             ("Featured", self._toggle_featured, "Toggle the What's New flag on the selected card"),
             ("Delete", self._delete_selected, "Delete a card from the index, or an empty room"),
         ):
@@ -386,7 +440,8 @@ class GalleryEditor:
             if c.get('live'):
                 marks.append('live')
             slots = [s for s in SLOTS if (c.get('files') or {}).get(s)]
-            marks.append('+'.join(s[0].upper() for s in slots) if slots else 'NO FILE')
+            marks.append('+'.join(s[0].upper() for s in slots) if slots
+                         else ('scene only' if c.get('live') else 'NO FILE'))
             marks.append(c.get('shape', ''))
             self.tree.insert(parent_iid, 'end', iid='card:' + c['id'],
                              text=star + c.get('title', c['id']),
@@ -463,7 +518,14 @@ class GalleryEditor:
     def _entry(self, parent, key, value, r, label):
         v = tk.StringVar(value=value or '')
         self.form_vars[key] = v
-        self._row(parent, r, label, ttk.Entry(parent, textvariable=v))
+        e = ttk.Entry(parent, textvariable=v)
+        e.bind('<FocusOut>', self._on_field_leave)
+        self._row(parent, r, label, e)
+
+    def _on_field_leave(self, _event=None):
+        """Fields apply themselves when left; no Apply button."""
+        if not self.suspend_apply:
+            self._apply_form(refresh=True)
 
     def _show_room(self, path, room):
         self._clear_form()
@@ -484,6 +546,7 @@ class GalleryEditor:
         txt = tk.Text(f, height=3, wrap='word')
         txt.insert('1.0', room.get('sentence', ''))
         txt.grid(row=4, column=1, sticky='ew', pady=4)
+        txt.bind('<FocusOut>', self._on_field_leave)
         self.form_vars['sentence'] = txt
         if is_door:
             self._entry(f, 'color', room.get('color'), 5, "Color (hex)")
@@ -495,7 +558,8 @@ class GalleryEditor:
             ttk.Label(f, text="Color").grid(row=5, column=0, sticky='w', padx=(0, 10))
         sp = tk.BooleanVar(value=bool(room.get('special')))
         self.form_vars['special'] = sp
-        ttk.Checkbutton(f, text="special exhibit (side gallery)", variable=sp).grid(
+        ttk.Checkbutton(f, text="special exhibit (side gallery)", variable=sp,
+                        command=self._on_field_leave).grid(
             row=6, column=1, sticky='w', pady=4)
         n_cards = len(self._cards_in(path))
         n_rooms = len(room.get('rooms', []))
@@ -507,8 +571,6 @@ class GalleryEditor:
                               "ceiling; the content probably wants a special exhibit.",
                       foreground='#b06000', wraplength=420, justify='left').grid(
                 row=8, column=1, sticky='w', pady=(8, 0))
-        ttk.Button(f, text="Apply", command=lambda: self._apply_form(refresh=True)).grid(
-            row=9, column=1, sticky='e', pady=(14, 0))
         f.columnconfigure(1, weight=1)
 
     def _show_storage(self):
@@ -535,6 +597,7 @@ class GalleryEditor:
         txt = tk.Text(f, height=3, wrap='word')
         txt.insert('1.0', c.get('description', ''))
         txt.grid(row=3, column=1, columnspan=2, sticky='ew', pady=4)
+        txt.bind('<FocusOut>', self._on_field_leave)
         self.form_vars['description'] = txt
 
         room = c.get('room', STORAGE_KEY)
@@ -560,6 +623,9 @@ class GalleryEditor:
                        command=lambda s=slot: self._clear_file(s)).pack(side='right', padx=2) if fn else None
             ttk.Button(sf, text="Replace..." if fn else "Add...",
                        command=lambda s=slot: self._pick_file(s)).pack(side='right', padx=2)
+            if fn:
+                ttk.Button(sf, text="Preview", command=lambda s=slot: self._preview(s)).pack(
+                    side='right', padx=2)
 
         sh = tk.StringVar(value=c.get('shape', '16:9'))
         self.form_vars['shape'] = sh
@@ -567,30 +633,34 @@ class GalleryEditor:
         shf = ttk.Frame(f)
         shf.grid(row=7, column=1, columnspan=2, sticky='w')
         ttk.Radiobutton(shf, text="16:9  sweeps sideways (2D) / scales to fit (3D)",
-                        variable=sh, value='16:9').pack(anchor='w')
-        ttk.Radiobutton(shf, text="9:16  shows as today", variable=sh, value='9:16').pack(anchor='w')
+                        variable=sh, value='16:9', command=self._on_field_leave).pack(anchor='w')
+        ttk.Radiobutton(shf, text="9:16  shows as today", variable=sh, value='9:16',
+                        command=self._on_field_leave).pack(anchor='w')
 
         self._entry(f, 'live', c.get('live') or '', 8, "Live scene URL")
-        ttk.Label(f, text="e.g. interactive.html?exhibit=sun -- empty means this card opens its file",
-                  foreground='#777777').grid(row=9, column=1, columnspan=2, sticky='w')
+        ttk.Button(f, text="Pick...", command=self._pick_live).grid(row=8, column=2, padx=4)
+        ttk.Label(f, text="set: the card opens this scene instead of a file (a live card may have no file). "
+                          "Empty: the card opens its file.",
+                  foreground='#777777', wraplength=440, justify='left').grid(
+            row=9, column=1, columnspan=2, sticky='w')
 
         fe = tk.BooleanVar(value=bool(c.get('featured')))
         self.form_vars['featured'] = fe
-        ttk.Checkbutton(f, text="featured (What's New)", variable=fe).grid(
+        ttk.Checkbutton(f, text="featured (What's New)", variable=fe,
+                        command=self._on_field_leave).grid(
             row=10, column=1, sticky='w', pady=4)
 
         ttk.Label(f, text="Sources").grid(row=11, column=0, sticky='nw', padx=(0, 10), pady=4)
         st = tk.Text(f, height=4, wrap='word')
         st.insert('1.0', '\n'.join(c.get('sources') or []))
         st.grid(row=11, column=1, columnspan=2, sticky='ew', pady=4)
+        st.bind('<FocusOut>', self._on_field_leave)
         self.form_vars['sources'] = st
         ttk.Label(f, text="one per line; empty is allowed", foreground='#777777').grid(
             row=12, column=1, sticky='w')
 
         ttk.Label(f, text=f"converted {c.get('converted', '?')}", foreground='#777777').grid(
             row=13, column=1, sticky='w', pady=(8, 0))
-        ttk.Button(f, text="Apply", command=lambda: self._apply_form(refresh=True)).grid(
-            row=14, column=1, columnspan=2, sticky='e', pady=(14, 0))
         f.columnconfigure(1, weight=1)
 
     def _apply_form(self, refresh=False):
@@ -657,7 +727,7 @@ class GalleryEditor:
                 self.suspend_apply = True
                 self._refresh_tree(keep=keep)
                 self.suspend_apply = False
-                self.status_var.set("Applied. Save All writes it to disk.")
+                self.status_var.set("Edit applied (unsaved). Save All writes it to disk.")
 
     # --------------------------------------------------------
     # Room actions
@@ -928,8 +998,8 @@ class GalleryEditor:
         files = c.get('files') or {}
         if slot not in files:
             return
-        if len(files) == 1:
-            messagebox.showinfo("Last file", "A card needs at least one file. Add the other slot first.")
+        if len(files) == 1 and not c.get('live'):
+            messagebox.showinfo("Last file", "A card needs a file unless it has a live scene URL.")
             return
         files.pop(slot)
         if isinstance(c.get('size_kb'), dict):
@@ -938,6 +1008,74 @@ class GalleryEditor:
         self._refresh_tree(keep='card:' + c['id'])
         self._show_card(c)
         self.status_var.set(f"Cleared {slot} file on {c['id']}")
+
+    def _preview(self, slot):
+        """Open the card in the browser through index.html?preview=<file>."""
+        self._apply_form()
+        c = self._current_card()
+        if c is None:
+            return
+        files = c.get('files') or {}
+        if slot is None:
+            slot = 'landscape' if files.get('landscape') else 'portrait'
+        fn = files.get(slot)
+        if not fn:
+            self.status_var.set(f"No {slot} file on {c['id']}.")
+            return
+        base, where = preview_base()
+        url = f"{base}?preview={fn}"
+        webbrowser.open(url)
+        self.status_var.set(f"Preview opened on {where}: {url}")
+
+    def _pick_live(self):
+        """Choose a live-scene URL from what interactive.html serves."""
+        self._apply_form()
+        c = self._current_card()
+        if c is None:
+            return
+        repo_root = os.path.dirname(os.path.dirname(self.meta_path))
+        options = [('', 'none -- this card opens its file')] + live_scene_urls(repo_root)
+        dlg = tk.Toplevel(self.root)
+        dlg.title(f"Live scene for {c['id']}")
+        dlg.geometry("460x300")
+        dlg.transient(self.root)
+        dlg.grab_set()
+        ttk.Label(dlg, text="Live scenes interactive.html serves (read from its source):").pack(
+            anchor='w', padx=12, pady=(12, 4))
+        lb = tk.Listbox(dlg)
+        lb.pack(fill='both', expand=True, padx=12, pady=4)
+        for url, note in options:
+            lb.insert('end', f"{url}    [{note}]" if url else note)
+            if url == (c.get('live') or ''):
+                lb.selection_set('end')
+        if len(options) == 1:
+            ttk.Label(dlg, text="interactive.html was not found beside the gallery/ folder.",
+                      foreground='#b06000').pack(anchor='w', padx=12)
+        result = {'url': None}
+
+        def ok(_e=None):
+            sel = lb.curselection()
+            if sel:
+                result['url'] = options[sel[0]][0]
+            dlg.destroy()
+
+        bf = ttk.Frame(dlg)
+        bf.pack(fill='x', padx=12, pady=(0, 12))
+        ttk.Button(bf, text="OK", command=ok).pack(side='right', padx=2)
+        ttk.Button(bf, text="Cancel", command=dlg.destroy).pack(side='right', padx=2)
+        lb.bind('<Double-1>', ok)
+        dlg.bind('<Escape>', lambda e: dlg.destroy())
+        self.root.wait_window(dlg)
+        if result['url'] is None:
+            return
+        new = result['url'] or None
+        if c.get('live') != new:
+            c['live'] = new
+            if 'live' in self.form_vars:
+                self.form_vars['live'].set(new or '')
+            self._mark_dirty()
+            self._refresh_tree(keep='card:' + c['id'])
+            self.status_var.set(f"Live scene for {c['id']}: {new or 'none'}")
 
     # --------------------------------------------------------
     # Dirty state, save, close

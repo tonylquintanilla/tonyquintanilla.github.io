@@ -1873,7 +1873,8 @@
                 var files = v.files || {};
                 var keys = Object.keys(files);
                 if (!v.mode) {
-                    v.mode = keys.length > 1 ? 'both' : (keys[0] || 'landscape');
+                    v.mode = (keys.length > 1 || (!keys.length && v.live)) ? 'both'
+                             : (keys[0] || 'landscape');
                 }
                 if (!v.filename && keys.length) v.filename = files[keys[0]];
                 if (v.size_kb && typeof v.size_kb === 'object') {
@@ -2146,6 +2147,9 @@
                             if (item.featured) {
                                 html += '<div class="viz-card-featured">Featured</div>';
                             }
+                            if (item.live) {
+                                html += '<div class="viz-card-featured">Live scene</div>';
+                            }
                             html += '</div>';
                         }
                         html += '</div>'; // close .subcategory-items
@@ -2165,6 +2169,9 @@
                         }
                         if (item.featured) {
                             html += '<div class="viz-card-featured">Featured</div>';
+                        }
+                        if (item.live) {
+                            html += '<div class="viz-card-featured">Live scene</div>';
                         }
                         html += '</div>';
                     }
@@ -2215,6 +2222,10 @@
         async function loadVisualization(vizId) {
             var viz = vizLookup[vizId];
             if (!viz) return;
+            if (viz.live) {                 // a live card opens its scene (L-287)
+                window.location.href = viz.live;
+                return;
+            }
 
             // Update state
             currentVizId = vizId;
