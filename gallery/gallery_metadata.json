@@ -204,14 +204,16 @@
       "id": "planetary_boundaries",
       "title": "Planetary Boundaries (Stockholm Resilience Centre)",
       "description": "Graphic after the Stockholm Resilience Centre's Planetary Boundaries, showing processes that regulate planetary stability.",
-      "room": "other",
+      "room": "earth_system",
       "shape": "16:9",
       "files": {
         "landscape": "planetary_boundaries.json"
       },
       "live": null,
       "featured": true,
-      "sources": [],
+      "sources": [
+        "After Stockholm Resilience Centre Planetary Boundaries"
+      ],
       "converted": "2026-02-08 23:37",
       "size_kb": {
         "landscape": 13.4
@@ -1903,6 +1905,6 @@
       }
     }
   ],
-  "last_updated": "2026-09-04 23:32",
+  "last_updated": "2026-09-05 08:37",
   "total_count": 107
 }

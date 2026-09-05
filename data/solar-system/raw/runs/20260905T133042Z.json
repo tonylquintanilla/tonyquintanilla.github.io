@@ -1,0 +1,24 @@
+{
+  "run_id": "20260905T133042Z",
+  "started": "2026-09-05T13:30:42.231285+00:00",
+  "mode": "nightly",
+  "objects": {
+    "sun": "features-only (frame origin; no ephemeris fetched)",
+    "earth": "nightly(8)",
+    "jupiter": "nightly(8)",
+    "saturn": "nightly(8)",
+    "moon": "nightly(8)",
+    "io": "nightly(8)",
+    "titan": "nightly(8)",
+    "pluto": "nightly(8)",
+    "charon": "nightly(8)",
+    "apophis": "nightly(8)",
+    "voyager_1": "nightly(8)",
+    "encke": "nightly(8)",
+    "halley": "nightly(8)"
+  },
+  "guard_warnings": [],
+  "structural_validation": "pass",
+  "committed": false,
+  "finished": "2026-09-05T13:31:01.273235+00:00"
+}
