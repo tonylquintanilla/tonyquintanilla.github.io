@@ -12,24 +12,9 @@
       },
       "live": null,
       "featured": false,
-      "sources": [],
-      "converted": "2026-02-17 23:25",
-      "size_kb": {
-        "landscape": 10082.0
-      }
-    },
-    {
-      "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape",
-      "title": "Inner Solar System Animation 2-4-2005 21 Years",
-      "description": "Animation of the inner solar system from 2005 for 21 years.",
-      "room": "other",
-      "shape": "16:9",
-      "files": {
-        "landscape": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
+      "sources": [
+        "JPL Horizons"
+      ],
       "converted": "2026-02-17 23:25",
       "size_kb": {
         "landscape": 10082.0
@@ -338,14 +323,16 @@
       "id": "inner_solar_system_animation_2-4-2005_21_years_social_copy2",
       "title": "Inner Solar System Animation 2-4-2005 for 21 Years",
       "description": "Animation of the inner solar system from 2005 for 21 years.",
-      "room": "other",
+      "room": "solar_system",
       "shape": "9:16",
       "files": {
         "portrait": "inner_solar_system_animation_2-4-2005_21_years_social.json"
       },
       "live": null,
       "featured": false,
-      "sources": [],
+      "sources": [
+        "JPL Horizons"
+      ],
       "converted": "2026-02-17 23:24",
       "size_kb": {
         "portrait": 10857.8
@@ -1948,6 +1935,6 @@
       }
     }
   ],
-  "last_updated": "2026-09-04 22:54",
-  "total_count": 110
+  "last_updated": "2026-09-04 22:59",
+  "total_count": 109
 }
