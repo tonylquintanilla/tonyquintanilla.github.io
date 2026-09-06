@@ -1963,8 +1963,24 @@
       "size_kb": {
         "landscape": 7.0
       }
+    },
+    {
+      "id": "solar_system_explorer",
+      "title": "Solar System Explorer",
+      "description": "Premade simulation of the solar system.",
+      "room": "other",
+      "shape": "16:9",
+      "files": {},
+      "live": "interactive.html",
+      "featured": false,
+      "sources": [
+        "Uses standard Keplerian mechanics.",
+        "No live JPL Horizons data."
+      ],
+      "converted": "2026-09-06 15:02",
+      "size_kb": {}
     }
   ],
-  "last_updated": "2026-09-05 16:11",
-  "total_count": 105
+  "last_updated": "2026-09-06 15:02",
+  "total_count": 106
 }
