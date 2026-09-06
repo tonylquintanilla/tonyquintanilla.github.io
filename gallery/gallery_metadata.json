@@ -2,23 +2,20 @@
   "version": 2,
   "visualizations": [
     {
-      "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy",
-      "title": "Inner Solar System Animation",
-      "description": "Animation of the inner solar system from February 4, 2005 for 21 years.",
+      "id": "solar_system_explorer",
+      "title": "Solar System Explorer",
+      "description": "Premade simulation of the solar system.",
       "room": "solar_system",
       "shape": "16:9",
-      "files": {
-        "landscape": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape.json"
-      },
-      "live": null,
-      "featured": false,
+      "files": {},
+      "live": "interactive.html",
+      "featured": true,
       "sources": [
-        "JPL Horizons"
+        "Uses standard Keplerian mechanics.",
+        "No live JPL Horizons data."
       ],
-      "converted": "2026-02-17 23:25",
-      "size_kb": {
-        "landscape": 10082.0
-      }
+      "converted": "2026-09-06 15:02",
+      "size_kb": {}
     },
     {
       "id": "panstarrs_perigee_geocentric_gallery",
@@ -301,6 +298,25 @@
       }
     },
     {
+      "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy",
+      "title": "Inner Solar System Animation",
+      "description": "Animation of the inner solar system from February 4, 2005 for 21 years.",
+      "room": "solar_system",
+      "shape": "16:9",
+      "files": {
+        "landscape": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape.json"
+      },
+      "live": null,
+      "featured": false,
+      "sources": [
+        "JPL Horizons"
+      ],
+      "converted": "2026-02-17 23:25",
+      "size_kb": {
+        "landscape": 10082.0
+      }
+    },
+    {
       "id": "inner_solar_system_animation_2-4-2005_21_years_social_copy2",
       "title": "Inner Solar System Animation",
       "description": "Animation of the inner solar system from February 4, 2005 for 21 years.",
@@ -317,25 +333,6 @@
       "converted": "2026-02-17 23:24",
       "size_kb": {
         "portrait": 10857.8
-      }
-    },
-    {
-      "id": "paloma_social_view_2005_02_04",
-      "title": "Inner Solar System",
-      "description": "Inner planets on February 4, 2005.",
-      "room": "solar_system",
-      "shape": "9:16",
-      "files": {
-        "portrait": "paloma_social_view_2005_02_04.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [
-        "JPL Horizons"
-      ],
-      "converted": "2026-02-11 00:38",
-      "size_kb": {
-        "portrait": 622.8
       }
     },
     {
@@ -1965,22 +1962,25 @@
       }
     },
     {
-      "id": "solar_system_explorer",
-      "title": "Solar System Explorer",
-      "description": "Premade simulation of the solar system.",
+      "id": "paloma_social_view_2005_02_04",
+      "title": "Inner Solar System",
+      "description": "Inner planets on February 4, 2005.",
       "room": "solar_system",
-      "shape": "16:9",
-      "files": {},
-      "live": "interactive.html",
+      "shape": "9:16",
+      "files": {
+        "portrait": "paloma_social_view_2005_02_04.json"
+      },
+      "live": null,
       "featured": false,
       "sources": [
-        "Uses standard Keplerian mechanics.",
-        "No live JPL Horizons data."
+        "JPL Horizons"
       ],
-      "converted": "2026-09-06 15:02",
-      "size_kb": {}
+      "converted": "2026-02-11 00:38",
+      "size_kb": {
+        "portrait": 622.8
+      }
     }
   ],
-  "last_updated": "2026-09-06 15:07",
+  "last_updated": "2026-09-06 15:13",
   "total_count": 106
 }
