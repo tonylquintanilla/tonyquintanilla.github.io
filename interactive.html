@@ -32,6 +32,12 @@
         the render says which box edge is which and the triad has
         something to be checked against. Grid lines stay white.
         ?edge=N sets the line weight for Mode 5)
+     Updated: September 6, 2026 with Anthropic's Claude Opus 5
+       (L-289: three coloured axis lines THROUGH the origin, because
+        Plotly paints its grid on the walls only and the centre of
+        the cube had nothing running through it -- the box edges also
+        ran off the sides of a portrait phone. ?axes=full|pos|off,
+        ?edge=0 turns the coloured box edges off)
      Architecture: Option C viewer (master plan v8 §2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1794,6 +1800,10 @@ async function initSunExhibit() {
         // is not there.
         sunPlotDiv = gd;
         buildSunDrawer(traces);
+        // L-289: the three axis lines through the origin go in AFTER the
+        // drawer, so the drawer has no row for them, and after the
+        // arrival extent has been measured, so they cannot widen it.
+        await sunOriginAxesInstall(gd);
         // L-289: the frame HUD binds to the camera once the scene exists.
         sunHudInstall(gd);
         // Arrival names its focus without reframing: newPlot has already
@@ -1876,8 +1886,84 @@ const SUN_AXIS_COLORS = { x: "#e06c6c", y: "#5dbb7a", z: "#6fa8ff" };
 // labels. Read once, at script evaluation, before any plot is built.
 const SUN_AXIS_LINE_WIDTH = (function () {
     const n = parseInt(new URLSearchParams(window.location.search).get("edge"), 10);
+    // 0 turns the box-edge colouring off; 1..6 set its weight.
+    if (n === 0) { return 0; }
     return (n >= 1 && n <= 6) ? n : 2;
 })();
+
+// The interior axes: three lines through the origin, in the same hues.
+// Tony, 2026-09-06: the coloured box edges run off the sides of a
+// portrait phone, and Plotly draws its grid on the walls only, so the
+// centre of the cube has nothing passing through it. These give the
+// cube the vertex it lacks. ?axes=full (default) crosses at the Sun,
+// "pos" draws the positive halves only (a scene copy of the triad),
+// "off" draws none.
+const SUN_ORIGIN_AXES = (function () {
+    const v = (new URLSearchParams(window.location.search).get("axes") || "").toLowerCase();
+    return (v === "pos" || v === "off") ? v : "full";
+})();
+let sunOriginAxisIdx = null;   // trace indices, set once after newPlot
+
+// Endpoints for one axis line at the current half-range. Separated
+// from the drawing so it can be exercised without a browser.
+function sunOriginAxisPoints(axis, r, form) {
+    if (form === "off") { r = 0; }
+    const lo = (form === "pos") ? 0 : -r;
+    const hi = r;
+    const zero = [0, 0];
+    const span = [lo, hi];
+    if (axis === "x") { return { x: span, y: zero, z: zero }; }
+    if (axis === "y") { return { x: zero, y: span, z: zero }; }
+    return { x: zero, y: zero, z: span };
+}
+
+// The half-range the scene is showing right now, from the x axis.
+function sunCurrentHalfRange(gd) {
+    const ax = (gd && gd.layout && gd.layout.scene && gd.layout.scene.xaxis) || {};
+    if (!ax.range || ax.range.length < 2) { return 0; }
+    return Math.abs(ax.range[1] - ax.range[0]) / 2;
+}
+
+// Added ONCE, after buildSunDrawer, so the drawer never gets a row for
+// them and the arrival extent (measured before newPlot) never counted
+// them. No legendgroup, no hover.
+function sunOriginAxesInstall(gd) {
+    if (!gd || sunOriginAxisIdx || SUN_ORIGIN_AXES === "off") { return Promise.resolve(); }
+    const r = sunCurrentHalfRange(gd);
+    if (!(r > 0)) { return Promise.resolve(); }
+    const axes = ["x", "y", "z"];
+    const base = (gd.data || []).length;
+    const add = axes.map(function (a) {
+        const p = sunOriginAxisPoints(a, r, SUN_ORIGIN_AXES);
+        return {
+            type: "scatter3d", mode: "lines",
+            x: p.x, y: p.y, z: p.z,
+            line: { color: SUN_AXIS_COLORS[a], width: 3 },
+            hoverinfo: "skip", showlegend: false,
+            name: "axis " + a,
+        };
+    });
+    sunOriginAxisIdx = [base, base + 1, base + 2];
+    return Plotly.addTraces(gd, add);
+}
+
+// Rebuilt at the end of every frame change, from the range the frame
+// just took. Called from sunHudUpdate, which is a then() continuation
+// of a relayout and not an event handler, so the L-278 re-entry
+// hazard does not apply.
+function sunOriginAxesUpdate() {
+    const gd = sunPlotDiv;
+    if (!gd || !sunOriginAxisIdx || !window.Plotly) { return Promise.resolve(); }
+    const r = sunCurrentHalfRange(gd);
+    if (!(r > 0)) { return Promise.resolve(); }
+    const axes = ["x", "y", "z"];
+    const xs = [], ys = [], zs = [];
+    for (let i = 0; i < 3; i++) {
+        const p = sunOriginAxisPoints(axes[i], r, SUN_ORIGIN_AXES);
+        xs.push(p.x); ys.push(p.y); zs.push(p.z);
+    }
+    return Plotly.restyle(gd, { x: xs, y: ys, z: zs }, sunOriginAxisIdx);
+}
 let sunHudBound = false;
 let sunHudFrame = 0;   // requestAnimationFrame handle
 
@@ -1983,7 +2069,9 @@ function sunHudSchedule(ev) {
 // relayout chain. Does nothing off the Sun.
 function sunHudUpdate() {
     if (sunPlotDiv && sunHudBound) { sunGridChipUpdate(); sunTriadUpdate(); }
-    return Promise.resolve();
+    // The interior axes are scene geometry, so unlike the chip and the
+    // triad they have to be re-cut to the new range (L-289, 2026-09-06).
+    return sunOriginAxesUpdate();
 }
 
 // The scene's LIVE camera. Plotly's relayout events fire on a mouse
