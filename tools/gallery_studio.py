@@ -39,6 +39,11 @@ Module updated: June 2026 with Anthropic's Claude Opus 4.8
   gallery/_studio_preview.json -> ?preview= in the genuine gallery), so the
   GE button / link icon appear exactly as the live gallery will show them.
 
+Module updated: September 6, 2026 with Anthropic's Claude Fable 5.1 (L-288)
+- New Interactive Card: a card that opens a scene in interactive.html
+  (title, placard, sources, scene URL from a picker); no figure, nothing
+  converted; lands in Storage via json_converter.add_live_card.
+
 Role: devtool
 Domain: gallery_pipeline
 """
@@ -3366,6 +3371,17 @@ class GalleryStudio:
                 "metadata (type, date, distance, velocity, note).\n\n"
                 "Output: a .py file to paste into spacecraft_encounters.py.")
 
+        live_btn = tk.Button(action_frame, text="New Interactive Card...",
+                             command=self._new_live_card, width=20,
+                             fg='#7a4a9a')
+        live_btn.pack(side='left', padx=3)
+        ToolTip(live_btn,
+                "Create a card that opens a live scene in interactive.html\n"
+                "(the Sun today; Earth when its exhibit exists).\n\n"
+                "No figure and nothing to convert: you write the title,\n"
+                "the placard and the sources, and pick the scene. The card\n"
+                "lands in Storage; move it to its room in the editor.")
+
         # Spacer to push status bar down and give tooltip room
         spacer = tk.Frame(self.root, height=40)
         spacer.pack(fill='x')
@@ -6011,6 +6027,78 @@ class GalleryStudio:
             self._log_status(f"Preview error: {e}")
             messagebox.showerror("Preview Error",
                                  f"Could not generate preview:\n\n{e}")
+
+    def _new_live_card(self):
+        """New Interactive Card (L-288): a card that opens a scene in
+        interactive.html. No figure, nothing to convert; Studio writes the
+        card (title, placard, sources, scene URL) into storage through
+        json_converter.add_live_card, and the editor places it."""
+        import json_converter
+        root = self._repo_root()
+        scenes = json_converter.live_scene_urls(root)
+        if not scenes:
+            messagebox.showinfo("New Interactive Card",
+                                "No scenes found in interactive.html.")
+            return
+
+        dlg = tk.Toplevel(self.root)
+        dlg.title("New Interactive Card")
+        dlg.transient(self.root)
+        dlg.grab_set()
+        pad = {'padx': 8, 'pady': 4}
+
+        tk.Label(dlg, text="Scene (read from interactive.html)").grid(
+            row=0, column=0, sticky='w', **pad)
+        labels = [f"{u}    ({note})" for u, note in scenes]
+        var_scene = tk.StringVar(value=labels[0])
+        tk.OptionMenu(dlg, var_scene, *labels).grid(
+            row=0, column=1, sticky='ew', **pad)
+
+        tk.Label(dlg, text="Title").grid(row=1, column=0, sticky='w', **pad)
+        var_title = tk.StringVar()
+        tk.Entry(dlg, textvariable=var_title, width=48).grid(
+            row=1, column=1, sticky='ew', **pad)
+
+        tk.Label(dlg, text="Placard (one or two sentences)").grid(
+            row=2, column=0, sticky='nw', **pad)
+        txt_desc = tk.Text(dlg, width=48, height=3, wrap='word')
+        txt_desc.grid(row=2, column=1, sticky='ew', **pad)
+
+        tk.Label(dlg, text="Sources (one per line)").grid(
+            row=3, column=0, sticky='nw', **pad)
+        txt_src = tk.Text(dlg, width=48, height=4, wrap='none')
+        txt_src.grid(row=3, column=1, sticky='ew', **pad)
+
+        tk.Label(dlg, fg='#555', justify='left',
+                 text="The card lands in Storage; move it to its room in "
+                      "the gallery editor.\nNo picture: a live card is a "
+                      "placard with an Interactive tag.").grid(
+            row=4, column=0, columnspan=2, sticky='w', **pad)
+
+        def create():
+            url = var_scene.get().split('    (')[0].strip()
+            title = var_title.get()
+            desc = txt_desc.get('1.0', 'end').strip()
+            sources = txt_src.get('1.0', 'end').splitlines()
+            try:
+                entry = json_converter.add_live_card(root, url, title, desc, sources)
+            except (ValueError, OSError, json.JSONDecodeError) as e:
+                messagebox.showerror("New Interactive Card", str(e), parent=dlg)
+                return
+            self._log_status(f"Interactive card created in Storage: {entry['id']} -> {url}")
+            messagebox.showinfo(
+                "New Interactive Card",
+                f"Created '{entry['title']}' ({entry['id']}) in Storage, opening {url}.\n\n"
+                "Open the gallery editor to move it to its room.", parent=dlg)
+            dlg.destroy()
+
+        btns = tk.Frame(dlg)
+        btns.grid(row=5, column=0, columnspan=2, sticky='e', **pad)
+        tk.Button(btns, text="Create", command=create, width=10,
+                  fg='blue').pack(side='right', padx=3)
+        tk.Button(btns, text="Cancel", command=dlg.destroy,
+                  width=10).pack(side='right', padx=3)
+        dlg.columnconfigure(1, weight=1)
 
     def _export(self):
         """Export the tailored HTML to a user-chosen location."""

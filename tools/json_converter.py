@@ -27,6 +27,9 @@ Module updated: September 4, 2026 with Anthropic's Claude Fable 5.1 (L-287):
 writes schema-v2 cards (room / files / shape) when gallery_metadata.json is
 version 2; new cards land in storage ("other") and are placed in the editor;
 the category prompt is skipped when gallery_config.json is version 2.
+Module updated: September 6, 2026 with Anthropic's Claude Fable 5.1 (L-288):
+live_scene_urls() moved here from the editor; add_live_card() writes an
+INTERACTIVE card (live scene, no file) into storage for Gallery Studio.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -151,6 +154,90 @@ def _v2_entry(metadata, safe_name, title, description, size_kb, mode):
         "size_kb": {slot: round(size_kb, 1)},
     }
     return entry, None
+
+
+def live_scene_urls(repo_root):
+    """The ?exhibit= values interactive.html serves, read from its source.
+
+    Returns a list of (url, note). The default exhibit comes from the
+    `.get("exhibit") || "..."` fallback; the rest from `EXHIBIT === "..."`.
+    Moved here from gallery_editor.py on 2026-09-06 (L-288) so Studio and
+    the editor read one list.
+    """
+    path = os.path.join(repo_root, 'interactive.html')
+    urls = []
+    try:
+        with open(path, 'r', encoding='utf-8', errors='replace') as f:
+            src = f.read()
+    except OSError:
+        return urls
+    m = re.search(r'get\(["\']exhibit["\']\)\s*\|\|\s*["\']([a-z0-9_-]+)["\']', src)
+    if m:
+        urls.append(('interactive.html', f'default exhibit: {m.group(1)}'))
+    for key in sorted(set(re.findall(r'EXHIBIT\s*===?\s*["\']([a-z0-9_-]+)["\']', src))):
+        if m and key == m.group(1):
+            continue
+        urls.append((f'interactive.html?exhibit={key}', key))
+    return urls
+
+
+def add_live_card(repo_root, url, title, description="", sources=None):
+    """Write a schema-v2 INTERACTIVE card into storage (L-288).
+
+    A live card opens a scene in interactive.html; it has no figure file,
+    so nothing is converted. The card lands in room "other" (storage) and
+    is placed in the editor, like every other new card. Refuses when the
+    metadata is not schema v2, when the title is empty, or when another
+    card already opens the same scene (edit that one in the editor).
+    Returns the new entry. Raises ValueError with a plain message.
+    """
+    title = (title or "").strip()
+    url = (url or "").strip()
+    if not title:
+        raise ValueError("The card needs a title.")
+    if not url:
+        raise ValueError("Pick the scene the card should open.")
+    metadata_path = os.path.join(repo_root, DEFAULT_OUTPUT_FOLDER, METADATA_FILE)
+    if not os.path.exists(metadata_path):
+        raise ValueError(f"{metadata_path} not found.")
+    with open(metadata_path, 'r', encoding='utf-8') as f:
+        metadata = json.load(f)
+    if metadata.get("version") != 2:
+        raise ValueError("gallery_metadata.json is not schema version 2; "
+                         "run the L-287 migration first.")
+    viz_list = metadata.get("visualizations", [])
+    for v in viz_list:
+        if (v.get("live") or "").strip() == url:
+            raise ValueError(f"'{v.get('title', v.get('id'))}' already opens "
+                             f"{url}. Edit that card in the editor instead.")
+    base = re.sub(r'[^\w\-]', '_', title.lower()).strip('_') or "interactive"
+    safe_name = base
+    n = 2
+    ids = {v.get("id") for v in viz_list}
+    while safe_name in ids:
+        safe_name = f"{base}_{n}"
+        n += 1
+    entry = {
+        "id": safe_name,
+        "title": title,
+        "description": (description or "").strip(),
+        "room": "other",
+        "shape": "16:9",
+        "files": {},
+        "live": url,
+        "featured": False,
+        "sources": [s.strip() for s in (sources or []) if s and s.strip()],
+        "converted": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "size_kb": {},
+    }
+    viz_list.append(entry)
+    metadata["visualizations"] = viz_list
+    metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+    metadata["total_count"] = len(viz_list)
+    with open(metadata_path, 'w', encoding='utf-8') as f:
+        json.dump(metadata, f, indent=2)
+    print(f"  metadata: new INTERACTIVE card {safe_name} -> {url} in Storage; place it in the editor")
+    return entry
 
 
 # ============================================================================

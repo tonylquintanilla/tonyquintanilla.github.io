@@ -131,6 +131,7 @@ ROLE_MAP = {
     'json_converter':                      'devtool',
     'module_atlas':                        'devtool',
     'serve_gallery':                       'devtool',
+    'sweep_report':                        'devtool',
     'test_artifact1_earth':                'devtool',
     'test_gallery_cache_builder_offline':  'devtool',
 }

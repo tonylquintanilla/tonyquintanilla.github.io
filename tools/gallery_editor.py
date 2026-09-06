@@ -53,6 +53,8 @@ Module updated: September 4, 2026 (L-287, same session): Preview button
 per file slot; live-scene URL picker read from interactive.html.
 Module updated: September 5, 2026 (L-287): Apply button removed, fields
 apply on focus-out; a live card may have no file; Copy to Room.
+Module updated: September 6, 2026 (L-288): live_scene_urls() now lives in
+json_converter.py and is imported; Studio reads the same list.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -94,27 +96,9 @@ def preview_base():
         return LIVE_SITE, 'palomasorrery.com (pushed files only)'
 
 
-def live_scene_urls(repo_root):
-    """The ?exhibit= values interactive.html serves, read from its source.
-
-    Returns a list of (url, note). The default exhibit comes from the
-    `.get("exhibit") || "..."` fallback; the rest from `EXHIBIT === "..."`.
-    """
-    path = os.path.join(repo_root, 'interactive.html')
-    urls = []
-    try:
-        with open(path, 'r', encoding='utf-8', errors='replace') as f:
-            src = f.read()
-    except OSError:
-        return urls
-    m = re.search(r'get\(["\']exhibit["\']\)\s*\|\|\s*["\']([a-z0-9_-]+)["\']', src)
-    if m:
-        urls.append(('interactive.html', f'default exhibit: {m.group(1)}'))
-    for key in sorted(set(re.findall(r'EXHIBIT\s*===?\s*["\']([a-z0-9_-]+)["\']', src))):
-        if m and key == m.group(1):
-            continue
-        urls.append((f'interactive.html?exhibit={key}', key))
-    return urls
+# live_scene_urls() moved to json_converter.py on 2026-09-06 (L-288) so
+# Studio and the editor read one list. Same signature, same result.
+from json_converter import live_scene_urls  # noqa: E402
 
 
 # ============================================================

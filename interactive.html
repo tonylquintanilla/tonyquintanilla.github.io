@@ -22,6 +22,11 @@
      Updated: September 5, 2026 with Anthropic's Claude Fable 5.1
        (L-282: the Gallery button steps back in history when the
         gallery is behind it, so the browser's back agrees with ours)
+     Updated: September 6, 2026 with Anthropic's Claude Fable 5.1
+       (L-289 HUD fixes from the desktop and phone pass: the frame
+        note opens on hover or tap and closes; grid lines back to
+        white; arrival dtick set so grid and chip agree; the triad
+        follows the live camera on touch)
      Architecture: Option C viewer (master plan v8 §2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -208,6 +213,8 @@
             font: 400 12.5px/1.5 'DM Sans', system-ui, sans-serif;
             color: var(--text-primary);
         }
+        /* Must outrank body.sun-exhibit .sun-chrome, or hidden loses. */
+        body.sun-exhibit .sun-frame-note[hidden] { display: none; }
         .sun-frame-note[hidden] { display: none; }
         .sun-frame-note h4 {
             margin: 0 0 6px; font: 600 10px 'DM Sans', sans-serif;
@@ -216,10 +223,6 @@
         .sun-frame-note p { margin: 0 0 6px; }
         .sun-frame-note .src { color: var(--text-dim); font-size: 11px; }
         .sun-frame-note .src a { color: var(--text-secondary); }
-        .sun-frame-note .close {
-            position: absolute; top: 6px; right: 8px; background: none; border: none;
-            color: var(--text-dim); font-size: 16px; cursor: pointer; line-height: 1;
-        }
         /* L-267 step 7: the nav cluster (gallery/nav_cluster.js) sits
            in the corner the open drawer covers, so it steps aside. */
         body.sun-drawer-open .nav-cluster { display: none; }
@@ -728,9 +731,7 @@
                      aria-label="Axis directions x, y, z"></svg>
                 <div class="sun-grid-chip" id="sun-grid-chip"></div>
             </div>
-            <div class="sun-frame-note sun-chrome" id="sun-frame-note" hidden role="note">
-                <button class="close" type="button" id="sun-frame-note-close"
-                        aria-label="Close">&times;</button>
+            <div class="sun-frame-note sun-chrome" id="sun-frame-note" hidden role="tooltip">
                 <h4>The frame</h4>
                 <p>The <b>x</b> arrow points at the vernal equinox, the First
                 Point of Aries (&#9800;). The floor of this box is the
@@ -1609,14 +1610,15 @@ function buildSunLayout(halfRangeAu) {
 
     return {
         scene: {
-            // Grid lines coloured per axis to match the triad (L-289):
-            // the lines that mark x positions are x-coloured, and so on.
-            xaxis: { ...axisTemplate, title: axisTitle("X (AU)"), gridcolor: "rgba(224,108,108,0.30)" },
-            yaxis: { ...axisTemplate, title: axisTitle("Y (AU)"), gridcolor: "rgba(93,187,122,0.30)" },
+            // Grid lines stay the template white. Per-axis colours were
+            // tried on 2026-09-05 and read as a second key against the
+            // triad (Tony, 2026-09-06); the triad alone carries the hues.
+            xaxis: { ...axisTemplate, title: axisTitle("X (AU)") },
+            yaxis: { ...axisTemplate, title: axisTitle("Y (AU)") },
             // 1:1:1, unlike the Explorer's flattened z.  These shells are
             // spheres; squashing z would draw every one of them as a
             // pancake and the render would be lying.
-            zaxis: { ...axisTemplate, title: axisTitle("Z (AU)"), gridcolor: "rgba(111,168,255,0.30)" },
+            zaxis: { ...axisTemplate, title: axisTitle("Z (AU)") },
             camera: {
                 eye: { x: 1.25, y: -1.25, z: 0.75 },
                 center: { x: 0, y: 0, z: 0 },
@@ -1904,14 +1906,39 @@ function sunTriadUpdate(camera) {
     svg.innerHTML = html;
     const aries = document.getElementById("sun-aries");
     if (aries) {
-        aries.addEventListener("click", sunFrameNoteToggle);
-        aries.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { sunFrameNoteToggle(); } });
+        // Like every other hover on the page: a mouse opens it by
+        // resting on the glyph and closes it by leaving; a finger
+        // toggles it with a tap (tap elsewhere closes, see install).
+        aries.addEventListener("pointerenter", function (ev) { if (ev.pointerType !== "touch") { sunFrameNoteShow(true); } });
+        aries.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") { sunFrameNoteLeave(); } });
+        aries.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            // Tap toggles on screens without hover; a mouse already has it.
+            if (!window.matchMedia("(hover: hover)").matches) { sunFrameNoteShow(!sunFrameNoteOpen()); }
+        });
+        aries.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); sunFrameNoteShow(!sunFrameNoteOpen()); } });
     }
 }
 
-function sunFrameNoteToggle() {
+let sunFrameNoteTimer = 0;
+function sunFrameNoteOpen() {
     const n = document.getElementById("sun-frame-note");
-    if (n) { n.hidden = !n.hidden; }
+    return !!(n && !n.hidden);
+}
+function sunFrameNoteShow(on) {
+    if (sunFrameNoteTimer) { clearTimeout(sunFrameNoteTimer); sunFrameNoteTimer = 0; }
+    const n = document.getElementById("sun-frame-note");
+    if (n) { n.hidden = !on; }
+}
+// The pointer left the glyph: close unless it moved onto the note
+// (the source link lives there). The note's own leave closes it.
+function sunFrameNoteLeave() {
+    if (sunFrameNoteTimer) { clearTimeout(sunFrameNoteTimer); }
+    sunFrameNoteTimer = setTimeout(function () {
+        sunFrameNoteTimer = 0;
+        const n = document.getElementById("sun-frame-note");
+        if (n && !n.matches(":hover")) { n.hidden = true; }
+    }, 250);
 }
 
 function sunHudSchedule(ev) {
@@ -1928,16 +1955,58 @@ function sunHudUpdate() {
     return Promise.resolve();
 }
 
-// Once, after newPlot. Binds the camera events; the handlers only touch
-// the SVG and the chip.
+// The scene's LIVE camera. Plotly's relayout events fire on a mouse
+// drag but not during a touch rotation (Tony's phone, 2026-09-06), so
+// the triad watches the camera itself, one read per animation frame,
+// and redraws only when it moved. gl3d exposes it as getCamera(); the
+// layout copy is the fallback.
+function sunLiveCamera(gd) {
+    try {
+        const sc = gd._fullLayout && gd._fullLayout.scene && gd._fullLayout.scene._scene;
+        if (sc && typeof sc.getCamera === "function") { return sc.getCamera(); }
+    } catch (e) { /* fall through */ }
+    return (gd._fullLayout && gd._fullLayout.scene && gd._fullLayout.scene.camera) || null;
+}
+let sunHudLastCam = "";
+function sunHudWatch() {
+    if (!sunHudBound || !sunPlotDiv) { return; }
+    if (document.visibilityState === "visible") {
+        const cam = sunLiveCamera(sunPlotDiv);
+        if (cam && cam.eye) {
+            const e = cam.eye, u = cam.up || {}, c = cam.center || {};
+            const key = [e.x, e.y, e.z, u.x, u.y, u.z, c.x, c.y, c.z].map(function (v) { return (+v || 0).toFixed(4); }).join(",");
+            if (key !== sunHudLastCam) { sunHudLastCam = key; sunTriadUpdate(cam); }
+        }
+    }
+    requestAnimationFrame(sunHudWatch);
+}
+
+// Once, after newPlot. Sets the arrival tick spacing from the same rule
+// Home uses (Plotly's automatic tick and the page's rule disagreed on
+// arrival: 0.2 vs 0.1 AU, Tony 2026-09-06), starts the camera watch,
+// and binds the tap-elsewhere close for the note.
 function sunHudInstall(gd) {
     if (!gd || sunHudBound) { return; }
     sunHudBound = true;
     gd.on("plotly_relayout", sunHudSchedule);
     gd.on("plotly_relayouting", sunHudSchedule);
-    const close = document.getElementById("sun-frame-note-close");
-    if (close) { close.addEventListener("click", sunFrameNoteToggle); }
-    sunHudUpdate();
+    document.addEventListener("click", function (ev) {
+        const n = document.getElementById("sun-frame-note");
+        if (n && !n.hidden && !n.contains(ev.target)) { sunFrameNoteShow(false); }
+    });
+    const note = document.getElementById("sun-frame-note");
+    if (note) { note.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") { sunFrameNoteLeave(); } }); }
+    const sc = (gd.layout && gd.layout.scene) || {};
+    const xa = sc.xaxis || {};
+    let ready = Promise.resolve();
+    if (!(xa.dtick > 0) && xa.range) {
+        const d = sunGridDtick(Math.abs(xa.range[1] - xa.range[0]));
+        ready = Plotly.relayout(gd, {
+            "scene.xaxis.dtick": d, "scene.yaxis.dtick": d, "scene.zaxis.dtick": d,
+            "scene.xaxis.tick0": 0, "scene.yaxis.tick0": 0, "scene.zaxis.tick0": 0
+        });
+    }
+    ready.then(function () { sunHudUpdate(); requestAnimationFrame(sunHudWatch); });
 }
 
 function sunSwatchColor(trace) {
