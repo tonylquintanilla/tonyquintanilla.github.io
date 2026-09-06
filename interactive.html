@@ -27,6 +27,11 @@
         note opens on hover or tap and closes; grid lines back to
         white; arrival dtick set so grid and chip agree; the triad
         follows the live camera on touch)
+     Updated: September 6, 2026 with Anthropic's Claude Opus 5
+       (L-289: the Sun's three axis LINES take the triad's hues, so
+        the render says which box edge is which and the triad has
+        something to be checked against. Grid lines stay white.
+        ?edge=N sets the line weight for Mode 5)
      Architecture: Option C viewer (master plan v8 §2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1610,15 +1615,30 @@ function buildSunLayout(halfRangeAu) {
 
     return {
         scene: {
-            // Grid lines stay the template white. Per-axis colours were
-            // tried on 2026-09-05 and read as a second key against the
-            // triad (Tony, 2026-09-06); the triad alone carries the hues.
-            xaxis: { ...axisTemplate, title: axisTitle("X (AU)") },
-            yaxis: { ...axisTemplate, title: axisTitle("Y (AU)") },
+            // Grid LINES stay the template white: per-axis grid colours
+            // were tried on 2026-09-05 and read as a second key against
+            // the triad (Tony, 2026-09-06). What carries the hues in the
+            // scene is the AXIS LINE -- one box edge per axis, from the
+            // same SUN_AXIS_COLORS the triad reads, so an arrow and its
+            // edge cannot drift apart. Tony's ruling 2026-09-06: the
+            // triad was asserting an orientation the render could not
+            // confirm, because the axis titles are blank and the grid is
+            // one white. Plotly chooses WHICH of the four parallel edges
+            // from the camera and puts that axis's tick numbers on the
+            // same edge, so the colour follows the view and labels the
+            // numbers too. Weight: SUN_AXIS_LINE_WIDTH (?edge=N).
+            xaxis: { ...axisTemplate, title: axisTitle("X (AU)"),
+                     showline: true, linewidth: SUN_AXIS_LINE_WIDTH,
+                     linecolor: SUN_AXIS_COLORS.x },
+            yaxis: { ...axisTemplate, title: axisTitle("Y (AU)"),
+                     showline: true, linewidth: SUN_AXIS_LINE_WIDTH,
+                     linecolor: SUN_AXIS_COLORS.y },
             // 1:1:1, unlike the Explorer's flattened z.  These shells are
             // spheres; squashing z would draw every one of them as a
             // pancake and the render would be lying.
-            zaxis: { ...axisTemplate, title: axisTitle("Z (AU)") },
+            zaxis: { ...axisTemplate, title: axisTitle("Z (AU)"),
+                     showline: true, linewidth: SUN_AXIS_LINE_WIDTH,
+                     linecolor: SUN_AXIS_COLORS.z },
             camera: {
                 eye: { x: 1.25, y: -1.25, z: 0.75 },
                 center: { x: 0, y: 0, z: 0 },
@@ -1847,6 +1867,17 @@ const SUN_HIDDEN = "legendonly";
 // redraws an SVG; it never calls into Plotly, so the click-deferral
 // hazard above does not apply.
 const SUN_AXIS_COLORS = { x: "#e06c6c", y: "#5dbb7a", z: "#6fa8ff" };
+// The hues above are read twice: by the triad below, and by the scene's
+// three axis LINES in buildSunLayout, which is what gives the triad
+// something in the render to be checked against (L-289, 2026-09-06).
+// Weight of those lines in pixels. ?edge=N (1..6) overrides it for a
+// single load, so Mode 5 settles the weight from the URL rather than
+// from another patch -- the same move ?ticks=N made for the edge
+// labels. Read once, at script evaluation, before any plot is built.
+const SUN_AXIS_LINE_WIDTH = (function () {
+    const n = parseInt(new URLSearchParams(window.location.search).get("edge"), 10);
+    return (n >= 1 && n <= 6) ? n : 2;
+})();
 let sunHudBound = false;
 let sunHudFrame = 0;   // requestAnimationFrame handle
 

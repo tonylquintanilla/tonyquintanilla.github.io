@@ -10,22 +10,18 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 30  
-**Total Lines of Code (non-blank):** 15,408  
-**Total Public Functions/Classes:** 176
+**Total Python Files:** 28  
+**Total Lines of Code (non-blank):** 14,891  
+**Total Public Functions/Classes:** 174
 
 ## Classification Coverage
 
-**Undetermined role (3).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (1).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `patch_L288_1_studio_live_card.py`
-- `patch_L289_4_hud_fixes.py`
 - `sweep_collapsed_features.py`
 
-**Undetermined domain (3).** No valid `Domain:` tag.
+**Undetermined domain (1).** No valid `Domain:` tag.
 
-- `patch_L288_1_studio_live_card.py`
-- `patch_L289_4_hud_fixes.py`
 - `sweep_collapsed_features.py`
 
 
@@ -99,7 +95,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,534 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (783 lines) |
-| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (820 lines) |
+| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (821 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (140 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (120 lines) |
@@ -111,8 +107,6 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `patch_L288_1_studio_live_card.py` | - Gallery Studio creates INTERACTIVE cards (a card that opens a live scene, no figure file). Three files in tools/, all-or-nothing. (298 lines) |
-| `patch_L289_4_hud_fixes.py` | - interactive.html: four fixes from Tony's desktop and phone pass on the frame HUD, 2026-09-06. (220 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 
 ---
