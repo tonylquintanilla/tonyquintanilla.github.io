@@ -14,6 +14,14 @@
         Plotly's own tick labels and titles are off on the Sun.
         ?ticks=N thins the labels for Mode 5. The axis name sits on
         the unlabeled grid line nearest the centre of each edge)
+     Updated: September 5, 2026 with Anthropic's Claude Fable 5.1
+       (L-289 rebuilt after Tony's phone pass: the edge labels come
+        out; a camera-following triad with the Aries glyph and frame
+        note, a grid-spacing chip, and per-axis grid colours go in;
+        Plotly's tick numbers return)
+     Updated: September 5, 2026 with Anthropic's Claude Fable 5.1
+       (L-282: the Gallery button steps back in history when the
+        gallery is behind it, so the browser's back agrees with ours)
      Architecture: Option C viewer (master plan v8 §2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -162,6 +170,56 @@
            drawer it has no rows for. */
         .sun-chrome { display: none; }
         body.sun-exhibit .sun-chrome { display: block; }
+        /* Frame HUD (L-289 rebuilt, September 5, 2026): the triad, the
+           grid chip and the Aries note live in the page, not the scene,
+           so they never shrink, clip or float. Bottom-right, clear of the
+           nav cluster (left) and the drawer button (centre). */
+        .sun-hud {
+            position: absolute; right: 10px;
+            bottom: calc(58px + env(safe-area-inset-bottom));
+            z-index: 5; pointer-events: none;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+        }
+        body.sun-exhibit.sun-drawer-open .sun-hud { display: none; }
+        .sun-triad {
+            width: 104px; height: 120px; pointer-events: none;
+            font: 600 11px 'DM Sans', system-ui, sans-serif;
+        }
+        .sun-triad text { fill: var(--text-primary); }
+        .sun-triad .aries {
+            pointer-events: auto; cursor: pointer; font-size: 15px;
+            fill: var(--accent);
+        }
+        .sun-triad .aries:hover { fill: #ffd97a; }
+        .sun-grid-chip {
+            pointer-events: auto;
+            background: rgba(17,24,39,0.94); border: 1px solid var(--border);
+            border-radius: 20px; padding: 5px 11px;
+            font: 500 11px 'DM Sans', system-ui, sans-serif;
+            color: var(--text-secondary); letter-spacing: 0.3px; white-space: nowrap;
+        }
+        .sun-grid-chip b { color: var(--text-primary); font-weight: 600; }
+        .sun-frame-note {
+            position: absolute; right: 10px; left: 10px;
+            bottom: calc(168px + env(safe-area-inset-bottom));
+            max-width: 340px; margin-left: auto; z-index: 8;
+            background: rgba(17,24,39,0.97); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 14px;
+            font: 400 12.5px/1.5 'DM Sans', system-ui, sans-serif;
+            color: var(--text-primary);
+        }
+        .sun-frame-note[hidden] { display: none; }
+        .sun-frame-note h4 {
+            margin: 0 0 6px; font: 600 10px 'DM Sans', sans-serif;
+            letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-dim);
+        }
+        .sun-frame-note p { margin: 0 0 6px; }
+        .sun-frame-note .src { color: var(--text-dim); font-size: 11px; }
+        .sun-frame-note .src a { color: var(--text-secondary); }
+        .sun-frame-note .close {
+            position: absolute; top: 6px; right: 8px; background: none; border: none;
+            color: var(--text-dim); font-size: 16px; cursor: pointer; line-height: 1;
+        }
         /* L-267 step 7: the nav cluster (gallery/nav_cluster.js) sits
            in the corner the open drawer covers, so it steps aside. */
         body.sun-drawer-open .nav-cluster { display: none; }
@@ -661,6 +719,32 @@
                     <span class="chev">&#9660;</span>
                 </button>
             </div>
+            <!-- Frame HUD (L-289): which way is which, and how far the
+                 grid lines are apart. Filled by sunHud*; hidden unless
+                 body carries .sun-exhibit. -->
+            <div class="sun-hud sun-chrome" id="sun-hud" aria-label="Frame">
+                <svg class="sun-triad" id="sun-triad" viewBox="0 0 104 120"
+                     xmlns="http://www.w3.org/2000/svg" role="img"
+                     aria-label="Axis directions x, y, z"></svg>
+                <div class="sun-grid-chip" id="sun-grid-chip"></div>
+            </div>
+            <div class="sun-frame-note sun-chrome" id="sun-frame-note" hidden role="note">
+                <button class="close" type="button" id="sun-frame-note-close"
+                        aria-label="Close">&times;</button>
+                <h4>The frame</h4>
+                <p>The <b>x</b> arrow points at the vernal equinox, the First
+                Point of Aries (&#9800;). The floor of this box is the
+                <b>ecliptic</b>, the plane of Earth's orbit, and <b>z</b>
+                stands up from it. The frame is fixed to the stars at epoch
+                J2000; it does not turn with the page.</p>
+                <p class="src">Source: NASA/JPL NAIF, Frames and Coordinate
+                Systems tutorial (J2000 x axis at the equator-ecliptic
+                intersection, the vernal equinox; the ecliptic frame shares
+                it): <a href="https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/Tutorials/pdf/individual_docs/17_frames_and_coordinate_systems.pdf"
+                target="_blank" rel="noopener">naif.jpl.nasa.gov</a>.
+                The renderer rotates every pole into this frame
+                (feature_renderers.js, poleBasis).</p>
+            </div>
         </div>
 
         <!-- Controls -->
@@ -723,6 +807,30 @@ const PLANETS = {
 let pyodide = null;
 let activePlanets = new Set(['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn']);
 let computing = false;
+
+// ====================================================================
+// BACK TO THE GALLERY (L-282, September 5, 2026)
+// ====================================================================
+// A plain link to index.html goes FORWARD, leaving lobby -> exhibit ->
+// lobby in the browser's history; Safari's back then lands on the
+// exhibit, which is what Tony saw on the phone. When the page behind
+// us is our own gallery, step back instead. Opened from a shared link
+// with no gallery behind, the link works as written. Runs on both
+// exhibit paths (the Sun never calls initControls).
+(function () {
+    const link = document.querySelector(".top-bar .back-link");
+    if (!link) { return; }
+    link.addEventListener("click", function (ev) {
+        let ref = null;
+        try { ref = document.referrer ? new URL(document.referrer) : null; } catch (e) { ref = null; }
+        const fromGallery = ref && ref.origin === window.location.origin &&
+            (/\/index\.html$/.test(ref.pathname) || /\/$/.test(ref.pathname));
+        if (fromGallery && window.history.length > 1) {
+            ev.preventDefault();
+            window.history.back();
+        }
+    });
+})();
 
 // ====================================================================
 // UI SETUP
@@ -1343,7 +1451,7 @@ function sunFrameOn(k) {
         "scene.yaxis.range": [-r, r], "scene.yaxis.dtick": d,
         "scene.zaxis.range": [-r, r], "scene.zaxis.dtick": d,
         "scene.xaxis.tick0": 0, "scene.yaxis.tick0": 0, "scene.zaxis.tick0": 0
-    }).then(sunEdgeLabelsUpdate);
+    }).then(sunHudUpdate);
 }
 
 function sunOutermostShown() {
@@ -1434,7 +1542,7 @@ function navFrameZoom(direction) {
         update["scene.yaxis.dtick"] = d;
         update["scene.zaxis.dtick"] = d;
     }
-    return Plotly.relayout(gd, update).then(sunEdgeLabelsUpdate);
+    return Plotly.relayout(gd, update).then(sunHudUpdate);
 }
 
 function navHome() {
@@ -1457,7 +1565,7 @@ function navHome() {
         setSunDrawer(false);
         renderSunDrawer();
     }
-    return Plotly.relayout(gd, update).then(sunEdgeLabelsUpdate);
+    return Plotly.relayout(gd, update).then(sunHudUpdate);
 }
 
 function mountNavCluster() {
@@ -1479,10 +1587,9 @@ function buildSunLayout(halfRangeAu) {
         showbackground: true,
         backgroundcolor: "#060a12",
         tickfont: { size: 9, color: "#5a5a6a" },
-        // L-289: the page draws tick labels on all twelve edges
-        // (sunEdgeLabels*); Plotly's one-edge set is off so no edge
-        // carries two. The grid lines themselves stay.
-        showticklabels: false,
+        // L-289 (rebuilt 2026-09-05): Plotly's tick numbers are back
+        // on. The frame HUD (triad + grid chip) carries direction and
+        // spacing; per-axis gridcolor below matches the triad.
         showspikes: false,
     };
 
@@ -1492,22 +1599,24 @@ function buildSunLayout(halfRangeAu) {
     // tells a visitor nothing.  Wording matches the desktop
     // orrery's build_scene_axes in visualization_utils.py -- the
     // established language carrying over, not a new one.  L-260.
-    // L-289, 2026-09-05: the names now travel on the edge labels
-    // (SUN_EDGE_NAMES carries the same wording), one per edge, so the
-    // Plotly title is blank here rather than drawn once on an edge
-    // the phone cannot see.
+    // L-289, 2026-09-05: the names travel on the frame HUD's triad
+    // (page chrome, always in view), so the Plotly title is blank
+    // here rather than drawn once on an edge the phone cannot see.
+    // The unit is on the grid chip ("grid 0.2 AU").
     const axisTitle = function (label) {
         return { text: "", font: { size: 10, color: "#7a7a8a" } };
     };
 
     return {
         scene: {
-            xaxis: { ...axisTemplate, title: axisTitle("X (AU)") },
-            yaxis: { ...axisTemplate, title: axisTitle("Y (AU)") },
+            // Grid lines coloured per axis to match the triad (L-289):
+            // the lines that mark x positions are x-coloured, and so on.
+            xaxis: { ...axisTemplate, title: axisTitle("X (AU)"), gridcolor: "rgba(224,108,108,0.30)" },
+            yaxis: { ...axisTemplate, title: axisTitle("Y (AU)"), gridcolor: "rgba(93,187,122,0.30)" },
             // 1:1:1, unlike the Explorer's flattened z.  These shells are
             // spheres; squashing z would draw every one of them as a
             // pancake and the render would be lying.
-            zaxis: { ...axisTemplate, title: axisTitle("Z (AU)") },
+            zaxis: { ...axisTemplate, title: axisTitle("Z (AU)"), gridcolor: "rgba(111,168,255,0.30)" },
             camera: {
                 eye: { x: 1.25, y: -1.25, z: 0.75 },
                 center: { x: 0, y: 0, z: 0 },
@@ -1663,8 +1772,8 @@ async function initSunExhibit() {
         // is not there.
         sunPlotDiv = gd;
         buildSunDrawer(traces);
-        // L-289: the edge labels go on last, so nothing above counted them.
-        await sunEdgeLabelsInstall(gd);
+        // L-289: the frame HUD binds to the camera once the scene exists.
+        sunHudInstall(gd);
         // Arrival names its focus without reframing: newPlot has already
         // set the arrival view, floor and all, and that is the one frame
         // the floor is right for.
@@ -1715,137 +1824,120 @@ let sunTraceGroup = {};  // trace index -> group index, for marker clicks
 const SUN_HIDDEN = "legendonly";
 
 // ====================================================================
-// EDGE LABELS (L-289, September 5, 2026) -- twelve edges, not three
+// FRAME HUD (L-289, rebuilt September 5, 2026) -- triad, grid chip, Aries
 // ====================================================================
-// Plotly labels a 3D axis on one edge it picks from the camera angle.
-// On the phone the arrival frame is full by design, so that edge is
-// off-screen and nothing is labelled. Tony's design: put the axis name
-// and the tick values on ALL twelve edges of the box, so a label is in
-// view whatever the rotation. The page owns the ticks -- Plotly's tick
-// labels and titles are off on the Sun (buildSunLayout) so no edge
-// carries two sets -- and rebuilds them after every frame change from
-// the same range and dtick the grid is drawn from. Rules: thin by count
-// (every second grid line by default; ?ticks=N for Mode 5); no label at
-// a vertex; the axis name at each edge's midpoint, displacing the tick
-// nearest it; no dimming with distance.
-const SUN_EDGE_TICK_EVERY = (function () {
-    const n = parseInt(new URLSearchParams(window.location.search).get("ticks"), 10);
-    return (n >= 1 && n <= 6) ? n : 2;
-})();
-const SUN_EDGE_NAMES = { xaxis: "X (AU)", yaxis: "Y (AU)", zaxis: "Z (AU)" };
-const SUN_EDGE_TICK_COLOR = "#7a7a8a";
-const SUN_EDGE_NAME_COLOR = "#9a9aaa";
-let sunEdgeTraceIdx = -1;   // index of the label trace once installed
+// The first build drew tick values and axis names as text INSIDE the
+// scene on all twelve box edges. Tony's phone pass the same evening:
+// they shrank with distance and vanished on zoom-out, were sliced where
+// they crossed the box, and edges beside the camera projected as text
+// floating on nothing. Scenery behaves like scenery. Rebuilt as page
+// chrome, on Tony's design:
+//   - a TRIAD in the corner: three arrows for x, y, z, projected from the
+//     camera after every move, so it turns with the box (aspectratio is
+//     read from the layout: a stretched axis stretches its arrow);
+//   - the First Point of Aries glyph at the x tip, with a note on tap
+//     saying this is the J2000 ecliptic frame, not a graph frame;
+//   - a GRID CHIP naming the uniform grid spacing once ("grid 0.2 AU"),
+//     updated when the frame zooms;
+//   - grid lines coloured per axis to match the arrows (buildSunLayout).
+// Plotly's own tick numbers are back on. Its axis titles stay blank;
+// the triad carries the names. The HUD only READS the camera and
+// redraws an SVG; it never calls into Plotly, so the click-deferral
+// hazard above does not apply.
+const SUN_AXIS_COLORS = { x: "#e06c6c", y: "#5dbb7a", z: "#6fa8ff" };
+let sunHudBound = false;
+let sunHudFrame = 0;   // requestAnimationFrame handle
 
-// A tick value in the axis unit, with decimals that fit the spacing:
-// dtick 0.2 -> one decimal, dtick 2e-5 -> five. Zero prints as 0.
-function sunEdgeFormat(v, dtick) {
-    if (Math.abs(v) < dtick * 1e-6) { return "0"; }
-    const dec = Math.max(0, -Math.floor(Math.log10(dtick)));
-    return v.toFixed(dec);
+function sunVec(o, d) { return [o.x || 0, o.y || 0, o.z || 0].map(function (v, i) { return v * (d ? d[i] : 1); }); }
+function sunDot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+function sunCross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+function sunNorm(a) { const n = Math.sqrt(sunDot(a, a)) || 1; return [a[0] / n, a[1] / n, a[2] / n]; }
+
+function sunGridChipUpdate() {
+    const gd = sunPlotDiv, chip = document.getElementById("sun-grid-chip");
+    if (!gd || !chip || !gd.layout || !gd.layout.scene) { return; }
+    const ax = gd.layout.scene.xaxis || {};
+    let d = ax.dtick;
+    if (!(d > 0) && ax.range) { d = sunGridDtick(Math.abs(ax.range[1] - ax.range[0])); }
+    if (!(d > 0)) { chip.textContent = ""; return; }
+    const dec = Math.max(0, -Math.floor(Math.log10(d)));
+    chip.innerHTML = "grid <b>" + d.toFixed(dec) + " AU</b>";
 }
 
-// The twelve edges of the box described by the scene's three ranges.
-// For axis A, the four edges are the corners of the (B, C) rectangle.
-// Points sit a hair inside the box so they are not lost in the
-// background planes gl3d paints on the far faces.
-function sunEdgeLabelPoints(scene) {
-    const axes = ["xaxis", "yaxis", "zaxis"];
-    const rng = {}, dtk = {};
+// Project the three unit axes onto the screen from the camera.
+// Plotly's camera lives in the scene's normalized units, so the axes are
+// scaled by aspectratio before projection (Tony: 1:1:1 is not a given).
+function sunTriadUpdate(camera) {
+    const gd = sunPlotDiv, svg = document.getElementById("sun-triad");
+    if (!gd || !svg) { return; }
+    const full = (gd._fullLayout && gd._fullLayout.scene) || {};
+    const cam = camera || full.camera || (gd.layout.scene && gd.layout.scene.camera);
+    if (!cam || !cam.eye) { return; }
+    const arr = full.aspectratio || { x: 1, y: 1, z: 1 };
+    const ar = [arr.x || 1, arr.y || 1, arr.z || 1];
+    const eye = sunVec(cam.eye), ctr = sunVec(cam.center || {}), up = sunVec(cam.up || { z: 1 });
+    const f = sunNorm([ctr[0] - eye[0], ctr[1] - eye[1], ctr[2] - eye[2]]);
+    let r = sunCross(f, up);
+    if (sunDot(r, r) < 1e-9) { r = sunCross(f, [0, 1, 0]); }
+    r = sunNorm(r);
+    const u = sunCross(r, f);
+    const cx = 52, cy = 64, L = 30;
+    let html = "";
+    const axes = ["x", "y", "z"];
     for (let i = 0; i < 3; i++) {
-        const a = scene[axes[i]] || {};
-        if (!a.range || a.range.length < 2) { return null; }
-        rng[axes[i]] = [Math.min(a.range[0], a.range[1]), Math.max(a.range[0], a.range[1])];
-        dtk[axes[i]] = a.dtick > 0 ? a.dtick : sunGridDtick(rng[axes[i]][1] - rng[axes[i]][0]);
-    }
-    const out = { x: [], y: [], z: [], text: [], color: [] };
-    const push = function (p, text, color) {
-        out.x.push(p.xaxis); out.y.push(p.yaxis); out.z.push(p.zaxis);
-        out.text.push(text); out.color.push(color);
-    };
-    for (let i = 0; i < 3; i++) {
-        const A = axes[i], B = axes[(i + 1) % 3], C = axes[(i + 2) % 3];
-        const lo = rng[A][0], hi = rng[A][1], d = dtk[A];
-        const mid = (lo + hi) / 2;
-        const inB = (rng[B][1] - rng[B][0]) * 0.005;
-        const inC = (rng[C][1] - rng[C][0]) * 0.005;
-        // Tick candidates: multiples of dtick inside the range, clear of
-        // both vertices by half a step, then every Nth of what is left.
-        const ticks = [];
-        for (let k = Math.ceil(lo / d); k * d <= hi; k++) {
-            const t = k * d;
-            if (t - lo < 0.5 * d || hi - t < 0.5 * d) { continue; }
-            ticks.push(t);
-        }
-        // Every Nth line carries its value. The axis name takes the
-        // UNLABELED line nearest the centre (Tony, 2026-09-05), so no value
-        // is lost to it; with every line labelled it sits between the two
-        // lines nearest the centre instead.
-        const kept = [], skipped = [];
-        for (let k = 0; k < ticks.length; k++) {
-            (k % SUN_EDGE_TICK_EVERY === 0 ? kept : skipped).push(ticks[k]);
-        }
-        let nameAt = mid;
-        if (skipped.length) {
-            nameAt = skipped[0];
-            for (let k = 1; k < skipped.length; k++) {
-                if (Math.abs(skipped[k] - mid) < Math.abs(nameAt - mid)) { nameAt = skipped[k]; }
-            }
-        } else if (kept.length) {
-            let near = kept[0];
-            for (let k = 1; k < kept.length; k++) {
-                if (Math.abs(kept[k] - mid) < Math.abs(near - mid)) { near = kept[k]; }
-            }
-            nameAt = near + (near <= mid ? 0.5 * d : -0.5 * d);
-        }
-        const corners = [[0, 0], [0, 1], [1, 0], [1, 1]];
-        for (let c = 0; c < 4; c++) {
-            const p = {};
-            p[B] = rng[B][corners[c][0]] + (corners[c][0] ? -inB : inB);
-            p[C] = rng[C][corners[c][1]] + (corners[c][1] ? -inC : inC);
-            for (let k = 0; k < kept.length; k++) {
-                p[A] = kept[k];
-                push(Object.assign({}, p), sunEdgeFormat(kept[k], d), SUN_EDGE_TICK_COLOR);
-            }
-            p[A] = nameAt;
-            push(Object.assign({}, p), SUN_EDGE_NAMES[A], SUN_EDGE_NAME_COLOR);
+        const e = [0, 0, 0]; e[i] = ar[i];
+        const sx = sunDot(e, r), sy = sunDot(e, u);
+        const tx = cx + L * sx, ty = cy - L * sy;
+        const lx = cx + (L + 12) * sx, ly = cy - (L + 12) * sy;
+        const c = SUN_AXIS_COLORS[axes[i]];
+        html += '<line x1="' + cx + '" y1="' + cy + '" x2="' + tx.toFixed(1) + '" y2="' + ty.toFixed(1) +
+                '" stroke="' + c + '" stroke-width="2.2" stroke-linecap="round"/>';
+        html += '<circle cx="' + tx.toFixed(1) + '" cy="' + ty.toFixed(1) + '" r="2.4" fill="' + c + '"/>';
+        html += '<text x="' + lx.toFixed(1) + '" y="' + (ly + 4).toFixed(1) + '" text-anchor="middle" fill="' + c + '">' + axes[i] + "</text>";
+        if (i === 0) {
+            const ax2 = cx + (L + 26) * sx, ay2 = cy - (L + 26) * sy;
+            html += '<text class="aries" id="sun-aries" x="' + ax2.toFixed(1) + '" y="' + (ay2 + 5).toFixed(1) +
+                    '" text-anchor="middle" role="button" tabindex="0" aria-label="About this frame">&#9800;</text>';
         }
     }
-    return out;
+    html += '<circle cx="' + cx + '" cy="' + cy + '" r="2" fill="#9a9a9a"/>';
+    svg.innerHTML = html;
+    const aries = document.getElementById("sun-aries");
+    if (aries) {
+        aries.addEventListener("click", sunFrameNoteToggle);
+        aries.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { sunFrameNoteToggle(); } });
+    }
 }
 
-// Add the one label trace after the scene exists. Called once, after
-// newPlot and after the drawer has read the plotted traces, so the
-// extents, the drawer rows and sunTraceGroup never see it.
-function sunEdgeLabelsInstall(gd) {
-    if (!gd || !window.Plotly || !gd.layout || !gd.layout.scene) { return Promise.resolve(); }
-    const pts = sunEdgeLabelPoints(gd.layout.scene);
-    if (!pts) { return Promise.resolve(); }
-    const trace = {
-        type: "scatter3d", mode: "text", name: "axis labels",
-        x: pts.x, y: pts.y, z: pts.z, text: pts.text,
-        textposition: "middle center",
-        textfont: { size: 9, color: pts.color, family: "DM Sans, system-ui" },
-        hoverinfo: "skip", showlegend: false,
-    };
-    return Plotly.addTraces(gd, [trace]).then(function () {
-        sunEdgeTraceIdx = gd.data.length - 1;
-    });
+function sunFrameNoteToggle() {
+    const n = document.getElementById("sun-frame-note");
+    if (n) { n.hidden = !n.hidden; }
 }
 
-// Rebuild after a frame change. Safe to call from any room: it does
-// nothing until the trace has been installed on the Sun.
-function sunEdgeLabelsUpdate() {
-    const gd = sunPlotDiv;
-    if (sunEdgeTraceIdx < 0 || !gd || !window.Plotly || !gd.layout || !gd.layout.scene) {
-        return Promise.resolve();
-    }
-    const pts = sunEdgeLabelPoints(gd.layout.scene);
-    if (!pts) { return Promise.resolve(); }
-    return Plotly.restyle(gd, {
-        x: [pts.x], y: [pts.y], z: [pts.z], text: [pts.text],
-        "textfont.color": [pts.color]
-    }, [sunEdgeTraceIdx]);
+function sunHudSchedule(ev) {
+    const cam = ev && ev["scene.camera"];
+    if (sunHudFrame) { cancelAnimationFrame(sunHudFrame); }
+    sunHudFrame = requestAnimationFrame(function () { sunHudFrame = 0; sunTriadUpdate(cam); });
+}
+
+// After a frame change (focus, +, -, Home): chip and triad. Returns a
+// promise so it can sit where the edge labels used to, at the end of a
+// relayout chain. Does nothing off the Sun.
+function sunHudUpdate() {
+    if (sunPlotDiv && sunHudBound) { sunGridChipUpdate(); sunTriadUpdate(); }
+    return Promise.resolve();
+}
+
+// Once, after newPlot. Binds the camera events; the handlers only touch
+// the SVG and the chip.
+function sunHudInstall(gd) {
+    if (!gd || sunHudBound) { return; }
+    sunHudBound = true;
+    gd.on("plotly_relayout", sunHudSchedule);
+    gd.on("plotly_relayouting", sunHudSchedule);
+    const close = document.getElementById("sun-frame-note-close");
+    if (close) { close.addEventListener("click", sunFrameNoteToggle); }
+    sunHudUpdate();
 }
 
 function sunSwatchColor(trace) {

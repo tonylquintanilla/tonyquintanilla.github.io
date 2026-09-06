@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** September 05, 2026 by `module_atlas.py`  
+**Generated:** September 06, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,36 +10,18 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 36  
-**Total Lines of Code (non-blank):** 16,038  
-**Total Public Functions/Classes:** 179
+**Total Python Files:** 27  
+**Total Lines of Code (non-blank):** 14,607  
+**Total Public Functions/Classes:** 170
 
 ## Classification Coverage
 
-**Undetermined role (10).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (1).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `patch_L282_1_lobby.py`
-- `patch_L282_2_sweep.py`
-- `patch_L282_3_ledger_lobby_sweep_edges.py`
-- `patch_L282_4_master_plan_v24.py`
-- `patch_L287_3_hide_storage.py`
-- `patch_L287_4_sentence_sources.py`
-- `patch_L287_5_live_cards.py`
-- `patch_L289_1_edge_labels.py`
-- `patch_L289_2_name_on_skipped_tick.py`
 - `sweep_collapsed_features.py`
 
-**Undetermined domain (10).** No valid `Domain:` tag.
+**Undetermined domain (1).** No valid `Domain:` tag.
 
-- `patch_L282_1_lobby.py`
-- `patch_L282_2_sweep.py`
-- `patch_L282_3_ledger_lobby_sweep_edges.py`
-- `patch_L282_4_master_plan_v24.py`
-- `patch_L287_3_hide_storage.py`
-- `patch_L287_4_sentence_sources.py`
-- `patch_L287_5_live_cards.py`
-- `patch_L289_1_edge_labels.py`
-- `patch_L289_2_name_on_skipped_tick.py`
 - `sweep_collapsed_features.py`
 
 
@@ -124,15 +106,6 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `patch_L282_1_lobby.py` | - index.html: the lobby replaces the landing panel. (435 lines) |
-| `patch_L282_2_sweep.py` | - index.html: every exhibit shows on the phone, and a 16:9 room is SWEPT sideways in portrait instead of compressed. (203 lines) |
-| `patch_L282_3_ledger_lobby_sweep_edges.py` | - LEDGER_CONSOLIDATED.md: the 2026-09-05 away-session record. L-282 rulings (Featured, Interactive, Under construction) and the lobby build; L-286's sweep built for 2D; L-289 designed and built (twelve-edge labels); a note on L-287 that the mode filter wa... (195 lines) |
-| `patch_L282_4_master_plan_v24.py` | - MASTER_PLAN_INTERACTIVE_GALLERY.md -> v24: Section 5a gains the 2026-09-05 subsection (L-287 live; the lobby, the sweep and the twelve-edge labels built and render-gated; the step-2 build order half done), and the header moves with it. (130 lines) |
-| `patch_L287_3_hide_storage.py` | - index.html: cards in Storage are not served. (38 lines) |
-| `patch_L287_4_sentence_sources.py` | - index.html shows room sentences and card sources; fixes the "NaN KB" size on schema-v2 cards. (37 lines) |
-| `patch_L287_5_live_cards.py` | - index.html: a card with a live scene URL opens that scene when clicked, wears a "Live scene" badge, and is listed in both Desktop and Mobile even when it has no file. (36 lines) |
-| `patch_L289_1_edge_labels.py` | - interactive.html: the Sun exhibit draws its axis names and tick labels on all TWELVE edges of the box, not the three Plotly picks. (256 lines) |
-| `patch_L289_2_name_on_skipped_tick.py` | - interactive.html: the axis name sits on the UNLABELED grid line nearest the centre of each edge, instead of displacing the tick label nearest the midpoint. (101 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 
 ---

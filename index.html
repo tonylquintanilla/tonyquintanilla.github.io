@@ -10,7 +10,9 @@
          doors, Featured and the guest book; renderLobby() is the one
          writer of the home view. "Live scene" labels read "Interactive".
        - Every card shows on the phone (L-287); a 16:9 room sweeps
-         sideways in portrait instead of compressing (L-286). -->
+         sideways in portrait instead of compressing (L-286).
+       - Menu and Featured follow the room tree (doors, loose cards,
+         rooms, in config order); no invented "Other" heading (L-286). -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1885,6 +1887,7 @@
         var STORAGE_KEY = 'other';   // the hidden room; never served (L-287)
         var ROOM_SENTENCES = {};     // schema v2: room path -> placard sentence
         var DOORS = [];              // schema v2: the door records, in config order (L-282)
+        var ROOM_ORDER = {};         // room path -> position in a pre-order walk of the tree (L-286)
 
         // ---- DOM refs ----
         var navBtn         = document.getElementById('navBtn');
@@ -2023,10 +2026,12 @@
         // still thinks in categories. Door key -> color, room path -> label.
         function readRoomTree(cfg) {
             var doors = cfg.doors || [];
+            var roomSeq = 0;
             function walk(list, prefix) {
                 for (var i = 0; i < list.length; i++) {
                     var r = list[i];
                     var path = prefix ? prefix + '/' + r.key : r.key;
+                    ROOM_ORDER[path] = roomSeq++;
                     ROOM_LABELS[path] = r.label || r.key;
                     if (r.sentence) ROOM_SENTENCES[path] = r.sentence;
                     if (r.rooms) walk(r.rooms, path);
@@ -2207,6 +2212,21 @@
 
         // Every card shows in every mode (L-287, 2026-09-05); the mode only
         // picks WHICH FILE a two-slot card serves (fileForMode).
+        // Tree order (Tony's ruling 2026-09-05): a card's rank is its
+        // room's position in the pre-order walk of gallery_config.json.
+        // A door precedes its rooms, so loose cards come first under a
+        // door. Cards in the same room keep metadata order (the editor's
+        // reorder). Unknown rooms sort last.
+        function treeRank(v) {
+            var r = ROOM_ORDER[v.room || ''];
+            return (typeof r === 'number') ? r : 1e9;
+        }
+        function treeSort(list) {
+            var idx = list.map(function (v, i) { return { v: v, i: i, r: treeRank(v) }; });
+            idx.sort(function (a, b) { return a.r - b.r || a.i - b.i; });
+            return idx.map(function (o) { return o.v; });
+        }
+
         function inCurrentMode(v) {
             return !!v;
         }
@@ -2285,6 +2305,7 @@
             for (var f = 0; f < shown.length; f++) {
                 if (shown[f].featured) featured.push(shown[f]);
             }
+            featured = treeSort(featured);
             if (featured.length) {
                 html += '<div class="lobby-section"><div class="lobby-heading">Featured</div>';
                 html += '<div class="lobby-featured">';
@@ -2393,11 +2414,14 @@
         }
 
         function renderNavList(vizs) {
-            // Every card shows (L-287); the mode picks the file, not the list
+            // Every card shows (L-287); the mode picks the file, not the list.
+            // Tree order (L-286): doors, then loose cards, then rooms, as the
+            // editor shows them.
             var filtered = [];
             for (var i = 0; i < vizs.length; i++) {
                 if (inCurrentMode(vizs[i])) filtered.push(vizs[i]);
             }
+            filtered = treeSort(filtered);
 
             // Group by category
             var categories = {};
@@ -2457,6 +2481,31 @@
                         var sk = subOrder[si];
                         var sg = subGroups[sk];
                         var subId = catKey + '_' + (sk || '_none');
+
+                        // Cards directly under the door: at the door, no
+                        // heading (L-286; the "Other" heading was invented).
+                        if (!sk) {
+                            for (var lj = 0; lj < sg.items.length; lj++) {
+                                var loose = sg.items[lj];
+                                html += '<div class="viz-card" data-viz-id="' + escapeHtml(loose.id) + '">';
+                                html += '<div class="viz-card-title">' + escapeHtml(loose.title || 'Untitled') + '</div>';
+                                if (loose.description) {
+                                    html += '<div class="viz-card-desc">' + escapeHtml(loose.description) + '</div>';
+                                }
+                                html += sourcesHtml(loose);
+                                if (loose.size_kb) {
+                                    html += '<div class="viz-card-size">' + Math.round(loose.size_kb) + ' KB</div>';
+                                }
+                                if (loose.featured) {
+                                    html += '<div class="viz-card-featured">Featured</div>';
+                                }
+                                if (loose.live) {
+                                    html += '<div class="viz-card-featured">Interactive</div>';
+                                }
+                                html += '</div>';
+                            }
+                            continue;
+                        }
 
                         // Subcategory header
                         html += '<div class="subcategory-header" data-subcat="' + subId + '">';
