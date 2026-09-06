@@ -8,6 +8,12 @@
         carries the focused shell's link out; the i button is wired on
         both exhibit paths -- on the Sun it had never been; the panel
         and the drawer share the height rather than overlap)
+     Updated: September 5, 2026 with Anthropic's Claude Fable 5.1
+       (L-289: the Sun's axis names and tick labels are drawn on all
+        twelve box edges by the page, rebuilt on every frame change;
+        Plotly's own tick labels and titles are off on the Sun.
+        ?ticks=N thins the labels for Mode 5. The axis name sits on
+        the unlabeled grid line nearest the centre of each edge)
      Architecture: Option C viewer (master plan v8 §2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1337,7 +1343,7 @@ function sunFrameOn(k) {
         "scene.yaxis.range": [-r, r], "scene.yaxis.dtick": d,
         "scene.zaxis.range": [-r, r], "scene.zaxis.dtick": d,
         "scene.xaxis.tick0": 0, "scene.yaxis.tick0": 0, "scene.zaxis.tick0": 0
-    });
+    }).then(sunEdgeLabelsUpdate);
 }
 
 function sunOutermostShown() {
@@ -1428,7 +1434,7 @@ function navFrameZoom(direction) {
         update["scene.yaxis.dtick"] = d;
         update["scene.zaxis.dtick"] = d;
     }
-    return Plotly.relayout(gd, update);
+    return Plotly.relayout(gd, update).then(sunEdgeLabelsUpdate);
 }
 
 function navHome() {
@@ -1451,7 +1457,7 @@ function navHome() {
         setSunDrawer(false);
         renderSunDrawer();
     }
-    return Plotly.relayout(gd, update);
+    return Plotly.relayout(gd, update).then(sunEdgeLabelsUpdate);
 }
 
 function mountNavCluster() {
@@ -1473,6 +1479,10 @@ function buildSunLayout(halfRangeAu) {
         showbackground: true,
         backgroundcolor: "#060a12",
         tickfont: { size: 9, color: "#5a5a6a" },
+        // L-289: the page draws tick labels on all twelve edges
+        // (sunEdgeLabels*); Plotly's one-edge set is off so no edge
+        // carries two. The grid lines themselves stay.
+        showticklabels: false,
         showspikes: false,
     };
 
@@ -1482,8 +1492,12 @@ function buildSunLayout(halfRangeAu) {
     // tells a visitor nothing.  Wording matches the desktop
     // orrery's build_scene_axes in visualization_utils.py -- the
     // established language carrying over, not a new one.  L-260.
+    // L-289, 2026-09-05: the names now travel on the edge labels
+    // (SUN_EDGE_NAMES carries the same wording), one per edge, so the
+    // Plotly title is blank here rather than drawn once on an edge
+    // the phone cannot see.
     const axisTitle = function (label) {
-        return { text: label, font: { size: 10, color: "#7a7a8a" } };
+        return { text: "", font: { size: 10, color: "#7a7a8a" } };
     };
 
     return {
@@ -1649,6 +1663,8 @@ async function initSunExhibit() {
         // is not there.
         sunPlotDiv = gd;
         buildSunDrawer(traces);
+        // L-289: the edge labels go on last, so nothing above counted them.
+        await sunEdgeLabelsInstall(gd);
         // Arrival names its focus without reframing: newPlot has already
         // set the arrival view, floor and all, and that is the one frame
         // the floor is right for.
@@ -1697,6 +1713,140 @@ let sunTraceGroup = {};  // trace index -> group index, for marker clicks
 // when it decides what the frame has to hold, so a different word here
 // would leave the refit framing hidden shells.
 const SUN_HIDDEN = "legendonly";
+
+// ====================================================================
+// EDGE LABELS (L-289, September 5, 2026) -- twelve edges, not three
+// ====================================================================
+// Plotly labels a 3D axis on one edge it picks from the camera angle.
+// On the phone the arrival frame is full by design, so that edge is
+// off-screen and nothing is labelled. Tony's design: put the axis name
+// and the tick values on ALL twelve edges of the box, so a label is in
+// view whatever the rotation. The page owns the ticks -- Plotly's tick
+// labels and titles are off on the Sun (buildSunLayout) so no edge
+// carries two sets -- and rebuilds them after every frame change from
+// the same range and dtick the grid is drawn from. Rules: thin by count
+// (every second grid line by default; ?ticks=N for Mode 5); no label at
+// a vertex; the axis name at each edge's midpoint, displacing the tick
+// nearest it; no dimming with distance.
+const SUN_EDGE_TICK_EVERY = (function () {
+    const n = parseInt(new URLSearchParams(window.location.search).get("ticks"), 10);
+    return (n >= 1 && n <= 6) ? n : 2;
+})();
+const SUN_EDGE_NAMES = { xaxis: "X (AU)", yaxis: "Y (AU)", zaxis: "Z (AU)" };
+const SUN_EDGE_TICK_COLOR = "#7a7a8a";
+const SUN_EDGE_NAME_COLOR = "#9a9aaa";
+let sunEdgeTraceIdx = -1;   // index of the label trace once installed
+
+// A tick value in the axis unit, with decimals that fit the spacing:
+// dtick 0.2 -> one decimal, dtick 2e-5 -> five. Zero prints as 0.
+function sunEdgeFormat(v, dtick) {
+    if (Math.abs(v) < dtick * 1e-6) { return "0"; }
+    const dec = Math.max(0, -Math.floor(Math.log10(dtick)));
+    return v.toFixed(dec);
+}
+
+// The twelve edges of the box described by the scene's three ranges.
+// For axis A, the four edges are the corners of the (B, C) rectangle.
+// Points sit a hair inside the box so they are not lost in the
+// background planes gl3d paints on the far faces.
+function sunEdgeLabelPoints(scene) {
+    const axes = ["xaxis", "yaxis", "zaxis"];
+    const rng = {}, dtk = {};
+    for (let i = 0; i < 3; i++) {
+        const a = scene[axes[i]] || {};
+        if (!a.range || a.range.length < 2) { return null; }
+        rng[axes[i]] = [Math.min(a.range[0], a.range[1]), Math.max(a.range[0], a.range[1])];
+        dtk[axes[i]] = a.dtick > 0 ? a.dtick : sunGridDtick(rng[axes[i]][1] - rng[axes[i]][0]);
+    }
+    const out = { x: [], y: [], z: [], text: [], color: [] };
+    const push = function (p, text, color) {
+        out.x.push(p.xaxis); out.y.push(p.yaxis); out.z.push(p.zaxis);
+        out.text.push(text); out.color.push(color);
+    };
+    for (let i = 0; i < 3; i++) {
+        const A = axes[i], B = axes[(i + 1) % 3], C = axes[(i + 2) % 3];
+        const lo = rng[A][0], hi = rng[A][1], d = dtk[A];
+        const mid = (lo + hi) / 2;
+        const inB = (rng[B][1] - rng[B][0]) * 0.005;
+        const inC = (rng[C][1] - rng[C][0]) * 0.005;
+        // Tick candidates: multiples of dtick inside the range, clear of
+        // both vertices by half a step, then every Nth of what is left.
+        const ticks = [];
+        for (let k = Math.ceil(lo / d); k * d <= hi; k++) {
+            const t = k * d;
+            if (t - lo < 0.5 * d || hi - t < 0.5 * d) { continue; }
+            ticks.push(t);
+        }
+        // Every Nth line carries its value. The axis name takes the
+        // UNLABELED line nearest the centre (Tony, 2026-09-05), so no value
+        // is lost to it; with every line labelled it sits between the two
+        // lines nearest the centre instead.
+        const kept = [], skipped = [];
+        for (let k = 0; k < ticks.length; k++) {
+            (k % SUN_EDGE_TICK_EVERY === 0 ? kept : skipped).push(ticks[k]);
+        }
+        let nameAt = mid;
+        if (skipped.length) {
+            nameAt = skipped[0];
+            for (let k = 1; k < skipped.length; k++) {
+                if (Math.abs(skipped[k] - mid) < Math.abs(nameAt - mid)) { nameAt = skipped[k]; }
+            }
+        } else if (kept.length) {
+            let near = kept[0];
+            for (let k = 1; k < kept.length; k++) {
+                if (Math.abs(kept[k] - mid) < Math.abs(near - mid)) { near = kept[k]; }
+            }
+            nameAt = near + (near <= mid ? 0.5 * d : -0.5 * d);
+        }
+        const corners = [[0, 0], [0, 1], [1, 0], [1, 1]];
+        for (let c = 0; c < 4; c++) {
+            const p = {};
+            p[B] = rng[B][corners[c][0]] + (corners[c][0] ? -inB : inB);
+            p[C] = rng[C][corners[c][1]] + (corners[c][1] ? -inC : inC);
+            for (let k = 0; k < kept.length; k++) {
+                p[A] = kept[k];
+                push(Object.assign({}, p), sunEdgeFormat(kept[k], d), SUN_EDGE_TICK_COLOR);
+            }
+            p[A] = nameAt;
+            push(Object.assign({}, p), SUN_EDGE_NAMES[A], SUN_EDGE_NAME_COLOR);
+        }
+    }
+    return out;
+}
+
+// Add the one label trace after the scene exists. Called once, after
+// newPlot and after the drawer has read the plotted traces, so the
+// extents, the drawer rows and sunTraceGroup never see it.
+function sunEdgeLabelsInstall(gd) {
+    if (!gd || !window.Plotly || !gd.layout || !gd.layout.scene) { return Promise.resolve(); }
+    const pts = sunEdgeLabelPoints(gd.layout.scene);
+    if (!pts) { return Promise.resolve(); }
+    const trace = {
+        type: "scatter3d", mode: "text", name: "axis labels",
+        x: pts.x, y: pts.y, z: pts.z, text: pts.text,
+        textposition: "middle center",
+        textfont: { size: 9, color: pts.color, family: "DM Sans, system-ui" },
+        hoverinfo: "skip", showlegend: false,
+    };
+    return Plotly.addTraces(gd, [trace]).then(function () {
+        sunEdgeTraceIdx = gd.data.length - 1;
+    });
+}
+
+// Rebuild after a frame change. Safe to call from any room: it does
+// nothing until the trace has been installed on the Sun.
+function sunEdgeLabelsUpdate() {
+    const gd = sunPlotDiv;
+    if (sunEdgeTraceIdx < 0 || !gd || !window.Plotly || !gd.layout || !gd.layout.scene) {
+        return Promise.resolve();
+    }
+    const pts = sunEdgeLabelPoints(gd.layout.scene);
+    if (!pts) { return Promise.resolve(); }
+    return Plotly.restyle(gd, {
+        x: [pts.x], y: [pts.y], z: [pts.z], text: [pts.text],
+        "textfont.color": [pts.color]
+    }, [sunEdgeTraceIdx]);
+}
 
 function sunSwatchColor(trace) {
     const m = trace.marker || {};

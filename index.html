@@ -4,7 +4,13 @@
      Updated: May 2, 2026 with Anthropic's Claude Opus 4.6
        - Nav controls 2D/3D split: standalone reset button for 3D,
          full D-pad for 2D, avoids blocking animation slider
-     Updated: June 26, 2026 with Opus 4.8 -->
+     Updated: June 26, 2026 with Opus 4.8
+     Updated: September 5, 2026 with Anthropic's Claude Fable 5.1 (L-282)
+       - The lobby: the first screen is an entrance hall with three
+         doors, Featured and the guest book; renderLobby() is the one
+         writer of the home view. "Live scene" labels read "Interactive".
+       - Every card shows on the phone (L-287); a 16:9 room sweeps
+         sideways in portrait instead of compressing (L-286). -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -740,17 +746,143 @@
             width: 100%;
             height: 100%;
         }
+        /* The sweep (L-286 room-shape rule, September 5, 2026): a 16:9 room
+           in portrait on a phone keeps its width and scrolls sideways. */
+        .viz-container.swept {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+        .viz-container.swept #plotly-graph { touch-action: pan-x; }
+        .viz-container.swept #plotly-graph .draglayer,
+        .viz-container.swept #plotly-graph .nsewdrag { touch-action: pan-x; cursor: grab; }
 
         /* Welcome state */
         .welcome-state {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100%;
+            justify-content: flex-start;
+            min-height: 100%;
             text-align: center;
-            padding: 40px;
+            padding: 28px 18px 24px;
             position: relative;
+        }
+        /* ---- The lobby (L-282, September 5, 2026) ----
+           The first screen is an entrance hall: title, sentence, three
+           doors, Featured, guest book, footer. Portrait first. */
+        .lobby {
+            width: 100%;
+            max-width: 560px;
+            text-align: left;
+            position: relative;
+            z-index: 1;
+        }
+        .lobby .welcome-title { text-align: center; margin-bottom: 6px; }
+        .lobby .welcome-text { text-align: center; margin: 0 auto 26px; }
+        .lobby-heading {
+            font-size: 0.68rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin: 0 0 8px 2px;
+        }
+        .lobby-door {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 13px 4px;
+            border-top: 1px solid var(--border);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .lobby-door:last-of-type { border-bottom: 1px solid var(--border); }
+        .lobby-door:hover { background: rgba(255, 255, 255, 0.025); }
+        .lobby-door-bar { width: 6px; align-self: stretch; min-height: 40px; border-radius: 1px; }
+        .lobby-door-body { flex: 1; min-width: 0; }
+        .lobby-door-name {
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .lobby-door-sentence {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+        .lobby-door-meta {
+            font-size: 0.74rem;
+            color: var(--text-dim);
+            margin-top: 3px;
+        }
+        .lobby-door-chevron { color: var(--text-dim); font-size: 0.8rem; padding-right: 4px; }
+        .lobby-section { margin-top: 26px; }
+        .lobby-featured {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .lobby-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: rgba(18, 18, 26, 0.6);
+            padding: 10px 12px 12px;
+            cursor: pointer;
+            display: flex;
+            gap: 10px;
+            min-height: 88px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .lobby-card:hover { border-color: var(--accent-dim); }
+        .lobby-card-bar { width: 4px; border-radius: 1px; align-self: stretch; }
+        .lobby-card-body { flex: 1; min-width: 0; }
+        .lobby-card-room {
+            font-size: 0.62rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+        .lobby-card-title {
+            font-size: 0.84rem;
+            color: var(--text-primary);
+            line-height: 1.35;
+            margin-top: 4px;
+        }
+        .lobby-card .viz-card-featured { margin-top: 6px; animation: none; }
+        .lobby-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 4px;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .lobby-row-icon {
+            width: 34px; height: 34px; border-radius: 50%;
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary);
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-style: italic; font-size: 1.1rem;
+        }
+        .lobby-row-name { font-size: 0.95rem; color: var(--text-primary); }
+        .lobby-row-meta { font-size: 0.74rem; color: var(--text-dim); margin-top: 2px; }
+        .lobby-footer {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-top: 22px;
+            padding-top: 14px;
+            color: var(--text-secondary);
+        }
+        .lobby-footer a { color: inherit; display: flex; }
+        .lobby-footer .footer-about-btn { margin: 0; }
+        .lobby .welcome-version { margin: 18px 0 0; text-align: center; }
+        @media (min-width: 768px) {
+            .lobby-featured { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
         .welcome-state::before {
             content: '';
@@ -1567,15 +1699,12 @@
 
             <!-- Welcome state -->
             <div class="welcome-state" id="welcomeState">
+                <!-- Filled by renderLobby() (L-282); this is the no-script fallback -->
                 <div class="welcome-title">Paloma's Orrery</div>
                 <div class="welcome-text">
                     Explore interactive visualizations of the solar system,
                     stellar neighborhoods, exoplanets, and more.
                 </div>
-                <div class="welcome-hint">
-                    Tap the menu to select a visualization.
-                </div>
-                <div class="welcome-device-hint"></div>
                 <div class="welcome-version" id="welcomeVersion"></div>
             </div>
 
@@ -1718,8 +1847,10 @@
        Author: Tony Quintanilla / Paloma's Orrery
        Gallery v2 - February 2026
        Schema v2 reader shim (rooms, two file slots) - September 4, 2026,
-       L-287, with Anthropic's Claude Fable 5.1. Transitional: L-282 /
-       L-286 replace this selector with the lobby and rooms.
+       L-287, with Anthropic's Claude Fable 5.1. Transitional: L-286
+       replaces this selector with rooms and a breadcrumb. The lobby
+       (L-282, September 5, 2026) is the first screen and opens this
+       selector at a door until then.
        ==================================================================== */
 
     (function() {
@@ -1753,6 +1884,7 @@
         var ROOM_LABELS = {};   // schema v2: room path -> label (filled from config doors)
         var STORAGE_KEY = 'other';   // the hidden room; never served (L-287)
         var ROOM_SENTENCES = {};     // schema v2: room path -> placard sentence
+        var DOORS = [];              // schema v2: the door records, in config order (L-282)
 
         // ---- DOM refs ----
         var navBtn         = document.getElementById('navBtn');
@@ -1835,6 +1967,52 @@
             });
         }
 
+        // ---- The sweep (L-286 room-shape rule) ----
+        // On a phone in portrait, a 2D plot served from a landscape file is
+        // drawn at its own width and the room scrolls sideways. The card's
+        // shape and file slots decide; desktop and landscape are untouched.
+        var sweepAspect = 0;          // width / height of the room being shown
+        var sweepDragmode = null;     // the plot's own dragmode, restored when not swept
+
+        function sweepWanted(viz, layout) {
+            if (!viz || viz.shape === '9:16') return false;
+            var phone = window.innerWidth < 768;
+            var portrait = window.innerHeight > window.innerWidth;
+            if (!phone || !portrait) return false;
+            var files = viz.files || {};
+            if (files.portrait) return false;              // a portrait file serves instead
+            if (layout && layout.scene) return false;      // 3D scales to fit
+            return true;
+        }
+
+        function applySweep(viz, layout) {
+            var container = plotlyGraph.parentElement;
+            var on = sweepWanted(viz, layout);
+            if (on) {
+                var h = container.clientHeight;
+                var w = Math.round(h * (sweepAspect || 16 / 9));
+                if (w <= container.clientWidth) on = false;    // it fits; nothing to sweep
+                else {
+                    container.classList.add('swept');
+                    plotlyGraph.style.width = w + 'px';
+                    plotlyGraph.style.height = h + 'px';
+                    plotlyGraph.style.minHeight = '';
+                }
+            }
+            if (!on) {
+                container.classList.remove('swept');
+                plotlyGraph.style.width = '';
+                plotlyGraph.style.height = '';
+            }
+            if (plotlyGraph.data && typeof Plotly !== 'undefined') {
+                var want = on ? false : sweepDragmode;
+                if ((plotlyGraph.layout || {}).dragmode !== want) {
+                    Plotly.relayout('plotly-graph', { dragmode: want });
+                }
+            }
+            return on;
+        }
+
         // Track current plot's aspect ratio for resize handler
         var currentAspect = 0;
         var infoCardShown = false;
@@ -1855,6 +2033,8 @@
                 }
             }
             walk(doors, '');
+            DOORS = doors;
+            window.__galleryConfig = cfg;
             for (var d = 0; d < doors.length; d++) {
                 if (doors[d].key && doors[d].color) {
                     CATEGORY_COLORS[doors[d].key] = doors[d].color;
@@ -1970,10 +2150,8 @@
             // Render nav list
             renderNavList(vizs);
 
-            // Display version/update date
-            if (metadata.last_updated) {
-                updateWelcomeCount();
-            }
+            // The lobby is the first screen (L-282)
+            renderLobby();
 
             // Setup event listeners
             setupEvents();
@@ -2015,6 +2193,167 @@
             }
         }
 
+        // ---- The lobby (L-282) ----
+        // The first screen. One writer for the home view; goHome() and the
+        // initial load both call this. Doors open the existing menu at that
+        // door until L-286 gives each door its own rooms page.
+        var LOBBY_DEFAULT_SENTENCE = 'Explore interactive visualizations of the solar system, ' +
+            'stellar neighborhoods, exoplanets, and more.';
+        var LOBBY_FOOTER_ICONS =
+            '<a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener" title="Instagram @palomas_orrery">' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg></a>' +
+            '<a href="https://github.com/tonylquintanilla/palomas_orrery" target="_blank" rel="noopener" title="Source code on GitHub">' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>';
+
+        // Every card shows in every mode (L-287, 2026-09-05); the mode only
+        // picks WHICH FILE a two-slot card serves (fileForMode).
+        function inCurrentMode(v) {
+            return !!v;
+        }
+
+        // Rooms under a door with no card anywhere in their subtree.
+        function countEmptyRooms(door, roomCards) {
+            var empty = 0;
+            function subtreeHas(r, path) {
+                var has = !!roomCards[path];
+                var kids = r.rooms || [];
+                for (var i = 0; i < kids.length; i++) {
+                    if (subtreeHas(kids[i], path + '/' + kids[i].key)) has = true;
+                }
+                return has;
+            }
+            function walk(list, prefix) {
+                for (var i = 0; i < list.length; i++) {
+                    var path = prefix + '/' + list[i].key;
+                    if (!subtreeHas(list[i], path)) empty++;
+                    walk(list[i].rooms || [], path);
+                }
+            }
+            walk(door.rooms || [], door.key);
+            return empty;
+        }
+
+        function plural(n, word) {
+            return n + ' ' + word + (n === 1 ? '' : 's');
+        }
+
+        function renderLobby() {
+            var vizs = (metadata && metadata.visualizations) || [];
+            var shown = [];
+            var roomCards = {};
+            for (var i = 0; i < vizs.length; i++) {
+                if (!inCurrentMode(vizs[i])) continue;
+                shown.push(vizs[i]);
+                roomCards[vizs[i].room || 'other'] = true;
+            }
+
+            var cfgSentence = (window.__galleryConfig && window.__galleryConfig.sentence) || '';
+            var html = '<div class="lobby">';
+            html += '<div class="welcome-title">Paloma\'s Orrery</div>';
+            html += '<div class="welcome-text">' + escapeHtml(cfgSentence || LOBBY_DEFAULT_SENTENCE) + '</div>';
+
+            // Doors
+            html += '<div class="lobby-heading">Doors</div>';
+            for (var d = 0; d < DOORS.length; d++) {
+                var door = DOORS[d];
+                var color = door.color || CATEGORY_COLORS[door.key] || CATEGORY_COLORS.other;
+                var count = 0, live = 0;
+                for (var j = 0; j < shown.length; j++) {
+                    var room = shown[j].room || '';
+                    if (room === door.key || room.indexOf(door.key + '/') === 0) {
+                        count++;
+                        if (shown[j].live) live++;
+                    }
+                }
+                var empty = countEmptyRooms(door, roomCards);
+                var meta = [plural(count, 'exhibit')];
+                if (live) meta.push(plural(live, 'interactive scene'));
+                if (empty) meta.push(plural(empty, 'room') + ' under construction');
+                html += '<div class="lobby-door" data-door="' + escapeHtml(door.key) + '">';
+                html += '<div class="lobby-door-bar" style="background: ' + color + ';"></div>';
+                html += '<div class="lobby-door-body">';
+                html += '<div class="lobby-door-name" style="color: ' + color + ';">' + escapeHtml(door.label || door.key) + '</div>';
+                if (door.sentence) {
+                    html += '<div class="lobby-door-sentence">' + escapeHtml(door.sentence) + '</div>';
+                }
+                html += '<div class="lobby-door-meta">' + escapeHtml(meta.join(' \u00b7 ')) + '</div>';
+                html += '</div><div class="lobby-door-chevron">&#9654;</div></div>';
+            }
+
+            // Featured: the flag the editor sets (Tony's ruling 2026-09-05)
+            var featured = [];
+            for (var f = 0; f < shown.length; f++) {
+                if (shown[f].featured) featured.push(shown[f]);
+            }
+            if (featured.length) {
+                html += '<div class="lobby-section"><div class="lobby-heading">Featured</div>';
+                html += '<div class="lobby-featured">';
+                for (var k = 0; k < featured.length; k++) {
+                    var item = featured[k];
+                    var doorKey = (item.room || 'other').split('/')[0];
+                    var cColor = CATEGORY_COLORS[doorKey] || CATEGORY_COLORS.other;
+                    var roomLabel = ROOM_LABELS[item.room] || ROOM_LABELS[doorKey] || '';
+                    html += '<div class="lobby-card" data-viz-id="' + escapeHtml(item.id) + '">';
+                    html += '<div class="lobby-card-bar" style="background: ' + cColor + ';"></div>';
+                    html += '<div class="lobby-card-body">';
+                    html += '<div class="lobby-card-room">' + escapeHtml(roomLabel) + '</div>';
+                    html += '<div class="lobby-card-title">' + escapeHtml(item.title || 'Untitled') + '</div>';
+                    if (item.live) html += '<div class="viz-card-featured">Interactive</div>';
+                    html += '</div></div>';
+                }
+                html += '</div></div>';
+            }
+
+            // Guest book: L-281, not yet built
+            html += '<div class="lobby-section">';
+            html += '<div class="lobby-row"><div class="lobby-row-icon">&#8220;</div><div>';
+            html += '<div class="lobby-row-name">Guest book</div>';
+            html += '<div class="lobby-row-meta">Under construction</div></div></div></div>';
+
+            // Footer
+            html += '<div class="lobby-footer">';
+            html += '<button class="footer-about-btn" id="lobby-about-btn" title="About Paloma\'s Orrery">i</button>';
+            html += LOBBY_FOOTER_ICONS + '</div>';
+            html += '<div class="welcome-version" id="welcomeVersion"></div>';
+            html += '</div>';
+
+            welcomeState.innerHTML = html;
+            welcomeState.style.display = 'flex';
+            updateWelcomeCount();
+
+            var doorEls = welcomeState.querySelectorAll('.lobby-door');
+            for (var e = 0; e < doorEls.length; e++) {
+                doorEls[e].addEventListener('click', function () {
+                    openDoor(this.getAttribute('data-door'));
+                });
+            }
+            var cardEls = welcomeState.querySelectorAll('.lobby-card');
+            for (var c = 0; c < cardEls.length; c++) {
+                cardEls[c].addEventListener('click', function () {
+                    loadVisualization(this.getAttribute('data-viz-id'));
+                });
+            }
+            var about = document.getElementById('lobby-about-btn');
+            if (about) about.addEventListener('click', openAbout);
+        }
+
+        // Open the menu with one door expanded and scrolled into view.
+        function openDoor(doorKey) {
+            var headers = selectorNav.querySelectorAll('.category-header');
+            for (var h = 0; h < headers.length; h++) {
+                var key = headers[h].getAttribute('data-cat');
+                var items = selectorNav.querySelector('.category-items[data-cat="' + key + '"]');
+                var on = (key === doorKey);
+                headers[h].classList.toggle('expanded', on);
+                if (items) items.classList.toggle('expanded', on);
+            }
+            openOverlay();
+            var target = selectorNav.querySelector('.category-header[data-cat="' + doorKey + '"]');
+            if (target) {
+                setTimeout(function () { target.scrollIntoView({ block: 'start' }); }, 320);
+            }
+        }
+
         // ---- Update welcome screen visualization count ----
         function updateWelcomeCount() {
             if (!metadata || !metadata.last_updated) return;
@@ -2023,10 +2362,9 @@
             var vizs = metadata.visualizations || [];
             var count = 0;
             for (var i = 0; i < vizs.length; i++) {
-                var vMode = vizs[i].mode || 'landscape';
-                if (vMode === currentMode || vMode === 'both') count++;
+                if (inCurrentMode(vizs[i])) count++;
             }
-            el.textContent = count + ' visualizations \u00b7 Updated ' + metadata.last_updated;
+            el.textContent = count + ' exhibits \u00b7 Updated ' + metadata.last_updated;
         }
 
         // ---- Render navigation list ----
@@ -2055,14 +2393,10 @@
         }
 
         function renderNavList(vizs) {
-            // Filter by current mode: show items matching mode or "both"
+            // Every card shows (L-287); the mode picks the file, not the list
             var filtered = [];
             for (var i = 0; i < vizs.length; i++) {
-                var v = vizs[i];
-                var vMode = v.mode || 'landscape';
-                if (vMode === currentMode || vMode === 'both') {
-                    filtered.push(v);
-                }
+                if (inCurrentMode(vizs[i])) filtered.push(vizs[i]);
             }
 
             // Group by category
@@ -2148,7 +2482,7 @@
                                 html += '<div class="viz-card-featured">Featured</div>';
                             }
                             if (item.live) {
-                                html += '<div class="viz-card-featured">Live scene</div>';
+                                html += '<div class="viz-card-featured">Interactive</div>';
                             }
                             html += '</div>';
                         }
@@ -2171,7 +2505,7 @@
                             html += '<div class="viz-card-featured">Featured</div>';
                         }
                         if (item.live) {
-                            html += '<div class="viz-card-featured">Live scene</div>';
+                            html += '<div class="viz-card-featured">Interactive</div>';
                         }
                         html += '</div>';
                     }
@@ -2360,6 +2694,12 @@
                     }
                 }
 
+                // The sweep (L-286): remember the room's own aspect and the
+                // plot's dragmode; a swept room gives horizontal drag to the sweep
+                sweepAspect = (origWidth && origHeight) ? origWidth / origHeight : 0;
+                sweepDragmode = (figDict.layout.dragmode === undefined) ? null : figDict.layout.dragmode;
+                if (sweepWanted(viz, figDict.layout)) figDict.layout.dragmode = false;
+
                 // Apply responsive width to annotations before render
                 if (figDict.layout && figDict.layout.annotations && figDict.layout.annotations.length > 0) {
                     figDict.layout.annotations = _wrapAnnotations(figDict.layout.annotations);
@@ -2381,6 +2721,8 @@
                 } else {
                     plotlyGraph.style.minHeight = '';
                 }
+
+                applySweep(viz, figDict.layout);
 
                 // Force resize after render
                 setTimeout(function() {
@@ -3108,7 +3450,8 @@
             // Window resize -> Plotly resize + recalculate min-height
             window.addEventListener('resize', function() {
                 if (plotlyGraph.style.display !== 'none') {
-                    if (currentAspect >= 0.8) {
+                    var swept = applySweep(vizLookup[currentVizId], plotlyGraph.layout);
+                    if (!swept && currentAspect >= 0.8) {
                         var containerWidth = plotlyGraph.parentElement.clientWidth;
                         plotlyGraph.style.minHeight = Math.round(containerWidth * currentAspect) + 'px';
                     }
@@ -3175,7 +3518,7 @@
             // Re-render nav list filtered by mode
             if (metadata) {
                 renderNavList(metadata.visualizations || []);
-                updateWelcomeCount();
+                if (!currentVizId) renderLobby(); else updateWelcomeCount();
             }
         }
 
@@ -3424,18 +3767,11 @@
             // Hide plot, show welcome
             plotlyGraph.style.display = 'none';
             plotlyGraph.style.minHeight = '';
+            plotlyGraph.style.width = '';
+            plotlyGraph.style.height = '';
+            plotlyGraph.parentElement.classList.remove('swept');
             currentAspect = 0;
-            welcomeState.innerHTML =
-                '<div class="welcome-title">Paloma\'s Orrery</div>' +
-                '<div class="welcome-text">' +
-                'Explore interactive visualizations of the solar system, ' +
-                'stellar neighborhoods, exoplanets, and more.</div>' +
-                '<div class="welcome-hint">' +
-                'Tap the menu to select a visualization.</div>' +
-                '<div class="welcome-device-hint"></div>' +
-                '<div class="welcome-version" id="welcomeVersion"></div>';
-            welcomeState.style.display = 'flex';
-            updateWelcomeCount();
+            renderLobby();
 
             // Deselect active card
             if (activeCard) {
