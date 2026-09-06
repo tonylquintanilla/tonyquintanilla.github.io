@@ -1968,7 +1968,7 @@
       "id": "solar_system_explorer",
       "title": "Solar System Explorer",
       "description": "Premade simulation of the solar system.",
-      "room": "other",
+      "room": "solar_system",
       "shape": "16:9",
       "files": {},
       "live": "interactive.html",
@@ -1981,6 +1981,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-09-06 15:02",
+  "last_updated": "2026-09-06 15:07",
   "total_count": 106
 }
