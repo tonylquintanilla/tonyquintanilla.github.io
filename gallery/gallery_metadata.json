@@ -1979,8 +1979,42 @@
       "size_kb": {
         "portrait": 622.8
       }
+    },
+    {
+      "id": "solar_system_20260907_earth_shells_moon_mobile",
+      "title": "Earth and Moon",
+      "description": "Earth and Moon",
+      "room": "other",
+      "shape": "9:16",
+      "files": {
+        "portrait": "solar_system_20260907_earth_shells_moon_mobile.json"
+      },
+      "live": null,
+      "featured": false,
+      "sources": [],
+      "converted": "2026-09-07 17:50",
+      "size_kb": {
+        "portrait": 626.4
+      }
+    },
+    {
+      "id": "solar_system_20260907_earth_shells_moon_gallery",
+      "title": "Earth and Moon",
+      "description": "Earth and Moon",
+      "room": "other",
+      "shape": "16:9",
+      "files": {
+        "landscape": "solar_system_20260907_earth_shells_moon_gallery.json"
+      },
+      "live": null,
+      "featured": false,
+      "sources": [],
+      "converted": "2026-09-07 17:51",
+      "size_kb": {
+        "landscape": 618.5
+      }
     }
   ],
-  "last_updated": "2026-09-06 15:13",
-  "total_count": 106
+  "last_updated": "2026-09-07 17:51",
+  "total_count": 108
 }

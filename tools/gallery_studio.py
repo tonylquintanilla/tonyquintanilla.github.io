@@ -1447,13 +1447,19 @@ def apply_config(fig_dict, config):
             trace['customdata'] = customdata_list
 
             # Non-destructive routing: keep trace['text'] intact.
-            # Tooltip is suppressed visually by transparent hoverlabel
-            # (set in the hoverlabel config block below).
+            # Tooltip is suppressed visually by the near-transparent
+            # hoverlabel set in the hoverlabel config block below.
             # Keep hoverinfo='text' so Plotly fires click/hover events
             # for the info card. Setting hoverinfo='none' kills 3D
             # event detection in some Plotly versions.
             trace['hovertemplate'] = '%{text}<extra></extra>'
             trace['hoverinfo'] = 'text'
+            # L-288 (2026-09-07): the orrery writes a per-trace
+            # hoverlabel {font: {size: 11}} on many traces, and a
+            # per-trace hoverlabel beats the layout's -- so the size-1
+            # suppression below never applied and the box drew at
+            # full size with invisible text. Drop it; the layout rules.
+            trace.pop('hoverlabel', None)
             _routing_log.append(
                 f'[ROUTING] {tname}: ROUTED, tooltip suppressed '
                 f'({len(customdata_list)} items)')
@@ -1599,10 +1605,15 @@ def apply_config(fig_dict, config):
         # Non-destructive routing: trace['text'] stays intact but
         # tooltip is visually suppressed via transparent hoverlabel.
         # Applies to all output formats when routing is active.
+        # L-288 (2026-09-07): NOT fully transparent. Plotly's hover code
+        # reads combine(opacity(bgcolor) ? bgcolor : defaultLine), so a
+        # zero-opacity bgcolor is replaced by defaultLine (#444) and the
+        # box renders opaque grey. Opacity 0.01 is kept as given and is
+        # invisible on the black paper. Verified in plotly.min.js 2.35.2.
         layout['hoverlabel'] = {
-            'bgcolor': 'rgba(0,0,0,0)',
-            'bordercolor': 'rgba(0,0,0,0)',
-            'font': {'size': 1, 'color': 'rgba(0,0,0,0)'}
+            'bgcolor': 'rgba(0,0,0,0.01)',
+            'bordercolor': 'rgba(0,0,0,0.01)',
+            'font': {'size': 1, 'color': 'rgba(0,0,0,0.01)'}
         }
     elif config.get('output_format') == 'portrait':
         # Portrait without routing: styled tooltip

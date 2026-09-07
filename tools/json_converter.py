@@ -48,9 +48,15 @@ from datetime import datetime
 # CONFIGURATION
 # ============================================================================
 
-# Default input/output folders (relative to script location)
-DEFAULT_INPUT_FOLDER = "images"
-DEFAULT_OUTPUT_FOLDER = "gallery"
+# Default input/output folders, resolved against the REPO ROOT from this
+# script's own location, so the result is the same from any working
+# directory. (L-288, 2026-09-07: these were bare relative names, so a
+# run from tools/ created tools/gallery/ and a shadow schema-1
+# metadata file there; the editor never saw the card.)
+_TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.dirname(_TOOLS_DIR)
+DEFAULT_INPUT_FOLDER = os.path.join(_REPO_ROOT, "images")
+DEFAULT_OUTPUT_FOLDER = os.path.join(_REPO_ROOT, "gallery")
 METADATA_FILE = "gallery_metadata.json"
 CONFIG_FILE = "gallery_config.json"
 
