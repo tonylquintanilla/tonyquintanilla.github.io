@@ -126,20 +126,37 @@
       }
     },
     {
-      "id": "earth_heliocentric_20260207_0659",
-      "title": "Earth Heliocentric 20260207 0659",
-      "description": "Static plot of Earth's heliocentric orbit.",
+      "id": "solar_system_20260907_earth_shells_moon_gallery",
+      "title": "Earth and Moon",
+      "description": "Earth and Moon",
       "room": "solar_system/earth",
       "shape": "16:9",
       "files": {
-        "landscape": "earth_heliocentric_20260207_0659.json"
+        "landscape": "solar_system_20260907_earth_shells_moon_gallery.json"
       },
       "live": null,
       "featured": false,
       "sources": [],
-      "converted": "2026-02-07 07:08",
+      "converted": "2026-09-07 17:51",
       "size_kb": {
-        "landscape": 146.6
+        "landscape": 618.5
+      }
+    },
+    {
+      "id": "solar_system_20260907_earth_shells_moon_mobile",
+      "title": "Earth and Moon",
+      "description": "Earth and Moon",
+      "room": "solar_system/earth",
+      "shape": "9:16",
+      "files": {
+        "portrait": "solar_system_20260907_earth_shells_moon_mobile.json"
+      },
+      "live": null,
+      "featured": true,
+      "sources": [],
+      "converted": "2026-09-07 17:50",
+      "size_kb": {
+        "portrait": 626.4
       }
     },
     {
@@ -160,40 +177,6 @@
       }
     },
     {
-      "id": "near_earth_asteroids_20260207_2114",
-      "title": "Near Earth Asteroids 20260207 2114",
-      "description": "Plot of near-Earth asteroids between Venus and Mars.",
-      "room": "solar_system/earth",
-      "shape": "16:9",
-      "files": {
-        "landscape": "near_earth_asteroids_20260207_2114.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
-      "converted": "2026-02-07 23:57",
-      "size_kb": {
-        "landscape": 1887.3
-      }
-    },
-    {
-      "id": "near_earth_asteroids_social_view_20260211_0024",
-      "title": "Near Earth Asteroids on 2026 02 11 00:24",
-      "description": "Near-Earth asteroids.",
-      "room": "solar_system/earth",
-      "shape": "9:16",
-      "files": {
-        "portrait": "near_earth_asteroids_social_view_20260211_0024.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
-      "converted": "2026-02-11 00:39",
-      "size_kb": {
-        "portrait": 2001.0
-      }
-    },
-    {
       "id": "planetary_boundaries",
       "title": "Planetary Boundaries (Stockholm Resilience Centre)",
       "description": "Graphic after the Stockholm Resilience Centre's Planetary Boundaries, showing processes that regulate planetary stability.",
@@ -203,7 +186,7 @@
         "landscape": "planetary_boundaries.json"
       },
       "live": null,
-      "featured": true,
+      "featured": false,
       "sources": [
         "After Stockholm Resilience Centre Planetary Boundaries"
       ],
@@ -290,7 +273,7 @@
         "landscape": "paleoclimate_wet_bulb.json"
       },
       "live": null,
-      "featured": true,
+      "featured": false,
       "sources": [],
       "converted": "2026-02-08 23:35",
       "size_kb": {
@@ -408,22 +391,20 @@
       }
     },
     {
-      "id": "earth-apophis_20290401_29",
-      "title": "Apophis Closest Approach, 4-13-2029",
-      "description": "Apophis Closest Approach, 4-13-2029",
+      "id": "near_earth_asteroids_20260207_2114",
+      "title": "Near Earth Asteroids 20260207 2114",
+      "description": "Plot of near-Earth asteroids between Venus and Mars.",
       "room": "solar_system/earth",
       "shape": "16:9",
       "files": {
-        "landscape": "earth-apophis_20290401_29.json",
-        "portrait": "earth-apophis_20290401_29_mobile.json"
+        "landscape": "near_earth_asteroids_20260207_2114.json"
       },
       "live": null,
       "featured": false,
       "sources": [],
-      "converted": "2026-03-10 00:16",
+      "converted": "2026-02-07 23:57",
       "size_kb": {
-        "landscape": 4280.1,
-        "portrait": 5827.7
+        "landscape": 1887.3
       }
     },
     {
@@ -1981,40 +1962,42 @@
       }
     },
     {
-      "id": "solar_system_20260907_earth_shells_moon_mobile",
-      "title": "Earth and Moon",
-      "description": "Earth and Moon",
-      "room": "other",
+      "id": "near_earth_asteroids_social_view_20260211_0024",
+      "title": "Near Earth Asteroids on 2026 02 11 00:24",
+      "description": "Near-Earth asteroids.",
+      "room": "solar_system/earth",
       "shape": "9:16",
       "files": {
-        "portrait": "solar_system_20260907_earth_shells_moon_mobile.json"
+        "portrait": "near_earth_asteroids_social_view_20260211_0024.json"
       },
       "live": null,
       "featured": false,
       "sources": [],
-      "converted": "2026-09-07 17:50",
+      "converted": "2026-02-11 00:39",
       "size_kb": {
-        "portrait": 626.4
+        "portrait": 2001.0
       }
     },
     {
-      "id": "solar_system_20260907_earth_shells_moon_gallery",
-      "title": "Earth and Moon",
-      "description": "Earth and Moon",
-      "room": "other",
+      "id": "earth-apophis_20290401_29",
+      "title": "Apophis Closest Approach, 4-13-2029",
+      "description": "Apophis Closest Approach, 4-13-2029",
+      "room": "solar_system/earth",
       "shape": "16:9",
       "files": {
-        "landscape": "solar_system_20260907_earth_shells_moon_gallery.json"
+        "landscape": "earth-apophis_20290401_29.json",
+        "portrait": "earth-apophis_20290401_29_mobile.json"
       },
       "live": null,
       "featured": false,
       "sources": [],
-      "converted": "2026-09-07 17:51",
+      "converted": "2026-03-10 00:16",
       "size_kb": {
-        "landscape": 618.5
+        "landscape": 4280.1,
+        "portrait": 5827.7
       }
     }
   ],
-  "last_updated": "2026-09-07 17:51",
-  "total_count": 108
+  "last_updated": "2026-09-07 17:57",
+  "total_count": 107
 }
