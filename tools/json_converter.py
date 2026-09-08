@@ -134,9 +134,36 @@ def _v2_entry(metadata, safe_name, title, description, size_kb, mode):
     filename = f"{safe_name}.json"
     slot = "portrait" if mode == "portrait" else "landscape"
     viz_list = metadata.get("visualizations", [])
-    for i, v in enumerate(viz_list):
+
+    # L-287 follow-on (2026-09-08). Studio exports a landscape and a
+    # portrait file of the same figure as SEPARATE scenes (each preset
+    # handles its own), named <base>_gallery and <base>_mobile. They are
+    # one card with two files. The L-287 migration paired existing cards;
+    # this is the same pairing for cards that arrive one file at a time,
+    # in the order: same filename/id, then same STEM, then same TITLE.
+    def _stem(name):
+        return re.sub(r"_(gallery|mobile|portrait|landscape)$", "", name)
+
+    def _joins(v):
         files = v.get("files") or {}
         if filename in files.values() or v.get("id") == safe_name:
+            return True
+        if slot in files:
+            return False          # that orientation is already taken
+        stems = {_stem(os.path.splitext(f)[0]) for f in files.values()}
+        stems.add(_stem(str(v.get("id", ""))))
+        return _stem(safe_name) in stems
+
+    match = [i for i, v in enumerate(viz_list) if _joins(v)]
+    if not match and title:
+        by_title = [i for i, v in enumerate(viz_list)
+                    if v.get("title") == title and slot not in (v.get("files") or {})]
+        if len(by_title) == 1:
+            match = by_title
+    for i in match[:1]:
+        v = viz_list[i]
+        files = v.get("files") or {}
+        if True:
             files[slot] = filename
             sizes = v.get("size_kb") if isinstance(v.get("size_kb"), dict) else {}
             sizes[slot] = round(size_kb, 1)
