@@ -226,13 +226,23 @@ def main():
         check(all(isinstance(v, dict) for v in feats.values()),
               "M1: every served feature entry is a dict (no lists survive)")
         ef = feats['earth']
-        check('van_allen_belts' in ef and 'atmosphere_shell' in ef,
-              "M1: earth has van_allen_belts + atmosphere_shell")
-        check(ef['van_allen_belts']['inner_belt_distance'] == 1.5,
-              "M1: earth van_allen_belts.inner_belt_distance == 1.5")
-        check('atmosphere' in ef['atmosphere_shell']
-              and 'upper_atmosphere' in ef['atmosphere_shell'],
-              "M1: earth atmosphere_shell has atmosphere + upper_atmosphere")
+        # L-291 (2026-09-07): Earth's entry is in the measured shape. These
+        # pins describe what is SERVED; the numbers are read against the
+        # orrery store by the live drift run, not re-typed here.
+        for grp in ('earth_interior', 'earth_atmosphere', 'earth_exosphere',
+                    'earth_orbital_zones', 'earth_geostationary',
+                    'earth_magnetosphere', 'van_allen_belts', 'hill_sphere',
+                    'orientation'):
+            check(grp in ef, "M1: earth serves group '%s'" % grp)
+        ibd = ef['van_allen_belts']['inner_belt_distance']
+        check(isinstance(ibd, dict) and ibd.get('unit') == 'R_earth'
+              and 'orrery_constant' in ibd and 'source' in ibd,
+              "M1: earth inner_belt_distance is a measured entry in R_earth with source and pointer")
+        check('lower_atmosphere' in ef['earth_atmosphere']
+              and 'upper_atmosphere' in ef['earth_atmosphere'],
+              "M1: earth earth_atmosphere has lower_atmosphere + upper_atmosphere")
+        check('atmosphere_shell' not in ef,
+              "M1: the pre-L-291 atmosphere_shell group is gone (no second home)")
         jf = feats['jupiter']
         check('radiation_belts' in jf and 'magnetosphere' not in jf,
               "M1: jupiter has radiation_belts and NOT magnetosphere")

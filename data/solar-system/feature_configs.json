@@ -369,22 +369,243 @@
       }
     },
     "earth": {
-      "atmosphere_shell": {
-        "atmosphere": {
-          "name": "Lower Atmosphere",
-          "radius_fraction": 1.05,
+      "earth_interior": {
+        "inner_core": {
+          "name": "Inner Core",
+          "radius": {
+            "value": 1221.5,
+            "unit": "km"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Earth%27s_inner_core",
+          "color": "rgb(255, 180, 140)",
+          "opacity": 1.0,
+          "n_points": 25,
+          "marker_size": 10,
+          "source": "Dziewonski & Anderson (1981), Preliminary Reference Earth Model, Phys. Earth Planet. Inter. 25:297",
+          "orrery_constant": "constants_new.py::EARTH_INNER_CORE_KM"
+        },
+        "outer_core": {
+          "name": "Outer Core",
+          "radius": {
+            "value": 3480.0,
+            "unit": "km"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Earth%27s_outer_core",
+          "color": "rgb(255, 140, 0)",
+          "opacity": 1.0,
+          "n_points": 25,
+          "marker_size": 7,
+          "source": "Dziewonski & Anderson (1981), Preliminary Reference Earth Model, Phys. Earth Planet. Inter. 25:297",
+          "orrery_constant": "constants_new.py::EARTH_OUTER_CORE_KM"
+        },
+        "lower_mantle": {
+          "name": "Lower Mantle",
+          "radius": {
+            "value": 5711.0,
+            "unit": "km"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Lower_mantle",
+          "color": "rgb(230, 100, 20)",
+          "opacity": 1.0,
+          "n_points": 25,
+          "marker_size": 7,
+          "source": "Ishii, Kumagai, Sugiura & Tsuchiya (2019), Nature Geoscience 12:869 -- the 660-km discontinuity",
+          "orrery_constant": "constants_new.py::EARTH_LOWER_MANTLE_KM"
+        },
+        "upper_mantle": {
+          "name": "Upper Mantle",
+          "radius": {
+            "value": 6346.6,
+            "unit": "km"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Upper_mantle",
+          "color": "rgb(205, 85, 85)",
+          "opacity": 1.0,
+          "n_points": 25,
+          "marker_size": 7,
+          "source": "Dziewonski & Anderson (1981), Preliminary Reference Earth Model, Phys. Earth Planet. Inter. 25:297 -- Moho",
+          "orrery_constant": "constants_new.py::EARTH_UPPER_MANTLE_KM"
+        },
+        "crust": {
+          "name": "Crust",
+          "radius": {
+            "value": 1.0,
+            "unit": "R_earth"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Earth%27s_crust",
+          "color": "rgb(70, 120, 160)",
+          "opacity": 1.0,
+          "n_points": 40,
+          "marker_size": 3.0,
+          "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1 -- equatorial radius",
+          "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM",
+          "note": "Drawn at the equatorial radius. Crust thickness (5-10 km oceanic, 30-50 km continental) is below the drawn resolution."
+        },
+        "planet_radius": {
+          "value": 6378.1366,
+          "unit": "km",
+          "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
+          "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
+        }
+      },
+      "earth_atmosphere": {
+        "lower_atmosphere": {
+          "name": "Lower Atmosphere (to the stratopause)",
+          "radius": {
+            "value": 1.0078392802060714,
+            "unit": "R_earth"
+          },
           "info_url": "https://science.nasa.gov/earth/earth-atmosphere/earths-atmosphere-a-multi-layered-cake/",
           "color": "rgb(150, 200, 255)",
           "opacity": 0.5,
-          "n_points": 20
+          "n_points": 20,
+          "marker_size": 3.0,
+          "source": "NOAA JetStream, \"Layers of the Atmosphere\"; NASA, \"Earth's Atmospheric Layers\" -- stratopause at about 50 km",
+          "orrery_constant": "constants_new.py::EARTH_STRATOPAUSE_RADII",
+          "note": "Troposphere and stratosphere, 99% of atmospheric mass. Drawn at the physical boundary since 2026-09-07 (L-295); before that at a visibility fraction its own hover contradicted."
         },
         "upper_atmosphere": {
-          "name": "Upper Atmosphere",
-          "radius_fraction": 1.25,
+          "name": "Upper Atmosphere (to the thermopause)",
+          "radius": {
+            "value": 1.0940713624728577,
+            "unit": "R_earth"
+          },
           "info_url": "https://www.nasa.gov/image-article/earths-upper-atmosphere/",
           "color": "rgb(100, 150, 255)",
           "opacity": 0.3,
-          "n_points": 20
+          "n_points": 20,
+          "marker_size": 3.0,
+          "source": "NOAA JetStream, \"Layers of the Atmosphere\"; NASA, \"Earth's Atmospheric Layers\" -- thermosphere to about 600 km",
+          "orrery_constant": "constants_new.py::EARTH_THERMOPAUSE_RADII",
+          "note": "Mesosphere and thermosphere. The thermopause moves with solar activity over roughly 500-1,000 km; 600 km is the nominal figure."
+        },
+        "planet_radius": {
+          "value": 6378.1366,
+          "unit": "km",
+          "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
+          "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
+        }
+      },
+      "earth_exosphere": {
+        "geocorona": {
+          "name": "Exosphere / Geocorona (hydrogen halo, detected extent)",
+          "radius": {
+            "value": 100.0,
+            "unit": "R_earth"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Geocorona",
+          "color": "rgb(200, 200, 255)",
+          "opacity": 0.15,
+          "n_points": 20,
+          "marker_size": 3.0,
+          "source": "Baliukin, Bertaux, Quemerais, Izmodenov & Schmidt (2019), J. Geophys. Res. Space Physics 124:861, doi:10.1029/2018JA026136 -- the hydrogen geocorona is detected to at least 100 Earth radii",
+          "orrery_constant": "constants_new.py::EARTH_GEOCORONA_RADII",
+          "note": "The exosphere has no boundary: it thins into space. This shell is the sourced DETECTION FLOOR, not an edge, and it encloses the Moon's orbit at about 60 Earth radii. The orrery folds the exosphere into its upper-atmosphere hover; growing it a shell of its own is L-292."
+        },
+        "planet_radius": {
+          "value": 6378.1366,
+          "unit": "km",
+          "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
+          "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
+        }
+      },
+      "earth_orbital_zones": {
+        "leo_inner": {
+          "name": "Low Earth Orbit, inner edge (200 km)",
+          "radius": {
+            "value": 1.031357120824286,
+            "unit": "R_earth"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Low_Earth_orbit",
+          "color": "rgb(255, 248, 220)",
+          "opacity": 0.25,
+          "n_points": 30,
+          "marker_size": 2.5,
+          "source": "Drawing floor: the LEO region begins at the surface (IADC-02-01 Rev. 3); 200 km marks where orbits stop decaying within days. Declared, not measured.",
+          "orrery_constant": "constants_new.py::EARTH_LEO_INNER_RADII"
+        },
+        "leo_outer": {
+          "name": "Low Earth Orbit, outer edge (2,000 km)",
+          "radius": {
+            "value": 1.313571208242859,
+            "unit": "R_earth"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Low_Earth_orbit",
+          "color": "rgb(255, 248, 220)",
+          "opacity": 0.25,
+          "n_points": 30,
+          "marker_size": 2.5,
+          "source": "IADC Space Debris Mitigation Guidelines, IADC-02-01 Rev. 3 (June 2021), sec. 3.3.2 -- the LEO Protected Region extends to 2,000 km altitude",
+          "orrery_constant": "constants_new.py::EARTH_LEO_OUTER_RADII"
+        },
+        "planet_radius": {
+          "value": 6378.1366,
+          "unit": "km",
+          "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
+          "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
+        }
+      },
+      "earth_geostationary": {
+        "geostationary_ring": {
+          "name": "Geostationary Belt (GEO)",
+          "shape": "equatorial_ring",
+          "radius": {
+            "value": 6.610735325291913,
+            "unit": "R_earth"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Geostationary_orbit",
+          "color": "rgb(220, 220, 255)",
+          "opacity": 0.6,
+          "n_points": 120,
+          "marker_size": 2.0,
+          "source": "Derived: (GM_E / omega^2)^(1/3) from IERS Conventions (2010) TN36 Table 1.1 -- GM_E = 3.986004418e14 m^3 s^-2, nominal mean angular velocity 7.292115e-5 rad s^-1",
+          "orrery_constant": "constants_new.py::EARTH_GEOSTATIONARY_RADII",
+          "note": "A ring in the equatorial plane, not a sphere: needs the orientation block and its own renderer (step 3). 42,164 km from Earth's centre, 35,786 km up."
+        },
+        "planet_radius": {
+          "value": 6378.1366,
+          "unit": "km",
+          "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
+          "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
+        }
+      },
+      "earth_magnetosphere": {
+        "_comment": "The orrery emits magnetopause, bow shock, inner belt and outer belt from ONE call. Served as four rows: the two standoffs here, the two belts in van_allen_belts. Renderer for the standoff shapes is step 3.",
+        "magnetopause": {
+          "name": "Magnetopause (sunward standoff)",
+          "shape": "magnetopause",
+          "standoff": {
+            "value": 10.0,
+            "unit": "R_earth"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Magnetopause",
+          "color": "rgb(180, 180, 255)",
+          "opacity": 0.25,
+          "source": "Shue et al. (1998), J. Geophys. Res. 103:17691, doi:10.1029/98JA01103 -- r0 = 10.2 R_E at Bz = 0 nT, Dp = 2 nPa; Lugaz et al. (2016), doi:10.1038/ncomms13001 -- typical subsolar magnetopause 9-11 R_E",
+          "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_STANDOFF_RADII",
+          "note": "Quiet-time nominal. Under storm compression it can fall inside geostationary orbit (6.6 R_E)."
+        },
+        "bow_shock": {
+          "name": "Bow Shock (sunward standoff)",
+          "shape": "bow_shock",
+          "standoff": {
+            "value": 12.5,
+            "unit": "R_earth"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Bow_shocks_in_astrophysics",
+          "color": "rgb(255, 200, 150)",
+          "opacity": 0.25,
+          "source": "Lugaz et al. (2016), Nat. Commun. 7:13001, doi:10.1038/ncomms13001 -- under normal solar wind the bow shock forms at 11-14 R_E subsolar. Drawn at the midpoint of that range.",
+          "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_STANDOFF_RADII",
+          "note": "Model form: Farris & Russell (1994), J. Geophys. Res. 99:17681. The orrery drew 15 R_E (textbook) until 2026-09-07; store and shells now agree."
+        },
+        "magnetotail": {
+          "_declared": "Drawing parameters, not measurements: the orrery's tail is drawn to 100 Earth radii with a 15-radius base and 25-radius end; the real tail extends past 1,000 radii and the hover must say so (Show the Envelope).",
+          "length_radii": 100.0,
+          "base_radii": 15.0,
+          "end_radii": 25.0,
+          "color": "rgb(180, 180, 255)",
+          "opacity": 0.15
         },
         "planet_radius": {
           "value": 6378.1366,
@@ -394,8 +615,20 @@
         }
       },
       "van_allen_belts": {
-        "inner_belt_distance": 1.5,
-        "outer_belt_distance": 4.5,
+        "inner_belt_distance": {
+          "value": 1.5,
+          "unit": "R_earth",
+          "source": "Baker et al. (2018), Space Sci. Rev. 214:17, doi:10.1007/s11214-017-0452-7 -- inner-zone proton fluxes peak near r ~ 1.5 R_E",
+          "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_RADII",
+          "note": "A flux PEAK, not an edge; the inner belt spans roughly L = 1.1 to 2."
+        },
+        "outer_belt_distance": {
+          "value": 4.5,
+          "unit": "R_earth",
+          "source": "J. Geophys. Res. Space Physics (2025), doi:10.1029/2024JA033504 -- the outer belt is most intense around L = 4 and 5; Kellerman et al. (2014) as cited in arXiv:1809.00902 -- maximum electron flux at L = 4-5. Drawn at the midpoint.",
+          "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_RADII",
+          "note": "A flux PEAK, not an edge; the outer belt spans roughly L = 3 to 7 and moves with geomagnetic activity."
+        },
         "belt_thickness": 0.5,
         "n_rings": 5,
         "n_points": 80,
@@ -411,12 +644,51 @@
           "https://science.nasa.gov/biological-physical/stories/van-allen-belts/",
           "https://science.nasa.gov/biological-physical/stories/van-allen-belts/"
         ],
+        "_declared": "belt_thickness, n_rings, n_points, colours and names are drawing choices.",
         "planet_radius": {
           "value": 6378.1366,
           "unit": "km",
           "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
           "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
         }
+      },
+      "hill_sphere": {
+        "hill_sphere": {
+          "name": "Hill Sphere (gravitational dominance over the Sun)",
+          "radius": {
+            "value": 234.6388338020614,
+            "unit": "R_earth"
+          },
+          "info_url": "https://en.wikipedia.org/wiki/Hill_sphere",
+          "color": "rgb(0, 255, 0)",
+          "opacity": 0.2,
+          "n_points": 20,
+          "marker_size": 3.0,
+          "source": "Derived: r_H = a (GM_E / 3 GM_Sun)^(1/3) with a = 1 AU; GM_E from IERS Conventions (2010) TN36 Table 1.1, GM_Sun from IAU 2015 Resolution B3",
+          "orrery_constant": "constants_new.py::EARTH_HILL_SPHERE_RADII",
+          "note": "About 1.50 million km. The Moon at about 60 Earth radii sits well inside it, which is why it stays bound. a = 1 AU exactly; Earth's semi-major axis is 1.00000011 AU (NASA Earth Fact Sheet)."
+        },
+        "planet_radius": {
+          "value": 6378.1366,
+          "unit": "km",
+          "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
+          "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
+        }
+      },
+      "orientation": {
+        "pole": {
+          "ra": {
+            "value": 0.0,
+            "unit": "deg"
+          },
+          "dec": {
+            "value": 90.0,
+            "unit": "deg"
+          }
+        },
+        "source": "IAU 2018 (Archinal et al.) -- Earth's north pole is the J2000 celestial north pole in ICRF equatorial coordinates",
+        "orrery_constant": "idealized_orbits.py::planet_poles['Earth']",
+        "note": "Same shape as the Sun's orientation block; read by poleBasis(). The equator plane and the GEO ring both hang off this."
       }
     },
     "jupiter": {

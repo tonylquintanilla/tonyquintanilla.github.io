@@ -108,23 +108,43 @@ check("inner belt sits at ~1.75 Jupiter radii (1.5 + half the 0.5 band)",
 // --- Earth ---------------------------------------------------------------
 const p1 = JSON.parse(fs.readFileSync(path.join(__dirname, "payload_earth.json"), "utf8"));
 const r1 = GF.buildFeatureTraces(p1.features, p1.bodies);
-check("no unread inputs reported for earth", r1.warnings.length === 0, r1.warnings.join(" | "));
+// L-291: Earth's entry is in the measured shape. Two groups have no renderer
+// yet (earth_geostationary, earth_magnetosphere) and the dispatch must SAY
+// so, by name -- those two warnings are expected and nothing else is.
+const expectedWarn = ["earth/earth_geostationary", "earth/earth_magnetosphere"];
+check("earth reports exactly the two no-renderer groups, by name",
+      r1.warnings.length === 2 &&
+      expectedWarn.every(k => r1.warnings.some(w => w.indexOf(k) === 0 && /no renderer/.test(w))),
+      r1.warnings.join(" | "));
 const geo1 = r1.traces.filter(t => t.showlegend === true);
 const geoEarth = geo1.filter(t => t.name.indexOf("Earth:") === 0);
-check("2 atmosphere shells + 2 Van Allen belts = 4 Earth geometry traces",
-      geoEarth.length === 4, "got " + geoEarth.length);
+check("5 interior + 2 atmosphere + 1 geocorona + 2 LEO + 2 belts + 1 Hill = 13 Earth geometry traces",
+      geoEarth.length === 13, "got " + geoEarth.length + ": " + geoEarth.map(t => t.name).join(", "));
+// Info markers carry an empty name, the group label in legendgroup and the
+// hover in text (an array); read them where they are.
+const earthSourced = r1.traces.filter(t => t.showlegend !== true &&
+                                          String(t.legendgroup || "").indexOf("Earth:") === 0 &&
+                                          /Source:/.test(JSON.stringify(t.text || t.hovertext || "")));
+check("every Earth info marker carries a Source line (13 of 13)",
+      earthSourced.length === 13, "got " + earthSourced.length);
 // L-234: same reasoning as above, from the other side.
 const geoSun = geo1.filter(t => t.name.indexOf("Sun:") === 0);
 check("the scene centre contributes 14 solar shells",
       geoSun.length === 14, "got " + geoSun.length);
-const lower = geo1.find(t => t.name === "Earth: Lower Atmosphere");
+const lower = geo1.find(t => t.name.indexOf("Earth: Lower Atmosphere") === 0);
 const ePos = p1.bodies.earth.position;
 let sr = 0;
 for (let i = 0; i < lower.x.length; i++) {
   sr = Math.max(sr, Math.hypot(lower.x[i]-ePos[0], lower.y[i]-ePos[1], lower.z[i]-ePos[2]));
 }
-check("lower atmosphere at 1.05 Earth radii",
-      Math.abs(sr * KM / 6378.1366 - 1.05) < 0.001, (sr*KM/6378.1366).toFixed(4));
+// The expected radius is read from the fixture, not typed: the fixture is a
+// copy of the served entry, and the served entry is checked against the
+// store by the live drift run. Nothing here is a second home for the value.
+const atmo = p1.features.find(f => f.object === "earth" && f.feature === "earth_atmosphere").params;
+const expectLower = atmo.lower_atmosphere.radius.value;
+const rEarthKm = atmo.planet_radius.value;
+check("lower atmosphere at the served stratopause radius (" + expectLower.toFixed(4) + " R_earth)",
+      Math.abs(sr * KM / rEarthKm - expectLower) < 0.001, (sr*KM/rEarthKm).toFixed(4));
 
 // --- The blind spot must announce ---------------------------------------
 const broken = JSON.parse(JSON.stringify(p2));

@@ -52,7 +52,10 @@
   // objects_config.json draws without a code change here -- while an
   // unrecognized key still falls through to the dispatcher's warning.
   var SHELL_SET_KEYS = ["sun_structures", "solar_atmosphere",
-                        "solar_wind", "oort_cloud", "hill_sphere"];
+                        "solar_wind", "oort_cloud", "hill_sphere",
+                        // L-291: Earth's groups are the same shape.
+                        "earth_interior", "earth_atmosphere",
+                        "earth_exosphere", "earth_orbital_zones"];
 
   // --- DECLARED style (see header) ---------------------------------------
 
@@ -166,16 +169,21 @@
     if (node.unit === "au") {
       return node.value;
     }
-    if (node.unit === "R_sun") {
+    if (node.unit === "km") {
+      return node.value / KM_PER_AU;  // L-291: Earth's interior is served in km
+    }
+    // L-291: "R_sun" and "R_earth" both mean "radii of the group's body";
+    // the body radius is served in the group as sun_radius or planet_radius.
+    if (node.unit === "R_sun" || node.unit === "R_earth") {
       if (typeof starRadiusKm !== "number") {
-        warn(where + ": radius is in R_sun but no star radius was served " +
-             "for this group -- nothing drawn");
+        warn(where + ": radius is in " + node.unit + " but no body radius " +
+             "(sun_radius / planet_radius) was served for this group -- nothing drawn");
         return null;
       }
       return node.value * starRadiusKm / KM_PER_AU;
     }
     warn(where + ": unit is " + JSON.stringify(node.unit) +
-         ", expected \"R_sun\" or \"au\" -- refusing to guess a conversion");
+         ", expected \"R_sun\", \"R_earth\", \"km\" or \"au\" -- refusing to guess a conversion");
     return null;
   }
 
@@ -444,11 +452,29 @@
     var radiusAu = radiusKm / KM_PER_AU;
 
     var distances, names, colors;
+    var sources = [];
+    // L-291: a belt distance may be a measured entry {value, unit
+    // "R_earth", source, orrery_constant} (Earth) or a bare number in
+    // planet radii (Jupiter, unchanged). Read either; carry the source.
+    function beltDistance(node, label) {
+      if (typeof node === "number") return node;
+      if (isDict(node) && typeof node.value === "number") {
+        if (node.unit !== "R_earth" && node.unit !== undefined) {
+          warn(slug + "/" + featureKey + "/" + label + ": unit is " +
+               JSON.stringify(node.unit) + ", expected \"R_earth\" -- not drawn");
+          return null;
+        }
+        sources.push(node.source || null);
+        return node.value;
+      }
+      return null;
+    }
+    var innerD = beltDistance(params.inner_belt_distance, "inner_belt_distance");
+    var outerD = beltDistance(params.outer_belt_distance, "outer_belt_distance");
     if (Array.isArray(params.belt_distances)) {
       distances = params.belt_distances;
-    } else if (typeof params.inner_belt_distance === "number" &&
-               typeof params.outer_belt_distance === "number") {
-      distances = [params.inner_belt_distance, params.outer_belt_distance];
+    } else if (typeof innerD === "number" && typeof outerD === "number") {
+      distances = [innerD, outerD];
     } else {
       warn(slug + "/" + featureKey +
            ": no belt_distances and no inner/outer pair -- nothing drawn");
@@ -485,6 +511,9 @@
         "= " + kmAndAu(distances[i] * radiusKm) + "<br>" +
         "Band thickness: " + thickness.toFixed(1) + " radii<br>" +
         "Trapped-particle region; band is illustrative in shape.";
+      if (sources[i]) {
+        hover += "<br><br>" + wrapHover("Source: " + sources[i]);
+      }
       traces.push(infoMarker(built.x[0], built.y[0], built.z[0],
                              color, hover, label));
     }
@@ -927,10 +956,15 @@
                           basis, halfRangeAu, warn) {
     var traces = [];
     var where = slug + "/" + featureKey;
+    // The group's body radius, in km: the Sun serves sun_radius, a planet
+    // serves planet_radius (L-291). Radii in R_sun / R_earth scale by it.
     var starRadiusKm = null;
     if (params.sun_radius !== undefined) {
       starRadiusKm = measured(params.sun_radius, "km",
                               where + "/sun_radius", warn);
+    } else if (params.planet_radius !== undefined) {
+      starRadiusKm = measured(params.planet_radius, "km",
+                              where + "/planet_radius", warn);
     }
 
     var keys = Object.keys(params);
@@ -1019,6 +1053,12 @@
       var hover = label + "<br><br>";
       if (cfg.radius.unit === "R_sun") {
         hover += "Radius: " + cfg.radius.value + " solar radii<br>";
+      } else if (cfg.radius.unit === "R_earth") {
+        // L-291: Earth radii, with the altitude the hover convention asks for.
+        hover += "Radius: " + cfg.radius.value.toFixed(4) + " Earth radii<br>";
+        if (typeof starRadiusKm === "number" && cfg.radius.value > 1) {
+          hover += "Altitude: " + kmAndAu((cfg.radius.value - 1) * starRadiusKm) + "<br>";
+        }
       }
       hover += "= " + kmAndAu(radiusAu * KM_PER_AU);
       if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + cfg.source);

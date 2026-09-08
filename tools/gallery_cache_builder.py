@@ -960,6 +960,16 @@ def _iso_to_jd(iso_str):
 _RGB_RE = re.compile(r'^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$')
 
 
+def _shape_number(x):
+    """The number a shape rule compares: a bare number, or a measured
+    entry's value. Anything else is None (L-291)."""
+    if isinstance(x, (int, float)) and not isinstance(x, bool):
+        return x
+    if isinstance(x, dict) and isinstance(x.get('value'), (int, float)):
+        return x['value']
+    return None
+
+
 def _validate_feature_shapes(slug, node):
     """Structural validation of a served feature subtree (manifest v2 M1 sec
     4.3), ABORT disposition. Shapes are recognized by FIELD PRESENCE, not a
@@ -992,7 +1002,16 @@ def _validate_feature_shapes(slug, node):
                 "feature-shape (%s): radius_fraction <= 0 (%r)"
                 % (slug, node['radius_fraction']))
     if 'inner_belt_distance' in node and 'outer_belt_distance' in node:
-        inn, out = node['inner_belt_distance'], node['outer_belt_distance']
+        # L-291 (2026-09-07): a belt distance may be served as a MEASURED
+        # entry {value, unit, source, orrery_constant} (Earth) as well as a
+        # bare number (Jupiter). Compare the number either way; a measured
+        # entry with no numeric value is a config error and aborts here.
+        inn, out = _shape_number(node['inner_belt_distance']), _shape_number(node['outer_belt_distance'])
+        if inn is None or out is None:
+            raise ValidationAbort(
+                "feature-shape (%s): belt distance is neither a number nor a "
+                "measured {value, unit} entry (%r, %r)"
+                % (slug, node['inner_belt_distance'], node['outer_belt_distance']))
         if not (0 < inn < out):
             raise ValidationAbort(
                 "feature-shape (%s): belt distances not 0 < inner < outer (%r, %r)"

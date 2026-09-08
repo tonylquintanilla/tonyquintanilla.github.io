@@ -423,6 +423,22 @@ BARE_NUMBER = re.compile(r"^-?[0-9.]+$")
 UNIT_BY_SUFFIX = (("_RADII", "r_sun"), ("_AU", "au"), ("_KM", "km"))
 
 
+def unit_of_constant(name):
+    """The unit a constant's NAME declares, or None.
+
+    L-291 (2026-09-07): *_RADII meant solar radii while the Sun was the
+    only exhibit. An EARTH_-prefixed *_RADII is in Earth radii. The
+    factor for r_earth comes from the store (store_conversions), never
+    from a number typed here.
+    """
+    if name.startswith("EARTH_") and name.endswith("_RADII"):
+        return "r_earth"
+    for suffix, unit_name in UNIT_BY_SUFFIX:
+        if name.endswith(suffix):
+            return unit_name
+    return None
+
+
 def parse_constants(source):
     """Top-level numeric assignments, evaluated without executing anything.
 
@@ -529,7 +545,15 @@ def store_conversions(constants):
     solar_radius_au = constants["SOLAR_RADIUS_AU"][0]
     if not km_per_au or not solar_radius_au:
         return None
-    return {"au": 1.0, "km": 1.0 / km_per_au, "r_sun": solar_radius_au}
+    factors = {"au": 1.0, "km": 1.0 / km_per_au, "r_sun": solar_radius_au}
+    # L-291: Earth radii, from the store's equatorial radius. Absent from
+    # the store means the unit is absent here, and an r_earth pointer then
+    # reports NO UNIT -- the announcement, not a silence.
+    if "EARTH_EQUATORIAL_RADIUS_KM" in constants:
+        earth_km = constants["EARTH_EQUATORIAL_RADIUS_KM"][0]
+        if earth_km:
+            factors["r_earth"] = earth_km / km_per_au
+    return factors
 
 
 def agreement_depth(left, right):
@@ -568,11 +592,7 @@ def judge(name, expression, orrery_value, value, unit, to_au):
                          % (coefficient, value,
                             _depth_note(coefficient, value)))
 
-    orrery_unit = None
-    for suffix, unit_name in UNIT_BY_SUFFIX:
-        if name.endswith(suffix):
-            orrery_unit = unit_name
-            break
+    orrery_unit = unit_of_constant(name)
     if orrery_unit is None:
         return "NO UNIT", "the constant's name declares no unit"
     if unit not in to_au:

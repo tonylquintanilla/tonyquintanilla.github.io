@@ -2007,9 +2007,20 @@
                 plotlyGraph.style.width = '';
                 plotlyGraph.style.height = '';
             }
-            if (plotlyGraph.data && typeof Plotly !== 'undefined') {
+            // Dragmode is the sweep's to give and take ONLY on a 2D figure.
+            // A 3D scene is never swept (sweepWanted excludes it) and must
+            // never see a layout-level dragmode relayout: in Plotly 2.35.2
+            // that relayout -- even to null -- makes gl3d.updateFx copy the
+            // LAYOUT dragmode (default "zoom") into every scene, and the
+            // turntable rotation is gone until a modebar button restores
+            // it, which a phone does not have. (2026-09-07; found by Tony
+            // on a served card, absent from Studio's HTML export.)
+            var is3d = !!((plotlyGraph.layout || {}).scene);
+            if (!is3d && plotlyGraph.data && typeof Plotly !== 'undefined') {
                 var want = on ? false : sweepDragmode;
-                if ((plotlyGraph.layout || {}).dragmode !== want) {
+                var cur = (plotlyGraph.layout || {}).dragmode;
+                if (cur === undefined) cur = null;   // absent == nothing to restore
+                if (cur !== want) {
                     Plotly.relayout('plotly-graph', { dragmode: want });
                 }
             }
