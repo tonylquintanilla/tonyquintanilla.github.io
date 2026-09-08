@@ -2030,6 +2030,7 @@
         // Track current plot's aspect ratio for resize handler
         var currentAspect = 0;
         var infoCardShown = false;
+        var infoCardOpenedAt = 0;     // ms; the tap that opens the card must not dismiss it
         var tapHintShown = false;
 
         // ---- Schema v2 shim (L-287) ----
@@ -3530,9 +3531,14 @@
                 }
             });
 
-            // Click/tap anywhere dismisses info card (except on card itself)
+            // Click/tap anywhere dismisses info card (except on card itself).
+            // The Plotly click that OPENS the card bubbles here as the same DOM
+            // click and, until 2026-09-08, closed it in the same instant -- a
+            // left click flashed the card, a right click (no DOM click) kept
+            // it, a tap needed a tiny drag. Ignore the click that just opened it.
             document.addEventListener('click', function(e) {
-                if (infoCardShown && !infoCard.contains(e.target)) {
+                if (infoCardShown && !infoCard.contains(e.target) &&
+                    Date.now() - infoCardOpenedAt > 400) {
                     dismissInfoCard();
                 }
             });
@@ -3736,6 +3742,7 @@
 
                 infoCard.classList.add('visible');
                 infoCardShown = true;
+                infoCardOpenedAt = Date.now();
             } catch (e) {
                 // Unparseable data -- ignore
             }

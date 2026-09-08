@@ -69,7 +69,8 @@ PINNED = [
     ("T2", "OK",
      "Earth assembles into five traces"),
     ("T3", "FAIL",
-     "KNOWN, L-237 -- expects Earth's two feature groups, sees all eight"),
+     "KNOWN, L-237 -- expects Earth's feature groups alone, sees the Sun's too "
+     "(13 keys since L-291, 2026-09-08)"),
     ("T4", "RAISED",
      "the moon/sun frame mismatch is rejected as required"),
     ("T5", "OK",
@@ -79,9 +80,14 @@ PINNED = [
 # T3's failure is only pinned if the feature set is the SAME failure.
 # Sorted, because the test prints a sorted list on the T3 line and an
 # unordered set on the FAILURES line.
+# L-291 (2026-09-08): Earth's entry moved to the measured shape -- nine
+# groups, atmosphere_shell retired. hill_sphere and orientation are keys
+# both bodies serve, so the set is 13, not 9 + 6.
 PINNED_T3_FEATURES = [
-    "atmosphere_shell", "hill_sphere", "oort_cloud", "orientation",
-    "solar_atmosphere", "solar_wind", "sun_structures", "van_allen_belts",
+    "earth_atmosphere", "earth_exosphere", "earth_geostationary",
+    "earth_interior", "earth_magnetosphere", "earth_orbital_zones",
+    "hill_sphere", "oort_cloud", "orientation", "solar_atmosphere",
+    "solar_wind", "sun_structures", "van_allen_belts",
 ]
 PINNED_T3_PY_TRACES = 0
 
