@@ -1,7 +1,7 @@
 // smoke_earth_geometry.js -- the Earth room's composed scene, headless.
 //
 // Runs EarthGeometry.composeScene on a fixture that is the REAL output of
-// the page's Python driver against the served cache of 2026-09-08
+// the page's Python driver against the served cache of 2026-09-09, after the L-168 fix
 // (documentation/payload_earth_scene.json), and checks the geometry the
 // phone will show: axis tilt, equator and GEO in one plane, terminator
 // perpendicular to the Sun line, subsolar point on it, Moon arc on the
@@ -152,6 +152,16 @@ let dMin = Infinity;
 for (let i = 0; i < arc.x.length; i++) dMin = Math.min(dMin, Math.hypot(arc.x[i]-moonMarker.x[0], arc.y[i]-moonMarker.y[0], arc.z[i]-moonMarker.z[0]));
 const step = Math.hypot(arc.x[1]-arc.x[0], arc.y[1]-arc.y[0], arc.z[1]-arc.z[0]);
 check("the Moon's marker lies on its trusted arc (within one sample step)", dMin <= step, (dMin / step).toFixed(3) + " steps");
+// L-168: the arc must be a short piece of ONE orbit. With mean motion
+// derived from solar GM it swept 23 orbits (8,406 deg) and drew as a
+// lattice; with the served Horizons n it sweeps ~13.2 deg/day x 6.8 days.
+let sweep = 0;
+for (let i = 1; i < arc.x.length; i++) {
+  const a0 = Math.atan2(arc.y[i-1], arc.x[i-1]), a1 = Math.atan2(arc.y[i], arc.x[i]);
+  let d = (a1 - a0) * 180 / Math.PI; if (d > 180) d -= 360; if (d < -180) d += 360; sweep += d;
+}
+check("the trusted arc sweeps one short piece of the orbit (60-120 deg for a ~6.8-day window)",
+      sweep > 60 && sweep < 120, sweep.toFixed(1) + " deg");
 
 const markers = T.filter(t => t.showlegend === false && t.marker && t.marker.symbol === "cross");
 // The assembler's own orbit info marker (render_orbits.py) is a plain

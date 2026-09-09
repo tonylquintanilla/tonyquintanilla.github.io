@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 28  
-**Total Lines of Code (non-blank):** 15,023  
+**Total Lines of Code (non-blank):** 15,045  
 **Total Public Functions/Classes:** 175
 
 ## Classification Coverage
@@ -34,7 +34,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `presentation.py` | Layout, axes, colors, title, and layer ordering. (161 lines) |
 | `render_events.py` | Perihelion and event_link markers. (20 lines) |
 | `render_objects.py` | Object markers, center marker, and labels. (63 lines) |
-| `render_orbits.py` | Osculating (and mean-elements) conics. (137 lines) |
+| `render_orbits.py` | Osculating (and mean-elements) conics. (159 lines) |
 | `render_spacecraft.py` | Spacecraft full-arc rendering from served positions. (19 lines) |
 
 ---

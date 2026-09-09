@@ -39,7 +39,9 @@ import math
 from typing import Any, Dict, List, Optional, Tuple
 
 AU_KM = 149597870.7
-K_GAUSS = 0.01720209895  # sqrt(GM_sun) in AU**1.5 / day
+K_GAUSS = 0.01720209895  # sqrt(GM_sun) in AU**1.5 / day -- no longer used
+                         # for mean motion (L-168); kept for callers that
+                         # import it.
 
 
 # --- two-body math (validated) --------------------------------------------
@@ -85,9 +87,30 @@ def _osc_radians(osc: Dict[str, Any]):
 
 
 def propagate_marker(osc: Dict[str, Any], t_jd: float) -> Tuple[float, float, float]:
-    """Position (AU) at Julian date t_jd, propagated from the snapshot."""
+    """Position (AU) at Julian date t_jd, propagated from the snapshot.
+
+    Mean motion is the SERVED one, `n_deg_per_day` -- Horizons' own value
+    for this object about its own centre (fetched, not recalled). Until
+    2026-09-09 this line derived n from solar GM, K_GAUSS / a**1.5, which
+    is right for a heliocentric body and wrong by three orders of magnitude
+    for a moon about its planet (L-168, FLAG-2: the Moon's implied month
+    came out at 68 minutes). The first moon to render, in the Earth room,
+    drew its trusted arc as 23 orbits of lattice and put its marker
+    anywhere on the orbit between 00:00 UTC and the nightly. A block with
+    no served n is REFUSED, never quietly given solar GM: the served cache
+    carries n on every osculating block (builder M2, sec 5.3), so a
+    missing one is a builder fault to surface, not a case to paper over.
+    """
     a, e, i, node, peri, m0, epoch_jd = _osc_radians(osc)
-    n = K_GAUSS / (a ** 1.5)                       # rad/day
+    n_deg = osc.get("n_deg_per_day")
+    if not isinstance(n_deg, (int, float)) or not n_deg > 0:
+        raise ValueError(
+            "propagate_marker: osculating block carries no n_deg_per_day "
+            "(centre %r, a = %r AU). The served mean motion is required; "
+            "deriving it from solar GM is wrong for anything not "
+            "heliocentric (L-168). Rebuild the cache or fix the builder."
+            % (osc.get("center"), osc.get("a_au")))
+    n = math.radians(float(n_deg))                 # rad/day
     mean_anom = m0 + n * (t_jd - epoch_jd)
     ecc_anom = solve_kepler(mean_anom, e)
     nu = 2.0 * math.atan2(
