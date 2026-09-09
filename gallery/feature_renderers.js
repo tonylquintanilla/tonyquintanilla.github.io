@@ -55,7 +55,10 @@
                         "solar_wind", "oort_cloud", "hill_sphere",
                         // L-291: Earth's groups are the same shape.
                         "earth_interior", "earth_atmosphere",
-                        "earth_exosphere", "earth_orbital_zones"];
+                        "earth_exosphere", "earth_orbital_zones",
+                        // L-291 step 3: one member, shape "equatorial_ring",
+                        // drawn by renderEquatorialRing in the shape branch.
+                        "earth_geostationary"];
 
   // --- DECLARED style (see header) ---------------------------------------
 
@@ -435,7 +438,8 @@
     return traces;
   }
 
-  function renderBelts(slug, bodyName, featureKey, params, center, warn) {
+  function renderBelts(slug, bodyName, featureKey, params, center, warn,
+                       halfRangeAu) {
     // Belts are NOT pole-oriented: the orrery draws them in the ecliptic
     // plane for both Earth and Jupiter, and scene equivalence means matching
     // what the orrery draws. (That the orrery's own comment claims the
@@ -453,6 +457,7 @@
 
     var distances, names, colors;
     var sources = [];
+    var notes = [];
     // L-291: a belt distance may be a measured entry {value, unit
     // "R_earth", source, orrery_constant} (Earth) or a bare number in
     // planet radii (Jupiter, unchanged). Read either; carry the source.
@@ -465,6 +470,7 @@
           return null;
         }
         sources.push(node.source || null);
+        notes.push(node.note || null);
         return node.value;
       }
       return null;
@@ -503,6 +509,13 @@
                            nRings, nPoints);
       var built = geometryTrace(pts, center, null, label, color, opacity,
                                 BELT_MARKER_SIZE);
+      // L-291 step 3: a belt larger than the arrival frame goes to the
+      // drawer, as a shell does. Earth's inner belt at 1.5 R_earth sits
+      // just outside the exhibit's 6.155e-5 AU floor and was drawn lit,
+      // setting the frame the design had ruled it should not.
+      var beltBeyond = (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
+                        (distances[i] + thickness / 2) * radiusAu > halfRangeAu);
+      if (beltBeyond) built.trace.visible = "legendonly";
       traces.push(built.trace);
 
       var hover = label + "<br><br>" +
@@ -514,8 +527,24 @@
       if (sources[i]) {
         hover += "<br><br>" + wrapHover("Source: " + sources[i]);
       }
-      traces.push(infoMarker(built.x[0], built.y[0], built.z[0],
-                             color, hover, label));
+      // L-291 step 3: the served note travels too. Earth's belts are flux
+      // PEAKS, not edges, and the hover is where that has to be said.
+      if (notes[i]) {
+        hover += "<br>" + wrapHover(notes[i]);
+      }
+      var beltMarker = infoMarker(built.x[0], built.y[0], built.z[0],
+                                  color, hover, label);
+      if (beltBeyond) beltMarker.visible = "legendonly";
+      // L-291 step 3: the belt's link and source ride in meta for the
+      // i-panel, as every shell's do. Before this the panel read "No link
+      // on file" for both Earth belts while the served row carried one.
+      var linkCfg = {};
+      if (Array.isArray(params.info_urls) && typeof params.info_urls[i] === "string") {
+        linkCfg.info_url = params.info_urls[i];
+      }
+      if (sources[i]) linkCfg.source = sources[i];
+      traces.push(beltMarker);
+      stampLink([built.trace, beltMarker], linkCfg);
     }
     return traces;
   }
@@ -944,12 +973,64 @@
     } else if (Array.isArray(cfg.info_urls) && cfg.info_urls.length) {
       meta = { info_urls: cfg.info_urls.slice() };
     }
+    // L-291 step 3: the served source string rides along too, so the
+    // page's i-panel can show it under the link without restating it.
+    if (typeof cfg.source === "string" && cfg.source) {
+      meta = meta || {};
+      meta.source = cfg.source;
+    }
     if (meta) {
       for (var i = 0; i < traceList.length; i++) {
         traceList[i].meta = meta;
       }
     }
     return traceList;
+  }
+
+  /*
+   * A ring of satellites in the body's EQUATORIAL plane at one radius --
+   * the geostationary belt (L-291 step 3). Oriented by the body's served
+   * pole the way renderRingSystem is; drawn in the ecliptic with a warning
+   * if no orientation was served. Row shape:
+   *   {shape: "equatorial_ring", radius: {value, unit}, name, color, ...}
+   * The radius unit follows measuredRadiusAu (R_earth needs planet_radius).
+   */
+  function renderEquatorialRing(slug, bodyName, cfg, where, center, basis,
+                                starRadiusKm, halfRangeAu, warn) {
+    var radiusAu = measuredRadiusAu(cfg.radius, where, starRadiusKm, warn);
+    if (radiusAu === null || !(radiusAu > 0)) return [];
+    if (!basis) {
+      warn(where + ": no orientation served, so the ring is drawn in the " +
+           "ecliptic plane rather than the body's equator");
+    }
+    var label = bodyName + ": " + (cfg.name || "Equatorial ring");
+    var color = cfg.color || "rgb(200, 200, 200)";
+    var opacity = (typeof cfg.opacity === "number") ? cfg.opacity : 0.6;
+    var size = (typeof cfg.marker_size === "number") ? cfg.marker_size : 2.0;
+    var nTheta = cfg.n_points || 120;
+    var pts = ringPoints(radiusAu, radiusAu, nTheta, 1, 0, 1);
+    var built = geometryTrace(pts, center, basis, label, color, opacity, size);
+    var beyondFrame = (typeof halfRangeAu === "number" &&
+                       halfRangeAu > 0 && radiusAu > halfRangeAu);
+    if (beyondFrame) built.trace.visible = "legendonly";
+
+    var hover = label + "<br><br>";
+    if (cfg.radius.unit === "R_earth") {
+      hover += "Radius: " + cfg.radius.value.toFixed(4) + " Earth radii<br>";
+      if (typeof starRadiusKm === "number" && cfg.radius.value > 1) {
+        hover += "Altitude: " + kmAndAu((cfg.radius.value - 1) * starRadiusKm) + "<br>";
+      }
+    }
+    hover += "= " + kmAndAu(radiusAu * KM_PER_AU) + "<br>" +
+             "A ring in the equatorial plane, not a sphere: satellites here<br>" +
+             "keep pace with Earth's turning and hang over one longitude.";
+    if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + cfg.source);
+    if (cfg.note) hover += "<br>" + wrapHover(cfg.note);
+    // Info marker on the ring itself, at the ascending node (index 0):
+    // the equatorial plane is clear of the shells' polar markers.
+    var marker = infoMarker(built.x[0], built.y[0], built.z[0], color, hover, label);
+    if (beyondFrame) marker.visible = "legendonly";
+    return stampLink([built.trace, marker], cfg);
   }
 
   function renderShellSet(slug, bodyName, featureKey, params, center,
@@ -987,6 +1068,12 @@
             slug, bodyName, cfg, where + "/" + key, center, basis,
             starRadiusKm, warn), cfg));
           drawn += 1;
+        } else if (cfg.shape === "equatorial_ring") {
+          var ringTraces = renderEquatorialRing(
+            slug, bodyName, cfg, where + "/" + key, center, basis,
+            starRadiusKm, halfRangeAu, warn);
+          traces = traces.concat(ringTraces);
+          if (ringTraces.length) drawn += 1;
         } else if (cfg.shape === "torus" ||
                    cfg.shape === "clump_field" ||
                    cfg.shape === "tide_field") {
@@ -1137,7 +1224,7 @@
         case "radiation_belts":
         case "van_allen_belts":
           traces = traces.concat(renderBelts(
-            slug, bodyName, fr.feature, params, center, warn));
+            slug, bodyName, fr.feature, params, center, warn, halfRangeAu));
           break;
         case "atmosphere_shell":
           traces = traces.concat(renderAtmosphereShell(

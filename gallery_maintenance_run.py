@@ -164,6 +164,14 @@ OFFLINE_CHECKERS = [
       "data/objects_config.json"],
      ".", None, False),
 
+    # L-291 step 3: the Earth room composed headless from the driver's
+    # real output of 2026-09-08 -- axis, equator, GEO, terminator, Sun
+    # line, the Moon's trusted arc, and the arrival policy. Gates.
+    ("Earth scene geometry", "node",
+     ["documentation/smoke_earth_geometry.js", "gallery/feature_renderers.js",
+      "gallery/earth_geometry.js"],
+     ".", "===", False),
+
     # L-237: this used to call the test directly and print FAIL every
     # run, which made a real regression indistinguishable from the known
     # one. The pin runs the same test and compares its five verdicts, and
@@ -188,6 +196,7 @@ OFFLINE_CHECKERS = [
 SERVED_FILES = [
     "interactive.html",
     "gallery/feature_renderers.js",
+    "gallery/earth_geometry.js",
     "gallery/assembler/resolver.py",
     "gallery/assembler/__init__.py",
     "data/solar-system/coverage_index.json",

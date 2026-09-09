@@ -58,6 +58,7 @@
     <!-- Client-side feature renderers (shells, rings, belts). Used by
          the Sun exhibit; harmless for the Solar System Explorer. -->
     <script src="gallery/feature_renderers.js"></script>
+    <script src="gallery/earth_geometry.js"></script>
     <!-- The three-button navigation cluster (+, -, Home). One control
          set for the whole site; this page decides what the buttons do
          (see navFrameZoom / navHome below). -->
@@ -302,6 +303,10 @@
             font: 400 13px 'DM Sans', system-ui, sans-serif;
         }
         .sun-row:hover { background: var(--bg-surface); }
+        /* L-291 step 3: a served group the page cannot draw yet is a row
+           that SAYS so, not a gap (the magnetosphere until L-305). */
+        .sun-row.absent { cursor: default; opacity: 0.55; font-style: italic; }
+        .sun-row.absent:hover { background: none; }
         .sun-row:focus-visible {
             outline: 2px solid var(--interactive); outline-offset: -2px;
         }
@@ -1353,15 +1358,203 @@ const SUN_INFO_HTML = [
     " elements from JPL Horizons and credit them there.</div>"
 ].join("");
 
+// ====================================================================
+// EARTH EXHIBIT  --  interactive.html?exhibit=earth   (L-291 step 3)
+// ====================================================================
+// Second room on the shared chrome. Design:
+// documentation/PREDESIGN_earth_exhibit_20260906.md; the split that
+// left the magnetosphere out is L-291 / L-305.
+//
+// Arrival half-range: 6.155e-5 AU is the served LEO outer edge (2,000 km
+// altitude, 8,378 km from centre) times the renderer's marker offset,
+// so the eight arrival shells fill the frame with their info markers
+// inside it. Everything larger is a drawer row.
+const EARTH_HALF_RANGE_AU = 6.155e-5;
+
+// Same modules as the Sun; the driver differs.
+const EARTH_DRIVER = `
+import json
+import math
+import sys
+sys.path.insert(0, "/home/pyodide")
+
+from assembler.catalog import Catalog
+from assembler.cache_reader import CacheReader
+from assembler.assemble import assemble_scene
+from assembler.render_orbits import propagate_marker
+from assembler.resolver import _iso_to_jd
+
+_cfg = json.loads(CFG_JSON)
+_cov = json.loads(COV_JSON)
+_cache = CacheReader(_cov)
+
+# The Moon is the only ORBITING object: Earth is the centre, and the
+# resolver hands its shells over by the centre-features path (L-234).
+# Listing Earth as an object is rejected, because Earth is stored
+# relative to the Sun and this scene resolves centre Earth.
+result = assemble_scene(
+    {
+        "spec_version": "1.0",
+        "domain": "solar_system",
+        "content_type": "static",
+        "objects": ["moon"],
+        "center": "earth",
+        "epoch": EPOCH_ISO,
+    },
+    Catalog(_cfg),
+    _cache,
+)
+
+_jd = _iso_to_jd(EPOCH_ISO)
+_notes = []
+
+# Direction to the Sun, from Earth's own heliocentric osculating
+# elements in the served cache (JPL Horizons), propagated to the epoch by
+# the assembler's Kepler solver. Nothing typed.
+_sun = None
+try:
+    _erec = _cache.record("earth")
+    _eosc = _erec.get("osculating") or {}
+    _ex, _ey, _ez = propagate_marker(_eosc, _jd)
+    _d = math.sqrt(_ex * _ex + _ey * _ey + _ez * _ez)
+    if _d > 0:
+        _sun = {
+            "dir": [-_ex / _d, -_ey / _d, -_ez / _d],
+            "distAu": _d,
+            "elementsEpochJd": _eosc.get("epoch_jd"),
+        }
+    else:
+        _notes.append("earth: heliocentric position is zero; no Sun direction")
+except Exception as _e:  # reported, not swallowed
+    _notes.append("earth: Sun direction not derived (%s)" % _e)
+
+# The Moon's trusted arc: the served trust window, propagated by the same
+# solver that placed the marker, so arc and marker cannot disagree.
+_arc = None
+try:
+    _mrec = _cache.record("moon")
+    _mosc = _mrec.get("osculating") or {}
+    _trust = _mrec.get("trust") or {}
+    _win = _trust.get("window") or {}
+    _lo, _hi = _win.get("start_jd"), _win.get("end_jd")
+    if _lo is not None and _hi is not None and _hi > _lo:
+        _n = 121
+        _xs, _ys, _zs = [], [], []
+        for _k in range(_n):
+            _x, _y, _z = propagate_marker(_mosc, _lo + (_hi - _lo) * _k / (_n - 1))
+            _xs.append(_x); _ys.append(_y); _zs.append(_z)
+        _arc = {
+            "x": _xs, "y": _ys, "z": _zs,
+            "windowDays": _trust.get("window_days"),
+            "tolerance_deg": _trust.get("tolerance_deg"),
+            "startJd": _lo, "endJd": _hi,
+        }
+    else:
+        _notes.append("moon: no trust window served; the trusted arc is not drawn")
+except Exception as _e:
+    _notes.append("moon: trusted arc not derived (%s)" % _e)
+
+json.dumps({
+    "figure": result.figure,
+    "features": result.report["features"],
+    "warnings": list(result.report["warnings"]) + _notes,
+    "sun": _sun,
+    "moonArc": _arc,
+    "epochJd": _jd,
+})
+`;
+
+const EARTH_INFO_HTML = [
+    "<div class=\"info-focus\" id=\"sun-info-focus\"></div>",
+    "<h3>Earth</h3>",
+    "<p>Earth's shells, from the inner core out to the Hill sphere,",
+    " drawn from measured radii held in the orrery's own constant store.",
+    " Each shell carries its source in its hover text and in the line",
+    " under its link above, so you can see where every number came",
+    " from.</p>",
+    "<p>You arrive inside the atmosphere's reach: the interior, the two",
+    " atmosphere shells and low Earth orbit, with the rotation axis and",
+    " the direction to the Sun. The geostationary ring, the radiation",
+    " belts, the geocorona, the Hill sphere, the day-night line and the",
+    " Moon wait in the drawer at the foot of the screen. Tap one and it",
+    " draws; the view rescales to hold it.</p>",
+    "<p>This scene is one moment &mdash; the date in the title. The",
+    " Sun direction, the day-night line and the Moon's place are for that",
+    " moment; the axis is the line Earth turns about, but the turning is",
+    " not shown. The Moon's orbit is drawn twice: a faint full ellipse,",
+    " and a brighter arc where this page's propagation is trusted.</p>",
+    "<p>The magnetosphere is not drawn yet. The shape the orrery draws",
+    " was never sourced, and this gallery does not draw a number it",
+    " cannot cite; it returns when it has a published model behind it.</p>",
+    "<p>The computation runs in your browser via <strong>Pyodide</strong>,",
+    " using the same Python the desktop orrery uses. No server.</p>",
+    "<div class=\"info-note\">Part of Paloma's Orrery &mdash; named for the",
+    " inventor's daughter. Shell radii from the published sources named in",
+    " each hover. Earth's and the Moon's places come from JPL Horizons",
+    " osculating elements in the served cache, propagated to the date",
+    " shown.</div>"
+].join("");
+
+// ONE table, two rooms. What differs between the Sun and Earth is data:
+// a title, an arrival half-range, a Python driver, and how the driver's
+// payload becomes traces. The chrome functions keep their sun* names --
+// renaming them touches a working room for no visible change and would
+// put the Sun back under Mode 5; the parameters are what changed.
+const EXHIBITS = {
+    sun: {
+        title: "The Sun",
+        sceneTitle: "Paloma's Orrery \u2014 The Sun",
+        pngName: "palomas_orrery_sun",
+        halfRangeAu: SUN_HALF_RANGE_AU,
+        driver: SUN_DRIVER,
+        infoHtml: SUN_INFO_HTML,
+        // The Sun room's composition, unchanged: the assembler's figure,
+        // then the features around a Sun at the origin.
+        compose: function (payload) {
+            const built = GalleryFeatures.buildFeatureTraces(
+                payload.features,
+                { sun: { name: "Sun", position: [0, 0, 0] } },
+                { sceneHalfRangeAu: SUN_HALF_RANGE_AU }
+            );
+            return {
+                traces: payload.figure.data.concat(built.traces),
+                warnings: built.warnings || [],
+                absent: []
+            };
+        }
+    },
+    earth: {
+        title: "Earth",
+        sceneTitle: "Paloma's Orrery \u2014 Earth",
+        pngName: "palomas_orrery_earth",
+        halfRangeAu: EARTH_HALF_RANGE_AU,
+        driver: EARTH_DRIVER,
+        infoHtml: EARTH_INFO_HTML,
+        // gallery/earth_geometry.js composes the room: served shells,
+        // the derived axis / Sun line / terminator, the Moon and its
+        // trusted arc, and the arrival policy.
+        compose: function (payload) {
+            return EarthGeometry.composeScene(payload, {
+                GF: GalleryFeatures,
+                halfRangeAu: EARTH_HALF_RANGE_AU,
+                epochIso: new Date().toISOString().slice(0, 10)
+            });
+        }
+    }
+};
+// The room this page is showing, or null for the Explorer.
+const EX = EXHIBITS.hasOwnProperty(EXHIBIT) ? EXHIBITS[EXHIBIT] : null;
+let sunAbsent = [];   // named absences for the drawer, set by init
+
 // Chrome changes that do not need Pyodide, so they run immediately.
 function applySunChrome() {
-    document.title = "Paloma's Orrery - The Sun";
+    document.title = "Paloma's Orrery - " + EX.title;
     const title = document.getElementById("top-title");
-    if (title) { title.textContent = "The Sun"; }
+    if (title) { title.textContent = EX.title; }
     const controls = document.getElementById("controls-panel");
     if (controls) { controls.style.display = "none"; }
     const info = document.getElementById("info-panel");
-    if (info) { info.innerHTML = SUN_INFO_HTML; }
+    if (info) { info.innerHTML = EX.infoHtml; }
     wireInfoToggle();
     // The Explorer shares this file and has no drawer rows, so the
     // chrome is revealed by class rather than shipped visible.
@@ -1456,7 +1649,7 @@ function sunGridDtick(span) {
 function sunFrameOn(k) {
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
     const rad = sunGroupRadius(k);
-    const r = rad > 0 ? rad * 1.1 : SUN_HALF_RANGE_AU;
+    const r = rad > 0 ? rad * 1.1 : (EX ? EX.halfRangeAu : SUN_HALF_RANGE_AU);
     const d = sunGridDtick(2 * r);
     return Plotly.relayout(sunPlotDiv, {
         "scene.xaxis.range": [-r, r], "scene.xaxis.dtick": d,
@@ -1590,7 +1783,7 @@ function mountNavCluster() {
 }
 
 function buildSunLayout(halfRangeAu) {
-    const r = halfRangeAu || SUN_HALF_RANGE_AU;
+    const r = halfRangeAu || EX.halfRangeAu;
     const axisTemplate = {
         range: [-r, r],
         showgrid: true,
@@ -1656,7 +1849,7 @@ function buildSunLayout(halfRangeAu) {
         plot_bgcolor: "#060a12",
         font: { family: "DM Sans, system-ui", color: "#e8e6e3" },
         title: {
-            text: "Paloma's Orrery \u2014 The Sun",
+            text: EX.sceneTitle,
             font: { family: "Cormorant Garamond, serif", size: 16,
                     color: "#e8e6e3" },
             x: 0.5, xanchor: "center", y: 0.97,
@@ -1713,21 +1906,19 @@ async function initSunExhibit() {
 
         status.textContent = "Assembling the scene\u2026";
         bar.style.width = "90%";
-        const payload = JSON.parse(await pyodide.runPythonAsync(SUN_DRIVER));
+        const payload = JSON.parse(await pyodide.runPythonAsync(EX.driver));
 
-        const built = GalleryFeatures.buildFeatureTraces(
-            payload.features,
-            { sun: { name: "Sun", position: [0, 0, 0] } },
-            { sceneHalfRangeAu: SUN_HALF_RANGE_AU }
-        );
+        // Per room: how the payload becomes traces (the EXHIBITS table).
+        const built = EX.compose(payload);
+        sunAbsent = built.absent || [];
 
         const notes = (payload.warnings || []).concat(built.warnings || []);
         for (let i = 0; i < notes.length; i++) {
-            console.warn("sun exhibit: " + notes[i]);
+            console.warn(EXHIBIT + " exhibit: " + notes[i]);
         }
         if (notes.length) { reportSunNotes(notes); }
 
-        const traces = payload.figure.data.concat(built.traces);
+        const traces = built.traces;
 
         // Measure every trace once. Index i belongs to trace i, and
         // the legend never reorders traces, so the two stay aligned.
@@ -1738,7 +1929,7 @@ async function initSunExhibit() {
             if (vis === "legendonly" || vis === false) { continue; }
             if (extents[i] > arrivalR) { arrivalR = extents[i]; }
         }
-        arrivalR = Math.max(arrivalR * 1.1, SUN_HALF_RANGE_AU);
+        arrivalR = Math.max(arrivalR * 1.1, EX.halfRangeAu);
         navArrivalR = arrivalR;   // what Home returns to
 
         const gd = document.getElementById("plotly-container");
@@ -1758,7 +1949,7 @@ async function initSunExhibit() {
                 displaylogo: true,
                 toImageButtonOptions: {
                     format: "png",
-                    filename: "palomas_orrery_sun",
+                    filename: EX.pngName,
                     scale: 2,
                 },
             }
@@ -1821,7 +2012,7 @@ async function initSunExhibit() {
     } catch (err) {
         status.textContent = "Failed to load: " + err.message;
         bar.style.background = "var(--error)";
-        console.error("Sun exhibit failed:", err);
+        console.error(EXHIBIT + " exhibit failed:", err);
     }
 }
 
@@ -1980,7 +2171,15 @@ function sunGridChipUpdate() {
     if (!(d > 0) && ax.range) { d = sunGridDtick(Math.abs(ax.range[1] - ax.range[0])); }
     if (!(d > 0)) { chip.textContent = ""; return; }
     const dec = Math.max(0, -Math.floor(Math.log10(d)));
-    chip.innerHTML = "grid <b>" + d.toFixed(dec) + " AU</b>";
+    // Below a thousandth of an AU the number stops meaning anything to
+    // a visitor, so the chip gives km too -- the hover convention, on
+    // the one surface that lacked it. Earth's arrival grid is 2e-5 AU.
+    let label = d.toFixed(dec) + " AU";
+    if (d < 1e-3) {
+        const km = d * GalleryFeatures._KM_PER_AU;
+        label += " (" + km.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km)";
+    }
+    chip.innerHTML = "grid <b>" + label + "</b>";
 }
 
 // Project the three unit axes onto the screen from the camera.
@@ -2148,6 +2347,7 @@ function buildSunDrawer(traces) {
                 name: t.name || g,
                 color: sunSwatchColor(t),
                 link: sunLinkOf(t),
+                source: (t.meta && typeof t.meta.source === "string") ? t.meta.source : null,
                 indices: [],
                 shown: t.visible !== SUN_HIDDEN && t.visible !== false,
             };
@@ -2158,6 +2358,7 @@ function buildSunDrawer(traces) {
             byName[g].name = t.name || g;
             byName[g].color = sunSwatchColor(t);
             byName[g].link = sunLinkOf(t) || byName[g].link;
+            if (t.meta && typeof t.meta.source === "string") { byName[g].source = t.meta.source; }
         }
     }
 
@@ -2203,6 +2404,24 @@ function buildSunDrawer(traces) {
         };
         list.appendChild(row);
     });
+    // L-291 step 3: served groups with no renderer yet are listed, not
+    // omitted. Not a button: nothing to toggle, nothing to focus.
+    // renderSunDrawer walks sunGroups by index, so these sit after them.
+    for (let a = 0; a < sunAbsent.length; a++) {
+        const ab = sunAbsent[a];
+        const row = document.createElement("div");
+        row.className = "sun-row absent";
+        row.setAttribute("aria-disabled", "true");
+        const what = ab.members && ab.members.length
+            ? ab.members.join(", ")
+            : ab.key.replace(/^[a-z]+_/, "").replace(/_/g, " ");
+        row.innerHTML =
+            '<span class="box"></span>' +
+            '<span class="swatch" style="background:transparent"></span>' +
+            '<span class="rname"></span>';
+        row.querySelector(".rname").textContent = what + " -- not yet drawn";
+        list.appendChild(row);
+    }
 
     renderSunDrawer();
 }
@@ -2309,6 +2528,15 @@ function renderSunInfo(grp) {
         a.textContent = sunLinkLabel(grp.link[i]);
         box.appendChild(a);
     }
+    // L-291 step 3: the served source string, read off the trace's meta
+    // (stampLink carries it now), so the panel shows the citation the
+    // hover shows without restating it in page copy.
+    if (grp.source) {
+        const src = document.createElement("div");
+        src.className = "info-focus-empty";
+        src.textContent = "Source: " + grp.source;
+        box.appendChild(src);
+    }
 }
 
 // keepFocus true pins the focus where it is. False -- the drawer's own
@@ -2399,7 +2627,7 @@ function loadPyodideRuntime() {
 
     const pyodideScript = document.createElement('script');
     pyodideScript.src = 'https://cdn.jsdelivr.net/pyodide/v314.0.2/full/pyodide.js';
-    pyodideScript.onload = () => (EXHIBIT === "sun"
+    pyodideScript.onload = () => (EX
                                   ? initSunExhibit()
                                   : initPyodide());
     pyodideScript.onerror = () => {
@@ -2409,7 +2637,9 @@ function loadPyodideRuntime() {
     document.head.appendChild(pyodideScript);
 }
 
-if (EXHIBIT === "sun") {
+// Any room in the EXHIBITS table takes the exhibit chrome; the Explorer
+// keeps its controls.
+if (EX) {
     applySunChrome();
 } else {
     initControls();

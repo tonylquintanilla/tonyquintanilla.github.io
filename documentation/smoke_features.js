@@ -111,22 +111,43 @@ const r1 = GF.buildFeatureTraces(p1.features, p1.bodies);
 // L-291: Earth's entry is in the measured shape. Two groups have no renderer
 // yet (earth_geostationary, earth_magnetosphere) and the dispatch must SAY
 // so, by name -- those two warnings are expected and nothing else is.
-const expectedWarn = ["earth/earth_geostationary", "earth/earth_magnetosphere"];
-check("earth reports exactly the two no-renderer groups, by name",
-      r1.warnings.length === 2 &&
+// L-291 step 3: the geostationary ring draws now. The magnetosphere stays a
+// NAMED expected absence until L-305 rebuilds it on a sourced model; this
+// pin moves in the same commit as that renderer.
+const expectedWarn = ["earth/earth_magnetosphere"];
+check("earth reports exactly one no-renderer group, the magnetosphere, by name",
+      r1.warnings.length === 1 &&
       expectedWarn.every(k => r1.warnings.some(w => w.indexOf(k) === 0 && /no renderer/.test(w))),
       r1.warnings.join(" | "));
 const geo1 = r1.traces.filter(t => t.showlegend === true);
 const geoEarth = geo1.filter(t => t.name.indexOf("Earth:") === 0);
-check("5 interior + 2 atmosphere + 1 geocorona + 2 LEO + 2 belts + 1 Hill = 13 Earth geometry traces",
-      geoEarth.length === 13, "got " + geoEarth.length + ": " + geoEarth.map(t => t.name).join(", "));
+check("5 interior + 2 atmosphere + 1 geocorona + 2 LEO + 1 GEO ring + 2 belts + 1 Hill = 14 Earth geometry traces",
+      geoEarth.length === 14, "got " + geoEarth.length + ": " + geoEarth.map(t => t.name).join(", "));
 // Info markers carry an empty name, the group label in legendgroup and the
 // hover in text (an array); read them where they are.
 const earthSourced = r1.traces.filter(t => t.showlegend !== true &&
                                           String(t.legendgroup || "").indexOf("Earth:") === 0 &&
                                           /Source:/.test(JSON.stringify(t.text || t.hovertext || "")));
-check("every Earth info marker carries a Source line (13 of 13)",
-      earthSourced.length === 13, "got " + earthSourced.length);
+check("every Earth info marker carries a Source line (14 of 14)",
+      earthSourced.length === 14, "got " + earthSourced.length);
+// The GEO ring lies in Earth's EQUATOR, which the served pole (RA 0, Dec 90,
+// ICRF) puts 23.44 deg from the ecliptic after the obliquity rotation.
+const geoRing = geoEarth.find(t => /Geostationary/.test(t.name));
+check("GEO ring exists and is a single-radius ring", !!geoRing && geoRing.x.length === 120);
+const geoTilt = geoRing ? planeNormalDeg(geoRing, 120) : NaN;
+check("GEO ring plane at 23.44 deg from the ecliptic (Earth's equator)",
+      Math.abs(geoTilt - 23.439) < 0.02, geoTilt.toFixed(3) + " deg");
+const geoParams = p1.features.find(f => f.object === "earth" && f.feature === "earth_geostationary").params;
+let geoR = 0;
+for (let i = 0; i < geoRing.x.length; i++) {
+  geoR = Math.max(geoR, Math.hypot(geoRing.x[i]-p1.bodies.earth.position[0], geoRing.y[i]-p1.bodies.earth.position[1], geoRing.z[i]-p1.bodies.earth.position[2]));
+}
+check("GEO ring at the served radius (" + geoParams.geostationary_ring.radius.value.toFixed(4) + " R_earth)",
+      Math.abs(geoR * KM / geoParams.planet_radius.value - geoParams.geostationary_ring.radius.value) < 0.001,
+      (geoR * KM / geoParams.planet_radius.value).toFixed(4));
+check("every Earth info marker carries the served source in meta for the i-panel",
+      r1.traces.filter(t => String(t.legendgroup || "").indexOf("Earth:") === 0 && t.showlegend !== true)
+        .every(t => t.meta && typeof t.meta.source === "string"));
 // L-234: same reasoning as above, from the other side.
 const geoSun = geo1.filter(t => t.name.indexOf("Sun:") === 0);
 check("the scene centre contributes 14 solar shells",

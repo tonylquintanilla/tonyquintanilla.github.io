@@ -232,7 +232,15 @@ def live_scene_urls(repo_root):
     m = re.search(r'get\(["\']exhibit["\']\)\s*\|\|\s*["\']([a-z0-9_-]+)["\']', src)
     if m:
         urls.append(('interactive.html', f'default exhibit: {m.group(1)}'))
-    for key in sorted(set(re.findall(r'EXHIBIT\s*===?\s*["\']([a-z0-9_-]+)["\']', src))):
+    # L-291 step 3 (2026-09-09): the rooms are the keys of the page's
+    # EXHIBITS table (`const EXHIBITS = { sun: {...}, earth: {...} }`).
+    # The older `EXHIBIT === "..."` gates are read too, for any page
+    # that still has them, so this finds a room either way.
+    keys = set(re.findall(r'EXHIBIT\s*===?\s*["\']([a-z0-9_-]+)["\']', src))
+    table = re.search(r'const EXHIBITS\s*=\s*\{(.*?)\n\};', src, re.S)
+    if table:
+        keys.update(re.findall(r'^    ([a-z0-9_-]+):\s*\{', table.group(1), re.M))
+    for key in sorted(keys):
         if m and key == m.group(1):
             continue
         urls.append((f'interactive.html?exhibit={key}', key))
