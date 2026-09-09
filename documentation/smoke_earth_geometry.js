@@ -91,26 +91,47 @@ const sunG = groups["Earth: Sun Direction"];
 const sunLine = sunG.find(t => t.mode === "lines");
 const sunDir = (() => { const v = [sunLine.x[1]-sunLine.x[0], sunLine.y[1]-sunLine.y[0], sunLine.z[1]-sunLine.z[0]]; const m = Math.hypot(...v); return v.map(c => c/m); })();
 check("Sun line points along the driver's Sun direction", angleDeg(sunDir, payload.sun.dir) < 0.01);
-check("Sun line runs from the crust to 92% of the frame",
-      Math.abs(Math.hypot(sunLine.x[0], sunLine.y[0], sunLine.z[0]) - rCrust) < 1e-9 &&
+check("Sun line runs from Earth's centre to 92% of the frame",
+      Math.hypot(sunLine.x[0], sunLine.y[0], sunLine.z[0]) < 1e-12 &&
       Math.abs(Math.hypot(sunLine.x[1], sunLine.y[1], sunLine.z[1]) - HALF * 0.92) < 1e-9);
+const subDot = sunG.find(t => t.mode === "markers" && t.hoverinfo === "skip");
+check("subsolar dot sits on the Sun line just above the crust, in the Sun group",
+      !!subDot && angleDeg([subDot.x[0], subDot.y[0], subDot.z[0]].map(c => c / Math.hypot(subDot.x[0], subDot.y[0], subDot.z[0])), sunDir) < 0.01 &&
+      Math.abs(Math.hypot(subDot.x[0], subDot.y[0], subDot.z[0]) / rCrust - 1.003) < 1e-6);
 check("Sun hover gives the Earth-Sun distance in km AND AU",
-      /Earth-Sun distance: [\d,]+ km \(1\.0\d AU\)/.test(sunG.find(t => t.mode === "markers").text[0]));
+      /Earth-Sun distance: [\d,]+ km \(1\.0\d AU\)/.test(sunG.find(t => t.mode === "markers" && t.text).text[0]));
 
 const termG = groups["Earth: Terminator (day-night line)"];
 const term = termG.find(t => t.mode === "lines");
-const subsolar = termG.find(t => t.mode === "markers");
+const termMarker = termG.find(t => t.mode === "markers");
 check("terminator plane is perpendicular to the Sun direction", angleDeg(normal(term), sunDir) < 0.05,
       angleDeg(normal(term), sunDir).toFixed(4) + " deg");
-const sub = [subsolar.x[0], subsolar.y[0], subsolar.z[0]];
-check("subsolar marker sits on the Sun line just above the crust",
-      angleDeg(sub.map(c => c / Math.hypot(...sub)), sunDir) < 0.01 &&
-      Math.abs(Math.hypot(...sub) / rCrust - 1.02) < 1e-6);
+const tm = [termMarker.x[0], termMarker.y[0], termMarker.z[0]];
+check("terminator hover marker lies ON the circle (perpendicular to the Sun line, at the crust)",
+      Math.abs(tm[0]*sunDir[0] + tm[1]*sunDir[1] + tm[2]*sunDir[2]) < 1e-12 &&
+      Math.abs(Math.hypot(...tm) / rCrust - 1.003) < 1e-6);
 check("terminator hover says it is FROZEN and that there is no lighting model",
-      /FROZEN/.test(subsolar.text[0]) && /no lighting is modelled/.test(subsolar.text[0]));
+      /FROZEN/.test(termMarker.text[0]) && /no lighting is modelled/.test(termMarker.text[0]));
+// Spin arcs: two 60-point arcs, one at each pole tip, each with a cone.
+const arcs = axisG.filter(t => t.mode === "lines" && t.x.length === 60);
+const cones = axisG.filter(t => t.type === "cone");
+check("rotation axis carries a spin arc and a cone head at each pole", arcs.length === 2 && cones.length === 2);
+const axHalf = Math.hypot(axisLine.x[1], axisLine.y[1], axisLine.z[1]);
+check("spin arcs are centred on the pole tips at 0.28 of the axis half-length",
+      arcs.every(a => { const d = Math.hypot(a.x[0]-a.x[30], a.y[0]-a.y[30], a.z[0]-a.z[30]); return d > 0 && d < 2 * 0.28 * axHalf + 1e-12; }) &&
+      Math.abs(Math.hypot(arcs[0].x[0] - axisDir[0]*axHalf, arcs[0].y[0] - axisDir[1]*axHalf, arcs[0].z[0] - axisDir[2]*axHalf) / axHalf - 0.28) < 1e-9);
+// Prograde: the arc's tangent at its start is +yb about the pole; the
+// second point must sit on the +yb side of the first (right-hand rule).
+const ybDir = (() => { const f = arcs[0]; const v = [f.x[1]-f.x[0], f.y[1]-f.y[0], f.z[1]-f.z[0]]; return v; })();
+const rStart = [arcs[0].x[0]-axisDir[0]*axHalf, arcs[0].y[0]-axisDir[1]*axHalf, arcs[0].z[0]-axisDir[2]*axHalf];
+const omegaCrossR = [axisDir[1]*rStart[2]-axisDir[2]*rStart[1], axisDir[2]*rStart[0]-axisDir[0]*rStart[2], axisDir[0]*rStart[1]-axisDir[1]*rStart[0]];
+check("spin arcs run prograde: the arc's motion is omega x r about the north pole",
+      (ybDir[0]*omegaCrossR[0] + ybDir[1]*omegaCrossR[1] + ybDir[2]*omegaCrossR[2]) > 0);
+check("axis hover cites the sense of rotation",
+      /Archinal/.test(axisG.find(t => t.mode === "markers").text[0]));
 check("axis hover says the rotation is not shown and states no period",
       /turning itself is not shown/.test(axisG.find(t => t.mode === "markers").text[0]) &&
-      /no rotation period is stated/.test(axisG.find(t => t.mode === "markers").text[0]));
+      /period is stated because none is served/.test(axisG.find(t => t.mode === "markers").text[0]));
 
 const moonG = groups["moon"];
 const arc = moonG.find(t => t.name === "Moon trusted arc");
@@ -139,8 +160,9 @@ check("every hover with km also gives AU",
       markers.every(t => !/\bkm\b/.test(t.text[0]) || /AU/.test(t.text[0])));
 check("no hover line exceeds 90 characters",
       markers.every(t => t.text[0].split("<br>").every(l => l.length <= 90)));
-check("every info marker's geometry skips hover",
-      T.filter(t => t.showlegend === true).every(t => t.hoverinfo === "skip"));
+check("every geometry trace skips hover (lines, dots and cones alike)",
+      T.filter(t => t.showlegend === true || t.type === "cone" || (t.mode === "markers" && t.showlegend === false && !t.text))
+        .every(t => t.hoverinfo === "skip"));
 
 console.log("");
 console.log(failures === 0 ? "=== ALL CHECKS PASSED ===" : "=== " + failures + " FAILURE(S) ===");

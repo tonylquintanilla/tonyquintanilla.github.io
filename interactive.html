@@ -2129,7 +2129,10 @@ function sunOriginAxesInstall(gd) {
         return {
             type: "scatter3d", mode: "lines",
             x: p.x, y: p.y, z: p.z,
-            line: { color: SUN_AXIS_COLORS[a], width: 3 },
+            // Width 6, up from 3 (Tony, Mode 5 2026-09-09): at 3 the
+            // frame axes read as one more feature line beside the axis
+            // and the Sun direction. Both rooms; it is chrome.
+            line: { color: SUN_AXIS_COLORS[a], width: 6 },
             hoverinfo: "skip", showlegend: false,
             name: "axis " + a,
         };

@@ -11,9 +11,11 @@
  *                                       elements in the served cache (JPL
  *                                       Horizons), propagated to the epoch
  *   3. Terminator (day-night line)      a great circle on the crust
- *                                       perpendicular to the Sun direction,
- *                                       plus a subsolar marker. Geometry only;
- *                                       there is no lighting model.
+ *                                       perpendicular to the Sun direction;
+ *                                       its hover marker sits on the circle.
+ *                                       The subsolar point is a dot on the
+ *                                       Sun line where it leaves the crust.
+ *                                       Geometry only; no lighting model.
  *   4. The Moon's trusted arc           the piece of the Moon's orbit inside
  *                                       the served trust window, propagated
  *                                       by the assembler's own Kepler code
@@ -180,6 +182,42 @@
       traces.push(lineTrace(axis, gAxis, AXIS_COLOR, 4, gAxis));
       var eq = circle(c, xb, yb, rCrust * 1.002, CIRCLE_POINTS);
       traces.push(lineTrace(eq, gAxis, AXIS_COLOR, 2, gAxis, { showlegend: false }));
+      // Spin-direction arcs at BOTH poles, the orrery's construction
+      // (planet_visualization_utilities.py build_rotation_axis_traces):
+      // one circulation in 3-space, v = omega x r, so both arcs follow the
+      // one angular-velocity vector and read as mirror images from
+      // opposite ends -- which is how one rigid rotation looks. Earth's
+      // sense is prograde (counter-clockwise seen from above the north
+      // pole): the right-hand rule about the served pole, with the sign
+      // from IAU WGCCRE (Archinal et al. 2018), whose prime-meridian angle
+      // W for Earth increases with time. 270-degree sweep, radius 0.28 of
+      // the axis half-length, cone head at the end, as the orrery draws.
+      var arcR = 0.28 * axisHalf, sweep = 1.5 * Math.PI, nArc = 60;
+      var tangent = [
+        -Math.sin(sweep) * xb[0] + Math.cos(sweep) * yb[0],
+        -Math.sin(sweep) * xb[1] + Math.cos(sweep) * yb[1],
+        -Math.sin(sweep) * xb[2] + Math.cos(sweep) * yb[2]
+      ];
+      for (var tipSign = 1; tipSign >= -1; tipSign -= 2) {
+        var at = [c[0] + tipSign * zb[0] * axisHalf, c[1] + tipSign * zb[1] * axisHalf, c[2] + tipSign * zb[2] * axisHalf];
+        var ax = [], ay = [], az = [];
+        for (var k = 0; k < nArc; k++) {
+          var th = sweep * k / (nArc - 1);
+          var cs = Math.cos(th) * arcR, sn = Math.sin(th) * arcR;
+          ax.push(at[0] + xb[0] * cs + yb[0] * sn);
+          ay.push(at[1] + xb[1] * cs + yb[1] * sn);
+          az.push(at[2] + xb[2] * cs + yb[2] * sn);
+        }
+        traces.push(lineTrace({ x: ax, y: ay, z: az }, gAxis, AXIS_COLOR, 4, gAxis, { showlegend: false }));
+        traces.push({
+          type: "cone",
+          x: [ax[nArc - 1]], y: [ay[nArc - 1]], z: [az[nArc - 1]],
+          u: [tangent[0]], v: [tangent[1]], w: [tangent[2]],
+          sizemode: "absolute", sizeref: arcR * 0.5, anchor: "tail",
+          showscale: false, colorscale: [[0, AXIS_COLOR], [1, AXIS_COLOR]],
+          name: gAxis, legendgroup: gAxis, showlegend: false, hoverinfo: "skip"
+        });
+      }
       // Tilt of the pole from the frame's z (the ecliptic pole), derived
       // from the served pole and the renderer's sourced mean obliquity.
       var tiltDeg = Math.acos(Math.max(-1, Math.min(1, zb[2]))) * 180 / Math.PI;
@@ -189,9 +227,12 @@
         "Tilt from the ecliptic pole (this frame's z): " + tiltDeg.toFixed(2) + " deg,<br>" +
         "derived from the served pole and the renderer's mean obliquity.<br>" +
         "Axis drawn to " + kmAndAu(K, axisHalf) + " -- a drawing length.<br><br>" +
-        "This scene is one epoch. The axis is the line Earth turns about;<br>" +
-        "the turning itself is not shown, and no rotation period is stated<br>" +
-        "because none is served.<br><br>" +
+        "The curved arrows at both ends show the sense of the turning:<br>" +
+        "prograde, west to east, counter-clockwise seen from above the<br>" +
+        "north pole. This scene is one epoch: the axis is the line Earth<br>" +
+        "turns about; the turning itself is not shown, and no rotation<br>" +
+        "period is stated because none is served.<br><br>" +
+        wrap("Sense: IAU WGCCRE, Archinal et al. (2018), Cel. Mech. Dyn. Astron. 130:22 -- Earth's prime-meridian angle W increases with time.") + "<br>" +
         wrap("Source: " + (pole.source || "pole source not served")) +
         (pole.orrery_constant ? "<br>" + wrap("Store: " + pole.orrery_constant) : "");
       traces.push(infoMarker(tip, AXIS_COLOR, hAxis, gAxis));
@@ -208,15 +249,29 @@
     if (sunDir) {
       var len = half * 0.92;
       var gSun = name + ": Sun Direction";
+      // From Earth's CENTRE out through the crust (Tony, Mode 5
+      // 2026-09-09): the line then passes through the middle of the
+      // terminator circle, which is what ties the two together on screen.
       var sunLine = {
-        x: [c[0] + sunDir[0] * rCrust, c[0] + sunDir[0] * len],
-        y: [c[1] + sunDir[1] * rCrust, c[1] + sunDir[1] * len],
-        z: [c[2] + sunDir[2] * rCrust, c[2] + sunDir[2] * len]
+        x: [c[0], c[0] + sunDir[0] * len],
+        y: [c[1], c[1] + sunDir[1] * len],
+        z: [c[2], c[2] + sunDir[2] * len]
       };
       traces.push(lineTrace(sunLine, gSun, SUN_COLOR, 3, gSun));
+      // The subsolar point: where the line pierces the crust. A dot in
+      // the Sun group, hover skipped; the Sun hover names it.
+      var sub = [c[0] + sunDir[0] * rCrust * 1.003, c[1] + sunDir[1] * rCrust * 1.003, c[2] + sunDir[2] * rCrust * 1.003];
+      traces.push({
+        type: "scatter3d", mode: "markers",
+        x: [sub[0]], y: [sub[1]], z: [sub[2]],
+        marker: { size: 6, color: SUBSOLAR_COLOR, opacity: 1.0 },
+        name: gSun, legendgroup: gSun, hoverinfo: "skip", showlegend: false
+      });
       var tipS = [c[0] + sunDir[0] * len, c[1] + sunDir[1] * len, c[2] + sunDir[2] * len];
       var hSun = "<b>" + gSun + "</b><br><br>" +
-        "Toward the Sun at " + (opts.epochIso || "the scene epoch") + ".<br>" +
+        "Toward the Sun at " + (opts.epochIso || "the scene epoch") + ", from Earth's centre.<br>" +
+        "The dot where the line leaves the crust is the subsolar point, where<br>" +
+        "the Sun is overhead.<br>" +
         (isNum(opts.sun.distAu)
           ? "Earth-Sun distance: " + kmAndAu(K, opts.sun.distAu) + "<br>" : "") +
         "Line drawn to the edge of the arrival frame; the Sun is far beyond it.<br><br>" +
@@ -235,11 +290,17 @@
       var gTerm = name + ": Terminator (day-night line)";
       var term = circle(c, u, v, rCrust * 1.003, CIRCLE_POINTS);
       traces.push(lineTrace(term, gTerm, TERMINATOR_COLOR, 3, gTerm));
-      var sub = [c[0] + sunDir[0] * rCrust * 1.02, c[1] + sunDir[1] * rCrust * 1.02, c[2] + sunDir[2] * rCrust * 1.02];
+      // The info marker sits ON the circle, at its highest point, so the
+      // hover and the line it describes cannot come apart on screen
+      // (Tony, Mode 5 2026-09-09: the subsolar marker read as detached).
+      var topI = 0;
+      for (var ti = 1; ti < term.z.length; ti++) { if (term.z[ti] > term.z[topI]) topI = ti; }
+      var onCircle = [term.x[topI], term.y[topI], term.z[topI]];
       var hTerm = "<b>" + gTerm + "</b><br><br>" +
         "The white circle is where the Sun is on the horizon: the sunlit half<br>" +
-        "of Earth faces the Sun line, the night half faces away. This marker<br>" +
-        "is the subsolar point, where the Sun is overhead.<br><br>" +
+        "of Earth faces the Sun line, the night half faces away. The yellow<br>" +
+        "line through the circle's centre is the Sun direction; its dot on<br>" +
+        "the crust is the subsolar point, where the Sun is overhead.<br><br>" +
         "FROZEN at " + (opts.epochIso || "the scene epoch") + ". The real terminator<br>" +
         "sweeps around Earth once a day; this scene does not turn. Geometry<br>" +
         "only -- no lighting is modelled, and the refraction and solar-disc<br>" +
@@ -247,7 +308,7 @@
         wrap("Source: the Sun direction above, and the crust radius " +
              (opts.planetRadius && opts.planetRadius.source
                ? "(" + opts.planetRadius.source + ")" : "as served") + ".");
-      traces.push(infoMarker(sub, SUBSOLAR_COLOR, hTerm, gTerm));
+      traces.push(infoMarker(onCircle, TERMINATOR_COLOR, hTerm, gTerm));
     }
 
     // --- 4. The Moon's trusted arc -----------------------------------------
