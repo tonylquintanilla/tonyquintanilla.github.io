@@ -2092,8 +2092,21 @@
             }
         }
 
+        // Landscape cards hidden on this phone (L-303), id -> portrait
+        // sibling id, so a deep link to a hidden card can be redirected.
+        var hiddenSibling = {};
+
+        // The card's size line; a card with a sibling also names its
+        // shape, so two cards with one title read apart on the desktop.
+        function sizeLabel(viz) {
+            var s = Math.round(viz.size_kb) + ' KB';
+            if (viz.sibling && viz.shape) s += ' \u00b7 ' + viz.shape;
+            return s;
+        }
+
         // Which file to open for this card in this mode. A one-file card
-        // serves its one file either way; a two-file card picks by mode.
+        // serves its one file either way; a two-file card (none since
+        // L-303, but the editor can still make one) picks by mode.
         function fileForMode(viz, mode) {
             var files = viz.files;
             if (files && Object.keys(files).length) {
@@ -2149,6 +2162,23 @@
                     // only cards placed in a room are served.
                     metadata.visualizations = (metadata.visualizations || []).filter(
                         function (v) { return v.room && v.room !== STORAGE_KEY; });
+                    // ONE rule (Tony's ruling, L-303, 2026-09-08): on a phone,
+                    // hide a landscape card that has a portrait sibling -- and
+                    // only when that sibling is itself served. A landscape card
+                    // with no sibling still shows and still sweeps. Desktop and
+                    // tablet show everything. Phone is the sweep's own test.
+                    if (window.innerWidth < 768) {
+                        var servedIds = {};
+                        metadata.visualizations.forEach(function (v) { servedIds[v.id] = v; });
+                        metadata.visualizations = metadata.visualizations.filter(function (v) {
+                            var files = v.files || {};
+                            var sib = v.sibling && servedIds[v.sibling];
+                            var hide = !!(files.landscape && !files.portrait && sib &&
+                                          (sib.files || {}).portrait);
+                            if (hide) hiddenSibling[v.id] = v.sibling;
+                            return !hide;
+                        });
+                    }
                 }
             } catch (err) {
                 selectorNav.innerHTML =
@@ -2315,7 +2345,12 @@
             // Featured: the flag the editor sets (Tony's ruling 2026-09-05)
             var featured = [];
             for (var f = 0; f < shown.length; f++) {
-                if (shown[f].featured) featured.push(shown[f]);
+                if (!shown[f].featured) continue;
+                // One of a featured pair, not both (L-303): the portrait
+                // card yields when its landscape sibling is also shown.
+                var sibF = shown[f].sibling && vizLookup[shown[f].sibling];
+                if (sibF && sibF.featured && shown[f].shape === '9:16') continue;
+                featured.push(shown[f]);
             }
             featured = treeSort(featured);
             if (featured.length) {
@@ -2506,7 +2541,7 @@
                                 }
                                 html += sourcesHtml(loose);
                                 if (loose.size_kb) {
-                                    html += '<div class="viz-card-size">' + Math.round(loose.size_kb) + ' KB</div>';
+                                    html += '<div class="viz-card-size">' + sizeLabel(loose) + '</div>';
                                 }
                                 if (loose.featured) {
                                     html += '<div class="viz-card-featured">Featured</div>';
@@ -2537,7 +2572,7 @@
                             }
                             html += sourcesHtml(item);
                             if (item.size_kb) {
-                                html += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
+                                html += '<div class="viz-card-size">' + sizeLabel(item) + '</div>';
                             }
                             if (item.featured) {
                                 html += '<div class="viz-card-featured">Featured</div>';
@@ -2560,7 +2595,7 @@
                         }
                         html += sourcesHtml(item);
                         if (item.size_kb) {
-                            html += '<div class="viz-card-size">' + Math.round(item.size_kb) + ' KB</div>';
+                            html += '<div class="viz-card-size">' + sizeLabel(item) + '</div>';
                         }
                         if (item.featured) {
                             html += '<div class="viz-card-featured">Featured</div>';
@@ -3814,6 +3849,9 @@
         // ---- URL hash routing ----
         function handleHash() {
             var hash = window.location.hash.replace('#', '');
+            // A link to a landscape card hidden on this phone (L-303)
+            // opens its portrait sibling instead of nothing.
+            if (hash && !vizLookup[hash] && hiddenSibling[hash]) hash = hiddenSibling[hash];
             if (hash && vizLookup[hash]) {
                 loadVisualization(hash);
             }

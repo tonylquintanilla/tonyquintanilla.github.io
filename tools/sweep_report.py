@@ -77,6 +77,10 @@ def classify(card):
         return "no sweep: shape 9:16", title, room, ""
     if files.get("portrait"):
         return "no sweep: portrait file serves", title, room, ""
+    if card.get("sibling"):
+        # L-303: the phone hides this card; its portrait sibling shows.
+        return ("no sweep: hidden on the phone (portrait sibling)",
+                title, room, "sibling %s" % card["sibling"])
     land = files.get("landscape")
     if not land:
         return "no sweep: no landscape file", title, room, ""
@@ -129,6 +133,7 @@ def main():
         "SWEEPS -- Mapbox figure (map has its own drag)",
         "sweeps by rule, but fits: nothing scrolls",
         "no sweep: 3D scene (scales to fit)",
+        "no sweep: hidden on the phone (portrait sibling)",
         "no sweep: portrait file serves",
         "no sweep: shape 9:16",
         "no sweep: no landscape file",

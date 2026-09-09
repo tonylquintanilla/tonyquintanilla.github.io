@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 28  
-**Total Lines of Code (non-blank):** 14,976  
+**Total Lines of Code (non-blank):** 15,007  
 **Total Public Functions/Classes:** 175
 
 ## Classification Coverage
@@ -94,10 +94,10 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (731 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
-| `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (813 lines) |
+| `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (839 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (821 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
-| `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (140 lines) |
+| `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (145 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (120 lines) |
 | `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (716 lines) |
 

@@ -124,55 +124,69 @@ def _config_is_v2(output_folder=None):
 
 
 def _v2_entry(metadata, safe_name, title, description, size_kb, mode):
-    """Build or update a schema-v2 card (L-287).
+    """Build or update a schema-v2 card (L-287; card model ruled L-303).
 
-    New card: room "other" (storage), one files slot keyed by mode
-    ("both" -> landscape), shape from the mode. If some card already lists
-    this filename, that slot is updated in place and the card keeps its
-    room, live, featured and sources. Returns (entry, replaced_index).
+    ONE CARD, ONE FILE. A landscape export and a portrait export of the
+    same figure are separate cards, stamped as siblings -- never two
+    slots on one card (Tony's ruling, L-303, 2026-09-08; the two-slot
+    card was L-287's merge, not his workflow).
+
+    - A file already on some card (by filename or id) REPLACES that
+      card's file in place; the card keeps its room, live, featured and
+      sources. That is a re-export.
+    - Otherwise L-301's pairing detection finds a SIBLING: a card of
+      the other orientation, not yet stamped, with a shared STEM
+      (trailing _gallery|_mobile|_portrait|_landscape removed), else
+      exactly one title match. Same rule as L-301, inverted action: a
+      NEW card is built for the new file, inheriting the sibling's
+      room, description and sources, and both carry
+      "sibling": <the other card's id>. The caller inserts the new card
+      right after its sibling. The viewer (index.html) hides a
+      landscape card on a phone when its portrait sibling is served.
+    - Otherwise a new card in Storage, one slot, shape from the mode.
+
+    Returns (entry, replaced_index, insert_after_index). Exactly one of
+    the two indices is not None for a new card; both are None for a
+    plain new card.
     """
     filename = f"{safe_name}.json"
     slot = "portrait" if mode == "portrait" else "landscape"
+    other = "landscape" if slot == "portrait" else "portrait"
     viz_list = metadata.get("visualizations", [])
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    # L-287 follow-on (2026-09-08). Studio exports a landscape and a
-    # portrait file of the same figure as SEPARATE scenes (each preset
-    # handles its own), named <base>_gallery and <base>_mobile. They are
-    # one card with two files. The L-287 migration paired existing cards;
-    # this is the same pairing for cards that arrive one file at a time,
-    # in the order: same filename/id, then same STEM, then same TITLE.
     def _stem(name):
         return re.sub(r"_(gallery|mobile|portrait|landscape)$", "", name)
 
-    def _joins(v):
+    # 1. Re-export: the file (or id) is already a card.
+    for i, v in enumerate(viz_list):
         files = v.get("files") or {}
         if filename in files.values() or v.get("id") == safe_name:
-            return True
-        if slot in files:
-            return False          # that orientation is already taken
+            v["files"] = {slot: filename}
+            v["size_kb"] = {slot: round(size_kb, 1)}
+            v["shape"] = "9:16" if slot == "portrait" else "16:9"
+            v["converted"] = now
+            if description:
+                v["description"] = description
+            return v, i, None
+
+    # 2. Sibling: a card of the other orientation, not yet paired.
+    def _is_sibling(v):
+        files = v.get("files") or {}
+        if other not in files or v.get("sibling"):
+            return False
         stems = {_stem(os.path.splitext(f)[0]) for f in files.values()}
         stems.add(_stem(str(v.get("id", ""))))
         return _stem(safe_name) in stems
 
-    match = [i for i, v in enumerate(viz_list) if _joins(v)]
+    match = [i for i, v in enumerate(viz_list) if _is_sibling(v)]
     if not match and title:
         by_title = [i for i, v in enumerate(viz_list)
-                    if v.get("title") == title and slot not in (v.get("files") or {})]
+                    if v.get("title") == title and other in (v.get("files") or {})
+                    and not v.get("sibling")]
         if len(by_title) == 1:
             match = by_title
-    for i in match[:1]:
-        v = viz_list[i]
-        files = v.get("files") or {}
-        if True:
-            files[slot] = filename
-            sizes = v.get("size_kb") if isinstance(v.get("size_kb"), dict) else {}
-            sizes[slot] = round(size_kb, 1)
-            v["files"] = files
-            v["size_kb"] = sizes
-            v["converted"] = datetime.now().strftime("%Y-%m-%d %H:%M")
-            if description:
-                v["description"] = description
-            return v, i
+
     entry = {
         "id": safe_name,
         "title": title,
@@ -183,10 +197,21 @@ def _v2_entry(metadata, safe_name, title, description, size_kb, mode):
         "live": None,
         "featured": False,
         "sources": [],
-        "converted": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "converted": now,
         "size_kb": {slot: round(size_kb, 1)},
     }
-    return entry, None
+    if match:
+        i = match[0]
+        sib = viz_list[i]
+        entry["room"] = sib.get("room", "other")
+        entry["sources"] = list(sib.get("sources") or [])
+        entry["featured"] = bool(sib.get("featured"))
+        if not description and sib.get("description"):
+            entry["description"] = sib["description"]
+        entry["sibling"] = sib.get("id")
+        sib["sibling"] = safe_name
+        return entry, None, i
+    return entry, None, None
 
 
 def live_scene_urls(repo_root):
@@ -718,13 +743,18 @@ def _update_metadata(output_folder, safe_name, display_name, category,
 
     if metadata.get("version") == 2:
         title = description if description else _clean_title(display_name)
-        entry, idx = _v2_entry(metadata, safe_name, title, description, size_kb, mode)
+        entry, idx, after = _v2_entry(metadata, safe_name, title, description, size_kb, mode)
         viz_list = metadata.get("visualizations", [])
-        if idx is None:
+        if idx is not None:
+            print(f"  metadata: replaced the file on {entry['id']} ({', '.join(entry['files'])})")
+        elif after is not None:
+            viz_list.insert(after + 1, entry)
+            sib = viz_list[after]
+            print(f"  metadata: new card {safe_name} ({entry['shape']}) beside its sibling "
+                  f"{sib.get('id')} in room {entry['room']} (L-303)")
+        else:
             viz_list.append(entry)
             print(f"  metadata: new card {safe_name} in Storage; place it in the editor")
-        else:
-            print(f"  metadata: updated {entry['id']} ({', '.join(entry['files'])})")
         metadata["visualizations"] = viz_list
         metadata["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M")
         metadata["total_count"] = len(viz_list)
