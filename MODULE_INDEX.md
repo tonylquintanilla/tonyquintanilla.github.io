@@ -10,20 +10,18 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 29  
-**Total Lines of Code (non-blank):** 15,151  
-**Total Public Functions/Classes:** 176
+**Total Python Files:** 28  
+**Total Lines of Code (non-blank):** 15,023  
+**Total Public Functions/Classes:** 175
 
 ## Classification Coverage
 
-**Undetermined role (2).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (1).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `patch_L291_11_earth_mode5_round1_20260909.py`
 - `sweep_collapsed_features.py`
 
-**Undetermined domain (2).** No valid `Domain:` tag.
+**Undetermined domain (1).** No valid `Domain:` tag.
 
-- `patch_L291_11_earth_mode5_round1_20260909.py`
 - `sweep_collapsed_features.py`
 
 
@@ -109,7 +107,6 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `patch_L291_11_earth_mode5_round1_20260909.py` | - Earth exhibit, Mode 5 round 1 (gallery repo) (128 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 
 ---

@@ -137,8 +137,11 @@ const moonG = groups["moon"];
 const arc = moonG.find(t => t.name === "Moon trusted arc");
 const ellipse = moonG.find(t => /orbit and position/.test(t.name));
 const moonMarker = moonG.find(t => t.name === "Moon");
-check("Moon group carries the faint ellipse, the arc, the position and one arc info marker",
-      !!arc && !!ellipse && !!moonMarker && ellipse.line.width === 1 && arc.line.width === 6 &&
+check("Moon: ellipse faint by rgba (no trace opacity), arc white and wide, dates in the hover",
+      !!arc && !!ellipse && !!moonMarker && ellipse.line.width === 1.5 && arc.line.width === 6 &&
+      ellipse.opacity === undefined && /^rgba\(/.test(ellipse.line.color) && arc.line.color === "rgb(255, 255, 255)" &&
+      /The arc runs from 2026-09-0\d \d\d:00 to 2026-09-\d\d \d\d:00 \(UTC\)/.test(
+        moonG.find(t => /trusted arc of the orbit/.test((t.text || [""])[0])).text[0]) &&
       moonG.some(t => t.showlegend === false && /trusted arc of the orbit/.test((t.text || [""])[0])));
 check("arc is the served trust window: " + payload.moonArc.windowDays.toFixed(2) + " days either side",
       new RegExp(payload.moonArc.windowDays.toFixed(2) + " days either side").test(

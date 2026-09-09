@@ -58,6 +58,13 @@
 
   function isNum(v) { return typeof v === "number" && isFinite(v); }
 
+  // Julian date -> calendar date, UTC, to the hour. JD 2440587.5 is the
+  // Unix epoch (1970-01-01T00:00Z), the standard conversion.
+  function jdToDate(jd) {
+    var d = new Date((jd - 2440587.5) * 86400000);
+    return d.toISOString().slice(0, 13).replace("T", " ") + ":00";
+  }
+
   function norm(v) {
     var n = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     return n > 0 ? [v[0] / n, v[1] / n, v[2] / n] : null;
@@ -327,6 +334,10 @@
         (isNum(arc.tolerance_deg) ? " to within " + arc.tolerance_deg + " deg" : "") +
         (isNum(arc.windowDays) ? ": " + arc.windowDays.toFixed(2) + " days either side of the<br>elements' epoch" : "") +
         ".<br>" +
+        (isNum(arc.startJd) && isNum(arc.endJd)
+          ? "The arc runs from " + jdToDate(arc.startJd) + " to " + jdToDate(arc.endJd) + " (UTC).<br>" : "") +
+        "There is no longer span to choose: this scene is one epoch, and the<br>" +
+        "arc is the stretch of orbit the served elements are trusted for.<br>" +
         "The faint full ellipse is the same orbit swept once around; outside<br>" +
         "the arc, the Moon's real path drifts from it as the Sun and Earth's<br>" +
         "shape perturb the two-body orbit.<br><br>" +
@@ -413,6 +424,7 @@
       x: payload.moonArc.x, y: payload.moonArc.y, z: payload.moonArc.z,
       windowDays: payload.moonArc.windowDays,
       tolerance_deg: payload.moonArc.tolerance_deg,
+      startJd: payload.moonArc.startJd, endJd: payload.moonArc.endJd,
       legendgroup: "moon", color: null
     } : null;
 
@@ -427,8 +439,12 @@
       if (tr.legendgroup === "moon") {
         if (tr.mode === "lines" && tr.line) {
           moonColor = moonColor || tr.line.color;
-          tr.line = { color: tr.line.color, width: 1 };
-          tr.opacity = 0.45;
+          // Faint by COLOUR, not by trace opacity (Tony, Mode 5
+          // 2026-09-09: the ellipse drew as a woven band). Plotly sends
+          // a 3D line with opacity < 1 down its transparent-line path;
+          // an rgba colour on an opaque trace does not go there.
+          tr.line = { color: "rgba(191, 191, 191, 0.45)", width: 1.5 };
+          delete tr.opacity;
           tr.name = "Moon (orbit and position)";
         }
         if (tr.mode === "markers" && tr.marker && !moonColor) moonColor = tr.marker.color;
@@ -436,7 +452,9 @@
       }
       scene.push(tr);
     }
-    if (moonArc) moonArc.color = moonColor || "rgb(200, 200, 200)";
+    // The arc is BRIGHTER than the ellipse: white, wide, opaque. Before
+    // this it took the Moon's own grey and differed only in width.
+    if (moonArc) moonArc.color = "rgb(255, 255, 255)";
 
     var geom = build({
       bodyName: "Earth", center: [0, 0, 0], kmPerAu: K,
