@@ -38,6 +38,10 @@
         the cube had nothing running through it -- the box edges also
         ran off the sides of a portrait phone. ?axes=full|pos|off,
         ?edge=0 turns the coloured box edges off)
+     Updated: September 10, 2026 with Anthropic's Claude Fable 5.1
+       (L-310: arrow buttons on the nav cluster step the camera by an
+        angle that scales with the eye distance, so a dollied-in view
+        moves by the same slice of the screen per tap)
      Architecture: Option C viewer (master plan v8 §2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1707,6 +1711,18 @@ const NAV_HALF_RANGE_MIN_AU = 1e-5;   // ~1500 km: past the core's detail
 const NAV_HALF_RANGE_MAX_AU = 5e3;    // past the Sun's gravitational edge
 let navArrivalR = null;               // arrival half-range, either room
 
+// L-310: one arrow tap turns the camera by NAV_STEP_BASE_DEG at the
+// arrival eye distance. Wheel-dollied closer, the step shrinks in
+// proportion, so a tap always moves about the same slice of the screen
+// -- a telescope's slow-motion knob (Tony, 2026-09-10). Frame zoom
+// (+/-) leaves the eye distance alone, and there a fixed angle already
+// sweeps a fixed slice, so the two zooms compose. MODE-5 KNOBS:
+const NAV_STEP_BASE_DEG = 5;
+const NAV_STEP_SIGN = 1;              // flip to -1 if the arrows feel backwards
+const NAV_STEP_MIN_DEG = 0.1;
+const NAV_STEP_MAX_DEG = 30;
+const NAV_STEP_POLE_MARGIN_DEG = 2;   // pitch stops short of the up vector
+
 // The camera each layout starts with. Read from the layout builders,
 // not recalled: buildSunLayout and buildLayout above.
 const NAV_SUN_CAMERA = {
@@ -1773,12 +1789,93 @@ function navHome() {
     return Plotly.relayout(gd, update).then(sunHudUpdate);
 }
 
+// L-310: vector helpers for the camera step.
+function navVecLen(v) { return Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z); }
+function navVecUnit(v) {
+    const l = navVecLen(v);
+    return l > 0 ? { x: v.x / l, y: v.y / l, z: v.z / l } : null;
+}
+function navVecCross(a, b) {
+    return { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x };
+}
+function navVecDot(a, b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+// Rodrigues: rotate v about unit axis k by t radians.
+function navVecRotate(v, k, t) {
+    const c = Math.cos(t), s = Math.sin(t);
+    const kv = navVecCross(k, v), kd = navVecDot(k, v);
+    return {
+        x: v.x * c + kv.x * s + k.x * kd * (1 - c),
+        y: v.y * c + kv.y * s + k.y * kd * (1 - c),
+        z: v.z * c + kv.z * s + k.z * kd * (1 - c)
+    };
+}
+
+// L-310: a camera step. Orbits the eye around the scene centre, the
+// same move as the drag but a known amount. "left"/"right" yaw about
+// the up vector; "up"/"down" pitch about the eye's horizontal, refused
+// within NAV_STEP_POLE_MARGIN_DEG of the poles so the view never flips.
+// Ranges and grid do not change. Sign convention, at NAV_STEP_SIGN = 1:
+// the RIGHT arrow moves the camera to its right around the subject
+// (the scene appears to turn left); UP raises the camera. Reads the
+// live camera the way the HUD does, so it is right after a touch
+// rotation too.
+function navCameraStep(dir) {
+    const gd = navPlotDiv();
+    if (!gd || !window.Plotly) { return Promise.resolve(); }
+    const cam = sunLiveCamera(gd) || gd.layout.scene.camera;
+    if (!cam || !cam.eye) { return Promise.resolve(); }
+    const c = cam.center || { x: 0, y: 0, z: 0 };
+    const u = navVecUnit(cam.up || { x: 0, y: 0, z: 1 });
+    const e = { x: cam.eye.x - c.x, y: cam.eye.y - c.y, z: cam.eye.z - c.z };
+    const dist = navVecLen(e);
+    if (!u || !(dist > 0)) { return Promise.resolve(); }
+
+    // Scale the step by magnification: live eye distance over arrival.
+    const isSun = document.body.classList.contains("sun-exhibit");
+    const home = isSun ? NAV_SUN_CAMERA : NAV_EXPLORER_CAMERA;
+    const homeDist = navVecLen({ x: home.eye.x - home.center.x,
+                                 y: home.eye.y - home.center.y,
+                                 z: home.eye.z - home.center.z });
+    let deg = NAV_STEP_BASE_DEG * (dist / homeDist);
+    deg = Math.max(NAV_STEP_MIN_DEG, Math.min(NAV_STEP_MAX_DEG, deg));
+    const t = deg * Math.PI / 180;
+
+    let axis, sign;
+    if (dir === "left" || dir === "right") {
+        axis = u;
+        sign = (dir === "right" ? 1 : -1) * NAV_STEP_SIGN;
+    } else if (dir === "up" || dir === "down") {
+        axis = navVecUnit(navVecCross(e, u));  // the eye's horizontal
+        if (!axis) { return Promise.resolve(); } // looking straight down the up vector
+        sign = (dir === "up" ? 1 : -1) * NAV_STEP_SIGN;
+    } else {
+        return Promise.resolve();
+    }
+    const e2 = navVecRotate(e, axis, sign * t);
+    if (dir === "up" || dir === "down") {
+        const elev = Math.asin(Math.max(-1, Math.min(1, navVecDot(navVecUnit(e2), u)))) * 180 / Math.PI;
+        if (Math.abs(elev) > 90 - NAV_STEP_POLE_MARGIN_DEG) { return Promise.resolve(); }
+    }
+    const camera = {
+        eye: { x: c.x + e2.x, y: c.y + e2.y, z: c.z + e2.z },
+        center: { x: c.x, y: c.y, z: c.z },
+        up: { x: u.x, y: u.y, z: u.z }
+    };
+    if (cam.projection) { camera.projection = cam.projection; }
+    return Plotly.relayout(gd, { "scene.camera": camera }).then(sunHudUpdate);
+}
+
 function mountNavCluster() {
     if (!window.GalleryNav) { return; }
     GalleryNav.mount(document.querySelector(".viz-area"), {
         zoomIn:  function () { navFrameZoom(-1); },
         zoomOut: function () { navFrameZoom(+1); },
-        home:    function () { navHome(); }
+        home:    function () { navHome(); },
+        // L-310: the four arrows; every exhibit room is a 3D scene.
+        stepLeft:  function () { navCameraStep("left"); },
+        stepRight: function () { navCameraStep("right"); },
+        stepUp:    function () { navCameraStep("up"); },
+        stepDown:  function () { navCameraStep("down"); }
     });
 }
 

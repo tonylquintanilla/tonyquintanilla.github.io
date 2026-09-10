@@ -24,7 +24,15 @@
  *   GalleryNav.mount(document.querySelector('.viz-area'), {
  *       zoomIn:  function () { ... },
  *       zoomOut: function () { ... },
- *       home:    function () { ... }
+ *       home:    function () { ... },
+ *       // optional (L-310): when any of these four is passed, the
+ *       // cluster draws a cross of arrows with Home at its centre.
+ *       // A page with no 3D camera passes none and gets the three
+ *       // buttons above, unchanged: one button, one meaning (L-285).
+ *       stepLeft:  function () { ... },
+ *       stepRight: function () { ... },
+ *       stepUp:    function () { ... },
+ *       stepDown:  function () { ... }
  *   });
  *
  * The cluster is position:absolute inside the container you pass, so
@@ -39,6 +47,8 @@
  * the cluster is a sibling of the plot, not a child.
  *
  * Module written September 4, 2026 with Anthropic's Claude Fable 5.1.
+ * Module updated September 10, 2026 with Anthropic's Claude Fable 5.1
+ *   (L-310: optional arrow buttons in a cross around Home).
  */
 (function (global) {
     'use strict';
@@ -89,7 +99,14 @@
         '    background: rgba(18, 18, 26, 0.95);',
         '    transform: scale(0.93);',
         '}',
-        '.nav-btn svg { display: block; }'
+        '.nav-btn svg { display: block; }',
+        /* L-310: the arrows and Home form a cross under + and -. */
+        '.nav-cross {',
+        '    display: grid;',
+        '    grid-template-columns: repeat(3, 44px);',
+        '    grid-template-rows: repeat(3, 44px);',
+        '    gap: 6px;',
+        '}'
     ].join('\n');
 
     var SVG_PLUS =
@@ -109,6 +126,26 @@
         '<path d="M3 10 L10 3.5 L17 10"/>' +
         '<path d="M5 9 V16.5 H15 V9"/>' +
         '<path d="M8.5 16.5 V12 H11.5 V16.5"/></svg>';
+
+    /* L-310: one chevron, pointing up; rotated about the icon centre
+       for the other three directions. */
+    function svgChevron(deg) {
+        return '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" ' +
+            'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+            '<path d="M5 12.5 L10 7.5 L15 12.5" transform="rotate(' + deg + ' 10 10)"/></svg>';
+    }
+
+    function hasSteps(h) {
+        return ['stepLeft', 'stepRight', 'stepUp', 'stepDown'].some(function (k) {
+            return typeof h[k] === 'function';
+        });
+    }
+
+    function place(btn, row, col) {
+        btn.style.gridRow = String(row);
+        btn.style.gridColumn = String(col);
+        return btn;
+    }
 
     function injectStyle() {
         if (document.getElementById(STYLE_ID)) { return; }
@@ -142,7 +179,18 @@
         el.setAttribute('aria-label', 'Navigation');
         el.appendChild(button('Zoom in', SVG_PLUS, handlers.zoomIn));
         el.appendChild(button('Zoom out', SVG_MINUS, handlers.zoomOut));
-        el.appendChild(button('Home', SVG_HOME, handlers.home));
+        if (hasSteps(handlers)) {
+            var cross = document.createElement('div');
+            cross.className = 'nav-cross';
+            cross.appendChild(place(button('Turn up',    svgChevron(0),   handlers.stepUp),    1, 2));
+            cross.appendChild(place(button('Turn left',  svgChevron(270), handlers.stepLeft),  2, 1));
+            cross.appendChild(place(button('Home',       SVG_HOME,        handlers.home),      2, 2));
+            cross.appendChild(place(button('Turn right', svgChevron(90),  handlers.stepRight), 2, 3));
+            cross.appendChild(place(button('Turn down',  svgChevron(180), handlers.stepDown),  3, 2));
+            el.appendChild(cross);
+        } else {
+            el.appendChild(button('Home', SVG_HOME, handlers.home));
+        }
         container.appendChild(el);
         return {
             el: el,
