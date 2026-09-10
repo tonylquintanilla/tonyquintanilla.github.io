@@ -215,26 +215,6 @@
       "sibling": "solar_system_20260907_earth_shells_moon_gallery"
     },
     {
-      "id": "solar_system_20260907_earth_shells_moon_mobile__moon",
-      "title": "Earth and Moon Interactive",
-      "description": "Earth and Moon",
-      "room": "solar_system/earth",
-      "shape": "9:16",
-      "files": {
-        "portrait": "solar_system_20260907_earth_shells_moon_mobile.json"
-      },
-      "live": "interactive.html?exhibit=earth",
-      "featured": true,
-      "sources": [
-        "See hovertext."
-      ],
-      "converted": "2026-09-07 17:51",
-      "size_kb": {
-        "portrait": 626.4
-      },
-      "sibling": "solar_system_20260907_earth_shells_moon_gallery"
-    },
-    {
       "id": "earth_barycenter_shells_20260207_1635",
       "title": "Earth Barycenter Shells 20260207 1635",
       "description": "Plot of Earth-Moon system with barycenter. Shows Earth's geological, atmospheric and magnetic structure.",
@@ -2681,8 +2661,23 @@
         "portrait": 5827.7
       },
       "sibling": "earth-apophis_20290401_29"
+    },
+    {
+      "id": "earth_and_moon",
+      "title": "Earth and Moon",
+      "description": "Interactive exhibit of the Earth and Moon system with Earth's body, atmosphere, magnetic and gravitational fields.",
+      "room": "solar_system/earth",
+      "shape": "9:16",
+      "files": {},
+      "live": "interactive.html?exhibit=earth",
+      "featured": true,
+      "sources": [
+        "See references in the hover text."
+      ],
+      "converted": "2026-09-10 09:44",
+      "size_kb": {}
     }
   ],
-  "last_updated": "2026-09-09 12:54",
+  "last_updated": "2026-09-10 09:47",
   "total_count": 145
 }
