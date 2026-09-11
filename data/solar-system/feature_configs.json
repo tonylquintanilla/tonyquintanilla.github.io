@@ -130,6 +130,7 @@
           },
           "info_url": "https://en.wikipedia.org/wiki/Roche_limit",
           "color": "rgb(200, 60, 60)",
+          "info_border": "white",
           "opacity": 0.5,
           "n_points": 20,
           "marker_size": 3.0,
@@ -392,6 +393,7 @@
           },
           "info_url": "https://en.wikipedia.org/wiki/Earth%27s_outer_core",
           "color": "rgb(255, 140, 0)",
+          "info_border": "white",
           "opacity": 1.0,
           "n_points": 25,
           "marker_size": 7,
@@ -406,6 +408,7 @@
           },
           "info_url": "https://en.wikipedia.org/wiki/Lower_mantle",
           "color": "rgb(230, 100, 20)",
+          "info_border": "white",
           "opacity": 1.0,
           "n_points": 25,
           "marker_size": 7,
@@ -420,6 +423,7 @@
           },
           "info_url": "https://en.wikipedia.org/wiki/Upper_mantle",
           "color": "rgb(205, 85, 85)",
+          "info_border": "white",
           "opacity": 1.0,
           "n_points": 25,
           "marker_size": 7,
@@ -636,6 +640,10 @@
           "rgb(255, 100, 100)",
           "rgb(100, 200, 255)"
         ],
+        "info_borders": [
+          "white",
+          "red"
+        ],
         "names": [
           "Inner Radiation Belt",
           "Outer Radiation Belt"
@@ -644,7 +652,7 @@
           "https://science.nasa.gov/biological-physical/stories/van-allen-belts/",
           "https://science.nasa.gov/biological-physical/stories/van-allen-belts/"
         ],
-        "_declared": "belt_thickness, n_rings, n_points, colours and names are drawing choices.",
+        "_declared": "belt_thickness, n_rings, n_points, colours, names and info_borders are drawing choices; info_borders mirrors the orrery's two-standards outline (shell_configs.py).",
         "planet_radius": {
           "value": 6378.1366,
           "unit": "km",
