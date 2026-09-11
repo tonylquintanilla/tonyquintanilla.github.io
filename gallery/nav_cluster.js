@@ -39,14 +39,14 @@
  * the container must be position:relative (or fixed/absolute) and is
  * expected to be the plot's own wrapper -- not the page body -- so the
  * buttons sit over the picture and never over a controls panel below
- * it. mount() returns { el, show(), hide(), crossTop(on) }.
+ * it. mount() returns { el, show(), hide(), crossRight(on) }.
  *
- * crossTop(true) moves the arrow cross -- Home with it -- into its own
- * holder at the top centre of the container; crossTop(false) puts it
- * back under + and -, where mount() built it. It returns whether the
- * cross is on top. The page decides when: the exhibit rooms move it on a
- * portrait phone, where the in-frame title used to sit (L-316). A page
- * with no step handlers has no cross, and crossTop always returns false.
+ * crossRight(true) moves the arrow cross -- Home with it -- into its own
+ * holder in the top-right corner of the container; crossRight(false)
+ * puts it back under + and -, where mount() built it. It returns whether
+ * the cross is at the right. The page decides when: the exhibit rooms
+ * move it on a portrait phone (L-316). A page with no step handlers has
+ * no cross, and crossRight always returns false.
  *
  * Buttons respond to click only. touch-action:manipulation removes the
  * 300 ms tap delay on phones, so no separate touchstart handler is
@@ -58,6 +58,10 @@
  *   (L-310: optional arrow buttons in a cross around Home).
  * Module updated September 10, 2026 with Anthropic's Claude Opus 5
  *   (L-316: crossTop() moves the cross to the top centre on request).
+ * Module updated September 10, 2026 with Anthropic's Claude Opus 5
+ *   (L-316 round 2, Tony's Mode 5: the top centre covered the marker at
+ *   the top of whichever shell fills the view, so the holder moves to the
+ *   top-right corner; crossTop() is renamed crossRight()).
  */
 (function (global) {
     'use strict';
@@ -72,8 +76,9 @@
            drawer owns the bottom, the panel owns the right (desktop) or
            the bottom (portrait), the title is centred: this corner is
            the one nothing else claims, on either room. On a portrait
-           phone the rooms drop that title and the arrow cross moves up
-           into its place (L-316, Tony 2026-09-10); + and - stay here. */
+           phone the rooms move the arrow cross to the top-right corner,
+           which the hidden mode bar leaves free there (L-316, Tony
+           2026-09-10); + and - stay here. */
         '    left: 12px;',
         '    top: calc(12px + env(safe-area-inset-top, 0px));',
         '    z-index: 6;',
@@ -118,11 +123,10 @@
         '    grid-template-rows: repeat(3, 44px);',
         '    gap: 6px;',
         '}',
-        /* L-316: the cross's holder when the page puts it on top. */
-        '.nav-cross-top {',
+        /* L-316: the cross's holder when the page puts it at the right. */
+        '.nav-cross-right {',
         '    position: absolute;',
-        '    left: 50%;',
-        '    transform: translateX(-50%);',
+        '    right: calc(12px + env(safe-area-inset-right, 0px));',
         '    top: calc(12px + env(safe-area-inset-top, 0px));',
         '    z-index: 6;',
         '}'
@@ -213,32 +217,32 @@
         }
         container.appendChild(el);
 
-        /* L-316: the cross moves between the cluster and a top-centre
+        /* L-316: the cross moves between the cluster and a top-right
            holder. Moving the element keeps its buttons and handlers;
            putting it back appends it as the cluster's last child, which
            is where it was built, so the corner layout is unchanged. */
-        var topWrap = null;
-        var onTop = false;
+        var rightWrap = null;
+        var onRight = false;
         var hidden = false;
-        function crossTop(on) {
+        function crossRight(on) {
             on = !!on;
-            if (!cross || on === onTop) { return onTop; }
+            if (!cross || on === onRight) { return onRight; }
             if (on) {
-                if (!topWrap) {
-                    topWrap = document.createElement('div');
-                    topWrap.className = 'nav-cross-top';
-                    topWrap.setAttribute('role', 'group');
-                    topWrap.setAttribute('aria-label', 'Turn the view');
-                    container.appendChild(topWrap);
+                if (!rightWrap) {
+                    rightWrap = document.createElement('div');
+                    rightWrap.className = 'nav-cross-right';
+                    rightWrap.setAttribute('role', 'group');
+                    rightWrap.setAttribute('aria-label', 'Turn the view');
+                    container.appendChild(rightWrap);
                 }
-                topWrap.appendChild(cross);
-                topWrap.style.display = hidden ? 'none' : '';
+                rightWrap.appendChild(cross);
+                rightWrap.style.display = hidden ? 'none' : '';
             } else {
                 el.appendChild(cross);
-                topWrap.style.display = 'none';
+                rightWrap.style.display = 'none';
             }
-            onTop = on;
-            return onTop;
+            onRight = on;
+            return onRight;
         }
 
         return {
@@ -246,14 +250,14 @@
             show: function () {
                 hidden = false;
                 el.style.display = '';
-                if (topWrap && onTop) { topWrap.style.display = ''; }
+                if (rightWrap && onRight) { rightWrap.style.display = ''; }
             },
             hide: function () {
                 hidden = true;
                 el.style.display = 'none';
-                if (topWrap) { topWrap.style.display = 'none'; }
+                if (rightWrap) { rightWrap.style.display = 'none'; }
             },
-            crossTop: crossTop
+            crossRight: crossRight
         };
     }
 

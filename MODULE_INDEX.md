@@ -10,22 +10,20 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 30  
-**Total Lines of Code (non-blank):** 15,858  
-**Total Public Functions/Classes:** 178
+**Total Python Files:** 29  
+**Total Lines of Code (non-blank):** 15,323  
+**Total Public Functions/Classes:** 176
 
 ## Classification Coverage
 
-**Undetermined role (3).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (2).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `patch_L310_camera_step.py`
-- `patch_L316_cross_and_borders.py`
+- `patch_L316_2_cross_right.py`
 - `sweep_collapsed_features.py`
 
-**Undetermined domain (3).** No valid `Domain:` tag.
+**Undetermined domain (2).** No valid `Domain:` tag.
 
-- `patch_L310_camera_step.py`
-- `patch_L316_cross_and_borders.py`
+- `patch_L316_2_cross_right.py`
 - `sweep_collapsed_features.py`
 
 
@@ -111,8 +109,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `patch_L310_camera_step.py` | - L-310: directional camera steps in the exhibit rooms. (261 lines) |
-| `patch_L316_cross_and_borders.py` | - L-316 and L-317, from Tony's Mode 5 of L-310 on 2026-09-10. Replaces patch_L316_cross_and_markers.py, which must not be run: its white, larger markers were not the orrery's rule. (552 lines) |
+| `patch_L316_2_cross_right.py` | - L-316 round 2, from Tony's Mode 5 of 2026-09-10: the in-frame title comes back, and on a portrait phone the arrow cross moves to the top-right corner instead of the top centre. (278 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 
 ---

@@ -54,6 +54,11 @@
         "the date in the title", which never held one; it now points at
         the Sun Direction's hover. Non-ASCII in the head and in comments
         normalised to ASCII)
+     Updated: September 10, 2026 with Anthropic's Claude Opus 5
+       (L-316 round 2, Tony's Mode 5: the top-centre cross covered the
+        marker at the top of whichever shell fills the view. The in-frame
+        title is back on every screen, and on a portrait phone the cross
+        moves to the top-right corner instead)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1962,7 +1967,7 @@ function buildSunLayout(halfRangeAu) {
         plot_bgcolor: "#060a12",
         font: { family: "DM Sans, system-ui", color: "#e8e6e3" },
         title: {
-            text: sunSceneTitle(),   // L-316: empty on a portrait phone
+            text: EX.sceneTitle,
             font: { family: "Cormorant Garamond, serif", size: 16,
                     color: "#e8e6e3" },
             x: 0.5, xanchor: "center", y: 0.97,
@@ -1987,22 +1992,21 @@ function sunMargins() {
         : { l: 0, r: 0, t: 32, b: 0 };
 }
 
-// L-316, Tony's Mode 5 ruling of 2026-09-10: on a portrait phone the
-// room's in-frame title comes off -- the page header already names the
-// room -- and the arrow cross takes its place at the top centre. "Phone"
-// is 768 px wide or less, where this page draws no mode bar, so no
-// download button is left saving an image without its label. Desktop and
-// landscape keep the title and the cross under + and -. The Explorer is
-// not a room: its title carries the date, and its cross never moves.
-function sunCrossOnTop() {
+// L-316, Tony's Mode 5 rulings of 2026-09-10: on a portrait phone the
+// arrow cross moves to the top-right corner. Round 1 put it at the top
+// centre in place of the in-frame title; that covered the marker at the
+// top of whichever shell fills the view, so round 2 kept the title and
+// moved the cross right. "Phone" is 768 px wide or less: the page hides
+// the mode bar there (the @media rule and displayModeBar both use 768),
+// which leaves the top-right corner free. Desktop and landscape keep the
+// cross under + and -, clear of the mode bar. The Explorer's cross never
+// moves.
+function sunCrossRight() {
     return window.innerHeight > window.innerWidth && window.innerWidth <= 768;
 }
-function sunSceneTitle() {
-    return sunCrossOnTop() ? "" : EX.sceneTitle;
-}
 function navPlaceCross() {
-    if (navCluster && typeof navCluster.crossTop === "function") {
-        navCluster.crossTop(!!EX && sunCrossOnTop());
+    if (navCluster && typeof navCluster.crossRight === "function") {
+        navCluster.crossRight(!!EX && sunCrossRight());
     }
 }
 
@@ -2739,9 +2743,8 @@ function wireSunDrawer() {
     });
 }
 
-// Rotating a phone changes which margins are right, whether the room's
-// in-frame title shows, and where the arrow cross sits (L-316) -- and
-// nothing else.
+// Rotating a phone changes which margins are right and where the arrow
+// cross sits (L-316) -- and nothing else.
 let sunResizeTimer = null;
 function onSunResize() {
     if (sunResizeTimer) { clearTimeout(sunResizeTimer); }
@@ -2750,10 +2753,7 @@ function onSunResize() {
             sunMeasureDrawer();
         }
         if (sunPlotDiv && window.Plotly) {
-            Plotly.relayout(sunPlotDiv, {
-                margin: sunMargins(),
-                "title.text": sunSceneTitle()
-            });
+            Plotly.relayout(sunPlotDiv, { margin: sunMargins() });
         }
         navPlaceCross();
     }, 180);
