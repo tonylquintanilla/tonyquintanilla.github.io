@@ -64,6 +64,9 @@
         text as a label pinned to its info marker, with an arrow; a tap in
         the scene, unticking the shell, or naming another shell closes or
         moves it. Tapping a marker still works as before)
+     Updated: September 10, 2026 with Anthropic's Claude Opus 5
+       (L-318 Mode 5: the label's arrow takes the marker's outline colour,
+        red or white, for contrast; the box border keeps the shell's)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2561,10 +2564,16 @@ function sunLabelRefresh() {
     if (key === sunLabelApplied) { return Promise.resolve(); }
     sunLabelApplied = key;
     const color = grp.color || "rgb(200, 200, 200)";
+    // The arrow takes the marker's outline colour -- red, or white on the
+    // saturated warm shells (the two-standards rule) -- not the shell's: a
+    // shell-coloured arrow is lost against the shell's own dots (Tony's
+    // Mode 5, 2026-09-10). The box border keeps the shell's colour, which
+    // ties the text to the shell.
+    const arrowColor = (m.marker && m.marker.line && m.marker.line.color) || "red";
     return sunLabelRelayout([{
         x: m.x[0], y: m.y[0], z: m.z[0],
         text: sunLabelWrap(m.text[0], SUN_LABEL_WRAP_CHARS),
-        showarrow: true, arrowcolor: color, arrowwidth: 1.5, arrowhead: 0,
+        showarrow: true, arrowcolor: arrowColor, arrowwidth: 1.5, arrowhead: 0,
         ax: side.ax, ay: side.ay, xanchor: side.xanchor, yanchor: side.yanchor,
         align: "left", bgcolor: "rgba(17, 24, 39, 0.95)",
         bordercolor: color, borderwidth: 1, borderpad: 6,
