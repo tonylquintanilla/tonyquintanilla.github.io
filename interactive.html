@@ -38,11 +38,23 @@
         the cube had nothing running through it -- the box edges also
         ran off the sides of a portrait phone. ?axes=full|pos|off,
         ?edge=0 turns the coloured box edges off)
+     Updated: September 9, 2026 with Anthropic's Claude Opus 5
+       (L-291 step 3: Earth joins the Sun as a second row of the
+        EXHIBITS table, on the same chrome; Mode 5 round 1 widened the
+        frame axes from 3 to 6 in both rooms. Line added September 10
+        from the archived patch_L291_9 and patch_L291_11)
      Updated: September 10, 2026 with Anthropic's Claude Fable 5.1
        (L-310: arrow buttons on the nav cluster step the camera by an
         angle that scales with the eye distance, so a dollied-in view
         moves by the same slice of the screen per tap)
-     Architecture: Option C viewer (master plan v8 §2a)
+     Updated: September 10, 2026 with Anthropic's Claude Opus 5
+       (L-316: on a portrait phone the rooms leave the in-frame title
+        empty -- the page header names the room -- and the arrow cross
+        takes its place at the top centre. Earth's panel pointed at
+        "the date in the title", which never held one; it now points at
+        the Sun Direction's hover. Non-ASCII in the head and in comments
+        normalised to ASCII)
+     Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
        - gallery_metadata.json bridges both -->
@@ -50,14 +62,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Paloma's Orrery — Interactive Exhibits</title>
+    <title>Paloma's Orrery &mdash; Interactive Exhibits</title>
 
-    <meta property="og:title" content="Paloma's Orrery — Interactive Exhibits">
+    <meta property="og:title" content="Paloma's Orrery &mdash; Interactive Exhibits">
     <meta property="og:description" content="Explore the solar system with real orbital mechanics, powered by Python in your browser.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://palomasorrery.com/interactive.html">
 
-    <!-- Plotly.js — same version as the gallery viewer -->
+    <!-- Plotly.js -- same version as the gallery viewer -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
     <!-- Client-side feature renderers (shells, rings, belts). Used by
          the Sun exhibit; harmless for the Solar System Explorer. -->
@@ -68,14 +80,14 @@
          (see navFrameZoom / navHome below). -->
     <script src="gallery/nav_cluster.js"></script>
 
-    <!-- Fonts — match gallery viewer -->
+    <!-- Fonts -- match gallery viewer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
         /* ================================================================
-           CSS VARIABLES — gallery-matched palette
+           CSS VARIABLES -- gallery-matched palette
            ================================================================ */
         :root {
             --bg-void: #060a12;
@@ -111,7 +123,7 @@
         }
 
         /* ================================================================
-           LAYOUT — full viewport, three bands
+           LAYOUT -- full viewport, three bands
            ================================================================ */
         .app {
             display: flex;
@@ -789,7 +801,7 @@
 
 <script>
 // ====================================================================
-// PLANET DATA — from orbital_elements.py (mean elements, J2000 epoch)
+// PLANET DATA -- from orbital_elements.py (mean elements, J2000 epoch)
 // Source: NASA Planetary Fact Sheets / JPL Approximate Positions
 // ====================================================================
 const PLANETS = {
@@ -977,7 +989,7 @@ async function initPyodide() {
 }
 
 // ====================================================================
-// PYTHON ENGINE — Keplerian orbit computation via NumPy
+// PYTHON ENGINE -- Keplerian orbit computation via NumPy
 // Returns JSON with orbit points and positions; JS builds the figure.
 // ====================================================================
 const PYTHON_ENGINE = `
@@ -1482,7 +1494,7 @@ const EARTH_INFO_HTML = [
     " belts, the geocorona, the Hill sphere, the day-night line and the",
     " Moon wait in the drawer at the foot of the screen. Tap one and it",
     " draws; the view rescales to hold it.</p>",
-    "<p>This scene is one moment &mdash; the date in the title. The",
+    "<p>This scene is one moment &mdash; the date in the Sun Direction's hover. The",
     " Sun direction, the day-night line and the Moon's place are for that",
     " moment; the axis is the line Earth turns about, but the turning is",
     " not shown. The Moon's orbit is drawn twice: a faint full ellipse,",
@@ -1865,9 +1877,12 @@ function navCameraStep(dir) {
     return Plotly.relayout(gd, { "scene.camera": camera }).then(sunHudUpdate);
 }
 
+// L-316: kept so the rooms can move the cross, and move it again on rotation.
+let navCluster = null;
+
 function mountNavCluster() {
     if (!window.GalleryNav) { return; }
-    GalleryNav.mount(document.querySelector(".viz-area"), {
+    navCluster = GalleryNav.mount(document.querySelector(".viz-area"), {
         zoomIn:  function () { navFrameZoom(-1); },
         zoomOut: function () { navFrameZoom(+1); },
         home:    function () { navHome(); },
@@ -1877,6 +1892,7 @@ function mountNavCluster() {
         stepUp:    function () { navCameraStep("up"); },
         stepDown:  function () { navCameraStep("down"); }
     });
+    navPlaceCross();
 }
 
 function buildSunLayout(halfRangeAu) {
@@ -1946,7 +1962,7 @@ function buildSunLayout(halfRangeAu) {
         plot_bgcolor: "#060a12",
         font: { family: "DM Sans, system-ui", color: "#e8e6e3" },
         title: {
-            text: EX.sceneTitle,
+            text: sunSceneTitle(),   // L-316: empty on a portrait phone
             font: { family: "Cormorant Garamond, serif", size: 16,
                     color: "#e8e6e3" },
             x: 0.5, xanchor: "center", y: 0.97,
@@ -1969,6 +1985,25 @@ function sunMargins() {
     return (window.innerHeight > window.innerWidth)
         ? { l: 22, r: 22, t: 34, b: 26 }
         : { l: 0, r: 0, t: 32, b: 0 };
+}
+
+// L-316, Tony's Mode 5 ruling of 2026-09-10: on a portrait phone the
+// room's in-frame title comes off -- the page header already names the
+// room -- and the arrow cross takes its place at the top centre. "Phone"
+// is 768 px wide or less, where this page draws no mode bar, so no
+// download button is left saving an image without its label. Desktop and
+// landscape keep the title and the cross under + and -. The Explorer is
+// not a room: its title carries the date, and its cross never moves.
+function sunCrossOnTop() {
+    return window.innerHeight > window.innerWidth && window.innerWidth <= 768;
+}
+function sunSceneTitle() {
+    return sunCrossOnTop() ? "" : EX.sceneTitle;
+}
+function navPlaceCross() {
+    if (navCluster && typeof navCluster.crossTop === "function") {
+        navCluster.crossTop(!!EX && sunCrossOnTop());
+    }
 }
 
 async function initSunExhibit() {
@@ -2704,7 +2739,9 @@ function wireSunDrawer() {
     });
 }
 
-// Rotating a phone changes which margins are right, and nothing else.
+// Rotating a phone changes which margins are right, whether the room's
+// in-frame title shows, and where the arrow cross sits (L-316) -- and
+// nothing else.
 let sunResizeTimer = null;
 function onSunResize() {
     if (sunResizeTimer) { clearTimeout(sunResizeTimer); }
@@ -2713,8 +2750,12 @@ function onSunResize() {
             sunMeasureDrawer();
         }
         if (sunPlotDiv && window.Plotly) {
-            Plotly.relayout(sunPlotDiv, { margin: sunMargins() });
+            Plotly.relayout(sunPlotDiv, {
+                margin: sunMargins(),
+                "title.text": sunSceneTitle()
+            });
         }
+        navPlaceCross();
     }, 180);
 }
 
@@ -2749,10 +2790,10 @@ mountNavCluster();
 
 // Check for prior consent
 if (localStorage.getItem(CONSENT_KEY) === 'yes') {
-    // Returning user — skip consent, go straight to loading
+    // Returning user -- skip consent, go straight to loading
     loadPyodideRuntime();
 } else {
-    // First visit — show consent gate
+    // First visit -- show consent gate
     document.getElementById('consent-launch').addEventListener('click', () => {
         localStorage.setItem(CONSENT_KEY, 'yes');
         loadPyodideRuntime();

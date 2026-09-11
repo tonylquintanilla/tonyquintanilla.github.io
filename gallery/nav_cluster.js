@@ -39,7 +39,14 @@
  * the container must be position:relative (or fixed/absolute) and is
  * expected to be the plot's own wrapper -- not the page body -- so the
  * buttons sit over the picture and never over a controls panel below
- * it. mount() returns { el, show(), hide() }.
+ * it. mount() returns { el, show(), hide(), crossTop(on) }.
+ *
+ * crossTop(true) moves the arrow cross -- Home with it -- into its own
+ * holder at the top centre of the container; crossTop(false) puts it
+ * back under + and -, where mount() built it. It returns whether the
+ * cross is on top. The page decides when: the exhibit rooms move it on a
+ * portrait phone, where the in-frame title used to sit (L-316). A page
+ * with no step handlers has no cross, and crossTop always returns false.
  *
  * Buttons respond to click only. touch-action:manipulation removes the
  * 300 ms tap delay on phones, so no separate touchstart handler is
@@ -49,6 +56,8 @@
  * Module written September 4, 2026 with Anthropic's Claude Fable 5.1.
  * Module updated September 10, 2026 with Anthropic's Claude Fable 5.1
  *   (L-310: optional arrow buttons in a cross around Home).
+ * Module updated September 10, 2026 with Anthropic's Claude Opus 5
+ *   (L-316: crossTop() moves the cross to the top centre on request).
  */
 (function (global) {
     'use strict';
@@ -62,7 +71,9 @@
            bottom-right under both the drawer and the info panel. The
            drawer owns the bottom, the panel owns the right (desktop) or
            the bottom (portrait), the title is centred: this corner is
-           the one nothing else claims, on either room. */
+           the one nothing else claims, on either room. On a portrait
+           phone the rooms drop that title and the arrow cross moves up
+           into its place (L-316, Tony 2026-09-10); + and - stay here. */
         '    left: 12px;',
         '    top: calc(12px + env(safe-area-inset-top, 0px));',
         '    z-index: 6;',
@@ -106,6 +117,14 @@
         '    grid-template-columns: repeat(3, 44px);',
         '    grid-template-rows: repeat(3, 44px);',
         '    gap: 6px;',
+        '}',
+        /* L-316: the cross's holder when the page puts it on top. */
+        '.nav-cross-top {',
+        '    position: absolute;',
+        '    left: 50%;',
+        '    transform: translateX(-50%);',
+        '    top: calc(12px + env(safe-area-inset-top, 0px));',
+        '    z-index: 6;',
         '}'
     ].join('\n');
 
@@ -179,8 +198,9 @@
         el.setAttribute('aria-label', 'Navigation');
         el.appendChild(button('Zoom in', SVG_PLUS, handlers.zoomIn));
         el.appendChild(button('Zoom out', SVG_MINUS, handlers.zoomOut));
+        var cross = null;
         if (hasSteps(handlers)) {
-            var cross = document.createElement('div');
+            cross = document.createElement('div');
             cross.className = 'nav-cross';
             cross.appendChild(place(button('Turn up',    svgChevron(0),   handlers.stepUp),    1, 2));
             cross.appendChild(place(button('Turn left',  svgChevron(270), handlers.stepLeft),  2, 1));
@@ -192,10 +212,48 @@
             el.appendChild(button('Home', SVG_HOME, handlers.home));
         }
         container.appendChild(el);
+
+        /* L-316: the cross moves between the cluster and a top-centre
+           holder. Moving the element keeps its buttons and handlers;
+           putting it back appends it as the cluster's last child, which
+           is where it was built, so the corner layout is unchanged. */
+        var topWrap = null;
+        var onTop = false;
+        var hidden = false;
+        function crossTop(on) {
+            on = !!on;
+            if (!cross || on === onTop) { return onTop; }
+            if (on) {
+                if (!topWrap) {
+                    topWrap = document.createElement('div');
+                    topWrap.className = 'nav-cross-top';
+                    topWrap.setAttribute('role', 'group');
+                    topWrap.setAttribute('aria-label', 'Turn the view');
+                    container.appendChild(topWrap);
+                }
+                topWrap.appendChild(cross);
+                topWrap.style.display = hidden ? 'none' : '';
+            } else {
+                el.appendChild(cross);
+                topWrap.style.display = 'none';
+            }
+            onTop = on;
+            return onTop;
+        }
+
         return {
             el: el,
-            show: function () { el.style.display = ''; },
-            hide: function () { el.style.display = 'none'; }
+            show: function () {
+                hidden = false;
+                el.style.display = '';
+                if (topWrap && onTop) { topWrap.style.display = ''; }
+            },
+            hide: function () {
+                hidden = true;
+                el.style.display = 'none';
+                if (topWrap) { topWrap.style.display = 'none'; }
+            },
+            crossTop: crossTop
         };
     }
 

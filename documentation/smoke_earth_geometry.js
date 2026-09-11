@@ -11,6 +11,8 @@
 //
 // Every check can fail: the numbers compared are read from the fixture's
 // served rows, not typed twice. Added September 2026 (L-291 step 3).
+// Updated September 10, 2026 with Anthropic's Claude Opus 5 (L-317: the
+// orrery's two-standards outline, checked against the live config).
 
 const fs = require("fs");
 const path = require("path");
@@ -165,10 +167,33 @@ check("the trusted arc sweeps one short piece of the orbit (60-120 deg for a ~6.
 
 const markers = T.filter(t => t.showlegend === false && t.marker && t.marker.symbol === "cross");
 // The assembler's own orbit info marker (render_orbits.py) is a plain
-// cross; the renderer's and this module's carry the red border.
+// cross; the renderer's and this module's carry the red border. (The
+// fixture predates the served outline flags; the L-317 check below reads
+// the live config.)
 const ours = markers.filter(t => t.name !== "Moon osculating orbit info");
 check("every renderer/geometry info marker is a cross with a red border and hover text",
       ours.every(t => t.marker.line && t.marker.line.color === "red" && t.text && t.text[0].length > 20));
+// L-317: the orrery's two-standards outline, served per shell. The same
+// scene composed with Earth's rows from the LIVE data/objects_config.json
+// (the renderer receives served rows verbatim): exactly the saturated warm
+// shells are white. Fails if a flag leaves the config or the renderer
+// stops reading it.
+const liveCfg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "objects_config.json"), "utf8"));
+const liveEarth = liveCfg.objects.find(o => o.slug === "earth");
+const payloadLive = JSON.parse(JSON.stringify(payload));
+payloadLive.features.forEach(f => {
+  if (f.object === "earth" && liveEarth.features[f.feature]) f.params = liveEarth.features[f.feature];
+});
+const liveMarkers = EG.composeScene(payloadLive, { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" })
+  .traces.filter(t => t.showlegend === false && t.marker && t.marker.symbol === "cross");
+const whiteEarth = liveMarkers.filter(t => t.marker.line && t.marker.line.color === "white")
+  .map(t => t.legendgroup).sort();
+check("two-standards outlines: white on Earth's saturated warm shells, red on the rest",
+      JSON.stringify(whiteEarth) === JSON.stringify(["Earth: Inner Radiation Belt", "Earth: Lower Mantle",
+                                                     "Earth: Outer Core", "Earth: Upper Mantle"]) &&
+      liveMarkers.filter(t => t.name !== "Moon osculating orbit info")
+        .every(t => t.marker.line && (t.marker.line.color === "white" || t.marker.line.color === "red")),
+      "white: " + (whiteEarth.join(", ") || "none"));
 check("every hover with km also gives AU",
       markers.every(t => !/\bkm\b/.test(t.text[0]) || /AU/.test(t.text[0])));
 check("no hover line exceeds 90 characters",

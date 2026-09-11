@@ -52,6 +52,17 @@ const sep = Math.hypot(mp.x[0]-mc.x[0], mp.y[0]-mc.y[0], mp.z[0]-mc.z[0]);
 check("photosphere/chromosphere markers separated",
       sep > 0.2 * RSUN_KM/AU, "sep " + (sep*AU).toFixed(0) + " km");
 
+// L-317 (September 10, 2026, Claude Opus 5): the orrery's two-standards
+// outline, served per shell. The Roche limit is the Sun's only saturated
+// warm shell; every other marker keeps the red outline. Read from the live
+// config, so this fails if the flag leaves it or the renderer ignores it.
+const whiteSun = info.filter(t => t.marker.line && t.marker.line.color === "white")
+  .map(t => t.legendgroup).sort();
+check("two-standards outlines: white on the Roche limit only, red on the rest",
+      JSON.stringify(whiteSun) === JSON.stringify(["Sun: Roche Limit (Comets)"]) &&
+      info.every(t => t.marker.line && (t.marker.line.color === "white" || t.marker.line.color === "red")),
+      "white: " + (whiteSun.join(", ") || "none"));
+
 // --- no half-range supplied (the older smoke tests) ---
 const r2 = GF.buildFeatureTraces(features, bodies);
 check("no half-range -> nothing hidden",

@@ -27,6 +27,10 @@
  *   (L-267 Stage C: renderShellSet stamps each shell's info link onto
  *   its traces in `meta`, so the page's i panel can read it off the
  *   trace instead of rebuilding the label to look it up).
+ * Module updated: September 10, 2026 with Anthropic's Claude Opus 5
+ *   (L-317: the info marker's outline is SERVED per shell -- the orrery's
+ *   two-standards rule, white on saturated warm fills and red elsewhere --
+ *   instead of always red).
  */
 
 (function (global) {
@@ -371,14 +375,27 @@
    * cross marker carries the whole hover string, so a shell of several
    * thousand points routes one tooltip rather than several thousand.
    * Canonical style: size 8, cross, red border, opacity 1.
+   *
+   * The border follows the orrery's two-standards rule (Tony's Mode 5,
+   * 2026-05-28/29; HANDOFF_shell_consolidation_stage_3_v15.md in the
+   * orrery): red by default, WHITE on saturated warm fills -- the oranges,
+   * the pink-reds, the dense reds -- where a red outline is lost against
+   * the dots. The pale peach and golden ends of that ramp stay red. It is
+   * judged per shell by eye, not by a colour threshold, so it is SERVED:
+   * a row's info_border (info_borders[i] for a belt pair), mirroring the
+   * orrery's shell_configs.py. The fill stays the shell's colour. (L-317)
    */
-  function infoMarker(x, y, z, color, text, legendgroup) {
+  function servedBorder(b) {
+    return (typeof b === "string" && b) ? b : "red";
+  }
+
+  function infoMarker(x, y, z, color, text, legendgroup, border) {
     return {
       type: "scatter3d", mode: "markers",
       x: [x], y: [y], z: [z],
       marker: {
         size: 8, color: color, opacity: 1.0, symbol: "cross",
-        line: { color: "red", width: 2 }
+        line: { color: servedBorder(border), width: 2 }
       },
       name: "", legendgroup: legendgroup,
       text: [text], customdata: [legendgroup],
@@ -533,7 +550,9 @@
         hover += "<br>" + wrapHover(notes[i]);
       }
       var beltMarker = infoMarker(built.x[0], built.y[0], built.z[0],
-                                  color, hover, label);
+                                  color, hover, label,
+                                  Array.isArray(params.info_borders)
+                                    ? params.info_borders[i] : undefined);
       if (beltBeyond) beltMarker.visible = "legendonly";
       // L-291 step 3: the belt's link and source ride in meta for the
       // i-panel, as every shell's do. Before this the panel read "No link
@@ -590,7 +609,7 @@
         kmAndAu((cfg.radius_fraction - 1.0) * radiusKm);
       traces.push(infoMarker(center[0], center[1],
                              center[2] + shellAu * 1.05,
-                             color, hover, label));
+                             color, hover, label, cfg.info_border));
     }
     return traces;
   }
@@ -764,7 +783,8 @@
     if (cfg.note) hover += "<br><br>" + wrapHover(cfg.note);
     traces.push(infoMarker(center[0] + m[0], center[1] + m[1],
                            center[2] + m[2],
-                           cfg.color || "rgb(255, 200, 80)", hover, label));
+                           cfg.color || "rgb(255, 200, 80)", hover, label,
+                           cfg.info_border));
     return traces;
   }
 
@@ -940,7 +960,8 @@
       cloudTrace(pts.x, pts.y, pts.z, center, label, color,
                  d.opacity, d.marker_size),
       infoMarker(center[0] + marker[0], center[1] + marker[1],
-                 center[2] + marker[2], color, hover, label)
+                 center[2] + marker[2], color, hover, label,
+                 cfg.info_border)
     ];
   }
 
@@ -1028,7 +1049,8 @@
     if (cfg.note) hover += "<br>" + wrapHover(cfg.note);
     // Info marker on the ring itself, at the ascending node (index 0):
     // the equatorial plane is clear of the shells' polar markers.
-    var marker = infoMarker(built.x[0], built.y[0], built.z[0], color, hover, label);
+    var marker = infoMarker(built.x[0], built.y[0], built.z[0], color, hover, label,
+                            cfg.info_border);
     if (beyondFrame) marker.visible = "legendonly";
     return stampLink([built.trace, marker], cfg);
   }
@@ -1150,7 +1172,7 @@
       hover += "= " + kmAndAu(radiusAu * KM_PER_AU);
       if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + cfg.source);
       if (cfg.note) hover += "<br>" + wrapHover(cfg.note);
-      var marker = infoMarker(mx, my, mz, color, hover, label);
+      var marker = infoMarker(mx, my, mz, color, hover, label, cfg.info_border);
       if (beyondFrame) {
         // Without this the marker is drawn while its shell is not:
         // one stray hoverable point at the shell radius, with
