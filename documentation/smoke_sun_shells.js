@@ -52,6 +52,16 @@ const sep = Math.hypot(mp.x[0]-mc.x[0], mp.y[0]-mc.y[0], mp.z[0]-mc.z[0]);
 check("photosphere/chromosphere markers separated",
       sep > 0.2 * RSUN_KM/AU, "sep " + (sep*AU).toFixed(0) + " km");
 
+// L-320 (September 10, 2026, Claude Opus 5): no info marker sits on the z
+// axis through the Sun. Every marker placed from the pole starts
+// GF.infoMarkerOffsetDeg off it; this fails if any placement goes back to
+// the pole.
+const offAxis = info.map(t => [Math.atan2(Math.hypot(t.x[0], t.y[0]), t.z[0]) * 180 / Math.PI, t.legendgroup])
+  .sort((a, b) => a[0] - b[0]);
+check("no Sun info marker within 4 degrees of the z axis",
+      typeof GF.infoMarkerOffsetDeg === "number" && offAxis[0][0] >= 4,
+      "closest: " + offAxis[0][1] + " at " + offAxis[0][0].toFixed(1) + " deg");
+
 // L-317 (September 10, 2026, Claude Opus 5): the orrery's two-standards
 // outline, served per shell. The Roche limit is the Sun's only saturated
 // warm shell; every other marker keeps the red outline. Read from the live

@@ -44,6 +44,9 @@
  * the legendgroup, so the drawer gets one row per thing.
  *
  * Added September 2026 with Anthropic's Claude Opus 5 (L-291 step 3).
+ * Updated September 10, 2026 with Anthropic's Claude Opus 5 (L-320: the
+ * terminator's info marker steps along its circle, off the z axis, by
+ * GalleryFeatures.infoMarkerOffsetDeg).
  */
 (function (global) {
   "use strict";
@@ -302,7 +305,18 @@
       // (Tony, Mode 5 2026-09-09: the subsolar marker read as detached).
       var topI = 0;
       for (var ti = 1; ti < term.z.length; ti++) { if (term.z[ti] > term.z[topI]) topI = ti; }
-      var onCircle = [term.x[topI], term.y[topI], term.z[topI]];
+      // L-320 (Tony, 2026-09-10): the highest point sits on the z axis
+      // whenever the Sun lies near the ecliptic, where the axis line runs
+      // through it. Step along the drawn circle by the renderer's marker
+      // offset, to the nearest drawn point, so it leaves the axis and stays
+      // ON the line. Missing offset means the load order broke; say so.
+      var offDeg = global.GalleryFeatures && global.GalleryFeatures.infoMarkerOffsetDeg;
+      if (typeof offDeg !== "number") {
+        throw new Error("earth_geometry.js: GalleryFeatures.infoMarkerOffsetDeg is missing");
+      }
+      var stepPts = Math.round(offDeg / (360 / (CIRCLE_POINTS - 1)));
+      var markI = (topI + stepPts) % (CIRCLE_POINTS - 1);
+      var onCircle = [term.x[markI], term.y[markI], term.z[markI]];
       var hTerm = "<b>" + gTerm + "</b><br><br>" +
         "The white circle is where the Sun is on the horizon: the sunlit half<br>" +
         "of Earth faces the Sun line, the night half faces away. The yellow<br>" +

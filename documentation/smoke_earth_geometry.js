@@ -13,6 +13,8 @@
 // served rows, not typed twice. Added September 2026 (L-291 step 3).
 // Updated September 10, 2026 with Anthropic's Claude Opus 5 (L-317: the
 // orrery's two-standards outline, checked against the live config).
+// Updated September 10, 2026 with Anthropic's Claude Opus 5 (L-320: no
+// info marker on the z axis).
 
 const fs = require("fs");
 const path = require("path");
@@ -194,6 +196,16 @@ check("two-standards outlines: white on Earth's saturated warm shells, red on th
       liveMarkers.filter(t => t.name !== "Moon osculating orbit info")
         .every(t => t.marker.line && (t.marker.line.color === "white" || t.marker.line.color === "red")),
       "white: " + (whiteEarth.join(", ") || "none"));
+// L-320: no info marker sits on the z axis through Earth's centre, where
+// the room's axis line runs. Shell markers start GF.infoMarkerOffsetDeg
+// off the pole and the terminator's steps along its circle; this fails if
+// either goes back.
+const earthMarkers = T.filter(t => t.showlegend === false && t.marker && t.marker.symbol === "cross");
+const offAxisE = earthMarkers.map(t => [Math.atan2(Math.hypot(t.x[0], t.y[0]), t.z[0]) * 180 / Math.PI,
+                                        t.legendgroup || t.name]).sort((a, b) => a[0] - b[0]);
+check("no Earth info marker within 4 degrees of the z axis",
+      typeof GF.infoMarkerOffsetDeg === "number" && offAxisE.length > 0 && offAxisE[0][0] >= 4,
+      "closest: " + offAxisE[0][1] + " at " + offAxisE[0][0].toFixed(1) + " deg");
 check("every hover with km also gives AU",
       markers.every(t => !/\bkm\b/.test(t.text[0]) || /AU/.test(t.text[0])));
 check("no hover line exceeds 90 characters",

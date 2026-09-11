@@ -31,6 +31,10 @@
  *   (L-317: the info marker's outline is SERVED per shell -- the orrery's
  *   two-standards rule, white on saturated warm fills and red elsewhere --
  *   instead of always red).
+ * Module updated: September 10, 2026 with Anthropic's Claude Opus 5
+ *   (L-320: every info marker placed from the pole starts 5 degrees off
+ *   it, so none sits on the axis a room draws; exported as
+ *   infoMarkerOffsetDeg for earth_geometry.js).
  */
 
 (function (global) {
@@ -385,6 +389,16 @@
    * a row's info_border (info_borders[i] for a belt pair), mirroring the
    * orrery's shell_configs.py. The fill stays the shell's colour. (L-317)
    */
+  /*
+   * How far an info marker placed from a body's pole starts off it
+   * (L-320, Tony's ruling of 2026-09-10: "Keep gallery's steps, shift all
+   * 5 degrees"). A marker ON the pole sits on the z axis, where the room's
+   * axis line runs through it and it reads poorly; the shell-set steps of
+   * 20 degrees now start here instead of at zero. MODE-5 KNOB. Exported so
+   * earth_geometry.js steps the terminator's marker by the same amount.
+   */
+  var INFO_MARKER_OFFSET_DEG = 5;
+
   function servedBorder(b) {
     return (typeof b === "string" && b) ? b : "red";
   }
@@ -600,15 +614,18 @@
       var built = geometryTrace(pts, center, null, label, color, opacity, size);
       traces.push(built.trace);
 
-      // Single info marker at the north pole, 5% above the shell radius.
+      // Single info marker 5% above the shell radius, INFO_MARKER_OFFSET_DEG
+      // off the north pole (L-320).
       var hover = label + "<br><br>" +
         "Radius: " + cfg.radius_fraction.toFixed(2) + " " + bodyName +
         " radii<br>" +
         "= " + kmAndAu(cfg.radius_fraction * radiusKm) + "<br>" +
         "Altitude above surface: " +
         kmAndAu((cfg.radius_fraction - 1.0) * radiusKm);
-      traces.push(infoMarker(center[0], center[1],
-                             center[2] + shellAu * 1.05,
+      var offPole = (Math.PI / 180) * INFO_MARKER_OFFSET_DEG;
+      traces.push(infoMarker(center[0] + shellAu * 1.05 * Math.sin(offPole),
+                             center[1],
+                             center[2] + shellAu * 1.05 * Math.cos(offPole),
                              color, hover, label, cfg.info_border));
     }
     return traces;
@@ -1153,8 +1170,9 @@
       // at that shell's own radius. Separating angularly rather than
       // radially is the only thing that works when two shells are a
       // fraction of a percent apart, as the photosphere and chromosphere
-      // are (orrery-coding-conventions 1.5).
-      var polar = (Math.PI / 180) * 20 * drawn;
+      // are (orrery-coding-conventions 1.5). The steps start
+      // INFO_MARKER_OFFSET_DEG off the pole rather than on it (L-320).
+      var polar = (Math.PI / 180) * (INFO_MARKER_OFFSET_DEG + 20 * drawn);
       var mx = center[0] + radiusAu * 1.05 * Math.sin(polar);
       var my = center[1];
       var mz = center[2] + radiusAu * 1.05 * Math.cos(polar);
@@ -1269,6 +1287,8 @@
 
   global.GalleryFeatures = {
     buildFeatureTraces: buildFeatureTraces,
+    // L-320: the marker offset off the pole, shared with earth_geometry.js.
+    infoMarkerOffsetDeg: INFO_MARKER_OFFSET_DEG,
     // Exported for the smoke test; not part of the drawing interface.
     _poleBasis: poleBasis,
     _KM_PER_AU: KM_PER_AU
