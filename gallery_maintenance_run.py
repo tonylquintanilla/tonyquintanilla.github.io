@@ -439,6 +439,27 @@ BARE_NUMBER = re.compile(r"^-?[0-9.]+$")
 # 9c056d1a the served config had 53 pointers, 48 MATCH and 0 NO UNIT, so
 # nothing that passed then changes.
 #
+# TRANSITIONAL, and L-322 retires this. The six entries below for
+# non-length units are a STOPGAP. L-322 rules that a unit is a field
+# DECLARED in the orrery's store -- a `# Unit:` line beside the value --
+# and that this suffix reader is then retired rather than kept as a
+# fallback, because two declarations of one fact can disagree. It is
+# still here only because the store has no `# Unit:` lines yet:
+# measured, dropping the reader before they exist puts 46 of 48 checks
+# dark while the run stays green, which is why the order is units
+# first.
+#
+# DO NOT NAME A CONSTANT TO SATISFY THIS TABLE. "_DIMENSIONLESS" as a
+# suffix especially invites renaming a constant to turn it green. Under
+# L-322 dimensionless is a declared KEY in a `# Unit:` line, never a
+# name. L-305's fifteen new constants get `# Unit:` lines; until the
+# export lands, twelve of them report NO UNIT, and that is recorded as
+# one class row on L-322, not fixed by renaming.
+#
+# What SURVIVES L-322 is below this table, not in it: the scalar-unit
+# comparison rule and the UNIT MISMATCH verdict are about how two
+# values compare, not about reading a name, and the design keeps both.
+#
 # LONGEST SUFFIX FIRST. "_PER_NT" also ends in "_NT", so a shorter-first
 # scan would read a per-nanotesla coefficient as a field strength -- a
 # FALSE MATCH, the one outcome the paragraph above promises this
@@ -463,8 +484,10 @@ UNIT_BY_SUFFIX = tuple(sorted(UNIT_BY_SUFFIX, key=lambda pair: -len(pair[0])))
 # conversion. Keeping them out of the AU table is also what stops a
 # speed in km_s from being read as a distance in km.
 #
-# Dimensionless is a DECLARED unit here, spelled in the name, not the
-# absence of one. A constant that simply carries no suffix still reports
+# Dimensionless is a DECLARED unit here. Spelled in the name only
+# because the store has nowhere else to put it yet; under L-322 it is
+# spelled in the value's own `# Unit:` line. Either way it is a
+# declaration, not the absence of one. A constant that simply carries no suffix still reports
 # NO UNIT, which keeps the promise above intact: the reader is told,
 # never guessed at.
 SCALAR_UNITS = frozenset(
