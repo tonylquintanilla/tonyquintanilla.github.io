@@ -429,7 +429,46 @@ BARE_NUMBER = re.compile(r"^-?[0-9.]+$")
 # convention can only cost coverage, never produce a false match. A
 # declared unit beside the value would remove even that, and belongs
 # with the status line (L-256, L-240).
-UNIT_BY_SUFFIX = (("_RADII", "r_sun"), ("_AU", "au"), ("_KM", "km"))
+#
+# L-305 (2026-09-11): the magnetosphere serves quantities that are not
+# lengths -- Shue's eight coefficients, Jelinek's eps and lambda, the
+# bow shock cut angle, and the declared solar wind conditions. Measured
+# before this change, twelve of those fifteen pointers reported NO UNIT
+# and went unexamined while the run stayed green, so L-305's own "MATCH
+# by name for every new pointer" was not reachable. Measured at gallery
+# 9c056d1a the served config had 53 pointers, 48 MATCH and 0 NO UNIT, so
+# nothing that passed then changes.
+#
+# LONGEST SUFFIX FIRST. "_PER_NT" also ends in "_NT", so a shorter-first
+# scan would read a per-nanotesla coefficient as a field strength -- a
+# FALSE MATCH, the one outcome the paragraph above promises this
+# convention cannot produce. The sort enforces the order rather than
+# trusting the order the tuple happens to be written in.
+UNIT_BY_SUFFIX = (
+    ("_RADII", "r_sun"),
+    ("_AU", "au"),
+    ("_KM", "km"),
+    ("_PER_NT", "per_nt"),
+    ("_NT", "nt"),
+    ("_NPA", "npa"),
+    ("_DEG", "deg"),
+    ("_KM_S", "km_s"),
+    ("_DIMENSIONLESS", "dimensionless"),
+)
+UNIT_BY_SUFFIX = tuple(sorted(UNIT_BY_SUFFIX, key=lambda pair: -len(pair[0])))
+
+# Units with no factor to AU, and none is wanted: a nanotesla does not
+# convert to a length. A scalar is compared EXACTLY and only against
+# ITSELF; a scalar meeting a different unit is a finding, never a
+# conversion. Keeping them out of the AU table is also what stops a
+# speed in km_s from being read as a distance in km.
+#
+# Dimensionless is a DECLARED unit here, spelled in the name, not the
+# absence of one. A constant that simply carries no suffix still reports
+# NO UNIT, which keeps the promise above intact: the reader is told,
+# never guessed at.
+SCALAR_UNITS = frozenset(
+    ("per_nt", "nt", "npa", "deg", "km_s", "dimensionless"))
 
 
 def unit_of_constant(name):
@@ -604,6 +643,20 @@ def judge(name, expression, orrery_value, value, unit, to_au):
     orrery_unit = unit_of_constant(name)
     if orrery_unit is None:
         return "NO UNIT", "the constant's name declares no unit"
+    # A scalar unit converts to nothing, so it is compared against
+    # itself or it is a finding. Crossing units is reported rather than
+    # converted, which is what keeps a speed in km_s from passing as a
+    # distance in km (L-305).
+    if orrery_unit in SCALAR_UNITS or unit in SCALAR_UNITS:
+        if orrery_unit != unit:
+            return "UNIT MISMATCH", ("the name declares %s, the config "
+                                     "says %r" % (orrery_unit, unit))
+        if orrery_value == value:
+            return "MATCH", ""
+        return "DRIFT", ("orrery %.12g, config %.12g -- %s"
+                         % (orrery_value, value,
+                            _depth_note(orrery_value, value)))
+
     if unit not in to_au:
         return "NO UNIT", "config unit %r has no factor in the store" % unit
 
@@ -674,8 +727,8 @@ def check_store_drift(root):
         config = json.loads(handle.read().decode("utf-8"))
 
     pointers = collect_pointers(config)
-    tally = {"MATCH": 0, "DRIFT": 0, "NO UNIT": 0, "NO VALUE": 0,
-             "NOT IN STORE": 0}
+    tally = {"MATCH": 0, "DRIFT": 0, "UNIT MISMATCH": 0, "NO UNIT": 0,
+             "NO VALUE": 0, "NOT IN STORE": 0}
     notable = []
 
     for path, entry in pointers:
@@ -698,18 +751,23 @@ def check_store_drift(root):
         print("                  %s" % path)
 
     unexamined = tally["NO UNIT"] + tally["NO VALUE"] + tally["NOT IN STORE"]
-    print("  %d pointers: %d match, %d DRIFT, %d could not be examined."
-          % (len(pointers), tally["MATCH"], tally["DRIFT"], unexamined))
+    # A unit mismatch is a wrong answer, not an unexamined one, so it is
+    # counted with DRIFT and is red (L-305).
+    wrong = tally["DRIFT"] + tally["UNIT MISMATCH"]
+    print("  %d pointers: %d match, %d DRIFT, %d UNIT MISMATCH, %d could "
+          "not be examined."
+          % (len(pointers), tally["MATCH"], tally["DRIFT"],
+             tally["UNIT MISMATCH"], unexamined))
 
     # Report-only, so this state never gates. It still says FAIL when a
     # value has drifted, because the summary prints report-only rows with
     # their state and a drift should be red on the page even though the
     # run stays green.
-    return ("FAIL" if tally["DRIFT"] else "PASS",
-            "%d pointers against orrery %s -- %d match, %d DRIFT, %d could "
-            "not be examined."
+    return ("FAIL" if wrong else "PASS",
+            "%d pointers against orrery %s -- %d match, %d DRIFT, "
+            "%d UNIT MISMATCH, %d could not be examined."
             % (len(pointers), sha[:8], tally["MATCH"], tally["DRIFT"],
-               unexamined))
+               tally["UNIT MISMATCH"], unexamined))
 
 
 LIVE_CHECKERS = [
