@@ -10,18 +10,20 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 28  
-**Total Lines of Code (non-blank):** 15,124  
-**Total Public Functions/Classes:** 175
+**Total Python Files:** 29  
+**Total Lines of Code (non-blank):** 15,394  
+**Total Public Functions/Classes:** 177
 
 ## Classification Coverage
 
-**Undetermined role (1).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (2).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
+- `patch_L305_item6a_gallery_config_claims.py`
 - `sweep_collapsed_features.py`
 
-**Undetermined domain (1).** No valid `Domain:` tag.
+**Undetermined domain (2).** No valid `Domain:` tag.
 
+- `patch_L305_item6a_gallery_config_claims.py`
 - `sweep_collapsed_features.py`
 
 
@@ -107,6 +109,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
+| `patch_L305_item6a_gallery_config_claims.py` | *** RUN THIS ONE FROM THE GALLERY REPO *** C:\Users\tonyq\OneDrive\Desktop\python_work\tonyquintanilla.github.io (270 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 
 ---
