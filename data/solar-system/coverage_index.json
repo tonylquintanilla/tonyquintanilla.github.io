@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-09-14T16:41:33.109604+00:00",
+  "generated": "2026-09-15T01:34:39.312375+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2460974.653770603,
-    "end_jd": 2461621.7372736004
+    "start_jd": 2460975.0239861,
+    "end_jd": 2461622.1074794633
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -420,19 +420,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461297.5,
-        "a_au": 1.00075714056233,
-        "e": 0.01658121693166131,
-        "i_deg": 0.002207700876621185,
-        "node_deg": 179.849945254303,
-        "peri_deg": 280.5928686877443,
-        "M0_deg": 252.1957181912402,
-        "n_deg_per_day": 0.984490840194097,
+        "epoch_jd": 2461298.5,
+        "a_au": 1.000638428552806,
+        "e": 0.01668608417721438,
+        "i_deg": 0.002638173506819229,
+        "node_deg": 178.4527114338737,
+        "peri_deg": 282.3068936901802,
+        "M0_deg": 252.8715680445466,
+        "n_deg_per_day": 0.9846660398699372,
         "source": {
           "query_target": "399",
           "center": "@sun",
-          "epoch": 2461297.5,
-          "retrieved": "2026-09-14T16:41:23.502626+00:00"
+          "epoch": 2461298.5,
+          "retrieved": "2026-09-15T01:34:26.654778+00:00"
         }
       },
       "positions": null,
@@ -672,7 +672,14 @@
             "note": "Quiet-time nominal, at the same declared solar wind pressure as the magnetopause. An earlier note here cited Farris & Russell (1994) for the model FORM; that was a miscitation -- it is a relation for the standoff at a given Mach number and takes obstacle shape as an input, not a shape model. Removed 2026-09-12 (L-305)."
           },
           "magnetotail": {
-            "_declared": "Drawing parameters, not measurements: the orrery's tail is drawn to 100 Earth radii with a 15-radius base and 25-radius end. This line also asserted an observed extent for the real tail. That claim is retired (2026-09-12, L-305): it rested on Ness, Scearce and Cantarano (1967), doi:10.1029/JZ072i015p03769, which reports ONE Pioneer 7 crossing, with 'probable' in the title and no coherent tail with a neutral sheet at that distance -- a signature, not an extent. No figure is restated here on purpose: the observed extent has no store row yet, and a number served from prose is how the belt spans drifted in the first place. L-323 settled its form, a lower bound read 'observed to at least', and L-305 item 7 stores it. This field serves it once it has a row.",
+            "_declared": "Drawing parameters, not measurements: the orrery's tail is drawn to 100 Earth radii with a 15-radius base and 25-radius end. This line asserted an observed extent for the real tail until 2026-09-12, when that claim was retired for resting on a single Pioneer 7 crossing. The observed extent now has a store row and is served beside these, as observed_extent. The two are different claims and neither is the other: 100 is a picture, 220 is a measurement.",
+            "observed_extent": {
+              "value": 220.0,
+              "unit": "R_earth",
+              "source": "Slavin, Tsurutani, Smith, Jones and Sibeck (1983), 'Average configuration of the distant (less than 220-earth-radii) magnetotail - Initial ISEE-3 magnetic field results', Geophys. Res. Lett. 10(10):973, doi:10.1029/GL010i010p00973 -- the abstract states that the magnetotail retains much of its near-Earth structure out to X = -220 Earth radii, that flaring ceases at 100-120 R_E, and that the tail diameter settles near 60 R_E. Abstract open at ntrs.nasa.gov/citations/19830066648.",
+              "orrery_constant": "constants_new.py::EARTH_MAGNETOTAIL_OBSERVED_RADII",
+              "note": "Read as OBSERVED TO AT LEAST, not as an edge. 220 R_E is ISEE-3's reach on its first two tail passes, so the figure is bounded by the orbit rather than by where the tail ends. Two further signatures are more distant and less like a tail: Ness, Scearce and Cantarano (1967), doi:10.1029/JZ072i015p03769, report Pioneer 7 in the expected tail region at 900 to 1,050 R_E over a week in 1966, intermittently and with no coherent tail, the title saying 'probable'; and Intriligator et al. (1979), Geophys. Res. Lett. 6:585, report tail-ASSOCIATED phenomena near 3,100 R_E, read by later work as signatures disconnected from Earth."
+            },
             "length_radii": 100.0,
             "base_radii": 15.0,
             "end_radii": 25.0,
@@ -687,19 +694,48 @@
           }
         },
         "van_allen_belts": {
+          "_frame": "The edge rows below are geocentric distances in the geomagnetic equatorial plane, which is the frame their sources state. Tony's ruling, 2026-09-14 (L-323 ruling B, second amendment). The literature is mixed -- Y. X. Li et al. (2023) states the outer span in L shells and Baker et al. (2018) states it both ways -- so each row names the paper its figure follows and the frame travels with the row rather than with the block.",
           "inner_belt_distance": {
             "value": 1.5,
             "unit": "R_earth",
-            "source": "Baker et al. (2018), Space Sci. Rev. 214:17, doi:10.1007/s11214-017-0452-7 -- inner-zone proton fluxes peak near r ~ 1.5 R_E",
+            "source": "Baker et al. (2018), Space Sci. Rev. 214:17, doi:10.1007/s11214-017-0452-7 -- sec. 2, inner-zone proton fluxes peak near geocentric r ~ 1.5 R_E",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_RADII",
-            "note": "A flux PEAK, not an edge; the inner belt spans roughly L = 1.1 to 2."
+            "note": "A flux PEAK, not an edge. The edges are their own rows below, as of 2026-09-14 (L-305 item 7); this note carried the span in prose until then, which is what let the served figure and the orrery's disagree."
+          },
+          "inner_belt_inner_edge": {
+            "value": 1.1,
+            "unit": "R_earth",
+            "source": "Meredith, Horne, Kersten, Fraser and Grew (2014), J. Geophys. Res. Space Physics 119:5328, doi:10.1002/2014JA020064 -- introduction, first paragraph: the inner belt extends from about 1.1 to 2 Earth radii in the geomagnetic equatorial plane. Open full text at nora.nerc.ac.uk. Meredith states this as background and passes it on from Baker et al. (2007), which is the layer below rather than the source.",
+            "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_BELT_INNER_EDGE",
+            "note": "Koskinen and Kilpua (2022) sec. 1.1 corroborate 1.1 to 2 R_E but are NOT the source, because they state it for the inner ELECTRON belt and put the energetic protons over about 1.1 to 3 R_E. The figure matched and the scope did not."
+          },
+          "inner_belt_outer_edge": {
+            "value": 2.0,
+            "unit": "R_earth",
+            "source": "Meredith et al. (2014), doi:10.1002/2014JA020064 -- introduction, first paragraph, the outer end of the same stated span.",
+            "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_BELT_OUTER_EDGE",
+            "note": "Two rows rather than one span, because provenance is per number and the two edges do not move together."
           },
           "outer_belt_distance": {
             "value": 4.5,
-            "unit": "R_earth",
-            "source": "J. Geophys. Res. Space Physics (2025), doi:10.1029/2024JA033504 -- the outer belt is most intense around L = 4 and 5; Kellerman et al. (2014) as cited in arXiv:1809.00902 -- maximum electron flux at L = 4-5. Drawn at the midpoint.",
+            "unit": "l_shell",
+            "source": "Li et al. (2025), J. Geophys. Res. Space Physics, doi:10.1029/2024JA033504 -- sec. 1, the outer belt is most intense around L = 4 and 5; the value served is our midpoint of that band. Kellerman et al. (2014), as reported in arXiv:1809.00902 -- maximum electron flux at L = 4-5; the arXiv paper is the document opened and Kellerman is the layer below it.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_RADII",
-            "note": "A flux PEAK, not an edge; the outer belt spans roughly L = 3 to 7 and moves with geomagnetic activity."
+            "note": "A flux PEAK, not an edge. The unit is L, the McIlwain parameter, which equals geocentric distance in Earth radii only where a field line crosses the magnetic equator -- so any string printing this value says 'at the equator'. Baker et al. (2018) was removed from this citation on 2026-09-14: his figure 30 uses L* = 4.5 as a selected analysis location rather than a universal peak, and his span figure belongs on the edge row below."
+          },
+          "outer_belt_inner_edge": {
+            "value": 3.0,
+            "unit": "R_earth",
+            "source": "Meredith et al. (2014), doi:10.1002/2014JA020064, and Li, Tu, Selesnick and Huang (2024), J. Geophys. Res. Space Physics 129:e2023JA032171, doi:10.1029/2023JA032171 -- both state the outer belt extending from 3 Earth radii, in their introductions. Open full text at nora.nerc.ac.uk and par.nsf.gov.",
+            "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BELT_INNER_EDGE",
+            "note": "The layer below is Paulikas and Blake (1979) with Baker et al. (1986) for Meredith, and Ganushkina et al. (2011) with Van Allen et al. (1958) for Li. Baker et al. (2018) sec. 2 gives the same inner edge from SAMPEX and reports it reaching L ~ 2.5 under strong driving."
+          },
+          "outer_belt_outer_edge": {
+            "value": 7.0,
+            "unit": "R_earth",
+            "source": "Meredith et al. (2014), doi:10.1002/2014JA020064, and Li, Tu et al. (2024), doi:10.1029/2023JA032171 -- both state the outer belt extending to 7 Earth radii, in their introductions.",
+            "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BELT_OUTER_EDGE",
+            "note": "The measuring review disagrees on the outside and the disagreement is recorded rather than resolved by silence: Baker et al. (2018) sec. 2 and 3.4 puts the outer zone at r ~ 3 to >= 6.5 R_E from SAMPEX and, in L, at about 3.0 to 6.5. Koskinen and Kilpua (2022) sec. 1.1 put the outer reach at 7 to 10 R_E, which is why an outer figure near 10 R_E is not the physical impossibility one checker called it -- the belt's outer edge approaches the magnetopause, and magnetopause shadowing is a standard loss mechanism."
           },
           "belt_thickness": 0.5,
           "n_rings": 5,
@@ -769,35 +805,35 @@
       },
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": 148588611.58572665,
-        "y": -23954785.598158777,
-        "z": 908.0198038276285
+        "t": 2461298.500694444,
+        "x": 148934428.4804925,
+        "y": -21419234.283264354,
+        "z": 800.7145814253017
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461297.5,
+        "element_epoch_jd": 2461298.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.004506647373472105
+            "error_deg": 0.002437137148337097
           },
           {
             "offset_days": 30.0,
-            "error_deg": 0.010672528523766763
+            "error_deg": 0.010302601160016701
           }
         ],
-        "error_rate_deg_per_day": 0.00035575095079222544,
+        "error_rate_deg_per_day": 0.0003434200386672234,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 365.6712539133673,
-        "cap_applied": 365.6712539133673,
+        "window_days": 365.60619075229994,
+        "cap_applied": 365.60619075229994,
         "window": {
-          "start_jd": 2460931.8287460865,
-          "end_jd": 2461663.1712539135
+          "start_jd": 2460932.8938092478,
+          "end_jd": 2461664.1061907522
         }
       }
     },
@@ -812,19 +848,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461297.5,
-        "a_au": 5.203279211776898,
-        "e": 0.04834518338417278,
-        "i_deg": 1.303463827331378,
-        "node_deg": 100.5147306645351,
-        "peri_deg": 273.7775456729474,
-        "M0_deg": 110.4073535581072,
-        "n_deg_per_day": 0.08307982363098858,
+        "epoch_jd": 2461298.5,
+        "a_au": 5.202869678657555,
+        "e": 0.04819621220011872,
+        "i_deg": 1.303486418648433,
+        "node_deg": 100.5153001610097,
+        "peri_deg": 273.6093903785915,
+        "M0_deg": 110.6805071644438,
+        "n_deg_per_day": 0.08308963300858682,
         "source": {
           "query_target": "599",
           "center": "@sun",
-          "epoch": 2461297.5,
-          "retrieved": "2026-09-14T16:41:24.426339+00:00"
+          "epoch": 2461298.5,
+          "retrieved": "2026-09-15T01:34:28.032162+00:00"
         }
       },
       "positions": null,
@@ -886,35 +922,35 @@
       },
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": -507324892.5588122,
-        "y": 609521479.5640751,
-        "z": 8818758.303001434
+        "t": 2461298.500694444,
+        "x": -508206021.15855426,
+        "y": 608850735.530972,
+        "z": 8841252.581819773
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461297.5,
+        "element_epoch_jd": 2461298.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.00019323839171777438
+            "error_deg": 9.15926696718257e-05
           },
           {
             "offset_days": 30.0,
-            "error_deg": 0.00013390347120725743
+            "error_deg": 8.272334391923767e-05
           }
         ],
-        "error_rate_deg_per_day": 6.441279723925813e-06,
+        "error_rate_deg_per_day": 3.0530889890608566e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 4333.182044283022,
-        "cap_applied": 4333.182044283022,
+        "window_days": 4332.670478431361,
+        "cap_applied": 4332.670478431361,
         "window": {
-          "start_jd": 2456964.317955717,
-          "end_jd": 2465630.682044283
+          "start_jd": 2456965.8295215685,
+          "end_jd": 2465631.1704784315
         }
       }
     },
@@ -929,19 +965,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461297.5,
-        "a_au": 9.536154354617981,
-        "e": 0.05514892684024979,
-        "i_deg": 2.487104039248077,
-        "node_deg": 113.554021859612,
-        "peri_deg": 339.2501696672587,
-        "M0_deg": 283.6598215892451,
-        "n_deg_per_day": 0.03347389279357939,
+        "epoch_jd": 2461298.5,
+        "a_au": 9.536196402006818,
+        "e": 0.05509965642677687,
+        "i_deg": 2.487240444476122,
+        "node_deg": 113.5673100957753,
+        "peri_deg": 339.2197860499726,
+        "M0_deg": 283.7045539559382,
+        "n_deg_per_day": 0.03347367140212906,
         "source": {
           "query_target": "699",
           "center": "@sun",
-          "epoch": 2461297.5,
-          "retrieved": "2026-09-14T16:41:25.388680+00:00"
+          "epoch": 2461298.5,
+          "retrieved": "2026-09-15T01:34:29.496939+00:00"
         }
       },
       "positions": null,
@@ -995,35 +1031,35 @@
       },
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": 1388525145.8931408,
-        "y": 250381576.7853508,
-        "z": -59632264.24656941
+        "t": 2461298.500694444,
+        "x": 1388330511.736446,
+        "y": 251200674.8709398,
+        "z": -59638736.046835385
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461297.5,
+        "element_epoch_jd": 2461298.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.0001661964981977732
+            "error_deg": 0.00015423193372507508
           },
           {
             "offset_days": 30.0,
-            "error_deg": 0.00013111416279784117
+            "error_deg": 0.0001221617040020197
           }
         ],
-        "error_rate_deg_per_day": 5.539883273259106e-06,
+        "error_rate_deg_per_day": 5.141064457502502e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 10754.649966168603,
-        "cap_applied": 10754.649966168603,
+        "window_days": 10754.721096327143,
+        "cap_applied": 10754.721096327143,
         "window": {
-          "start_jd": 2450542.8500338313,
-          "end_jd": 2472052.1499661687
+          "start_jd": 2450543.778903673,
+          "end_jd": 2472053.221096327
         }
       }
     },
@@ -1038,19 +1074,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "earth",
-        "epoch_jd": 2461297.5,
-        "a_au": 0.002570928884743238,
-        "e": 0.05570195143359902,
-        "i_deg": 5.233259887051092,
-        "node_deg": 329.300981510153,
-        "peri_deg": 130.2621138571614,
-        "M0_deg": 100.3813560500323,
-        "n_deg_per_day": 13.18368057808702,
+        "epoch_jd": 2461298.5,
+        "a_au": 0.002561612156004797,
+        "e": 0.05800165706509682,
+        "i_deg": 5.23063187143243,
+        "node_deg": 329.2441668240219,
+        "peri_deg": 127.1577498189126,
+        "M0_deg": 116.6524524882529,
+        "n_deg_per_day": 13.25567062835514,
         "source": {
           "query_target": "301",
           "center": "@399",
-          "epoch": 2461297.5,
-          "retrieved": "2026-09-14T16:41:26.350460+00:00"
+          "epoch": 2461298.5,
+          "retrieved": "2026-09-15T01:34:31.001159+00:00"
         }
       },
       "positions": null,
@@ -1058,35 +1094,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": -349055.7732573897,
-        "y": -170489.48240546184,
-        "z": -29749.238382296116
+        "t": 2461298.500694444,
+        "x": -306381.03138845623,
+        "y": -245703.79672804568,
+        "z": -33672.887491584355
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461297.5,
-        "delta_days": 3.4133108530250507,
+        "element_epoch_jd": 2461298.5,
+        "delta_days": 3.394773547235001,
         "samples": [
           {
-            "offset_days": -3.4133108530250507,
-            "error_deg": 0.008480579969115
+            "offset_days": -3.394773547235001,
+            "error_deg": 0.05744492093515309
           },
           {
-            "offset_days": 3.4133108530250507,
-            "error_deg": 0.13186321802557593
+            "offset_days": 3.394773547235001,
+            "error_deg": 0.09188387274751594
           }
         ],
-        "error_rate_deg_per_day": 0.03863205658772977,
+        "error_rate_deg_per_day": 0.02706627451552819,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 3.4133108530250507,
-        "cap_applied": 3.4133108530250507,
+        "window_days": 3.394773547235001,
+        "cap_applied": 3.394773547235001,
         "window": {
-          "start_jd": 2461294.086689147,
-          "end_jd": 2461300.913310853
+          "start_jd": 2461295.105226453,
+          "end_jd": 2461301.894773547
         }
       }
     },
@@ -1101,19 +1137,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "jupiter",
-        "epoch_jd": 2461297.5,
-        "a_au": 0.002821036406232522,
-        "e": 0.003574069441297223,
-        "i_deg": 2.226093577439195,
-        "node_deg": 338.4224333906432,
-        "peri_deg": 54.70093358763439,
-        "M0_deg": 191.1237287627427,
-        "n_deg_per_day": 203.2406894618015,
+        "epoch_jd": 2461298.5,
+        "a_au": 0.002821187052317836,
+        "e": 0.00472862401713129,
+        "i_deg": 2.226161467802171,
+        "node_deg": 338.4221140173485,
+        "peri_deg": 59.65158980406337,
+        "M0_deg": 29.65440525229155,
+        "n_deg_per_day": 203.2244106729737,
         "source": {
           "query_target": "501",
           "center": "@599",
-          "epoch": 2461297.5,
-          "retrieved": "2026-09-14T16:41:27.371420+00:00"
+          "epoch": 2461298.5,
+          "retrieved": "2026-09-15T01:34:32.386405+00:00"
         }
       },
       "positions": null,
@@ -1121,35 +1157,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": -302944.67076204065,
-        "y": -295553.34529607947,
-        "z": -15014.482307981387
+        "t": 2461298.500694444,
+        "x": 156383.88094531954,
+        "y": 389796.6547002778,
+        "z": 16326.511460458456
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461297.5,
-        "delta_days": 0.22141235654712546,
+        "element_epoch_jd": 2461298.5,
+        "delta_days": 0.22143009223637736,
         "samples": [
           {
-            "offset_days": -0.22141235654712546,
-            "error_deg": 0.005523354622014974
+            "offset_days": -0.22143009223637736,
+            "error_deg": 0.005716144955628771
           },
           {
-            "offset_days": 0.22141235654712546,
-            "error_deg": 0.0056697650828251905
+            "offset_days": 0.22143009223637736,
+            "error_deg": 0.0053327061613047564
           }
         ],
-        "error_rate_deg_per_day": 0.025607265878218665,
+        "error_rate_deg_per_day": 0.025814670887309966,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 0.22141235654712546,
-        "cap_applied": 0.22141235654712546,
+        "window_days": 0.22143009223637736,
+        "cap_applied": 0.22143009223637736,
         "window": {
-          "start_jd": 2461297.2785876435,
-          "end_jd": 2461297.7214123565
+          "start_jd": 2461298.278569908,
+          "end_jd": 2461298.721430092
         }
       }
     },
@@ -1164,19 +1200,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "saturn",
-        "epoch_jd": 2461297.5,
-        "a_au": 0.008168274947254944,
-        "e": 0.02880931823798374,
-        "i_deg": 27.70594516768603,
-        "node_deg": 169.0805002621768,
-        "peri_deg": 178.412322018186,
-        "M0_deg": 11.54294864657618,
-        "n_deg_per_day": 22.57368464096023,
+        "epoch_jd": 2461298.5,
+        "a_au": 0.008168033191268034,
+        "e": 0.02877665320441349,
+        "i_deg": 27.70591897960067,
+        "node_deg": 169.0804764151609,
+        "peri_deg": 178.4247264204687,
+        "M0_deg": 34.10686396833163,
+        "n_deg_per_day": 22.57468684620264,
         "source": {
           "query_target": "606",
           "center": "@699",
-          "epoch": 2461297.5,
-          "retrieved": "2026-09-14T16:41:28.394197+00:00"
+          "epoch": 2461298.5,
+          "retrieved": "2026-09-15T01:34:33.677034+00:00"
         }
       },
       "positions": null,
@@ -1184,35 +1220,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": 1182727.327052667,
-        "y": -30171.33587833339,
-        "z": -102097.74723618386
+        "t": 2461298.500694444,
+        "x": 1079240.138198198,
+        "y": 400420.6124668908,
+        "z": -313831.6432286998
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461297.5,
-        "delta_days": 1.993471633706929,
+        "element_epoch_jd": 2461298.5,
+        "delta_days": 1.9933831333553846,
         "samples": [
           {
-            "offset_days": -1.993471633706929,
-            "error_deg": 0.0009433136758098751
+            "offset_days": -1.9933831333553846,
+            "error_deg": 0.0008537723648390221
           },
           {
-            "offset_days": 1.993471633706929,
-            "error_deg": 0.00016015295405271836
+            "offset_days": 1.9933831333553846,
+            "error_deg": 0.0006011904813926478
           }
         ],
-        "error_rate_deg_per_day": 0.0004732014541163803,
+        "error_rate_deg_per_day": 0.0004283031949818398,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 1.993471633706929,
-        "cap_applied": 1.993471633706929,
+        "window_days": 1.9933831333553846,
+        "cap_applied": 1.9933831333553846,
         "window": {
-          "start_jd": 2461295.5065283664,
-          "end_jd": 2461299.4934716336
+          "start_jd": 2461296.5066168667,
+          "end_jd": 2461300.4933831333
         }
       }
     },
@@ -1227,19 +1263,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "pluto_barycenter",
-        "epoch_jd": 2461297.5,
-        "a_au": 1.424844191812419e-05,
-        "e": 0.0002075441203431909,
-        "i_deg": 112.88777783393,
-        "node_deg": 227.3930727788614,
-        "peri_deg": 346.8173311293787,
-        "M0_deg": 110.0112220493967,
-        "n_deg_per_day": 56.36414189831431,
+        "epoch_jd": 2461298.5,
+        "a_au": 1.424911576617775e-05,
+        "e": 0.0001673401445118215,
+        "i_deg": 112.8877752592641,
+        "node_deg": 227.39307641033,
+        "peri_deg": 352.6674596807629,
+        "M0_deg": 160.525191637584,
+        "n_deg_per_day": 56.36014371145539,
         "source": {
           "query_target": "999",
           "center": "@9",
-          "epoch": 2461297.5,
-          "retrieved": "2026-09-14T16:41:29.352953+00:00"
+          "epoch": 2461298.5,
+          "retrieved": "2026-09-15T01:34:34.854029+00:00"
         }
       },
       "positions": null,
@@ -1247,35 +1283,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": -432.6852083129088,
-        "y": 745.417888832805,
-        "z": 1949.6745345934603
+        "t": 2461298.500694444,
+        "x": 1013.8731335054144,
+        "y": 1653.84195966719,
+        "z": 884.4095101969431
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461297.5,
-        "delta_days": 0.7983799359739001,
+        "element_epoch_jd": 2461298.5,
+        "delta_days": 0.7984365730219668,
         "samples": [
           {
-            "offset_days": -0.7983799359739001,
-            "error_deg": 0.000920239972167325
+            "offset_days": -0.7984365730219668,
+            "error_deg": 0.00010031475404655115
           },
           {
-            "offset_days": 0.7983799359739001,
-            "error_deg": 0.0005435054396160475
+            "offset_days": 0.7984365730219668,
+            "error_deg": 0.00012842472619995946
           }
         ],
-        "error_rate_deg_per_day": 0.0011526341415942205,
+        "error_rate_deg_per_day": 0.00016084524499408948,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 6.387039487791201,
-        "cap_applied": 6.387039487791201,
+        "window_days": 6.387492584175734,
+        "cap_applied": 6.387492584175734,
         "window": {
-          "start_jd": 2461291.1129605123,
-          "end_jd": 2461303.8870394877
+          "start_jd": 2461292.112507416,
+          "end_jd": 2461304.887492584
         }
       }
     },
@@ -1290,19 +1326,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "pluto_barycenter",
-        "epoch_jd": 2461297.5,
-        "a_au": 0.000116739207030535,
-        "e": 0.0001604739689412012,
-        "i_deg": 112.8877750475689,
-        "node_deg": 227.3930692411559,
-        "peri_deg": 167.6125936982175,
-        "M0_deg": 109.2180661264635,
-        "n_deg_per_day": 56.36421341768794,
+        "epoch_jd": 2461298.5,
+        "a_au": 0.0001167385142567123,
+        "e": 0.0001763694335620731,
+        "i_deg": 112.8877750687368,
+        "node_deg": 227.3930692585259,
+        "peri_deg": 170.6059569672578,
+        "M0_deg": 162.5870665974331,
+        "n_deg_per_day": 56.36471515068206,
         "source": {
           "query_target": "901",
           "center": "@9",
-          "epoch": 2461297.5,
-          "retrieved": "2026-09-14T16:41:30.362355+00:00"
+          "epoch": 2461298.5,
+          "retrieved": "2026-09-15T01:34:36.165522+00:00"
         }
       },
       "positions": null,
@@ -1310,35 +1346,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": 3545.5953975579882,
-        "y": -6106.574725161098,
-        "z": -15973.724843488653
+        "t": 2461298.500694444,
+        "x": -8306.43714340082,
+        "y": -13549.54820726975,
+        "z": -7245.757136937119
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461297.5,
-        "delta_days": 0.798378922926268,
+        "element_epoch_jd": 2461298.5,
+        "delta_days": 0.7983718161211263,
         "samples": [
           {
-            "offset_days": -0.798378922926268,
-            "error_deg": 3.525572530078905e-05
+            "offset_days": -0.7983718161211263,
+            "error_deg": 0.00016038980535973063
           },
           {
-            "offset_days": 0.798378922926268,
-            "error_deg": 0.00021746054605374892
+            "offset_days": 0.7983718161211263,
+            "error_deg": 0.00016333029397599768
           }
         ],
-        "error_rate_deg_per_day": 0.0002723776139488991,
+        "error_rate_deg_per_day": 0.0002045792332318727,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 0.798378922926268,
-        "cap_applied": 0.798378922926268,
+        "window_days": 0.7983718161211263,
+        "cap_applied": 0.7983718161211263,
         "window": {
-          "start_jd": 2461296.701621077,
-          "end_jd": 2461298.298378923
+          "start_jd": 2461297.701628184,
+          "end_jd": 2461299.298371816
         }
       }
     },
@@ -1353,19 +1389,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461297.5,
-        "a_au": 0.9223334023148255,
-        "e": 0.1911825937460597,
-        "i_deg": 3.341090065672572,
-        "node_deg": 203.8926297383765,
-        "peri_deg": 126.6840541953472,
-        "M0_deg": 283.25662551007,
-        "n_deg_per_day": 1.112684833819001,
+        "epoch_jd": 2461298.5,
+        "a_au": 0.9223333931593769,
+        "e": 0.1911826859958217,
+        "i_deg": 3.341090203744363,
+        "node_deg": 203.8926310239696,
+        "peri_deg": 126.6840626389318,
+        "M0_deg": 284.369311336817,
+        "n_deg_per_day": 1.11268485038643,
         "source": {
           "query_target": "99942",
           "center": "@sun",
-          "epoch": 2461297.5,
-          "retrieved": "2026-09-14T16:41:31.371967+00:00"
+          "epoch": 2461298.5,
+          "retrieved": "2026-09-15T01:34:37.547265+00:00"
         }
       },
       "positions": null,
@@ -1373,35 +1409,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": -84650703.5375621,
-        "y": -107545046.5353788,
-        "z": 3738810.1947064176
+        "t": 2461298.500694444,
+        "x": -82233209.59757078,
+        "y": -108753226.66969702,
+        "z": 3860460.1759057716
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461297.5,
+        "element_epoch_jd": 2461298.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 3.9948809456693e-05
+            "error_deg": 3.8578402964214957e-05
           },
           {
             "offset_days": 30.0,
-            "error_deg": 1.637358370702552e-05
+            "error_deg": 1.648034973389331e-05
           }
         ],
-        "error_rate_deg_per_day": 1.3316269818897668e-06,
+        "error_rate_deg_per_day": 1.2859467654738319e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 323.54175149884423,
-        "cap_applied": 323.54175149884423,
+        "window_days": 323.5417466814379,
+        "cap_applied": 323.5417466814379,
         "window": {
-          "start_jd": 2460973.958248501,
-          "end_jd": 2461621.041751499
+          "start_jd": 2460974.9582533184,
+          "end_jd": 2461622.0417466816
         }
       }
     },
@@ -1418,19 +1454,19 @@
       "positions": {
         "file": "positions/voyager_1.json",
         "start": "1977-09-06",
-        "end": "2026-09-14",
+        "end": "2026-09-15",
         "step_hours": 24.0,
-        "n_points": 168,
+        "n_points": 169,
         "size_kb": 13
       },
       "presets": null,
       "features": {},
       "orbit_type": null,
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": -4808479410.685747,
-        "y": -20448677100.094044,
-        "z": 14795035274.296501
+        "t": 2461298.500694444,
+        "x": -4808658265.17464,
+        "y": -20449853118.1196,
+        "z": 14795884769.299984
       },
       "event_link": null,
       "trust": {
@@ -1462,7 +1498,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460239.895222311,
-          "retrieved": "2026-09-14T16:41:32.582733+00:00"
+          "retrieved": "2026-09-15T01:34:38.734081+00:00"
         }
       },
       "positions": null,
@@ -1470,10 +1506,10 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": 337384069.49091935,
-        "y": 67249874.00497545,
-        "z": 41793603.47744927
+        "t": 2461298.500694444,
+        "x": 335831372.5009434,
+        "y": 67825201.82105331,
+        "z": 41760888.572821066
       },
       "event_link": null,
       "trust": {
@@ -1530,7 +1566,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-09-14T16:41:33.083326+00:00"
+          "retrieved": "2026-09-15T01:34:39.282734+00:00"
         }
       },
       "positions": null,
@@ -1538,10 +1574,10 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461297.500694444,
-        "x": -2896979646.9001675,
-        "y": 4108905706.6136446,
-        "z": -1474468719.3604157
+        "t": 2461298.500694444,
+        "x": -2896898043.802024,
+        "y": 4108924092.8510685,
+        "z": -1474449197.487133
       },
       "event_link": null,
       "trust": {
