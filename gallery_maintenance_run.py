@@ -490,8 +490,16 @@ UNIT_BY_SUFFIX = tuple(sorted(UNIT_BY_SUFFIX, key=lambda pair: -len(pair[0])))
 # declaration, not the absence of one. A constant that simply carries no suffix still reports
 # NO UNIT, which keeps the promise above intact: the reader is told,
 # never guessed at.
+# l_shell is a scalar here for the same reason a nanotesla is, and for
+# one more.  L is a shell LABEL, not a length: it equals a geocentric
+# radius only where that shell crosses the magnetic equator, and nowhere
+# else on the shell.  So it must never acquire a factor in the AU table.
+# Registered 2026-09-14 (L-305 item 7), which is also what makes
+# EARTH_VAN_ALLEN_OUTER_RADII report UNIT MISMATCH rather than sitting
+# quietly among the pointers that could not be examined: its name
+# declares r_earth and its served row declares l_shell.
 SCALAR_UNITS = frozenset(
-    ("per_nt", "nt", "npa", "deg", "km_s", "dimensionless"))
+    ("per_nt", "nt", "npa", "deg", "km_s", "dimensionless", "l_shell"))
 
 
 def unit_of_constant(name):

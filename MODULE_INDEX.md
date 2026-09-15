@@ -11,19 +11,19 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 29  
-**Total Lines of Code (non-blank):** 15,342  
-**Total Public Functions/Classes:** 178
+**Total Lines of Code (non-blank):** 15,222  
+**Total Public Functions/Classes:** 176
 
 ## Classification Coverage
 
 **Undetermined role (2).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `patch_L305_item7_belt_renderer.py`
+- `patch_L305_l_shell_scalar_unit.py`
 - `sweep_collapsed_features.py`
 
 **Undetermined domain (2).** No valid `Domain:` tag.
 
-- `patch_L305_item7_belt_renderer.py`
+- `patch_L305_l_shell_scalar_unit.py`
 - `sweep_collapsed_features.py`
 
 
@@ -93,7 +93,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,073 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (818 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (826 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (847 lines) |
@@ -109,7 +109,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `patch_L305_item7_belt_renderer.py` | Fixes the belts I broke, and takes the two Mode 5 notes that came with the report. (218 lines) |
+| `patch_L305_l_shell_scalar_unit.py` | Register l_shell as a SCALAR unit in the gallery maintenance checker. (90 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 
 ---
