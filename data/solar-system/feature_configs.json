@@ -576,8 +576,47 @@
       "earth_magnetosphere": {
         "_comment": "The orrery emits magnetopause, bow shock, inner belt and outer belt from ONE call. Served as four rows: the two standoffs here, the two belts in van_allen_belts. Renderer for the standoff shapes is step 3.",
         "magnetopause": {
-          "name": "Magnetopause (sunward standoff)",
+          "name": "Magnetopause",
           "shape": "magnetopause",
+          "surface": {
+            "_model": "Shue et al. (1998) eq. 10 with eq. 11. r = r0 [2 / (1 + cos theta)]^alpha, theta measured from the Sun-Earth line, r0 the standoff below. The geometry evaluates alpha = (a6 + a7 Bz)(1 + a8 ln Dp) from the rows here; alpha gets no row of its own because no text on the page prints it. At the declared conditions alpha is 0.59 -- two figures, because a6 is 0.58 +/- 0.01 and that carries straight through.",
+            "a6": {
+              "value": 0.58,
+              "unit": "dimensionless",
+              "source": "Shue et al. (1998), doi:10.1029/98JA01103 -- Table 1 (After Fit) row a6, p. 17,698: 0.58 +/- 0.01. The leading term of eq. 11.",
+              "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_A6"
+            },
+            "a7": {
+              "value": -0.007,
+              "unit": "per_nT",
+              "source": "Shue et al. (1998), doi:10.1029/98JA01103 -- Table 1 (After Fit) row a7, p. 17,698: -0.007 +/- 0.0005 per nT. Eq. 11 prints it as a subtraction; the table carries the sign, so this value is negative and adds.",
+              "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_A7_PER_NT"
+            },
+            "a8": {
+              "value": 0.024,
+              "unit": "dimensionless",
+              "source": "Shue et al. (1998), doi:10.1029/98JA01103 -- Table 1 (After Fit) row a8, p. 17,698: 0.024 +/- 0.0004. The pressure term of eq. 11.",
+              "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_A8"
+            },
+            "bz": {
+              "value": 0.0,
+              "unit": "nT",
+              "_declared": "A neutral midpoint chosen for this scene, NOT a figure from the paper. Both boundaries are evaluated at the same conditions so the two surfaces can be compared.",
+              "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_BZ_NT"
+            },
+            "pressure": {
+              "value": 2.0,
+              "unit": "nPa",
+              "_declared": "The solar wind dynamic pressure both fits are evaluated at. Declared for this scene, not measured.",
+              "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_PRESSURE_NPA"
+            },
+            "cut_angle": {
+              "value": 120.0,
+              "unit": "deg",
+              "_declared": "Where the drawn surface stops, measured from the nose. Shue's surface has no end: at this flaring the radius grows without bound as theta approaches 180 degrees, so a drawing must choose a stop. Shue et al. (1998) fig. 6, p. 17,695 plots the model out to 120 degrees, the furthest the authors evaluate it. A drawing limit, not an edge.",
+              "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_CUT_ANGLE_DEG"
+            }
+          },
           "standoff": {
             "value": 10.25,
             "unit": "R_earth"
@@ -590,8 +629,41 @@
           "note": "Quiet-time nominal. Under storm compression it can fall inside geostationary orbit (6.6 R_E)."
         },
         "bow_shock": {
-          "name": "Bow Shock (sunward standoff)",
+          "name": "Bow Shock",
           "shape": "bow_shock",
+          "surface": {
+            "_model": "Jelinek et al. (2012), the paraboloid of eqs. 15-16 parameterised by tau: x = R0 p^(-1/eps) - tau^2 / 2, and the distance from the Sun-Earth line is sqrt(2 R0 p^(-1/eps)) tau / lambda. At tau = 0 this is the standoff below. A different functional form from the magnetopause because it is a different paper's fit, not a variation on Shue.",
+            "r0": {
+              "value": 15.02,
+              "unit": "R_earth",
+              "source": "Jelinek, Nemecek and Safrankova (2012), J. Geophys. Res. 117:A05208, doi:10.1029/2011JA017252 -- eq. 14, p. 5: R_BS = 15.02 p^(-1/6.55), so 15.02 R_E is the bow shock standoff at p = 1 nPa.",
+              "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_R0_RADII"
+            },
+            "epsilon": {
+              "value": 6.55,
+              "unit": "dimensionless",
+              "source": "Jelinek et al. (2012), doi:10.1029/2011JA017252 -- eq. 14, p. 5: the pressure exponent of R_BS = 15.02 p^(-1/6.55).",
+              "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_EPS"
+            },
+            "lambda": {
+              "value": 1.17,
+              "unit": "dimensionless",
+              "source": "Jelinek et al. (2012), doi:10.1029/2011JA017252 -- sec. 4, in the text after eq. 11: lambda = 1.17 for the bow shock. Their magnetopause lambda of 1.54 is deliberately not used here, because this page's magnetopause is Shue's.",
+              "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_LAMBDA"
+            },
+            "pressure": {
+              "value": 2.0,
+              "unit": "nPa",
+              "_declared": "The same declared pressure as the magnetopause. Both surfaces must be evaluated at the same conditions or their relative positions mean nothing.",
+              "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_PRESSURE_NPA"
+            },
+            "cut_angle": {
+              "value": 105.0,
+              "unit": "deg",
+              "_declared": "Where the drawn surface stops, measured from the nose. Jelinek et al. fitted crossings within 7 hours of local noon either side, and 7 hours of Earth's turn is 105 degrees. A drawing limit set by where the data was, not by where the formula fails -- the opposite reason from the magnetopause's 120.",
+              "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_CUT_ANGLE_DEG"
+            }
+          },
           "standoff": {
             "value": 13.51,
             "unit": "R_earth"
@@ -626,6 +698,13 @@
         }
       },
       "van_allen_belts": {
+        "magnetic_tilt": {
+          "value": 9.6,
+          "unit": "deg",
+          "source": "Alken et al. (2021), International Geomagnetic Reference Field: the thirteenth generation, Earth Planets Space 73:49, doi:10.1186/s40623-020-01288-x -- the angle between the geomagnetic dipole axis and Earth's rotation axis, epoch 2020-2025. Rounded to a tenth of a degree, which is the precision the dipole cone's projection can honour. The tilt drifts, decreasing about 0.05 deg per decade, so any quotation of it carries its epoch.",
+          "orrery_constant": "constants_new.py::EARTH_DIPOLE_TILT_DEG",
+          "note": "Served so the hover can quote it. The rings are NOT tilted by it. They are drawn in the equatorial plane, which is the daily average of the magnetic one, because a tilted plane needs a direction as well as an angle and that direction turns once a day while this scene is frozen (L-231, Tony's ruling 2026-09-15)."
+        },
         "_frame": "The edge rows below are geocentric distances in the geomagnetic equatorial plane, which is the frame their sources state. Tony's ruling, 2026-09-14 (L-323 ruling B, second amendment). The literature is mixed -- Y. X. Li et al. (2023) states the outer span in L shells and Baker et al. (2018) states it both ways -- so each row names the paper its figure follows and the frame travels with the row rather than with the block.",
         "inner_belt_distance": {
           "value": 1.5,
