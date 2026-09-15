@@ -120,6 +120,19 @@
     return t;
   }
 
+  /*
+   * The same closing line every hover in the scene ends with, read from
+   * GalleryFeatures so the words exist once (L-231 follow-up, 2026-09-15).
+   * If the renderers are not loaded this is empty rather than wrong, and
+   * the hover budget suite's "every hover points at the i panel" leg fails,
+   * which is the right way round.
+   */
+  function tail() {
+    var GFx = global.GalleryFeatures;
+    return (GFx && typeof GFx.HOVER_TAIL === "string")
+      ? "<br><br>" + GFx.HOVER_TAIL : "";
+  }
+
   function infoMarker(p, color, text, group, extra) {
     var t = {
       type: "scatter3d", mode: "markers",
@@ -242,10 +255,11 @@
         "north pole. This scene is one epoch: the axis is the line Earth<br>" +
         "turns about; the turning itself is not shown, and no rotation<br>" +
         "period is stated because none is served.<br><br>" +
-        wrap("Sense: IAU WGCCRE, Archinal et al. (2018), Cel. Mech. Dyn. Astron. 130:22 -- Earth's prime-meridian angle W increases with time.") + "<br>" +
-        wrap("Source: " + (pole.source || "pole source not served")) +
-        (pole.orrery_constant ? "<br>" + wrap("Store: " + pole.orrery_constant) : "");
-      traces.push(infoMarker(tip, AXIS_COLOR, hAxis, gAxis));
+        tail();
+      traces.push(infoMarker(tip, AXIS_COLOR, hAxis, gAxis, { meta: {
+        source: "IAU WGCCRE, Archinal et al. (2018), Cel. Mech. Dyn. Astron. 130:22 -- the sense of rotation: Earth's prime-meridian angle W increases with time. Pole: " + (pole.source || "pole source not served"),
+        detail: pole.orrery_constant ? "Store: " + pole.orrery_constant : null
+      } }));
     }
 
     // --- 2. Direction to the Sun -----------------------------------------
@@ -284,11 +298,13 @@
         "the Sun is overhead.<br>" +
         (isNum(opts.sun.distAu)
           ? "Earth-Sun distance: " + kmAndAu(K, opts.sun.distAu) + "<br>" : "") +
-        "Line drawn to the edge of the arrival frame; the Sun is far beyond it.<br><br>" +
-        wrap("Source: direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons" +
-             (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +
-             ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py).");
-      traces.push(infoMarker(tipS, SUN_COLOR, hSun, gSun));
+        "Line drawn to the edge of the arrival frame; the Sun is far beyond it." +
+        tail();
+      traces.push(infoMarker(tipS, SUN_COLOR, hSun, gSun, { meta: {
+        source: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons" +
+          (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +
+          ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py)."
+      } }));
 
       // --- 3. Terminator -------------------------------------------------
       // Great circle on the crust whose plane is perpendicular to the Sun
@@ -326,10 +342,12 @@
         "sweeps around Earth once a day; this scene does not turn. Geometry<br>" +
         "only -- no lighting is modelled, and the refraction and solar-disc<br>" +
         "corrections that define sunrise on the ground are not applied.<br><br>" +
-        wrap("Source: the Sun direction above, and the crust radius " +
-             (opts.planetRadius && opts.planetRadius.source
-               ? "(" + opts.planetRadius.source + ")" : "as served") + ".");
-      traces.push(infoMarker(onCircle, TERMINATOR_COLOR, hTerm, gTerm));
+        tail();
+      traces.push(infoMarker(onCircle, TERMINATOR_COLOR, hTerm, gTerm, { meta: {
+        source: "The Sun direction above, and the crust radius " +
+          (opts.planetRadius && opts.planetRadius.source
+            ? "(" + opts.planetRadius.source + ")" : "as served") + "."
+      } }));
     }
 
     // --- 4. The Moon's trusted arc -----------------------------------------
@@ -355,8 +373,10 @@
         "The faint full ellipse is the same orbit swept once around; outside<br>" +
         "the arc, the Moon's real path drifts from it as the Sun and Earth's<br>" +
         "shape perturb the two-body orbit.<br><br>" +
-        wrap("Source: JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder).");
-      traces.push(infoMarker(pm, arc.color || "rgb(200, 200, 200)", hArc, gMoon));
+        tail();
+      traces.push(infoMarker(pm, arc.color || "rgb(200, 200, 200)", hArc, gMoon, { meta: {
+        source: "JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder)."
+      } }));
     } else if (arc) {
       warn("moon/trusted arc: fewer than two points supplied -- arc not drawn");
     }

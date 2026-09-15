@@ -20,12 +20,19 @@
 //
 // A RATCHET, NOT A TARGET. The ceiling below is the worst hover in the
 // scene as it stands. It may be lowered and must never be raised: raising
-// it to admit a new hover is how the old ones got to 32. The intended
-// budget is nearer 14, which is what the geostationary belt costs. What
-// stands between here and there is the served NOTES -- the outer belt's
-// caveat alone is about seven lines -- and whether a caveat belongs in the
-// hover or behind the information panel's click is a judgment about what a
-// visitor must see, recorded as open rather than decided here.
+// it to admit a new hover is how the old ones got to 32.
+//
+// 2026-09-15, second pass: Tony ruled the split. The hover is the glance
+// and the i panel is the record -- every citation, the model equations and
+// the served caveats now live in the panel, and every hover ends with a
+// line pointing there. That took the worst from 23 to 17, and the ceiling
+// followed it down. What is left is each hover's OWN prose, which is the
+// author's to shorten, not a structural problem to fix here.
+//
+// THIS SUITE IS NOT AN INSTRUCTION TO KEEP CUTTING. Tony, same day: "we
+// should not remove so much information that it is less useful." The
+// budget exists so a hover does not quietly grow to twice its neighbours
+// again, not to grind them all down.
 //
 // Exit code 0 on pass, 1 on failure, the same as its siblings.
 
@@ -37,10 +44,18 @@ const path = require("path");
 // The worst hover in the scene at the time of writing: the outer radiation
 // belt, whose bulk is its served note. LOWER THIS WHEN IT CAN BE LOWERED.
 // Never raise it. If a new hover needs more than this, shorten the hover.
-const CEILING = 23;
+const CEILING = 17;
 
 // The intended budget, for the message only. Nothing gates on it.
 const TARGET = 14;
+
+// The assembler's own traces (render_orbits.py) arrive inside the payload's
+// FIGURE, not from these renderers, so they carry no pointer to the panel
+// and it is not this file's business to add one. They are identified by
+// being in the figure rather than by a name list: a list would have to be
+// kept in step with the assembler, and the first version of this leg named
+// one trace when there were two. smoke_features.js excludes the same
+// traces from its border leg for the same reason.
 
 const code = fs.readFileSync(process.argv[2], "utf8");
 const geomPath = process.argv[3];
@@ -65,16 +80,21 @@ function fixture(name) {
 // already compose. A trace with hoverinfo "skip" is not counted: geometry
 // is silent by convention and only the info markers speak.
 const hovers = [];
-function collect(scene, traces) {
+function collect(scene, traces, notOurs) {
     for (const t of traces) {
         if (!t || t.hoverinfo === "skip") { continue; }
         const txt = Array.isArray(t.text) ? t.text[0] : t.text;
         if (typeof txt !== "string" || !txt.length) { continue; }
         hovers.push({
             scene: scene,
+            // The trace's own name as well as its group: the assembler's
+            // marker sits in the "moon" group but is named for itself, and
+            // that name is how it is told apart from ours.
+            ours: !(notOurs && notOurs.has(t.name)),
             name: t.legendgroup || t.name || "(unnamed)",
             lines: txt.split("<br>").length,
-            chars: txt.length
+            chars: txt.length,
+            pointed: txt.indexOf("button top right") >= 0
         });
     }
 }
@@ -89,7 +109,10 @@ if (EG) {
         halfRangeAu: 6.155e-5,
         epochIso: "2026-09-15"
     });
-    collect("earth room", out.traces);
+    const fromAssembler = new Set(
+        (p.figure && p.figure.data ? p.figure.data : [])
+            .map(d => d.name).filter(Boolean));
+    collect("earth room", out.traces, fromAssembler);
 } else {
     console.log("  NOTE  no earth_geometry.js given; the Earth room's own " +
                 "traces (axis, Sun line, terminator, Moon) are not measured");
@@ -120,6 +143,11 @@ const worst = hovers.length ? hovers[0] : null;
 
 check("at least one hover was found to measure", hovers.length > 0,
       hovers.length + " found");
+
+check("every hover we build points the reader at the i panel",
+      hovers.filter(h => h.ours && !h.pointed).length === 0,
+      hovers.filter(h => h.ours && !h.pointed)
+            .map(h => h.name).join(", ") || "all of them do");
 
 check("no hover exceeds the ceiling of " + CEILING + " lines",
       !worst || worst.lines <= CEILING,

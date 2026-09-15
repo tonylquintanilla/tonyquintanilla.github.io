@@ -132,8 +132,14 @@ const rStart = [arcs[0].x[0]-axisDir[0]*axHalf, arcs[0].y[0]-axisDir[1]*axHalf, 
 const omegaCrossR = [axisDir[1]*rStart[2]-axisDir[2]*rStart[1], axisDir[2]*rStart[0]-axisDir[0]*rStart[2], axisDir[0]*rStart[1]-axisDir[1]*rStart[0]];
 check("spin arcs run prograde: the arc's motion is omega x r about the north pole",
       (ybDir[0]*omegaCrossR[0] + ybDir[1]*omegaCrossR[1] + ybDir[2]*omegaCrossR[2]) > 0);
-check("axis hover cites the sense of rotation",
-      /Archinal/.test(axisG.find(t => t.mode === "markers").text[0]));
+// L-231 follow-up (2026-09-15): the CITATION for the sense moved to the i
+// panel with every other citation. The hover still states the sense in
+// words -- it has to, it is the thing the curved arrows mean -- so this leg
+// now checks the statement in the hover and the citation where it went.
+check("axis hover states the sense of rotation in words",
+      /prograde, west to east/.test(axisG.find(t => t.mode === "markers").text[0]));
+check("...and its citation is in the panel entry, not lost",
+      /Archinal/.test((axisG.find(t => t.mode === "markers").meta || {}).source || ""));
 check("axis hover says the rotation is not shown and states no period",
       /turning itself is not shown/.test(axisG.find(t => t.mode === "markers").text[0]) &&
       /period is stated because none is served/.test(axisG.find(t => t.mode === "markers").text[0]));

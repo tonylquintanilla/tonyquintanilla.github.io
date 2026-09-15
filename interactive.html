@@ -2691,6 +2691,7 @@ function buildSunDrawer(traces) {
                 link: sunLinkOf(t),
                 source: (t.meta && typeof t.meta.source === "string") ? t.meta.source : null,
                 detail: (t.meta && typeof t.meta.detail === "string") ? t.meta.detail : null,
+                note: (t.meta && typeof t.meta.note === "string") ? t.meta.note : null,
                 indices: [],
                 shown: t.visible !== SUN_HIDDEN && t.visible !== false,
             };
@@ -2703,6 +2704,7 @@ function buildSunDrawer(traces) {
             byName[g].link = sunLinkOf(t) || byName[g].link;
             if (t.meta && typeof t.meta.source === "string") { byName[g].source = t.meta.source; }
             if (t.meta && typeof t.meta.detail === "string") { byName[g].detail = t.meta.detail; }
+            if (t.meta && typeof t.meta.note === "string") { byName[g].note = t.meta.note; }
         }
     }
 
@@ -2831,11 +2833,19 @@ function sunLinkLabel(url) {
 }
 
 // L-267 Stage C. The i panel's top block follows the focus, the same
-// way the drawer handle does. It carries the name and the link OUT and
-// nothing else: the cross marker's hover already has the radius and
-// the citation, and the panel is not a second copy of it. The i button
-// keeps one job -- open and close -- so this never opens the panel
-// itself; it only keeps the contents current for when it is opened.
+// way the drawer handle does. The i button keeps one job -- open and
+// close -- so this never opens the panel itself; it only keeps the
+// contents current for when it is opened.
+//
+// L-231 follow-up, 2026-09-15: the split between hover and panel is now
+// the OPPOSITE of what this comment used to describe. It used to say the
+// panel carried the name and the link and nothing else, because the hover
+// already had the radius and the citation. On a phone those hovers ran to
+// thirty lines and collided with the navigation cluster, so Tony ruled
+// that the hover is the glance and the panel is the record: the hover
+// keeps the figures and ends by pointing here, and the citation, the
+// model's own equations and the served caveats all arrive below.
+// The panel is deliberately a fuller copy now, not a second one.
 function renderSunInfo(grp) {
     const box = document.getElementById("sun-info-focus");
     if (!box) { return; }
@@ -2893,6 +2903,17 @@ function renderSunInfo(grp) {
         det.className = "info-focus-empty";
         det.textContent = grp.detail;
         box.appendChild(det);
+    }
+    // The served note -- the caveats. It left the hover with the citation
+    // on 2026-09-15 and would have been lost in the move if it did not
+    // land here: the magnetopause's "under storm compression it can fall
+    // inside geostationary orbit" is a note, and it is the kind of thing a
+    // reader should still be able to find.
+    if (grp.note) {
+        const nte = document.createElement("div");
+        nte.className = "info-focus-empty";
+        nte.textContent = grp.note;
+        box.appendChild(nte);
     }
 }
 

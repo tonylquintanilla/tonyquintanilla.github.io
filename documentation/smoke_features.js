@@ -137,11 +137,19 @@ check("5 interior + 2 atmosphere + 1 geocorona + 2 LEO + 1 GEO ring + 2 belts + 
       geoEarth.length === 14, "got " + geoEarth.length + ": " + geoEarth.map(t => t.name).join(", "));
 // Info markers carry an empty name, the group label in legendgroup and the
 // hover in text (an array); read them where they are.
-const earthSourced = r1.traces.filter(t => t.showlegend !== true &&
-                                          String(t.legendgroup || "").indexOf("Earth:") === 0 &&
-                                          /Source:/.test(JSON.stringify(t.text || t.hovertext || "")));
-check("every Earth info marker carries a Source line (14 of 14)",
-      earthSourced.length === 14, "got " + earthSourced.length);
+// L-231 follow-up (2026-09-15): this leg used to require a "Source:" line
+// in every hover. The citations moved to the i panel -- Tony's ruling after
+// seeing the boxes on a phone -- so the hover now ends with a pointer to
+// the panel instead, and the leg below it, unchanged, is the one that
+// asserts the citation itself is there in meta. Both halves still checked:
+// the reader is told where to look, and something is waiting when they do.
+const earthMarkers = r1.traces.filter(t => t.showlegend !== true &&
+                                          String(t.legendgroup || "").indexOf("Earth:") === 0);
+const earthPointed = earthMarkers.filter(t =>
+    /button top right/.test(JSON.stringify(t.text || t.hovertext || "")));
+check("every Earth info marker points the reader at the i panel (14 of 14)",
+      earthPointed.length === 14,
+      "got " + earthPointed.length + " of " + earthMarkers.length);
 // The GEO ring lies in Earth's EQUATOR, which the served pole (RA 0, Dec 90,
 // ICRF) puts 23.44 deg from the ecliptic after the obliquity rotation.
 const geoRing = geoEarth.find(t => /Geostationary/.test(t.name));

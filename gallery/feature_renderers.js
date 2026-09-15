@@ -478,6 +478,7 @@
         "Outer edge: " + kmAndAu(ring.outer_radius_km) + "<br>" +
         (thickKm ? ("Thickness: " + kmAndAu(thickKm) + "<br>") : "") +
         "Drawn from the served cache; radii as measured.";
+      hover = withTail(hover);
       traces.push(infoMarker(built.x[0], built.y[0], built.z[0],
                              st.color, hover, label));
     }
@@ -653,14 +654,11 @@
             " epoch<br>2020-2025), and turning with ") +
         bodyName + " once a day; this plane is the daily average.<br>" +
         "Trapped-particle region; the band's shape is illustrative.";
-      if (sources[i]) {
-        hover += "<br><br>" + wrapHover("Source: " + sourceHead(sources[i]));
-      }
-      // L-291 step 3: the served note travels too. Earth's belts are flux
-      // PEAKS, not edges, and the hover is where that has to be said.
-      if (notes[i]) {
-        hover += "<br>" + wrapHover(notes[i]);
-      }
+      // L-231 follow-up (2026-09-15): the citation and the served note
+      // both moved to the i panel. Earth's belts are flux PEAKS rather than
+      // edges, which is what that note says, and the panel is where it is
+      // said now -- with the pointer below telling the reader so.
+      hover = withTail(hover);
       // L-305 item 7 (2026-09-14), Mode 5: the marker sat at point zero of
       // the first ring, which is exactly on the +x axis, where it collided
       // with the axis line. Move it round by a declared angle instead. The
@@ -681,6 +679,10 @@
         linkCfg.info_url = params.info_urls[i];
       }
       if (sources[i]) linkCfg.source = sources[i];
+      // L-231 follow-up (2026-09-15): the belt's served note left the hover
+      // with its citation. It says these are flux PEAKS rather than edges,
+      // which is the whole point of the row, so it travels to the panel.
+      if (notes[i]) linkCfg.note = notes[i];
       traces.push(beltMarker);
       stampLink([built.trace, beltMarker], linkCfg);
     }
@@ -727,6 +729,7 @@
         "= " + kmAndAu(cfg.radius_fraction * radiusKm) + "<br>" +
         "Altitude above surface: " +
         kmAndAu((cfg.radius_fraction - 1.0) * radiusKm);
+      hover = withTail(hover);
       var offPole = (Math.PI / 180) * INFO_MARKER_OFFSET_DEG;
       traces.push(infoMarker(center[0] + shellAu * 1.05 * Math.sin(offPole),
                              center[1],
@@ -902,7 +905,6 @@
     if (cfg.fade_radius.source) {
       hover += "<br><br>" + wrapHover("Fade: " + cfg.fade_radius.source);
     }
-    if (cfg.note) hover += "<br><br>" + wrapHover(cfg.note);
     traces.push(infoMarker(center[0] + m[0], center[1] + m[1],
                            center[2] + m[2],
                            cfg.color || "rgb(255, 200, 80)", hover, label,
@@ -1076,7 +1078,6 @@
         hover += "<br>" + wrapHover(cfg.typical_radius.source);
       }
     }
-    if (cfg.note) hover += "<br><br>" + wrapHover(cfg.note);
     var color = cfg.color || "rgb(200, 200, 255)";
     return [
       cloudTrace(pts.x, pts.y, pts.z, center, label, color,
@@ -1110,19 +1111,23 @@
    * meta, and the page says so in words.
    */
   /*
-   * The head of a served source string: everything before the first " -- ",
-   * which is the house separator between a citation and the explanation of
-   * what was taken from it. L-231 follow-up, 2026-09-15: hovers had grown to
-   * 27 and 32 lines on a phone against a house ceiling of about 14, and the
-   * biggest single block was a citation the information panel was already
-   * showing in full. So the HOVER carries the citation's head and the PANEL
-   * carries the whole thing -- it rides in meta either way, unchanged.
-   * A string with no " -- " is returned as it stands.
+   * Every hover ends with the same line. Tony's ruling, 2026-09-15, after
+   * seeing the boxes on a phone: the hover is the glance and the i panel is
+   * the record. The citation, the model's own equations and the served
+   * caveats all live in the panel now, which follows the focus and also
+   * carries the link out. Uniform on EVERY hover, including the short ones
+   * that have little waiting for them, because the point is that people
+   * learn where the "i" button is.
+   *
+   * Exported as GalleryFeatures.HOVER_TAIL so earth_geometry.js ends its own
+   * four hovers -- axis, Sun line, terminator, Moon -- with the same words
+   * rather than a second copy that can drift.
    */
-  function sourceHead(src) {
-    if (typeof src !== "string") return src;
-    var cut = src.indexOf(" -- ");
-    return (cut > 0) ? src.slice(0, cut) : src;
+  var HOVER_TAIL = "For more information and references please click on " +
+                   "the<br>info \"i\" button top right.";
+
+  function withTail(hover) {
+    return hover + "<br><br>" + HOVER_TAIL;
   }
 
   function stampLink(traceList, cfg) {
@@ -1144,6 +1149,14 @@
     if (typeof cfg.detail === "string" && cfg.detail) {
       meta = meta || {};
       meta.detail = cfg.detail;
+    }
+    // L-231 follow-up (2026-09-15): the served note rides here too, because
+    // it left the hover with the citation. Losing it in the move would have
+    // taken the caveats with it -- the magnetopause's "under storm
+    // compression it can fall inside geostationary orbit", for one.
+    if (typeof cfg.note === "string" && cfg.note) {
+      meta = meta || {};
+      meta.note = cfg.note;
     }
     if (meta) {
       for (var i = 0; i < traceList.length; i++) {
@@ -1190,8 +1203,7 @@
     hover += "= " + kmAndAu(radiusAu * KM_PER_AU) + "<br>" +
              "A ring in the equatorial plane, not a sphere: satellites here<br>" +
              "keep pace with Earth's turning and hang over one longitude.";
-    if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + sourceHead(cfg.source));
-    if (cfg.note) hover += "<br>" + wrapHover(cfg.note);
+    hover = withTail(hover);
     // Info marker on the ring itself, at the ascending node (index 0):
     // the equatorial plane is clear of the shells' polar markers.
     var marker = infoMarker(built.x[0], built.y[0], built.z[0], color, hover, label,
@@ -1316,8 +1328,7 @@
         }
       }
       hover += "= " + kmAndAu(radiusAu * KM_PER_AU);
-      if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + sourceHead(cfg.source));
-      if (cfg.note) hover += "<br>" + wrapHover(cfg.note);
+      hover = withTail(hover);
       var marker = infoMarker(mx, my, mz, color, hover, label, cfg.info_border);
       if (beyondFrame) {
         // Without this the marker is drawn while its shell is not:
@@ -1549,8 +1560,7 @@
         "the paper<br>plots its own model. A DRAWING LIMIT, not an edge: " +
         "this<br>surface has no end, it widens without bound down the tail." +
         "<br>Not tilted: the fit is symmetric about the Sun line.";
-      if (mp.source) mpHover += "<br><br>" + wrapHover("Source: " + sourceHead(mp.source));
-      if (mp.note) mpHover += "<br>" + wrapHover(mp.note);
+      mpHover = withTail(mpHover);
 
       var mpMk = magMarkerPoint(function (th) {
         var r = shueRadius(r0, alpha, th) * radiusAu;
@@ -1563,7 +1573,7 @@
       traces.push(mpMarker);
       stampLink([mpBuilt.trace, mpMarker],
                 { info_url: mp.info_url, source: mp.source,
-                  detail: mpS._model });
+                  detail: mpS._model, note: mp.note });
     }
 
     // --- Bow shock, Jelinek et al. (2012) ---------------------------------
@@ -1613,8 +1623,7 @@
         // phone-sized budget, so it moved to the served note, which the
         // i-panel shows in full.
         "Not tilted: the fit is symmetric about the Sun line.";
-      if (bs.source) bsHover += "<br><br>" + wrapHover("Source: " + sourceHead(bs.source));
-      if (bs.note) bsHover += "<br>" + wrapHover(bs.note);
+      bsHover = withTail(bsHover);
 
       var bsMk = magMarkerPoint(function (th) {
         var tau = bowTauAtAngle(S, bsLam, th);
@@ -1628,7 +1637,7 @@
       traces.push(bsMarker);
       stampLink([bsBuilt.trace, bsMarker],
                 { info_url: bs.info_url, source: bs.source,
-                  detail: bsS._model });
+                  detail: bsS._model, note: bs.note });
 
       if (bsStand !== null && Math.abs(bsStand - S) > 0.02) {
         warn(where + "/bow_shock: the served standoff is " +
@@ -1731,7 +1740,10 @@
     infoMarkerOffsetDeg: INFO_MARKER_OFFSET_DEG,
     // Exported for the smoke test; not part of the drawing interface.
     _poleBasis: poleBasis,
-    _KM_PER_AU: KM_PER_AU
+    _KM_PER_AU: KM_PER_AU,
+    // L-231 follow-up (2026-09-15): earth_geometry.js ends its own hovers
+    // with these exact words rather than a second copy.
+    HOVER_TAIL: HOVER_TAIL
   };
 
 })(typeof window !== "undefined" ? window : globalThis);
