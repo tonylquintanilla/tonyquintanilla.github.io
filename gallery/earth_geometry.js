@@ -396,7 +396,12 @@
     var built = GF.buildFeatureTraces(
       features,
       { earth: { name: "Earth", position: [0, 0, 0] } },
-      { sceneHalfRangeAu: half }
+      { sceneHalfRangeAu: half,
+        // The magnetopause and the bow shock are surfaces of revolution
+        // about the Sun line, so the direction has to travel with the
+        // feature list. This composer is the only place that has it.
+        sunDir: (payload.sun && Array.isArray(payload.sun.dir))
+          ? payload.sun.dir : null }
     );
     warnings = warnings.concat(built.warnings || []);
 

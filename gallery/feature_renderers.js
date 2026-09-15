@@ -338,7 +338,16 @@
         var ang = (j / nPoints) * 2 * Math.PI;
         xs.push(r * Math.cos(ang));
         ys.push(r * Math.sin(ang));
-        zs.push(0.2 * r * Math.sin(2 * ang));
+        // L-231 (Tony's ruling, 2026-09-15): the saddle is gone. This line
+        // used to be 0.2 * r * sin(2 * ang), lifting the ring a fifth of
+        // its radius TWICE per circuit -- more vertical swing than the
+        // real 9.6-degree magnetic tilt would give, at twice the
+        // frequency, meaning nothing. The orrery comment beside its copy
+        // said the wobble made the belt "thinner near poles"; it moved
+        // the whole ring instead. The ring is now flat in its own plane
+        // and that plane is tilted by the caller. Any real thickness is
+        // L-330's question, not a leftover wobble's.
+        zs.push(0);
       }
     }
     return { x: xs, y: ys, z: zs };
@@ -475,12 +484,38 @@
     return traces;
   }
 
-  function renderBelts(slug, bodyName, featureKey, params, center, warn,
-                       halfRangeAu) {
-    // Belts are NOT pole-oriented: the orrery draws them in the ecliptic
-    // plane for both Earth and Jupiter, and scene equivalence means matching
-    // what the orrery draws. (That the orrery's own comment claims the
-    // rotational axis is a separate, recorded finding -- not fixed here.)
+  /*
+   * The served edges of one belt, as [inner, outer] in planet radii, or
+   * null if they are not served. L-231: these rows landed 2026-09-14 and
+   * NEITHER instrument read them -- the hover printed the typed drawn
+   * width instead, as if it were the belt's width. The geometry still
+   * does not use them; drawing the region between them is L-330. This
+   * reads them for the hover only.
+   */
+  function beltSpan(params, i) {
+    var prefix = (i === 0) ? "inner_belt_" : "outer_belt_";
+    var lo = params[prefix + "inner_edge"];
+    var hi = params[prefix + "outer_edge"];
+    if (!isDict(lo) || !isDict(hi)) return null;
+    if (typeof lo.value !== "number" || typeof hi.value !== "number") return null;
+    return [lo.value, hi.value];
+  }
+
+  function renderBelts(slug, bodyName, featureKey, params, center, basis,
+                       warn, halfRangeAu) {
+    // L-231, Tony's ruling of 2026-09-15: belts ARE pole-oriented, drawn in
+    // the body's EQUATORIAL plane. The previous comment here gave scene
+    // equivalence as the reason for the ecliptic, which was a reason for
+    // the two instruments to match rather than a reason for any plane; the
+    // real reason was build order, since nothing ever wired the pole basis
+    // in. The deciding argument: the geostationary ring is drawn in this
+    // plane and sits at 6.6 R_earth, inside an outer belt served as 3 to 7,
+    // and the ecliptic put those two 23.4 degrees apart in one picture.
+    // The magnetic equator would be better still, but it needs a DIRECTION
+    // as well as an angle and that direction turns once a day; this scene
+    // is frozen and has no hour to give. The spin equator is the daily
+    // average of it. Falls back to the ecliptic, with a warning, if no
+    // orientation is served.
     var traces = [];
     var radiusKm = measured(params.planet_radius, "km",
                             slug + "/" + featureKey + "/planet_radius", warn);
@@ -499,12 +534,16 @@
     // L-291: a belt distance may be a measured entry {value, unit
     // "R_earth", source, orrery_constant} (Earth) or a bare number in
     // planet radii (Jupiter, unchanged). Read either; carry the source.
-    // L-305 item 7 (2026-09-14): "l_shell" is accepted too, and the
-    // identification is deliberate rather than lenient. L is the McIlwain
-    // parameter: it labels a whole magnetic shell, and it equals geocentric
-    // distance in planet radii exactly where that shell crosses the magnetic
-    // equator. These rings are drawn in that plane, so an L value may be
-    // drawn at that radius -- and the hover says which it was given.
+    // L-305 item 7 (2026-09-14): "l_shell" is accepted too. L is the
+    // McIlwain parameter: it labels a whole magnetic shell, and it equals
+    // geocentric distance in planet radii exactly where that shell crosses
+    // the magnetic equator. CORRECTED 2026-09-15 (L-231): this comment used
+    // to say "These rings are drawn in that plane", and they were not --
+    // they were drawn in the ecliptic, and the hover repeated the claim to
+    // the visitor. What is true is that the RADIUS is the one where the
+    // shell and the distance agree; the RING is drawn in the equatorial
+    // plane, the daily average of the magnetic one. The hover now says
+    // exactly that and no more.
     // Refusing it silently dropped BOTH Earth belts on 2026-09-14, because
     // the pair test below needs two numbers.
     function beltDistance(node, label) {
@@ -556,7 +595,7 @@
       var label = bodyName + ": " + name;
       var pts = beltPoints(distances[i] * radiusAu, thickness * radiusAu,
                            nRings, nPoints);
-      var built = geometryTrace(pts, center, null, label, color, opacity,
+      var built = geometryTrace(pts, center, basis, label, color, opacity,
                                 BELT_MARKER_SIZE);
       // L-291 step 3: a belt larger than the arrival frame goes to the
       // drawer, as a shell does. Earth's inner belt at 1.5 R_earth sits
@@ -571,17 +610,49 @@
       // a distance, and the ring is drawn where that shell crosses the
       // magnetic equator -- the one plane where the two numbers agree. Say
       // that rather than printing it as a centre distance.
+      // L-231 (2026-09-15). Three corrections in this string.
+      // (a) The old text told the visitor the ring was drawn where the L
+      //     shell crosses the magnetic equator. It was not. Only the
+      //     RADIUS comes from there; the ring is in the equatorial plane.
+      // (b) "Band thickness: 0.5 radii" printed a TYPED drawing choice as
+      //     if it were the belt's width, a few lines above a served note
+      //     giving the real span. The served edges are now read and shown
+      //     beside it, and the drawn width is named as a choice.
+      // (c) The plane is now stated, with what it approximates.
+      // L-231 (2026-09-15): the magnetic tilt is now served, as a row
+      // pointing at EARTH_DIPOLE_TILT_DEG, so the sentence can carry the
+      // figure. It names its model and epoch because the tilt drifts.
+      // If no tilt row is served -- Jupiter's belts have none -- the
+      // sentence still runs, just without the number.
+      var span = beltSpan(params, i);
+      // Soft read: absent is normal (Jupiter), a wrong unit is not.
+      var tilt = null;
+      if (isDict(params.magnetic_tilt)) {
+        tilt = measured(params.magnetic_tilt, "deg",
+                        slug + "/" + featureKey + "/magnetic_tilt", warn);
+      }
       var hover = label + "<br><br>" +
+        "Drawn at " + distances[i].toFixed(1) + " " + bodyName +
+        " radii, the sourced flux peak<br>" +
         (units[i] === "l_shell"
-          ? "Drawn at L = " + distances[i].toFixed(1) +
-            ", where that shell crosses the magnetic equator<br>" +
-            "= " + distances[i].toFixed(1) + " " + bodyName +
-            " radii from centre there<br>"
-          : "Centre distance: " + distances[i].toFixed(1) + " " + bodyName +
-            " radii<br>") +
+          ? "(served as L = " + distances[i].toFixed(1) + " -- that is the" +
+            " radius where the L shell<br>crosses the magnetic equator)<br>"
+          : "") +
         "= " + kmAndAu(distances[i] * radiusKm) + "<br>" +
-        "Band thickness: " + thickness.toFixed(1) + " radii<br>" +
-        "Trapped-particle region; band is illustrative in shape.";
+        (span
+          ? "Sourced span: " + span[0].toFixed(1) + " to " +
+            span[1].toFixed(1) + " " + bodyName + " radii<br>"
+          : "") +
+        "Drawn as a band " + thickness.toFixed(1) + " radii wide, which is a" +
+        "<br>drawing choice and not the belt's width<br>" +
+        "The ring lies in " + bodyName + "'s equatorial plane. The belts" +
+        " follow the<br>magnetic equator, " +
+        (tilt === null
+          ? "which is tilted from it and turns with<br>"
+          : "tilted " + tilt.toFixed(1) + " degrees from it (IGRF-13," +
+            " epoch<br>2020-2025), and turning with ") +
+        bodyName + " once a day; this plane is the daily average.<br>" +
+        "Trapped-particle region; the band's shape is illustrative.";
       if (sources[i]) {
         hover += "<br><br>" + wrapHover("Source: " + sources[i]);
       }
@@ -1252,10 +1323,310 @@
    * read is REPORTED rather than dropped -- silence about something
    * unexamined is the failure mode.
    */
+  /*
+   * --- Earth's magnetosphere: two surfaces, two papers, one Sun line ------
+   *
+   * Both boundaries are figures of revolution about the direction to the
+   * Sun, so this renderer needs that direction. It arrives in opts.sunDir,
+   * because the scene composer is the only place that has it. Without it
+   * NOTHING IS DRAWN and the absence is reported -- a magnetosphere aimed
+   * at a fixed axis would be wrong on every day of the year but one, and
+   * would look entirely plausible while being wrong.
+   *
+   * Magnetopause -- Shue et al. (1998) eq. 10 with eq. 11:
+   *     r = r0 [2 / (1 + cos theta)]^alpha
+   *     alpha = (a6 + a7 Bz) (1 + a8 ln Dp)
+   * theta is measured from the Sun line. alpha is evaluated here rather
+   * than served: nothing on the page prints it, and the standing rule is
+   * that the store carries the value and the geometry derives. At the
+   * served conditions alpha is 0.59 -- two figures, because a6 is
+   * 0.58 +/- 0.01 and that uncertainty passes straight through.
+   *
+   * Bow shock -- Jelinek et al. (2012) eqs. 15-16, a paraboloid in tau:
+   *     S = r0 p^(-1/eps),  x = S - tau^2 / 2,
+   *     rho = sqrt(2 S) tau / lambda
+   * A different functional form because it is a different paper's fit, not
+   * a variation on Shue's.
+   *
+   * NEITHER SURFACE HAS AN END. Each stops at its own served cut angle for
+   * its own reason: the magnetopause where Shue's own figure stops
+   * plotting, the bow shock where its crossings stopped. Those are drawing
+   * limits, not edges, and each hover says so in words.
+   *
+   * NO TILT, deliberately. Both fits are symmetric about the Sun line and
+   * were made from crossings taken at every dipole tilt, so the tilt is
+   * already averaged into the published coefficients; one study notes it
+   * does not move the equatorial magnetopause at all. (L-305 ruling; the
+   * desktop's magnetic_tilt_deg=11 is ruled for removal.) Earth's dipole
+   * cone is where that tilt IS shown, in a different frame -- L-009 built,
+   * L-231 and L-061 open.
+   */
+
+  // Surface sampling. MODE-5 KNOBS: raise for a smoother edge at the cost
+  // of points. 24 x 48 puts ~1,150 points on each surface, the same order
+  // as a belt pair.
+  var MAG_N_THETA = 24;
+  var MAG_N_PHI = 48;
+  var MAG_MARKER_SIZE = 2.0;
+  // Where the single info marker sits, in the surface's own coordinates.
+  // Off the nose, because the nose lies on the Sun line where the Sun
+  // Direction trace runs through it; and on opposite sides for the two
+  // surfaces so the two crosses do not stack in a side-on view.
+  // MODE-5 KNOBS.
+  var MAG_MARKER_THETA_DEG = 60;
+  var MAG_MARKER_PHI_DEG = { magnetopause: 90, bow_shock: 270 };
+
+  function sunFrame(sunDir) {
+    var m = Math.sqrt(sunDir[0] * sunDir[0] + sunDir[1] * sunDir[1] +
+                      sunDir[2] * sunDir[2]);
+    if (!(m > 0)) return null;
+    var u = [sunDir[0] / m, sunDir[1] / m, sunDir[2] / m];
+    var a = (Math.abs(u[2]) < 0.9) ? [0, 0, 1] : [1, 0, 0];
+    var v = [u[1] * a[2] - u[2] * a[1],
+             u[2] * a[0] - u[0] * a[2],
+             u[0] * a[1] - u[1] * a[0]];
+    var vm = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    v = [v[0] / vm, v[1] / vm, v[2] / vm];
+    var w = [u[1] * v[2] - u[2] * v[1],
+             u[2] * v[0] - u[0] * v[2],
+             u[0] * v[1] - u[1] * v[0]];
+    return { u: u, v: v, w: w };
+  }
+
+  // Place a point given along-Sun and across-Sun distances plus a roll.
+  function sunPlace(frame, center, along, across, phi) {
+    var c = Math.cos(phi), s = Math.sin(phi);
+    return [
+      center[0] + frame.u[0] * along + frame.v[0] * across * c + frame.w[0] * across * s,
+      center[1] + frame.u[1] * along + frame.v[1] * across * c + frame.w[1] * across * s,
+      center[2] + frame.u[2] * along + frame.v[2] * across * c + frame.w[2] * across * s
+    ];
+  }
+
+  function shueRadius(r0, alpha, theta) {
+    return r0 * Math.pow(2 / (1 + Math.cos(theta)), alpha);
+  }
+
+  // The tau at which the paraboloid reaches a given angle from the nose.
+  // The angle rises monotonically with tau, so a bisection is exact enough
+  // and cannot pick the wrong branch.
+  function bowTauAtAngle(S, lambda, cutRad) {
+    function ang(t) {
+      return Math.atan2(Math.sqrt(2 * S) * t / lambda, S - t * t / 2);
+    }
+    var hi = 1;
+    while (ang(hi) < cutRad && hi < 1e6) hi *= 2;
+    var lo = 0;
+    for (var i = 0; i < 80; i++) {
+      var mid = (lo + hi) / 2;
+      if (ang(mid) < cutRad) lo = mid; else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+
+  function magSurfaceTrace(rows, frame, center, label, color, opacity) {
+    var x = [], y = [], z = [];
+    for (var i = 0; i <= MAG_N_THETA; i++) {
+      var row = rows(i / MAG_N_THETA);
+      for (var j = 0; j < MAG_N_PHI; j++) {
+        var p = sunPlace(frame, center, row[0], row[1],
+                         2 * Math.PI * j / MAG_N_PHI);
+        x.push(p[0]); y.push(p[1]); z.push(p[2]);
+        if (row[1] === 0) break;   // the nose is one point, not N_PHI of them
+      }
+    }
+    return {
+      trace: {
+        type: "scatter3d", mode: "markers",
+        x: x, y: y, z: z,
+        marker: { size: MAG_MARKER_SIZE, color: color, opacity: opacity },
+        name: label, legendgroup: label,
+        hoverinfo: "skip", showlegend: true
+      },
+      x: x, y: y, z: z
+    };
+  }
+
+  function renderMagnetosphere(slug, bodyName, params, center, sunDir,
+                               halfRangeAu, warn) {
+    var traces = [];
+    var where = slug + "/earth_magnetosphere";
+
+    if (!Array.isArray(sunDir)) {
+      warn(where + ": no Sun direction reached the renderer -- the " +
+           "magnetopause and bow shock are surfaces of revolution about " +
+           "the Sun line and nothing is drawn without it");
+      return traces;
+    }
+    var frame = sunFrame(sunDir);
+    if (!frame) {
+      warn(where + ": the Sun direction is a zero-length vector -- " +
+           "nothing drawn");
+      return traces;
+    }
+
+    var radiusKm = measured(params.planet_radius, "km",
+                            where + "/planet_radius", warn);
+    if (radiusKm === null) {
+      warn(where + ": the shape is in Earth radii and no planet_radius " +
+           "was served -- nothing drawn");
+      return traces;
+    }
+    var radiusAu = radiusKm / KM_PER_AU;
+
+    var mp = params.magnetopause || {};
+    var bs = params.bow_shock || {};
+    var mpS = mp.surface || null;
+    var bsS = bs.surface || null;
+    if (!mpS || !bsS) {
+      warn(where + ": no surface rows served -- only the standoff is " +
+           "known, which is one point rather than a shape, so nothing " +
+           "is drawn");
+      return traces;
+    }
+
+    // --- Magnetopause, Shue et al. (1998) ---------------------------------
+    var r0 = measured(mp.standoff, "R_earth", where + "/magnetopause/standoff",
+                      warn);
+    var a6 = measured(mpS.a6, "dimensionless", where + "/magnetopause/a6", warn);
+    var a7 = measured(mpS.a7, "per_nT", where + "/magnetopause/a7", warn);
+    var a8 = measured(mpS.a8, "dimensionless", where + "/magnetopause/a8", warn);
+    var bz = measured(mpS.bz, "nT", where + "/magnetopause/bz", warn);
+    var dp = measured(mpS.pressure, "nPa", where + "/magnetopause/pressure",
+                      warn);
+    var mpCut = measured(mpS.cut_angle, "deg",
+                         where + "/magnetopause/cut_angle", warn);
+
+    if (r0 !== null && a6 !== null && a7 !== null && a8 !== null &&
+        bz !== null && dp !== null && mpCut !== null && dp > 0) {
+      var alpha = (a6 + a7 * bz) * (1 + a8 * Math.log(dp));
+      var mpLabel = bodyName + ": " + (mp.name || "Magnetopause");
+      var mpCutRad = mpCut * Math.PI / 180;
+      var mpBuilt = magSurfaceTrace(function (t) {
+        var th = t * mpCutRad;
+        var r = shueRadius(r0, alpha, th) * radiusAu;
+        return [r * Math.cos(th), r * Math.sin(th)];
+      }, frame, center, mpLabel, mp.color || "rgb(180, 180, 255)",
+        (typeof mp.opacity === "number") ? mp.opacity : 0.25);
+
+      var mpEdge = shueRadius(r0, alpha, mpCutRad) * radiusAu;
+      var mpBeyond = (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
+                      mpEdge > halfRangeAu);
+      if (mpBeyond) mpBuilt.trace.visible = "legendonly";
+      traces.push(mpBuilt.trace);
+
+      var mpHover = mpLabel + "<br><br>" +
+        "Sunward standoff: " + r0.toFixed(2) + " Earth radii<br>" +
+        "= " + kmAndAu(r0 * radiusKm) + "<br>" +
+        "Shue et al. (1998), at the scene's declared solar wind:<br>" +
+        "Bz " + bz.toFixed(1) + " nT, dynamic pressure " + dp.toFixed(1) +
+        " nPa<br>" +
+        "Flaring exponent works out to " + alpha.toPrecision(2) + "<br>" +
+        "Drawn to " + mpCut.toFixed(0) + " deg from the nose, the furthest " +
+        "the paper<br>plots its own model. A DRAWING LIMIT, not an edge: " +
+        "this<br>surface has no end, it widens without bound down the tail." +
+        "<br>Not tilted: the fit is symmetric about the Sun line.";
+      if (mpS._model) mpHover += "<br><br>" + wrapHover(mpS._model);
+      if (mp.source) mpHover += "<br><br>" + wrapHover("Source: " + mp.source);
+      if (mp.note) mpHover += "<br>" + wrapHover(mp.note);
+
+      var mpMk = magMarkerPoint(function (th) {
+        var r = shueRadius(r0, alpha, th) * radiusAu;
+        return [r * Math.cos(th), r * Math.sin(th)];
+      }, frame, center, mpCutRad, MAG_MARKER_PHI_DEG.magnetopause);
+      var mpMarker = infoMarker(mpMk[0], mpMk[1], mpMk[2],
+                                mp.color || "rgb(180, 180, 255)", mpHover,
+                                mpLabel, mp.info_border);
+      if (mpBeyond) mpMarker.visible = "legendonly";
+      traces.push(mpMarker);
+      stampLink([mpBuilt.trace, mpMarker],
+                { info_url: mp.info_url, source: mp.source });
+    }
+
+    // --- Bow shock, Jelinek et al. (2012) ---------------------------------
+    var bsR0 = measured(bsS.r0, "R_earth", where + "/bow_shock/r0", warn);
+    var bsEps = measured(bsS.epsilon, "dimensionless",
+                         where + "/bow_shock/epsilon", warn);
+    var bsLam = measured(bsS["lambda"], "dimensionless",
+                         where + "/bow_shock/lambda", warn);
+    var bsP = measured(bsS.pressure, "nPa", where + "/bow_shock/pressure",
+                       warn);
+    var bsCut = measured(bsS.cut_angle, "deg", where + "/bow_shock/cut_angle",
+                         warn);
+    var bsStand = measured(bs.standoff, "R_earth",
+                           where + "/bow_shock/standoff", warn);
+
+    if (bsR0 !== null && bsEps !== null && bsLam !== null && bsP !== null &&
+        bsCut !== null && bsP > 0 && bsEps !== 0 && bsLam !== 0) {
+      var S = bsR0 * Math.pow(bsP, -1 / bsEps);
+      var bsCutRad = bsCut * Math.PI / 180;
+      var tauMax = bowTauAtAngle(S, bsLam, bsCutRad);
+      var bsLabel = bodyName + ": " + (bs.name || "Bow Shock");
+      var bsBuilt = magSurfaceTrace(function (t) {
+        var tau = t * tauMax;
+        return [(S - tau * tau / 2) * radiusAu,
+                (Math.sqrt(2 * S) * tau / bsLam) * radiusAu];
+      }, frame, center, bsLabel, bs.color || "rgb(255, 200, 150)",
+        (typeof bs.opacity === "number") ? bs.opacity : 0.25);
+
+      var bsRho = Math.sqrt(2 * S) * tauMax / bsLam;
+      var bsX = S - tauMax * tauMax / 2;
+      var bsEdge = Math.sqrt(bsRho * bsRho + bsX * bsX) * radiusAu;
+      var bsBeyond = (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
+                      bsEdge > halfRangeAu);
+      if (bsBeyond) bsBuilt.trace.visible = "legendonly";
+      traces.push(bsBuilt.trace);
+
+      var bsHover = bsLabel + "<br><br>" +
+        "Sunward standoff: " + S.toFixed(2) + " Earth radii<br>" +
+        "= " + kmAndAu(S * radiusKm) + "<br>" +
+        "Jelinek et al. (2012), at dynamic pressure " + bsP.toFixed(1) +
+        " nPa<br>" +
+        "Drawn to " + bsCut.toFixed(0) + " deg from the nose, which is how " +
+        "far round<br>the crossings the fit was made from actually reached." +
+        "<br>A DRAWING LIMIT, not an edge.<br>" +
+        "Ends wider and shorter than the magnetopause here -- that is<br>" +
+        "two papers' drawing limits, not a fact about the two boundaries." +
+        "<br>Not tilted: the fit is symmetric about the Sun line.";
+      if (bsS._model) bsHover += "<br><br>" + wrapHover(bsS._model);
+      if (bs.source) bsHover += "<br><br>" + wrapHover("Source: " + bs.source);
+      if (bs.note) bsHover += "<br>" + wrapHover(bs.note);
+
+      var bsMk = magMarkerPoint(function (th) {
+        var tau = bowTauAtAngle(S, bsLam, th);
+        return [(S - tau * tau / 2) * radiusAu,
+                (Math.sqrt(2 * S) * tau / bsLam) * radiusAu];
+      }, frame, center, bsCutRad, MAG_MARKER_PHI_DEG.bow_shock);
+      var bsMarker = infoMarker(bsMk[0], bsMk[1], bsMk[2],
+                                bs.color || "rgb(255, 200, 150)", bsHover,
+                                bsLabel, bs.info_border);
+      if (bsBeyond) bsMarker.visible = "legendonly";
+      traces.push(bsMarker);
+      stampLink([bsBuilt.trace, bsMarker],
+                { info_url: bs.info_url, source: bs.source });
+
+      if (bsStand !== null && Math.abs(bsStand - S) > 0.02) {
+        warn(where + "/bow_shock: the served standoff is " +
+             bsStand.toFixed(2) + " R_earth but the served shape gives " +
+             S.toFixed(2) + " at the served pressure -- the two disagree");
+      }
+    }
+
+    return traces;
+  }
+
+  // The info marker rides ON the surface, at a declared angle off the nose.
+  function magMarkerPoint(rowAtTheta, frame, center, cutRad, phiDeg) {
+    var th = Math.min(MAG_MARKER_THETA_DEG * Math.PI / 180, cutRad * 0.8);
+    var row = rowAtTheta(th);
+    return sunPlace(frame, center, row[0], row[1], phiDeg * Math.PI / 180);
+  }
+
   function buildFeatureTraces(featureRequests, bodies, opts) {
     var warnings = [];
     var halfRangeAu = (opts && typeof opts.sceneHalfRangeAu === "number")
       ? opts.sceneHalfRangeAu : null;
+    var sunDir = (opts && Array.isArray(opts.sunDir)) ? opts.sunDir : null;
     function warn(msg) { warnings.push(msg); }
 
     var traces = [];
@@ -1297,8 +1668,18 @@
           break;
         case "radiation_belts":
         case "van_allen_belts":
+          if (!orientations[slug]) {
+            warn(slug + "/" + fr.feature + ": no orientation served, so the " +
+                 "belts fall back to the ecliptic plane rather than the " +
+                 "body's equator -- visibly wrong for a tilted body (L-231)");
+          }
           traces = traces.concat(renderBelts(
-            slug, bodyName, fr.feature, params, center, warn, halfRangeAu));
+            slug, bodyName, fr.feature, params, center,
+            orientations[slug] || null, warn, halfRangeAu));
+          break;
+        case "earth_magnetosphere":
+          traces = traces.concat(renderMagnetosphere(
+            slug, bodyName, params, center, sunDir, halfRangeAu, warn));
           break;
         case "atmosphere_shell":
           traces = traces.concat(renderAtmosphereShell(

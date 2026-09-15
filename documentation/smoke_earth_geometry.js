@@ -51,19 +51,19 @@ payload.features.forEach(f => { if (f.object === "earth") earthParams[f.feature]
 const R_E_KM = earthParams.earth_interior.planet_radius.value;
 const rCrust = earthParams.earth_interior.crust.radius.value * R_E_KM / K;
 
-check("the one warning is the magnetosphere, named", out.warnings.length === 1 &&
-      /earth\/earth_magnetosphere: no renderer/.test(out.warnings[0]), out.warnings.join(" | "));
-check("the drawer's named absence is the magnetosphere with its served member names",
-      out.absent.length === 1 && out.absent[0].key === "earth_magnetosphere" &&
-      out.absent[0].members.length === 2 && /Magnetopause/.test(out.absent[0].members[0]),
-      JSON.stringify(out.absent));
+// L-305 item 5 (2026-09-14): the magnetosphere has a renderer now, so the
+// scene has no warning and nothing is named absent. Before this it was the
+// one known gap and these two legs asserted its exact shape.
+check("no warnings: every served group has a renderer", out.warnings.length === 0,
+      out.warnings.join(" | "));
+check("nothing is named absent", out.absent.length === 0, JSON.stringify(out.absent));
 check("no scene-centre marker survives", !T.some(t => t.legendgroup === "center"));
 
 const groups = {};
 T.forEach(t => { if (t.legendgroup) (groups[t.legendgroup] = groups[t.legendgroup] || []).push(t); });
 const names = Object.keys(groups);
-check("drawer rows: 14 served + axis + Sun + terminator + Moon = 18 groups",
-      names.length === 18, names.length + ": " + names.join(", "));
+check("drawer rows: 16 served + axis + Sun + terminator + Moon = 20 groups",
+      names.length === 20, names.length + ": " + names.join(", "));
 
 // Arrival policy: what is lit.
 const lit = names.filter(k => groups[k].some(t => t.showlegend === true && t.visible !== "legendonly" && t.visible !== false));
@@ -73,8 +73,9 @@ const wantLit = ["Inner Core", "Outer Core", "Lower Mantle", "Upper Mantle", "Cr
 check("arrival lights exactly the eight shells (LEO as two edges) plus axis and Sun direction",
       lit.length === wantLit.length && wantLit.every(w => lit.some(l => l.indexOf(w) >= 0)),
       lit.join(", "));
-check("Moon, terminator, GEO, belts, geocorona and Hill sphere wait in the drawer",
-      ["moon", "Terminator", "Geostationary", "Radiation Belt", "Geocorona", "Hill"].every(w =>
+check("Moon, terminator, GEO, belts, geocorona, Hill sphere and both magnetosphere surfaces wait in the drawer",
+      ["moon", "Terminator", "Geostationary", "Radiation Belt", "Geocorona", "Hill",
+       "Magnetopause", "Bow Shock"].every(w =>
         names.filter(n => n.indexOf(w) >= 0).every(n => groups[n].every(t => t.visible === "legendonly"))));
 
 // Geometry.
@@ -169,12 +170,19 @@ check("the trusted arc sweeps one short piece of the orbit (60-120 deg for a ~6.
 
 const markers = T.filter(t => t.showlegend === false && t.marker && t.marker.symbol === "cross");
 // The assembler's own orbit info marker (render_orbits.py) is a plain
-// cross; the renderer's and this module's carry the red border. (The
-// fixture predates the served outline flags; the L-317 check below reads
-// the live config.)
+// cross; the renderer's and this module's carry a border.
+// 2026-09-14: this leg used to assert the border was ALWAYS red, and it
+// passed only because the fixture predated the served outline flags. With
+// the fixture synced to the config it would fail on the three white
+// interior shells and the white inner belt, which are correct. So the leg
+// now asserts what is actually required -- a served border, red or white,
+// and a hover -- and the L-317 leg below keeps saying WHICH are white.
 const ours = markers.filter(t => t.name !== "Moon osculating orbit info");
-check("every renderer/geometry info marker is a cross with a red border and hover text",
-      ours.every(t => t.marker.line && t.marker.line.color === "red" && t.text && t.text[0].length > 20));
+check("every renderer/geometry info marker is a cross with a served border and hover text",
+      ours.every(t => t.marker.line &&
+                      (t.marker.line.color === "red" || t.marker.line.color === "white") &&
+                      t.text && t.text[0].length > 20),
+      ours.map(t => (t.marker.line || {}).color).join(", "));
 // L-317: the orrery's two-standards outline, served per shell. The same
 // scene composed with Earth's rows from the LIVE data/objects_config.json
 // (the renderer receives served rows verbatim): exactly the saturated warm
@@ -210,6 +218,69 @@ check("every hover with km also gives AU",
       markers.every(t => !/\bkm\b/.test(t.text[0]) || /AU/.test(t.text[0])));
 check("no hover line exceeds 90 characters",
       markers.every(t => t.text[0].split("<br>").every(l => l.length <= 90)));
+// --- L-305 item 5: the two magnetosphere surfaces ------------------------
+// Both are figures of revolution about the Sun line. Every leg below is
+// computed from the traces, not from the code that made them.
+const sunU = (() => { const v = payload.sun.dir; const m = Math.hypot(...v); return v.map(c => c / m); })();
+const along = p => p[0]*sunU[0] + p[1]*sunU[1] + p[2]*sunU[2];
+const across = p => { const a = along(p); return Math.hypot(p[0]-a*sunU[0], p[1]-a*sunU[1], p[2]-a*sunU[2]); };
+const magParams = earthParams.earth_magnetosphere;
+
+[["Earth: Magnetopause", magParams.magnetopause, 120],
+ ["Earth: Bow Shock", magParams.bow_shock, 105]].forEach(([label, row, wantCut]) => {
+  const surf = groups[label].find(t => t.hoverinfo === "skip");
+  const pts = surf.x.map((_, i) => [surf.x[i], surf.y[i], surf.z[i]]);
+  const nose = pts.reduce((a, b) => along(a) > along(b) ? a : b);
+  const standoffAu = row.standoff.value * R_E_KM / K;
+  check(label + ": the nose sits on the served standoff",
+        Math.abs(along(nose) - standoffAu) / standoffAu < 2e-3 && across(nose) < standoffAu * 1e-9,
+        (along(nose) / (R_E_KM / K)).toFixed(3) + " R_E vs served " + row.standoff.value);
+  const maxAng = Math.max(...pts.map(p => deg(Math.atan2(across(p), along(p)))));
+  check(label + ": drawn out to its served cut angle and no further",
+        Math.abs(maxAng - wantCut) < 0.5 && wantCut === row.surface.cut_angle.value,
+        maxAng.toFixed(2) + " deg, served " + row.surface.cut_angle.value);
+  // A revolution about the Sun line: at any along-distance the across-distance
+  // is one value. Tilting the surface would break this and nothing else would.
+  const bucket = {};
+  pts.forEach(p => { const k = along(p).toExponential(6); (bucket[k] = bucket[k] || []).push(across(p)); });
+  const worst = Math.max(...Object.values(bucket).map(v => (Math.max(...v) - Math.min(...v)) / (Math.max(...v) || 1)));
+  check(label + ": a true surface of revolution about the Sun line, no tilt", worst < 1e-9, worst.toExponential(2));
+  const mk = groups[label].find(t => t.marker && t.marker.symbol === "cross");
+  check(label + ": its one info marker lies ON the surface",
+        Math.min(...pts.map(p => Math.hypot(p[0]-mk.x[0], p[1]-mk.y[0], p[2]-mk.z[0]))) < standoffAu * 0.05);
+  check(label + ": the hover says the cut is a drawing limit, not an edge",
+        /DRAWING LIMIT, not an edge/.test(mk.text[0]));
+});
+
+// --- L-231: the belts sit in the equatorial plane and are flat ----------
+["Earth: Inner Radiation Belt", "Earth: Outer Radiation Belt"].forEach(label => {
+  const belt = groups[label].find(t => t.hoverinfo === "skip");
+  const n = normal(belt);
+  check(label + ": shares a plane with the equator and the GEO ring",
+        angleDeg(n, normal(equator)) < 0.05 && angleDeg(n, normal(geo)) < 0.05,
+        angleDeg(n, normal(equator)).toFixed(4) + " deg from the equator");
+  // L-231: the saddle warp lifted the ring a fifth of its radius twice per
+  // circuit. Flat in its own plane is the whole point of removing it.
+  const off = Math.max(...belt.x.map((_, i) =>
+    Math.abs(n[0]*belt.x[i] + n[1]*belt.y[i] + n[2]*belt.z[i])));
+  const rad = Math.max(...belt.x.map((_, i) => Math.hypot(belt.x[i], belt.y[i], belt.z[i])));
+  check(label + ": flat in that plane -- no saddle warp", off / rad < 1e-9,
+        (off / rad).toExponential(2) + " of its radius out of plane");
+  const mk = groups[label].find(t => t.marker && t.marker.symbol === "cross");
+  check(label + ": the hover names the drawn width as a drawing choice",
+        /drawing choice and not the belt's width/.test(mk.text[0]));
+  check(label + ": the hover gives the sourced span from the served edges",
+        /Sourced span: \d/.test(mk.text[0]), mk.text[0].indexOf("Sourced span") >= 0);
+  // L-231: the tilt is quoted only because the store carries it and it is
+  // served. The epoch rides with it because the tilt drifts.
+  check(label + ": the hover quotes the served magnetic tilt with its model and epoch",
+        /tilted 9\.6 degrees from it \(IGRF-13, epoch<br>2020-2025\)/.test(mk.text[0]));
+  check(label + ": the hover does NOT claim the ring is drawn at the magnetic equator",
+        !/rings? (is|are) drawn/.test(mk.text[0]) &&
+        /equatorial plane/.test(mk.text[0]) &&
+        /daily average/.test(mk.text[0]));
+});
+
 check("every geometry trace skips hover (lines, dots and cones alike)",
       T.filter(t => t.showlegend === true || t.type === "cone" || (t.mode === "markers" && t.showlegend === false && !t.text))
         .every(t => t.hoverinfo === "skip"));
