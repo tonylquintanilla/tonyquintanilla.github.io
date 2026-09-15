@@ -102,12 +102,18 @@
                "rgb(100, 200, 255)"],
       opacity: 0.3
     },
-    earth: { opacity: 0.2 }
+    // MODE-5 KNOB (2026-09-14): 0.2 read as very faint against the dark
+    // scene once the belts were the thing being looked at.
+    earth: { opacity: 0.45 }
   };
 
   var SHELL_MARKER_SIZE = { atmosphere: 2.5, upper_atmosphere: 2.0 };
   var RING_MARKER_SIZE = 1.5;
-  var BELT_MARKER_SIZE = 1.5;
+  // MODE-5 KNOBS (2026-09-14). BELT_MARKER_SIZE is the dot size of the belt
+  // rings themselves; BELT_MARKER_DEG is how far round the first ring the
+  // info marker sits, in degrees, keeping it clear of the +x axis line.
+  var BELT_MARKER_SIZE = 2.2;
+  var BELT_MARKER_DEG = 10;
 
   // --- Small helpers ------------------------------------------------------
 
@@ -489,19 +495,31 @@
     var distances, names, colors;
     var sources = [];
     var notes = [];
+    var units = [];
     // L-291: a belt distance may be a measured entry {value, unit
     // "R_earth", source, orrery_constant} (Earth) or a bare number in
     // planet radii (Jupiter, unchanged). Read either; carry the source.
+    // L-305 item 7 (2026-09-14): "l_shell" is accepted too, and the
+    // identification is deliberate rather than lenient. L is the McIlwain
+    // parameter: it labels a whole magnetic shell, and it equals geocentric
+    // distance in planet radii exactly where that shell crosses the magnetic
+    // equator. These rings are drawn in that plane, so an L value may be
+    // drawn at that radius -- and the hover says which it was given.
+    // Refusing it silently dropped BOTH Earth belts on 2026-09-14, because
+    // the pair test below needs two numbers.
     function beltDistance(node, label) {
       if (typeof node === "number") return node;
       if (isDict(node) && typeof node.value === "number") {
-        if (node.unit !== "R_earth" && node.unit !== undefined) {
+        if (node.unit !== "R_earth" && node.unit !== "l_shell" &&
+            node.unit !== undefined) {
           warn(slug + "/" + featureKey + "/" + label + ": unit is " +
-               JSON.stringify(node.unit) + ", expected \"R_earth\" -- not drawn");
+               JSON.stringify(node.unit) +
+               ", expected \"R_earth\" or \"l_shell\" -- not drawn");
           return null;
         }
         sources.push(node.source || null);
         notes.push(node.note || null);
+        units.push(node.unit || "R_earth");
         return node.value;
       }
       return null;
@@ -549,9 +567,18 @@
       if (beltBeyond) built.trace.visible = "legendonly";
       traces.push(built.trace);
 
+      // L-305 item 7 (2026-09-14): a belt served in L is a shell label, not
+      // a distance, and the ring is drawn where that shell crosses the
+      // magnetic equator -- the one plane where the two numbers agree. Say
+      // that rather than printing it as a centre distance.
       var hover = label + "<br><br>" +
-        "Centre distance: " + distances[i].toFixed(1) + " " + bodyName +
-        " radii<br>" +
+        (units[i] === "l_shell"
+          ? "Drawn at L = " + distances[i].toFixed(1) +
+            ", where that shell crosses the magnetic equator<br>" +
+            "= " + distances[i].toFixed(1) + " " + bodyName +
+            " radii from centre there<br>"
+          : "Centre distance: " + distances[i].toFixed(1) + " " + bodyName +
+            " radii<br>") +
         "= " + kmAndAu(distances[i] * radiusKm) + "<br>" +
         "Band thickness: " + thickness.toFixed(1) + " radii<br>" +
         "Trapped-particle region; band is illustrative in shape.";
@@ -563,7 +590,14 @@
       if (notes[i]) {
         hover += "<br>" + wrapHover(notes[i]);
       }
-      var beltMarker = infoMarker(built.x[0], built.y[0], built.z[0],
+      // L-305 item 7 (2026-09-14), Mode 5: the marker sat at point zero of
+      // the first ring, which is exactly on the +x axis, where it collided
+      // with the axis line. Move it round by a declared angle instead. The
+      // index is computed from n_points so the angle holds if the ring
+      // sampling changes. MODE-5 KNOB: raise or lower BELT_MARKER_DEG.
+      var markerIdx = Math.round(nPoints * (BELT_MARKER_DEG / 360)) % nPoints;
+      var beltMarker = infoMarker(built.x[markerIdx], built.y[markerIdx],
+                                  built.z[markerIdx],
                                   color, hover, label,
                                   Array.isArray(params.info_borders)
                                     ? params.info_borders[i] : undefined);
