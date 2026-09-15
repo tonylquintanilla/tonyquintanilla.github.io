@@ -654,7 +654,7 @@
         bodyName + " once a day; this plane is the daily average.<br>" +
         "Trapped-particle region; the band's shape is illustrative.";
       if (sources[i]) {
-        hover += "<br><br>" + wrapHover("Source: " + sources[i]);
+        hover += "<br><br>" + wrapHover("Source: " + sourceHead(sources[i]));
       }
       // L-291 step 3: the served note travels too. Earth's belts are flux
       // PEAKS, not edges, and the hover is where that has to be said.
@@ -1109,6 +1109,22 @@
    * `info_urls` (a list, used by Earth's belts). Neither present: no
    * meta, and the page says so in words.
    */
+  /*
+   * The head of a served source string: everything before the first " -- ",
+   * which is the house separator between a citation and the explanation of
+   * what was taken from it. L-231 follow-up, 2026-09-15: hovers had grown to
+   * 27 and 32 lines on a phone against a house ceiling of about 14, and the
+   * biggest single block was a citation the information panel was already
+   * showing in full. So the HOVER carries the citation's head and the PANEL
+   * carries the whole thing -- it rides in meta either way, unchanged.
+   * A string with no " -- " is returned as it stands.
+   */
+  function sourceHead(src) {
+    if (typeof src !== "string") return src;
+    var cut = src.indexOf(" -- ");
+    return (cut > 0) ? src.slice(0, cut) : src;
+  }
+
   function stampLink(traceList, cfg) {
     var meta = null;
     if (typeof cfg.info_url === "string" && cfg.info_url) {
@@ -1121,6 +1137,13 @@
     if (typeof cfg.source === "string" && cfg.source) {
       meta = meta || {};
       meta.source = cfg.source;
+    }
+    // L-231 follow-up (2026-09-15): longer reference prose -- the model's
+    // own equations, say -- rides here for the i-panel and stays OUT of the
+    // hover, which has a phone-sized budget the panel does not.
+    if (typeof cfg.detail === "string" && cfg.detail) {
+      meta = meta || {};
+      meta.detail = cfg.detail;
     }
     if (meta) {
       for (var i = 0; i < traceList.length; i++) {
@@ -1167,7 +1190,7 @@
     hover += "= " + kmAndAu(radiusAu * KM_PER_AU) + "<br>" +
              "A ring in the equatorial plane, not a sphere: satellites here<br>" +
              "keep pace with Earth's turning and hang over one longitude.";
-    if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + cfg.source);
+    if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + sourceHead(cfg.source));
     if (cfg.note) hover += "<br>" + wrapHover(cfg.note);
     // Info marker on the ring itself, at the ascending node (index 0):
     // the equatorial plane is clear of the shells' polar markers.
@@ -1293,7 +1316,7 @@
         }
       }
       hover += "= " + kmAndAu(radiusAu * KM_PER_AU);
-      if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + cfg.source);
+      if (cfg.source) hover += "<br><br>" + wrapHover("Source: " + sourceHead(cfg.source));
       if (cfg.note) hover += "<br>" + wrapHover(cfg.note);
       var marker = infoMarker(mx, my, mz, color, hover, label, cfg.info_border);
       if (beyondFrame) {
@@ -1526,8 +1549,7 @@
         "the paper<br>plots its own model. A DRAWING LIMIT, not an edge: " +
         "this<br>surface has no end, it widens without bound down the tail." +
         "<br>Not tilted: the fit is symmetric about the Sun line.";
-      if (mpS._model) mpHover += "<br><br>" + wrapHover(mpS._model);
-      if (mp.source) mpHover += "<br><br>" + wrapHover("Source: " + mp.source);
+      if (mp.source) mpHover += "<br><br>" + wrapHover("Source: " + sourceHead(mp.source));
       if (mp.note) mpHover += "<br>" + wrapHover(mp.note);
 
       var mpMk = magMarkerPoint(function (th) {
@@ -1540,7 +1562,8 @@
       if (mpBeyond) mpMarker.visible = "legendonly";
       traces.push(mpMarker);
       stampLink([mpBuilt.trace, mpMarker],
-                { info_url: mp.info_url, source: mp.source });
+                { info_url: mp.info_url, source: mp.source,
+                  detail: mpS._model });
     }
 
     // --- Bow shock, Jelinek et al. (2012) ---------------------------------
@@ -1585,11 +1608,12 @@
         "Drawn to " + bsCut.toFixed(0) + " deg from the nose, which is how " +
         "far round<br>the crossings the fit was made from actually reached." +
         "<br>A DRAWING LIMIT, not an edge.<br>" +
-        "Ends wider and shorter than the magnetopause here -- that is<br>" +
-        "two papers' drawing limits, not a fact about the two boundaries." +
-        "<br>Not tilted: the fit is symmetric about the Sun line.";
-      if (bsS._model) bsHover += "<br><br>" + wrapHover(bsS._model);
-      if (bs.source) bsHover += "<br><br>" + wrapHover("Source: " + bs.source);
+        // The three-line comparison with the magnetopause used to sit here.
+        // It is a remark rather than a figure and the hover has a
+        // phone-sized budget, so it moved to the served note, which the
+        // i-panel shows in full.
+        "Not tilted: the fit is symmetric about the Sun line.";
+      if (bs.source) bsHover += "<br><br>" + wrapHover("Source: " + sourceHead(bs.source));
       if (bs.note) bsHover += "<br>" + wrapHover(bs.note);
 
       var bsMk = magMarkerPoint(function (th) {
@@ -1603,7 +1627,8 @@
       if (bsBeyond) bsMarker.visible = "legendonly";
       traces.push(bsMarker);
       stampLink([bsBuilt.trace, bsMarker],
-                { info_url: bs.info_url, source: bs.source });
+                { info_url: bs.info_url, source: bs.source,
+                  detail: bsS._model });
 
       if (bsStand !== null && Math.abs(bsStand - S) > 0.02) {
         warn(where + "/bow_shock: the served standoff is " +

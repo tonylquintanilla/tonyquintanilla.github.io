@@ -2690,6 +2690,7 @@ function buildSunDrawer(traces) {
                 color: sunSwatchColor(t),
                 link: sunLinkOf(t),
                 source: (t.meta && typeof t.meta.source === "string") ? t.meta.source : null,
+                detail: (t.meta && typeof t.meta.detail === "string") ? t.meta.detail : null,
                 indices: [],
                 shown: t.visible !== SUN_HIDDEN && t.visible !== false,
             };
@@ -2701,6 +2702,7 @@ function buildSunDrawer(traces) {
             byName[g].color = sunSwatchColor(t);
             byName[g].link = sunLinkOf(t) || byName[g].link;
             if (t.meta && typeof t.meta.source === "string") { byName[g].source = t.meta.source; }
+            if (t.meta && typeof t.meta.detail === "string") { byName[g].detail = t.meta.detail; }
         }
     }
 
@@ -2882,6 +2884,15 @@ function renderSunInfo(grp) {
         src.className = "info-focus-empty";
         src.textContent = "Source: " + grp.source;
         box.appendChild(src);
+    }
+    // L-231 follow-up (2026-09-15): longer reference prose -- a model's own
+    // equations, say -- rides in meta.detail and is shown HERE rather than
+    // in the hover. The hover has a phone-sized budget; this panel scrolls.
+    if (grp.detail) {
+        const det = document.createElement("div");
+        det.className = "info-focus-empty";
+        det.textContent = grp.detail;
+        box.appendChild(det);
     }
 }
 

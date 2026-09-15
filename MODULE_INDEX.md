@@ -10,29 +10,25 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 34  
-**Total Lines of Code (non-blank):** 16,557  
-**Total Public Functions/Classes:** 185
+**Total Python Files:** 32  
+**Total Lines of Code (non-blank):** 15,675  
+**Total Public Functions/Classes:** 182
 
 ## Classification Coverage
 
-**Undetermined role (7).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (5).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `patch_L231_belt_plane_gallery.py`
-- `patch_L231_serve_and_quote_tilt.py`
-- `patch_L305_item5_fixture_sync.py`
-- `patch_L305_item5_magnetosphere_render.py`
-- `patch_L305_item6b_served_surface_rows.py`
+- `patch_L231_hover_budget_checker.py`
+- `patch_L231_hover_length.py`
+- `patch_L305_item5_feature_pin.py`
 - `patch_L305_l_shell_scalar_unit.py`
 - `sweep_collapsed_features.py`
 
-**Undetermined domain (7).** No valid `Domain:` tag.
+**Undetermined domain (5).** No valid `Domain:` tag.
 
-- `patch_L231_belt_plane_gallery.py`
-- `patch_L231_serve_and_quote_tilt.py`
-- `patch_L305_item5_fixture_sync.py`
-- `patch_L305_item5_magnetosphere_render.py`
-- `patch_L305_item6b_served_surface_rows.py`
+- `patch_L231_hover_budget_checker.py`
+- `patch_L231_hover_length.py`
+- `patch_L305_item5_feature_pin.py`
 - `patch_L305_l_shell_scalar_unit.py`
 - `sweep_collapsed_features.py`
 
@@ -103,7 +99,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,073 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (826 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (836 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (847 lines) |
@@ -119,11 +115,9 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `patch_L231_belt_plane_gallery.py` | Draw the radiation belts in Earth's equatorial plane, flat, with an honest hover. (256 lines) |
-| `patch_L231_serve_and_quote_tilt.py` | Serve Earth's dipole tilt to the page and quote it in the belt hover. (189 lines) |
-| `patch_L305_item5_fixture_sync.py` | Sync the scene fixture to the config, and stop a check depending on the drift. (168 lines) |
-| `patch_L305_item5_magnetosphere_render.py` | Draw Earth's magnetopause and bow shock on the web page. (521 lines) |
-| `patch_L305_item6b_served_surface_rows.py` | Serve the shape of the magnetopause and the bow shock. (201 lines) |
+| `patch_L231_hover_budget_checker.py` | Add the hover budget checker: the line-width rule's missing twin. (123 lines) |
+| `patch_L231_hover_length.py` | Shorten the hovers: the citation's head in the hover, the rest in the panel. (197 lines) |
+| `patch_L305_item5_feature_pin.py` | Move the Feature renderers pin: the magnetosphere has a renderer now. (123 lines) |
 | `patch_L305_l_shell_scalar_unit.py` | Register l_shell as a SCALAR unit in the gallery maintenance checker. (90 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 

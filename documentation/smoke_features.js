@@ -108,17 +108,29 @@ check("inner belt sits at ~1.75 Jupiter radii (1.5 + half the 0.5 band)",
 // --- Earth ---------------------------------------------------------------
 const p1 = JSON.parse(fs.readFileSync(path.join(__dirname, "payload_earth.json"), "utf8"));
 const r1 = GF.buildFeatureTraces(p1.features, p1.bodies);
-// L-291: Earth's entry is in the measured shape. Two groups have no renderer
-// yet (earth_geostationary, earth_magnetosphere) and the dispatch must SAY
-// so, by name -- those two warnings are expected and nothing else is.
-// L-291 step 3: the geostationary ring draws now. The magnetosphere stays a
-// NAMED expected absence until L-305 rebuilds it on a sourced model; this
-// pin moves in the same commit as that renderer.
-const expectedWarn = ["earth/earth_magnetosphere"];
-check("earth reports exactly one no-renderer group, the magnetosphere, by name",
+// L-291: Earth's entry is in the measured shape. Two groups had no renderer
+// (earth_geostationary, earth_magnetosphere) and the dispatch had to SAY so
+// by name. Step 3 gave the geostationary ring one. L-305 item 5 gave the
+// magnetosphere one on 2026-09-15, and this pin moves with it, exactly as
+// the comment that used to sit here said it would.
+//
+// What is asserted now is the DEGRADED path, which is what this harness
+// exercises: buildFeatureTraces is called with no opts, so no Sun direction
+// reaches the renderer. The magnetopause and the bow shock are surfaces of
+// revolution about the Sun line, so drawing nothing and saying why is the
+// only honest answer -- a magnetosphere aimed at a fixed axis would be
+// wrong on every day of the year but one and would look plausible. Same
+// family as the missing-pole and missing-planet_radius legs below.
+// The drawn surfaces are checked in smoke_earth_geometry.js, which composes
+// through earth_geometry.js and therefore HAS a Sun direction.
+check("earth's magnetosphere reports the missing Sun direction and draws nothing",
       r1.warnings.length === 1 &&
-      expectedWarn.every(k => r1.warnings.some(w => w.indexOf(k) === 0 && /no renderer/.test(w))),
+      r1.warnings[0].indexOf("earth/earth_magnetosphere") === 0 &&
+      /no Sun direction reached the renderer/.test(r1.warnings[0]),
       r1.warnings.join(" | "));
+check("...and no magnetosphere trace is emitted in that state",
+      r1.traces.every(t => !/Magnetopause|Bow Shock/.test(t.name || "")),
+      r1.traces.filter(t => /Magnetopause|Bow Shock/.test(t.name || "")).length + " emitted");
 const geo1 = r1.traces.filter(t => t.showlegend === true);
 const geoEarth = geo1.filter(t => t.name.indexOf("Earth:") === 0);
 check("5 interior + 2 atmosphere + 1 geocorona + 2 LEO + 1 GEO ring + 2 belts + 1 Hill = 14 Earth geometry traces",

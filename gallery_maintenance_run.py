@@ -172,6 +172,17 @@ OFFLINE_CHECKERS = [
       "gallery/earth_geometry.js"],
      ".", "===", False),
 
+    # L-231 follow-up (2026-09-15): the width rule's missing twin. Its
+    # sibling checks that no hover LINE exceeds 90 characters, and every
+    # line of the 32-line bow shock hover passed that comfortably while the
+    # box ran off the bottom of the phone. This counts the lines, over every
+    # hover in every fixture the other suites carry, and names the worst.
+    # A ratchet: the ceiling may be lowered, never raised. Gates.
+    ("Hover budget", "node",
+     ["documentation/smoke_hover_budget.js", "gallery/feature_renderers.js",
+      "gallery/earth_geometry.js"],
+     ".", "===", False),
+
     # L-237: this used to call the test directly and print FAIL every
     # run, which made a real regression indistinguishable from the known
     # one. The pin runs the same test and compares its five verdicts, and
