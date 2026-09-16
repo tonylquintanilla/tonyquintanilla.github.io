@@ -92,6 +92,10 @@
        (L-316 round 4, Tony's Mode 5: on a portrait phone the arrow cross
         is back in the top-right corner, now that the text box sits
         mid-view; the holder's names no longer name a corner)
+     Updated: September 16, 2026 with Anthropic's Claude Opus 5
+       (L-318 round 6: on a portrait phone a tap can pick only markers
+        that carry text, within 22 px rather than 10, so the finger
+        reaches a shell's info cross instead of its dots)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2193,6 +2197,7 @@ async function initSunExhibit() {
             }
         });
         sunLabelInstall(gd);   // L-318: tap in the scene closes the drawer label
+        sunTapInstall(gd);     // L-318 round 6: a phone tap reaches the marker
 
         // The drawer is built from the traces that were actually
         // plotted, not from the config, so a shell the renderers
@@ -2708,6 +2713,89 @@ function sunLabelIfHidden() {
     return Promise.resolve();
 }
 
+// ====================================================================
+// L-318 round 6 -- A TAP THAT REACHES THE MARKER (Tony, 2026-09-16)
+// ====================================================================
+// On a portrait phone a tap on a shell's info cross often opened nothing.
+// Read from plotly.js 2.35.2: a 3D tap takes the drawn point NEAREST the
+// finger within gl-plot3d's scene.pickRadius (10 px, set by
+// src/plots/gl3d/scene.js; the pick buffer is in screen pixels), from
+// EVERY trace, and only then does scene.js drop a pick whose trace has
+// hoverinfo 'skip'. A shell's text-less dots, packed round its 8-px cross,
+// are usually nearer the finger, so they win and nothing opens.
+// On a portrait phone only (Tony: the mouse is fine on the desktop):
+//   1. a trace with hoverinfo 'skip' draws nothing into the pick buffer,
+//      so only a marker that carries text can be picked;
+//   2. the search widens to SUN_PICK_RADIUS_PX, a ~44-px target.
+// Both reach into Plotly's internals. The page loads a pinned Plotly, and
+// if those internals are not where 2.35.2 keeps them this does nothing --
+// today's behaviour. Plotly builds new WebGL objects when a hidden trace
+// is shown again, so this runs after every plot; turning the phone to
+// landscape restores Plotly's own values.
+// MODE-5 KNOB: SUN_PICK_RADIUS_PX.
+const SUN_PICK_RADIUS_PX = 22;
+let sunTapBound = false;
+function sunNoPick() {}
+function sunTapPicking(gd) {
+    try {
+        const scene = gd && gd._fullLayout && gd._fullLayout.scene
+            && gd._fullLayout.scene._scene;
+        const glplot = scene && scene.glplot;
+        if (!glplot || !scene.traces || typeof glplot.pickRadius !== "number") {
+            return false;
+        }
+        const phone = !!EX && sunPhonePortrait();
+        let changed = false;
+        if (phone) {
+            if (glplot._sunOwnPickRadius === undefined) {
+                glplot._sunOwnPickRadius = glplot.pickRadius;
+            }
+            if (glplot.pickRadius !== SUN_PICK_RADIUS_PX) {
+                glplot.pickRadius = SUN_PICK_RADIUS_PX;
+                changed = true;
+            }
+        } else if (glplot._sunOwnPickRadius !== undefined) {
+            glplot.pickRadius = glplot._sunOwnPickRadius;
+            delete glplot._sunOwnPickRadius;
+            changed = true;
+        }
+        Object.keys(scene.traces).forEach(function (uid) {
+            const tr = scene.traces[uid];
+            if (!tr || typeof tr !== "object") { return; }
+            const skip = !!(tr.data && tr.data.hoverinfo === "skip");
+            Object.keys(tr).forEach(function (prop) {
+                const obj = tr[prop];
+                if (!obj || typeof obj !== "object"
+                        || typeof obj.drawPick !== "function") { return; }
+                if (phone && skip) {
+                    if (!obj._sunOwnDrawPick) {
+                        obj._sunOwnDrawPick = obj.drawPick;
+                        obj.drawPick = sunNoPick;
+                        changed = true;
+                    }
+                } else if (obj._sunOwnDrawPick) {
+                    obj.drawPick = obj._sunOwnDrawPick;
+                    delete obj._sunOwnDrawPick;
+                    changed = true;
+                }
+            });
+        });
+        // A changed pick pass must be redrawn before the next tap.
+        if (changed && typeof glplot.update === "function") { glplot.update({}); }
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+// Once, after newPlot: re-apply after every plot, and now.
+function sunTapInstall(gd) {
+    if (!gd || sunTapBound || typeof gd.on !== "function") { return; }
+    sunTapBound = true;
+    gd.on("plotly_afterplot", function () { sunTapPicking(gd); });
+    sunTapPicking(gd);
+}
+
 // Once, after newPlot. A tap in the scene closes the label; a drag (a
 // rotation) re-anchors it instead, as does any relayout -- a camera step,
 // Home, a frame zoom, a rotation of the phone. Both run a tick later, out
@@ -3115,8 +3203,9 @@ function wireSunDrawer() {
     });
 }
 
-// Rotating a phone changes which margins are right and where the arrow
-// cross sits (L-316) -- and nothing else.
+// Rotating a phone changes which margins are right, where the arrow
+// cross sits (L-316) and how a tap picks (L-318 round 6) -- and nothing
+// else.
 let sunResizeTimer = null;
 function onSunResize() {
     if (sunResizeTimer) { clearTimeout(sunResizeTimer); }
@@ -3128,6 +3217,7 @@ function onSunResize() {
             Plotly.relayout(sunPlotDiv, { margin: sunMargins() });
         }
         navPlaceCross();
+        sunTapPicking(sunPlotDiv);
     }, 180);
 }
 
