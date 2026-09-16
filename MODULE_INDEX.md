@@ -10,22 +10,26 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 30  
-**Total Lines of Code (non-blank):** 15,678  
-**Total Public Functions/Classes:** 179
+**Total Python Files:** 32  
+**Total Lines of Code (non-blank):** 16,290  
+**Total Public Functions/Classes:** 183
 
 ## Classification Coverage
 
-**Undetermined role (3).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (5).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `patch_L231_hover_budget_checker.py`
 - `patch_L231_hover_to_panel.py`
+- `patch_L316_3_cross_bottom_left.py`
+- `patch_L318_3_drawer_row_targets.py`
 - `sweep_collapsed_features.py`
 
-**Undetermined domain (3).** No valid `Domain:` tag.
+**Undetermined domain (5).** No valid `Domain:` tag.
 
 - `patch_L231_hover_budget_checker.py`
 - `patch_L231_hover_to_panel.py`
+- `patch_L316_3_cross_bottom_left.py`
+- `patch_L318_3_drawer_row_targets.py`
 - `sweep_collapsed_features.py`
 
 
@@ -113,6 +117,8 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 |--------|-------------|
 | `patch_L231_hover_budget_checker.py` | Add the hover budget checker: the line-width rule's missing twin. (123 lines) |
 | `patch_L231_hover_to_panel.py` | Hover is the glance, the i panel is the record. (413 lines) |
+| `patch_L316_3_cross_bottom_left.py` | On a portrait phone, the arrow cross moves to the bottom-left corner. (346 lines) |
+| `patch_L318_3_drawer_row_targets.py` | The drawer row: a selection target a finger can hit, and no dead taps. (266 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 
 ---

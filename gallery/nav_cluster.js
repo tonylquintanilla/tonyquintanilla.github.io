@@ -39,14 +39,17 @@
  * the container must be position:relative (or fixed/absolute) and is
  * expected to be the plot's own wrapper -- not the page body -- so the
  * buttons sit over the picture and never over a controls panel below
- * it. mount() returns { el, show(), hide(), crossRight(on) }.
+ * it. mount() returns { el, show(), hide(), crossBottomLeft(on) }.
  *
- * crossRight(true) moves the arrow cross -- Home with it -- into its own
- * holder in the top-right corner of the container; crossRight(false)
+ * crossBottomLeft(true) moves the arrow cross -- Home with it -- into its
+ * own holder in the bottom-left corner of the container, 58 px up so it
+ * clears a drawer button along the bottom edge; crossBottomLeft(false)
  * puts it back under + and -, where mount() built it. It returns whether
- * the cross is at the right. The page decides when: the exhibit rooms
- * move it on a portrait phone (L-316). A page with no step handlers has
- * no cross, and crossRight always returns false.
+ * the cross is in that corner. The page decides when: the exhibit rooms
+ * move it on a portrait phone (L-316). A page with no step handlers
+ * has no cross, and crossBottomLeft always returns false.
+ * The holder's class is nav-cross-bottom-left, so a page can hide it
+ * with its own rules (the exhibit rooms do while their drawer is open).
  *
  * Buttons respond to click only. touch-action:manipulation removes the
  * 300 ms tap delay on phones, so no separate touchstart handler is
@@ -62,6 +65,11 @@
  *   (L-316 round 2, Tony's Mode 5: the top centre covered the marker at
  *   the top of whichever shell fills the view, so the holder moves to the
  *   top-right corner; crossTop() is renamed crossRight()).
+ * Module updated September 15, 2026 with Anthropic's Claude Opus 5
+ *   (Tony's Mode 5: at the top right the cross covered the text of a
+ *   hover box that opened over its marker, so the holder moves to the
+ *   bottom-left corner above the drawer; crossRight() is renamed
+ *   crossBottomLeft() and its class nav-cross-bottom-left).
  */
 (function (global) {
     'use strict';
@@ -76,9 +84,9 @@
            drawer owns the bottom, the panel owns the right (desktop) or
            the bottom (portrait), the title is centred: this corner is
            the one nothing else claims, on either room. On a portrait
-           phone the rooms move the arrow cross to the top-right corner,
-           which the hidden mode bar leaves free there (L-316, Tony
-           2026-09-10); + and - stay here. */
+           phone the rooms move the arrow cross out on its own -- to the
+           top right on 2026-09-10 (L-316), to the bottom left above the
+           drawer on 2026-09-15 (Tony's Mode 5) -- and + and - stay here. */
         '    left: 12px;',
         '    top: calc(12px + env(safe-area-inset-top, 0px));',
         '    z-index: 6;',
@@ -123,11 +131,14 @@
         '    grid-template-rows: repeat(3, 44px);',
         '    gap: 6px;',
         '}',
-        /* L-316: the cross's holder when the page puts it at the right. */
-        '.nav-cross-right {',
+        /* The cross's holder when the page moves it out on its own.
+           Bottom left, 58 px up: the height the exhibit rooms already use
+           for the frame HUD in the opposite corner, clear of the drawer
+           button that runs along the bottom edge (2026-09-15). */
+        '.nav-cross-bottom-left {',
         '    position: absolute;',
-        '    right: calc(12px + env(safe-area-inset-right, 0px));',
-        '    top: calc(12px + env(safe-area-inset-top, 0px));',
+        '    left: calc(12px + env(safe-area-inset-left, 0px));',
+        '    bottom: calc(58px + env(safe-area-inset-bottom, 0px));',
         '    z-index: 6;',
         '}'
     ].join('\n');
@@ -217,32 +228,33 @@
         }
         container.appendChild(el);
 
-        /* L-316: the cross moves between the cluster and a top-right
-           holder. Moving the element keeps its buttons and handlers;
-           putting it back appends it as the cluster's last child, which
-           is where it was built, so the corner layout is unchanged. */
-        var rightWrap = null;
-        var onRight = false;
+        /* L-316, moved 2026-09-15: the cross moves between the cluster
+           and a bottom-left holder. Moving the element keeps its buttons
+           and handlers; putting it back appends it as the cluster's last
+           child, which is where it was built, so the corner layout is
+           unchanged. */
+        var cornerWrap = null;
+        var inCorner = false;
         var hidden = false;
-        function crossRight(on) {
+        function crossBottomLeft(on) {
             on = !!on;
-            if (!cross || on === onRight) { return onRight; }
+            if (!cross || on === inCorner) { return inCorner; }
             if (on) {
-                if (!rightWrap) {
-                    rightWrap = document.createElement('div');
-                    rightWrap.className = 'nav-cross-right';
-                    rightWrap.setAttribute('role', 'group');
-                    rightWrap.setAttribute('aria-label', 'Turn the view');
-                    container.appendChild(rightWrap);
+                if (!cornerWrap) {
+                    cornerWrap = document.createElement('div');
+                    cornerWrap.className = 'nav-cross-bottom-left';
+                    cornerWrap.setAttribute('role', 'group');
+                    cornerWrap.setAttribute('aria-label', 'Turn the view');
+                    container.appendChild(cornerWrap);
                 }
-                rightWrap.appendChild(cross);
-                rightWrap.style.display = hidden ? 'none' : '';
+                cornerWrap.appendChild(cross);
+                cornerWrap.style.display = hidden ? 'none' : '';
             } else {
                 el.appendChild(cross);
-                rightWrap.style.display = 'none';
+                cornerWrap.style.display = 'none';
             }
-            onRight = on;
-            return onRight;
+            inCorner = on;
+            return inCorner;
         }
 
         return {
@@ -250,14 +262,14 @@
             show: function () {
                 hidden = false;
                 el.style.display = '';
-                if (rightWrap && onRight) { rightWrap.style.display = ''; }
+                if (cornerWrap && inCorner) { cornerWrap.style.display = ''; }
             },
             hide: function () {
                 hidden = true;
                 el.style.display = 'none';
-                if (rightWrap) { rightWrap.style.display = 'none'; }
+                if (cornerWrap) { cornerWrap.style.display = 'none'; }
             },
-            crossRight: crossRight
+            crossBottomLeft: crossBottomLeft
         };
     }
 
