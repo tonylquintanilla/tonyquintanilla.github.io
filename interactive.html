@@ -84,6 +84,10 @@
      Updated: September 15, 2026 with Anthropic's Claude Opus 5
        (L-318 round 4: the label rejoins soft line breaks before it
         wraps, so a phone box no longer breaks every desktop line again)
+     Updated: September 15, 2026 with Anthropic's Claude Opus 5
+       (L-318 round 5: on a portrait phone the drawer's text box has no
+        arrow and sits in the middle of the view; the desktop keeps its
+        arrowed label)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2057,8 +2061,13 @@ function sunMargins() {
 // or less, the width at which the page also hides the mode bar (the
 // @media rule and displayModeBar both use 768). Desktop and landscape
 // keep the cross under + and -. The Explorer's cross never moves.
-function sunCrossBottomLeft() {
+// L-318 round 5 (2026-09-15): the test has its own name so the drawer's
+// text box can use it too, and the two cannot drift apart.
+function sunPhonePortrait() {
     return window.innerHeight > window.innerWidth && window.innerWidth <= 768;
+}
+function sunCrossBottomLeft() {
+    return sunPhonePortrait();
 }
 function navPlaceCross() {
     if (navCluster && typeof navCluster.crossBottomLeft === "function") {
@@ -2497,14 +2506,27 @@ function sunLiveCamera(gd) {
 // Tapping a marker is unchanged: its own hover box, and the camera frames
 // its shell.
 //
+// AMENDED 2026-09-15, L-318 round 5, Tony's Mode 5: ON A PORTRAIT PHONE
+// the label has no arrow and is not placed beside its marker. Tied to the
+// marker, a tall box ran off the side or the bottom of the screen, and for
+// some views Plotly drew no arrow; beside its marker a box held about 16
+// lines. On the phone it is a PAGE-LEVEL annotation centred in the view
+// instead, where 22 lines or more fit. It opens and closes as above, and
+// its border keeps the shell's colour. The desktop, and a phone held
+// landscape, keep the scene label with its arrow (Tony: leave the desktop
+// as it is). "Phone" is sunPhonePortrait(), the arrow cross's own test.
+//
 // Every label update also sends the LIVE camera. Plotly's 3D replot
 // re-applies the camera stored in the layout (scene.js setViewport, read
 // at plotly.js v2.35.2), and a touch rotation never updates that copy --
 // without this, opening a label would snap a turned view back.
 //
-// MODE-5 KNOBS: wrap width, arrow length, font size, and what counts as a
-// tap rather than a drag.
+// MODE-5 KNOBS: wrap width, arrow length, font size, what counts as a
+// tap rather than a drag, and where the phone's box sits (its centre, as a
+// fraction of the view's width and height).
 const SUN_LABEL_WRAP_CHARS = 34;
+const SUN_LABEL_PHONE_X = 0.5;
+const SUN_LABEL_PHONE_Y = 0.5;
 const SUN_LABEL_OFFSET_PX = 36;
 const SUN_LABEL_FONT_PX = 12;
 const SUN_LABEL_TAP_PX = 10;
@@ -2590,8 +2612,13 @@ function sunLabelSide(gd, m) {
 }
 
 // Send the label (or none) with the live camera, so the view stays put.
-function sunLabelRelayout(annotations) {
-    const upd = { "scene.annotations": annotations };
+// L-318 round 5: the label is a scene annotation (desktop, with its arrow)
+// or a page-level one (phone, no arrow). Whichever form is not in use is
+// sent EMPTY, so turning the phone with a box open never leaves a stale
+// copy of the other. The rooms' layouts carry no page-level annotations of
+// their own, so the label may replace that list outright.
+function sunLabelRelayout(sceneAnns, pageAnns) {
+    const upd = { "scene.annotations": sceneAnns, "annotations": pageAnns };
     const cam = sunLiveCamera(sunPlotDiv);
     if (cam && cam.eye) { upd["scene.camera"] = cam; }
     return Plotly.relayout(sunPlotDiv, upd);
@@ -2613,27 +2640,50 @@ function sunLabelRefresh() {
     if (sunLabelGroup < 0 || !sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
     const grp = sunGroups[sunLabelGroup], m = sunLabelMarker(sunLabelGroup);
     if (!grp || !grp.shown || !m) { return sunLabelClose(); }
-    const side = sunLabelSide(sunPlotDiv, m);
-    const key = sunLabelGroup + ":" + side.ax + ":" + side.ay;
+    const phone = sunPhonePortrait();
+    const side = phone ? null : sunLabelSide(sunPlotDiv, m);
+    const key = sunLabelGroup + ":" +
+        (phone ? "phone" : side.ax + ":" + side.ay);
     if (key === sunLabelApplied) { return Promise.resolve(); }
     sunLabelApplied = key;
     const color = grp.color || "rgb(200, 200, 200)";
+    const box = {
+        text: sunLabelWrap(m.text[0], SUN_LABEL_WRAP_CHARS),
+        align: "left", bgcolor: "rgba(17, 24, 39, 0.95)",
+        bordercolor: color, borderwidth: 1, borderpad: 6,
+        font: { size: SUN_LABEL_FONT_PX, color: "#e6edf3" },
+        captureevents: false
+    };
+    if (phone) {
+        // L-318 round 5: no arrow, centred in the view, independent of the
+        // marker and the camera.
+        box.xref = "paper";
+        box.yref = "paper";
+        box.x = SUN_LABEL_PHONE_X;
+        box.y = SUN_LABEL_PHONE_Y;
+        box.xanchor = "center";
+        box.yanchor = "middle";
+        box.showarrow = false;
+        return sunLabelRelayout([], [box]);
+    }
     // The arrow takes the marker's outline colour -- red, or white on the
     // saturated warm shells (the two-standards rule) -- not the shell's: a
     // shell-coloured arrow is lost against the shell's own dots (Tony's
     // Mode 5, 2026-09-10). The box border keeps the shell's colour, which
     // ties the text to the shell.
     const arrowColor = (m.marker && m.marker.line && m.marker.line.color) || "red";
-    return sunLabelRelayout([{
-        x: m.x[0], y: m.y[0], z: m.z[0],
-        text: sunLabelWrap(m.text[0], SUN_LABEL_WRAP_CHARS),
-        showarrow: true, arrowcolor: arrowColor, arrowwidth: 1.5, arrowhead: 0,
-        ax: side.ax, ay: side.ay, xanchor: side.xanchor, yanchor: side.yanchor,
-        align: "left", bgcolor: "rgba(17, 24, 39, 0.95)",
-        bordercolor: color, borderwidth: 1, borderpad: 6,
-        font: { size: SUN_LABEL_FONT_PX, color: "#e6edf3" },
-        captureevents: false
-    }]);
+    box.x = m.x[0];
+    box.y = m.y[0];
+    box.z = m.z[0];
+    box.showarrow = true;
+    box.arrowcolor = arrowColor;
+    box.arrowwidth = 1.5;
+    box.arrowhead = 0;
+    box.ax = side.ax;
+    box.ay = side.ay;
+    box.xanchor = side.xanchor;
+    box.yanchor = side.yanchor;
+    return sunLabelRelayout([box], []);
 }
 
 function sunLabelClose() {
@@ -2641,7 +2691,7 @@ function sunLabelClose() {
     sunLabelGroup = -1;
     sunLabelApplied = "";
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
-    return sunLabelRelayout([]);
+    return sunLabelRelayout([], []);
 }
 
 function sunLabelIfHidden() {
