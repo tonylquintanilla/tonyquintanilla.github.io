@@ -96,6 +96,11 @@
        (L-318 round 6: on a portrait phone a tap can pick only markers
         that carry text, within 22 px rather than 10, so the finger
         reaches a shell's info cross instead of its dots)
+     Updated: September 16, 2026 with Anthropic's Claude Opus 5
+       (L-331: both rooms' info text stops saying a shell's source is in
+        its hover -- it has been in this panel since 2026-09-15 -- and
+        Earth's stops saying the magnetosphere is not drawn; the drawer
+        sentences say what a tap does since L-318 round 3)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1421,22 +1426,22 @@ const SUN_INFO_HTML = [
     "<div class=\"info-focus\" id=\"sun-info-focus\"></div>",
     "<h3>The Sun</h3>",
     "<p>The Sun's shells, drawn from measured radii held in the orrery's",
-    " own constant store. Each shell carries its source in its hover",
-    " text, so you can see where every number came from.</p>",
+    " own constant store. Name a shell and its source appears above, so",
+    " you can see where every number came from.</p>",
     "<p>This view spans a quarter of an astronomical unit &mdash; the core",
     " out through the outer corona, with the streamer belt in frame.",
     " Shells larger than that are listed in the drawer at the foot of",
-    " the screen rather than dropped. Tap one and it draws; the view",
-    " rescales to hold it.</p>",
-    "<p>Some of what you see is a drawing choice rather than a",
-    " measurement &mdash; the streamer belt's warp, the clumping of the",
+    " the screen rather than dropped. Tick one and it draws; tap its",
+    " name and the view moves to hold it.</p>",
+    "<p>Some of what you see is drawn to show a shape rather than",
+    " measured &mdash; the streamer belt's warp, the clumping of the",
     " Oort cloud, the thinning at the galactic plane. Nobody has measured",
-    " those. Where that is so, the hover text says so.</p>",
+    " those, and where that is so, the text says so.</p>",
     "<p>The computation runs in your browser via <strong>Pyodide</strong>,",
     " using the same Python the desktop orrery uses. No server.</p>",
     "<div class=\"info-note\">Part of Paloma's Orrery &mdash; named for the",
     " inventor's daughter. The shell radii are drawn from the published",
-    " sources named in each hover. This scene renders no orbit, so it",
+    " sources named in this panel. This scene renders no orbit, so it",
     " uses no ephemeris; exhibits with orbiting bodies carry orbital",
     " elements from JPL Horizons and credit them there.</div>"
 ].join("");
@@ -1552,28 +1557,30 @@ const EARTH_INFO_HTML = [
     "<h3>Earth</h3>",
     "<p>Earth's shells, from the inner core out to the Hill sphere,",
     " drawn from measured radii held in the orrery's own constant store.",
-    " Each shell carries its source in its hover text and in the line",
-    " under its link above, so you can see where every number came",
-    " from.</p>",
+    " Name a shell and its source appears in the line under its link",
+    " above, so you can see where every number came from.</p>",
     "<p>You arrive inside the atmosphere's reach: the interior, the two",
     " atmosphere shells and low Earth orbit, with the rotation axis and",
     " the direction to the Sun. The geostationary ring, the radiation",
-    " belts, the geocorona, the Hill sphere, the day-night line and the",
-    " Moon wait in the drawer at the foot of the screen. Tap one and it",
-    " draws; the view rescales to hold it.</p>",
+    " belts, the magnetopause and bow shock, the geocorona, the Hill",
+    " sphere, the day-night line and the Moon wait in the drawer at the",
+    " foot of the screen. Tick one and it draws; tap its name and the",
+    " view moves to hold it.</p>",
     "<p>This scene is one moment &mdash; the date in the Sun Direction's hover. The",
     " Sun direction, the day-night line and the Moon's place are for that",
     " moment; the axis is the line Earth turns about, but the turning is",
     " not shown. The Moon's orbit is drawn twice: a faint full ellipse,",
     " and a brighter arc where this page's propagation is trusted.</p>",
-    "<p>The magnetosphere is not drawn yet. The shape the orrery draws",
-    " was never sourced, and this gallery does not draw a number it",
-    " cannot cite; it returns when it has a published model behind it.</p>",
+    "<p>The magnetopause and the bow shock are drawn from published",
+    " models &mdash; Shue and others (1998) and Jelinek and others (2012)",
+    " &mdash; for quiet solar wind, with every number they need held in",
+    " the orrery's store. The radiation belts sit in Earth's equatorial",
+    " plane, the daily average of the tilted magnetic equator they follow.</p>",
     "<p>The computation runs in your browser via <strong>Pyodide</strong>,",
     " using the same Python the desktop orrery uses. No server.</p>",
     "<div class=\"info-note\">Part of Paloma's Orrery &mdash; named for the",
     " inventor's daughter. Shell radii from the published sources named in",
-    " each hover. Earth's and the Moon's places come from JPL Horizons",
+    " this panel. Earth's and the Moon's places come from JPL Horizons",
     " osculating elements in the served cache, propagated to the date",
     " shown.</div>"
 ].join("");

@@ -44,6 +44,16 @@
 // got in. Given interactive.html as a third file, it measures each label
 // the way the page wraps it, with the page's own function.
 //
+// THE SUN ROOM (L-331, 2026-09-16). This suite built the Earth room,
+// Earth's features and the two ringed planets, and never the Sun -- so its
+// "every hover points at the i panel" leg passed while four Sun hovers
+// (the streamer belt, the Hills torus, the Oort clumps, the galactic tide)
+// still carried their citations and no pointer line. A checker passes on
+// what it does not look at. The Sun is built below the way
+// smoke_sun_shells.js builds it, straight from data/objects_config.json,
+// which is the served store rather than a fixture and so cannot go stale
+// the way the Earth fixtures can (L-231 follow-up, 2026-09-15).
+//
 // Exit code 0 on pass, 1 on failure, the same as its siblings.
 
 "use strict";
@@ -139,6 +149,25 @@ collect("earth features", GF.buildFeatureTraces(
 
 const js = fixture("payload_jupiter_saturn.json");
 collect("jupiter+saturn", GF.buildFeatureTraces(js.features, js.bodies).traces);
+
+// 3. The Sun room, from the served store (L-331). The scene half-range is
+//    Artifact 1's 1.1 AU, as smoke_sun_shells.js uses; the Oort shapes
+//    then arrive visible:"legendonly", which changes nothing about their
+//    hover text.
+const cfgSun = JSON.parse(fs.readFileSync(
+    path.join(__dirname, "..", "data", "objects_config.json"), "utf8"));
+const sunObj = cfgSun.objects.find(o => o.slug === "sun");
+if (sunObj && sunObj.features) {
+    const sunFeatures = Object.keys(sunObj.features).map(k =>
+        ({object: "sun", feature: k, params: sunObj.features[k]}));
+    const sunBodies = {sun: {name: "Sun", position: [0, 0, 0]}};
+    collect("sun room", GF.buildFeatureTraces(
+        sunFeatures, sunBodies, {sceneHalfRangeAu: 1.1}).traces);
+} else {
+    console.log("  FAIL  data/objects_config.json has no sun object with " +
+                "features; the Sun room was not measured");
+    failures++;
+}
 
 // ---- the report ------------------------------------------------------
 hovers.sort((a, b) => b.lines - a.lines);

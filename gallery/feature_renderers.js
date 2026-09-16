@@ -39,6 +39,12 @@
  *   (L-318 round 4: a line break inside a sentence is SOFT_BR, "<br soft>",
  *   so the phone's label can rejoin it before wrapping at its own width;
  *   exported for earth_geometry.js and the page).
+ * Module updated: September 16, 2026 with Anthropic's Claude Opus 5
+ *   (L-331: the Sun's four custom shapes -- streamer belt, Hills torus,
+ *   Oort clumps, galactic tide -- send their citations to the i panel
+ *   through withGatheredSource() and end their hovers with the pointer
+ *   line like every other hover; each carries its caveat in plain words.
+ *   Their served notes reach the panel for the first time).
  */
 
 (function (global) {
@@ -862,6 +868,59 @@
     return out;
   }
 
+  /*
+   * VISITOR_WORDING -- L-331 (Tony, 2026-09-16: "In general we should
+   * avoid compressed language in the hovertext"). The hover is the glance
+   * a visitor reads; project words like "declared", "served" and "drawing
+   * choice" mean nothing to them. These four sentences replace citations
+   * that moved to the i panel and say, in plain words, what is drawn and
+   * what is not measured. Each is one hover's caveat, kept beside its
+   * number. Reworded hovers go to Tony before they ship; edit here.
+   */
+  var STREAMER_CAVEAT =
+    "Its warp and width are drawn to show the shape, not measured.";
+  var HILLS_CAVEAT =
+    "Drawn flattened toward the ecliptic, as the inner cloud is" + SOFT_BR +
+    "thought to be; the thickness is chosen for the picture.";
+  var CLUMPS_CAVEAT =
+    "Drawn in clumps to show the cloud is not smooth; where the" + SOFT_BR +
+    "clumps really are is not known.";
+  // The Galactic Tide's distance is a point chosen for the illustration;
+  // fmtAu() supplies "50,000 AU (7.48e+12 km)" from the served value.
+  function tideCaveat(rr) {
+    return "Drawn at " + fmtAu(rr) + ": a point chosen for the picture," +
+      SOFT_BR + "midway between the Hills cloud and the cloud's outer edge.<br>" +
+      "It is not a measured distance.";
+  }
+
+  /*
+   * L-331 (2026-09-16). A shell set's `source` sits at the top of its
+   * config and stampLink() reads it there. The Sun's custom shapes keep
+   * their citations on their MEASURED FIELDS instead -- cusp_radius,
+   * fade_radius, inner_radius, outer_radius, typical_radius -- which is
+   * why those four hovers were carrying them and the i panel was not.
+   * Gather them into one string, labelled the way the hover used to
+   * label them, on a shallow copy of the config that stampLink() can read
+   * like any other feature's. The panel's Source line is plain text, so
+   * the parts are joined with "; " rather than a break.
+   */
+  function withGatheredSource(cfg, fields) {
+    var parts = [];
+    for (var i = 0; i < fields.length; i++) {
+      var f = cfg[fields[i][0]];
+      if (isDict(f) && typeof f.source === "string" && f.source) {
+        parts.push(fields[i][1] + ": " + f.source);
+      }
+    }
+    if (!parts.length) return cfg;
+    var copy = {};
+    for (var k in cfg) {
+      if (Object.prototype.hasOwnProperty.call(cfg, k)) copy[k] = cfg[k];
+    }
+    copy.source = parts.join("; ");
+    return copy;
+  }
+
   function renderStreamerBand(slug, bodyName, cfg, where, center, basis,
                               starRadiusKm, warn) {
     if (typeof starRadiusKm !== "number") {
@@ -915,13 +974,12 @@
       "Cusp: " + cuspR + " solar radii<br>= " +
       kmAndAu(cuspR * starRadiusKm) + "<br>" +
       "Fades to nothing by: " + fadeR + " solar radii<br>= " +
-      kmAndAu(fadeR * starRadiusKm);
-    if (cfg.cusp_radius.source) {
-      hover += "<br><br>" + wrapHover("Cusp: " + cfg.cusp_radius.source);
-    }
-    if (cfg.fade_radius.source) {
-      hover += "<br><br>" + wrapHover("Fade: " + cfg.fade_radius.source);
-    }
+      kmAndAu(fadeR * starRadiusKm) + "<br>" +
+      STREAMER_CAVEAT;
+    // L-331 (2026-09-16): the two citations that sat here reach the i
+    // panel through withGatheredSource() at the dispatcher; the hover
+    // ends with the pointer line like every other hover has since L-231.
+    hover = withTail(hover);
     traces.push(infoMarker(center[0] + m[0], center[1] + m[1],
                            center[2] + m[2],
                            cfg.color || "rgb(255, 200, 80)", hover, label,
@@ -1078,23 +1136,21 @@
       pts = (shape === "torus") ? torusPoints(lo, hi, d)
                                 : clumpFieldPoints(lo, hi, d);
       marker = [hi * 1.02, 0, 0];
-      hover += "From " + fmtAu(lo) + " to " + fmtAu(hi) + "<br>";
-      if (cfg.inner_radius.source) {
-        hover += "<br>" + wrapHover("Inner: " + cfg.inner_radius.source);
-      }
-      if (cfg.outer_radius.source) {
-        hover += "<br>" + wrapHover("Outer: " + cfg.outer_radius.source);
-      }
+      hover += "From " + fmtAu(lo) + " to " + fmtAu(hi) + "<br>" +
+        (shape === "torus" ? HILLS_CAVEAT : CLUMPS_CAVEAT);
     } else {
       var rr = measuredAu(cfg.typical_radius, where + "/typical_radius", warn);
       if (rr === null) return [];
       pts = tideFieldPoints(rr, d);
       marker = [rr * 1.02, 0, 0];
-      hover += "Typical distance " + fmtAu(rr) + "<br>";
-      if (cfg.typical_radius.source) {
-        hover += "<br>" + wrapHover(cfg.typical_radius.source);
-      }
+      hover += tideCaveat(rr);
     }
+    // L-331 (2026-09-16): the citations that sat in these hovers reach the
+    // i panel through withGatheredSource() at the dispatcher, and the
+    // served notes (flattening, clumping, the plane thinning) with them --
+    // those notes had been read by nothing. The hover ends with the
+    // pointer line like every other hover has since L-231.
+    hover = withTail(hover);
     var color = cfg.color || "rgb(200, 200, 255)";
     return [
       cloudTrace(pts.x, pts.y, pts.z, center, label, color,
@@ -1263,7 +1319,9 @@
         if (cfg.shape === "streamer_band") {
           traces = traces.concat(stampLink(renderStreamerBand(
             slug, bodyName, cfg, where + "/" + key, center, basis,
-            starRadiusKm, warn), cfg));
+            starRadiusKm, warn),
+            withGatheredSource(cfg, [["cusp_radius", "Cusp"],
+                                     ["fade_radius", "Fade"]])));
           drawn += 1;
         } else if (cfg.shape === "equatorial_ring") {
           var ringTraces = renderEquatorialRing(
@@ -1291,7 +1349,10 @@
               oortTraces[oi].visible = "legendonly";
             }
           }
-          traces = traces.concat(stampLink(oortTraces, cfg));
+          traces = traces.concat(stampLink(oortTraces,
+            withGatheredSource(cfg, [["inner_radius", "Inner edge"],
+                                     ["outer_radius", "Outer edge"],
+                                     ["typical_radius", "Distance"]])));
           drawn += 1;
         } else {
           warn(where + "/" + key + ": unknown shape " +
