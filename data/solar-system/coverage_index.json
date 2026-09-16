@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-09-16T17:55:35.469731+00:00",
+  "generated": "2026-09-16T21:09:06.918949+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2460976.7051943196,
-    "end_jd": 2461623.788682294
+    "start_jd": 2460976.839586093,
+    "end_jd": 2461623.9230740676
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -40,6 +40,8 @@
               "value": 0.2,
               "unit": "R_sun"
             },
+            "description": "The Sun's center, where hydrogen fuses into helium and the Sun's light and heat are made.",
+            "about": "The core reaches out to about a quarter of the Sun's radius and holds about a third of its mass. It is the hottest place in the solar system, near 15 million kelvin, and about 150 times denser than water under the weight of the layers above. Hydrogen nuclei fuse into helium there in the proton-proton chain, turning a little mass into a great deal of energy, which then works its way outward through the radiative zone and the convection zone to the surface.",
             "info_url": "https://en.wikipedia.org/wiki/Solar_core",
             "color": "rgb(70, 130, 180)",
             "opacity": 1.0,
@@ -54,6 +56,8 @@
               "value": 0.713,
               "unit": "R_sun"
             },
+            "description": "The deep layer around the core where energy crawls outward as light, absorbed and re-emitted countless times.",
+            "about": "The radiative zone lies between the core and the convection zone, from about a fifth to about seven tenths of the Sun's radius. It is dense and opaque: a photon made in the core travels only a short distance before it is absorbed and sent on again, so its energy can take millions of years to cross this layer. Temperatures fall from about 7 million kelvin near the core to about 2 million at the top of the zone.",
             "info_url": "https://en.wikipedia.org/wiki/Radiative_zone",
             "color": "rgb(30, 144, 255)",
             "opacity": 1.0,
@@ -68,6 +72,8 @@
               "value": 1.0,
               "unit": "R_sun"
             },
+            "description": "The Sun's visible surface: the thin, glowing layer that the light we see comes from.",
+            "about": "Below the photosphere, in the convection zone, hot gas rises, cools and sinks, carrying energy the last stretch to the surface. At the photosphere, a layer only about 500 km thick, that energy leaves as light, at about 5,500 kelvin. To the eye it is a smooth disk; up close it shows granulation, the tops of the convection cells, and sunspots, cooler patches held by strong magnetic fields that can be larger than Earth.",
             "info_url": "https://en.wikipedia.org/wiki/Photosphere",
             "color": "rgb(255, 244, 214)",
             "opacity": 1.0,
@@ -87,6 +93,8 @@
           "streamer_belt": {
             "name": "Streamer Belt (helmet and stalk)",
             "shape": "streamer_band",
+            "description": "The brightest part of the Sun's outer atmosphere, seen at a total eclipse as the pearly white halo, shaped by the Sun's magnetic field.",
+            "about": "A streamer is two things stacked. The helmet, a dome of closed magnetic loops, rises only a few solar radii. Above its cusp the field opens and the solar wind draws the gas out into a long thin stalk. The band drawn here is one object with both parts: wide and dense at the base, pinched at the cusp, then thinning until it dissolves into the solar wind. It has no drawn outer edge because there is no edge: what the eye sees at an eclipse is a boundary of brightness, not a surface.",
             "info_url": "https://en.wikipedia.org/wiki/Helmet_streamer",
             "color": "rgb(255, 200, 80)",
             "cusp_radius": {
@@ -130,6 +138,8 @@
               "value": 1.002874802357338,
               "unit": "R_sun"
             },
+            "description": "A thin, reddish layer of the Sun's atmosphere just above the visible surface, about 2,000 km deep.",
+            "about": "The chromosphere sits between the photosphere and the corona and takes its name from the Greek word for color, because the hydrogen in it glows red. It is far less dense than the surface, and its temperature rises with height, from a few thousand kelvin at the bottom to about 20,000 at the top. It is never still: jets of gas called spicules rise and fall like geysers, and cooler prominences hang in it, held up by magnetic fields.",
             "info_url": "https://en.wikipedia.org/wiki/Chromosphere",
             "color": "rgb(30, 144, 255)",
             "opacity": 0.5,
@@ -145,6 +155,8 @@
               "value": 3,
               "unit": "R_sun"
             },
+            "description": "The lowest part of the Sun's outer atmosphere: a thin gas at millions of degrees, shaped by the Sun's magnetic field.",
+            "about": "The inner corona is the part of the corona nearest the surface. It is thin, far thinner than the photosphere, and yet at one to three million kelvin it is much hotter, a puzzle known as the coronal heating problem. The magnetic field rules it: closed loops trap glowing gas in bright arcs, open regions called coronal holes let gas escape as the solar wind, and streamers reach outward. Because it is so faint it is seen directly only at a total eclipse or with special instruments.",
             "info_url": "https://en.wikipedia.org/wiki/Solar_corona",
             "color": "rgb(0, 0, 255)",
             "opacity": 0.45,
@@ -159,6 +171,8 @@
               "value": 3.45,
               "unit": "R_sun"
             },
+            "description": "The distance inside which the Sun's tides would pull a loosely held comet apart.",
+            "about": "Inside the Roche limit the difference in the Sun's pull across a body outweighs the body's own gravity. The limit drawn here is for a comet held together only by its own gravity, at a typical comet density. It is not a hard wall: the strength of the ice and rock can hold a nucleus together well inside it, and several sungrazing comets have survived far closer than this line before breaking up or escaping.",
             "info_url": "https://en.wikipedia.org/wiki/Roche_limit",
             "color": "rgb(200, 60, 60)",
             "info_border": "white",
@@ -174,6 +188,8 @@
               "value": 19.7,
               "unit": "R_sun"
             },
+            "description": "The true outer edge of the Sun's atmosphere, where the outflowing gas becomes the solar wind and can no longer signal back to the Sun.",
+            "about": "Inside the Alfven surface the gas is tied to the Sun by its magnetic field, and a disturbance there can travel back to the surface. Outside it the gas moves faster than magnetic waves can carry a signal inward, so it is on its own, and is called the solar wind. NASA's Parker Solar Probe crossed this boundary in April 2021, the first spacecraft to fly inside the corona. The surface is not a smooth sphere: it is lower over the poles and higher over the streamer belt.",
             "info_url": "https://svs.gsfc.nasa.gov/14036",
             "color": "rgb(0, 200, 200)",
             "opacity": 0.35,
@@ -188,6 +204,8 @@
               "value": 50,
               "unit": "R_sun"
             },
+            "description": "The faint outer reach of the Sun's atmosphere, where sunlight scattered by dust gives a soft glow far beyond the streamers.",
+            "about": "At this distance the corona is extremely thin. Sunlight scattered by dust, the F-corona, outshines the light scattered by electrons that dominates nearer the Sun. By here the gas has long since become the solar wind; the shell marks the extent of the faint glow rather than a physical edge.",
             "info_url": "https://en.wikipedia.org/wiki/Solar_corona",
             "color": "rgb(25, 25, 112)",
             "opacity": 0.5,
@@ -210,6 +228,8 @@
               "value": 94,
               "unit": "au"
             },
+            "description": "The place far beyond the planets where the solar wind slows suddenly from supersonic speed as it meets the gas between the stars.",
+            "about": "The solar wind streams outward at supersonic speed until the pressure of the interstellar gas brings it up short. At the termination shock it slows abruptly, and its energy of motion becomes heat. Voyager 1 crossed it at 94 AU and Voyager 2 at 84 AU; beyond it the wind moves at a few hundred kilometers a second through the turbulent region called the heliosheath.",
             "info_url": "https://en.wikipedia.org/wiki/Heliosphere",
             "color": "rgb(240, 244, 255)",
             "opacity": 0.4,
@@ -224,6 +244,8 @@
               "value": 26148,
               "unit": "R_sun"
             },
+            "description": "The outer boundary of the Sun's bubble, where the solar wind's push is balanced by the gas between the stars.",
+            "about": "The solar wind, a constant stream of charged particles from the Sun, inflates a vast bubble called the heliosphere around the Sun and planets. The bubble is not round: the Sun's motion through interstellar gas gives it a rounded head and a long tail. The heliopause is its outermost boundary, where the wind's pressure equals the pressure of the interstellar medium, and it shields the planets from much of the galaxy's cosmic radiation.",
             "info_url": "https://en.wikipedia.org/wiki/Heliosphere",
             "color": "rgb(135, 206, 250)",
             "opacity": 0.4,
@@ -243,6 +265,8 @@
           "hills_cloud_torus": {
             "name": "Hills Cloud (torus)",
             "shape": "torus",
+            "description": "The inner part of the Oort cloud: a thick, flattened ring of icy bodies far beyond the planets, the reservoir that feeds the comets.",
+            "about": "The Oort cloud is a vast, unseen swarm of icy bodies surrounding the solar system, thought to be the source of the long-period comets. Its inner part, the Hills cloud, is more tightly bound to the Sun than the outer cloud and, in dynamical models, is flattened into a disk-like or doughnut shape by the pull of the galaxy. Nobody has seen it directly; its existence is inferred from the orbits of comets and from distant objects such as Sedna, which may belong to it.",
             "info_url": "https://en.wikipedia.org/wiki/Hills_cloud",
             "color": "rgb(180, 160, 255)",
             "inner_radius": {
@@ -272,6 +296,8 @@
           "outer_oort_clumpy": {
             "name": "Outer Oort Cloud (clumps)",
             "shape": "clump_field",
+            "description": "The outer Oort cloud: a rough sphere of icy bodies at the very edge of the Sun's reach, drawn here as clumps.",
+            "about": "The outer Oort cloud is a roughly spherical shell of icy bodies, cometary nuclei of water ice, ammonia and methane, reaching out to about a light-year and a half from the Sun. Objects here are only loosely held, so passing stars and the galaxy's tide can nudge them inward as long-period comets, the ones that take more than two centuries to circle the Sun. Simulations suggest the cloud is lumpy rather than smooth, which is what the clumps show; where any real lump lies is not known.",
             "info_url": "https://science.nasa.gov/solar-system/oort-cloud/",
             "color": "rgb(200, 200, 255)",
             "inner_radius": {
@@ -304,6 +330,8 @@
           "galactic_tide": {
             "name": "Galactic Tide (thinned at the plane)",
             "shape": "tide_field",
+            "description": "How the Milky Way's gravity shapes the Oort cloud: its bodies drawn thinned out near the plane of the galaxy.",
+            "about": "The Sun sits inside the Milky Way, and the galaxy's gravity pulls differently on the near and far sides of the Oort cloud. Over millions of years that tide sculpts the cloud, thinning it in some directions and thickening it in others, and it is one of the forces that send outer Oort cloud comets falling toward the Sun. The drawing shows the idea rather than a map: the cloud has never been imaged.",
             "info_url": "https://en.wikipedia.org/wiki/Galactic_tide",
             "color": "rgb(140, 200, 200)",
             "typical_radius": {
@@ -331,6 +359,8 @@
               "value": 2000,
               "unit": "au"
             },
+            "description": "The inner edge of the Oort cloud, where the swarm of icy bodies is thought to begin.",
+            "about": "The Oort cloud is a vast shell of icy bodies surrounding the solar system, believed to be the source of the long-period comets. This sphere marks where its inner part, the Hills cloud, begins; between it and the Kuiper belt lies a sparse gap in which distant objects such as Sedna travel.",
             "info_url": "https://en.wikipedia.org/wiki/Hills_cloud",
             "color": "rgb(255, 255, 255)",
             "opacity": 0.35,
@@ -345,6 +375,8 @@
               "value": 20000,
               "unit": "au"
             },
+            "description": "The outer edge of the inner Oort cloud, where the flattened inner swarm gives way to the spherical outer cloud.",
+            "about": "The inner Oort cloud, or Hills cloud, is the more tightly bound part of the cloud, an intermediate zone between the Kuiper belt and the outer cloud. This sphere marks its outer limit. The cloud is made mostly of cometary nuclei, small icy bodies of water ice, ammonia and methane, and no one has observed it directly.",
             "info_url": "https://en.wikipedia.org/wiki/Hills_cloud",
             "color": "rgb(255, 255, 255)",
             "opacity": 0.35,
@@ -359,6 +391,8 @@
               "value": 100000,
               "unit": "au"
             },
+            "description": "The outer edge of the Oort cloud, about a light-year and a half from the Sun, where the Sun's realm gives way to the space between the stars.",
+            "about": "At this distance the outer Oort cloud fades out. It is the usual mark for the boundary between the solar system and interstellar space by gravity, far beyond the heliopause where the solar wind stops. Objects here are loosely bound and easily disturbed by passing stars; the long-period comets come from this region.",
             "info_url": "https://science.nasa.gov/solar-system/oort-cloud/",
             "color": "rgb(255, 255, 255)",
             "opacity": 0.3,
@@ -390,6 +424,8 @@
               "value": 150000,
               "unit": "au"
             },
+            "description": "The outer limit of the Sun's gravitational hold: how far out a body can still belong to the Sun rather than to the galaxy.",
+            "about": "The solar system's extent can be defined in more than one way. The heliopause marks where the solar wind ends, but the Sun's gravity reaches much farther, holding Sedna, the Hills cloud and the outer Oort cloud. Astronomers count these as part of the solar system even though the Oort cloud has never been observed directly. This sphere is the outer limit of that gravitational influence.",
             "info_url": "https://en.wikipedia.org/wiki/Hill_sphere",
             "color": "rgb(102, 187, 106)",
             "opacity": 0.3,
@@ -432,7 +468,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461299.5,
-          "retrieved": "2026-09-16T17:55:33.478245+00:00"
+          "retrieved": "2026-09-16T21:09:05.745473+00:00"
         }
       },
       "positions": null,
@@ -441,6 +477,8 @@
         "earth_interior": {
           "inner_core": {
             "name": "Inner Core",
+            "description": "A solid ball of iron and nickel at Earth's center, nearly at its melting point despite the crushing pressure.",
+            "about": "Temperatures near 5,400 degrees Celsius keep the inner core close to melting even under the weight of the whole planet. It turns slightly faster than the rest of Earth, which adds complexity to the magnetic field generated in the liquid layer above it.",
             "radius": {
               "value": 1221.5,
               "unit": "km"
@@ -455,6 +493,8 @@
           },
           "outer_core": {
             "name": "Outer Core",
+            "description": "A liquid layer of iron and nickel whose churning currents generate Earth's magnetic field.",
+            "about": "The outer core is molten iron and nickel with lighter elements mixed in, at 4,500 to 5,400 degrees Celsius. Convection in this conducting fluid acts as a dynamo, the geodynamo, and produces the magnetic field that reaches out into space to form the magnetosphere.",
             "radius": {
               "value": 3480.0,
               "unit": "km"
@@ -470,6 +510,8 @@
           },
           "lower_mantle": {
             "name": "Lower Mantle",
+            "description": "The deep layer of hot, solid rock between the core and the upper mantle, flowing very slowly over millions of years.",
+            "about": "The lower mantle is solid silicate rock rich in iron and magnesium, at 2,200 to 4,500 degrees Celsius and under enormous pressure. Although solid, it creeps slowly by convection, and that slow flow is what drives the plates at the surface.",
             "radius": {
               "value": 5711.0,
               "unit": "km"
@@ -485,6 +527,8 @@
           },
           "upper_mantle": {
             "name": "Upper Mantle",
+            "description": "The rock beneath the crust, including the partly molten layer where most magma is born and on which the plates slide.",
+            "about": "The upper mantle includes the asthenosphere, a partly molten layer that flows more readily than the mantle below it, letting the tectonic plates move. It reaches from the base of the crust down to the top of the lower mantle, with temperatures from about 500 to 2,200 degrees Celsius.",
             "radius": {
               "value": 6346.6,
               "unit": "km"
@@ -500,6 +544,8 @@
           },
           "crust": {
             "name": "Crust",
+            "description": "Earth's thin, solid outer skin: the ground we live on, the ocean floors, and everything that has ever lived.",
+            "about": "The crust is thin compared with the planet: 5 to 10 km under the oceans, where it is mostly basalt, and 30 to 50 km under the continents, where it is mostly granite. Surface temperatures range from about minus 80 to 60 degrees Celsius. It holds all known life and every resource we can reach.",
             "radius": {
               "value": 1.0,
               "unit": "R_earth"
@@ -523,6 +569,8 @@
         "earth_atmosphere": {
           "lower_atmosphere": {
             "name": "Lower Atmosphere (to the stratopause)",
+            "description": "The air where weather happens and the ozone layer sits: the troposphere and stratosphere, holding nearly all the atmosphere's mass.",
+            "about": "The troposphere, the lowest 12 km or so, is where clouds and weather form; above it the stratosphere, to about 50 km, holds the ozone layer. Together they contain 99 percent of the atmosphere's mass, mostly nitrogen and oxygen. Temperature falls from about 15 degrees Celsius at sea level to minus 60 at the top of the troposphere, then warms again toward the stratopause as ozone absorbs sunlight.",
             "radius": {
               "value": 1.0078392802060714,
               "unit": "R_earth"
@@ -538,6 +586,8 @@
           },
           "upper_atmosphere": {
             "name": "Upper Atmosphere (to the thermopause)",
+            "description": "The thin upper air where meteors burn up, the aurora glows, and the Space Station orbits, fading toward space.",
+            "about": "Above 50 km lie the mesosphere, where most meteors burn up, the thermosphere, where the aurora appears and the International Space Station flies, and, higher still, the beginning of the exosphere. In the thermosphere the gas can reach 2,000 degrees Celsius, yet it is so thin it would feel cold to the skin.",
             "radius": {
               "value": 1.0940713624728577,
               "unit": "R_earth"
@@ -561,6 +611,8 @@
         "earth_exosphere": {
           "geocorona": {
             "name": "Exosphere / Geocorona (hydrogen halo, detected extent)",
+            "description": "A faint halo of hydrogen gas that surrounds Earth and thins out far into space, the outermost trace of the atmosphere.",
+            "about": "The exosphere has no top: it simply thins into space. Its hydrogen glows faintly in ultraviolet light, a halo called the geocorona. This shell is drawn where that glow has been detected, not where the atmosphere ends.",
             "radius": {
               "value": 100.0,
               "unit": "R_earth"
@@ -584,6 +636,8 @@
         "earth_orbital_zones": {
           "leo_inner": {
             "name": "Low Earth Orbit, inner edge (200 km)",
+            "description": "The lower edge of low Earth orbit, the band of space where most satellites and the Space Station fly.",
+            "about": "Low Earth orbit is the region from roughly 200 to 2,000 km up. Satellites there circle at every angle to the equator, so together they form a shell around Earth rather than a ring, and each completes an orbit in about 90 to 120 minutes. The International Space Station, the Hubble Space Telescope, Starlink and most weather and Earth-observing satellites live here; the moving lights seen at dusk and dawn are usually these.",
             "radius": {
               "value": 1.031357120824286,
               "unit": "R_earth"
@@ -598,6 +652,8 @@
           },
           "leo_outer": {
             "name": "Low Earth Orbit, outer edge (2,000 km)",
+            "description": "The upper edge of low Earth orbit, about 2,000 km up, above which the sky belongs to higher orbits.",
+            "about": "Low Earth orbit is the region from roughly 200 to 2,000 km up. Satellites there circle at every angle to the equator, so together they form a shell around Earth rather than a ring, and each completes an orbit in about 90 to 120 minutes. The International Space Station, the Hubble Space Telescope, Starlink and most weather and Earth-observing satellites live here; the moving lights seen at dusk and dawn are usually these.",
             "radius": {
               "value": 1.313571208242859,
               "unit": "R_earth"
@@ -620,6 +676,8 @@
         "earth_geostationary": {
           "geostationary_ring": {
             "name": "Geostationary Belt (GEO)",
+            "description": "A ring of satellites 35,786 km above the equator that circle exactly as fast as Earth turns, so each hangs over one spot.",
+            "about": "Satellites in the geostationary belt orbit once a day, matching Earth's rotation, and so stay fixed over a point on the equator. Several hundred of them carry television, weather imagery and communications for much of the world. In April 2029 the asteroid Apophis will pass inside this ring, a few thousand kilometers below the nearest satellites.",
             "shape": "equatorial_ring",
             "radius": {
               "value": 6.610735325291913,
@@ -645,6 +703,8 @@
           "_comment": "The orrery emits magnetopause, bow shock, inner belt and outer belt from ONE call. Served as four rows: the two standoffs here, the two belts in van_allen_belts. Renderer for the standoff shapes is step 3.",
           "magnetopause": {
             "name": "Magnetopause",
+            "description": "The outer boundary of Earth's magnetic field, where it holds off the solar wind: pressed in by day, trailing a long tail by night.",
+            "about": "Earth's magnetic field carves a cavity in the solar wind called the magnetosphere. On the side facing the Sun the wind presses it in; on the night side it stretches into a magnetotail observed far beyond the Moon's distance. The magnetopause is that boundary. It deflects the solar wind and turns aside many of the charged particles that reach Earth from the Sun and from beyond the solar system. The surface drawn is a model for a quiet solar wind; the real boundary moves in and out as the wind's pressure changes.",
             "shape": "magnetopause",
             "surface": {
               "_model": "Shue et al. (1998) eq. 10 with eq. 11. r = r0 [2 / (1 + cos theta)]^alpha, theta measured from the Sun-Earth line, r0 the standoff below. The geometry evaluates alpha = (a6 + a7 Bz)(1 + a8 ln Dp) from the rows here; alpha gets no row of its own because no text on the page prints it. At the declared conditions alpha is 0.59 -- two figures, because a6 is 0.58 +/- 0.01 and that carries straight through.",
@@ -698,6 +758,8 @@
           },
           "bow_shock": {
             "name": "Bow Shock",
+            "description": "The shock wave where the supersonic solar wind first slows as it hits Earth's magnetic field, like the bow wave of a boat.",
+            "about": "The solar wind moves faster than sound travels through the thin gas of space, so when it meets Earth's magnetic field it cannot flow smoothly around it: a standing shock forms upstream, sunward of the magnetopause, where the wind slows and heats. The surface drawn is a model for a quiet solar wind, and real crossings scatter around it.",
             "shape": "bow_shock",
             "surface": {
               "_model": "Jelinek et al. (2012), the paraboloid of eqs. 15-16 parameterised by tau: x = R0 p^(-1/eps) - tau^2 / 2, and the distance from the Sun-Earth line is sqrt(2 R0 p^(-1/eps)) tau / lambda. At tau = 0 this is the standoff below. A different functional form from the magnetopause because it is a different paper's fit, not a variation on Shue.",
@@ -831,6 +893,14 @@
             "Inner Radiation Belt",
             "Outer Radiation Belt"
           ],
+          "descriptions": [
+            "A ring of trapped charged particles, mostly protons, held by Earth's magnetic field close above the atmosphere.",
+            "A broader ring of trapped electrons farther out, that swells and shrinks with solar storms."
+          ],
+          "abouts": [
+            "The inner Van Allen belt is a region of energetic protons trapped by Earth's magnetic field. It follows the magnetic equator, which is tilted from the geographic one and turns with Earth once a day; the ring drawn here lies in the daily average of that plane.",
+            "The outer Van Allen belt is mostly energetic electrons, trapped farther out than the inner belt, and it swells and shrinks as the solar wind changes. Like the inner belt it follows the magnetic equator; the ring drawn is the daily average of that tilted plane."
+          ],
           "info_urls": [
             "https://science.nasa.gov/biological-physical/stories/van-allen-belts/",
             "https://science.nasa.gov/biological-physical/stories/van-allen-belts/"
@@ -846,6 +916,8 @@
         "hill_sphere": {
           "hill_sphere": {
             "name": "Hill Sphere (gravitational dominance over the Sun)",
+            "description": "The region where Earth's gravity, not the Sun's, is the stronger hold; the Moon orbits well inside it.",
+            "about": "Inside the Hill sphere a body can orbit Earth without being pulled away by the Sun. The Moon lies deep within it. Beyond this sphere the Sun's gravity wins, and an object would drift into its own orbit around the Sun.",
             "radius": {
               "value": 234.6388338020614,
               "unit": "R_earth"
@@ -939,7 +1011,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461299.5,
-          "retrieved": "2026-09-16T17:55:33.594272+00:00"
+          "retrieved": "2026-09-16T21:09:05.844533+00:00"
         }
       },
       "positions": null,
@@ -1056,7 +1128,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461299.5,
-          "retrieved": "2026-09-16T17:55:33.941811+00:00"
+          "retrieved": "2026-09-16T21:09:05.936826+00:00"
         }
       },
       "positions": null,
@@ -1165,7 +1237,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461299.5,
-          "retrieved": "2026-09-16T17:55:34.068760+00:00"
+          "retrieved": "2026-09-16T21:09:06.049154+00:00"
         }
       },
       "positions": null,
@@ -1228,7 +1300,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461299.5,
-          "retrieved": "2026-09-16T17:55:34.219319+00:00"
+          "retrieved": "2026-09-16T21:09:06.153141+00:00"
         }
       },
       "positions": null,
@@ -1291,7 +1363,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461299.5,
-          "retrieved": "2026-09-16T17:55:34.362827+00:00"
+          "retrieved": "2026-09-16T21:09:06.247955+00:00"
         }
       },
       "positions": null,
@@ -1354,7 +1426,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461299.5,
-          "retrieved": "2026-09-16T17:55:34.541072+00:00"
+          "retrieved": "2026-09-16T21:09:06.349351+00:00"
         }
       },
       "positions": null,
@@ -1417,7 +1489,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461299.5,
-          "retrieved": "2026-09-16T17:55:34.711959+00:00"
+          "retrieved": "2026-09-16T21:09:06.436088+00:00"
         }
       },
       "positions": null,
@@ -1480,7 +1552,7 @@
           "query_target": "99942",
           "center": "@sun",
           "epoch": 2461299.5,
-          "retrieved": "2026-09-16T17:55:34.921632+00:00"
+          "retrieved": "2026-09-16T21:09:06.531259+00:00"
         }
       },
       "positions": null,
@@ -1577,7 +1649,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460239.895222311,
-          "retrieved": "2026-09-16T17:55:35.198212+00:00"
+          "retrieved": "2026-09-16T21:09:06.685162+00:00"
         }
       },
       "positions": null,
@@ -1645,7 +1717,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-09-16T17:55:35.410665+00:00"
+          "retrieved": "2026-09-16T21:09:06.890085+00:00"
         }
       },
       "positions": null,

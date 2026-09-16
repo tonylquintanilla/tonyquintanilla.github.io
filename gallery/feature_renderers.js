@@ -45,6 +45,12 @@
  *   through withGatheredSource() and end their hovers with the pointer
  *   line like every other hover; each carries its caveat in plain words.
  *   Their served notes reach the panel for the first time).
+ * Module updated: September 16, 2026 with Anthropic's Claude Opus 5
+ *   (L-331, Tony's Mode 5: every Sun and Earth hover opens with the
+ *   served `description` -- what the visitor is looking at, in plain
+ *   words -- under its name, through descLine(); the served `about`
+ *   paragraph rides to the i panel in meta. The belt hovers lose their
+ *   project vocabulary. Rings untouched: no room, no served names).
  */
 
 (function (global) {
@@ -174,6 +180,21 @@
    */
   var HOVER_WIDTH = 70;
   var SOFT_BR = "<br soft>";
+
+  /*
+   * L-331 (2026-09-16), Tony's Mode 5: "it has data but no description of
+   * what we are looking at." Every hover opens with the served
+   * `description`, one or two plain sentences saying what the thing IS,
+   * wrapped like any other hover prose. A feature with none served gets
+   * nothing here rather than a placeholder; the store is where the words
+   * live, so a missing sentence is a store gap and not a rendering one.
+   */
+  function descLine(cfg) {
+    if (isDict(cfg) && typeof cfg.description === "string" && cfg.description) {
+      return wrapHover(cfg.description) + "<br><br>";
+    }
+    return "";
+  }
 
   function wrapHover(text) {
     var words = String(text).split(" ");
@@ -601,6 +622,9 @@
     var declared = BELT_STYLE[slug] || {};
     names = params.names || declared.names || [];
     colors = params.colors || declared.colors || [];
+    // L-331: the belts keep their prose as parallel lists like their names.
+    var descs = Array.isArray(params.descriptions) ? params.descriptions : [];
+    var abouts = Array.isArray(params.abouts) ? params.abouts : [];
     var opacity = (typeof declared.opacity === "number") ? declared.opacity : 0.3;
 
     var thickness = (typeof params.belt_thickness === "number")
@@ -654,29 +678,35 @@
         tilt = measured(params.magnetic_tilt, "deg",
                         slug + "/" + featureKey + "/magnetic_tilt", warn);
       }
-      var hover = label + "<br><br>" +
+      // L-331 (2026-09-16): opens with the served description; "sourced",
+      // "drawing choice" and "illustrative" are gone (Tony: no compressed
+      // language in the hover), and the closing line with them, since the
+      // description says what the belt is. The tilt and the plane stay,
+      // in plain words: the tilt is quoted because it is served (L-231),
+      // and smoke_earth_geometry.js pins both. The L-shell aside is one
+      // line now; that and the width line pay for the description.
+      var hover = label + "<br><br>" + descLine({description: descs[i]}) +
         "Drawn at " + distances[i].toFixed(1) + " " + bodyName +
-        " radii, the sourced flux peak" +
+        " radii, where the measured particle flux peaks" +
         (units[i] === "l_shell"
-          ? SOFT_BR + "(served as L = " + distances[i].toFixed(1) + " -- that is the" +
-            " radius where the L shell" + SOFT_BR +
-            "crosses the magnetic equator)<br>"
+          ? SOFT_BR + "(given as L = " + distances[i].toFixed(1) +
+            ": where that field line crosses the magnetic equator)<br>"
           : "<br>") +
         "= " + kmAndAu(distances[i] * radiusKm) + "<br>" +
         (span
-          ? "Sourced span: " + span[0].toFixed(1) + " to " +
+          ? "Measured extent: " + span[0].toFixed(1) + " to " +
             span[1].toFixed(1) + " " + bodyName + " radii<br>"
           : "") +
-        "Drawn as a band " + thickness.toFixed(1) + " radii wide, which is a" +
-        SOFT_BR + "drawing choice and not the belt's width<br>" +
-        "The ring lies in " + bodyName + "'s equatorial plane. The belts" +
-        " follow the" + SOFT_BR + "magnetic equator, " +
+        "Drawn " + thickness.toFixed(1) + " radii wide, a width chosen for" +
+        " the picture.<br>" +
+        "The ring lies in " + bodyName + "'s equatorial plane, the daily" +
+        " average of the" + SOFT_BR + "magnetic equator, " +
         (tilt === null
-          ? "which is tilted from it and turns with" + SOFT_BR
-          : "tilted " + tilt.toFixed(1) + " degrees from it (IGRF-13," +
-            " epoch" + SOFT_BR + "2020-2025), and turning with ") +
-        bodyName + " once a day; this plane is the daily average.<br>" +
-        "Trapped-particle region; the band's shape is illustrative.";
+          ? "which is tilted from it and turns with " + bodyName +
+            SOFT_BR + "once a day."
+          : "which is tilted " + tilt.toFixed(1) + " degrees from it (IGRF-13," +
+            " epoch" + SOFT_BR + "2020-2025) and turns with " + bodyName +
+            " once a day.");
       // L-231 follow-up (2026-09-15): the citation and the served note
       // both moved to the i panel. Earth's belts are flux PEAKS rather than
       // edges, which is what that note says, and the panel is where it is
@@ -706,6 +736,7 @@
       // with its citation. It says these are flux PEAKS rather than edges,
       // which is the whole point of the row, so it travels to the panel.
       if (notes[i]) linkCfg.note = notes[i];
+      if (typeof abouts[i] === "string" && abouts[i]) linkCfg.about = abouts[i];
       traces.push(beltMarker);
       stampLink([built.trace, beltMarker], linkCfg);
     }
@@ -746,7 +777,7 @@
 
       // Single info marker 5% above the shell radius, INFO_MARKER_OFFSET_DEG
       // off the north pole (L-320).
-      var hover = label + "<br><br>" +
+      var hover = label + "<br><br>" + descLine(cfg) +
         "Radius: " + cfg.radius_fraction.toFixed(2) + " " + bodyName +
         " radii<br>" +
         "= " + kmAndAu(cfg.radius_fraction * radiusKm) + "<br>" +
@@ -970,7 +1001,7 @@
     // pinch is where the eye goes and where the physics is. Deliberately not
     // at a pole: this is a band, and the poles are empty by design.
     var m = applyBasis(basis, cuspR * scale * 1.12, 0, 0);
-    var hover = label + "<br><br>" +
+    var hover = label + "<br><br>" + descLine(cfg) +
       "Cusp: " + cuspR + " solar radii<br>= " +
       kmAndAu(cuspR * starRadiusKm) + "<br>" +
       "Fades to nothing by: " + fadeR + " solar radii<br>= " +
@@ -1128,7 +1159,7 @@
       return [];
     }
     var pts, marker, label = bodyName + ": " + (cfg.name || shape);
-    var hover = label + "<br><br>";
+    var hover = label + "<br><br>" + descLine(cfg);
     if (shape === "torus" || shape === "clump_field") {
       var lo = measuredAu(cfg.inner_radius, where + "/inner_radius", warn);
       var hi = measuredAu(cfg.outer_radius, where + "/outer_radius", warn);
@@ -1227,6 +1258,13 @@
     // it left the hover with the citation. Losing it in the move would have
     // taken the caveats with it -- the magnetopause's "under storm
     // compression it can fall inside geostationary orbit", for one.
+    // L-331 (2026-09-16): the served `about` paragraph -- what the thing
+    // is, condensed from the orrery's own info text -- rides to the panel
+    // and is shown first there, above the link.
+    if (typeof cfg.about === "string" && cfg.about) {
+      meta = meta || {};
+      meta.about = cfg.about;
+    }
     if (typeof cfg.note === "string" && cfg.note) {
       meta = meta || {};
       meta.note = cfg.note;
@@ -1266,7 +1304,7 @@
                        halfRangeAu > 0 && radiusAu > halfRangeAu);
     if (beyondFrame) built.trace.visible = "legendonly";
 
-    var hover = label + "<br><br>";
+    var hover = label + "<br><br>" + descLine(cfg);
     if (cfg.radius.unit === "R_earth") {
       hover += "Radius: " + cfg.radius.value.toFixed(4) + " Earth radii<br>";
       if (typeof starRadiusKm === "number" && cfg.radius.value > 1) {
@@ -1396,7 +1434,7 @@
       var my = center[1];
       var mz = center[2] + radiusAu * 1.05 * Math.cos(polar);
 
-      var hover = label + "<br><br>";
+      var hover = label + "<br><br>" + descLine(cfg);
       if (cfg.radius.unit === "R_sun") {
         hover += "Radius: " + cfg.radius.value + " solar radii<br>";
       } else if (cfg.radius.unit === "R_earth") {
@@ -1628,18 +1666,22 @@
       if (mpBeyond) mpBuilt.trace.visible = "legendonly";
       traces.push(mpBuilt.trace);
 
-      var mpHover = mpLabel + "<br><br>" +
+      // L-331 (2026-09-16): opens with the served description. The flaring
+      // exponent left the hover -- it is model arithmetic, and the panel's
+      // `detail` carries the equations -- and "A DRAWING LIMIT" became a
+      // sentence (Tony: no compressed language in the hover). With the
+      // description on top this hover had reached 18 lines; it is 16.
+      var mpHover = mpLabel + "<br><br>" + descLine(mp) +
         "Sunward standoff: " + r0.toFixed(2) + " Earth radii<br>" +
         "= " + kmAndAu(r0 * radiusKm) + "<br>" +
-        "Shue et al. (1998), at the scene's declared solar wind:<br>" +
+        "Shue et al. (1998), for the solar wind assumed here:<br>" +
         "Bz " + bz.toFixed(1) + " nT, dynamic pressure " + dp.toFixed(1) +
         " nPa<br>" +
-        "Flaring exponent works out to " + alpha.toPrecision(2) + "<br>" +
-        "Drawn to " + mpCut.toFixed(0) + " deg from the nose, the furthest " +
-        "the paper" + SOFT_BR + "plots its own model. A DRAWING LIMIT, not an " +
-        "edge: this" + SOFT_BR +
-        "surface has no end, it widens without bound down the tail." +
-        "<br>Not tilted: the fit is symmetric about the Sun line.";
+        "Drawn to " + mpCut.toFixed(0) + " deg from the nose, as far as the" +
+        " paper" + SOFT_BR + "plots its model. That is where the drawing stops," +
+        " not where" + SOFT_BR +
+        "the surface ends: it widens down the tail without limit.<br>" +
+        "Not tilted: the model is symmetric about the Sun line.";
       mpHover = withTail(mpHover);
 
       var mpMk = magMarkerPoint(function (th) {
@@ -1652,7 +1694,7 @@
       if (mpBeyond) mpMarker.visible = "legendonly";
       traces.push(mpMarker);
       stampLink([mpBuilt.trace, mpMarker],
-                { info_url: mp.info_url, source: mp.source,
+                { info_url: mp.info_url, source: mp.source, about: mp.about,
                   detail: mpS._model, note: mp.note });
     }
 
@@ -1690,7 +1732,7 @@
       if (bsBeyond) bsBuilt.trace.visible = "legendonly";
       traces.push(bsBuilt.trace);
 
-      var bsHover = bsLabel + "<br><br>" +
+      var bsHover = bsLabel + "<br><br>" + descLine(bs) +
         "Sunward standoff: " + S.toFixed(2) + " Earth radii<br>" +
         "= " + kmAndAu(S * radiusKm) + "<br>" +
         "Jelinek et al. (2012), at dynamic pressure " + bsP.toFixed(1) +
@@ -1698,7 +1740,7 @@
         "Drawn to " + bsCut.toFixed(0) + " deg from the nose, which is how " +
         "far round" + SOFT_BR +
         "the crossings the fit was made from actually reached." +
-        "<br>A DRAWING LIMIT, not an edge.<br>" +
+        "<br>That is where the drawing stops, not where the shock ends.<br>" +
         // The three-line comparison with the magnetopause used to sit here.
         // It is a remark rather than a figure and the hover has a
         // phone-sized budget, so it moved to the served note, which the
@@ -1717,7 +1759,7 @@
       if (bsBeyond) bsMarker.visible = "legendonly";
       traces.push(bsMarker);
       stampLink([bsBuilt.trace, bsMarker],
-                { info_url: bs.info_url, source: bs.source,
+                { info_url: bs.info_url, source: bs.source, about: bs.about,
                   detail: bsS._model, note: bs.note });
 
       if (bsStand !== null && Math.abs(bsStand - S) > 0.02) {

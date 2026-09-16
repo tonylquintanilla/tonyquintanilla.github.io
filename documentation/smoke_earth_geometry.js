@@ -256,8 +256,10 @@ const magParams = earthParams.earth_magnetosphere;
   const mk = groups[label].find(t => t.marker && t.marker.symbol === "cross");
   check(label + ": its one info marker lies ON the surface",
         Math.min(...pts.map(p => Math.hypot(p[0]-mk.x[0], p[1]-mk.y[0], p[2]-mk.z[0]))) < standoffAu * 0.05);
-  check(label + ": the hover says the cut is a drawing limit, not an edge",
-        /DRAWING LIMIT, not an edge/.test(mk.text[0]));
+  // L-331 (2026-09-16): same pin, plain words -- "A DRAWING LIMIT, not an
+  // edge" is now a sentence a visitor can read.
+  check(label + ": the hover says the cut is where the drawing stops, not an edge",
+        /where the drawing stops, not where(<br[^>]*>| )the/.test(mk.text[0]));
 });
 
 // --- L-231: the belts sit in the equatorial plane and are flat ----------
@@ -275,10 +277,14 @@ const magParams = earthParams.earth_magnetosphere;
   check(label + ": flat in that plane -- no saddle warp", off / rad < 1e-9,
         (off / rad).toExponential(2) + " of its radius out of plane");
   const mk = groups[label].find(t => t.marker && t.marker.symbol === "cross");
-  check(label + ": the hover names the drawn width as a drawing choice",
-        /drawing choice and not the belt's width/.test(mk.text[0]));
-  check(label + ": the hover gives the sourced span from the served edges",
-        /Sourced span: \d/.test(mk.text[0]), mk.text[0].indexOf("Sourced span") >= 0);
+  // L-331 (2026-09-16): the same two pins, on the plain wording that
+  // replaced "drawing choice" and "Sourced span". The description itself
+  // is measured by smoke_hover_budget.js, which overlays the store; this
+  // suite renders a fixture that predates the field.
+  check(label + ": the hover says the drawn width is chosen for the picture",
+        /a width chosen for the picture/.test(mk.text[0]));
+  check(label + ": the hover gives the measured extent from the served edges",
+        /Measured extent: \d/.test(mk.text[0]), mk.text[0].indexOf("Measured extent") >= 0);
   // L-231: the tilt is quoted only because the store carries it and it is
   // served. The epoch rides with it because the tilt drifts.
   check(label + ": the hover quotes the served magnetic tilt with its model and epoch",

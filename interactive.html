@@ -101,6 +101,10 @@
         its hover -- it has been in this panel since 2026-09-15 -- and
         Earth's stops saying the magnetosphere is not drawn; the drawer
         sentences say what a tap does since L-318 round 3)
+     Updated: September 16, 2026 with Anthropic's Claude Opus 5
+       (L-331, Tony's Mode 5: the i panel opens with the shell's served
+        `about` paragraph -- what it is -- above its link; the drawer
+        reads it off the trace meta like source, detail and note)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2895,6 +2899,7 @@ function buildSunDrawer(traces) {
                 name: t.name || g,
                 color: sunSwatchColor(t),
                 link: sunLinkOf(t),
+                about: (t.meta && typeof t.meta.about === "string") ? t.meta.about : null,
                 source: (t.meta && typeof t.meta.source === "string") ? t.meta.source : null,
                 detail: (t.meta && typeof t.meta.detail === "string") ? t.meta.detail : null,
                 note: (t.meta && typeof t.meta.note === "string") ? t.meta.note : null,
@@ -2908,6 +2913,7 @@ function buildSunDrawer(traces) {
             byName[g].name = t.name || g;
             byName[g].color = sunSwatchColor(t);
             byName[g].link = sunLinkOf(t) || byName[g].link;
+            if (t.meta && typeof t.meta.about === "string") { byName[g].about = t.meta.about; }
             if (t.meta && typeof t.meta.source === "string") { byName[g].source = t.meta.source; }
             if (t.meta && typeof t.meta.detail === "string") { byName[g].detail = t.meta.detail; }
             if (t.meta && typeof t.meta.note === "string") { byName[g].note = t.meta.note; }
@@ -3088,6 +3094,16 @@ function renderSunInfo(grp) {
     head.appendChild(sw);
     head.appendChild(document.createTextNode(grp.name));
     box.appendChild(head);
+
+    // L-331 (2026-09-16): what it is comes first, before where the number
+    // came from. The served `about` paragraph, condensed from the orrery's
+    // own info text; the hover carries its one-sentence `description`.
+    if (grp.about) {
+        const abt = document.createElement("div");
+        abt.className = "info-focus-empty";
+        abt.textContent = grp.about;
+        box.appendChild(abt);
+    }
 
     if (!grp.link) {
         // A blind spot announces. A shell with no link on file says so

@@ -122,11 +122,39 @@ function collect(scene, traces, notOurs) {
     }
 }
 
+// L-331 (2026-09-16). The two Earth fixtures were captured before the
+// store carried `description` and `about`, so on their own they would
+// measure hovers the page no longer shows -- shorter ones. Overlay those
+// two fields (and the belts' two lists) from the served store onto the
+// fixture features by object, feature and shell key, and nothing else:
+// the numbers stay the fixture's. A fixture recaptured later carries the
+// fields itself and the overlay changes nothing.
+const storeObjects = JSON.parse(fs.readFileSync(
+    path.join(__dirname, "..", "data", "objects_config.json"), "utf8")).objects;
+const PROSE = ["description", "about", "descriptions", "abouts"];
+function overlayProse(features) {
+    for (const f of features) {
+        const obj = storeObjects.find(o => o.slug === f.object);
+        const src = obj && obj.features ? obj.features[f.feature] : null;
+        if (!src || !f.params) { continue; }
+        for (const k of PROSE) { if (k in src) { f.params[k] = src[k]; } }
+        for (const key of Object.keys(src)) {
+            const sub = src[key];
+            if (sub && typeof sub === "object" && !Array.isArray(sub) &&
+                f.params[key] && typeof f.params[key] === "object") {
+                for (const k of PROSE) { if (k in sub) { f.params[key][k] = sub[k]; } }
+            }
+        }
+    }
+    return features;
+}
+
 // 1. The Earth room, composed the way the page composes it -- this is the
 //    only path with a Sun direction, so it is the only one where the
 //    magnetopause and bow shock hovers exist at all.
 if (EG) {
     const p = fixture("payload_earth_scene.json");
+    overlayProse(p.features);
     const out = EG.composeScene(p, {
         GF: GF,
         halfRangeAu: 6.155e-5,
@@ -143,9 +171,9 @@ if (EG) {
 
 // 2. The feature renderers on their own, which is what the other fixtures
 //    exercise: Earth's shells and belts, and the two ringed planets.
+const pe = fixture("payload_earth.json");
 collect("earth features", GF.buildFeatureTraces(
-    fixture("payload_earth.json").features,
-    fixture("payload_earth.json").bodies).traces);
+    overlayProse(pe.features), pe.bodies).traces);
 
 const js = fixture("payload_jupiter_saturn.json");
 collect("jupiter+saturn", GF.buildFeatureTraces(js.features, js.bodies).traces);
@@ -154,9 +182,7 @@ collect("jupiter+saturn", GF.buildFeatureTraces(js.features, js.bodies).traces);
 //    Artifact 1's 1.1 AU, as smoke_sun_shells.js uses; the Oort shapes
 //    then arrive visible:"legendonly", which changes nothing about their
 //    hover text.
-const cfgSun = JSON.parse(fs.readFileSync(
-    path.join(__dirname, "..", "data", "objects_config.json"), "utf8"));
-const sunObj = cfgSun.objects.find(o => o.slug === "sun");
+const sunObj = storeObjects.find(o => o.slug === "sun");
 if (sunObj && sunObj.features) {
     const sunFeatures = Object.keys(sunObj.features).map(k =>
         ({object: "sun", feature: k, params: sunObj.features[k]}));
