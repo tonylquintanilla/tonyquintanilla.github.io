@@ -81,6 +81,9 @@
         ticks and unticks, rows are 44 px tall, the name or GO on an
         unticked shell ticks it too, and the drawer's backdrop closes the
         text box as well as the drawer)
+     Updated: September 15, 2026 with Anthropic's Claude Opus 5
+       (L-318 round 4: the label rejoins soft line breaks before it
+        wraps, so a phone box no longer breaks every desktop line again)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2525,12 +2528,18 @@ function sunLabelMarker(k) {
     return null;
 }
 
-// Rewrap hover text for a label: keep its own line breaks, and break any
-// line longer than SUN_LABEL_WRAP_CHARS visible characters at a space.
-// Tags such as <b> count as no width.
+// Rewrap hover text for a label: keep its HARD line breaks, turn its SOFT
+// ones back into spaces, and break any line longer than
+// SUN_LABEL_WRAP_CHARS visible characters at a space. Tags such as <b>
+// count as no width. L-318 round 4, Tony's Mode 5 of 2026-09-15: a soft
+// break only keeps a DESKTOP line under 70 characters, and wrapping each
+// of those lines again at 34 left an orphan word on the phone for every
+// one of them. The soft token is the renderers' own
+// (GalleryFeatures.SOFT_BR).
 function sunLabelWrap(html, n) {
     const visible = function (s) { return s.replace(/<[^>]*>/g, "").length; };
-    return String(html).split(/<br[^>]*>/i).map(function (seg) {
+    const soft = (window.GalleryFeatures && window.GalleryFeatures.SOFT_BR) || "<br soft>";
+    return String(html).split(soft).join(" ").split(/<br[^>]*>/i).map(function (seg) {
         if (visible(seg) <= n) { return seg; }
         const words = seg.split(" "), lines = [];
         let cur = "";

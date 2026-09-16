@@ -54,7 +54,8 @@ check("every info marker carries hover text",
 check("hover text carries AU alongside km",
       marks2.every(t => !/\bkm\b/.test(t.text[0]) || /AU/.test(t.text[0])));
 check("no hover line exceeds 90 characters",
-      marks2.every(t => t.text[0].split("<br>").every(l => l.length <= 90)),
+      // Any break tag, soft or hard, is a line in the Plotly box (L-318 round 4).
+      marks2.every(t => t.text[0].split(/<br[^>]*>/i).every(l => l.length <= 90)),
       "L-227 line-width convention");
 
 // The tilt is the point of the whole exercise: measure it off the points.

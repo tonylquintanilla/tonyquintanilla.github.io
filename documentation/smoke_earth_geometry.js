@@ -15,6 +15,8 @@
 // orrery's two-standards outline, checked against the live config).
 // Updated September 10, 2026 with Anthropic's Claude Opus 5 (L-320: no
 // info marker on the z axis).
+// Updated September 15, 2026 with Anthropic's Claude Opus 5 (L-318 round 4:
+// a soft break is a line too, and the tilt's epoch may sit across one).
 
 const fs = require("fs");
 const path = require("path");
@@ -223,7 +225,7 @@ check("no Earth info marker within 4 degrees of the z axis",
 check("every hover with km also gives AU",
       markers.every(t => !/\bkm\b/.test(t.text[0]) || /AU/.test(t.text[0])));
 check("no hover line exceeds 90 characters",
-      markers.every(t => t.text[0].split("<br>").every(l => l.length <= 90)));
+      markers.every(t => t.text[0].split(/<br[^>]*>/i).every(l => l.length <= 90)));
 // --- L-305 item 5: the two magnetosphere surfaces ------------------------
 // Both are figures of revolution about the Sun line. Every leg below is
 // computed from the traces, not from the code that made them.
@@ -280,7 +282,7 @@ const magParams = earthParams.earth_magnetosphere;
   // L-231: the tilt is quoted only because the store carries it and it is
   // served. The epoch rides with it because the tilt drifts.
   check(label + ": the hover quotes the served magnetic tilt with its model and epoch",
-        /tilted 9\.6 degrees from it \(IGRF-13, epoch<br>2020-2025\)/.test(mk.text[0]));
+        /tilted 9\.6 degrees from it \(IGRF-13, epoch(<br[^>]*>| )2020-2025\)/.test(mk.text[0]));
   check(label + ": the hover does NOT claim the ring is drawn at the magnetic equator",
         !/rings? (is|are) drawn/.test(mk.text[0]) &&
         /equatorial plane/.test(mk.text[0]) &&

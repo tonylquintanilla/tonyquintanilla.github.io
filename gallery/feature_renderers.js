@@ -35,6 +35,10 @@
  *   (L-320: every info marker placed from the pole starts 5 degrees off
  *   it, so none sits on the axis a room draws; exported as
  *   infoMarkerOffsetDeg for earth_geometry.js).
+ * Module updated: September 15, 2026 with Anthropic's Claude Opus 5
+ *   (L-318 round 4: a line break inside a sentence is SOFT_BR, "<br soft>",
+ *   so the phone's label can rejoin it before wrapping at its own width;
+ *   exported for earth_geometry.js and the page).
  */
 
 (function (global) {
@@ -150,8 +154,20 @@
    * otherwise render as a single run off the side of the viewport. Breaks
    * on word boundaries at HOVER_WIDTH, so a long DOI or URL overruns rather
    * than being cut in half.
+   *
+   * L-318 round 4 (2026-09-15): those breaks are SOFT. They exist only to
+   * keep a desktop line under HOVER_WIDTH, so they are written as SOFT_BR,
+   * which Plotly draws exactly as it draws <br> (its text splitter reads a
+   * tag's name up to the first space -- plotly.js 2.35.2,
+   * svg_text_utils.js). The phone's label turns each one back into a space
+   * and wraps the statement once, at its own width; before this, it
+   * wrapped every desktop line a second time and left an orphan word on
+   * the phone for each one. A plain <br> is a HARD break and ends a
+   * statement. A break written by hand inside a sentence must be SOFT_BR
+   * too; smoke_hover_budget.js fails on one that is not.
    */
   var HOVER_WIDTH = 70;
+  var SOFT_BR = "<br soft>";
 
   function wrapHover(text) {
     var words = String(text).split(" ");
@@ -165,7 +181,7 @@
       }
     }
     if (cur) lines.push(cur);
-    return lines.join("<br>");
+    return lines.join(SOFT_BR);
   }
 
   /*
@@ -634,24 +650,25 @@
       }
       var hover = label + "<br><br>" +
         "Drawn at " + distances[i].toFixed(1) + " " + bodyName +
-        " radii, the sourced flux peak<br>" +
+        " radii, the sourced flux peak" +
         (units[i] === "l_shell"
-          ? "(served as L = " + distances[i].toFixed(1) + " -- that is the" +
-            " radius where the L shell<br>crosses the magnetic equator)<br>"
-          : "") +
+          ? SOFT_BR + "(served as L = " + distances[i].toFixed(1) + " -- that is the" +
+            " radius where the L shell" + SOFT_BR +
+            "crosses the magnetic equator)<br>"
+          : "<br>") +
         "= " + kmAndAu(distances[i] * radiusKm) + "<br>" +
         (span
           ? "Sourced span: " + span[0].toFixed(1) + " to " +
             span[1].toFixed(1) + " " + bodyName + " radii<br>"
           : "") +
         "Drawn as a band " + thickness.toFixed(1) + " radii wide, which is a" +
-        "<br>drawing choice and not the belt's width<br>" +
+        SOFT_BR + "drawing choice and not the belt's width<br>" +
         "The ring lies in " + bodyName + "'s equatorial plane. The belts" +
-        " follow the<br>magnetic equator, " +
+        " follow the" + SOFT_BR + "magnetic equator, " +
         (tilt === null
-          ? "which is tilted from it and turns with<br>"
+          ? "which is tilted from it and turns with" + SOFT_BR
           : "tilted " + tilt.toFixed(1) + " degrees from it (IGRF-13," +
-            " epoch<br>2020-2025), and turning with ") +
+            " epoch" + SOFT_BR + "2020-2025), and turning with ") +
         bodyName + " once a day; this plane is the daily average.<br>" +
         "Trapped-particle region; the band's shape is illustrative.";
       // L-231 follow-up (2026-09-15): the citation and the served note
@@ -1124,7 +1141,7 @@
    * rather than a second copy that can drift.
    */
   var HOVER_TAIL = "For more information and references please click on " +
-                   "the<br>info \"i\" button top right.";
+                   "the" + SOFT_BR + "info \"i\" button top right.";
 
   function withTail(hover) {
     return hover + "<br><br>" + HOVER_TAIL;
@@ -1201,7 +1218,8 @@
       }
     }
     hover += "= " + kmAndAu(radiusAu * KM_PER_AU) + "<br>" +
-             "A ring in the equatorial plane, not a sphere: satellites here<br>" +
+             "A ring in the equatorial plane, not a sphere: satellites here" +
+             SOFT_BR +
              "keep pace with Earth's turning and hang over one longitude.";
     hover = withTail(hover);
     // Info marker on the ring itself, at the ascending node (index 0):
@@ -1557,8 +1575,9 @@
         " nPa<br>" +
         "Flaring exponent works out to " + alpha.toPrecision(2) + "<br>" +
         "Drawn to " + mpCut.toFixed(0) + " deg from the nose, the furthest " +
-        "the paper<br>plots its own model. A DRAWING LIMIT, not an edge: " +
-        "this<br>surface has no end, it widens without bound down the tail." +
+        "the paper" + SOFT_BR + "plots its own model. A DRAWING LIMIT, not an " +
+        "edge: this" + SOFT_BR +
+        "surface has no end, it widens without bound down the tail." +
         "<br>Not tilted: the fit is symmetric about the Sun line.";
       mpHover = withTail(mpHover);
 
@@ -1616,7 +1635,8 @@
         "Jelinek et al. (2012), at dynamic pressure " + bsP.toFixed(1) +
         " nPa<br>" +
         "Drawn to " + bsCut.toFixed(0) + " deg from the nose, which is how " +
-        "far round<br>the crossings the fit was made from actually reached." +
+        "far round" + SOFT_BR +
+        "the crossings the fit was made from actually reached." +
         "<br>A DRAWING LIMIT, not an edge.<br>" +
         // The three-line comparison with the magnetopause used to sit here.
         // It is a remark rather than a figure and the hover has a
@@ -1743,7 +1763,10 @@
     _KM_PER_AU: KM_PER_AU,
     // L-231 follow-up (2026-09-15): earth_geometry.js ends its own hovers
     // with these exact words rather than a second copy.
-    HOVER_TAIL: HOVER_TAIL
+    HOVER_TAIL: HOVER_TAIL,
+    // L-318 round 4 (2026-09-15): the soft line break, for earth_geometry.js,
+    // the page's label wrapper and the hover budget suite.
+    SOFT_BR: SOFT_BR
   };
 
 })(typeof window !== "undefined" ? window : globalThis);

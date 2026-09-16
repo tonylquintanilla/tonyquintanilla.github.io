@@ -178,9 +178,12 @@ OFFLINE_CHECKERS = [
     # box ran off the bottom of the phone. This counts the lines, over every
     # hover in every fixture the other suites carry, and names the worst.
     # A ratchet: the ceiling may be lowered, never raised. Gates.
+    # L-318 round 4 (2026-09-15): given the page as well, it also measures
+    # the phone's labels with the page's own wrapper, and fails on a hard
+    # line break inside a sentence.
     ("Hover budget", "node",
      ["documentation/smoke_hover_budget.js", "gallery/feature_renderers.js",
-      "gallery/earth_geometry.js"],
+      "gallery/earth_geometry.js", "interactive.html"],
      ".", "===", False),
 
     # L-237: this used to call the test directly and print FAIL every

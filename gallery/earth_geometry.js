@@ -47,6 +47,9 @@
  * Updated September 10, 2026 with Anthropic's Claude Opus 5 (L-320: the
  * terminator's info marker steps along its circle, off the z axis, by
  * GalleryFeatures.infoMarkerOffsetDeg).
+ * Updated September 15, 2026 with Anthropic's Claude Opus 5 (L-318 round
+ * 4: the four hovers written here break inside a sentence only with
+ * GalleryFeatures.SOFT_BR, so the phone's label can rejoin the sentence).
  */
 (function (global) {
   "use strict";
@@ -83,7 +86,9 @@
            au.toPrecision(3) + " AU)";
   }
 
-  // Wrap on word boundaries at 70 columns (the hover convention).
+  // Wrap on word boundaries at 70 columns (the hover convention). The
+  // breaks are soft (L-318 round 4). Nothing in this file calls wrap() at
+  // the time of writing; it is kept in step with wrapHover all the same.
   function wrap(text) {
     var words = String(text).split(" "), lines = [], cur = "";
     for (var i = 0; i < words.length; i++) {
@@ -91,7 +96,7 @@
       else { cur = cur ? cur + " " + words[i] : words[i]; }
     }
     if (cur) lines.push(cur);
-    return lines.join("<br>");
+    return lines.join(SB);
   }
 
   // A circle of radius r about `center`, in the plane spanned by unit
@@ -127,6 +132,12 @@
    * the hover budget suite's "every hover points at the i panel" leg fails,
    * which is the right way round.
    */
+  // The soft break (L-318 round 4), read from the renderers so the token
+  // exists once. Without them it falls back to a hard break: the desktop
+  // box is unchanged either way, and the phone's label merely wraps as it
+  // did before.
+  var SB = (global.GalleryFeatures && global.GalleryFeatures.SOFT_BR) || "<br>";
+
   function tail() {
     var GFx = global.GalleryFeatures;
     return (GFx && typeof GFx.HOVER_TAIL === "string")
@@ -247,13 +258,13 @@
       var tip = [c[0] + zb[0] * axisHalf, c[1] + zb[1] * axisHalf, c[2] + zb[2] * axisHalf];
       var hAxis = "<b>" + gAxis + "</b><br><br>" +
         "North pole up the gold line; the ring is the equator on the crust.<br>" +
-        "Tilt from the ecliptic pole (this frame's z): " + tiltDeg.toFixed(2) + " deg,<br>" +
+        "Tilt from the ecliptic pole (this frame's z): " + tiltDeg.toFixed(2) + " deg," + SB +
         "derived from the served pole and the renderer's mean obliquity.<br>" +
         "Axis drawn to " + kmAndAu(K, axisHalf) + " -- a drawing length.<br><br>" +
-        "The curved arrows at both ends show the sense of the turning:<br>" +
-        "prograde, west to east, counter-clockwise seen from above the<br>" +
-        "north pole. This scene is one epoch: the axis is the line Earth<br>" +
-        "turns about; the turning itself is not shown, and no rotation<br>" +
+        "The curved arrows at both ends show the sense of the turning:" + SB +
+        "prograde, west to east, counter-clockwise seen from above the" + SB +
+        "north pole. This scene is one epoch: the axis is the line Earth" + SB +
+        "turns about; the turning itself is not shown, and no rotation" + SB +
         "period is stated because none is served.<br><br>" +
         tail();
       traces.push(infoMarker(tip, AXIS_COLOR, hAxis, gAxis, { meta: {
@@ -294,7 +305,7 @@
       var tipS = [c[0] + sunDir[0] * len, c[1] + sunDir[1] * len, c[2] + sunDir[2] * len];
       var hSun = "<b>" + gSun + "</b><br><br>" +
         "Toward the Sun at " + (opts.epochIso || "the scene epoch") + ", from Earth's centre.<br>" +
-        "The dot where the line leaves the crust is the subsolar point, where<br>" +
+        "The dot where the line leaves the crust is the subsolar point, where" + SB +
         "the Sun is overhead.<br>" +
         (isNum(opts.sun.distAu)
           ? "Earth-Sun distance: " + kmAndAu(K, opts.sun.distAu) + "<br>" : "") +
@@ -334,13 +345,13 @@
       var markI = (topI + stepPts) % (CIRCLE_POINTS - 1);
       var onCircle = [term.x[markI], term.y[markI], term.z[markI]];
       var hTerm = "<b>" + gTerm + "</b><br><br>" +
-        "The white circle is where the Sun is on the horizon: the sunlit half<br>" +
-        "of Earth faces the Sun line, the night half faces away. The yellow<br>" +
-        "line through the circle's centre is the Sun direction; its dot on<br>" +
+        "The white circle is where the Sun is on the horizon: the sunlit half" + SB +
+        "of Earth faces the Sun line, the night half faces away. The yellow" + SB +
+        "line through the circle's centre is the Sun direction; its dot on" + SB +
         "the crust is the subsolar point, where the Sun is overhead.<br><br>" +
-        "FROZEN at " + (opts.epochIso || "the scene epoch") + ". The real terminator<br>" +
-        "sweeps around Earth once a day; this scene does not turn. Geometry<br>" +
-        "only -- no lighting is modelled, and the refraction and solar-disc<br>" +
+        "FROZEN at " + (opts.epochIso || "the scene epoch") + ". The real terminator" + SB +
+        "sweeps around Earth once a day; this scene does not turn. Geometry" + SB +
+        "only -- no lighting is modelled, and the refraction and solar-disc" + SB +
         "corrections that define sunrise on the ground are not applied.<br><br>" +
         tail();
       traces.push(infoMarker(onCircle, TERMINATOR_COLOR, hTerm, gTerm, { meta: {
@@ -361,17 +372,17 @@
       var mid = Math.floor(arc.x.length / 2);
       var pm = [arc.x[mid], arc.y[mid], arc.z[mid]];
       var hArc = "<b>Moon: trusted arc of the orbit</b><br><br>" +
-        "The brighter arc is the part of the Moon's orbit where this page's<br>" +
+        "The brighter arc is the part of the Moon's orbit where this page's" + SB +
         "propagation is trusted" +
         (isNum(arc.tolerance_deg) ? " to within " + arc.tolerance_deg + " deg" : "") +
-        (isNum(arc.windowDays) ? ": " + arc.windowDays.toFixed(2) + " days either side of the<br>elements' epoch" : "") +
+        (isNum(arc.windowDays) ? ": " + arc.windowDays.toFixed(2) + " days either side of the" + SB + "elements' epoch" : "") +
         ".<br>" +
         (isNum(arc.startJd) && isNum(arc.endJd)
           ? "The arc runs from " + jdToDate(arc.startJd) + " to " + jdToDate(arc.endJd) + " (UTC).<br>" : "") +
-        "There is no longer span to choose: this scene is one epoch, and the<br>" +
+        "There is no longer span to choose: this scene is one epoch, and the" + SB +
         "arc is the stretch of orbit the served elements are trusted for.<br>" +
-        "The faint full ellipse is the same orbit swept once around; outside<br>" +
-        "the arc, the Moon's real path drifts from it as the Sun and Earth's<br>" +
+        "The faint full ellipse is the same orbit swept once around; outside" + SB +
+        "the arc, the Moon's real path drifts from it as the Sun and Earth's" + SB +
         "shape perturb the two-body orbit.<br><br>" +
         tail();
       traces.push(infoMarker(pm, arc.color || "rgb(200, 200, 200)", hArc, gMoon, { meta: {

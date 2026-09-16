@@ -1,7 +1,7 @@
 // smoke_hover_budget.js -- no hover outgrows the phone.
 //
 // node documentation/smoke_hover_budget.js gallery/feature_renderers.js \
-//      gallery/earth_geometry.js
+//      gallery/earth_geometry.js interactive.html
 //
 // WHY THIS EXISTS (L-231 follow-up, 2026-09-15)
 //
@@ -34,6 +34,16 @@
 // budget exists so a hover does not quietly grow to twice its neighbours
 // again, not to grind them all down.
 //
+// SOFT BREAKS (L-318 round 4, 2026-09-15). The phone showed the belts'
+// labels running off the screen, full of orphan words. The text was being
+// wrapped twice: at 70 characters for the desktop box, by hand in places,
+// and again at 34 by the phone's label. A break that only keeps a desktop
+// line short is now SOFT (GalleryFeatures.SOFT_BR) and the label rejoins
+// it. So this suite now also counts a soft break as a line of the box, and
+// fails on a HARD break inside a sentence, which is how the double wrap
+// got in. Given interactive.html as a third file, it measures each label
+// the way the page wraps it, with the page's own function.
+//
 // Exit code 0 on pass, 1 on failure, the same as its siblings.
 
 "use strict";
@@ -59,6 +69,7 @@ const TARGET = 14;
 
 const code = fs.readFileSync(process.argv[2], "utf8");
 const geomPath = process.argv[3];
+const pagePath = process.argv[4];
 global.window = global;
 eval(code);
 if (geomPath) { eval(fs.readFileSync(geomPath, "utf8")); }
@@ -92,7 +103,9 @@ function collect(scene, traces, notOurs) {
             // that name is how it is told apart from ours.
             ours: !(notOurs && notOurs.has(t.name)),
             name: t.legendgroup || t.name || "(unnamed)",
-            lines: txt.split("<br>").length,
+            // A soft break is a line of the Plotly box as well.
+            lines: txt.split(/<br[^>]*>/i).length,
+            txt: txt,
             chars: txt.length,
             pointed: txt.indexOf("button top right") >= 0
         });
@@ -148,6 +161,75 @@ check("every hover we build points the reader at the i panel",
       hovers.filter(h => h.ours && !h.pointed).length === 0,
       hovers.filter(h => h.ours && !h.pointed)
             .map(h => h.name).join(", ") || "all of them do");
+
+// L-318 round 4. Every break in our hovers is one of two tags, so a
+// second way of writing "soft" cannot creep in and go unrejoined.
+const SOFT = GF.SOFT_BR;
+const oddBreaks = [];
+for (const h of hovers.filter(x => x.ours)) {
+    for (const tag of (h.txt.match(/<br[^>]*>/gi) || [])) {
+        if (tag !== "<br>" && tag !== SOFT) { oddBreaks.push(h.name + ": " + tag); }
+    }
+}
+check("every line break in our hovers is <br> or the renderers' soft break",
+      typeof SOFT === "string" && SOFT.length > 0 && oddBreaks.length === 0,
+      oddBreaks.length ? [...new Set(oddBreaks)].join("; ") : "SOFT_BR is " + SOFT);
+
+// A HARD break between a word and a lower-case word (or a "(") is a
+// sentence broken by hand. It must be soft, or the phone breaks the line a
+// second time. A line such as "r = 0.0025 AU" is a statement, not a
+// continuation, and is let through.
+const HAND_WRAP = /([A-Za-z0-9,;:)'"-])<br>(?=[a-z(])(?![a-z]\s*=)/g;
+const handWraps = [];
+for (const h of hovers.filter(x => x.ours)) {
+    let m;
+    HAND_WRAP.lastIndex = 0;
+    while ((m = HAND_WRAP.exec(h.txt))) {
+        handWraps.push(h.name + ": ..." +
+            h.txt.slice(Math.max(0, m.index - 16), m.index + 1) + " | " +
+            h.txt.slice(m.index + 5, m.index + 20) + "...");
+    }
+}
+check("no hard line break splits a sentence (write it as the soft break)",
+      handWraps.length === 0,
+      handWraps.length ? [...new Set(handWraps)].join("; ") : "none");
+
+// The phone's label, wrapped by the page's own function rather than a copy.
+if (pagePath) {
+    const page = fs.readFileSync(pagePath, "utf8");
+    const start = page.indexOf("\nfunction sunLabelWrap(");
+    const widthM = page.match(/const SUN_LABEL_WRAP_CHARS = (\d+);/);
+    let wrapFn = null;
+    if (start >= 0) {
+        let i = page.indexOf("{", start), depth = 0;
+        for (; i < page.length; i++) {
+            if (page[i] === "{") { depth++; }
+            else if (page[i] === "}") { depth--; if (depth === 0) { break; } }
+        }
+        wrapFn = new Function("window",
+            page.slice(start, i + 1) + "\nreturn sunLabelWrap;")(global);
+    }
+    check("the page's label wrapper and its width were found",
+          !!wrapFn && !!widthM, pagePath);
+    if (wrapFn && widthM) {
+        const W = Number(widthM[1]);
+        check("the label joins a soft break and keeps a hard one",
+              wrapFn("one" + SOFT + "two<br>three", W) === "one two<br>three",
+              wrapFn("one" + SOFT + "two<br>three", W));
+        const labels = hovers.filter(h => h.ours).map(h => ({
+            name: h.name,
+            lines: wrapFn(h.txt, W).split(/<br[^>]*>/i).length
+        })).sort((a, b) => b.lines - a.lines);
+        console.log("");
+        console.log("  The tallest labels on the phone (" + W + " characters a line):");
+        for (const l of labels.slice(0, 5)) {
+            console.log("    " + String(l.lines).padStart(3) + " lines  " + l.name);
+        }
+        console.log("");
+    }
+} else {
+    console.log("  NOTE  no interactive.html given; the phone's labels are not measured");
+}
 
 check("no hover exceeds the ceiling of " + CEILING + " lines",
       !worst || worst.lines <= CEILING,
