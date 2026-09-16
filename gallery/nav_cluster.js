@@ -39,17 +39,18 @@
  * the container must be position:relative (or fixed/absolute) and is
  * expected to be the plot's own wrapper -- not the page body -- so the
  * buttons sit over the picture and never over a controls panel below
- * it. mount() returns { el, show(), hide(), crossBottomLeft(on) }.
+ * it. mount() returns { el, show(), hide(), crossApart(on) }.
  *
- * crossBottomLeft(true) moves the arrow cross -- Home with it -- into its
- * own holder in the bottom-left corner of the container, 58 px up so it
- * clears a drawer button along the bottom edge; crossBottomLeft(false)
- * puts it back under + and -, where mount() built it. It returns whether
- * the cross is in that corner. The page decides when: the exhibit rooms
- * move it on a portrait phone (L-316). A page with no step handlers
- * has no cross, and crossBottomLeft always returns false.
- * The holder's class is nav-cross-bottom-left, so a page can hide it
- * with its own rules (the exhibit rooms do while their drawer is open).
+ * crossApart(true) moves the arrow cross -- Home with it -- into its own
+ * holder, apart from + and -; crossApart(false) puts it back under them,
+ * where mount() built it. It returns whether the cross is apart. WHERE the
+ * holder sits is set only by the .nav-cross-apart rule below (the top-
+ * right corner since 2026-09-16), so moving it again touches nothing
+ * else. The page decides when: the exhibit rooms move it on a portrait
+ * phone (L-316). A page with no step handlers has no cross, and
+ * crossApart always returns false. The holder's class lets a page hide
+ * it with its own rules (the exhibit rooms do while their drawer is
+ * open).
  *
  * Buttons respond to click only. touch-action:manipulation removes the
  * 300 ms tap delay on phones, so no separate touchstart handler is
@@ -70,6 +71,11 @@
  *   hover box that opened over its marker, so the holder moves to the
  *   bottom-left corner above the drawer; crossRight() is renamed
  *   crossBottomLeft() and its class nav-cross-bottom-left).
+ * Module updated September 16, 2026 with Anthropic's Claude Opus 5
+ *   (Tony's Mode 5: the phone's text box now sits mid-view with no arrow,
+ *   so the cross goes back to the top-right corner; the method is renamed
+ *   once more, to crossApart(), and its class to nav-cross-apart, names
+ *   that say nothing about the corner so the next move renames nothing).
  */
 (function (global) {
     'use strict';
@@ -86,7 +92,8 @@
            the one nothing else claims, on either room. On a portrait
            phone the rooms move the arrow cross out on its own -- to the
            top right on 2026-09-10 (L-316), to the bottom left above the
-           drawer on 2026-09-15 (Tony's Mode 5) -- and + and - stay here. */
+           drawer on 2026-09-15, and back to the top right on 2026-09-16
+           (Tony's Mode 5) -- and + and - stay here. */
         '    left: 12px;',
         '    top: calc(12px + env(safe-area-inset-top, 0px));',
         '    z-index: 6;',
@@ -132,13 +139,15 @@
         '    gap: 6px;',
         '}',
         /* The cross's holder when the page moves it out on its own.
-           Bottom left, 58 px up: the height the exhibit rooms already use
-           for the frame HUD in the opposite corner, clear of the drawer
-           button that runs along the bottom edge (2026-09-15). */
-        '.nav-cross-bottom-left {',
+           THIS RULE IS THE ONLY PLACE ITS CORNER IS SET. Top right, 12 px
+           in, as round 2 had it (2026-09-10); round 3 put it at the bottom
+           left (2026-09-15) while the phone's text box still opened beside
+           its marker; Tony moved it back on 2026-09-16 once that box sat
+           mid-view. */
+        '.nav-cross-apart {',
         '    position: absolute;',
-        '    left: calc(12px + env(safe-area-inset-left, 0px));',
-        '    bottom: calc(58px + env(safe-area-inset-bottom, 0px));',
+        '    right: calc(12px + env(safe-area-inset-right, 0px));',
+        '    top: calc(12px + env(safe-area-inset-top, 0px));',
         '    z-index: 6;',
         '}'
     ].join('\n');
@@ -228,33 +237,33 @@
         }
         container.appendChild(el);
 
-        /* L-316, moved 2026-09-15: the cross moves between the cluster
-           and a bottom-left holder. Moving the element keeps its buttons
-           and handlers; putting it back appends it as the cluster's last
-           child, which is where it was built, so the corner layout is
-           unchanged. */
-        var cornerWrap = null;
-        var inCorner = false;
+        /* L-316: the cross moves between the cluster and a holder of
+           its own, whose corner the .nav-cross-apart rule sets. Moving the
+           element keeps its buttons and handlers; putting it back appends
+           it as the cluster's last child, which is where it was built, so
+           the cluster's layout is unchanged. */
+        var apartWrap = null;
+        var isApart = false;
         var hidden = false;
-        function crossBottomLeft(on) {
+        function crossApart(on) {
             on = !!on;
-            if (!cross || on === inCorner) { return inCorner; }
+            if (!cross || on === isApart) { return isApart; }
             if (on) {
-                if (!cornerWrap) {
-                    cornerWrap = document.createElement('div');
-                    cornerWrap.className = 'nav-cross-bottom-left';
-                    cornerWrap.setAttribute('role', 'group');
-                    cornerWrap.setAttribute('aria-label', 'Turn the view');
-                    container.appendChild(cornerWrap);
+                if (!apartWrap) {
+                    apartWrap = document.createElement('div');
+                    apartWrap.className = 'nav-cross-apart';
+                    apartWrap.setAttribute('role', 'group');
+                    apartWrap.setAttribute('aria-label', 'Turn the view');
+                    container.appendChild(apartWrap);
                 }
-                cornerWrap.appendChild(cross);
-                cornerWrap.style.display = hidden ? 'none' : '';
+                apartWrap.appendChild(cross);
+                apartWrap.style.display = hidden ? 'none' : '';
             } else {
                 el.appendChild(cross);
-                cornerWrap.style.display = 'none';
+                apartWrap.style.display = 'none';
             }
-            inCorner = on;
-            return inCorner;
+            isApart = on;
+            return isApart;
         }
 
         return {
@@ -262,14 +271,14 @@
             show: function () {
                 hidden = false;
                 el.style.display = '';
-                if (cornerWrap && inCorner) { cornerWrap.style.display = ''; }
+                if (apartWrap && isApart) { apartWrap.style.display = ''; }
             },
             hide: function () {
                 hidden = true;
                 el.style.display = 'none';
-                if (cornerWrap) { cornerWrap.style.display = 'none'; }
+                if (apartWrap) { apartWrap.style.display = 'none'; }
             },
-            crossBottomLeft: crossBottomLeft
+            crossApart: crossApart
         };
     }
 

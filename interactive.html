@@ -88,6 +88,10 @@
        (L-318 round 5: on a portrait phone the drawer's text box has no
         arrow and sits in the middle of the view; the desktop keeps its
         arrowed label)
+     Updated: September 16, 2026 with Anthropic's Claude Opus 5
+       (L-316 round 4, Tony's Mode 5: on a portrait phone the arrow cross
+        is back in the top-right corner, now that the text box sits
+        mid-view; the holder's names no longer name a corner)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -241,8 +245,8 @@
            grid chip and the Aries note live in the page, not the scene,
            so they never shrink, clip or float. Bottom-right, above the
            drawer button (centre). The + and - buttons are at the top left;
-           on a portrait phone the arrow cross sits at this same height in
-           the bottom-left corner (2026-09-15). */
+           on a portrait phone the arrow cross is at the top right
+           (2026-09-16). */
         .sun-hud {
             position: absolute; right: 10px;
             bottom: calc(58px + env(safe-area-inset-bottom));
@@ -291,11 +295,14 @@
            aside while the drawer is open. When this was written the cluster
            sat in the corner the open drawer covers; it has been at the top
            left since 2026-09-04, and the rule is left as it was.
-           2026-09-15: on a portrait phone the arrow cross has its own
-           holder at the bottom left, which the open drawer DOES cover, and
-           the cluster rule never reached that holder -- so it has its own. */
+           On a portrait phone the arrow cross has a holder of its own,
+           which the cluster rule never reached, so it has its own rule. It
+           was added on 2026-09-15 when that holder sat at the bottom left,
+           under the open drawer; with the holder back at the top right
+           (2026-09-16) it is kept, so all of the navigation steps aside
+           together while the drawer is open. */
         body.sun-drawer-open .nav-cluster { display: none; }
-        body.sun-drawer-open .nav-cross-bottom-left { display: none; }
+        body.sun-drawer-open .nav-cross-apart { display: none; }
 
         .drawer-bar {
             position: absolute; left: 0; right: 0; bottom: 0;
@@ -2055,23 +2062,23 @@ function sunMargins() {
 // moved the cross to the top-right corner. Round 3, Tony's Mode 5 of
 // 2026-09-15: a hover box that cannot fit beside its marker opens over
 // it, and at the top right the cross was drawn over the magnetopause's
-// text, so the cross moves to the bottom-left corner, above the drawer
-// button and level with the frame HUD opposite. The open drawer hides it
-// (see the drawer-open rules in the style block). "Phone" is 768 px wide
-// or less, the width at which the page also hides the mode bar (the
+// text, so the cross moved to the bottom-left corner. Round 4, Tony's
+// Mode 5 of 2026-09-16: the phone's text box now sits mid-view with no
+// arrow (L-318 round 5), so the cross is back at the top right, where
+// the figure has more room. The corner is set only by nav_cluster.js's
+// .nav-cross-apart rule. The open drawer hides it (see the drawer-open
+// rules in the style block). "Phone" is 768 px wide or less and taller
+// than wide, the width at which the page also hides the mode bar (the
 // @media rule and displayModeBar both use 768). Desktop and landscape
 // keep the cross under + and -. The Explorer's cross never moves.
 // L-318 round 5 (2026-09-15): the test has its own name so the drawer's
-// text box can use it too, and the two cannot drift apart.
+// text box uses the same one, and the two cannot drift apart.
 function sunPhonePortrait() {
     return window.innerHeight > window.innerWidth && window.innerWidth <= 768;
 }
-function sunCrossBottomLeft() {
-    return sunPhonePortrait();
-}
 function navPlaceCross() {
-    if (navCluster && typeof navCluster.crossBottomLeft === "function") {
-        navCluster.crossBottomLeft(!!EX && sunCrossBottomLeft());
+    if (navCluster && typeof navCluster.crossApart === "function") {
+        navCluster.crossApart(!!EX && sunPhonePortrait());
     }
 }
 
