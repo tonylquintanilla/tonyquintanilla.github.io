@@ -120,6 +120,7 @@ ROLE_MAP = {
 
     # devtool
     'add_docstrings':                      'devtool',
+    'check_constants_links':               'devtool',
     'debug_encke_tp':                      'devtool',
     'fingerprint':                         'devtool',
     'gallery_cleanup':                     'devtool',
@@ -129,7 +130,9 @@ ROLE_MAP = {
     'gallery_studio':                      'devtool',
     'inspect_staging':                     'devtool',
     'json_converter':                      'devtool',
+    'mirror_constants':                    'devtool',
     'module_atlas':                        'devtool',
+    'pull_constants_export':               'devtool',
     'serve_gallery':                       'devtool',
     'sweep_report':                        'devtool',
     'test_artifact1_earth':                'devtool',

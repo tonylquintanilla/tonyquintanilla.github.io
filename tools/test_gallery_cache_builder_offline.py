@@ -235,7 +235,7 @@ def main():
                     'orientation'):
             check(grp in ef, "M1: earth serves group '%s'" % grp)
         ibd = ef['van_allen_belts']['inner_belt_distance']
-        check(isinstance(ibd, dict) and ibd.get('unit') == 'R_earth'
+        check(isinstance(ibd, dict) and ibd.get('unit') == 'r_earth'
               and 'orrery_constant' in ibd and 'source' in ibd,
               "M1: earth inner_belt_distance is a measured entry in R_earth with source and pointer")
         check('lower_atmosphere' in ef['earth_atmosphere']

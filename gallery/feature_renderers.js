@@ -139,6 +139,24 @@
 
   // A MEASURED entry is {value, unit, source} (Section 7 decision 18). Read
   // the value and check the unit rather than trusting the key name.
+  /* The figure count the orrery's export declares for a served number,
+     or null. L-322: the mirror writes "figures" beside "value" and
+     "unit"; a number this page computes has none. */
+  function servedFigures(node) {
+    return (isDict(node) && typeof node.figures === "number")
+      ? node.figures : null;
+  }
+
+  /* Rule 7 of provenance-discipline: a display may show FEWER figures
+     than the row declares, never more. With a declared count, format to
+     it; without one, keep the format this hover has always used. Every
+     served count is null at the time of writing, so nothing printed
+     changes until a store row declares one. */
+  function fmtServed(value, figures, digits) {
+    return (typeof figures === "number")
+      ? value.toPrecision(figures) : value.toFixed(digits);
+  }
+
   function measured(node, expectedUnit, where, warn) {
     if (!isDict(node)) {
       warn(where + ": expected a measured entry {value, unit, source}, got " +
@@ -234,7 +252,7 @@
     }
     // L-291: "R_sun" and "R_earth" both mean "radii of the group's body";
     // the body radius is served in the group as sun_radius or planet_radius.
-    if (node.unit === "R_sun" || node.unit === "R_earth") {
+    if (node.unit === "r_sun" || node.unit === "r_earth") {
       if (typeof starRadiusKm !== "number") {
         warn(where + ": radius is in " + node.unit + " but no body radius " +
              "(sun_radius / planet_radius) was served for this group -- nothing drawn");
@@ -243,7 +261,7 @@
       return node.value * starRadiusKm / KM_PER_AU;
     }
     warn(where + ": unit is " + JSON.stringify(node.unit) +
-         ", expected \"R_sun\", \"R_earth\", \"km\" or \"au\" -- refusing to guess a conversion");
+         ", expected \"r_sun\", \"r_earth\", \"km\" or \"au\" -- refusing to guess a conversion");
     return null;
   }
 
@@ -253,9 +271,9 @@
       warn(where + ": expected a measured radius {value, unit}");
       return null;
     }
-    if (node.unit !== "R_sun") {
+    if (node.unit !== "r_sun") {
       warn(where + ": unit is " + JSON.stringify(node.unit) +
-           ", expected \"R_sun\"");
+           ", expected \"r_sun\"");
       return null;
     }
     return node.value;
@@ -575,6 +593,7 @@
     var sources = [];
     var notes = [];
     var units = [];
+    var figures = [];
     // L-291: a belt distance may be a measured entry {value, unit
     // "R_earth", source, orrery_constant} (Earth) or a bare number in
     // planet radii (Jupiter, unchanged). Read either; carry the source.
@@ -593,16 +612,17 @@
     function beltDistance(node, label) {
       if (typeof node === "number") return node;
       if (isDict(node) && typeof node.value === "number") {
-        if (node.unit !== "R_earth" && node.unit !== "l_shell" &&
+        if (node.unit !== "r_earth" && node.unit !== "l_shell" &&
             node.unit !== undefined) {
           warn(slug + "/" + featureKey + "/" + label + ": unit is " +
                JSON.stringify(node.unit) +
-               ", expected \"R_earth\" or \"l_shell\" -- not drawn");
+               ", expected \"r_earth\" or \"l_shell\" -- not drawn");
           return null;
         }
         sources.push(node.source || null);
         notes.push(node.note || null);
-        units.push(node.unit || "R_earth");
+        units.push(node.unit || "r_earth");
+        figures.push(servedFigures(node));
         return node.value;
       }
       return null;
@@ -686,10 +706,10 @@
       // and smoke_earth_geometry.js pins both. The L-shell aside is one
       // line now; that and the width line pay for the description.
       var hover = label + "<br><br>" + descLine({description: descs[i]}) +
-        "Drawn at " + distances[i].toFixed(1) + " " + bodyName +
+        "Drawn at " + fmtServed(distances[i], figures[i], 1) + " " + bodyName +
         " radii, where the measured particle flux peaks" +
         (units[i] === "l_shell"
-          ? SOFT_BR + "(given as L = " + distances[i].toFixed(1) +
+          ? SOFT_BR + "(given as L = " + fmtServed(distances[i], figures[i], 1) +
             ": where that field line crosses the magnetic equator)<br>"
           : "<br>") +
         "= " + kmAndAu(distances[i] * radiusKm) + "<br>" +
@@ -704,7 +724,9 @@
         (tilt === null
           ? "which is tilted from it and turns with " + bodyName +
             SOFT_BR + "once a day."
-          : "which is tilted " + tilt.toFixed(1) + " degrees from it (IGRF-13," +
+          : "which is tilted " +
+            fmtServed(tilt, servedFigures(params.magnetic_tilt), 1) +
+            " degrees from it (IGRF-13," +
             " epoch" + SOFT_BR + "2020-2025) and turns with " + bodyName +
             " once a day.");
       // L-231 follow-up (2026-09-15): the citation and the served note
@@ -1305,8 +1327,10 @@
     if (beyondFrame) built.trace.visible = "legendonly";
 
     var hover = label + "<br><br>" + descLine(cfg);
-    if (cfg.radius.unit === "R_earth") {
-      hover += "Radius: " + cfg.radius.value.toFixed(4) + " Earth radii<br>";
+    if (cfg.radius.unit === "r_earth") {
+      hover += "Radius: " +
+        fmtServed(cfg.radius.value, servedFigures(cfg.radius), 4) +
+        " Earth radii<br>";
       if (typeof starRadiusKm === "number" && cfg.radius.value > 1) {
         hover += "Altitude: " + kmAndAu((cfg.radius.value - 1) * starRadiusKm) + "<br>";
       }
@@ -1435,11 +1459,13 @@
       var mz = center[2] + radiusAu * 1.05 * Math.cos(polar);
 
       var hover = label + "<br><br>" + descLine(cfg);
-      if (cfg.radius.unit === "R_sun") {
+      if (cfg.radius.unit === "r_sun") {
         hover += "Radius: " + cfg.radius.value + " solar radii<br>";
-      } else if (cfg.radius.unit === "R_earth") {
+      } else if (cfg.radius.unit === "r_earth") {
         // L-291: Earth radii, with the altitude the hover convention asks for.
-        hover += "Radius: " + cfg.radius.value.toFixed(4) + " Earth radii<br>";
+        hover += "Radius: " +
+        fmtServed(cfg.radius.value, servedFigures(cfg.radius), 4) +
+        " Earth radii<br>";
         if (typeof starRadiusKm === "number" && cfg.radius.value > 1) {
           hover += "Altitude: " + kmAndAu((cfg.radius.value - 1) * starRadiusKm) + "<br>";
         }
@@ -1637,13 +1663,13 @@
     }
 
     // --- Magnetopause, Shue et al. (1998) ---------------------------------
-    var r0 = measured(mp.standoff, "R_earth", where + "/magnetopause/standoff",
+    var r0 = measured(mp.standoff, "r_earth", where + "/magnetopause/standoff",
                       warn);
     var a6 = measured(mpS.a6, "dimensionless", where + "/magnetopause/a6", warn);
-    var a7 = measured(mpS.a7, "per_nT", where + "/magnetopause/a7", warn);
+    var a7 = measured(mpS.a7, "per_nt", where + "/magnetopause/a7", warn);
     var a8 = measured(mpS.a8, "dimensionless", where + "/magnetopause/a8", warn);
-    var bz = measured(mpS.bz, "nT", where + "/magnetopause/bz", warn);
-    var dp = measured(mpS.pressure, "nPa", where + "/magnetopause/pressure",
+    var bz = measured(mpS.bz, "nt", where + "/magnetopause/bz", warn);
+    var dp = measured(mpS.pressure, "npa", where + "/magnetopause/pressure",
                       warn);
     var mpCut = measured(mpS.cut_angle, "deg",
                          where + "/magnetopause/cut_angle", warn);
@@ -1672,12 +1698,15 @@
       // sentence (Tony: no compressed language in the hover). With the
       // description on top this hover had reached 18 lines; it is 16.
       var mpHover = mpLabel + "<br><br>" + descLine(mp) +
-        "Sunward standoff: " + r0.toFixed(2) + " Earth radii<br>" +
+        "Sunward standoff: " + fmtServed(r0, servedFigures(mp.standoff), 2) +
+        " Earth radii<br>" +
         "= " + kmAndAu(r0 * radiusKm) + "<br>" +
         "Shue et al. (1998), for the solar wind assumed here:<br>" +
-        "Bz " + bz.toFixed(1) + " nT, dynamic pressure " + dp.toFixed(1) +
+        "Bz " + fmtServed(bz, servedFigures(mpS.bz), 1) +
+        " nT, dynamic pressure " + fmtServed(dp, servedFigures(mpS.pressure), 1) +
         " nPa<br>" +
-        "Drawn to " + mpCut.toFixed(0) + " deg from the nose, as far as the" +
+        "Drawn to " + fmtServed(mpCut, servedFigures(mpS.cut_angle), 0) +
+        " deg from the nose, as far as the" +
         " paper" + SOFT_BR + "plots its model. That is where the drawing stops," +
         " not where" + SOFT_BR +
         "the surface ends: it widens down the tail without limit.<br>" +
@@ -1699,16 +1728,16 @@
     }
 
     // --- Bow shock, Jelinek et al. (2012) ---------------------------------
-    var bsR0 = measured(bsS.r0, "R_earth", where + "/bow_shock/r0", warn);
+    var bsR0 = measured(bsS.r0, "r_earth", where + "/bow_shock/r0", warn);
     var bsEps = measured(bsS.epsilon, "dimensionless",
                          where + "/bow_shock/epsilon", warn);
     var bsLam = measured(bsS["lambda"], "dimensionless",
                          where + "/bow_shock/lambda", warn);
-    var bsP = measured(bsS.pressure, "nPa", where + "/bow_shock/pressure",
+    var bsP = measured(bsS.pressure, "npa", where + "/bow_shock/pressure",
                        warn);
     var bsCut = measured(bsS.cut_angle, "deg", where + "/bow_shock/cut_angle",
                          warn);
-    var bsStand = measured(bs.standoff, "R_earth",
+    var bsStand = measured(bs.standoff, "r_earth",
                            where + "/bow_shock/standoff", warn);
 
     if (bsR0 !== null && bsEps !== null && bsLam !== null && bsP !== null &&
@@ -1735,9 +1764,11 @@
       var bsHover = bsLabel + "<br><br>" + descLine(bs) +
         "Sunward standoff: " + S.toFixed(2) + " Earth radii<br>" +
         "= " + kmAndAu(S * radiusKm) + "<br>" +
-        "Jelinek et al. (2012), at dynamic pressure " + bsP.toFixed(1) +
+        "Jelinek et al. (2012), at dynamic pressure " +
+        fmtServed(bsP, servedFigures(bsS.pressure), 1) +
         " nPa<br>" +
-        "Drawn to " + bsCut.toFixed(0) + " deg from the nose, which is how " +
+        "Drawn to " + fmtServed(bsCut, servedFigures(bsS.cut_angle), 0) +
+        " deg from the nose, which is how " +
         "far round" + SOFT_BR +
         "the crossings the fit was made from actually reached." +
         "<br>That is where the drawing stops, not where the shock ends.<br>" +

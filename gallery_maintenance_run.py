@@ -134,6 +134,17 @@ NOTE_WIDTH = 34
 GENERATORS = [
     ("Module atlas", ["module_atlas.py"], ".",
      ["MODULE_ATLAS.md", "MODULE_INDEX.md"]),
+
+    # L-322: the orrery exports its constants and the gallery reads that
+    # file instead of parsing orrery source. The pull records the SHA it
+    # fetched at; the mirror writes the served numbers into the config
+    # the page boots from. The mirror runs second because it reads what
+    # the pull wrote.
+    ("Constants export pull", ["tools/pull_constants_export.py"], ".",
+     ["data/constants_export.json", "data/constants_export.sha"]),
+
+    ("Config mirror", ["tools/mirror_constants.py", "--write"], ".",
+     ["data/objects_config.json"]),
 ]
 
 # ---- offline checkers ------------------------------------------------
@@ -144,6 +155,20 @@ GENERATORS = [
 OFFLINE_CHECKERS = [
     ("Cache builder suite", "python",
      ["test_gallery_cache_builder_offline.py"], "tools", None, False),
+
+    # L-322, the gallery half. The suite proves the mirror's verdicts on
+    # fixtures, because no link in the real config can produce a
+    # relabel, a conflict or a definition until those rows are exported.
+    # The two checks below share the mirror's own reading, so one cause
+    # prints one explanation.
+    ("Mirror suite", "python",
+     ["test_mirror_constants.py"], "tools", None, False),
+
+    ("Config mirror check", "python",
+     ["tools/check_constants_links.py", "--mirror"], ".", None, False),
+
+    ("Pointer join", "python",
+     ["tools/check_constants_links.py", "--join"], ".", None, False),
 
     ("Feature renderers", "node",
      ["documentation/smoke_features.js", "gallery/feature_renderers.js"],
@@ -734,6 +759,59 @@ def _depth_note(left, right):
             % (depth, "" if depth == 1 else "s"))
 
 
+CONSTANTS_EXPORT = os.path.join("data", "constants_export.json")
+CONSTANTS_SHA = os.path.join("data", "constants_export.sha")
+
+
+def export_rows(root):
+    """The names the pulled export serves, or an empty set."""
+    path = os.path.join(root, CONSTANTS_EXPORT)
+    if not os.path.exists(path):
+        return set()
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            return set(json.load(handle).get("rows", {}))
+    except (ValueError, OSError):
+        return set()
+
+
+def check_export_freshness(root):
+    """The gallery's copy of the export is the orrery's, at a named SHA.
+
+    L-322. The pull records the SHA it fetched at; this fetches the same
+    bytes again and compares. It cannot print a pass without the SHA
+    resolving, so a green line here names an orrery state that exists.
+    """
+    print("")
+    sha_path = os.path.join(root, CONSTANTS_SHA)
+    export_path = os.path.join(root, CONSTANTS_EXPORT)
+    if not os.path.exists(sha_path) or not os.path.exists(export_path):
+        return ("FAIL", "no pulled export to check: run the maintenance "
+                        "run's Constants export pull first")
+    with open(sha_path, "r", encoding="utf-8") as handle:
+        sha = handle.read().strip()
+    if not sha:
+        return ("FAIL", "%s is empty, so nothing records which orrery "
+                        "state these numbers came from"
+                % CONSTANTS_SHA.replace(os.sep, "/"))
+    with open(export_path, "rb") as handle:
+        local = handle.read()
+
+    print("  orrery export pinned at %s" % sha[:8])
+    status, body, error = fetch(
+        "https://raw.githubusercontent.com/%s/%s/%s"
+        % (ORRERY_REPO, sha, CONSTANTS_EXPORT.replace(os.sep, "/")))
+    if status != 200:
+        return ("N-A", "could not fetch the export at %s (%s)"
+                % (sha[:8], error or "HTTP %s" % status))
+    if same_content(local, body):
+        return ("PASS", "the served export is the orrery's at %s, byte for "
+                        "byte" % sha[:8])
+    return ("FAIL", "the served export differs from the orrery's at %s -- "
+                    "it was edited here, or written by something other "
+                    "than the pull" % sha[:8])
+
+
 def check_store_drift(root):
     """Follow objects_config.json's pointers into the orrery's store."""
     print("")
@@ -772,6 +850,30 @@ def check_store_drift(root):
         config = json.loads(handle.read().decode("utf-8"))
 
     pointers = collect_pointers(config)
+
+    # L-322, order C: this check is not switched off while 48 of 70
+    # links still have nothing in the export to join to -- that would be
+    # 48 checks going dark while the run stays green, which is the shape
+    # ruling 3 forbids. Instead its DENOMINATOR shrinks. Every link the
+    # export serves belongs to the Config mirror check and the Pointer
+    # join; every link it cannot serve yet stays here. When the walk
+    # empties this set, the check has nothing left to judge and the
+    # patch that removes it, the suffix reader, SCALAR_UNITS,
+    # store_conversions and judge is owed.
+    served_by_export = export_rows(root)
+    total_links = len(pointers)
+    pointers = [(path, entry) for path, entry in pointers
+                if entry["orrery_constant"].split("::")[-1]
+                not in served_by_export]
+    print("  examining %d of %d links; the other %d are served from the "
+          "export" % (len(pointers), total_links,
+                      total_links - len(pointers)))
+    if not pointers:
+        return ("PASS", "nothing left to examine: every link is served "
+                        "from the export. Retire this check, the suffix "
+                        "reader, SCALAR_UNITS, store_conversions and "
+                        "judge.")
+
     tally = {"MATCH": 0, "DRIFT": 0, "UNIT MISMATCH": 0, "NO UNIT": 0,
              "NO VALUE": 0, "NOT IN STORE": 0}
     notable = []
@@ -817,6 +919,7 @@ def check_store_drift(root):
 
 LIVE_CHECKERS = [
     ("Served reachability", check_served, False),
+    ("Export freshness", check_export_freshness, False),
     ("Store drift", check_store_drift, True),
 ]
 

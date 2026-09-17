@@ -445,7 +445,7 @@
     var planetRadius = interior.planet_radius || null;
     var crustAu = null;
     if (interior.crust && interior.crust.radius && planetRadius &&
-        interior.crust.radius.unit === "R_earth" && planetRadius.unit === "km") {
+        interior.crust.radius.unit === "r_earth" && planetRadius.unit === "km") {
       crustAu = interior.crust.radius.value * planetRadius.value / K;
     } else if (planetRadius && planetRadius.unit === "km") {
       crustAu = planetRadius.value / K;

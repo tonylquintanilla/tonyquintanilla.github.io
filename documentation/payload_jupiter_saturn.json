@@ -2670,7 +2670,7 @@
      "name": "Core",
      "radius": {
       "value": 0.2,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(70, 130, 180)",
      "opacity": 1.0,
@@ -2683,7 +2683,7 @@
      "name": "Radiative Zone",
      "radius": {
       "value": 0.7,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(30, 144, 255)",
      "opacity": 1.0,
@@ -2696,7 +2696,7 @@
      "name": "Photosphere",
      "radius": {
       "value": 1.0,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(255, 244, 214)",
      "opacity": 1.0,
@@ -2721,7 +2721,7 @@
      "name": "Chromosphere (2,000 km skin)",
      "radius": {
       "value": 1.0028748,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(30, 144, 255)",
      "opacity": 0.5,
@@ -2735,7 +2735,7 @@
      "name": "Inner Corona",
      "radius": {
       "value": 3,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(0, 0, 255)",
      "opacity": 0.45,
@@ -2748,7 +2748,7 @@
      "name": "Roche Limit (Comets)",
      "radius": {
       "value": 3.45,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(200, 60, 60)",
      "opacity": 0.5,
@@ -2761,7 +2761,7 @@
      "name": "Alfven Surface",
      "radius": {
       "value": 19.7,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(0, 200, 200)",
      "opacity": 0.35,
@@ -2774,7 +2774,7 @@
      "name": "Outer Corona",
      "radius": {
       "value": 50,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(25, 25, 112)",
      "opacity": 0.5,
@@ -2812,7 +2812,7 @@
      "name": "Heliopause",
      "radius": {
       "value": 26148,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(135, 206, 250)",
      "opacity": 0.4,

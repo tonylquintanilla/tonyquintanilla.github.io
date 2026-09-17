@@ -1427,7 +1427,7 @@
      "name": "Crust",
      "radius": {
       "value": 1.0,
-      "unit": "R_earth"
+      "unit": "r_earth"
      },
      "info_url": "https://en.wikipedia.org/wiki/Earth%27s_crust",
      "color": "rgb(70, 120, 160)",
@@ -1454,7 +1454,7 @@
      "name": "Lower Atmosphere (to the stratopause)",
      "radius": {
       "value": 1.0078392802060714,
-      "unit": "R_earth"
+      "unit": "r_earth"
      },
      "info_url": "https://science.nasa.gov/earth/earth-atmosphere/earths-atmosphere-a-multi-layered-cake/",
      "color": "rgb(150, 200, 255)",
@@ -1469,7 +1469,7 @@
      "name": "Upper Atmosphere (to the thermopause)",
      "radius": {
       "value": 1.0940713624728577,
-      "unit": "R_earth"
+      "unit": "r_earth"
      },
      "info_url": "https://www.nasa.gov/image-article/earths-upper-atmosphere/",
      "color": "rgb(100, 150, 255)",
@@ -1496,7 +1496,7 @@
      "name": "Exosphere / Geocorona (hydrogen halo, detected extent)",
      "radius": {
       "value": 100.0,
-      "unit": "R_earth"
+      "unit": "r_earth"
      },
      "info_url": "https://en.wikipedia.org/wiki/Geocorona",
      "color": "rgb(200, 200, 255)",
@@ -1523,7 +1523,7 @@
      "name": "Low Earth Orbit, inner edge (200 km)",
      "radius": {
       "value": 1.031357120824286,
-      "unit": "R_earth"
+      "unit": "r_earth"
      },
      "info_url": "https://en.wikipedia.org/wiki/Low_Earth_orbit",
      "color": "rgb(255, 248, 220)",
@@ -1537,7 +1537,7 @@
      "name": "Low Earth Orbit, outer edge (2,000 km)",
      "radius": {
       "value": 1.313571208242859,
-      "unit": "R_earth"
+      "unit": "r_earth"
      },
      "info_url": "https://en.wikipedia.org/wiki/Low_Earth_orbit",
      "color": "rgb(255, 248, 220)",
@@ -1564,7 +1564,7 @@
      "shape": "equatorial_ring",
      "radius": {
       "value": 6.610735325291913,
-      "unit": "R_earth"
+      "unit": "r_earth"
      },
      "info_url": "https://en.wikipedia.org/wiki/Geostationary_orbit",
      "color": "rgb(220, 220, 255)",
@@ -1593,7 +1593,7 @@
      "shape": "magnetopause",
      "standoff": {
       "value": 10.0,
-      "unit": "R_earth"
+      "unit": "r_earth"
      },
      "info_url": "https://en.wikipedia.org/wiki/Magnetopause",
      "color": "rgb(180, 180, 255)",
@@ -1607,7 +1607,7 @@
      "shape": "bow_shock",
      "standoff": {
       "value": 12.5,
-      "unit": "R_earth"
+      "unit": "r_earth"
      },
      "info_url": "https://en.wikipedia.org/wiki/Bow_shocks_in_astrophysics",
      "color": "rgb(255, 200, 150)",
@@ -1638,14 +1638,14 @@
    "params": {
     "inner_belt_distance": {
      "value": 1.5,
-     "unit": "R_earth",
+     "unit": "r_earth",
      "source": "Baker et al. (2018), Space Sci. Rev. 214:17, doi:10.1007/s11214-017-0452-7 -- inner-zone proton fluxes peak near r ~ 1.5 R_E",
      "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_RADII",
      "note": "A flux PEAK, not an edge; the inner belt spans roughly L = 1.1 to 2."
     },
     "outer_belt_distance": {
      "value": 4.5,
-     "unit": "R_earth",
+     "unit": "r_earth",
      "source": "J. Geophys. Res. Space Physics (2025), doi:10.1029/2024JA033504 -- the outer belt is most intense around L = 4 and 5; Kellerman et al. (2014) as cited in arXiv:1809.00902 -- maximum electron flux at L = 4-5. Drawn at the midpoint.",
      "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_RADII",
      "note": "A flux PEAK, not an edge; the outer belt spans roughly L = 3 to 7 and moves with geomagnetic activity."
@@ -1682,7 +1682,7 @@
      "name": "Hill Sphere (gravitational dominance over the Sun)",
      "radius": {
       "value": 234.6388338020614,
-      "unit": "R_earth"
+      "unit": "r_earth"
      },
      "info_url": "https://en.wikipedia.org/wiki/Hill_sphere",
      "color": "rgb(0, 255, 0)",
@@ -1728,7 +1728,7 @@
      "name": "Core",
      "radius": {
       "value": 0.2,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(70, 130, 180)",
      "opacity": 1.0,
@@ -1741,7 +1741,7 @@
      "name": "Radiative Zone",
      "radius": {
       "value": 0.7,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(30, 144, 255)",
      "opacity": 1.0,
@@ -1754,7 +1754,7 @@
      "name": "Photosphere",
      "radius": {
       "value": 1.0,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(255, 244, 214)",
      "opacity": 1.0,
@@ -1779,7 +1779,7 @@
      "name": "Chromosphere (2,000 km skin)",
      "radius": {
       "value": 1.0028748,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(30, 144, 255)",
      "opacity": 0.5,
@@ -1793,7 +1793,7 @@
      "name": "Inner Corona",
      "radius": {
       "value": 3,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(0, 0, 255)",
      "opacity": 0.45,
@@ -1806,7 +1806,7 @@
      "name": "Roche Limit (Comets)",
      "radius": {
       "value": 3.45,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(200, 60, 60)",
      "opacity": 0.5,
@@ -1819,7 +1819,7 @@
      "name": "Alfven Surface",
      "radius": {
       "value": 19.7,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(0, 200, 200)",
      "opacity": 0.35,
@@ -1832,7 +1832,7 @@
      "name": "Outer Corona",
      "radius": {
       "value": 50,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(25, 25, 112)",
      "opacity": 0.5,
@@ -1870,7 +1870,7 @@
      "name": "Heliopause",
      "radius": {
       "value": 26148,
-      "unit": "R_sun"
+      "unit": "r_sun"
      },
      "color": "rgb(135, 206, 250)",
      "opacity": 0.4,
