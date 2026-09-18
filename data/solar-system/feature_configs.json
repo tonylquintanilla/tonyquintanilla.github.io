@@ -7,7 +7,7 @@
           "name": "Core",
           "radius": {
             "value": 0.2,
-            "unit": "R_sun"
+            "unit": "r_sun"
           },
           "description": "The Sun's center, where hydrogen fuses into helium and the Sun's light and heat are made.",
           "about": "The core reaches out to about a quarter of the Sun's radius and holds about a third of its mass. It is the hottest place in the solar system, near 15 million kelvin, and about 150 times denser than water under the weight of the layers above. Hydrogen nuclei fuse into helium there in the proton-proton chain, turning a little mass into a great deal of energy, which then works its way outward through the radiative zone and the convection zone to the surface.",
@@ -23,7 +23,7 @@
           "name": "Radiative Zone",
           "radius": {
             "value": 0.713,
-            "unit": "R_sun"
+            "unit": "r_sun"
           },
           "description": "The deep layer around the core where energy crawls outward as light, absorbed and re-emitted countless times.",
           "about": "The radiative zone lies between the core and the convection zone, from about a fifth to about seven tenths of the Sun's radius. It is dense and opaque: a photon made in the core travels only a short distance before it is absorbed and sent on again, so its energy can take millions of years to cross this layer. Temperatures fall from about 7 million kelvin near the core to about 2 million at the top of the zone.",
@@ -39,7 +39,7 @@
           "name": "Photosphere",
           "radius": {
             "value": 1.0,
-            "unit": "R_sun"
+            "unit": "r_sun"
           },
           "description": "The Sun's visible surface: the thin, glowing layer that the light we see comes from.",
           "about": "Below the photosphere, in the convection zone, hot gas rises, cools and sinks, carrying energy the last stretch to the surface. At the photosphere, a layer only about 500 km thick, that energy leaves as light, at about 5,500 kelvin. To the eye it is a smooth disk; up close it shows granulation, the tops of the convection cells, and sunspots, cooler patches held by strong magnetic fields that can be larger than Earth.",
@@ -68,13 +68,13 @@
           "color": "rgb(255, 200, 80)",
           "cusp_radius": {
             "value": 4.0,
-            "unit": "R_sun",
+            "unit": "r_sun",
             "source": "Suess and Nerney (2004) -- extent of the closed-field helmet, not of the streamer as a whole",
             "orrery_constant": "constants_new.py::HELMET_CUSP_RADII"
           },
           "fade_radius": {
             "value": 19.7,
-            "unit": "R_sun",
+            "unit": "r_sun",
             "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- the band dissolves across the Alfven surface",
             "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
           },
@@ -105,7 +105,7 @@
           "name": "Chromosphere (2,000 km skin)",
           "radius": {
             "value": 1.002874802357338,
-            "unit": "R_sun"
+            "unit": "r_sun"
           },
           "description": "A thin, reddish layer of the Sun's atmosphere just above the visible surface, about 2,000 km deep.",
           "about": "The chromosphere sits between the photosphere and the corona and takes its name from the Greek word for color, because the hydrogen in it glows red. It is far less dense than the surface, and its temperature rises with height, from a few thousand kelvin at the bottom to about 20,000 at the top. It is never still: jets of gas called spicules rise and fall like geysers, and cooler prominences hang in it, held up by magnetic fields.",
@@ -122,7 +122,7 @@
           "name": "Inner Corona",
           "radius": {
             "value": 3,
-            "unit": "R_sun"
+            "unit": "r_sun"
           },
           "description": "The lowest part of the Sun's outer atmosphere: a thin gas at millions of degrees, shaped by the Sun's magnetic field.",
           "about": "The inner corona is the part of the corona nearest the surface. It is thin, far thinner than the photosphere, and yet at one to three million kelvin it is much hotter, a puzzle known as the coronal heating problem. The magnetic field rules it: closed loops trap glowing gas in bright arcs, open regions called coronal holes let gas escape as the solar wind, and streamers reach outward. Because it is so faint it is seen directly only at a total eclipse or with special instruments.",
@@ -138,7 +138,7 @@
           "name": "Roche Limit (Comets)",
           "radius": {
             "value": 3.45,
-            "unit": "R_sun"
+            "unit": "r_sun"
           },
           "description": "The distance inside which the Sun's tides would pull a loosely held comet apart.",
           "about": "Inside the Roche limit the difference in the Sun's pull across a body outweighs the body's own gravity. The limit drawn here is for a comet held together only by its own gravity, at a typical comet density. It is not a hard wall: the strength of the ice and rock can hold a nucleus together well inside it, and several sungrazing comets have survived far closer than this line before breaking up or escaping.",
@@ -155,7 +155,7 @@
           "name": "Alfven Surface",
           "radius": {
             "value": 19.7,
-            "unit": "R_sun"
+            "unit": "r_sun"
           },
           "description": "The true outer edge of the Sun's atmosphere, where the outflowing gas becomes the solar wind and can no longer signal back to the Sun.",
           "about": "Inside the Alfven surface the gas is tied to the Sun by its magnetic field, and a disturbance there can travel back to the surface. Outside it the gas moves faster than magnetic waves can carry a signal inward, so it is on its own, and is called the solar wind. NASA's Parker Solar Probe crossed this boundary in April 2021, the first spacecraft to fly inside the corona. The surface is not a smooth sphere: it is lower over the poles and higher over the streamer belt.",
@@ -171,7 +171,7 @@
           "name": "Outer Corona",
           "radius": {
             "value": 50,
-            "unit": "R_sun"
+            "unit": "r_sun"
           },
           "description": "The faint outer reach of the Sun's atmosphere, where sunlight scattered by dust gives a soft glow far beyond the streamers.",
           "about": "At this distance the corona is extremely thin. Sunlight scattered by dust, the F-corona, outshines the light scattered by electrons that dominates nearer the Sun. By here the gas has long since become the solar wind; the shell marks the extent of the faint glow rather than a physical edge.",
@@ -211,7 +211,7 @@
           "name": "Heliopause",
           "radius": {
             "value": 26148,
-            "unit": "R_sun"
+            "unit": "r_sun"
           },
           "description": "The outer boundary of the Sun's bubble, where the solar wind's push is balanced by the gas between the stars.",
           "about": "The solar wind, a constant stream of charged particles from the Sun, inflates a vast bubble called the heliosphere around the Sun and planets. The bubble is not round: the Sun's motion through interstellar gas gives it a rounded head and a long tail. The heliopause is its outermost boundary, where the wind's pressure equals the pressure of the interstellar medium, and it shields the planets from much of the galaxy's cosmic radiation.",
@@ -480,7 +480,7 @@
           "about": "The crust is thin compared with the planet: 5 to 10 km under the oceans, where it is mostly basalt, and 30 to 50 km under the continents, where it is mostly granite. Surface temperatures range from about minus 80 to 60 degrees Celsius. It holds all known life and every resource we can reach.",
           "radius": {
             "value": 1.0,
-            "unit": "R_earth"
+            "unit": "r_earth"
           },
           "info_url": "https://en.wikipedia.org/wiki/Earth%27s_crust",
           "color": "rgb(70, 120, 160)",
@@ -505,7 +505,7 @@
           "about": "The troposphere, the lowest 12 km or so, is where clouds and weather form; above it the stratosphere, to about 50 km, holds the ozone layer. Together they contain 99 percent of the atmosphere's mass, mostly nitrogen and oxygen. Temperature falls from about 15 degrees Celsius at sea level to minus 60 at the top of the troposphere, then warms again toward the stratopause as ozone absorbs sunlight.",
           "radius": {
             "value": 1.0078392802060714,
-            "unit": "R_earth"
+            "unit": "r_earth"
           },
           "info_url": "https://science.nasa.gov/earth/earth-atmosphere/earths-atmosphere-a-multi-layered-cake/",
           "color": "rgb(150, 200, 255)",
@@ -522,7 +522,7 @@
           "about": "Above 50 km lie the mesosphere, where most meteors burn up, the thermosphere, where the aurora appears and the International Space Station flies, and, higher still, the beginning of the exosphere. In the thermosphere the gas can reach 2,000 degrees Celsius, yet it is so thin it would feel cold to the skin.",
           "radius": {
             "value": 1.0940713624728577,
-            "unit": "R_earth"
+            "unit": "r_earth"
           },
           "info_url": "https://www.nasa.gov/image-article/earths-upper-atmosphere/",
           "color": "rgb(100, 150, 255)",
@@ -547,7 +547,7 @@
           "about": "The exosphere has no top: it simply thins into space. Its hydrogen glows faintly in ultraviolet light, a halo called the geocorona. This shell is drawn where that glow has been detected, not where the atmosphere ends.",
           "radius": {
             "value": 100.0,
-            "unit": "R_earth"
+            "unit": "r_earth"
           },
           "info_url": "https://en.wikipedia.org/wiki/Geocorona",
           "color": "rgb(200, 200, 255)",
@@ -572,7 +572,7 @@
           "about": "Low Earth orbit is the region from roughly 200 to 2,000 km up. Satellites there circle at every angle to the equator, so together they form a shell around Earth rather than a ring, and each completes an orbit in about 90 to 120 minutes. The International Space Station, the Hubble Space Telescope, Starlink and most weather and Earth-observing satellites live here; the moving lights seen at dusk and dawn are usually these.",
           "radius": {
             "value": 1.031357120824286,
-            "unit": "R_earth"
+            "unit": "r_earth"
           },
           "info_url": "https://en.wikipedia.org/wiki/Low_Earth_orbit",
           "color": "rgb(255, 248, 220)",
@@ -588,7 +588,7 @@
           "about": "Low Earth orbit is the region from roughly 200 to 2,000 km up. Satellites there circle at every angle to the equator, so together they form a shell around Earth rather than a ring, and each completes an orbit in about 90 to 120 minutes. The International Space Station, the Hubble Space Telescope, Starlink and most weather and Earth-observing satellites live here; the moving lights seen at dusk and dawn are usually these.",
           "radius": {
             "value": 1.313571208242859,
-            "unit": "R_earth"
+            "unit": "r_earth"
           },
           "info_url": "https://en.wikipedia.org/wiki/Low_Earth_orbit",
           "color": "rgb(255, 248, 220)",
@@ -613,7 +613,7 @@
           "shape": "equatorial_ring",
           "radius": {
             "value": 6.610735325291913,
-            "unit": "R_earth"
+            "unit": "r_earth"
           },
           "info_url": "https://en.wikipedia.org/wiki/Geostationary_orbit",
           "color": "rgb(220, 220, 255)",
@@ -648,7 +648,8 @@
             },
             "a7": {
               "value": -0.007,
-              "unit": "per_nT",
+              "unit": "per_nt",
+              "figures": null,
               "source": "Shue et al. (1998), doi:10.1029/98JA01103 -- Table 1 (After Fit) row a7, p. 17,698: -0.007 +/- 0.0005 per nT. Eq. 11 prints it as a subtraction; the table carries the sign, so this value is negative and adds.",
               "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_A7_PER_NT"
             },
@@ -660,26 +661,30 @@
             },
             "bz": {
               "value": 0.0,
-              "unit": "nT",
+              "unit": "nt",
+              "figures": null,
               "_declared": "A neutral midpoint chosen for this scene, NOT a figure from the paper. Both boundaries are evaluated at the same conditions so the two surfaces can be compared.",
               "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_BZ_NT"
             },
             "pressure": {
               "value": 2.0,
-              "unit": "nPa",
+              "unit": "npa",
+              "figures": null,
               "_declared": "The solar wind dynamic pressure both fits are evaluated at. Declared for this scene, not measured.",
               "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_PRESSURE_NPA"
             },
             "cut_angle": {
               "value": 120.0,
               "unit": "deg",
+              "figures": null,
               "_declared": "Where the drawn surface stops, measured from the nose. Shue's surface has no end: at this flaring the radius grows without bound as theta approaches 180 degrees, so a drawing must choose a stop. Shue et al. (1998) fig. 6, p. 17,695 plots the model out to 120 degrees, the furthest the authors evaluate it. A drawing limit, not an edge.",
               "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_CUT_ANGLE_DEG"
             }
           },
           "standoff": {
             "value": 10.25,
-            "unit": "R_earth"
+            "unit": "r_earth",
+            "figures": null
           },
           "info_url": "https://en.wikipedia.org/wiki/Magnetopause",
           "color": "rgb(180, 180, 255)",
@@ -697,7 +702,8 @@
             "_model": "Jelinek et al. (2012), the paraboloid of eqs. 15-16 parameterised by tau: x = R0 p^(-1/eps) - tau^2 / 2, and the distance from the Sun-Earth line is sqrt(2 R0 p^(-1/eps)) tau / lambda. At tau = 0 this is the standoff below. A different functional form from the magnetopause because it is a different paper's fit, not a variation on Shue.",
             "r0": {
               "value": 15.02,
-              "unit": "R_earth",
+              "unit": "r_earth",
+              "figures": null,
               "source": "Jelinek, Nemecek and Safrankova (2012), J. Geophys. Res. 117:A05208, doi:10.1029/2011JA017252 -- eq. 14, p. 5: R_BS = 15.02 p^(-1/6.55), so 15.02 R_E is the bow shock standoff at p = 1 nPa.",
               "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_R0_RADII"
             },
@@ -715,20 +721,23 @@
             },
             "pressure": {
               "value": 2.0,
-              "unit": "nPa",
+              "unit": "npa",
+              "figures": null,
               "_declared": "The same declared pressure as the magnetopause. Both surfaces must be evaluated at the same conditions or their relative positions mean nothing.",
               "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_PRESSURE_NPA"
             },
             "cut_angle": {
               "value": 105.0,
               "unit": "deg",
+              "figures": null,
               "_declared": "Where the drawn surface stops, measured from the nose. Jelinek et al. fitted crossings within 7 hours of local noon either side, and 7 hours of Earth's turn is 105 degrees. A drawing limit set by where the data was, not by where the formula fails -- the opposite reason from the magnetopause's 120.",
               "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_CUT_ANGLE_DEG"
             }
           },
           "standoff": {
             "value": 13.51,
-            "unit": "R_earth"
+            "unit": "r_earth",
+            "figures": null
           },
           "info_url": "https://en.wikipedia.org/wiki/Bow_shocks_in_astrophysics",
           "color": "rgb(255, 200, 150)",
@@ -741,7 +750,8 @@
           "_declared": "Drawing parameters, not measurements: the orrery's tail is drawn to 100 Earth radii with a 15-radius base and 25-radius end. This line asserted an observed extent for the real tail until 2026-09-12, when that claim was retired for resting on a single Pioneer 7 crossing. The observed extent now has a store row and is served beside these, as observed_extent. The two are different claims and neither is the other: 100 is a picture, 220 is a measurement.",
           "observed_extent": {
             "value": 220.0,
-            "unit": "R_earth",
+            "unit": "r_earth",
+            "figures": null,
             "source": "Slavin, Tsurutani, Smith, Jones and Sibeck (1983), 'Average configuration of the distant (less than 220-earth-radii) magnetotail - Initial ISEE-3 magnetic field results', Geophys. Res. Lett. 10(10):973, doi:10.1029/GL010i010p00973 -- the abstract states that the magnetotail retains much of its near-Earth structure out to X = -220 Earth radii, that flaring ceases at 100-120 R_E, and that the tail diameter settles near 60 R_E. Abstract open at ntrs.nasa.gov/citations/19830066648.",
             "orrery_constant": "constants_new.py::EARTH_MAGNETOTAIL_OBSERVED_RADII",
             "note": "Read as OBSERVED TO AT LEAST, not as an edge. 220 R_E is ISEE-3's reach on its first two tail passes, so the figure is bounded by the orbit rather than by where the tail ends. Two further signatures are more distant and less like a tail: Ness, Scearce and Cantarano (1967), doi:10.1029/JZ072i015p03769, report Pioneer 7 in the expected tail region at 900 to 1,050 R_E over a week in 1966, intermittently and with no coherent tail, the title saying 'probable'; and Intriligator et al. (1979), Geophys. Res. Lett. 6:585, report tail-ASSOCIATED phenomena near 3,100 R_E, read by later work as signatures disconnected from Earth."
@@ -763,6 +773,7 @@
         "magnetic_tilt": {
           "value": 9.6,
           "unit": "deg",
+          "figures": null,
           "source": "Alken et al. (2021), International Geomagnetic Reference Field: the thirteenth generation, Earth Planets Space 73:49, doi:10.1186/s40623-020-01288-x -- the angle between the geomagnetic dipole axis and Earth's rotation axis, epoch 2020-2025. Rounded to a tenth of a degree, which is the precision the dipole cone's projection can honour. The tilt drifts, decreasing about 0.05 deg per decade, so any quotation of it carries its epoch.",
           "orrery_constant": "constants_new.py::EARTH_DIPOLE_TILT_DEG",
           "note": "Served so the hover can quote it. The rings are NOT tilted by it. They are drawn in the equatorial plane, which is the daily average of the magnetic one, because a tilted plane needs a direction as well as an angle and that direction turns once a day while this scene is frozen (L-231, Tony's ruling 2026-09-15)."
@@ -770,21 +781,24 @@
         "_frame": "The edge rows below are geocentric distances in the geomagnetic equatorial plane, which is the frame their sources state. Tony's ruling, 2026-09-14 (L-323 ruling B, second amendment). The literature is mixed -- Y. X. Li et al. (2023) states the outer span in L shells and Baker et al. (2018) states it both ways -- so each row names the paper its figure follows and the frame travels with the row rather than with the block.",
         "inner_belt_distance": {
           "value": 1.5,
-          "unit": "R_earth",
+          "unit": "r_earth",
+          "figures": null,
           "source": "Baker et al. (2018), Space Sci. Rev. 214:17, doi:10.1007/s11214-017-0452-7 -- sec. 2, inner-zone proton fluxes peak near geocentric r ~ 1.5 R_E",
           "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_RADII",
           "note": "A flux PEAK, not an edge. The edges are their own rows below, as of 2026-09-14 (L-305 item 7); this note carried the span in prose until then, which is what let the served figure and the orrery's disagree."
         },
         "inner_belt_inner_edge": {
           "value": 1.1,
-          "unit": "R_earth",
+          "unit": "r_earth",
+          "figures": null,
           "source": "Meredith, Horne, Kersten, Fraser and Grew (2014), J. Geophys. Res. Space Physics 119:5328, doi:10.1002/2014JA020064 -- introduction, first paragraph: the inner belt extends from about 1.1 to 2 Earth radii in the geomagnetic equatorial plane. Open full text at nora.nerc.ac.uk. Meredith states this as background and passes it on from Baker et al. (2007), which is the layer below rather than the source.",
           "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_BELT_INNER_EDGE",
           "note": "Koskinen and Kilpua (2022) sec. 1.1 corroborate 1.1 to 2 R_E but are NOT the source, because they state it for the inner ELECTRON belt and put the energetic protons over about 1.1 to 3 R_E. The figure matched and the scope did not."
         },
         "inner_belt_outer_edge": {
           "value": 2.0,
-          "unit": "R_earth",
+          "unit": "r_earth",
+          "figures": null,
           "source": "Meredith et al. (2014), doi:10.1002/2014JA020064 -- introduction, first paragraph, the outer end of the same stated span.",
           "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_BELT_OUTER_EDGE",
           "note": "Two rows rather than one span, because provenance is per number and the two edges do not move together."
@@ -792,20 +806,23 @@
         "outer_belt_distance": {
           "value": 4.5,
           "unit": "l_shell",
+          "figures": null,
           "source": "Li et al. (2025), J. Geophys. Res. Space Physics, doi:10.1029/2024JA033504 -- sec. 1, the outer belt is most intense around L = 4 and 5; the value served is our midpoint of that band. Kellerman et al. (2014), as reported in arXiv:1809.00902 -- maximum electron flux at L = 4-5; the arXiv paper is the document opened and Kellerman is the layer below it.",
           "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_RADII",
           "note": "A flux PEAK, not an edge. The unit is L, the McIlwain parameter, which equals geocentric distance in Earth radii only where a field line crosses the magnetic equator -- so any string printing this value says 'at the equator'. Baker et al. (2018) was removed from this citation on 2026-09-14: his figure 30 uses L* = 4.5 as a selected analysis location rather than a universal peak, and his span figure belongs on the edge row below."
         },
         "outer_belt_inner_edge": {
           "value": 3.0,
-          "unit": "R_earth",
+          "unit": "r_earth",
+          "figures": null,
           "source": "Meredith et al. (2014), doi:10.1002/2014JA020064, and Li, Tu, Selesnick and Huang (2024), J. Geophys. Res. Space Physics 129:e2023JA032171, doi:10.1029/2023JA032171 -- both state the outer belt extending from 3 Earth radii, in their introductions. Open full text at nora.nerc.ac.uk and par.nsf.gov.",
           "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BELT_INNER_EDGE",
           "note": "The layer below is Paulikas and Blake (1979) with Baker et al. (1986) for Meredith, and Ganushkina et al. (2011) with Van Allen et al. (1958) for Li. Baker et al. (2018) sec. 2 gives the same inner edge from SAMPEX and reports it reaching L ~ 2.5 under strong driving."
         },
         "outer_belt_outer_edge": {
           "value": 7.0,
-          "unit": "R_earth",
+          "unit": "r_earth",
+          "figures": null,
           "source": "Meredith et al. (2014), doi:10.1002/2014JA020064, and Li, Tu et al. (2024), doi:10.1029/2023JA032171 -- both state the outer belt extending to 7 Earth radii, in their introductions.",
           "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BELT_OUTER_EDGE",
           "note": "The measuring review disagrees on the outside and the disagreement is recorded rather than resolved by silence: Baker et al. (2018) sec. 2 and 3.4 puts the outer zone at r ~ 3 to >= 6.5 R_E from SAMPEX and, in L, at about 3.0 to 6.5. Koskinen and Kilpua (2022) sec. 1.1 put the outer reach at 7 to 10 R_E, which is why an outer figure near 10 R_E is not the physical impossibility one checker called it -- the belt's outer edge approaches the magnetopause, and magnetopause shadowing is a standard loss mechanism."
@@ -852,7 +869,7 @@
           "about": "Inside the Hill sphere a body can orbit Earth without being pulled away by the Sun. The Moon lies deep within it. Beyond this sphere the Sun's gravity wins, and an object would drift into its own orbit around the Sun.",
           "radius": {
             "value": 234.6388338020614,
-            "unit": "R_earth"
+            "unit": "r_earth"
           },
           "info_url": "https://en.wikipedia.org/wiki/Hill_sphere",
           "color": "rgb(0, 255, 0)",
