@@ -14,6 +14,11 @@
       "category": "star", "availability": "analytic", "parent": null,
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "frame-origin",
       "trajectory_of": null, "trace_policy": "none", "serve_positions": false,
+      "arrival": {
+        "_declared": "Drawing choices for the view a visitor arrives at, not measurements, so there is no orrery_constant link. drawn lists the served shells shown when the room opens, by key; every other shell starts unticked in the drawer. The frame elements the page builds (axis, Sun direction, terminator) are always shown. moon false starts the Moon unticked. The opening view fits what is drawn. Tony's ruling, 2026-09-17 (L-334).",
+        "drawn": ["photosphere"],
+        "moon": false
+      },
       "_comment": "The scene origin of a heliocentric cache: no orbit is fetched for it, and it is excluded from the served_window participants by canonical_frame. It is here for its shell geometry. Groups mirror the orrery GUI panel (Sun Structures / Solar Atmosphere Structures / Solar Wind Structures / Oort Cloud Structures / Hill Sphere Structure). Custom geometry -- streamer belt, Hills cloud torus, clumpy outer Oort, galactic tide -- is NOT here; it needs the solar pole first (L-229) and its own renderers.",
       "features": {
         "sun_structures": {
@@ -275,6 +280,11 @@
       "canonical_frame": "heliocentric",
       "trajectory_of": null,
       "trace_policy": "none",
+      "arrival": {
+        "_declared": "Drawing choices for the view a visitor arrives at, not measurements, so there is no orrery_constant link. drawn lists the served shells shown when the room opens, by key; every other shell starts unticked in the drawer. The frame elements the page builds (axis, Sun direction, terminator) are always shown. moon false starts the Moon unticked. The opening view fits what is drawn. Tony's ruling, 2026-09-17 (L-334).",
+        "drawn": ["crust"],
+        "moon": false
+      },
       "_comment": "L-291 (2026-09-07): entry rebuilt in the measured shape. Every rendered number carries value/unit/source/orrery_constant and is the orrery store's exact value at 5aed0590; the live store-drift run checks each by name. Groups earth_geostationary and earth_magnetosphere have no renderer yet (step 3) and the dispatch says so. Earth-Moon Lagrange points are L-297 and are not here.",
       "features": {
         "earth_interior": {
