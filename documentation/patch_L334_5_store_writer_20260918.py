@@ -13,8 +13,18 @@ Built on gallery 2f971040d14f9a9ee8c3d7c49c9d2aa182a1e0f4
 at https://github.com/tonylquintanilla/tonyquintanilla.github.io
 (orrery 8860b91b7cbcb6733844ef67478e7a6ef3cb52fd)
 
-L-334 STAGE C, FIRST OF THREE PUSHES -- pieces 2 and the writer's half of
+L-334 STAGE C, FIRST OF THREE PUSHES -- piece 2 and the writer's half of
 piece 5. No window yet, and nothing a visitor can see changes.
+
+REVISION 2, after Claude Fable 5.1's review of 2026-09-18. The first
+version refused six named fields and accepted every other piece of text
+in the file, which meant it would change a room's slug or a shell's
+colour -- either of which breaks a room. A refusal list cannot be
+complete; an allow list only has to know what is right. The writer now
+works from one, and two of Fable's other notes are in as well: an empty
+word is not added, and a belt's words turn out to be reachable, which
+makes leaving them out of the editor's list a choice rather than a
+limit.
 
 WHAT IT DOES (two new files, one edited):
 
@@ -23,15 +33,19 @@ WHAT IT DOES (two new files, one edited):
                               It shares mirror_constants.py's scanner, so
                               a save replaces exactly the characters of
                               the one value it was asked to change and
-                              leaves the other 928 lines alone. Three
-                              operations: a string, a list of strings
-                              (the arrival block's "drawn"), and true or
-                              false (its "moon"). Six field names are
-                              refused outright: value, unit, figures,
-                              orrery_constant, _declared and _comment.
+                              leaves the other 928 lines alone.
+                              WHAT IT MAY TOUCH IS AN ALLOW LIST built
+                              from the config -- 204 paths at gallery
+                              2f971040: a served shell's six words, a
+                              belt's parallel words, and the arrival
+                              block's drawn and moon. Everything else is
+                              refused, slugs and colours included.
                               A word a shell does not yet carry is ADDED
-                              rather than refused.
-  tools/test_store_writer.py  NEW. 231 checks. Built-in fixtures run
+                              rather than refused; an empty one is not
+                              added; a name may not be emptied; and a
+                              drawn entry naming no shell in that room
+                              is refused.
+  tools/test_store_writer.py  NEW. 245 checks. Built-in fixtures run
                               first, every run, so each refusal path has
                               actually been exercised; then every shell
                               and every word field of the real config,
@@ -44,6 +58,7 @@ The editor window that uses them is the next push.
 
 THEN (Tony), in this order:
   1. python gallery_maintenance_run.py    -- expect 13 of 13 now, not 12.
+     The new line reads "Store writer suite ... All 245 ... checks passed".
   2. Move this script into documentation/.
   3. Commit and push. Report the SHA.
 No cache build is needed: no served word and no config changed.
@@ -108,20 +123,41 @@ already there:
     a list of strings     the arrival block's "drawn"
     true or false         the arrival block's "moon"
 
-WHAT IT REFUSES, ALWAYS. Any path whose last step is one of:
-    value  unit  figures  orrery_constant     a number and its
-                                              provenance. These arrive
-                                              from the orrery through
-                                              the export and the mirror.
-                                              A number changes in
-                                              constants_new.py, never
-                                              here.
-    _declared  _comment                       the file's own record of
-                                              why a block exists. The
-                                              editor's form does not
-                                              offer them.
-It also refuses a path that does not exist, a change that would alter a
-value's TYPE, a list that is not all strings, and any result that does
+WHAT IT WILL TOUCH IS A LIST, NOT AN EXCEPTION LIST. editable_paths()
+reads the config and returns every path this writer may write, with the
+kind of value each one holds. Anything not in that map is refused,
+whatever it is.
+
+That is the second design. The first refused six named fields -- value,
+unit, figures, orrery_constant, _declared, _comment -- and accepted
+every other piece of text in the file, which meant it would happily
+change a room's `slug` from "earth" to "earthx", or a shell's `color` to
+"zzz". Either breaks a room. Claude Fable 5.1 found both by trying them
+during its review on 2026-09-18, and named the cause: a refusal list can
+never be complete, because it has to anticipate every way of being
+wrong. An allow list only has to know what is right. (L-334; the
+weakness came from the manifest asking for a refusal list.)
+
+So the editable surface is exactly:
+    a served shell's six words        name, description, about, note,
+                                      source, info_url -- on any member
+                                      of a feature group that carries a
+                                      display `name`
+    a belt's parallel words           names, descriptions, abouts,
+                                      notes, info_urls -- by index, for
+                                      a group served as parallel lists
+    the arrival block                 drawn, moon
+Numbers, their units, their figure counts, their `orrery_constant`
+links, `_declared`, `_comment`, slugs, colours, opacities, point counts
+and everything else are outside it, and a refusal says so.
+
+IT ALSO REFUSES: a path that does not exist; a change that would alter a
+value's TYPE; a list that is not all strings; an ADDED word that is
+empty, because a field that says nothing is noise (an existing word MAY
+be emptied -- the page reads an empty string as no word at all, and this
+writer has no way to remove a member); an empty `name`, because the
+shell list is keyed off it; a `drawn` entry that names no shell in that
+room, which would leave the Arrival check red; and any result that does
 not parse or that would put a non-ASCII byte in the file.
 
 NOTHING IS WRITTEN UNLESS EVERY CHANGE IN THE BATCH IS ACCEPTED. The
@@ -145,12 +181,25 @@ from mirror_constants import parse_with_spans, render   # noqa: E402
 CONFIG = os.path.join("data", "objects_config.json")
 
 # The last step of a path that this writer will never touch.
-REFUSED_FIELDS = ("value", "unit", "figures", "orrery_constant",
+# Kept as the names whose refusal gets its OWN sentence, because "not
+# editable" is less useful than "change it in constants_new.py". The
+# refusal itself is decided by editable_paths(), not by this list.
+NAMED_REFUSALS = ("value", "unit", "figures", "orrery_constant",
                   "_declared", "_comment")
 
 # The words this editor offers, in the order the form shows them. A
 # shell that lacks one gets it added on save; see plan().
 WORD_FIELDS = ("name", "description", "about", "note", "source", "info_url")
+
+# A feature served as PARALLEL LISTS rather than as a member each --
+# Earth's two radiation belts -- keeps its words in these, one entry per
+# belt, in step with `names`. `colors` and `info_borders` are drawing
+# choices and are not here.
+BELT_WORD_LISTS = ("names", "descriptions", "abouts", "notes", "info_urls")
+
+# A word that must not be emptied: the shell list is keyed off it, and
+# the renderers fall back to the raw key without it.
+REQUIRED_WORDS = ("name",)
 
 
 class WriteRefused(Exception):
@@ -211,18 +260,7 @@ def resolve(node, path):
     Raises WriteRefused naming the step that failed, because 'not found'
     without the step is a message nobody can act on.
     """
-    steps = split_path(path)
-    if steps[-1] in REFUSED_FIELDS:
-        raise WriteRefused(
-            "%s is not editable here: %s" % (steps[-1], _why(steps[-1])))
-    return _walk_node(node, steps, path)
-
-
-def _why(field):
-    if field in ("value", "unit", "figures", "orrery_constant"):
-        return ("a number and its provenance arrive from the orrery "
-                "through the export and the mirror")
-    return "the file's own record of why a block exists"
+    return _walk_node(node, split_path(path), path)
 
 
 # ----------------------------------------------------------------------
@@ -259,68 +297,154 @@ _OPERATIONS = {
 }
 
 
+def editable_paths(config_value):
+    """{path: kind} -- every path this writer may write, and no other.
+
+    kind is "string", "string_list" or "flag". This is the writer's
+    whole editable surface AND the window's source for what to show, so
+    the two cannot come to disagree about what is editable.
+
+    A ROOM is an object carrying an arrival block. Jupiter and Saturn
+    have feature blocks and no room, and their members carry no served
+    `name` (L-231), so nothing of theirs is here.
+    """
+    out = {}
+    for index, entry in enumerate(config_value.get("objects", [])):
+        if not isinstance(entry.get("arrival"), dict):
+            continue
+        base = "/objects/%d" % index
+        arrival = entry["arrival"]
+        if isinstance(arrival.get("drawn"), list):
+            out[base + "/arrival/drawn"] = "string_list"
+        if isinstance(arrival.get("moon"), bool):
+            out[base + "/arrival/moon"] = "flag"
+        features = entry.get("features") or {}
+        for group, params in features.items():
+            if group == "orientation" or not isinstance(params, dict):
+                continue
+            for key, member in params.items():
+                if isinstance(member, dict) and isinstance(member.get("name"), str):
+                    for word in WORD_FIELDS:
+                        out["%s/features/%s/%s/%s" % (base, group, key, word)] = \
+                            "string"
+            names = params.get("names")
+            if isinstance(names, list) and names:
+                for listname in BELT_WORD_LISTS:
+                    held = params.get(listname)
+                    if not isinstance(held, list):
+                        continue
+                    for position in range(len(held)):
+                        out["%s/features/%s/%s/%d"
+                            % (base, group, listname, position)] = "string"
+    return out
+
+
+def drawable_keys(config_value, slug):
+    """The keys an arrival block's `drawn` list may name, for one room."""
+    return set(key for key, _label, _covers
+               in arrival_choices(config_value, slug))
+
+
 def plan(text, changes):
     """[(start, end, piece, path, new)], one per change, unsorted.
 
     Every refusal happens here, before a single character is built.
-    `changes` is [(path, new_value)]; the operation is chosen by the
-    type of what is already in the file, and a change that would alter
-    that type is refused.
+    The path must be in editable_paths(); the value must match the kind
+    that map gives; and a change that would alter a value's type is
+    refused.
 
     A WORD FIELD A SHELL DOES NOT YET CARRY IS ADDED rather than
     refused. Not every shell is served with all six words -- the Sun's
     core has no `note` at gallery 2f971040 -- and a form that could show
     a field but never save it would be a trap. The insertion is the
     mirror's own: it lands after the last word the shell already has,
-    with the separator and indent mirror_constants.member_separator
-    works out from the file itself.
+    with the separator and indent worked out from the file itself.
     """
     node = parse_with_spans(text)
+    config_value = node.value
+    allowed = editable_paths(config_value)
     planned = []
     seen = {}
     for path, new in changes:
         steps = split_path(path)
         field = steps[-1]
-        if field in REFUSED_FIELDS:
-            raise WriteRefused(
-                "%s is not editable here: %s" % (field, _why(field)))
+        if path not in allowed:
+            raise WriteRefused(_not_editable(path, field))
         if path in seen:
             raise WriteRefused("%s was given twice in one save" % path)
         seen[path] = True
+        kind = allowed[path]
+        _OPERATIONS[kind][1](new, path)
+
+        if kind == "string":
+            if field in REQUIRED_WORDS and not new.strip():
+                raise WriteRefused(
+                    "%s cannot be emptied: the shell list and the drawer "
+                    "row are keyed off the name" % path)
+        if kind == "string_list":
+            room = _slug_at(config_value, steps)
+            unknown = sorted(set(new) - drawable_keys(config_value, room))
+            if unknown:
+                raise WriteRefused(
+                    "%s names %s, which %s does not draw -- the Arrival "
+                    "check would go red on it"
+                    % (path, ", ".join(repr(u) for u in unknown), room))
 
         parent = _walk_node(node, steps[:-1], path)
-        held_missing = (isinstance(parent.value, dict)
-                        and field not in parent.members)
-        if held_missing:
+        if isinstance(parent.value, dict) and field not in parent.members:
+            if not new.strip():
+                raise WriteRefused(
+                    "%s is not served, and an empty word is not worth "
+                    "adding -- type something or leave it be" % path)
             planned.append(_plan_insert(text, parent, steps, field, new, path))
             continue
 
         target = _walk_node(node, steps, path)
         held = target.value
-        # bool before str/int: in Python True is an int, and a flag slot
-        # must not quietly accept 1.
-        if isinstance(held, bool):
-            kind = "flag"
-        elif isinstance(held, str):
-            kind = "string"
-        elif isinstance(held, list):
-            kind = "string_list"
-        else:
+        held_kind = ("flag" if isinstance(held, bool)
+                     else "string" if isinstance(held, str)
+                     else "string_list" if isinstance(held, list)
+                     else None)
+        if held_kind != kind:
             raise WriteRefused(
-                "%s holds %s, which this writer does not change"
-                % (path, type(held).__name__))
-        _OPERATIONS[kind][1](new, path)
+                "%s holds %s, and this writer was going to write %s there"
+                % (path, type(held).__name__, kind))
         planned.append((target.start, target.end, render(new), path, new))
     return planned
 
 
+def _slug_at(config_value, steps):
+    """The room slug for a path that starts /objects/<index>/..."""
+    try:
+        return config_value["objects"][int(steps[1])].get("slug", "?")
+    except (KeyError, IndexError, ValueError):
+        return "?"
+
+
+def _not_editable(path, field):
+    """Why this path is refused, in words that say what to do instead."""
+    if field in ("value", "unit", "figures", "orrery_constant"):
+        return ("%s is not editable here: a number and its provenance "
+                "arrive from the orrery through the export and the "
+                "mirror. Change it in constants_new.py." % path)
+    if field in ("_declared", "_comment"):
+        return ("%s is not editable here: it is the file's own record of "
+                "why a block exists, and this editor does not offer it."
+                % path)
+    return ("%s is not something this editor changes. It writes a served "
+            "shell's words (%s), a belt's parallel words, and the arrival "
+            "block's drawn and moon. Everything else in this file -- "
+            "slugs, colours, opacities, point counts, numbers and their "
+            "links -- is outside it."
+            % (path, ", ".join(WORD_FIELDS)))
+
+
 def _plan_insert(text, parent, steps, field, new, path):
-    """The edit that ADDS a word field to a shell that lacks it."""
-    if field not in WORD_FIELDS:
-        raise WriteRefused(
-            "no %r under %s, and %s is not one of the words this editor "
-            "adds (%s)" % (field, "/" + "/".join(steps[:-1]), field,
-                           ", ".join(WORD_FIELDS)))
+    """The edit that ADDS a word field to a shell that lacks it.
+
+    The path is already known to be editable, so this only has to find
+    something to sit beside and work out the separator.
+    """
     _check_string(new, path)
     if not isinstance(parent.value.get("name"), str):
         raise WriteRefused(
@@ -647,6 +771,8 @@ FIXTURE = """{
         },
         "belts": {
           "names": ["Inner Belt", "Outer Belt"],
+          "descriptions": ["The inner one.", "The outer one."],
+          "colors": ["red", "blue"],
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
@@ -723,11 +849,23 @@ def fixture_checks():
           json.loads(out)["objects"][0]["features"]["interior"]["crust"]
           ["description"] == "A different sentence.")
 
-    # 3. The six refusals. The message must say the field is not
-    #    editable HERE -- not merely mention it. A locked number is
-    #    refused by the type check too, and a test that only looked for
-    #    the word would pass with the refusal list emptied: the word is
-    #    in the path. That hole was found by emptying it (2026-09-18).
+    # 3. THE ALLOW LIST. What may be written is a map built from the
+    #    config, not a list of exceptions, so anything not in it is
+    #    refused whatever it is. Claude Fable 5.1's review of
+    #    2026-09-18 found the previous design would change a room's
+    #    slug and a shell's colour, either of which breaks a room.
+    cfg0 = json.loads(text)
+    allowed = W.editable_paths(cfg0)
+    check("the allow list holds the shell words and nothing else",
+          len(allowed) == 2 * len(W.WORD_FIELDS) + 2 * 2 + 2,
+          "%d path(s): %s" % (len(allowed), sorted(allowed)[:3]))
+
+    #    The six that get their OWN sentence, because "not editable" is
+    #    less use than "change it in constants_new.py". The message must
+    #    say "is not editable here" -- not merely mention the field. A
+    #    locked number is refused by the type check too, and a test that
+    #    only looked for the word would pass with the refusal emptied:
+    #    the word is in the path. That hole was found by emptying it.
     for field, where in (("value", CRUST + "/radius/value"),
                          ("unit", CRUST + "/radius/unit"),
                          ("figures", CRUST + "/radius/figures"),
@@ -737,7 +875,18 @@ def fixture_checks():
                           "/objects/0/features/interior/mantle/_comment")):
         refuses("refuse " + field,
                 lambda w=where: W.edit(text, [(w, "anything")]),
-                expect_in="%s is not editable here" % field)
+                expect_in="is not editable here")
+
+    #    And the ones a refusal list would have let through.
+    for name, where, value in (
+            ("a room's slug", "/objects/0/slug", "testbodyx"),
+            ("a shell's colour", CRUST + "/color", "zzz"),
+            ("a belt's colour", "/objects/0/features/belts/colors/0", "zzz"),
+            ("a key nobody serves", CRUST + "/whatever", "x"),
+            ("the objects list itself", "/objects", "x")):
+        refuses("refuse " + name,
+                lambda w=where, v=value: W.edit(text, [(w, v)]),
+                expect_in="not something this editor changes")
 
     # 4. A batch with one refusal writes nothing.
     refuses("a batch with one refusal writes nothing",
@@ -767,7 +916,34 @@ def fixture_checks():
             expect_in="colour")
     refuses("a word is not added to something that is not a shell",
             lambda: W.edit(text, [("/objects/0/arrival/note", "x")]),
-            expect_in="not a shell")
+            expect_in="not something this editor changes")
+
+    # 5c. Empty words. An ADDED one is noise and is refused; an existing
+    #     one may be emptied, because the page reads an empty string as
+    #     no word at all and this writer cannot remove a member. A name
+    #     may never be emptied: the shell list is keyed off it.
+    refuses("an empty word is not ADDED",
+            lambda: W.edit(text, [
+                ("/objects/0/features/interior/mantle/note", "   ")]),
+            expect_in="not worth adding")
+    out = W.edit(text, [(CRUST + "/note", "")])
+    check("an existing word may be emptied",
+          json.loads(out)["objects"][0]["features"]["interior"]["crust"]
+          ["note"] == "")
+    refuses("a name may not be emptied",
+            lambda: W.edit(text, [(CRUST + "/name", "")]),
+            expect_in="cannot be emptied")
+
+    # 5d. A belt's words are reachable by index; its drawing choices
+    #     are not. Whether the WINDOW offers them is a separate choice.
+    out = W.edit(text, [("/objects/0/features/belts/descriptions/1",
+                         "A different outer belt.")])
+    check("a belt's description writes by index",
+          json.loads(out)["objects"][0]["features"]["belts"]
+          ["descriptions"][1] == "A different outer belt.")
+    refuses("a belt index past the end refuses",
+            lambda: W.edit(text, [("/objects/0/features/belts/names/9", "x")]),
+            expect_in="not something this editor changes")
 
     # 6. The arrival block.
     out = W.edit(text, [(DRAWN, ["crust", "mantle"]), (MOON, True)])
@@ -780,6 +956,12 @@ def fixture_checks():
             lambda: W.edit(text, [(DRAWN, ["crust", 7])]))
     refuses("a string offered to drawn refuses",
             lambda: W.edit(text, [(DRAWN, "crust")]))
+    refuses("drawn naming a shell the room does not draw refuses",
+            lambda: W.edit(text, [(DRAWN, ["crust", "nosuch"])]),
+            expect_in="does not draw")
+    out = W.edit(text, [(DRAWN, ["crust", "belts"])])
+    check("drawn may name a group served as parallel lists",
+          json.loads(out)["objects"][0]["arrival"]["drawn"] == ["crust", "belts"])
     refuses("a list offered to a string field refuses",
             lambda: W.edit(text, [(CRUST + "/name", ["Crust"])]))
 
@@ -890,6 +1072,14 @@ def real_config_checks():
                     replaced += 1
         print("    %s: %d word(s) replaced and %d added, across %d shell(s)"
               % (slug, replaced, added, len(shells)))
+    real_allowed = W.editable_paths(cfg)
+    print("    the allow list holds %d path(s) across %d room(s); every "
+          "other path in the file is refused"
+          % (len(real_allowed), len(rooms)))
+    check("real config: nothing outside a room is editable",
+          not any(p.startswith("/objects/%d/" % W.object_index(cfg, other))
+                  for other in others for p in real_allowed),
+          "a non-room path is in the allow list")
 
     # save() on a copy: the good half of a refused batch must not land.
     work = tempfile.mkdtemp(prefix="store_writer_")
@@ -943,10 +1133,12 @@ def main():
         for line in FAILURES:
             print("  " + line)
         return 1
-    print("All %d store-writer checks passed: no-edit round trip, one line "
-          "per change, six refusals, a refused batch writing nothing, "
-          "awkward text, the arrival list and flag, path errors named, "
-          "and the shell list matching the cache check's rule." % CHECKS[0])
+    print("All %d store-writer checks passed: an allow list that lets "
+          "through only a shell's words, a belt's words and the arrival "
+          "settings; a no-edit round trip; one line per change; empty "
+          "words handled; a refused batch writing nothing; awkward text; "
+          "and the shell list matching the cache check's rule."
+          % CHECKS[0])
     return 0
 
 

@@ -164,6 +164,16 @@ OFFLINE_CHECKERS = [
     ("Mirror suite", "python",
      ["test_mirror_constants.py"], "tools", None, False),
 
+    # L-334 piece 5 (2026-09-18): the writer that changes the WORDS in
+    # data/objects_config.json, beside the mirror that changes its
+    # NUMBERS -- they share one scanner, so the two cannot come to
+    # disagree about the file's layout. The suite runs its own fixtures
+    # first, every run, so a pass means each refusal path actually ran,
+    # and then walks every shell and every word field of the real
+    # config in both rooms.
+    ("Store writer suite", "python",
+     ["tools/test_store_writer.py"], ".", None, False),
+
     ("Config mirror check", "python",
      ["tools/check_constants_links.py", "--mirror"], ".", None, False),
 
