@@ -120,6 +120,7 @@ ROLE_MAP = {
 
     # devtool
     'add_docstrings':                      'devtool',
+    'check_cache_in_step':                 'devtool',
     'check_constants_links':               'devtool',
     'debug_encke_tp':                      'devtool',
     'fingerprint':                         'devtool',

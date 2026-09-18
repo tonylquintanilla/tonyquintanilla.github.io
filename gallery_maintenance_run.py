@@ -170,6 +170,15 @@ OFFLINE_CHECKERS = [
     ("Pointer join", "python",
      ["tools/check_constants_links.py", "--join"], ".", None, False),
 
+    # 2026-09-17: the rooms draw their shells from the served cache, not
+    # from data/objects_config.json, and the cache only follows the config
+    # when the cache builder runs. L-322's gallery half was pushed ahead
+    # of the cache and the live rooms lost 23 shells under a green run.
+    # This compares the two, value for value, and names each difference.
+    # When it fails: run the cache builder, then commit both together.
+    ("Cache in step", "python",
+     ["tools/check_cache_in_step.py"], ".", None, False),
+
     ("Feature renderers", "node",
      ["documentation/smoke_features.js", "gallery/feature_renderers.js"],
      ".", None, False),
