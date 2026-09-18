@@ -174,6 +174,16 @@ OFFLINE_CHECKERS = [
     ("Store writer suite", "python",
      ["tools/test_store_writer.py"], ".", None, False),
 
+    # L-334 piece 5 (2026-09-19): the editor window's logic, checked
+    # WITHOUT opening the window -- which rows the form shows, which
+    # ticks the arrival panel shows, what counts as a change, and what
+    # the save message says about deploying. Run it by hand with
+    # --window to also open a real window and walk every row and tick;
+    # this runner does not, because that would put a window on the
+    # screen in the middle of a check.
+    ("Store editor suite", "python",
+     ["tools/test_exhibit_store_editor.py"], ".", None, False),
+
     ("Config mirror check", "python",
      ["tools/check_constants_links.py", "--mirror"], ".", None, False),
 
