@@ -532,6 +532,7 @@
       var label = bodyName + ": " + st.name;
       var built = geometryTrace(pts, center, basis, label, st.color,
                                 st.opacity, RING_MARKER_SIZE);
+      stampShell([built.trace], key);
       traces.push(built.trace);
 
       var hover = label + "<br><br>" +
@@ -540,8 +541,10 @@
         (thickKm ? ("Thickness: " + kmAndAu(thickKm) + "<br>") : "") +
         "Drawn from the served cache; radii as measured.";
       hover = withTail(hover);
-      traces.push(infoMarker(built.x[0], built.y[0], built.z[0],
-                             st.color, hover, label));
+      var ringMarker = infoMarker(built.x[0], built.y[0], built.z[0],
+                                  st.color, hover, label);
+      stampShell([ringMarker], key);
+      traces.push(ringMarker);
     }
     return traces;
   }
@@ -761,6 +764,12 @@
       if (typeof abouts[i] === "string" && abouts[i]) linkCfg.about = abouts[i];
       traces.push(beltMarker);
       stampLink([built.trace, beltMarker], linkCfg);
+      // L-334 stage B: a belt is served as a member of parallel lists
+      // (names, colors) rather than under a key of its own, so there is
+      // no per-belt key to stamp and both belts carry the feature key.
+      // An arrival block naming "van_allen_belts" therefore draws both,
+      // which is what the served shape supports.
+      stampShell([built.trace, beltMarker], featureKey);
     }
     return traces;
   }
@@ -795,6 +804,7 @@
 
       var pts = spherePoints(shellAu, nPoints);
       var built = geometryTrace(pts, center, null, label, color, opacity, size);
+      stampShell([built.trace], key);
       traces.push(built.trace);
 
       // Single info marker 5% above the shell radius, INFO_MARKER_OFFSET_DEG
@@ -807,10 +817,13 @@
         kmAndAu((cfg.radius_fraction - 1.0) * radiusKm);
       hover = withTail(hover);
       var offPole = (Math.PI / 180) * INFO_MARKER_OFFSET_DEG;
-      traces.push(infoMarker(center[0] + shellAu * 1.05 * Math.sin(offPole),
-                             center[1],
-                             center[2] + shellAu * 1.05 * Math.cos(offPole),
-                             color, hover, label, cfg.info_border));
+      var atmMarker = infoMarker(
+        center[0] + shellAu * 1.05 * Math.sin(offPole),
+        center[1],
+        center[2] + shellAu * 1.05 * Math.cos(offPole),
+        color, hover, label, cfg.info_border);
+      stampShell([atmMarker], key);
+      traces.push(atmMarker);
     }
     return traces;
   }
@@ -1293,8 +1306,61 @@
     }
     if (meta) {
       for (var i = 0; i < traceList.length; i++) {
-        traceList[i].meta = meta;
+        // L-334 stage B: each trace gets its OWN meta object, and a shell
+        // key already stamped on it is carried across. Before this one
+        // object was shared across the list and assigned wholesale, which
+        // would have dropped the key whenever stampLink ran second.
+        var keep = (traceList[i].meta &&
+                    typeof traceList[i].meta === "object" &&
+                    typeof traceList[i].meta.shell_key === "string")
+          ? traceList[i].meta.shell_key : null;
+        var own = {};
+        for (var mk in meta) {
+          if (Object.prototype.hasOwnProperty.call(meta, mk)) {
+            own[mk] = meta[mk];
+          }
+        }
+        if (keep !== null) { own.shell_key = keep; }
+        traceList[i].meta = own;
       }
+    }
+    return traceList;
+  }
+
+  /*
+   * L-334 stage B: the shell KEY, stamped onto every trace that belongs
+   * to a served shell -- the key it sits under in the object's served
+   * features, not its display name.
+   *
+   * gallery/arrival.js reads it to decide what a room opens on. Before
+   * this it matched the END of the legend group name against the served
+   * names, which was a second reading of the label formula built a few
+   * lines below, and two readings of one formula are how they come to
+   * disagree.
+   *
+   * A trace with NO key reads as a frame element and is DRAWN, so a
+   * missed site here is a silent change to the opening view.
+   * documentation/smoke_arrival.js checks every trace these renderers
+   * build and names any that carries none.
+   *
+   * Order-free by construction: stampLink may run before or after this,
+   * because it carries an existing shell_key across.
+   */
+  function stampShell(traceList, shellKey) {
+    if (typeof shellKey !== "string" || !shellKey) { return traceList; }
+    for (var i = 0; i < traceList.length; i++) {
+      var t = traceList[i];
+      if (!t || typeof t !== "object") { continue; }
+      var meta = {};
+      if (t.meta && typeof t.meta === "object") {
+        for (var k in t.meta) {
+          if (Object.prototype.hasOwnProperty.call(t.meta, k)) {
+            meta[k] = t.meta[k];
+          }
+        }
+      }
+      meta.shell_key = shellKey;
+      t.meta = meta;
     }
     return traceList;
   }
@@ -1379,17 +1445,17 @@
       // rather than in a key of its own, and declares its shape.
       if (cfg.shape !== undefined) {
         if (cfg.shape === "streamer_band") {
-          traces = traces.concat(stampLink(renderStreamerBand(
+          traces = traces.concat(stampShell(stampLink(renderStreamerBand(
             slug, bodyName, cfg, where + "/" + key, center, basis,
             starRadiusKm, warn),
             withGatheredSource(cfg, [["cusp_radius", "Cusp"],
-                                     ["fade_radius", "Fade"]])));
+                                     ["fade_radius", "Fade"]])), key));
           drawn += 1;
         } else if (cfg.shape === "equatorial_ring") {
           var ringTraces = renderEquatorialRing(
             slug, bodyName, cfg, where + "/" + key, center, basis,
             starRadiusKm, halfRangeAu, warn);
-          traces = traces.concat(ringTraces);
+          traces = traces.concat(stampShell(ringTraces, key));
           if (ringTraces.length) drawn += 1;
         } else if (cfg.shape === "torus" ||
                    cfg.shape === "clump_field" ||
@@ -1411,10 +1477,10 @@
               oortTraces[oi].visible = "legendonly";
             }
           }
-          traces = traces.concat(stampLink(oortTraces,
+          traces = traces.concat(stampShell(stampLink(oortTraces,
             withGatheredSource(cfg, [["inner_radius", "Inner edge"],
                                      ["outer_radius", "Outer edge"],
-                                     ["typical_radius", "Distance"]])));
+                                     ["typical_radius", "Distance"]])), key));
           drawn += 1;
         } else {
           warn(where + "/" + key + ": unknown shape " +
@@ -1445,6 +1511,7 @@
         built.trace.visible = "legendonly";
       }
       stampLink([built.trace], cfg);
+      stampShell([built.trace], key);
       traces.push(built.trace);
 
       // Info marker: 20 degrees of polar angle per shell within the group,
@@ -1480,6 +1547,7 @@
         marker.visible = "legendonly";
       }
       stampLink([marker], cfg);
+      stampShell([marker], key);
       traces.push(marker);
       drawn += 1;
     }
@@ -1721,6 +1789,7 @@
                                 mp.color || "rgb(180, 180, 255)", mpHover,
                                 mpLabel, mp.info_border);
       if (mpBeyond) mpMarker.visible = "legendonly";
+      stampShell([mpBuilt.trace, mpMarker], "magnetopause");
       traces.push(mpMarker);
       stampLink([mpBuilt.trace, mpMarker],
                 { info_url: mp.info_url, source: mp.source, about: mp.about,
@@ -1788,6 +1857,7 @@
                                 bs.color || "rgb(255, 200, 150)", bsHover,
                                 bsLabel, bs.info_border);
       if (bsBeyond) bsMarker.visible = "legendonly";
+      stampShell([bsBuilt.trace, bsMarker], "bow_shock");
       traces.push(bsMarker);
       stampLink([bsBuilt.trace, bsMarker],
                 { info_url: bs.info_url, source: bs.source, about: bs.about,

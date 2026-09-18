@@ -220,13 +220,16 @@ OFFLINE_CHECKERS = [
       "gallery/earth_geometry.js", "interactive.html"],
      ".", "===", False),
 
-    # L-334 piece 1 (2026-09-17): what each room opens on. It lifts
-    # sunApplyArrival out of interactive.html, applies it to both
+    # L-334 (2026-09-17, piece 1; stage B 2026-09-18): what each room
+    # opens on. It requires gallery/arrival.js, applies it to both
     # rooms with the served arrival blocks, and fails unless exactly
     # the expected things are drawn -- the photosphere alone; the
     # crust with the axis, the Sun direction and the terminator --
     # and the Moon is not. It prints what it found drawn, and it
     # checks that an object with no arrival block is left as it was.
+    # Stage B: it also checks that every trace the feature renderers
+    # build carries its shell key, because an unstamped shell reads as
+    # a frame element and would be drawn.
     ("Arrival", "node",
      ["documentation/smoke_arrival.js"], ".", None, False),
 
@@ -260,6 +263,15 @@ SERVED_FILES = [
     "data/solar-system/coverage_index.json",
     "data/solar-system/feature_configs.json",
     "data/solar-system/positions/voyager_1.json",
+    # L-339 (2026-09-18): three files the browser fetches that nothing
+    # compared against the working copy. The page loads nav_cluster.js
+    # and arrival.js with script tags and reads objects_config.json at
+    # boot -- and the arrival block is read from that config directly,
+    # not from the cache, so a stale served copy changes what a visitor
+    # sees on opening with nothing saying so.
+    "gallery/arrival.js",
+    "gallery/nav_cluster.js",
+    "data/objects_config.json",
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing

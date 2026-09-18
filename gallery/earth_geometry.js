@@ -406,8 +406,9 @@
    * 2026-09-17, L-334): a room opens on the surface shell plus the frame
    * elements, with the Moon unticked. The served "arrival" block in
    * data/objects_config.json names the shells drawn, and
-   * sunApplyArrival in interactive.html applies it to the traces this
-   * function returns. So the crust alone is lit, and the terminator,
+   * GalleryArrival.applyArrival, in gallery/arrival.js, applies it to
+   * the traces this function returns. So the crust alone is lit, and
+   * the terminator,
    * which this function still hides, is switched back on by the page as
    * a frame element. What follows is the DEFAULT this function sets,
    * which is what a visitor gets only if no arrival block is served.

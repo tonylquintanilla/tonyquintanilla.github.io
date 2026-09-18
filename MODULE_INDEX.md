@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** September 17, 2026 by `module_atlas.py`  
+**Generated:** September 18, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -11,19 +11,20 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 34  
-**Total Lines of Code (non-blank):** 16,829  
-**Total Public Functions/Classes:** 222
+**Total Lines of Code (non-blank):** 17,575  
+**Total Public Functions/Classes:** 221
 
 ## Classification Coverage
 
 **Undetermined role (3).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
-- `patch_L334_1c_cache_in_step_20260917.py`
+- `patch_L334_3_arrival_module_20260918.py`
 - `sweep_collapsed_features.py`
 - `tools/test_mirror_constants.py`
 
-**Undetermined domain (1).** No valid `Domain:` tag.
+**Undetermined domain (2).** No valid `Domain:` tag.
 
+- `patch_L334_3_arrival_module_20260918.py`
 - `sweep_collapsed_features.py`
 
 
@@ -95,7 +96,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,073 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (944 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (956 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (847 lines) |
@@ -113,7 +114,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `patch_L334_1c_cache_in_step_20260917.py` | - GALLERY repo. A check that the served cache holds what the config says. (136 lines) |
+| `patch_L334_3_arrival_module_20260918.py` | - GALLERY repo. (870 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (380 lines) |
 
