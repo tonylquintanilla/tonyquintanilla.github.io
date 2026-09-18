@@ -211,6 +211,16 @@ OFFLINE_CHECKERS = [
       "gallery/earth_geometry.js", "interactive.html"],
      ".", "===", False),
 
+    # L-334 piece 1 (2026-09-17): what each room opens on. It lifts
+    # sunApplyArrival out of interactive.html, applies it to both
+    # rooms with the served arrival blocks, and fails unless exactly
+    # the expected things are drawn -- the photosphere alone; the
+    # crust with the axis, the Sun direction and the terminator --
+    # and the Moon is not. It prints what it found drawn, and it
+    # checks that an object with no arrival block is left as it was.
+    ("Arrival", "node",
+     ["documentation/smoke_arrival.js"], ".", None, False),
+
     # L-237: this used to call the test directly and print FAIL every
     # run, which made a real regression indistinguishable from the known
     # one. The pin runs the same test and compares its five verdicts, and

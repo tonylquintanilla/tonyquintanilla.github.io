@@ -402,7 +402,17 @@
    * warnings, sun, moonArc, epochJd}. ctx is {GF: GalleryFeatures,
    * halfRangeAu, epochIso}. Returns {traces, warnings, absent}.
    *
-   * Arrival policy (Tony's design round, L-291, 2026-09-06/08): eight
+   * ARRIVAL IS NOW DECIDED BY THE PAGE, NOT HERE (Tony's ruling,
+   * 2026-09-17, L-334): a room opens on the surface shell plus the frame
+   * elements, with the Moon unticked. The served "arrival" block in
+   * data/objects_config.json names the shells drawn, and
+   * sunApplyArrival in interactive.html applies it to the traces this
+   * function returns. So the crust alone is lit, and the terminator,
+   * which this function still hides, is switched back on by the page as
+   * a frame element. What follows is the DEFAULT this function sets,
+   * which is what a visitor gets only if no arrival block is served.
+   *
+   * The default (Tony's design round, L-291, 2026-09-06/08): eight
    * shells lit -- the five interior, the two atmosphere, LEO -- plus the
    * axis with the equator and the Sun direction. Everything else is a
    * drawer row, unselected. The renderers already send anything larger

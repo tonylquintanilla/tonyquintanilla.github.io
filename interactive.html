@@ -1379,6 +1379,15 @@ const EXHIBIT = (new URLSearchParams(window.location.search)
 // (20 R_sun = 0.0929 AU) in frame.  The termination shock at 94 AU and
 // everything beyond it is larger than this, and feature_renderers.js
 // serves those to the legend.
+//
+// SUPERSEDED FOR ARRIVAL, Tony's ruling, 2026-09-17 (L-334): a room
+// opens on the surface shell plus the frame elements, and the view
+// fits what is drawn. The served "arrival" block in
+// data/objects_config.json now says what is drawn, and
+// sunApplyArrival reads it. This constant still does two jobs: it
+// is the size the renderers use to send far shells to the drawer,
+// and it is the whole arrival rule for an object that serves no
+// arrival block.
 const SUN_HALF_RANGE_AU = 0.25;
 
 // The assembler is stdlib-only -- math, json, typing, dataclasses,
@@ -1678,6 +1687,125 @@ function reportSunNotes(notes) {
     box.innerHTML = html;
     info.appendChild(box);
 }
+
+// ARRIVAL-START (documentation/smoke_arrival.js reads this block)
+// L-334 piece 1. What is drawn when a room opens, read from the served
+// "arrival" block of this room's object in data/objects_config.json.
+//
+// Tony's ruling, 2026-09-17: a room opens on "the surface shell plus
+// frame elements like sun direction, axes, terminator", and the Moon
+// starts "with its box not selected".
+//
+// Three kinds of trace, told apart by legend group:
+//   a SERVED SHELL  its group ends with ": " + a name served in this
+//                   object's features. Drawn only if the arrival
+//                   block's "drawn" list names its key or its name.
+//   the MOON        group "moon". Drawn only if "moon" is true.
+//   a FRAME ELEMENT anything else the page builds: the axis with the
+//                   equator, the Sun direction, the terminator.
+//                   Always drawn.
+//
+// The match is on the END of the group name because the renderers
+// build it as body name + ": " + served name and do not put the
+// shell's key on the trace. That is a second reading of the label
+// formula, which the page otherwise avoids. The cure is for
+// feature_renderers.js to stamp the key into each trace's meta; it
+// waits for L-322's gallery half, which is editing that file now.
+//
+// No arrival block, or one that cannot be read: nothing is changed,
+// applied is false, and the page keeps its old arrival rule.
+// Pure: no DOM and no Plotly, so the smoke check runs it in node.
+function sunApplyArrival(traces, cfgText, slug) {
+    const out = { applied: false, minHalfRangeAu: 0,
+                  drawn: [], unknown: [] };
+    let cfgObj = null;
+    try { cfgObj = JSON.parse(cfgText); } catch (e) { return out; }
+    const objs = (cfgObj && Array.isArray(cfgObj.objects))
+        ? cfgObj.objects : [];
+    let entry = null;
+    for (let i = 0; i < objs.length; i++) {
+        if (objs[i] && objs[i].slug === slug) { entry = objs[i]; }
+    }
+    const arr = entry ? entry.arrival : null;
+    if (!arr || !Array.isArray(arr.drawn)) { return out; }
+
+    // Every served shell: its name, and the key it sits under.
+    const shells = [];
+    const seen = {};
+    function note(name, key) {
+        if (typeof name !== "string" || !name || seen[name]) { return; }
+        seen[name] = true;
+        shells.push({ name: name, key: key });
+    }
+    function walk(node, key) {
+        if (Array.isArray(node)) {
+            for (let a = 0; a < node.length; a++) { walk(node[a], null); }
+            return;
+        }
+        if (!node || typeof node !== "object") { return; }
+        note(node.name, key);
+        if (Array.isArray(node.names)) {
+            for (let n = 0; n < node.names.length; n++) {
+                note(node.names[n], null);
+            }
+        }
+        for (const k in node) {
+            if (Object.prototype.hasOwnProperty.call(node, k)) {
+                walk(node[k], k);
+            }
+        }
+    }
+    walk(entry.features || {}, null);
+
+    const wanted = {};
+    for (let d = 0; d < arr.drawn.length; d++) {
+        if (typeof arr.drawn[d] === "string") { wanted[arr.drawn[d]] = false; }
+    }
+    function shellOf(group) {
+        for (let s = 0; s < shells.length; s++) {
+            const tail = ": " + shells[s].name;
+            if (group.length > tail.length &&
+                group.slice(-tail.length) === tail) { return shells[s]; }
+        }
+        return null;
+    }
+
+    const drawnGroups = {};
+    for (let t = 0; t < traces.length; t++) {
+        const group = traces[t].legendgroup;
+        if (typeof group !== "string" || !group) { continue; }
+        let show;
+        if (group === "moon") {
+            show = arr.moon === true;
+        } else {
+            const shell = shellOf(group);
+            if (shell) {
+                const byKey = shell.key !== null &&
+                    wanted.hasOwnProperty(shell.key);
+                const byName = wanted.hasOwnProperty(shell.name);
+                show = byKey || byName;
+                if (byKey) { wanted[shell.key] = true; }
+                if (byName) { wanted[shell.name] = true; }
+            } else {
+                show = true;   // a frame element
+            }
+        }
+        traces[t].visible = show ? true : "legendonly";
+        if (show) { drawnGroups[group] = true; }
+    }
+
+    out.applied = true;
+    out.drawn = Object.keys(drawnGroups);
+    for (const w in wanted) {
+        if (wanted.hasOwnProperty(w) && !wanted[w]) { out.unknown.push(w); }
+    }
+    if (typeof arr.min_half_range_au === "number" &&
+        arr.min_half_range_au > 0) {
+        out.minHalfRangeAu = arr.min_half_range_au;
+    }
+    return out;
+}
+// ARRIVAL-END
 
 // The largest |x|, |y| or |z| this trace reaches, in AU. Computed once
 // per trace at plot time rather than on every legend click, because the
@@ -2143,6 +2271,17 @@ async function initSunExhibit() {
 
         const traces = built.traces;
 
+        // L-334: the served arrival block says what is drawn when
+        // the room opens. It runs BEFORE the measuring below, so
+        // the opening view fits what it left drawn, and before the
+        // drawer is built, so the tick boxes agree with the scene.
+        const arrival = sunApplyArrival(traces, cfg, EXHIBIT);
+        for (let u = 0; u < arrival.unknown.length; u++) {
+            console.warn(EXHIBIT + " exhibit: the arrival block names \"" +
+                         arrival.unknown[u] + "\", which is not a shell " +
+                         "this room draws");
+        }
+
         // Measure every trace once. Index i belongs to trace i, and
         // the legend never reorders traces, so the two stay aligned.
         const extents = traces.map(sunTraceExtentAu);
@@ -2152,7 +2291,15 @@ async function initSunExhibit() {
             if (vis === "legendonly" || vis === false) { continue; }
             if (extents[i] > arrivalR) { arrivalR = extents[i]; }
         }
-        arrivalR = Math.max(arrivalR * 1.1, EX.halfRangeAu);
+        if (arrival.applied && arrivalR > 0) {
+            // Fit what is drawn. A served min_half_range_au, if
+            // there is one, is the only floor.
+            arrivalR = Math.max(arrivalR * 1.1, arrival.minHalfRangeAu);
+        } else {
+            // No arrival block served, or it left nothing drawn:
+            // the rule this page had before L-334.
+            arrivalR = Math.max(arrivalR * 1.1, EX.halfRangeAu);
+        }
         navArrivalR = arrivalR;   // what Home returns to
 
         const gd = document.getElementById("plotly-container");
