@@ -156,9 +156,46 @@ def logic_checks():
               changes[0][1] == wanted, repr(changes[0][1]))
         check("and the writer accepts it",
               _accepted(text, changes))
-    moon_change = E.arrival_changes(cfg, slug, set(drawn), not moon)
-    check("the Moon toggles on its own", len(moon_change) == 1
-          and moon_change[0][1] is (not moon), repr(moon_change))
+    # The Moon check runs against a room that DECLARES one. The first
+    # room is the Sun, which does not: its arrival block lost the key on
+    # 2026-09-19 because the room draws no Moon (L-340). A check pinned
+    # to slugs[0] would have silently stopped testing anything.
+    moon_rooms = [s for s in slugs if "moon" in SW.arrival_paths(cfg, s)]
+    check("at least one room declares a Moon to toggle", bool(moon_rooms),
+          "none of %r does" % (slugs,))
+    for moon_slug in moon_rooms:
+        _mc, m_drawn, m_moon = E.arrival_state(cfg, moon_slug)
+        moon_change = E.arrival_changes(cfg, moon_slug, set(m_drawn), not m_moon)
+        check("%s: the Moon toggles on its own" % moon_slug,
+              len(moon_change) == 1 and moon_change[0][1] is (not m_moon),
+              repr(moon_change))
+
+    # 6b. The Moon tick, and the three things L-340 recorded.
+    for slug in slugs:
+        paths = SW.arrival_paths(cfg, slug)
+        declared = "moon" in paths
+        _c, _d, held = E.arrival_state(cfg, slug)
+        check("%s: a moon value is held only where the key is declared"
+              % slug, declared or held is False)
+        # A room with no `moon` key has nothing to save, so passing None
+        # must produce no change rather than an unsaveable one.
+        if not declared:
+            check("%s: an undeclared moon writes nothing" % slug,
+                  E.arrival_changes(cfg, slug, set(_d), None) == [])
+    check("source is a wrapped box, not a one-line entry",
+          "source" in E.LONG_FIELDS)
+    longest_source = 0
+    longest_label = 0
+    for slug in slugs:
+        for row in E.word_rows(cfg, slug):
+            longest_label = max(longest_label, len(row["label"]))
+            if "source" in row["fields"]:
+                longest_source = max(
+                    longest_source, len(E.field_value(cfg, row["fields"]["source"])))
+    check("the shell list can show the longest label", E.LIST_MAX >= longest_label,
+          "longest label %d, LIST_MAX %d" % (longest_label, E.LIST_MAX))
+    print("    widths: longest label %d (cap %d), longest source %d chars "
+          "(wrapped)" % (longest_label, E.LIST_MAX, longest_source))
 
     # 7. The save message.
     check("no change says so", "Nothing had changed"
