@@ -413,7 +413,8 @@
           "about": "Temperatures near 5,400 degrees Celsius keep the inner core close to melting even under the weight of the whole planet. It turns slightly faster than the rest of Earth, which adds complexity to the magnetic field generated in the liquid layer above it.",
           "radius": {
             "value": 1221.5,
-            "unit": "km"
+            "unit": "km",
+            "figures": 5
           },
           "info_url": "https://en.wikipedia.org/wiki/Earth%27s_inner_core",
           "color": "rgb(255, 180, 140)",
@@ -429,7 +430,8 @@
           "about": "The outer core is molten iron and nickel with lighter elements mixed in, at 4,500 to 5,400 degrees Celsius. Convection in this conducting fluid acts as a dynamo, the geodynamo, and produces the magnetic field that reaches out into space to form the magnetosphere.",
           "radius": {
             "value": 3480.0,
-            "unit": "km"
+            "unit": "km",
+            "figures": 4
           },
           "info_url": "https://en.wikipedia.org/wiki/Earth%27s_outer_core",
           "color": "rgb(255, 140, 0)",
@@ -445,8 +447,9 @@
           "description": "The deep layer of hot, solid rock between the core and the upper mantle, flowing very slowly over millions of years.",
           "about": "The lower mantle is solid silicate rock rich in iron and magnesium, at 2,200 to 4,500 degrees Celsius and under enormous pressure. Although solid, it creeps slowly by convection, and that slow flow is what drives the plates at the surface.",
           "radius": {
-            "value": 5711.0,
-            "unit": "km"
+            "value": 5710.0,
+            "unit": "km",
+            "figures": 3
           },
           "info_url": "https://en.wikipedia.org/wiki/Lower_mantle",
           "color": "rgb(230, 100, 20)",
@@ -454,7 +457,7 @@
           "opacity": 1.0,
           "n_points": 25,
           "marker_size": 7,
-          "source": "Ishii, Kumagai, Sugiura & Tsuchiya (2019), Nature Geoscience 12:869 -- the 660-km discontinuity",
+          "source": "Ishii, Huang, Myhill et al. (2019), Nature Geoscience 12:869-872 -- the sharp 660-km discontinuity; the global average depth of 660 +/- 10 km is from the same group's open companion, Ishii et al. (2018), Scientific Reports 8:6358",
           "orrery_constant": "constants_new.py::EARTH_LOWER_MANTLE_KM"
         },
         "upper_mantle": {
@@ -463,7 +466,8 @@
           "about": "The upper mantle includes the asthenosphere, a partly molten layer that flows more readily than the mantle below it, letting the tectonic plates move. It reaches from the base of the crust down to the top of the lower mantle, with temperatures from about 500 to 2,200 degrees Celsius.",
           "radius": {
             "value": 6346.6,
-            "unit": "km"
+            "unit": "km",
+            "figures": 5
           },
           "info_url": "https://en.wikipedia.org/wiki/Upper_mantle",
           "color": "rgb(205, 85, 85)",
@@ -480,7 +484,8 @@
           "about": "The crust is thin compared with the planet: 5 to 10 km under the oceans, where it is mostly basalt, and 30 to 50 km under the continents, where it is mostly granite. Surface temperatures range from about minus 80 to 60 degrees Celsius. It holds all known life and every resource we can reach.",
           "radius": {
             "value": 1.0,
-            "unit": "r_earth"
+            "unit": "r_earth",
+            "figures": "exact"
           },
           "info_url": "https://en.wikipedia.org/wiki/Earth%27s_crust",
           "color": "rgb(70, 120, 160)",
@@ -494,6 +499,7 @@
         "planet_radius": {
           "value": 6378.1366,
           "unit": "km",
+          "figures": 8,
           "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
           "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
         }
@@ -504,8 +510,9 @@
           "description": "The air where weather happens and the ozone layer sits: the troposphere and stratosphere, holding nearly all the atmosphere's mass.",
           "about": "The troposphere, the lowest 12 km or so, is where clouds and weather form; above it the stratosphere, to about 50 km, holds the ozone layer. Together they contain 99 percent of the atmosphere's mass, mostly nitrogen and oxygen. Temperature falls from about 15 degrees Celsius at sea level to minus 60 at the top of the troposphere, then warms again toward the stratopause as ozone absorbs sunlight.",
           "radius": {
-            "value": 1.0078392802060714,
-            "unit": "r_earth"
+            "value": 1.008,
+            "unit": "r_earth",
+            "figures": 4
           },
           "info_url": "https://science.nasa.gov/earth/earth-atmosphere/earths-atmosphere-a-multi-layered-cake/",
           "color": "rgb(150, 200, 255)",
@@ -521,8 +528,9 @@
           "description": "The thin upper air where meteors burn up, the aurora glows, and the Space Station orbits, fading toward space.",
           "about": "Above 50 km lie the mesosphere, where most meteors burn up, the thermosphere, where the aurora appears and the International Space Station flies, and, higher still, the beginning of the exosphere. In the thermosphere the gas can reach 2,000 degrees Celsius, yet it is so thin it would feel cold to the skin.",
           "radius": {
-            "value": 1.0940713624728577,
-            "unit": "r_earth"
+            "value": 1.09,
+            "unit": "r_earth",
+            "figures": 3
           },
           "info_url": "https://www.nasa.gov/image-article/earths-upper-atmosphere/",
           "color": "rgb(100, 150, 255)",
@@ -536,6 +544,7 @@
         "planet_radius": {
           "value": 6378.1366,
           "unit": "km",
+          "figures": 8,
           "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
           "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
         }
@@ -547,7 +556,8 @@
           "about": "The exosphere has no top: it simply thins into space. Its hydrogen glows faintly in ultraviolet light, a halo called the geocorona. This shell is drawn where that glow has been detected, not where the atmosphere ends.",
           "radius": {
             "value": 100.0,
-            "unit": "r_earth"
+            "unit": "r_earth",
+            "figures": 1
           },
           "info_url": "https://en.wikipedia.org/wiki/Geocorona",
           "color": "rgb(200, 200, 255)",
@@ -561,6 +571,7 @@
         "planet_radius": {
           "value": 6378.1366,
           "unit": "km",
+          "figures": 8,
           "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
           "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
         }
@@ -571,8 +582,9 @@
           "description": "The lower edge of low Earth orbit, the band of space where most satellites and the Space Station fly.",
           "about": "Low Earth orbit is the region from roughly 200 to 2,000 km up. Satellites there circle at every angle to the equator, so together they form a shell around Earth rather than a ring, and each completes an orbit in about 90 to 120 minutes. The International Space Station, the Hubble Space Telescope, Starlink and most weather and Earth-observing satellites live here; the moving lights seen at dusk and dawn are usually these.",
           "radius": {
-            "value": 1.031357120824286,
-            "unit": "r_earth"
+            "value": 1.0313571,
+            "unit": "r_earth",
+            "figures": 8
           },
           "info_url": "https://en.wikipedia.org/wiki/Low_Earth_orbit",
           "color": "rgb(255, 248, 220)",
@@ -587,8 +599,9 @@
           "description": "The upper edge of low Earth orbit, about 2,000 km up, above which the sky belongs to higher orbits.",
           "about": "Low Earth orbit is the region from roughly 200 to 2,000 km up. Satellites there circle at every angle to the equator, so together they form a shell around Earth rather than a ring, and each completes an orbit in about 90 to 120 minutes. The International Space Station, the Hubble Space Telescope, Starlink and most weather and Earth-observing satellites live here; the moving lights seen at dusk and dawn are usually these.",
           "radius": {
-            "value": 1.313571208242859,
-            "unit": "r_earth"
+            "value": 1.3135712,
+            "unit": "r_earth",
+            "figures": 8
           },
           "info_url": "https://en.wikipedia.org/wiki/Low_Earth_orbit",
           "color": "rgb(255, 248, 220)",
@@ -601,6 +614,7 @@
         "planet_radius": {
           "value": 6378.1366,
           "unit": "km",
+          "figures": 8,
           "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
           "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
         }
@@ -612,8 +626,9 @@
           "about": "Satellites in the geostationary belt orbit once a day, matching Earth's rotation, and so stay fixed over a point on the equator. Several hundred of them carry television, weather imagery and communications for much of the world. In April 2029 the asteroid Apophis will pass inside this ring, a few thousand kilometers below the nearest satellites.",
           "shape": "equatorial_ring",
           "radius": {
-            "value": 6.610735325291913,
-            "unit": "r_earth"
+            "value": 6.610735,
+            "unit": "r_earth",
+            "figures": 7
           },
           "info_url": "https://en.wikipedia.org/wiki/Geostationary_orbit",
           "color": "rgb(220, 220, 255)",
@@ -627,6 +642,7 @@
         "planet_radius": {
           "value": 6378.1366,
           "unit": "km",
+          "figures": 8,
           "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
           "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
         }
@@ -765,6 +781,7 @@
         "planet_radius": {
           "value": 6378.1366,
           "unit": "km",
+          "figures": 8,
           "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
           "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
         }
@@ -858,6 +875,7 @@
         "planet_radius": {
           "value": 6378.1366,
           "unit": "km",
+          "figures": 8,
           "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
           "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
         }
@@ -868,8 +886,9 @@
           "description": "The region where Earth's gravity, not the Sun's, is the stronger hold; the Moon orbits well inside it.",
           "about": "Inside the Hill sphere a body can orbit Earth without being pulled away by the Sun. The Moon lies deep within it. Beyond this sphere the Sun's gravity wins, and an object would drift into its own orbit around the Sun.",
           "radius": {
-            "value": 234.6388338020614,
-            "unit": "r_earth"
+            "value": 234.6388,
+            "unit": "r_earth",
+            "figures": 7
           },
           "info_url": "https://en.wikipedia.org/wiki/Hill_sphere",
           "color": "rgb(0, 255, 0)",
@@ -883,6 +902,7 @@
         "planet_radius": {
           "value": 6378.1366,
           "unit": "km",
+          "figures": 8,
           "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
           "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
         }
