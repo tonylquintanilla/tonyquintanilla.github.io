@@ -514,6 +514,12 @@
             "unit": "r_earth",
             "figures": 4
           },
+          "altitude": {
+            "value": 50.0,
+            "unit": "km",
+            "figures": 2,
+            "orrery_constant": "constants_new.py::EARTH_STRATOPAUSE_ALTITUDE_KM"
+          },
           "info_url": "https://science.nasa.gov/earth/earth-atmosphere/earths-atmosphere-a-multi-layered-cake/",
           "color": "rgb(150, 200, 255)",
           "opacity": 0.5,
@@ -531,6 +537,12 @@
             "value": 1.09,
             "unit": "r_earth",
             "figures": 3
+          },
+          "altitude": {
+            "value": 600.0,
+            "unit": "km",
+            "figures": 2,
+            "orrery_constant": "constants_new.py::EARTH_THERMOPAUSE_ALTITUDE_KM"
           },
           "info_url": "https://www.nasa.gov/image-article/earths-upper-atmosphere/",
           "color": "rgb(100, 150, 255)",
@@ -586,6 +598,18 @@
             "unit": "r_earth",
             "figures": 8
           },
+          "radius_km": {
+            "value": 6578.1366,
+            "unit": "km",
+            "figures": 8,
+            "orrery_constant": "constants_new.py::EARTH_LEO_INNER_KM"
+          },
+          "altitude": {
+            "value": 200.0,
+            "unit": "km",
+            "figures": "exact",
+            "orrery_constant": "constants_new.py::EARTH_LEO_LOWER_ALTITUDE_KM"
+          },
           "info_url": "https://en.wikipedia.org/wiki/Low_Earth_orbit",
           "color": "rgb(255, 248, 220)",
           "opacity": 0.25,
@@ -602,6 +626,18 @@
             "value": 1.3135712,
             "unit": "r_earth",
             "figures": 8
+          },
+          "radius_km": {
+            "value": 8378.1366,
+            "unit": "km",
+            "figures": 8,
+            "orrery_constant": "constants_new.py::EARTH_LEO_OUTER_KM"
+          },
+          "altitude": {
+            "value": 2000.0,
+            "unit": "km",
+            "figures": "exact",
+            "orrery_constant": "constants_new.py::EARTH_LEO_UPPER_ALTITUDE_KM"
           },
           "info_url": "https://en.wikipedia.org/wiki/Low_Earth_orbit",
           "color": "rgb(255, 248, 220)",
@@ -629,6 +665,12 @@
             "value": 6.610735,
             "unit": "r_earth",
             "figures": 7
+          },
+          "radius_km": {
+            "value": 42164.17,
+            "unit": "km",
+            "figures": 7,
+            "orrery_constant": "constants_new.py::EARTH_GEOSTATIONARY_RADIUS_KM"
           },
           "info_url": "https://en.wikipedia.org/wiki/Geostationary_orbit",
           "color": "rgb(220, 220, 255)",
@@ -889,6 +931,12 @@
             "value": 235.0,
             "unit": "r_earth",
             "figures": 3
+          },
+          "radius_km": {
+            "value": 1500000.0,
+            "unit": "km",
+            "figures": 3,
+            "orrery_constant": "constants_new.py::EARTH_HILL_SPHERE_KM"
           },
           "info_url": "https://en.wikipedia.org/wiki/Hill_sphere",
           "color": "rgb(0, 255, 0)",
