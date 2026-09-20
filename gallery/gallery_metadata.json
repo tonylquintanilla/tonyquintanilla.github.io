@@ -506,7 +506,7 @@
         "landscape": "keeling_curve_co2_concentration.json"
       },
       "live": null,
-      "featured": true,
+      "featured": false,
       "sources": [
         "See notes in graphic."
       ],
@@ -601,7 +601,7 @@
         "portrait": "paleoclimate_wet_bulb_gallery.json"
       },
       "live": null,
-      "featured": true,
+      "featured": false,
       "sources": [],
       "converted": "2026-02-15 01:01",
       "size_kb": {
@@ -2678,6 +2678,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-09-19 22:39",
+  "last_updated": "2026-09-19 22:49",
   "total_count": 145
 }
