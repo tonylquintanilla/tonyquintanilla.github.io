@@ -9,7 +9,7 @@
       "shape": "16:9",
       "files": {},
       "live": "interactive.html",
-      "featured": true,
+      "featured": false,
       "sources": [
         "Uses standard Keplerian mechanics.",
         "No live JPL Horizons data."
@@ -188,7 +188,7 @@
         "landscape": "solar_system_20260907_earth_shells_moon_gallery.json"
       },
       "live": null,
-      "featured": true,
+      "featured": false,
       "sources": [],
       "converted": "2026-09-07 17:51",
       "size_kb": {
@@ -206,7 +206,7 @@
         "portrait": "solar_system_20260907_earth_shells_moon_mobile.json"
       },
       "live": null,
-      "featured": true,
+      "featured": false,
       "sources": [],
       "converted": "2026-09-07 17:51",
       "size_kb": {
@@ -2678,6 +2678,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-09-10 09:47",
+  "last_updated": "2026-09-19 22:39",
   "total_count": 145
 }
