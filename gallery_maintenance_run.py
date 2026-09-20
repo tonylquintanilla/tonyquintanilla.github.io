@@ -253,6 +253,18 @@ OFFLINE_CHECKERS = [
     ("Arrival", "node",
      ["documentation/smoke_arrival.js"], ".", None, False),
 
+    # L-342 (2026-09-20): every number in a hover shows the figures its
+    # source supports. It reads BUILT HOVERS rather than the formatter,
+    # because the fault it was written for reached a DIFFERENT
+    # formatter: the upper atmosphere told a visitor its altitude was
+    # 574 km where its source says 600, and a formatter test could not
+    # see it. It builds Earth's hovers from the SERVED CACHE, which is
+    # the file the browser fetches, and fails if the cache and the
+    # config would build different hovers -- so a config pushed ahead of
+    # its cache is caught here too. Gates.
+    ("Display figures", "node",
+     ["documentation/smoke_display_figures.js"], ".", None, False),
+
     # L-237: this used to call the test directly and print FAIL every
     # run, which made a real regression indistinguishable from the known
     # one. The pin runs the same test and compares its five verdicts, and

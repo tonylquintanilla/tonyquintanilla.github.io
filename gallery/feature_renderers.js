@@ -147,6 +147,22 @@
       ? node.figures : null;
   }
 
+  /* The whole figure FIELD: a number, the string "exact", or null for a
+     row that has not declared a count yet.
+
+     servedFigures() above answers "may this be formatted to a count".
+     This answers "what does the row declare", which is what the figure
+     arithmetic below needs and cannot get from the other: an EXACT
+     input is skipped when finding the fewest figures, while a MISSING
+     one stops a count travelling at all, and both arrive as null
+     there. (L-342.) */
+  function servedFigureField(node) {
+    if (!isDict(node)) { return null; }
+    if (typeof node.figures === "number") { return node.figures; }
+    if (node.figures === "exact") { return "exact"; }
+    return null;
+  }
+
   /* Rule 7 of provenance-discipline: a display may show FEWER figures
      than the row declares, never more. With a declared count, format to
      it; without one, keep the format this hover has always used. */
@@ -311,14 +327,188 @@
     return node.value;
   }
 
-  function fmtKm(km) {
-    return km.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km";
+  /* A kilometre figure, to a declared count where there is one.
+
+     WITHOUT a count it prints exactly what it always has, byte for
+     byte: whole kilometres with a thousands separator. That is what
+     holds the Sun's, Jupiter's and Saturn's hovers still while their
+     slices are unvisited.
+
+     WITH one it prints that many significant figures and no more,
+     keeping a significant trailing zero -- "3,480.0 km" for a boundary
+     PREM reports to 0.1 km. The decimals are chosen the way
+     sigFigures() chooses them; the separator comes from the locale
+     formatter rather than from string surgery, and by the time it runs
+     the rounding has already happened, so it has nothing left to round.
+
+     L-342's first fault: the count was declared at C1 and this line
+     ignored it, so the outer core read "3,480 km" beside a radius
+     declared to five figures. */
+  function fmtKm(km, figures) {
+    if (typeof figures !== "number") {
+      return km.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km";
+    }
+    var n = Math.max(1, Math.min(21, Math.round(figures)));
+    var rounded = Number(km.toPrecision(n));
+    var decimals = (rounded === 0) ? (n - 1)
+      : n - 1 - Math.floor(Math.log10(Math.abs(rounded)));
+    if (decimals < 0) { decimals = 0; }
+    if (decimals > 20) { decimals = 20; }
+    return rounded.toLocaleString("en-US",
+      { minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals }) + " km";
   }
 
   // Hover text carries AU alongside km -- the standing convention, so numbers
   // can be compared across plots at different scales.
-  function kmAndAu(km) {
-    return fmtKm(km) + " (" + (km / KM_PER_AU).toPrecision(3) + " AU)";
+  //
+  // The AU figure is a comparison aid and stays short: three figures, or
+  // the declared count where that is fewer. Rule 7 of
+  // provenance-discipline lets a display show FEWER figures than the row
+  // declares and never more, so a one-figure row shortens this too.
+  function kmAndAu(km, figures) {
+    var n = (typeof figures === "number") ? Math.min(3, figures) : 3;
+    if (n < 1) { n = 1; }
+    return fmtKm(km, figures) + " (" + (km / KM_PER_AU).toPrecision(n) + " AU)";
+  }
+
+  /* ---- A figure count through arithmetic (provenance-discipline 2.15,
+     Rule 3) -------------------------------------------------------------
+
+     JavaScript can round to N figures but cannot count them through a
+     calculation, so a count travels only if something carries it. These
+     three carry it for the two shapes these hovers need. Each takes
+     [value, figureField] pairs.
+
+     An EXACT input is skipped: a definition or a declared drawing
+     condition limits nothing. An input with NO count stops the count
+     travelling, which is what leaves an unvisited slice's hovers
+     printing as they do today. */
+
+  function figProduct(parts) {
+    var least = null, i, f;
+    for (i = 0; i < parts.length; i++) {
+      f = parts[i][1];
+      if (f === "exact") { continue; }
+      if (typeof f !== "number") { return null; }
+      if (least === null || f < least) { least = f; }
+    }
+    return (least === null) ? "exact" : least;
+  }
+
+  /* The decimal place of a value's last significant digit: 0 is units,
+     -2 hundredths, 3 thousands. */
+  function figPlace(value, figures) {
+    return Math.floor(Math.log10(Math.abs(value))) - (figures - 1);
+  }
+
+  /* A sum or difference is good to the COARSEST decimal place among its
+     inputs rather than to the fewest figures: 6371.0 - 660 is good to
+     tens. The count is then read back from the result's own size and
+     that place, and never falls below one. */
+  function figSum(result, parts) {
+    var coarsest = null, i, f, p;
+    for (i = 0; i < parts.length; i++) {
+      f = parts[i][1];
+      if (f === "exact") { continue; }
+      if (typeof f !== "number") { return null; }
+      p = figPlace(parts[i][0], f);
+      if (coarsest === null || p > coarsest) { coarsest = p; }
+    }
+    if (coarsest === null) { return "exact"; }
+    if (result === 0) { return 1; }
+    return Math.max(1,
+      Math.floor(Math.log10(Math.abs(result))) - coarsest + 1);
+  }
+
+  /* The kilometre radius and the altitude a shell's hover shows.
+
+     RULE S, SERVE IT. A quantity the store holds has its own served
+     entry -- `radius_km`, `altitude` -- and is printed as served. The
+     browser does not recompute it, because recomputing it from the
+     radius in body radii chains through a number the export has
+     already rounded, which is the rounded intermediate Rule 4 exists
+     to prevent.
+
+     RULE P, PROPAGATE IT. A quantity the store does not hold is
+     computed here from the most primary served values there are, at
+     full precision, and rounded once by the formatter above.
+
+     This is the whole of L-342's second fault. Before it, the upper
+     atmosphere's altitude was (1.09 - 1) x 6378.1366 = 574 km, worked
+     from a radius the export had rounded to three figures, while its
+     source says 600. No formatter could have repaired that: no
+     rounding of 574 gives 600.
+
+     Returns null where there is nothing to say. */
+  function shellKmLines(cfg, radiusAu, bodyRadiusKm, bodyRadiusFigures) {
+    var radius = isDict(cfg) ? cfg.radius : null;
+    if (!isDict(radius) || typeof radius.value !== "number") { return null; }
+    if (typeof radiusAu !== "number") { return null; }
+    var rf = servedFigureField(radius);
+    var out = { radiusKm: null, radiusFigures: null,
+                altitudeKm: null, altitudeFigures: null };
+
+    if (radius.unit === "km") {
+      out.radiusKm = radius.value;              // Rule S: served in km
+      out.radiusFigures = rf;
+      return out;
+    }
+
+    // A unit that is not a body radius -- AU, which the Sun's far shells
+    // use -- converts by an EXACT factor, so the count passes straight
+    // through and there is no surface to take an altitude from. Handled
+    // before the body-radius branch because multiplying 94 AU by a solar
+    // radius is how the termination shock briefly came to read 65 million
+    // km instead of 14 billion. The fixture caught it.
+    if (radius.unit !== "r_earth" && radius.unit !== "r_sun") {
+      out.radiusKm = radiusAu * KM_PER_AU;
+      out.radiusFigures = figProduct([[radius.value, rf],
+                                      [KM_PER_AU, "exact"]]);
+      return out;
+    }
+    if (typeof bodyRadiusKm !== "number") { return null; }
+
+    var alt = (isDict(cfg.altitude) && typeof cfg.altitude.value === "number")
+      ? cfg.altitude : null;
+    var rad = (isDict(cfg.radius_km) && typeof cfg.radius_km.value === "number")
+      ? cfg.radius_km : null;
+
+    if (rad) {
+      out.radiusKm = rad.value;                 // Rule S
+      out.radiusFigures = servedFigureField(rad);
+    } else if (alt) {                           // Rule P: planet + altitude
+      out.radiusKm = bodyRadiusKm + alt.value;
+      out.radiusFigures = figSum(out.radiusKm,
+        [[bodyRadiusKm, bodyRadiusFigures],
+         [alt.value, servedFigureField(alt)]]);
+    } else {                                    // Rule P: a product
+      // radiusAu * KM_PER_AU rather than value * bodyRadiusKm: the same
+      // number, by the arithmetic this line has always done, so a shell
+      // with no declared count prints the same bytes as before.
+      out.radiusKm = radiusAu * KM_PER_AU;
+      out.radiusFigures = figProduct([[radius.value, rf],
+                                      [bodyRadiusKm, bodyRadiusFigures]]);
+    }
+
+    if (radius.value > 1) {
+      if (alt) {
+        out.altitudeKm = alt.value;             // Rule S
+        out.altitudeFigures = servedFigureField(alt);
+      } else if (rad) {                         // Rule P: radius - planet
+        out.altitudeKm = rad.value - bodyRadiusKm;
+        out.altitudeFigures = figSum(out.altitudeKm,
+          [[rad.value, servedFigureField(rad)],
+           [bodyRadiusKm, bodyRadiusFigures]]);
+      } else {                                  // Rule P: (radius - 1) x planet
+        var d = radius.value - 1.0;
+        var df = figSum(d, [[radius.value, rf], [1.0, "exact"]]);
+        out.altitudeKm = d * bodyRadiusKm;
+        out.altitudeFigures = figProduct([[d, df],
+                                          [bodyRadiusKm, bodyRadiusFigures]]);
+      }
+    }
+    return out;
   }
 
   // --- Orientation --------------------------------------------------------
@@ -567,6 +757,10 @@
       stampShell([built.trace], key);
       traces.push(built.trace);
 
+      // L-342: a ring edge is served as a BARE NUMBER of kilometres,
+      // with nowhere for a figure count to sit, so these three lines
+      // cannot carry one until the edges become measured entries. Said
+      // here rather than left as a silent omission.
       var hover = label + "<br><br>" +
         "Inner edge: " + kmAndAu(ring.inner_radius_km) + "<br>" +
         "Outer edge: " + kmAndAu(ring.outer_radius_km) + "<br>" +
@@ -616,6 +810,8 @@
     var traces = [];
     var radiusKm = measured(params.planet_radius, "km",
                             slug + "/" + featureKey + "/planet_radius", warn);
+    // L-342: the count beside it, for the kilometre line below.
+    var radiusFigures = servedFigureField(params.planet_radius);
     if (radiusKm === null) {
       warn(slug + "/" + featureKey +
            ": belt distances are in planet radii and no planet_radius was " +
@@ -657,7 +853,7 @@
         sources.push(node.source || null);
         notes.push(node.note || null);
         units.push(node.unit || "r_earth");
-        figures.push(servedFigures(node));
+        figures.push(servedFigureField(node));
         return node.value;
       }
       return null;
@@ -747,7 +943,9 @@
           ? SOFT_BR + "(given as L = " + fmtServed(distances[i], figures[i], 1) +
             ": where that field line crosses the magnetic equator)<br>"
           : "<br>") +
-        "= " + kmAndAu(distances[i] * radiusKm) + "<br>" +
+        "= " + kmAndAu(distances[i] * radiusKm,
+                       figProduct([[distances[i], figures[i]],
+                                   [radiusKm, radiusFigures]])) + "<br>" +
         (span
           ? "Measured extent: " + span[0].toFixed(1) + " to " +
             span[1].toFixed(1) + " " + bodyName + " radii<br>"
@@ -841,6 +1039,10 @@
 
       // Single info marker 5% above the shell radius, INFO_MARKER_OFFSET_DEG
       // off the north pole (L-320).
+      // L-342: radius_fraction is a typed number with no figure count,
+      // so these two kilometre lines cannot carry one. No object in the
+      // served data uses this shape at gallery cdfa74c3 -- nothing
+      // reaches this hover -- which is why it is noted and not changed.
       var hover = label + "<br><br>" + descLine(cfg) +
         "Radius: " + cfg.radius_fraction.toFixed(2) + " " + bodyName +
         " radii<br>" +
@@ -1020,7 +1222,7 @@
   }
 
   function renderStreamerBand(slug, bodyName, cfg, where, center, basis,
-                              starRadiusKm, warn) {
+                              starRadiusKm, warn, starRadiusFigures) {
     if (typeof starRadiusKm !== "number") {
       warn(where + ": a streamer band is measured in R_sun but no star " +
            "radius was served for this group -- nothing drawn");
@@ -1070,9 +1272,13 @@
     var m = applyBasis(basis, cuspR * scale * 1.12, 0, 0);
     var hover = label + "<br><br>" + descLine(cfg) +
       "Cusp: " + cuspR + " solar radii<br>= " +
-      kmAndAu(cuspR * starRadiusKm) + "<br>" +
+      kmAndAu(cuspR * starRadiusKm,
+              figProduct([[cuspR, servedFigureField(cfg.cusp_radius)],
+                          [starRadiusKm, starRadiusFigures]])) + "<br>" +
       "Fades to nothing by: " + fadeR + " solar radii<br>= " +
-      kmAndAu(fadeR * starRadiusKm) + "<br>" +
+      kmAndAu(fadeR * starRadiusKm,
+              figProduct([[fadeR, servedFigureField(cfg.fade_radius)],
+                          [starRadiusKm, starRadiusFigures]])) + "<br>" +
       STREAMER_CAVEAT;
     // L-331 (2026-09-16): the two citations that sat here reach the i
     // panel through withGatheredSource() at the dispatcher; the hover
@@ -1406,7 +1612,8 @@
    * The radius unit follows measuredRadiusAu (R_earth needs planet_radius).
    */
   function renderEquatorialRing(slug, bodyName, cfg, where, center, basis,
-                                starRadiusKm, halfRangeAu, warn) {
+                                starRadiusKm, halfRangeAu, warn,
+                                starRadiusFigures) {
     var radiusAu = measuredRadiusAu(cfg.radius, where, starRadiusKm, warn);
     if (radiusAu === null || !(radiusAu > 0)) return [];
     if (!basis) {
@@ -1424,16 +1631,22 @@
                        halfRangeAu > 0 && radiusAu > halfRangeAu);
     if (beyondFrame) built.trace.visible = "legendonly";
 
+    // L-342: served primary where there is one, Rule P where there is
+    // not. The geostationary belt's altitude is the worked example --
+    // 42,164.17 km minus Earth's radius, not 5.610735 radii times it.
+    var km = shellKmLines(cfg, radiusAu, starRadiusKm, starRadiusFigures);
     var hover = label + "<br><br>" + descLine(cfg);
     if (cfg.radius.unit === "r_earth") {
       hover += "Radius: " +
         fmtServed(cfg.radius.value, servedFigures(cfg.radius), 4) +
         " Earth radii<br>";
-      if (typeof starRadiusKm === "number" && cfg.radius.value > 1) {
-        hover += "Altitude: " + kmAndAu((cfg.radius.value - 1) * starRadiusKm) + "<br>";
+      if (km && km.altitudeKm !== null) {
+        hover += "Altitude: " +
+          kmAndAu(km.altitudeKm, km.altitudeFigures) + "<br>";
       }
     }
-    hover += "= " + kmAndAu(radiusAu * KM_PER_AU) + "<br>" +
+    hover += "= " + (km ? kmAndAu(km.radiusKm, km.radiusFigures)
+                        : kmAndAu(radiusAu * KM_PER_AU)) + "<br>" +
              "A ring in the equatorial plane, not a sphere: satellites here" +
              SOFT_BR +
              "keep pace with Earth's turning and hang over one longitude.";
@@ -1453,12 +1666,17 @@
     // The group's body radius, in km: the Sun serves sun_radius, a planet
     // serves planet_radius (L-291). Radii in R_sun / R_earth scale by it.
     var starRadiusKm = null;
+    // L-342: the body radius is a primary input to every kilometre line
+    // this group builds, so its declared count travels with its value.
+    var starRadiusFigures = null;
     if (params.sun_radius !== undefined) {
       starRadiusKm = measured(params.sun_radius, "km",
                               where + "/sun_radius", warn);
+      starRadiusFigures = servedFigureField(params.sun_radius);
     } else if (params.planet_radius !== undefined) {
       starRadiusKm = measured(params.planet_radius, "km",
                               where + "/planet_radius", warn);
+      starRadiusFigures = servedFigureField(params.planet_radius);
     }
 
     var keys = Object.keys(params);
@@ -1479,14 +1697,14 @@
         if (cfg.shape === "streamer_band") {
           traces = traces.concat(stampShell(stampLink(renderStreamerBand(
             slug, bodyName, cfg, where + "/" + key, center, basis,
-            starRadiusKm, warn),
+            starRadiusKm, warn, starRadiusFigures),
             withGatheredSource(cfg, [["cusp_radius", "Cusp"],
                                      ["fade_radius", "Fade"]])), key));
           drawn += 1;
         } else if (cfg.shape === "equatorial_ring") {
           var ringTraces = renderEquatorialRing(
             slug, bodyName, cfg, where + "/" + key, center, basis,
-            starRadiusKm, halfRangeAu, warn);
+            starRadiusKm, halfRangeAu, warn, starRadiusFigures);
           traces = traces.concat(stampShell(ringTraces, key));
           if (ringTraces.length) drawn += 1;
         } else if (cfg.shape === "torus" ||
@@ -1557,6 +1775,11 @@
       var my = center[1];
       var mz = center[2] + radiusAu * 1.05 * Math.cos(polar);
 
+      // L-342: the kilometre lines come from shellKmLines(), which
+      // prints a served primary where the store holds one and computes
+      // by Rule P where it does not. The shell is still DRAWN from
+      // `radius` above; only what the hover SAYS changes here.
+      var km = shellKmLines(cfg, radiusAu, starRadiusKm, starRadiusFigures);
       var hover = label + "<br><br>" + descLine(cfg);
       if (cfg.radius.unit === "r_sun") {
         hover += "Radius: " + cfg.radius.value + " solar radii<br>";
@@ -1565,11 +1788,13 @@
         hover += "Radius: " +
         fmtServed(cfg.radius.value, servedFigures(cfg.radius), 4) +
         " Earth radii<br>";
-        if (typeof starRadiusKm === "number" && cfg.radius.value > 1) {
-          hover += "Altitude: " + kmAndAu((cfg.radius.value - 1) * starRadiusKm) + "<br>";
+        if (km && km.altitudeKm !== null) {
+          hover += "Altitude: " +
+            kmAndAu(km.altitudeKm, km.altitudeFigures) + "<br>";
         }
       }
-      hover += "= " + kmAndAu(radiusAu * KM_PER_AU);
+      hover += "= " + (km ? kmAndAu(km.radiusKm, km.radiusFigures)
+                          : kmAndAu(radiusAu * KM_PER_AU));
       hover = withTail(hover);
       var marker = infoMarker(mx, my, mz, color, hover, label, cfg.info_border);
       if (beyondFrame) {
@@ -1744,6 +1969,8 @@
 
     var radiusKm = measured(params.planet_radius, "km",
                             where + "/planet_radius", warn);
+    // L-342: the count beside it, for the two kilometre lines below.
+    var radiusFigures = servedFigureField(params.planet_radius);
     if (radiusKm === null) {
       warn(where + ": the shape is in Earth radii and no planet_radius " +
            "was served -- nothing drawn");
@@ -1800,7 +2027,9 @@
       var mpHover = mpLabel + "<br><br>" + descLine(mp) +
         "Sunward standoff: " + fmtServed(r0, servedFigures(mp.standoff), 2) +
         " Earth radii<br>" +
-        "= " + kmAndAu(r0 * radiusKm) + "<br>" +
+        "= " + kmAndAu(r0 * radiusKm,
+                       figProduct([[r0, servedFigureField(mp.standoff)],
+                                   [radiusKm, radiusFigures]])) + "<br>" +
         "Shue et al. (1998), for the solar wind assumed here:<br>" +
         "Bz " + fmtServed(bz, servedFigures(mpS.bz), 1) +
         " nT, dynamic pressure " + fmtServed(dp, servedFigures(mpS.pressure), 1) +
@@ -1862,9 +2091,22 @@
       if (bsBeyond) bsBuilt.trace.visible = "legendonly";
       traces.push(bsBuilt.trace);
 
+      // L-342: S is bsR0 x pressure^(-1/epsilon), a POWER rather than a
+      // plain product. Rule 3 makes fewest-figures the default and drops
+      // one where the exponent magnifies the input's uncertainty, which
+      // is what the second line does. Every input here has a null count
+      // until the magnetosphere slice visits them, so this reads null
+      // today and the line prints exactly as it always has; the rule is
+      // wired now so the slice does not have to remember it.
+      var sFigures = figProduct([[bsR0, servedFigureField(bsS.r0)],
+                                 [bsP, servedFigureField(bsS.pressure)],
+                                 [radiusKm, radiusFigures]]);
+      if (typeof sFigures === "number" && Math.abs(1 / bsEps) > 1) {
+        sFigures = Math.max(1, sFigures - 1);
+      }
       var bsHover = bsLabel + "<br><br>" + descLine(bs) +
         "Sunward standoff: " + S.toFixed(2) + " Earth radii<br>" +
-        "= " + kmAndAu(S * radiusKm) + "<br>" +
+        "= " + kmAndAu(S * radiusKm, sFigures) + "<br>" +
         "Jelinek et al. (2012), at dynamic pressure " +
         fmtServed(bsP, servedFigures(bsS.pressure), 1) +
         " nPa<br>" +
