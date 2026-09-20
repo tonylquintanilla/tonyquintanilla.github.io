@@ -1043,7 +1043,50 @@ def run_live(root, results):
     print("")
 
 
-def summarize(results):
+def swap_log_note(root):
+    """L-216: the most recent cache swap, in one line, on the screen Tony
+    already reads.
+
+    A retry that worked looks exactly like a run with no problem, so the log
+    is the only evidence there is. A line with more than one attempt and the
+    outcome ok is a failure this build absorbed."""
+    path = os.path.join(root, "data", "cache_swap_log.jsonl")
+    if not os.path.isfile(path):
+        return ("no swap log yet -- data/cache_swap_log.jsonl appears the "
+                "first time the cache builder reaches its swap")
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            rows = [row for row in handle.read().splitlines() if row.strip()]
+        if not rows:
+            return "the swap log is empty"
+        record = json.loads(rows[-1])
+    except (OSError, ValueError) as exc:
+        return "the swap log could not be read (%s)" % exc
+
+    attempts = record.get("attempts") or {}
+    tried = attempts.get("staging_to_live") or 0
+    outcome = record.get("outcome", "unknown")
+    when = record.get("time", "unknown time")
+    if outcome == "ok" and tried > 1:
+        tail = ("succeeded on attempt %d -- a refused rename this build "
+                "absorbed" % tried)
+    elif outcome == "ok":
+        tail = "succeeded first time"
+    elif outcome == "started":
+        tail = ("reached the swap and never reported back -- the run was "
+                "interrupted")
+    elif outcome == "rolled_back":
+        tail = ("refused %d times; the previous cache was put back and "
+                "nothing was lost" % tried)
+    elif outcome == "failed":
+        tail = "refused %d times and could NOT be undone -- read the run's "\
+               "own output before committing anything" % tried
+    else:
+        tail = "outcome %r" % outcome
+    return "last swap %s: %s" % (when, tail)
+
+
+def summarize(results, root=None):
     checkers = [row for row in results if row[6]]
     report_only = [row for row in checkers if row[5]]
     gating = [row for row in checkers if not row[5]]
@@ -1086,6 +1129,11 @@ def summarize(results):
         for row in report_only:
             print("    %-4s %-22s %s"
                   % (row[0], row[1], wrapped(row[3], 40)[0]))
+    # L-216. Not a checker and never a gate: one line saying how the most
+    # recent cache swap went, because the swap happens in a different program
+    # and its only lasting record is a file nobody would think to open.
+    if root is not None:
+        print("  %s" % swap_log_note(root))
     print("=" * 70)
 
     for row in results:
@@ -1130,7 +1178,7 @@ def main():
         run_generators(root, results)
         run_checkers(root, OFFLINE_CHECKERS, results)
 
-    code = summarize(results)
+    code = summarize(results, root)
 
     print("")
     if live:

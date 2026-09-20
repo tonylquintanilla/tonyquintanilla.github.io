@@ -13,6 +13,10 @@ brought forward to the Sun's features-only entry).
 
 Module updated: August 2026 with Anthropic's Claude Opus 5 (L-238: the
 shell invariant admits interior shells).
+
+Module updated: September 2026 with Anthropic's Claude Opus 5 (L-216: the
+swap's retry, roll-back and tracked swap log, and the sibling report's
+view of folders the builder did not make).
 """
 import json
 import math
@@ -449,7 +453,7 @@ def main():
             out_swapfail = Path(td_swapfail) / 'data' / 'solar-system'
             _swap_current = b.atomic_swap_dir
 
-            def raising_swap(staging, live, run_id=None):
+            def raising_swap(staging, live, run_id=None, attempts=None):
                 raise OSError("simulated: file lock during promotion (e.g. OneDrive)")
 
             b.atomic_swap_dir = raising_swap
@@ -473,8 +477,8 @@ def main():
             out_mismatch = Path(td_mismatch) / 'data' / 'solar-system'
             _swap_current2 = b.atomic_swap_dir
 
-            def swap_then_corrupt(staging, live, run_id=None):
-                _swap_current2(staging, live, run_id)  # real promotion happens
+            def swap_then_corrupt(staging, live, run_id=None, attempts=None):
+                _swap_current2(staging, live, run_id, attempts)  # real promotion
                 stale = json.load(open(live / 'coverage_index.json'))
                 stale['generated'] = '2000-01-01T00:00:00+00:00'  # pretend it's old
                 json.dump(stale, open(live / 'coverage_index.json', 'w'))
@@ -492,6 +496,203 @@ def main():
             check(out_mismatch.exists() and (out_mismatch / 'coverage_index.json').exists(),
                   "L-173: unlike the raised-exception case, the (bad) promoted data is left in "
                   "place here, not deleted -- verify_promoted_data only refuses to commit it")
+
+        # --- L-216: the swap's renames are retried, a swap that still
+        # cannot finish puts the previous generation back, and every run
+        # that reaches the swap leaves a line in a TRACKED file outside the
+        # generation. The lock cannot be produced in a sandbox, so os.replace
+        # is simulated through the builder's own _rename seam -- the same
+        # name the real build path goes through. ---
+        import hashlib as _hashlib
+        import io as _io
+        import contextlib as _contextlib
+
+        def _refuse(real, when):
+            """A stand-in for os.replace that refuses the renames `when`
+            says to refuse and otherwise does the real thing."""
+            def _r(src, dst):
+                if when(Path(src), Path(dst)):
+                    raise OSError(13, "simulated: Access is denied")
+                return real(src, dst)
+            return _r
+
+        def _to_live_from_staging(src, dst):
+            return dst.name == 'solar-system' and src.name.startswith('.staging_')
+
+        def _any_to_live(src, dst):
+            return dst.name == 'solar-system'
+
+        def _log_rows(out):
+            # Absent is a RESULT, not a crash. A missing log has to fail a
+            # named check; an exception here would kill the suite and hide
+            # every check after it.
+            path = out.parent / b.SWAP_LOG_NAME
+            if not path.exists():
+                return []
+            return [r for r in path.read_text().splitlines() if r.strip()]
+
+        def _last_log(out):
+            rows = _log_rows(out)
+            return json.loads(rows[-1]) if rows else None
+
+        def _tree_fp(root):
+            h = _hashlib.md5()
+            for p in sorted(Path(root).rglob('*')):
+                if p.is_file():
+                    h.update(str(p.relative_to(root)).encode())
+                    h.update(p.read_bytes())
+            return h.hexdigest()
+
+        _real_rename = b._rename
+        _real_waits = b.SWAP_RENAME_WAITS
+        # Zero the waits so the suite stays fast. What is under test is the
+        # attempt count and the outcome, not the clock.
+        b.SWAP_RENAME_WAITS = (0.0, 0.0, 0.0, 0.0, 0.0)
+
+        try:
+            # 1. refused twice, then allowed.
+            with tempfile.TemporaryDirectory() as td_retry:
+                out_retry = Path(td_retry) / 'data' / 'solar-system'
+                out_retry.mkdir(parents=True)
+                state = {'n': 0}
+
+                def _twice(src, dst):
+                    if _to_live_from_staging(src, dst):
+                        state['n'] += 1
+                        return state['n'] <= 2
+                    return False
+
+                b._rename = _refuse(_real_rename, _twice)
+                try:
+                    rm_retry = b.run_build(cfg, out_retry, mode='first-build',
+                                           do_commit=False)
+                finally:
+                    b._rename = _real_rename
+                check(rm_retry['structural_validation'] == 'pass',
+                      "L-216: a rename refused twice then allowed -> the run "
+                      "still passes")
+                check((out_retry / 'coverage_index.json').exists(),
+                      "L-216: the NEW generation is live after the retry")
+                rows = _log_rows(out_retry)
+                check(len(rows) == 1,
+                      "L-216: the run left exactly ONE line in the tracked "
+                      "swap log (found %d)" % len(rows))
+                row = _last_log(out_retry)
+                check(row and row['outcome'] == 'ok',
+                      "L-216: the swap log says ok")
+                check(row and row['attempts'].get('staging_to_live') == 3,
+                      "L-216: the swap log says 3 attempts -- a line with more "
+                      "than one attempt and outcome ok is a failure this build "
+                      "absorbed (%r)"
+                      % (row and row['attempts'].get('staging_to_live')))
+
+            # 2. staging -> live refused every time; the roll-back allowed.
+            with tempfile.TemporaryDirectory() as td_roll:
+                out_roll = Path(td_roll) / 'data' / 'solar-system'
+                out_roll.mkdir(parents=True)
+                b.run_build(cfg, out_roll, mode='first-build', do_commit=False)
+                before_fp = _tree_fp(out_roll)
+                b._rename = _refuse(_real_rename, _to_live_from_staging)
+                try:
+                    rm_roll = b.run_build(cfg, out_roll, mode='nightly',
+                                          do_commit=True)
+                finally:
+                    b._rename = _real_rename
+                check(out_roll.exists() and _tree_fp(out_roll) == before_fp,
+                      "L-216: the swap fails -> the OLD generation is live "
+                      "again, byte for byte")
+                check(not (out_roll.parent / 'solar-system.prev').exists(),
+                      "L-216: the roll-back consumed .prev rather than leaving "
+                      "a second copy behind")
+                kept = list(out_roll.parent.glob('.staging_*'))
+                check(len(kept) == 1,
+                      "L-216: the new generation is KEPT at its staging path")
+                check(rm_roll['committed'] is False,
+                      "L-216: a rolled-back run never commits")
+                row = _last_log(out_roll)
+                check(row and row['outcome'] == 'rolled_back',
+                      "L-216: the swap log says rolled_back (%r)"
+                      % (row and row['outcome']))
+                check(row and row['attempts'].get('staging_to_live')
+                      == b.SWAP_RENAME_ATTEMPTS,
+                      "L-216: the log records every attempt that was made")
+
+            # 3. refused every time on both the swap and the roll-back.
+            with tempfile.TemporaryDirectory() as td_dead:
+                out_dead = Path(td_dead) / 'data' / 'solar-system'
+                out_dead.mkdir(parents=True)
+                b.run_build(cfg, out_dead, mode='first-build', do_commit=False)
+                b._rename = _refuse(_real_rename, _any_to_live)
+                said = _io.StringIO()
+                try:
+                    with _contextlib.redirect_stdout(said):
+                        rm_dead = b.run_build(cfg, out_dead, mode='nightly',
+                                              do_commit=True)
+                finally:
+                    b._rename = _real_rename
+                spoken = said.getvalue()
+                check(not out_dead.exists(),
+                      "L-216: both refused -> the live directory is missing")
+                check((out_dead.parent / 'solar-system.prev').exists(),
+                      "L-216: the previous generation is still on disk in .prev")
+                check("DO NOT COMMIT THAT" in spoken,
+                      "L-216: the plain-words block is printed, and it says not "
+                      "to commit the deletions")
+                check("discard the changes" in spoken
+                      and "rename" in spoken,
+                      "L-216: it names BOTH hand recoveries -- discard and "
+                      "re-run, or rename the staging folder")
+                check("self-heal" not in spoken,
+                      "L-216: it never says 'will self-heal' without saying "
+                      "what Tony does")
+                row = _last_log(out_dead)
+                check(row and row['outcome'] == 'failed',
+                      "L-216: the swap log says failed (%r)"
+                      % (row and row['outcome']))
+                check(rm_dead['committed'] is False,
+                      "L-216: a failed swap never commits")
+
+            # 4. a dry run writes nothing to the log.
+            with tempfile.TemporaryDirectory() as td_dry:
+                out_dry = Path(td_dry) / 'data' / 'solar-system'
+                out_dry.mkdir(parents=True)
+                b.run_build(cfg, out_dry, mode='first-build', do_commit=False)
+                before_rows = _log_rows(out_dry)
+                check(len(before_rows) == 1,
+                      "L-216: the first build wrote a swap log line to "
+                      "compare the dry run against (found %d)"
+                      % len(before_rows))
+                b.run_build(cfg, out_dry, mode='nightly', only_slug='earth',
+                            dry_run=True)
+                check(_log_rows(out_dry) == before_rows,
+                      "L-216: a dry run leaves the swap log untouched")
+        finally:
+            b._rename = _real_rename
+            b.SWAP_RENAME_WAITS = _real_waits
+
+        # 5. the sibling report sees folders the builder did not make. Before
+        # L-216 it globbed only builder-made names, so four OneDrive conflict
+        # copies sitting beside the cache printed as "no sibling directories".
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]
+                               / 'documentation'))
+        import check_cache_siblings as ccs
+
+        with tempfile.TemporaryDirectory() as td_sib:
+            data_sib = Path(td_sib) / 'data'
+            for name in ('solar-system', 'solar-system (1)',
+                         '123-solar-system', 'solar-system.prev',
+                         'solar-system.quarantine_20260901T120000Z'):
+                (data_sib / name).mkdir(parents=True)
+            found = ccs.classify(data_sib)
+            check(found['foreign'] == ['123-solar-system', 'solar-system (1)'],
+                  "L-216: the sibling report NAMES the folders the builder did "
+                  "not make (%r)" % (found['foreign'],))
+            check(found['builder']
+                  == ['solar-system.quarantine_20260901T120000Z'],
+                  "L-216: a builder-made sibling is still classed as the "
+                  "builder's")
+            check(found['live'] is not None and found['prev'] is not None,
+                  "L-216: the live cache and .prev are not reported as strays")
 
         # --- nightly re-run: shrink gate must pass, frozen dates stable ---
         earth_before = json.load(open(out / 'raw' / 'vectors' / 'earth.json'))['points']

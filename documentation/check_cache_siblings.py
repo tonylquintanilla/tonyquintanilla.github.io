@@ -27,15 +27,29 @@ anything actionable.
   - every sibling, with its age taken from the run id in its name
   - which ones the builder's next run should reap, by name
   - any whose name carries no run id, which is the blind spot
+  - every OTHER directory in data/, by name, under its own heading
 
 data/solar-system.prev is reported separately and never flagged. It is
 the retained one-generation rollback, and the gallery-cache-builder
 skill is explicit that it must never be hand-deleted.
 
+THE LAST BULLET IS L-216, AND IT IS THE SAME FAULT ONE LAYER OUT. This
+script globbed only the two name shapes the BUILDER makes. OneDrive had
+been making conflict copies of the served directory since 2026-09-05 --
+`solar-system (1)`, `(2)`, `(3)` and `1260806133443-solar-system` -- and
+with four of them sitting beside the cache this script printed "no
+sibling directories". It was a report that could not see the thing it
+should report, which is what it was written to prevent. Anything in
+data/ that is not the live cache, not .prev and not a builder-made
+sibling is now NAMED, whatever it is called.
+
 Role: devtool
 Domain: dev_tools
 
 Module created: September 1, 2026 with Anthropic's Claude Opus 5.
+Module updated: September 20, 2026 with Anthropic's Claude Opus 5 (L-216:
+every other directory in data/ is named; the classification is a
+function so the offline suite can check it).
 """
 
 import re
@@ -60,6 +74,30 @@ def age_days(name, now):
     return (now - stamp).total_seconds() / 86400.0
 
 
+def classify(data):
+    """Sort every directory in data/ into what the builder makes and what
+    it does not. Returns a dict; main() prints it.
+
+    A function rather than inline code so the offline suite can check it,
+    because a report nothing exercises is a report that cannot fail."""
+    live = prev = None
+    builder, foreign = [], []
+    for d in sorted(p for p in data.iterdir() if p.is_dir()):
+        name = d.name
+        if name == 'solar-system':
+            live = d
+        elif name == 'solar-system.prev':
+            prev = d
+        elif (name.startswith('solar-system.quarantine_')
+                or name.startswith('.staging_solar-system_')
+                or name.startswith('solar-system.prev')):
+            builder.append(name)
+        else:
+            foreign.append(name)
+    return {'live': live, 'prev': prev, 'builder': builder,
+            'foreign': foreign}
+
+
 def main():
     root = Path(__file__).resolve().parents[1]
     data = root / 'data'
@@ -67,36 +105,28 @@ def main():
         print("UNREACHABLE: %s not found; run from the gallery repo." % data)
         return 2
 
-    live = data / 'solar-system'
     now = datetime.now(timezone.utc)
+    found = classify(data)
+    live, prev = found['live'], found['prev']
+    siblings = found['builder']
+    foreign = found['foreign']
 
-    siblings = sorted(
-        [d for d in data.glob('solar-system.quarantine_*') if d.is_dir()] +
-        [d for d in data.glob('.staging_solar-system_*') if d.is_dir()])
-    prev = data / 'solar-system.prev'
-
-    print("served cache: %s" % ('present' if live.is_dir() else 'MISSING'))
+    print("served cache: %s" % ('present' if live else 'MISSING'))
     print("rollback    : %s"
           % ('solar-system.prev present (normal -- never hand-delete)'
-             if prev.is_dir() else 'no .prev this run'))
-
-    if not siblings:
-        print("siblings    : none")
-        print("")
-        print("RESULT: no sibling directories; nothing for the sweep to do.")
-        return 0
+             if prev else 'no .prev this run'))
 
     stale, fresh, unparsed = [], [], []
-    for d in siblings:
-        a = age_days(d.name, now)
+    for name in siblings:
+        a = age_days(name, now)
         if a is None:
-            unparsed.append(d.name)
+            unparsed.append(name)
         elif a >= KEEP_DAYS:
-            stale.append((a, d.name))
+            stale.append((a, name))
         else:
-            fresh.append((a, d.name))
+            fresh.append((a, name))
 
-    print("siblings    : %d" % len(siblings))
+    print("siblings    : %s" % (len(siblings) if siblings else 'none'))
     if stale:
         print("")
         print("  STALE -- the builder's next run should reap these (%d):"
@@ -115,15 +145,37 @@ def main():
         for n in unparsed:
             print("    %s" % n)
 
+    # L-216. Everything else in data/, by name. These are not the builder's
+    # and the sweep will never touch them; OneDrive's conflict copies land
+    # here, and so would anything else that appeared beside the cache.
+    if foreign:
+        print("")
+        print("  NOT MADE BY THE BUILDER -- the sweep will never touch these, "
+              "and OneDrive's conflict copies look like this (%d):"
+              % len(foreign))
+        for n in foreign:
+            print("    %s" % n)
+
     print("")
-    if stale:
+    if foreign:
+        print("RESULT: %d director%s in data/ the builder did not make: %s. "
+              "Check whether they belong there; the newer .gitignore rules "
+              "keep the known conflict-copy shapes out of git but do not "
+              "remove anything."
+              % (len(foreign), 'y' if len(foreign) == 1 else 'ies',
+                 ", ".join(foreign)))
+    elif stale:
         print("RESULT: %d stale of %d siblings. If these survive the next "
               "build run, the sweep has gone quiet again -- that is the "
               "L-274 failure, and it is silent by default."
               % (len(stale), len(siblings)))
-    else:
-        print("RESULT: %d sibling(s), none stale. The sweep is keeping up."
+    elif siblings:
+        print("RESULT: %d sibling(s), none stale, and nothing in data/ the "
+              "builder did not make. The sweep is keeping up."
               % len(siblings))
+    else:
+        print("RESULT: no sibling directories and nothing in data/ the "
+              "builder did not make.")
     return 0
 
 

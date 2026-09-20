@@ -46,6 +46,12 @@ unverified promotion).
 Module updated: August 2026 with Anthropic's Claude Opus 5 (L-234:
 features_only_result() and the serve_positions:false skip -- an entry
 may be served for its shell geometry with no orbit fetched for it).
+Module updated: September 2026 with Anthropic's Claude Opus 5 (L-216: the
+swap's renames are retried, a swap that cannot finish puts the previous
+generation back, and every run that reaches the swap records its outcome
+in data/cache_swap_log.jsonl -- a TRACKED file outside the generation, so
+a failed swap can no longer strand its own record where .gitignore hides
+it).
 
 Role: cache
 Domain: cache_builder
@@ -59,6 +65,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -1224,12 +1231,86 @@ def shrink_gate(staging_root, live_root, warn):
 # ATOMICITY + COMMIT
 # ===========================================================================
 
-def atomic_swap_dir(staging, live, run_id=None):
+# L-216. Each rename inside the swap is RETRIED, because the lock that
+# refuses it is brief. On 2026-09-20 Tony renamed the staging folder by hand
+# in File Explorer minutes after Python had been refused, and it worked.
+# Six attempts spaced by the waits below spend about fifty seconds waiting,
+# which is longer than any refusal this project has measured. A rename that
+# succeeds first time behaves exactly as it always did.
+SWAP_RENAME_ATTEMPTS = 6
+SWAP_RENAME_WAITS = (2.0, 4.0, 8.0, 15.0, 20.0)   # seconds between attempts
+
+# The rename is reached through this name so the offline suite can simulate
+# a refusal without monkeypatching os for the whole process. The real build
+# path goes through it too, so the seam is exercised on every single run.
+_rename = os.replace
+
+# The swap log. One line per run that reaches the swap, in a TRACKED file
+# that is a SIBLING of the served directory -- outside both the live tree
+# and the staging tree, for the same reason objects_config.json is (L-114).
+SWAP_LOG_NAME = 'cache_swap_log.jsonl'
+
+
+class SwapRenameFailed(OSError):
+    """A rename inside the swap was refused on every attempt.
+
+    Subclasses OSError deliberately. run_build has caught OSError around the
+    swap since L-173 and must keep catching both this and any plain refusal
+    raised from elsewhere in the swap.
+    """
+
+    def __init__(self, label, cause):
+        self.label = label
+        self.cause = cause
+        OSError.__init__(self, '%s refused on all %d attempts (%s)'
+                         % (label, SWAP_RENAME_ATTEMPTS, cause))
+
+
+def _rename_with_retry(src, dst, label, attempts):
+    """Rename src to dst, retrying a refusal. Records attempts[label].
+
+    attempts is a dict the CALLER owns, so the count survives the exception
+    and reaches the swap log -- which is the whole point of recording the
+    outcome outside the generation.
+
+    Every attempt after the first PRINTS, so a retry that worked shows up in
+    the console as well as in the log. A retry that works otherwise looks
+    exactly like a run with no problem at all.
+    """
+    last = None
+    for attempt in range(1, SWAP_RENAME_ATTEMPTS + 1):
+        attempts[label] = attempt
+        try:
+            _rename(src, dst)
+            if attempt > 1:
+                print('[SWAP] %s succeeded on attempt %d of %d'
+                      % (label, attempt, SWAP_RENAME_ATTEMPTS), flush=True)
+            return
+        except OSError as e:
+            last = e
+            if attempt < SWAP_RENAME_ATTEMPTS:
+                wait = SWAP_RENAME_WAITS[min(attempt - 1,
+                                             len(SWAP_RENAME_WAITS) - 1)]
+                print('[SWAP] %s refused on attempt %d of %d (%s); waiting %gs'
+                      % (label, attempt, SWAP_RENAME_ATTEMPTS, e, wait),
+                      flush=True)
+                time.sleep(wait)
+            else:
+                print('[SWAP] %s refused on attempt %d of %d (%s); giving up'
+                      % (label, attempt, SWAP_RENAME_ATTEMPTS, e), flush=True)
+    raise SwapRenameFailed(label, last)
+
+
+def atomic_swap_dir(staging, live, run_id=None, attempts=None):
     """N1: swap the WHOLE generation directory as one unit -- live -> .prev,
     staging -> live. A filesystem rename is all-or-nothing, so a crash can only
     ever leave a COMPLETE .prev (recovered next run) or a COMPLETE live, never a
     mixed generation. Does NOT delete .prev: it is the retained one-generation
-    rollback, cleared at the next run's start once live is confirmed healthy."""
+    rollback, cleared at the next run's start once live is confirmed healthy.
+
+    L-216: each rename is retried, and the per-rename attempt counts are
+    recorded into the caller's attempts dict."""
+    attempts = {} if attempts is None else attempts
     prev = live.parent / (live.name + '.prev')
     if prev.exists():
         # A stale .prev means run-start recovery could not clear it (e.g. a
@@ -1237,10 +1318,175 @@ def atomic_swap_dir(staging, live, run_id=None):
         # proceed rather than wedge every future run; the sweep reaps quarantines.
         q = live.parent / ('%s.quarantine_%s' % (live.name, run_id or _utcnow().strftime('%Y%m%dT%H%M%S')))
         print("[SWAP] stale %s (suspected file lock) -> quarantining as %s" % (prev, q), flush=True)
-        os.replace(prev, q)
+        _rename_with_retry(prev, q, 'quarantine_prev', attempts)
     if live.exists():
-        os.replace(live, prev)
-    os.replace(staging, live)
+        _rename_with_retry(live, prev, 'live_to_prev', attempts)
+    _rename_with_retry(staging, live, 'staging_to_live', attempts)
+
+
+def restore_after_failed_swap(staging, live, attempts):
+    """L-216: put the previous generation back after a swap that could not
+    finish, so the working copy is never left without a served cache and
+    GitHub Desktop never shows the pile of deletions.
+
+    Returns ONE WORD describing the working copy now:
+      'live_intact'        nothing had moved; the previous cache never left
+      'rolled_back'        .prev was renamed back; the previous cache is live
+      'nothing_to_restore' there was no previous generation (a first build)
+      'rollback_refused'   .prev could not be renamed back; live is missing
+
+    Reads the filesystem rather than trusting which rename raised, so it is
+    right whatever went wrong. The staging directory is KEPT either way; the
+    next run's sweep reaps it after keep_days."""
+    prev = live.parent / (live.name + '.prev')
+    if live.exists():
+        return 'live_intact'
+    if not prev.exists():
+        return 'nothing_to_restore'
+    try:
+        _rename_with_retry(prev, live, 'rollback_prev_to_live', attempts)
+        return 'rolled_back'
+    except OSError:
+        return 'rollback_refused'
+
+
+def _swap_log_path(live):
+    return live.parent / SWAP_LOG_NAME
+
+
+def swap_log_write(live, record, replacing_run_id=None):
+    """L-216, and it comes FIRST: record the swap's outcome OUTSIDE the
+    generation.
+
+    The run record is written inside the generation, so a run whose swap
+    fails strands its own record in a directory .gitignore hides, and the
+    committed history shows no sign that a run lost its data. This file is a
+    tracked sibling, so the mark survives the failure it records.
+
+    ONE LINE PER RUN. The line is appended with outcome 'started' before the
+    swap is attempted, and that same line is rewritten with the outcome
+    after. If the process is killed outright mid-swap, the 'started' line
+    survives and says a run reached the swap and never reported back --
+    which is the one thing no record inside the generation can say.
+
+    Written in binary so the file is LF on every platform, and never allowed
+    to fail a build: a log that cannot be written prints and steps aside."""
+    path = _swap_log_path(live)
+    line = json.dumps(record, sort_keys=True).encode('utf-8') + b'\n'
+    try:
+        existing = path.read_bytes() if path.exists() else b''
+        if replacing_run_id and existing:
+            lines = existing.splitlines(True)
+            try:
+                last = json.loads(lines[-1].decode('utf-8'))
+            except Exception:
+                last = None
+            if (isinstance(last, dict)
+                    and last.get('run_id') == replacing_run_id
+                    and last.get('outcome') == 'started'):
+                lines[-1] = line
+                path.write_bytes(b''.join(lines))
+                return
+        with open(path, 'ab') as f:
+            f.write(line)
+    except OSError as e:
+        print('[SWAP] could not write %s (%s)' % (path, e), flush=True)
+
+
+_SWAP_STATE_WORDS = {
+    'rolled_back': 'the previous cache was put back',
+    'live_intact': 'the previous cache never moved',
+    'nothing_to_restore': 'there was no previous cache to put back',
+    'rollback_refused': 'the previous cache could NOT be put back -- read the '
+                        'lines above for what to do',
+}
+
+
+def print_failed_swap_advice(staging, live, state, attempts):
+    """L-216: say in plain words what happened and what Tony does next.
+
+    Never "will self-heal" without saying what the person does. Tony reads
+    this in the panel he started the run from."""
+    bar = '-' * 70
+    tried = attempts.get('staging_to_live', 0)
+    print('', flush=True)
+    print(bar, flush=True)
+    if state in ('rolled_back', 'live_intact'):
+        if state == 'rolled_back':
+            print('THE CACHE SWAP COULD NOT FINISH. THE OLD CACHE IS BACK IN '
+                  'PLACE.', flush=True)
+        else:
+            print('THE CACHE SWAP COULD NOT START. THE OLD CACHE NEVER '
+                  'MOVED.', flush=True)
+        print('', flush=True)
+        print('The new data was built and it passed every check. The step that',
+              flush=True)
+        print('renames the new folder into place was refused %d time(s) by'
+              % tried, flush=True)
+        print('Windows. This is the file lock recorded as L-216.', flush=True)
+        print('', flush=True)
+        print('NOTHING WAS LOST. data/solar-system holds the generation that',
+              flush=True)
+        print('was there before this run, so GitHub Desktop will NOT show a',
+              flush=True)
+        print('pile of deletions. Nothing was committed and nothing was',
+              flush=True)
+        print('pushed, so the live site is unaffected.', flush=True)
+        print('', flush=True)
+        print('WHAT TO DO: run the builder again. The lock is usually brief.',
+              flush=True)
+    elif state == 'nothing_to_restore':
+        print('THE CACHE SWAP COULD NOT FINISH, AND THERE WAS NO PREVIOUS',
+              flush=True)
+        print('CACHE TO PUT BACK.', flush=True)
+        print('', flush=True)
+        print('The new data was built and it passed every check. The step that',
+              flush=True)
+        print('renames the new folder into place was refused %d time(s) by'
+              % tried, flush=True)
+        print('Windows. data/solar-system does not exist right now because it',
+              flush=True)
+        print('did not exist before this run either.', flush=True)
+        print('', flush=True)
+        print('WHAT TO DO: run the builder again. Nothing was committed or',
+              flush=True)
+        print('pushed.', flush=True)
+    else:
+        print('THE CACHE SWAP COULD NOT FINISH AND THE OLD CACHE COULD NOT BE',
+              flush=True)
+        print('PUT BACK.', flush=True)
+        print('', flush=True)
+        print('data/solar-system is missing right now. NOTHING IS LOST: both',
+              flush=True)
+        print('generations are on disk, and both are hidden from git by',
+              flush=True)
+        print('.gitignore -- which is exactly why GitHub Desktop will show a',
+              flush=True)
+        print('long list of deletions and no additions. DO NOT COMMIT THAT.',
+              flush=True)
+        print('', flush=True)
+        print('TWO WAYS OUT, either is fine:', flush=True)
+        print('  1. In GitHub Desktop, discard the changes, then run the',
+              flush=True)
+        print('     builder again. If the change list also holds work that is',
+              flush=True)
+        print('     NOT the cache, commit that work FIRST, then discard the',
+              flush=True)
+        print('     rest, then re-run.', flush=True)
+        print('  2. In File Explorer, rename', flush=True)
+        print('       %s' % staging, flush=True)
+        print('     to solar-system. That worked on 2026-09-20, minutes after',
+              flush=True)
+        print('     Python had been refused.', flush=True)
+        print('', flush=True)
+        print('The previous generation is at', flush=True)
+        print('  %s' % (live.parent / (live.name + '.prev')), flush=True)
+    print('', flush=True)
+    print('The new data is kept at', flush=True)
+    print('  %s' % staging, flush=True)
+    print('This run was recorded in data/%s' % SWAP_LOG_NAME, flush=True)
+    print(bar, flush=True)
+    print('', flush=True)
 
 def verify_promoted_data(out_dir, expected_index):
     """L-173/Option 3: confirm the swap actually landed before ever committing.
@@ -1660,20 +1906,47 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
 
     # N1: promote the WHOLE generation as ONE directory swap. A crash can leave
     # only a complete old generation or a complete new one -- never a mix.
+    #
+    # L-216, in the order the ledger asked for. The outcome is recorded in
+    # data/cache_swap_log.jsonl BEFORE the swap is attempted and completed
+    # after it, because without that every other part of this is
+    # unobservable. Each rename is retried. A swap that still cannot finish
+    # puts the previous generation back, so the working copy is never left
+    # without a served cache.
+    swap_attempts = {}
+    swap_started = _utcnow().isoformat()
+    swap_log_write(out_dir, {'run_id': run_id, 'time': swap_started,
+                             'mode': mode, 'reached': None, 'attempts': {},
+                             'outcome': 'started', 'error': None})
     try:
-        atomic_swap_dir(staging, out_dir, run_id)
+        atomic_swap_dir(staging, out_dir, run_id, swap_attempts)
     except OSError as e:
-        # L-173/Option 3: the swap can raise partway through under some
-        # execution contexts (observed: Task Scheduler's batch-logon session,
-        # likely an OneDrive file lock) -- live gets renamed to .prev but
-        # staging never lands in its place. Recovery for THIS is
-        # recover_incomplete_swap() at the START of the next run, not here;
-        # the only job here is to never commit/push whatever (nothing, or a
-        # partial state) is left at out_dir right now.
+        # L-173/Option 3 held that recovery for a failed swap was the NEXT
+        # run's recover_incomplete_swap(). L-216 moved it here: waiting for
+        # the next run means the working copy sits with no served cache and
+        # a change list that looks like total loss, which is the state a
+        # person has to read correctly for nothing bad to happen. That
+        # person read it correctly four times and, on 2026-07-24, did not.
+        state = restore_after_failed_swap(staging, out_dir, swap_attempts)
+        swap_log_write(out_dir,
+                       {'run_id': run_id, 'time': swap_started, 'mode': mode,
+                        'reached': getattr(e, 'label', 'staging_to_live'),
+                        'attempts': dict(swap_attempts),
+                        'outcome': ('rolled_back' if state == 'rolled_back'
+                                    else 'failed'),
+                        'error': str(e)},
+                       replacing_run_id=run_id)
+        print_failed_swap_advice(staging, out_dir, state, swap_attempts)
         run_manifest['structural_validation'] = ('fail: swap raised: %s -- '
-            'no commit; next run will self-heal' % e)
+            'no commit; %s' % (e, _SWAP_STATE_WORDS.get(state, state)))
         print("[ABORT] %s" % run_manifest['structural_validation'], flush=True)
         return run_manifest
+    swap_log_write(out_dir,
+                   {'run_id': run_id, 'time': swap_started, 'mode': mode,
+                    'reached': 'staging_to_live',
+                    'attempts': dict(swap_attempts),
+                    'outcome': 'ok', 'error': None},
+                   replacing_run_id=run_id)
 
     promo_fail = verify_promoted_data(out_dir, index)
     if promo_fail:

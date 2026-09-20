@@ -19,3 +19,13 @@ data/.staging_*/
 data/solar-system.prev*/
 data/solar-system.quarantine_*/
 data/_backup/
+
+# OneDrive conflict copies of the served cache (L-216). OneDrive forks the
+# whole directory when it cannot reconcile it and names the copy itself --
+# "solar-system (1)" or a numeric prefix. Four of them appeared between
+# 2026-09-05 and 2026-09-18, and one was committed and published by
+# accident. These two shapes keep the rest out of git. They do NOT untrack
+# anything already committed, and they do not delete anything on disk;
+# documentation/check_cache_siblings.py names whatever is there.
+data/solar-system (*)/
+data/[0-9]*-solar-system/
