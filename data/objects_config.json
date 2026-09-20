@@ -311,7 +311,7 @@
             "radius": {
               "value": 3480.0,
               "unit": "km",
-            "figures": 4
+            "figures": 5
             },
             "info_url": "https://en.wikipedia.org/wiki/Earth%27s_outer_core",
             "color": "rgb(255, 140, 0)",
@@ -766,9 +766,9 @@
             "description": "The region where Earth's gravity, not the Sun's, is the stronger hold; the Moon orbits well inside it.",
             "about": "Inside the Hill sphere a body can orbit Earth without being pulled away by the Sun. The Moon lies deep within it. Beyond this sphere the Sun's gravity wins, and an object would drift into its own orbit around the Sun.",
             "radius": {
-              "value": 234.6388,
+              "value": 235.0,
               "unit": "r_earth",
-            "figures": 7
+            "figures": 3
             },
             "info_url": "https://en.wikipedia.org/wiki/Hill_sphere",
             "color": "rgb(0, 255, 0)",

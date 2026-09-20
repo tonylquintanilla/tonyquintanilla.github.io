@@ -149,12 +149,44 @@
 
   /* Rule 7 of provenance-discipline: a display may show FEWER figures
      than the row declares, never more. With a declared count, format to
-     it; without one, keep the format this hover has always used. Every
-     served count is null at the time of writing, so nothing printed
-     changes until a store row declares one. */
+     it; without one, keep the format this hover has always used. */
   function fmtServed(value, figures, digits) {
     return (typeof figures === "number")
-      ? value.toPrecision(figures) : value.toFixed(digits);
+      ? sigFigures(value, figures) : value.toFixed(digits);
+  }
+
+  /* Round to `figures` significant figures and print PLAIN DIGITS.
+
+     This was value.toPrecision(figures) until 2026-09-19, and that is
+     where Earth's geocorona came to read "Radius: 1e+2 Earth radii".
+     JavaScript switches toPrecision to exponent notation whenever the
+     integer part has more digits than the figure count, so 100 declared
+     to ONE figure prints as an exponent. L-322's Earth walk declared the
+     first figure counts this store has ever carried, which is why the
+     fault appeared then and not before; any value of 10 or more at one
+     figure, or 100 or more at two, meets the same condition.
+
+     The rounding is unchanged -- toPrecision still does it -- and then
+     the decimal places are chosen to show exactly that many significant
+     digits. So a significant trailing zero survives (1 at two figures is
+     "1.0"), and a number wider than its own count stays plain (100 at one
+     figure is "100", 5710 at three is "5710").
+
+     Deliberate exponent notation elsewhere in these hovers -- the Oort
+     cloud's 2.00e+3 AU, the Moon's distance -- is written by other code
+     at magnitudes where it is the right way to show a number, and is not
+     touched by this. (L-342, Fable's review of C1, Finding 1.) */
+  function sigFigures(value, figures) {
+    if (typeof value !== "number" || !isFinite(value)) {
+      return String(value);
+    }
+    var n = Math.max(1, Math.min(21, Math.round(figures)));
+    var rounded = Number(value.toPrecision(n));
+    if (rounded === 0) { return rounded.toFixed(n - 1); }
+    var decimals = n - 1 - Math.floor(Math.log10(Math.abs(rounded)));
+    if (decimals < 0) { decimals = 0; }
+    if (decimals > 20) { decimals = 20; }
+    return rounded.toFixed(decimals);
   }
 
   function measured(node, expectedUnit, where, warn) {
@@ -1965,6 +1997,10 @@
     // Exported for the smoke test; not part of the drawing interface.
     _poleBasis: poleBasis,
     _KM_PER_AU: KM_PER_AU,
+    // L-342: the served-figures formatter, so the hover suite can run
+    // every declared count through the code the page actually uses
+    // rather than a second copy of the same arithmetic.
+    _fmtServed: fmtServed,
     // L-231 follow-up (2026-09-15): earth_geometry.js ends its own hovers
     // with these exact words rather than a second copy.
     HOVER_TAIL: HOVER_TAIL,

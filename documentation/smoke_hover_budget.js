@@ -305,6 +305,56 @@ if (worst && worst.lines > TARGET) {
                 worst.name + ".");
 }
 
+// L-342 (2026-09-19), from Fable's review of L-322 Stage C1.
+//
+// Earth's geocorona hover read "Radius: 1e+2 Earth radii" on the live
+// site, and all fourteen gallery checks passed over it, because none of
+// them reads the numbers inside a hover. This is the missing one.
+//
+// IT TESTS THE FORMATTER, NOT THE PROSE, and that is deliberate. A check
+// that fails on any hover containing exponent notation fails on twenty
+// hovers that are RIGHT: the Oort cloud's "2.00e+3 AU", the Sun's
+// gravitational influence at "1.50e+5", Jupiter's main ring at
+// "2.01e-7", the Moon at "3.684e+05". Those are written by other code at
+// magnitudes where the notation is how a number should be shown. A check
+// with twenty standing exceptions is not a check. So this runs every
+// served value that DECLARES a figure count through the renderers' own
+// fmtServed and fails if that comes back as an exponent -- exactly the
+// class of fault that hit the geocorona, and nothing else.
+//
+// The counts come from data/objects_config.json, so the check grows by
+// itself as the store's slices close. C2 adds Earth's magnetosphere.
+const declared = [];
+(function findDeclared(node, trail) {
+    if (Array.isArray(node)) {
+        node.forEach(function (item, i) {
+            findDeclared(item, trail + "[" + i + "]");
+        });
+        return;
+    }
+    if (!node || typeof node !== "object") { return; }
+    if (typeof node.figures === "number" && typeof node.value === "number") {
+        declared.push({ where: trail, value: node.value,
+                        figures: node.figures });
+    }
+    Object.keys(node).forEach(function (k) {
+        findDeclared(node[k], trail + "/" + k);
+    });
+}(storeObjects, ""));
+
+const EXPONENT = /[eE][+-]?\d/;
+const exponentiated = declared.filter(function (d) {
+    return EXPONENT.test(String(GF._fmtServed(d.value, d.figures, 4)));
+});
+check("no served figure count formats as an exponent",
+      exponentiated.length === 0,
+      exponentiated.length
+          ? exponentiated.map(function (d) {
+                return d.where + " " + d.value + " at " + d.figures +
+                       " -> " + GF._fmtServed(d.value, d.figures, 4);
+            }).join("; ")
+          : declared.length + " declared count(s) checked");
+
 console.log("");
 console.log(failures ? "=== " + failures + " FAILURE(S) ===" :
             "=== ALL CHECKS PASSED ===");
