@@ -1067,9 +1067,17 @@ def swap_log_note(root):
     tried = attempts.get("staging_to_live") or 0
     outcome = record.get("outcome", "unknown")
     when = record.get("time", "unknown time")
-    if outcome == "ok" and tried > 1:
-        tail = ("succeeded on attempt %d -- a refused rename this build "
-                "absorbed" % tried)
+    # EVERY rename, not only the last (L-216, 2026-09-21). The swap makes up
+    # to three, and the lock has been measured catching the .prev cleanup
+    # far more often than staging -> live; reading only the last one would
+    # print "succeeded first time" over a refusal the retry absorbed.
+    retried = [(name, count) for name, count in attempts.items()
+               if isinstance(count, int) and count > 1]
+    if outcome == "ok" and retried:
+        tail = ("succeeded after a refused rename -- %s -- a refusal this "
+                "build absorbed"
+                % ", ".join("%s took %d attempts" % (name, count)
+                            for name, count in retried))
     elif outcome == "ok":
         tail = "succeeded first time"
     elif outcome == "started":

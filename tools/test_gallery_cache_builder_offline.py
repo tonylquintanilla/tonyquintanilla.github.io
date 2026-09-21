@@ -17,6 +17,11 @@ shell invariant admits interior shells).
 Module updated: September 2026 with Anthropic's Claude Opus 5 (L-216: the
 swap's retry, roll-back and tracked swap log, and the sibling report's
 view of folders the builder did not make).
+
+Module updated: September 21, 2026 with Anthropic's Claude Opus 5 (L-216:
+the builder's [SWAP] line and the maintenance run's swap line agree, the
+maintenance run reads every rename, and main() prints its next steps after
+a good hand run and only then).
 """
 import json
 import math
@@ -506,6 +511,11 @@ def main():
         import hashlib as _hashlib
         import io as _io
         import contextlib as _contextlib
+        # The maintenance run's swap line is checked here too, so the two
+        # accounts of one swap -- the builder's and the log read back -- are
+        # held to agreeing.
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        import gallery_maintenance_run as _gmr
 
         def _refuse(real, when):
             """A stand-in for os.replace that refuses the renames `when`
@@ -563,9 +573,12 @@ def main():
                     return False
 
                 b._rename = _refuse(_real_rename, _twice)
+                said_retry = _io.StringIO()
                 try:
-                    rm_retry = b.run_build(cfg, out_retry, mode='first-build',
-                                           do_commit=False)
+                    with _contextlib.redirect_stdout(said_retry):
+                        rm_retry = b.run_build(cfg, out_retry,
+                                               mode='first-build',
+                                               do_commit=False)
                 finally:
                     b._rename = _real_rename
                 check(rm_retry['structural_validation'] == 'pass',
@@ -585,6 +598,16 @@ def main():
                       "than one attempt and outcome ok is a failure this build "
                       "absorbed (%r)"
                       % (row and row['attempts'].get('staging_to_live')))
+                check("[SWAP] the new cache is in place after a refused "
+                      "rename: staging_to_live took 3 tries"
+                      in said_retry.getvalue(),
+                      "L-216: the builder SAYS a refusal was absorbed, and on "
+                      "which rename, on the screen the build ran from")
+                note = _gmr.swap_log_note(td_retry)
+                check("staging_to_live took 3 attempts" in note
+                      and "absorbed" in note,
+                      "L-216: the maintenance run reads the same thing back "
+                      "from the log (%r)" % note)
 
             # 2. staging -> live refused every time; the roll-back allowed.
             with tempfile.TemporaryDirectory() as td_roll:
@@ -656,7 +679,16 @@ def main():
             with tempfile.TemporaryDirectory() as td_dry:
                 out_dry = Path(td_dry) / 'data' / 'solar-system'
                 out_dry.mkdir(parents=True)
-                b.run_build(cfg, out_dry, mode='first-build', do_commit=False)
+                said_first = _io.StringIO()
+                with _contextlib.redirect_stdout(said_first):
+                    b.run_build(cfg, out_dry, mode='first-build',
+                                do_commit=False)
+                check("every rename worked on the first try"
+                      in said_first.getvalue(),
+                      "L-216: a clean swap says so too -- success carries "
+                      "evidence instead of silence")
+                check("succeeded first time" in _gmr.swap_log_note(td_dry),
+                      "L-216: and the maintenance run agrees, reading the log")
                 before_rows = _log_rows(out_dry)
                 check(len(before_rows) == 1,
                       "L-216: the first build wrote a swap log line to "
@@ -669,6 +701,24 @@ def main():
         finally:
             b._rename = _real_rename
             b.SWAP_RENAME_WAITS = _real_waits
+
+        # The maintenance run's swap line reads EVERY rename. At L-216's
+        # first cut it read only staging -> live, so a refusal the retry
+        # absorbed on the .prev cleanup -- the rename the lock catches most
+        # -- would have printed "succeeded first time".
+        with tempfile.TemporaryDirectory() as td_note:
+            (Path(td_note) / 'data').mkdir()
+            (Path(td_note) / 'data' / b.SWAP_LOG_NAME).write_text(
+                json.dumps({'run_id': 'x', 'time': 't', 'mode': 'nightly',
+                            'reached': 'staging_to_live', 'outcome': 'ok',
+                            'error': None,
+                            'attempts': {'live_to_prev': 3,
+                                         'staging_to_live': 1}}) + '\n')
+            note = _gmr.swap_log_note(td_note)
+            check("first time" not in note
+                  and "live_to_prev took 3 attempts" in note,
+                  "L-216: a refusal absorbed on an EARLIER rename is reported, "
+                  "not read as 'succeeded first time' (%r)" % note)
 
         # 5. the sibling report sees folders the builder did not make. Before
         # L-216 it globbed only builder-made names, so four OneDrive conflict
@@ -757,6 +807,44 @@ def main():
         b.run_build = _orig
     check(rc_fail == 1, "A-2: main() exits nonzero on structural abort")
     check(rc_ok == 0, "A-2: main() exits 0 on pass")
+
+    # --- L-216: main() prints the next steps after a good HAND run, the
+    # maintenance run first, and stays quiet everywhere else ---
+    import io as _io_steps
+    import contextlib as _ctx_steps
+
+    def _main_says(result, argv):
+        said = _io_steps.StringIO()
+        saved = b.run_build
+        try:
+            b.run_build = lambda *a, **k: dict(result)
+            with _ctx_steps.redirect_stdout(said):
+                b.main(argv + ['--config', str(cfg_path)])
+        finally:
+            b.run_build = saved
+        return said.getvalue()
+
+    good = _main_says({'structural_validation': 'pass'}, ['--nightly'])
+    check("WHAT TO DO NEXT" in good,
+          "L-216: a good hand run ends by printing its next steps")
+    at_maint = good.find("python gallery_maintenance_run.py\n")
+    at_commit = good.find("Commit and push")
+    check(0 <= at_maint < at_commit,
+          "L-216: the maintenance run comes BEFORE the commit in those steps "
+          "(maintenance at %d, commit at %d)" % (at_maint, at_commit))
+    check("--live" in good[at_commit:],
+          "L-216: the live check comes AFTER the push")
+    check("WHAT TO DO NEXT" not in _main_says(
+              {'structural_validation': 'fail: induced'}, ['--nightly']),
+          "L-216: a failed run does NOT print the next steps -- a failure "
+          "prints its own advice")
+    check("WHAT TO DO NEXT" not in _main_says(
+              {'structural_validation': 'pass'}, ['--dry-run']),
+          "L-216: a dry run does NOT print them -- it changed nothing")
+    check("WHAT TO DO NEXT" not in _main_says(
+              {'structural_validation': 'pass'}, ['--nightly', '--commit']),
+          "L-216: a --commit run does NOT print them -- it has already "
+          "committed, so 'before you commit' would be wrong")
 
     # --- A-4: id_type normalization (majorbody/id -> None) ---
     check(b._norm_id_type('majorbody') is None and b._norm_id_type('id') is None,

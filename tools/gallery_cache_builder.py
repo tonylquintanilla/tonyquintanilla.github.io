@@ -52,6 +52,10 @@ generation back, and every run that reaches the swap records its outcome
 in data/cache_swap_log.jsonl -- a TRACKED file outside the generation, so
 a failed swap can no longer strand its own record where .gitignore hides
 it).
+Module updated: September 21, 2026 with Anthropic's Claude Opus 5 (L-216:
+every good swap prints one [SWAP] line saying how it went, and main() ends
+a good hand run with numbered next steps, the gallery maintenance run
+first -- so neither the outcome nor the order depends on memory).
 
 Role: cache
 Domain: cache_builder
@@ -1402,6 +1406,37 @@ _SWAP_STATE_WORDS = {
 }
 
 
+def retried_renames(attempts):
+    """Every rename that needed more than one attempt, as (label, tries),
+    in the order the swap made them.
+
+    ALL of them, not only the last. The lock has been measured catching the
+    .prev cleanup far more often than staging -> live (the roughly 30
+    nightly quarantines), so a report reading only the last rename would
+    say "first try" about exactly the refusals that happen most."""
+    return [(label, tries) for label, tries in attempts.items() if tries > 1]
+
+
+def print_swap_result(attempts):
+    """L-216, Tony's question of 2026-09-21: say how the swap went, on the
+    screen the build was started from, even when it went well.
+
+    A retry that worked looks exactly like a run with no trouble, so a
+    silent success cannot be told from a success nobody recorded. This line
+    is the builder's own account. The maintenance run reads the swap log
+    back independently, and the two should agree."""
+    retried = retried_renames(attempts)
+    if retried:
+        print('[SWAP] the new cache is in place after a refused rename: %s. '
+              'The builder absorbed it. Recorded in data/%s'
+              % (', '.join('%s took %d tries' % (label, tries)
+                           for label, tries in retried), SWAP_LOG_NAME),
+              flush=True)
+    else:
+        print('[SWAP] the new cache is in place; every rename worked on the '
+              'first try. Recorded in data/%s' % SWAP_LOG_NAME, flush=True)
+
+
 def print_failed_swap_advice(staging, live, state, attempts):
     """L-216: say in plain words what happened and what Tony does next.
 
@@ -1947,6 +1982,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                     'attempts': dict(swap_attempts),
                     'outcome': 'ok', 'error': None},
                    replacing_run_id=run_id)
+    print_swap_result(swap_attempts)
 
     promo_fail = verify_promoted_data(out_dir, index)
     if promo_fail:
@@ -2025,7 +2061,48 @@ def main(argv=None):
                        refresh_spacecraft=args.refresh_spacecraft)
     # A-2: a structural ABORT must surface as a nonzero exit (Task Scheduler
     # history is the monitoring channel manifest S8 relies on).
-    return 1 if str(rm.get('structural_validation') or '').startswith('fail') else 0
+    failed = str(rm.get('structural_validation') or '').startswith('fail')
+    # L-216, Tony's request of 2026-09-21: a good HAND run ends with the steps
+    # that follow it, in order. Not after a dry run (nothing changed), not
+    # after a failure (those print their own advice), and not after --commit
+    # (it has already committed, so "before you commit" would be wrong).
+    if not failed and not args.dry_run and not args.commit:
+        print_next_steps()
+    return 1 if failed else 0
+
+
+def print_next_steps():
+    """The numbered steps after a good hand build.
+
+    Printed rather than documented, because Tony follows the numbered steps
+    a tool prints, and a run-order requirement left to memory is the kind
+    that gets skipped (his rule, 2026-09-17). The FIRST step is the
+    maintenance run, before the commit: that is the order the project
+    requires before every commit, and it is the run that reads this
+    build's line in data/cache_swap_log.jsonl back off the disk."""
+    bar = '-' * 70
+    print('', flush=True)
+    print(bar, flush=True)
+    print('WHAT TO DO NEXT, before you commit anything:', flush=True)
+    print('', flush=True)
+    print('  1. Run the gallery maintenance run, from this same folder:',
+          flush=True)
+    print('         python gallery_maintenance_run.py', flush=True)
+    print('     Every gating checker should pass. Its LAST line reads the',
+          flush=True)
+    print('     swap log back and should agree with the [SWAP] line above.',
+          flush=True)
+    print('  2. In GitHub Desktop, look at the change list. A good build',
+          flush=True)
+    print('     shows changed and added files and NO pile of deletions.',
+          flush=True)
+    print('  3. Commit and push.', flush=True)
+    print('  4. After the push, check what the live site serves:', flush=True)
+    print('         python gallery_maintenance_run.py --live', flush=True)
+    print('', flush=True)
+    print('TONY-ACTION ROLLUP for this run:', flush=True)
+    print('  (do)     steps 1 to 4 above, in that order.', flush=True)
+    print(bar, flush=True)
 
 
 if __name__ == '__main__':
