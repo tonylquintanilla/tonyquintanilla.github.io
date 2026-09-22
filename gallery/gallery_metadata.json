@@ -9,7 +9,7 @@
       "shape": "9:16",
       "files": {},
       "live": "interactive.html",
-      "featured": false,
+      "featured": true,
       "sources": [
         "Uses standard Keplerian mechanics.",
         "No live JPL Horizons data."
@@ -2678,6 +2678,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-09-22 09:53",
+  "last_updated": "2026-09-22 13:08",
   "total_count": 145
 }
