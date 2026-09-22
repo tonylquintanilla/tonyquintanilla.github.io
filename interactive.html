@@ -105,6 +105,14 @@
        (L-331, Tony's Mode 5: the i panel opens with the shell's served
         `about` paragraph -- what it is -- above its link; the drawer
         reads it off the trace meta like source, detail and note)
+     Updated: September 22, 2026 with Anthropic's Claude Opus 5
+       (Tony's Mode 5 of the Solar System Explorer, desktop and phone:
+        + and - move to the bottom left and the arrow cross to the
+        bottom right, clear of the legend in the top left; all nine
+        planets start switched on, with the legend's rows closed up so
+        all ten entries clear + and -; and the rooms' "In this scene" bar
+        and grid chip, which two later display rules had let through,
+        are hidden on the Explorer again)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -258,6 +266,13 @@
            drawer it has no rows for. */
         .sun-chrome { display: none; }
         body.sun-exhibit .sun-chrome { display: block; }
+        /* The Explorer has no drawer and no frame HUD, but .drawer-bar
+           and .sun-hud below each set their own display, and a later
+           rule of the same weight wins. So from 2026-08-31 the Explorer
+           showed an "In this scene" button that did nothing and an empty
+           grid chip. This rule outweighs both, on the Explorer only
+           (Tony's Mode 5, 2026-09-22). */
+        body:not(.sun-exhibit) .sun-chrome { display: none; }
         /* Frame HUD (L-289 rebuilt, September 5, 2026): the triad, the
            grid chip and the Aries note live in the page, not the scene,
            so they never shrink, clip or float. Bottom-right, above the
@@ -918,7 +933,11 @@ const PLANETS = {
 // STATE
 // ====================================================================
 let pyodide = null;
-let activePlanets = new Set(['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn']);
+// Every planet button starts switched on, Mercury through Pluto (Tony's
+// Mode 5, 2026-09-22: "the default view should show all the planets").
+// The default used to stop at Saturn. The opening view fits the largest
+// orbit drawn, so it now reaches Pluto's.
+let activePlanets = new Set(Object.keys(PLANETS));
 let computing = false;
 
 // ====================================================================
@@ -1355,6 +1374,11 @@ function buildLayout(range, dateDisplay) {
             borderwidth: 1,
             x: 0.01, y: 0.99,
             xanchor: 'left', yanchor: 'top',
+            // Each planet is its own legend group, and Plotly leaves 10 px
+            // between groups unless told otherwise. With all nine planets
+            // on, that gap made the legend reach down to + and - on a
+            // phone (measured 2026-09-22). No gap, same rows.
+            tracegroupgap: 0,
         },
         margin: { l: 0, r: 0, t: 32, b: 0 },
     };
@@ -2116,17 +2140,30 @@ function sunMargins() {
 // .nav-cross-apart rule. The open drawer hides it (see the drawer-open
 // rules in the style block). "Phone" is 768 px wide or less and taller
 // than wide, the width at which the page also hides the mode bar (the
-// @media rule and displayModeBar both use 768). Desktop and landscape
-// keep the cross under + and -. The Explorer's cross never moves.
+// @media rule and displayModeBar both use 768). In the rooms, desktop
+// and landscape keep the cross under + and -. The Explorer moves it on
+// every screen size since 2026-09-22 (the first branch of navPlaceCross).
 // L-318 round 5 (2026-09-15): the test has its own name so the drawer's
 // text box uses the same one, and the two cannot drift apart.
 function sunPhonePortrait() {
     return window.innerHeight > window.innerWidth && window.innerWidth <= 768;
 }
 function navPlaceCross() {
-    if (navCluster && typeof navCluster.crossApart === "function") {
-        navCluster.crossApart(!!EX && sunPhonePortrait());
+    if (!navCluster || typeof navCluster.crossApart !== "function") { return; }
+    if (!EX) {
+        // The Solar System Explorer, Tony's Mode 5 of 2026-09-22 on the
+        // desktop and the phone: its legend is in the top-left corner,
+        // and + and - and the cross sat on top of it. On every screen
+        // size + and - go to the bottom left and the cross to the bottom
+        // right. The corners themselves are set in nav_cluster.js, by
+        // its .nav-clear-of-legend rule.
+        if (typeof navCluster.clearOfLegend === "function") {
+            navCluster.clearOfLegend(true);
+        }
+        navCluster.crossApart(true);
+        return;
     }
+    navCluster.crossApart(sunPhonePortrait());
 }
 
 async function initSunExhibit() {

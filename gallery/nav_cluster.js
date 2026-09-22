@@ -3,7 +3,10 @@
  * One control set for the whole site, Tony's ruling 2026-09-03: the
  * same three buttons, in the same corner, on every page and every
  * screen size. What the buttons DO is the page's business; this file
- * only draws them and calls back.
+ * only draws them and calls back. One page asks for other corners: the
+ * Solar System Explorer draws Plotly's legend in the top-left corner,
+ * so there + and - sit at the bottom left and the arrow cross at the
+ * bottom right (Tony's Mode 5, 2026-09-22; clearOfLegend below).
  *
  *   +     zoom in
  *   -     zoom out
@@ -39,7 +42,8 @@
  * the container must be position:relative (or fixed/absolute) and is
  * expected to be the plot's own wrapper -- not the page body -- so the
  * buttons sit over the picture and never over a controls panel below
- * it. mount() returns { el, show(), hide(), crossApart(on) }.
+ * it. mount() returns { el, show(), hide(), crossApart(on),
+ * clearOfLegend(on) }.
  *
  * crossApart(true) moves the arrow cross -- Home with it -- into its own
  * holder, apart from + and -; crossApart(false) puts it back under them,
@@ -51,6 +55,14 @@
  * crossApart always returns false. The holder's class lets a page hide
  * it with its own rules (the exhibit rooms do while their drawer is
  * open).
+ *
+ * clearOfLegend(true) moves + and - to the bottom-left corner and the
+ * cross's holder to the bottom-right, leaving the top of the picture to
+ * a page's legend; clearOfLegend(false) puts both back. It changes
+ * WHERE, not WHETHER: the cross still leaves + and - only when
+ * crossApart(true) is called, so the page calls both (the Solar System
+ * Explorer does, on every screen size). Those two corners are set only
+ * by the .nav-clear-of-legend rule below. It returns whether it is on.
  *
  * Buttons respond to click only. touch-action:manipulation removes the
  * 300 ms tap delay on phones, so no separate touchstart handler is
@@ -76,6 +88,11 @@
  *   so the cross goes back to the top-right corner; the method is renamed
  *   once more, to crossApart(), and its class to nav-cross-apart, names
  *   that say nothing about the corner so the next move renames nothing).
+ * Module updated September 22, 2026 with Anthropic's Claude Opus 5
+ *   (Tony's Mode 5 on the Solar System Explorer, desktop and phone: its
+ *   legend and the buttons shared the top-left corner, so clearOfLegend()
+ *   moves + and - to the bottom left and the cross to the bottom right,
+ *   on that page only; the exhibit rooms are unchanged).
  */
 (function (global) {
     'use strict';
@@ -93,7 +110,10 @@
            phone the rooms move the arrow cross out on its own -- to the
            top right on 2026-09-10 (L-316), to the bottom left above the
            drawer on 2026-09-15, and back to the top right on 2026-09-16
-           (Tony's Mode 5) -- and + and - stay here. */
+           (Tony's Mode 5) -- and + and - stay here. The Solar System
+           Explorer is the one page whose legend does claim this corner,
+           so there + and - go to the bottom left (2026-09-22; the
+           .nav-clear-of-legend rule at the end of this list). */
         '    left: 12px;',
         '    top: calc(12px + env(safe-area-inset-top, 0px));',
         '    z-index: 6;',
@@ -139,8 +159,10 @@
         '    gap: 6px;',
         '}',
         /* The cross's holder when the page moves it out on its own.
-           THIS RULE IS THE ONLY PLACE ITS CORNER IS SET. Top right, 12 px
-           in, as round 2 had it (2026-09-10); round 3 put it at the bottom
+           THIS RULE IS THE ONLY PLACE ITS CORNER IS SET in the exhibit
+           rooms; the Solar System Explorer's is set by the rule after
+           this one. Top right, 12 px in, as round 2 had it (2026-09-10);
+           round 3 put it at the bottom
            left (2026-09-15) while the phone's text box still opened beside
            its marker; Tony moved it back on 2026-09-16 once that box sat
            mid-view. */
@@ -149,6 +171,20 @@
         '    right: calc(12px + env(safe-area-inset-right, 0px));',
         '    top: calc(12px + env(safe-area-inset-top, 0px));',
         '    z-index: 6;',
+        '}',
+        /* The Solar System Explorer's corners, Tony's Mode 5 of
+           2026-09-22. Its Plotly legend owns the top left, so + and - go
+           to the bottom left and the cross's holder to the bottom right,
+           both 12 px in. THIS RULE IS THE ONLY PLACE THOSE CORNERS ARE
+           SET; clearOfLegend() puts the class on both elements. Two
+           classes outrank the one-class rules above whatever the order.
+           No safe-area inset at the bottom: on the Explorer the picture
+           ends at the top of the controls panel, not at the screen's
+           edge, so the phone's home-bar inset does not reach it. */
+        '.nav-cluster.nav-clear-of-legend,',
+        '.nav-cross-apart.nav-clear-of-legend {',
+        '    top: auto;',
+        '    bottom: 12px;',
         '}'
     ].join('\n');
 
@@ -245,6 +281,7 @@
         var apartWrap = null;
         var isApart = false;
         var hidden = false;
+        var clearLegend = false;
         function crossApart(on) {
             on = !!on;
             if (!cross || on === isApart) { return isApart; }
@@ -252,6 +289,9 @@
                 if (!apartWrap) {
                     apartWrap = document.createElement('div');
                     apartWrap.className = 'nav-cross-apart';
+                    if (clearLegend) {
+                        apartWrap.classList.add('nav-clear-of-legend');
+                    }
                     apartWrap.setAttribute('role', 'group');
                     apartWrap.setAttribute('aria-label', 'Turn the view');
                     container.appendChild(apartWrap);
@@ -266,6 +306,20 @@
             return isApart;
         }
 
+        /* Tony's Mode 5, 2026-09-22: the Solar System Explorer's legend
+           owns the top left. The class goes on the cluster now, and on
+           the cross's holder now if it exists or when crossApart builds
+           it, so the order the page calls the two methods in does not
+           matter. */
+        function clearOfLegend(on) {
+            clearLegend = !!on;
+            el.classList.toggle('nav-clear-of-legend', clearLegend);
+            if (apartWrap) {
+                apartWrap.classList.toggle('nav-clear-of-legend', clearLegend);
+            }
+            return clearLegend;
+        }
+
         return {
             el: el,
             show: function () {
@@ -278,7 +332,8 @@
                 el.style.display = 'none';
                 if (apartWrap) { apartWrap.style.display = 'none'; }
             },
-            crossApart: crossApart
+            crossApart: crossApart,
+            clearOfLegend: clearOfLegend
         };
     }
 
