@@ -51,6 +51,13 @@
  *   words -- under its name, through descLine(); the served `about`
  *   paragraph rides to the i panel in meta. The belt hovers lose their
  *   project vocabulary. Rings untouched: no room, no served names).
+ * Module updated: September 22, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-322 Stage C2-b: the two standoff hovers print the kilometre and AU
+ *   figures and the crossing scatter the store computed, through
+ *   standoffLines(), and the bow shock stops counting figures itself;
+ *   the belts print their edges and the outer belt's band at the counts
+ *   served, and the tilt with its epoch and served rate; four unit
+ *   asserts move to the tokens the store now gives the coefficients).
  */
 
 (function (global) {
@@ -789,7 +796,28 @@
     var hi = params[prefix + "outer_edge"];
     if (!isDict(lo) || !isDict(hi)) return null;
     if (typeof lo.value !== "number" || typeof hi.value !== "number") return null;
-    return [lo.value, hi.value];
+    // L-322 C2-b: each edge's served count rides with it, so the span line
+    // prints the figures the source printed ("2", not "2.0"). An edge with
+    // no count prints as it always has.
+    return [lo.value, hi.value, servedFigures(lo), servedFigures(hi)];
+  }
+
+  /*
+   * The band a belt's drawn distance is the midpoint of, or null.
+   * L-322 C2-b: Earth's outer belt is drawn at a declared midpoint of two
+   * measured band ends, EARTH_VAN_ALLEN_OUTER_BAND_LOW_L and _HIGH_L, each
+   * served under its own key. A drawn midpoint is a rule, not a
+   * measurement, so where a band is served the hover says so and prints
+   * no kilometre line for it. A belt with no band served -- the inner
+   * belt, Jupiter's -- prints exactly as before.
+   */
+  function beltBand(params, i) {
+    var prefix = (i === 0) ? "inner_belt_" : "outer_belt_";
+    var lo = params[prefix + "band_low"];
+    var hi = params[prefix + "band_high"];
+    if (!isDict(lo) || !isDict(hi)) return null;
+    if (typeof lo.value !== "number" || typeof hi.value !== "number") return null;
+    return [lo.value, hi.value, servedFigures(lo), servedFigures(hi)];
   }
 
   function renderBelts(slug, bodyName, featureKey, params, center, basis,
@@ -929,6 +957,15 @@
         tilt = measured(params.magnetic_tilt, "deg",
                         slug + "/" + featureKey + "/magnetic_tilt", warn);
       }
+      // L-322 C2-b: the tilt's rate of change, computed in the store from
+      // IGRF-13's coefficients and served beside it. Absent is normal.
+      var tiltRate = null;
+      if (isDict(params.magnetic_tilt_rate)) {
+        tiltRate = measured(params.magnetic_tilt_rate, "deg_per_year",
+                            slug + "/" + featureKey + "/magnetic_tilt_rate",
+                            warn);
+      }
+      var band = beltBand(params, i);
       // L-331 (2026-09-16): opens with the served description; "sourced",
       // "drawing choice" and "illustrative" are gone (Tony: no compressed
       // language in the hover), and the closing line with them, since the
@@ -936,32 +973,60 @@
       // in plain words: the tilt is quoted because it is served (L-231),
       // and smoke_earth_geometry.js pins both. The L-shell aside is one
       // line now; that and the width line pay for the description.
+      // L-322 C2-b (Tony's approval of the words, 2026-09-22): where a band
+      // is served, the drawn distance is described as the rule it is -- the
+      // halfway point of the band -- and there is no kilometre line, since
+      // a rule is not printed as if it were measured. The band's two ends
+      // print at their served counts. "L" is said in words (distance out at
+      // the magnetic equator) rather than named.
+      var drawnLines = band
+        ? wrapHover("Drawn at " + fmtServed(distances[i], figures[i], 1) +
+            " " + bodyName + " radii: halfway across the band, " +
+            fmtServed(band[0], band[2], 1) + " to " +
+            fmtServed(band[1], band[3], 1) + " " + bodyName +
+            " radii out at the magnetic equator, where the belt is most" +
+            " intense. The halfway point is our choice for the picture, not" +
+            " a measured peak.") + "<br>"
+        : "Drawn at " + fmtServed(distances[i], figures[i], 1) + " " +
+          bodyName + " radii, where the measured particle flux peaks" +
+          (units[i] === "l_shell"
+            ? SOFT_BR + "(given as L = " + fmtServed(distances[i], figures[i], 1) +
+              ": where that field line crosses the magnetic equator)<br>"
+            : "<br>") +
+          "= " + kmAndAu(distances[i] * radiusKm,
+                         figProduct([[distances[i], figures[i]],
+                                     [radiusKm, radiusFigures]])) + "<br>";
+      // L-322 C2-b: the tilt prints at its served count, with the epoch
+      // and model it belongs to and, where served, its rate. The epoch and
+      // the model name are typed here: the store computes the tilt from
+      // IGRF-13's epoch-2020.0 coefficients and has no row that says so
+      // (recorded on L-322 as a class). A body with no tilt served keeps
+      // the sentence it had.
+      var ringLines = (tilt === null)
+        ? "The ring lies in " + bodyName + "'s equatorial plane, the daily" +
+          " average of the" + SOFT_BR + "magnetic equator, " +
+          "which is tilted from it and turns with " + bodyName +
+          SOFT_BR + "once a day."
+        : wrapHover("The ring lies in " + bodyName + "'s equatorial plane," +
+            " the daily average of the magnetic equator, which is tilted " +
+            fmtServed(tilt, servedFigures(params.magnetic_tilt), 1) +
+            " degrees from it and turns with " + bodyName + " once a day." +
+            " That tilt is for 2020 (IGRF-13 model)" +
+            (tiltRate === null
+              ? "."
+              : " and " + (tiltRate < 0 ? "shrinks" : "grows") + " by " +
+                fmtServed(Math.abs(tiltRate),
+                          servedFigures(params.magnetic_tilt_rate), 4) +
+                " degrees a year."));
       var hover = label + "<br><br>" + descLine({description: descs[i]}) +
-        "Drawn at " + fmtServed(distances[i], figures[i], 1) + " " + bodyName +
-        " radii, where the measured particle flux peaks" +
-        (units[i] === "l_shell"
-          ? SOFT_BR + "(given as L = " + fmtServed(distances[i], figures[i], 1) +
-            ": where that field line crosses the magnetic equator)<br>"
-          : "<br>") +
-        "= " + kmAndAu(distances[i] * radiusKm,
-                       figProduct([[distances[i], figures[i]],
-                                   [radiusKm, radiusFigures]])) + "<br>" +
+        drawnLines +
         (span
-          ? "Measured extent: " + span[0].toFixed(1) + " to " +
-            span[1].toFixed(1) + " " + bodyName + " radii<br>"
+          ? "Measured extent: " + fmtServed(span[0], span[2], 1) + " to " +
+            fmtServed(span[1], span[3], 1) + " " + bodyName + " radii<br>"
           : "") +
         "Drawn " + thickness.toFixed(1) + " radii wide, a width chosen for" +
         " the picture.<br>" +
-        "The ring lies in " + bodyName + "'s equatorial plane, the daily" +
-        " average of the" + SOFT_BR + "magnetic equator, " +
-        (tilt === null
-          ? "which is tilted from it and turns with " + bodyName +
-            SOFT_BR + "once a day."
-          : "which is tilted " +
-            fmtServed(tilt, servedFigures(params.magnetic_tilt), 1) +
-            " degrees from it (IGRF-13," +
-            " epoch" + SOFT_BR + "2020-2025) and turns with " + bodyName +
-            " once a day.");
+        ringLines;
       // L-231 follow-up (2026-09-15): the citation and the served note
       // both moved to the i panel. Earth's belts are flux PEAKS rather than
       // edges, which is what that note says, and the panel is where it is
@@ -1992,9 +2057,15 @@
     // --- Magnetopause, Shue et al. (1998) ---------------------------------
     var r0 = measured(mp.standoff, "r_earth", where + "/magnetopause/standoff",
                       warn);
-    var a6 = measured(mpS.a6, "dimensionless", where + "/magnetopause/a6", warn);
+    // L-322 C2-b: the four coefficients' units moved off the retired
+    // "dimensionless" to tokens that name what each number is. These
+    // asserts move in the same commit as the mirror's relabel; a mismatch
+    // refuses the value and the shape disappears (the 2026-09-17 failure).
+    var a6 = measured(mpS.a6, "flaring_exponent", where + "/magnetopause/a6",
+                      warn);
     var a7 = measured(mpS.a7, "per_nt", where + "/magnetopause/a7", warn);
-    var a8 = measured(mpS.a8, "dimensionless", where + "/magnetopause/a8", warn);
+    var a8 = measured(mpS.a8, "log_pressure_coefficient",
+                      where + "/magnetopause/a8", warn);
     var bz = measured(mpS.bz, "nt", where + "/magnetopause/bz", warn);
     var dp = measured(mpS.pressure, "npa", where + "/magnetopause/pressure",
                       warn);
@@ -2027,9 +2098,10 @@
       var mpHover = mpLabel + "<br><br>" + descLine(mp) +
         "Sunward standoff: " + fmtServed(r0, servedFigures(mp.standoff), 2) +
         " Earth radii<br>" +
-        "= " + kmAndAu(r0 * radiusKm,
-                       figProduct([[r0, servedFigureField(mp.standoff)],
-                                   [radiusKm, radiusFigures]])) + "<br>" +
+        standoffLines(mp, r0 * radiusKm,
+                      figProduct([[r0, servedFigureField(mp.standoff)],
+                                  [radiusKm, radiusFigures]]),
+                      where + "/magnetopause", "boundary", warn) +
         "Shue et al. (1998), for the solar wind assumed here:<br>" +
         "Bz " + fmtServed(bz, servedFigures(mpS.bz), 1) +
         " nT, dynamic pressure " + fmtServed(dp, servedFigures(mpS.pressure), 1) +
@@ -2059,9 +2131,9 @@
 
     // --- Bow shock, Jelinek et al. (2012) ---------------------------------
     var bsR0 = measured(bsS.r0, "r_earth", where + "/bow_shock/r0", warn);
-    var bsEps = measured(bsS.epsilon, "dimensionless",
+    var bsEps = measured(bsS.epsilon, "inverse_exponent",
                          where + "/bow_shock/epsilon", warn);
-    var bsLam = measured(bsS["lambda"], "dimensionless",
+    var bsLam = measured(bsS["lambda"], "shape_factor",
                          where + "/bow_shock/lambda", warn);
     var bsP = measured(bsS.pressure, "npa", where + "/bow_shock/pressure",
                        warn);
@@ -2091,22 +2163,21 @@
       if (bsBeyond) bsBuilt.trace.visible = "legendonly";
       traces.push(bsBuilt.trace);
 
-      // L-342: S is bsR0 x pressure^(-1/epsilon), a POWER rather than a
-      // plain product. Rule 3 makes fewest-figures the default and drops
-      // one where the exponent magnifies the input's uncertainty, which
-      // is what the second line does. Every input here has a null count
-      // until the magnetosphere slice visits them, so this reads null
-      // today and the line prints exactly as it always has; the rule is
-      // wired now so the slice does not have to remember it.
-      var sFigures = figProduct([[bsR0, servedFigureField(bsS.r0)],
-                                 [bsP, servedFigureField(bsS.pressure)],
-                                 [radiusKm, radiusFigures]]);
-      if (typeof sFigures === "number" && Math.abs(1 / bsEps) > 1) {
-        sFigures = Math.max(1, sFigures - 1);
-      }
+      // L-322 C2-b: nothing in this hover is counted or computed here. The
+      // store computes the standoff, its kilometre and AU figures and the
+      // crossing scatter from full digits, declares each one's count, and
+      // test_derived_figures.py checks those counts; the page prints them
+      // as served. The recount that stood here left epsilon out, and its
+      // magnification branch is gone with it. S is still computed, because
+      // the SHAPE has to be drawn in the browser from Jelinek's served
+      // coefficients, and the warning below still compares it with the
+      // served standoff.
       var bsHover = bsLabel + "<br><br>" + descLine(bs) +
-        "Sunward standoff: " + S.toFixed(2) + " Earth radii<br>" +
-        "= " + kmAndAu(S * radiusKm, sFigures) + "<br>" +
+        "Sunward standoff: " +
+        (bsStand !== null ? fmtServed(bsStand, servedFigures(bs.standoff), 2)
+                          : S.toFixed(2)) + " Earth radii<br>" +
+        standoffLines(bs, S * radiusKm, null, where + "/bow_shock", "shock",
+                      warn) +
         "Jelinek et al. (2012), at dynamic pressure " +
         fmtServed(bsP, servedFigures(bsS.pressure), 1) +
         " nPa<br>" +
@@ -2145,6 +2216,48 @@
     }
 
     return traces;
+  }
+
+  /*
+   * The distance and scatter lines under a standoff (L-322 C2-b).
+   *
+   * Where the store serves the standoff in kilometres and AU, those are
+   * printed as served, each at its own count -- nothing is multiplied
+   * here, so the page never starts from a rounded number (Rule 4). The
+   * line reads "That is about ...": the kilometres are the full value
+   * rounded once to what their own uncertainty supports, so they need not
+   * equal the rounded Earth-radii figure times Earth's radius, and "about"
+   * keeps the pair from reading as an exact equation. Where the scatter
+   * of real crossings is served, it follows in the same paragraph, at its
+   * count. The words are Tony's, approved 2026-09-22.
+   *
+   * Where no kilometre figure is served -- any body but Earth -- the line
+   * is exactly the "= <km> (<au> AU)" it always was, from the arguments.
+   * The word "about" is never printed on that path, so no other hover can
+   * move.
+   */
+  function standoffLines(entry, kmFallback, figFallback, where, noun, warn) {
+    var kmNode = entry.standoff_km, auNode = entry.standoff_au;
+    var scNode = entry.scatter;
+    var km = isDict(kmNode) ? measured(kmNode, "km", where + "/standoff_km",
+                                       warn) : null;
+    var au = isDict(auNode) ? measured(auNode, "au", where + "/standoff_au",
+                                       warn) : null;
+    var sc = isDict(scNode) ? measured(scNode, "r_earth", where + "/scatter",
+                                       warn) : null;
+    var scatter = (sc === null) ? "" :
+      "Spacecraft that cross the real " + noun + " typically find it within " +
+      fmtServed(sc, servedFigures(scNode), 2) + " Earth radii of this model.";
+    if (km === null || au === null) {
+      return "= " + kmAndAu(kmFallback, figFallback) + "<br>" +
+        (scatter ? wrapHover(scatter) + "<br>" : "");
+    }
+    var auFig = servedFigures(auNode);
+    var n = (typeof auFig === "number") ? Math.min(3, auFig) : 3;
+    if (n < 1) { n = 1; }
+    return wrapHover("That is about " + fmtKm(km, servedFigures(kmNode)) +
+                     " (" + au.toPrecision(n) + " AU)." +
+                     (scatter ? " " + scatter : "")) + "<br>";
   }
 
   // The info marker rides ON the surface, at a declared angle off the nose.

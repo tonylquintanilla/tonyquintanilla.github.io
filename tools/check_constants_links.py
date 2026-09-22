@@ -46,11 +46,31 @@ RUN COMMAND
     prints zero fallbacks, it also prints the line saying Store drift
     has nothing left to examine and may retire.
 
+    THE READ CHECK (L-322 Stage C2-b). For every SERVED link whose row is
+    in a closed slice, it walks that row and its `inputs`, and theirs,
+    through the export. Every row reached whose status begins "measured"
+    must carry a non-empty `read`: somebody opened its source and checked
+    it against the number. A derived row needs none -- it is checked
+    through its inputs -- and a declared one has no source to read.
+    Inputs outside the slice count: KM_PER_AU and GM_SUN_SI reach the
+    Hill sphere this way.
+
+    It FAILS, naming the row and the served link that reached it, on a
+    measured row with no read; on a row reached that is not in the export,
+    since it could not be examined; on a row whose status begins "derived"
+    and whose `inputs` are empty, which is a typed number with its
+    arithmetic in a comment and its measured sources out of reach; and on
+    an export that carries no `read` or `inputs` field at all. It treats
+    every served link as drawn, because it cannot see what the page
+    shows.
+
 Role: devtool
 Domain: gallery
 
 Module created: September 17, 2026 with Anthropic's Claude Opus 5
 (L-322, the gallery half: piece 3 of the build manifest).
+Module updated: September 22, 2026 with Anthropic's Claude Opus 5.5
+(L-322 Stage C2-b: the pointer join gains the read check, read_walk()).
 """
 
 import json
@@ -131,6 +151,59 @@ def mirror_check(root):
     return 0
 
 
+def read_walk(links, export, closed):
+    """(counts, failures) for the read check. See the module docstring.
+
+    counts is (links walked, rows reached, measured rows, measured rows
+    with a read). failures is [(row, message)], each naming the served
+    link that reached the row.
+    """
+    rows = export.get("rows", {})
+    sample = next(iter(rows.values()), {}) if rows else {}
+    if rows and ("read" not in sample or "inputs" not in sample):
+        return (0, 0, 0, 0), [("data/constants_export.json",
+                               "the export carries no read/inputs fields, "
+                               "so no row reached could be examined -- the "
+                               "orrery's export is older than schema 3")]
+    failures = []
+    walked = 0
+    reached = {}
+    for link in links:
+        if link.verdict != "SERVED":
+            continue
+        if link.name.split("_", 1)[0] not in closed:
+            continue
+        walked += 1
+        stack = [link.name]
+        while stack:
+            name = stack.pop()
+            if name in reached:
+                continue
+            reached[name] = link.name
+            row = rows.get(name)
+            if row is None:
+                failures.append((name, "reached from %s and not in the "
+                                 "export, so it could not be examined"
+                                 % link.name))
+                continue
+            status = row.get("status") or ""
+            inputs = row.get("inputs") or []
+            if status.startswith("measured") and not row.get("read"):
+                failures.append((name, "measured, reached from %s, and "
+                                 "carries no read: nobody has recorded "
+                                 "opening its source" % link.name))
+            if status.startswith("derived") and not inputs:
+                failures.append((name, "derived, reached from %s, with no "
+                                 "inputs: a typed number whose arithmetic "
+                                 "is a comment, so its measured sources "
+                                 "cannot be reached" % link.name))
+            stack.extend(inputs)
+    measured = [n for n in reached if n in rows and
+                (rows[n].get("status") or "").startswith("measured")]
+    with_read = [n for n in measured if rows[n].get("read")]
+    return (walked, len(reached), len(measured), len(with_read)), failures
+
+
 def join_check(root):
     text, export, sha, problem = read(root)
     if problem:
@@ -171,6 +244,16 @@ def join_check(root):
         print("No fallback links remain: Store drift has nothing left to "
               "examine and may retire.")
         print("")
+
+    counts, read_failures = read_walk(links, export, closed)
+    print("READ CHECK: %d served link(s) in a closed slice walked; %d row(s) "
+          "reached, %d of them measured, %d of those with a read."
+          % counts)
+    for name, message in read_failures:
+        failures.append((name, "READ: " + message))
+    if not read_failures:
+        print("Every measured row reached carries a read.")
+    print("")
 
     if failures:
         print("FAILURES (%d):" % len(failures))

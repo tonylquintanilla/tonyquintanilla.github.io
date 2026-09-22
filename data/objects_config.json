@@ -580,54 +580,59 @@
               "_model": "Shue et al. (1998) eq. 10 with eq. 11. r = r0 [2 / (1 + cos theta)]^alpha, theta measured from the Sun-Earth line, r0 the standoff below. The geometry evaluates alpha = (a6 + a7 Bz)(1 + a8 ln Dp) from the rows here; alpha gets no row of its own because no text on the page prints it. At the declared conditions alpha is 0.59 -- two figures, because a6 is 0.58 +/- 0.01 and that carries straight through.",
               "a6": {
                 "value": 0.58,
-                "unit": "dimensionless",
+                "unit": "flaring_exponent",
+                "figures": 2,
                 "source": "Shue et al. (1998), doi:10.1029/98JA01103 -- Table 1 (After Fit) row a6, p. 17,698: 0.58 +/- 0.01. The leading term of eq. 11.",
                 "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_A6"
               },
               "a7": {
                 "value": -0.007,
                 "unit": "per_nt",
-                "figures": null,
+                "figures": 1,
                 "source": "Shue et al. (1998), doi:10.1029/98JA01103 -- Table 1 (After Fit) row a7, p. 17,698: -0.007 +/- 0.0005 per nT. Eq. 11 prints it as a subtraction; the table carries the sign, so this value is negative and adds.",
                 "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_A7_PER_NT"
               },
               "a8": {
                 "value": 0.024,
-                "unit": "dimensionless",
+                "unit": "log_pressure_coefficient",
+                "figures": 2,
                 "source": "Shue et al. (1998), doi:10.1029/98JA01103 -- Table 1 (After Fit) row a8, p. 17,698: 0.024 +/- 0.0004. The pressure term of eq. 11.",
                 "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_A8"
               },
               "bz": {
                 "value": 0.0,
                 "unit": "nt",
-                "figures": null,
+                "figures": "exact",
                 "_declared": "A neutral midpoint chosen for this scene, NOT a figure from the paper. Both boundaries are evaluated at the same conditions so the two surfaces can be compared.",
                 "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_BZ_NT"
               },
               "pressure": {
                 "value": 2.0,
                 "unit": "npa",
-                "figures": null,
+                "figures": "exact",
                 "_declared": "The solar wind dynamic pressure both fits are evaluated at. Declared for this scene, not measured.",
                 "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_PRESSURE_NPA"
               },
               "cut_angle": {
                 "value": 120.0,
                 "unit": "deg",
-                "figures": null,
+                "figures": "exact",
                 "_declared": "Where the drawn surface stops, measured from the nose. Shue's surface has no end: at this flaring the radius grows without bound as theta approaches 180 degrees, so a drawing must choose a stop. Shue et al. (1998) fig. 6, p. 17,695 plots the model out to 120 degrees, the furthest the authors evaluate it. A drawing limit, not an edge.",
                 "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_CUT_ANGLE_DEG"
               }
             },
             "standoff": {
-              "value": 10.25,
+              "value": 10.3,
               "unit": "r_earth",
-            "figures": null
+            "figures": 3
             },
+            "standoff_km": {"value": 65000.0, "unit": "km", "figures": 2, "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_STANDOFF_KM"},
+            "standoff_au": {"value": 0.00044, "unit": "au", "figures": 2, "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_STANDOFF_AU"},
+            "scatter": {"value": 1.23, "unit": "r_earth", "figures": 3, "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_SCATTER_RADII"},
             "info_url": "https://en.wikipedia.org/wiki/Magnetopause",
             "color": "rgb(180, 180, 255)",
             "opacity": 0.25,
-            "source": "Shue et al. (1998), J. Geophys. Res. 103:17691, doi:10.1029/98JA01103 -- eq. 10 evaluated at the declared conditions (Bz = 0 nT, Dp = 2 nPa) gives 10.25 R_E. Reported to four figures: Table 1 gives a1 to +/- 0.10 R_E and a5 to +/- 0.5, and either alone moves the result by about +/- 0.09. Corroboration: Lugaz et al. (2016), doi:10.1038/ncomms13001 -- typical subsolar magnetopause 9-11 R_E, which contains this.",
+            "source": "Shue et al. (1998), J. Geophys. Res. 103:17691, doi:10.1029/98JA01103 -- eq. 10 evaluated at the declared conditions (Bz = 0 nT, Dp = 2 nPa). Corroboration: Lugaz et al. (2016), doi:10.1038/ncomms13001 -- typical subsolar magnetopause 9-11 R_E, which contains this.",
             "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_STANDOFF_RADII",
             "note": "Quiet-time nominal. Under storm compression it can fall inside geostationary orbit (6.6 R_E)."
           },
@@ -641,46 +646,51 @@
               "r0": {
                 "value": 15.02,
                 "unit": "r_earth",
-                "figures": null,
+                "figures": 4,
                 "source": "Jelinek, Nemecek and Safrankova (2012), J. Geophys. Res. 117:A05208, doi:10.1029/2011JA017252 -- eq. 14, p. 5: R_BS = 15.02 p^(-1/6.55), so 15.02 R_E is the bow shock standoff at p = 1 nPa.",
                 "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_R0_RADII"
               },
               "epsilon": {
                 "value": 6.55,
-                "unit": "dimensionless",
+                "unit": "inverse_exponent",
+                "figures": 3,
                 "source": "Jelinek et al. (2012), doi:10.1029/2011JA017252 -- eq. 14, p. 5: the pressure exponent of R_BS = 15.02 p^(-1/6.55).",
                 "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_EPS"
               },
               "lambda": {
                 "value": 1.17,
-                "unit": "dimensionless",
+                "unit": "shape_factor",
+                "figures": 3,
                 "source": "Jelinek et al. (2012), doi:10.1029/2011JA017252 -- sec. 4, in the text after eq. 11: lambda = 1.17 for the bow shock. Their magnetopause lambda of 1.54 is deliberately not used here, because this page's magnetopause is Shue's.",
                 "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_LAMBDA"
               },
               "pressure": {
                 "value": 2.0,
                 "unit": "npa",
-                "figures": null,
+                "figures": "exact",
                 "_declared": "The same declared pressure as the magnetopause. Both surfaces must be evaluated at the same conditions or their relative positions mean nothing.",
                 "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_PRESSURE_NPA"
               },
               "cut_angle": {
                 "value": 105.0,
                 "unit": "deg",
-                "figures": null,
+                "figures": "exact",
                 "_declared": "Where the drawn surface stops, measured from the nose. Jelinek et al. fitted crossings within 7 hours of local noon either side, and 7 hours of Earth's turn is 105 degrees. A drawing limit set by where the data was, not by where the formula fails -- the opposite reason from the magnetopause's 120.",
                 "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_CUT_ANGLE_DEG"
               }
             },
             "standoff": {
-              "value": 13.51,
+              "value": 13.5,
               "unit": "r_earth",
-            "figures": null
+            "figures": 3
             },
+            "standoff_km": {"value": 86200.0, "unit": "km", "figures": 3, "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_STANDOFF_KM"},
+            "standoff_au": {"value": 0.000576, "unit": "au", "figures": 3, "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_STANDOFF_AU"},
+            "scatter": {"value": 0.69, "unit": "r_earth", "figures": 2, "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_SCATTER_RADII"},
             "info_url": "https://en.wikipedia.org/wiki/Bow_shocks_in_astrophysics",
             "color": "rgb(255, 200, 150)",
             "opacity": 0.25,
-            "source": "Jelinek, Nemecek and Safrankova (2012), J. Geophys. Res. 117:A05208, doi:10.1029/2011JA017252 -- eq. 14, R_BS = 15.02 p^(-1/6.55), evaluated at the declared pressure of 2 nPa gives 13.51 R_E. Reported to four figures: the paper states no uncertainty on its fitted numbers, and what bounds this is the crossing scatter of 0.69 R_E (fig. 7). Corroboration: Lugaz et al. (2016), Nat. Commun. 7:13001, doi:10.1038/ncomms13001 -- 11-14 R_E subsolar under normal solar wind, which contains this.",
+            "source": "Jelinek, Nemecek and Safrankova (2012), J. Geophys. Res. 117:A05208, doi:10.1029/2011JA017252 -- eq. 14, R_BS = 15.02 p^(-1/6.55), evaluated at the declared pressure of 2 nPa. The paper states no uncertainty on its fitted numbers; how far real crossings fall from the fit (fig. 7) is given in the hover. Corroboration: Lugaz et al. (2016), Nat. Commun. 7:13001, doi:10.1038/ncomms13001 -- 11-14 R_E subsolar under normal solar wind, which contains this.",
             "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_STANDOFF_RADII",
             "note": "Quiet-time nominal, at the same declared solar wind pressure as the magnetopause. An earlier note here cited Farris & Russell (1994) for the model FORM; that was a miscitation -- it is a relation for the standoff at a given Mach number and takes obstacle shape as an input, not a shape model. Removed 2026-09-12 (L-305)."
           },
@@ -689,7 +699,7 @@
             "observed_extent": {
               "value": 220.0,
               "unit": "r_earth",
-              "figures": null,
+              "figures": 2,
               "source": "Slavin, Tsurutani, Smith, Jones and Sibeck (1983), 'Average configuration of the distant (less than 220-earth-radii) magnetotail - Initial ISEE-3 magnetic field results', Geophys. Res. Lett. 10(10):973, doi:10.1029/GL010i010p00973 -- the abstract states that the magnetotail retains much of its near-Earth structure out to X = -220 Earth radii, that flaring ceases at 100-120 R_E, and that the tail diameter settles near 60 R_E. Abstract open at ntrs.nasa.gov/citations/19830066648.",
               "orrery_constant": "constants_new.py::EARTH_MAGNETOTAIL_OBSERVED_RADII",
               "note": "Read as OBSERVED TO AT LEAST, not as an edge. 220 R_E is ISEE-3's reach on its first two tail passes, so the figure is bounded by the orbit rather than by where the tail ends. Two further signatures are more distant and less like a tail: Ness, Scearce and Cantarano (1967), doi:10.1029/JZ072i015p03769, report Pioneer 7 in the expected tail region at 900 to 1,050 R_E over a week in 1966, intermittently and with no coherent tail, the title saying 'probable'; and Intriligator et al. (1979), Geophys. Res. Lett. 6:585, report tail-ASSOCIATED phenomena near 3,100 R_E, read by later work as signatures disconnected from Earth."
@@ -710,18 +720,19 @@
         },
         "van_allen_belts": {
           "magnetic_tilt": {
-            "value": 9.6,
+            "value": 9.4105,
             "unit": "deg",
-            "figures": null,
+            "figures": 5,
             "source": "Alken et al. (2021), International Geomagnetic Reference Field: the thirteenth generation, Earth Planets Space 73:49, doi:10.1186/s40623-020-01288-x -- the angle between the geomagnetic dipole axis and Earth's rotation axis, epoch 2020-2025. Rounded to a tenth of a degree, which is the precision the dipole cone's projection can honour. The tilt drifts, decreasing about 0.05 deg per decade, so any quotation of it carries its epoch.",
             "orrery_constant": "constants_new.py::EARTH_DIPOLE_TILT_DEG",
             "note": "Served so the hover can quote it. The rings are NOT tilted by it. They are drawn in the equatorial plane, which is the daily average of the magnetic one, because a tilted plane needs a direction as well as an angle and that direction turns once a day while this scene is frozen (L-231, Tony's ruling 2026-09-15)."
           },
+          "magnetic_tilt_rate": {"value": -0.0493, "unit": "deg_per_year", "figures": 3, "orrery_constant": "constants_new.py::EARTH_DIPOLE_TILT_RATE_DEG_PER_YEAR"},
           "_frame": "The edge rows below are geocentric distances in the geomagnetic equatorial plane, which is the frame their sources state. Tony's ruling, 2026-09-14 (L-323 ruling B, second amendment). The literature is mixed -- Y. X. Li et al. (2023) states the outer span in L shells and Baker et al. (2018) states it both ways -- so each row names the paper its figure follows and the frame travels with the row rather than with the block.",
           "inner_belt_distance": {
             "value": 1.5,
             "unit": "r_earth",
-            "figures": null,
+            "figures": 2,
             "source": "Baker et al. (2018), Space Sci. Rev. 214:17, doi:10.1007/s11214-017-0452-7 -- sec. 2, inner-zone proton fluxes peak near geocentric r ~ 1.5 R_E",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_RADII",
             "note": "A flux PEAK, not an edge. The edges are their own rows below, as of 2026-09-14 (L-305 item 7); this note carried the span in prose until then, which is what let the served figure and the orrery's disagree."
@@ -729,7 +740,7 @@
           "inner_belt_inner_edge": {
             "value": 1.1,
             "unit": "r_earth",
-            "figures": null,
+            "figures": 2,
             "source": "Meredith, Horne, Kersten, Fraser and Grew (2014), J. Geophys. Res. Space Physics 119:5328, doi:10.1002/2014JA020064 -- introduction, first paragraph: the inner belt extends from about 1.1 to 2 Earth radii in the geomagnetic equatorial plane. Open full text at nora.nerc.ac.uk. Meredith states this as background and passes it on from Baker et al. (2007), which is the layer below rather than the source.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_BELT_INNER_EDGE",
             "note": "Koskinen and Kilpua (2022) sec. 1.1 corroborate 1.1 to 2 R_E but are NOT the source, because they state it for the inner ELECTRON belt and put the energetic protons over about 1.1 to 3 R_E. The figure matched and the scope did not."
@@ -737,7 +748,7 @@
           "inner_belt_outer_edge": {
             "value": 2.0,
             "unit": "r_earth",
-            "figures": null,
+            "figures": 1,
             "source": "Meredith et al. (2014), doi:10.1002/2014JA020064 -- introduction, first paragraph, the outer end of the same stated span.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_BELT_OUTER_EDGE",
             "note": "Two rows rather than one span, because provenance is per number and the two edges do not move together."
@@ -745,15 +756,17 @@
           "outer_belt_distance": {
             "value": 4.5,
             "unit": "l_shell",
-            "figures": null,
+            "figures": "exact",
             "source": "Li et al. (2025), J. Geophys. Res. Space Physics, doi:10.1029/2024JA033504 -- sec. 1, the outer belt is most intense around L = 4 and 5; the value served is our midpoint of that band. Kellerman et al. (2014), as reported in arXiv:1809.00902 -- maximum electron flux at L = 4-5; the arXiv paper is the document opened and Kellerman is the layer below it.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_RADII",
             "note": "A flux PEAK, not an edge. The unit is L, the McIlwain parameter, which equals geocentric distance in Earth radii only where a field line crosses the magnetic equator -- so any string printing this value says 'at the equator'. Baker et al. (2018) was removed from this citation on 2026-09-14: his figure 30 uses L* = 4.5 as a selected analysis location rather than a universal peak, and his span figure belongs on the edge row below."
           },
+          "outer_belt_band_low": {"value": 4.0, "unit": "l_shell", "figures": 1, "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BAND_LOW_L"},
+          "outer_belt_band_high": {"value": 5.0, "unit": "l_shell", "figures": 1, "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BAND_HIGH_L"},
           "outer_belt_inner_edge": {
             "value": 3.0,
             "unit": "r_earth",
-            "figures": null,
+            "figures": 1,
             "source": "Meredith et al. (2014), doi:10.1002/2014JA020064, and Li, Tu, Selesnick and Huang (2024), J. Geophys. Res. Space Physics 129:e2023JA032171, doi:10.1029/2023JA032171 -- both state the outer belt extending from 3 Earth radii, in their introductions. Open full text at nora.nerc.ac.uk and par.nsf.gov.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BELT_INNER_EDGE",
             "note": "The layer below is Paulikas and Blake (1979) with Baker et al. (1986) for Meredith, and Ganushkina et al. (2011) with Van Allen et al. (1958) for Li. Baker et al. (2018) sec. 2 gives the same inner edge from SAMPEX and reports it reaching L ~ 2.5 under strong driving."
@@ -761,7 +774,7 @@
           "outer_belt_outer_edge": {
             "value": 7.0,
             "unit": "r_earth",
-            "figures": null,
+            "figures": 1,
             "source": "Meredith et al. (2014), doi:10.1002/2014JA020064, and Li, Tu et al. (2024), doi:10.1029/2023JA032171 -- both state the outer belt extending to 7 Earth radii, in their introductions.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BELT_OUTER_EDGE",
             "note": "The measuring review disagrees on the outside and the disagreement is recorded rather than resolved by silence: Baker et al. (2018) sec. 2 and 3.4 puts the outer zone at r ~ 3 to >= 6.5 R_E from SAMPEX and, in L, at about 3.0 to 6.5. Koskinen and Kilpua (2022) sec. 1.1 put the outer reach at 7 to 10 R_E, which is why an outer figure near 10 R_E is not the physical impossibility one checker called it -- the belt's outer edge approaches the magnetopause, and magnetopause shadowing is a standard loss mechanism."

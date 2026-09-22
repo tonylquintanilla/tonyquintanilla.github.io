@@ -287,8 +287,20 @@ const magParams = earthParams.earth_magnetosphere;
         /Measured extent: \d/.test(mk.text[0]), mk.text[0].indexOf("Measured extent") >= 0);
   // L-231: the tilt is quoted only because the store carries it and it is
   // served. The epoch rides with it because the tilt drifts.
+  // L-322 C2-b (September 22, 2026, Anthropic's Claude Opus 5.5): the
+  // sentence changed. The tilt prints at its served count
+  // and the epoch and model follow in their own sentence, "That tilt is
+  // for 2020 (IGRF-13 model)". This suite renders the recorded payload of
+  // 2026-09-08, whose tilt is the old 9.6 with no count and no rate, so
+  // the pin reads the SHAPE of the words and the served number, not the
+  // live value; smoke_display_figures.js pins the live strings.
+  const plainText = mk.text[0].split(/<br soft>/).join(" ");
+  const servedTilt = earthParams.van_allen_belts.magnetic_tilt.value;
   check(label + ": the hover quotes the served magnetic tilt with its model and epoch",
-        /tilted 9\.6 degrees from it \(IGRF-13, epoch(<br[^>]*>| )2020-2025\)/.test(mk.text[0]));
+        plainText.indexOf("which is tilted " + servedTilt.toFixed(1) +
+                          " degrees from it and turns with Earth once a day.") >= 0 &&
+        plainText.indexOf("That tilt is for 2020 (IGRF-13 model)") >= 0,
+        plainText.slice(plainText.indexOf("The ring lies")));
   check(label + ": the hover does NOT claim the ring is drawn at the magnetic equator",
         !/rings? (is|are) drawn/.test(mk.text[0]) &&
         /equatorial plane/.test(mk.text[0]) &&

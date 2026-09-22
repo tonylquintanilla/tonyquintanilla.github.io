@@ -51,6 +51,14 @@
 //
 // Written September 20, 2026 with Anthropic's Claude Opus 5, from the
 // build manifest of the same date by Claude Fable 5.1.
+// Updated September 22, 2026 with Anthropic's Claude Opus 5.5 (L-322
+// Stage C2-b): the four hovers whose numbers gained counts at C2 and are
+// not shells with a radius -- the magnetopause, the bow shock and both
+// radiation belts -- are graded line by line against Tony's approved
+// wording (ACCEPTANCE_LINES), and fail if a listed hover is never built.
+// The fixture was re-recorded with those four changed and is now
+// fixture_hovers_L322c2_on_42fd97dd.json; the old one is left in place,
+// unreferenced, and recorded on the ledger rather than deleted.
 
 "use strict";
 const fs = require("fs");
@@ -63,8 +71,10 @@ require(path.join(root, "gallery", "earth_geometry.js"));
 
 const KM_PER_AU = 149597870.7;
 const SOFT_BR = "<br soft>";
+// Recorded at gallery 42fd97dd with the L-322 C2-b patch applied.
+const FIXTURE_AT = "42fd97dd";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_cdfa74c3.json");
+                          "fixture_hovers_L322c2_on_42fd97dd.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }
@@ -246,6 +256,55 @@ const ACCEPTANCE = {
       { radius: "42,164.17 km", altitude: "35,786.03 km" },
   "Earth: Hill Sphere (gravitational dominance over the Sun)":
       { radius: "1,500,000 km", altitude: "1,490,000 km" }
+};
+
+/* L-322 Stage C2-b. The four hovers whose served numbers gained their
+   counts at C2 and which are not shells with a radius, so checkEarth()
+   never reaches them. Every string in `lines` is Tony's approved wording
+   of 2026-09-22 (documentation/NOTE_L322_C2b_gallery_words_20260922.md),
+   with the numbers the store serves at orrery 26f26fdb. Each must appear
+   VERBATIM in the built hover, with its soft breaks read as spaces, so a
+   line may wrap on the phone and still be found. `absent` names what the
+   old hover said and the new one must not. A hover listed here that the
+   run never builds FAILS. They are held byte for byte against the fixture
+   as well, which catches any line not listed. If a served number
+   legitimately moves, change the row here and say in the ledger which
+   number moved and why. */
+const ACCEPTANCE_LINES = {
+  "Earth: Magnetopause": {
+    lines: ["Sunward standoff: 10.3 Earth radii",
+            "That is about 65,000 km (0.00044 AU).",
+            "Spacecraft that cross the real boundary typically find it " +
+            "within 1.23 Earth radii of this model."],
+    absent: ["10.25", "65,376", "0.000437"] },
+  "Earth: Bow Shock": {
+    lines: ["Sunward standoff: 13.5 Earth radii",
+            "That is about 86,200 km (0.000576 AU).",
+            "Spacecraft that cross the real shock typically find it " +
+            "within 0.69 Earth radii of this model."],
+    absent: ["13.51", "86,180"] },
+  "Earth: Inner Radiation Belt": {
+    lines: ["Drawn at 1.5 Earth radii, where the measured particle flux peaks",
+            "= 9,600 km (0.000064 AU)",
+            "Measured extent: 1.1 to 2 Earth radii",
+            "which is tilted 9.4105 degrees from it and turns with Earth " +
+            "once a day.",
+            "That tilt is for 2020 (IGRF-13 model) and shrinks by 0.0493 " +
+            "degrees a year."],
+    absent: ["9,567", "2.0 Earth radii", "9.6 degrees", "2020-2025"] },
+  "Earth: Outer Radiation Belt": {
+    lines: ["Drawn at 4.5 Earth radii: halfway across the band, 4 to 5 " +
+            "Earth radii out at the magnetic equator, where the belt is " +
+            "most intense.",
+            "The halfway point is our choice for the picture, not a " +
+            "measured peak.",
+            "Measured extent: 3 to 7 Earth radii",
+            "which is tilted 9.4105 degrees from it and turns with Earth " +
+            "once a day.",
+            "That tilt is for 2020 (IGRF-13 model) and shrinks by 0.0493 " +
+            "degrees a year."],
+    absent: ["28,70", "L = 4.5", "3.0 to 7.0", "flux peaks", "9.6 degrees",
+             "2020-2025"] }
 };
 
 // ------------------------------------------------------------- building
@@ -475,6 +534,35 @@ function checkEarth(features, hovers) {
   return seen;
 }
 
+/* Grade each hover of a line table. Returns the labels it graded. */
+function checkLines(hovers, table) {
+  const graded = [];
+  Object.keys(table).forEach(function (label) {
+    const hover = hovers[label];
+    if (!hover) {
+      fail(label + ": in the C2 acceptance lines and the renderers built " +
+           "no such hover");
+      return;
+    }
+    const text = hover.split(SOFT_BR).join(" ");
+    table[label].lines.forEach(function (line) {
+      if (text.indexOf(line) < 0) {
+        fail(label + ": the hover does not carry the approved line\n" +
+             "        " + line);
+      } else {
+        numbersExamined += numbersIn(line).length;
+      }
+    });
+    (table[label].absent || []).forEach(function (old) {
+      if (text.indexOf(old) >= 0) {
+        fail(label + ": the hover still carries \"" + old + "\"");
+      }
+    });
+    graded.push(label);
+  });
+  return graded;
+}
+
 // ------------------------------------------------------------ self-test
 
 function selfTest() {
@@ -529,6 +617,30 @@ function selfTest() {
   failures.length = mark;          // the deliberate failures are not real
   hoversExamined -= 2;
   examinedNames.pop(); examinedNames.pop();
+  // 4. the C2 line grader goes red on a missing line, on an old figure
+  //    left behind, and on a listed hover the run never built
+  const table = { "Earth: T": { lines: ["That is about 1 km."],
+                                absent: ["13.51"] } };
+  const counted = numbersExamined;
+  const g0 = failures.length;
+  checkLines({ "Earth: T": "Earth: T<br>That is about" + SOFT_BR + "1 km.<br>" },
+             table);
+  if (failures.length !== g0) {
+    notes.push("the line grader failed a hover that is right, or did not " +
+               "read a soft break as a space");
+  }
+  const g1 = failures.length;
+  checkLines({ "Earth: T": "Earth: T<br>That is about 2 km. 13.51<br>" }, table);
+  if (failures.length - g1 !== 2) {
+    notes.push("the line grader passed a wrong line or an old figure");
+  }
+  const g2 = failures.length;
+  checkLines({}, table);
+  if (failures.length === g2) {
+    notes.push("the line grader passed a listed hover that was never built");
+  }
+  failures.length = g0;
+  numbersExamined = counted;
   return notes;
 }
 
@@ -542,8 +654,8 @@ if (selfNotes.length) {
   console.log("SELF-TEST: " + selfNotes.length + " fault(s) -- this check " +
               "cannot be trusted to grade anything else.\n");
 } else {
-  console.log("Self-test: the rules and the grader both go red on demand " +
-              "(9 ways).\n");
+  console.log("Self-test: the rules and the graders go red on demand " +
+              "(13 ways).\n");
 }
 
 // The served cache is what the browser fetches, so it is what is graded.
@@ -589,6 +701,7 @@ let drifted = 0;
 });
 
 const seen = checkEarth(earthCacheFeatures, earthBuilt.hovers);
+const linesGraded = checkLines(earthBuilt.hovers, ACCEPTANCE_LINES);
 
 // Everything whose numbers carry no count must not move by one byte.
 const unchanged = {};
@@ -655,9 +768,14 @@ console.log("Examined " + (hoversExamined + fixtureCompared) + " hover(s) and "
 console.log("  " + hoversExamined + " Earth hover(s) graded against the " +
             "figure rules and the\n  manifest's acceptance table:");
 examinedNames.sort().forEach(function (n) { console.log("      " + n); });
-console.log("  " + fixtureCompared + " hover(s) with no declared count, " +
-            "held byte for byte against\n  the fixture recorded at gallery " +
-            "cdfa74c3.");
+console.log("  " + linesGraded.length + " hover(s) graded line by line " +
+            "against the approved C2 wording:");
+linesGraded.slice().sort().forEach(function (n) {
+  console.log("      " + n);
+});
+console.log("  " + fixtureCompared + " hover(s) held byte for byte " +
+            "against the fixture recorded at\n  gallery " + FIXTURE_AT +
+            ", the four above among them.");
 console.log("  " + Object.keys(bothKeys).length + " hover(s) compared " +
             "between the cache and the config, in every room" +
             (drifted ? " (" + drifted + " differ)" : " (all agree)") + ".\n");
@@ -671,5 +789,6 @@ if (failures.length) {
 }
 console.log("=== PASS: " + (hoversExamined + fixtureCompared) +
             " hover(s) and " + numbersExamined + " number(s) examined; " +
-            hoversExamined + " graded, " + fixtureCompared +
+            hoversExamined + " graded, " + linesGraded.length +
+            " graded by line, " + fixtureCompared +
             " held to the fixture ===");
