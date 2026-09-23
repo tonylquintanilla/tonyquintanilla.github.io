@@ -12,7 +12,15 @@
        - Every card shows on the phone (L-287); a 16:9 room sweeps
          sideways in portrait instead of compressing (L-286).
        - Menu and Featured follow the room tree (doors, loose cards,
-         rooms, in config order); no invented "Other" heading (L-286). -->
+         rooms, in config order); no invented "Other" heading (L-286).
+     Updated: September 22, 2026 with Anthropic's Claude Opus 5
+       - The tab picks the cards (Tony's ruling from the card pass):
+         the Desktop tab lists the 16:9 cards and the Mobile tab the
+         9:16 cards, while a card with no counterpart in the other
+         shape, and a live room, list in both. inCurrentMode() is the
+         one place it is decided; the room lists, the lobby and the
+         exhibit count all read it. It replaces L-287's "every card
+         shows in every mode". -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2252,8 +2260,9 @@
             '<a href="https://github.com/tonylquintanilla/palomas_orrery" target="_blank" rel="noopener" title="Source code on GitHub">' +
             '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>';
 
-        // Every card shows in every mode (L-287, 2026-09-05); the mode only
-        // picks WHICH FILE a two-slot card serves (fileForMode).
+        // Which cards a tab lists: inCurrentMode() below, rewritten on
+        // 2026-09-22. It replaced L-287's "every card shows in every
+        // mode; the mode only picks WHICH FILE a card serves".
         // Tree order (Tony's ruling 2026-09-05): a card's rank is its
         // room's position in the pre-order walk of gallery_config.json.
         // A door precedes its rooms, so loose cards come first under a
@@ -2269,8 +2278,35 @@
             return idx.map(function (o) { return o.v; });
         }
 
+        // Which cards this tab lists (Tony's ruling, 2026-09-22). The
+        // Desktop tab lists the 16:9 cards, the Mobile tab the 9:16 ones:
+        // a figure with two cards is one card per tab, and the portrait
+        // card, whose hover text reaches the visitor only through the info
+        // card wired in Mobile mode, stops appearing on the desktop.
+        //
+        // Two kinds list in BOTH tabs. A card with no counterpart in the
+        // other shape: without that, 46 landscape-only cards would leave
+        // the Mobile tab and 14 portrait-only cards the Desktop tab. And a
+        // live room, which has no file at all -- the Explorer and the two
+        // exhibit rooms serve every screen themselves.
+        //
+        // The counterpart is the sibling link the converter stamps, not a
+        // guess from titles, and it must be SERVED: a twin in Storage is
+        // not shown to anyone, so its partner keeps its place in both tabs.
+        // vizLookup holds the served cards and is built before the first
+        // render, and on a phone it is already missing the landscape cards
+        // that phone hides, which is the same answer by a shorter route.
+        //
+        // Three callers: renderNavList (the room lists), renderLobby (the
+        // doors and the featured strip), updateWelcomeCount.
         function inCurrentMode(v) {
-            return !!v;
+            if (!v) return false;
+            var files = v.files || {};
+            if (!files.landscape && !files.portrait) return true;
+            var want = (currentMode === 'portrait') ? 'portrait' : 'landscape';
+            if (files[want]) return true;
+            var twin = v.sibling && vizLookup[v.sibling];
+            return !(twin && (twin.files || {})[want]);
         }
 
         // Rooms under a door with no card anywhere in their subtree.
@@ -2461,7 +2497,7 @@
         }
 
         function renderNavList(vizs) {
-            // Every card shows (L-287); the mode picks the file, not the list.
+            // The tab picks the cards (2026-09-22): see inCurrentMode.
             // Tree order (L-286): doors, then loose cards, then rooms, as the
             // editor shows them.
             var filtered = [];
