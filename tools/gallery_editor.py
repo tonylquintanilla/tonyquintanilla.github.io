@@ -55,6 +55,15 @@ Module updated: September 5, 2026 (L-287): Apply button removed, fields
 apply on focus-out; a live card may have no file; Copy to Room.
 Module updated: September 6, 2026 (L-288): live_scene_urls() now lives in
 json_converter.py and is imported; Studio reads the same list.
+Module updated: September 22, 2026 with Anthropic's Claude Opus 5.5 (card
+pass, Tony's ruling): the phone setting. "Shape (phone only)" offers
+"16:9 2D -- sweeps sideways", "16:9 3D -- asks the visitor to turn the
+phone", "9:16 -- shows as today" and "none -- not on the phone". The two
+16:9 choices both save shape "16:9"; which one is offered is read from the
+card's landscape file (a 3D scene or not), because the page decides from
+the file too, so the editor cannot record a choice the page will not
+follow. "none" saves shape "none" and the phone leaves the card out; the
+desktop, both tabs, is unchanged.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -81,7 +90,7 @@ CONFIG_FILE = os.path.join(GALLERY_DIR, 'gallery_config.json')
 
 STORAGE_KEY = 'other'
 DEPTH_CEILING = 4            # door = 1 ... encounter = 4 (L-286)
-SHAPES = ('16:9', '9:16')
+SHAPES = ('16:9', '9:16', 'none')    # 'none': not on the phone (2026-09-22)
 SLOTS = ('landscape', 'portrait')
 LOCAL_SERVER = 'http://localhost:8000/'       # tools/serve_gallery.py
 LIVE_SITE = 'https://palomasorrery.com/'
@@ -213,6 +222,30 @@ class GalleryEditor:
 
         self._load()
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _figure_is_3d(self, c):
+        """True if the card's landscape figure has a 3D scene, False if it
+        is 2D, None if there is no landscape file or it cannot be read.
+        The same test the page makes (layout.scene), on the same file."""
+        fn = (c.get('files') or {}).get('landscape')
+        if not fn:
+            return None
+        path = os.path.join(os.path.dirname(self.meta_path), fn)
+        try:
+            key = (path, os.path.getmtime(path))
+        except OSError:
+            return None
+        cache = getattr(self, '_fig3d_cache', None)
+        if cache is None:
+            cache = self._fig3d_cache = {}
+        if key not in cache:
+            try:
+                with open(path, 'rb') as fh:
+                    fig = json.loads(fh.read().decode('utf-8'))
+                cache[key] = bool((fig.get('layout') or {}).get('scene'))
+            except Exception:
+                cache[key] = None
+        return cache[key]
 
     @staticmethod
     def _find_file(path):
@@ -616,15 +649,42 @@ class GalleryEditor:
                 ttk.Button(sf, text="Preview", command=lambda s=slot: self._preview(s)).pack(
                     side='right', padx=2)
 
-        sh = tk.StringVar(value=c.get('shape', '16:9'))
+        # The phone setting (Tony's ruling, 2026-09-22). Four choices, one
+        # stored field. Both 16:9 choices store '16:9'; the form offers the
+        # one that matches the landscape file, because the page reads the
+        # file, not the card, to decide between sweeping and turning.
+        fig3d = self._figure_is_3d(c)
+        cur = c.get('shape', '16:9')
+        if cur in ('9:16', 'none'):
+            ui = cur
+        else:
+            ui = '16:9/3d' if fig3d else '16:9/2d'
+        sh = tk.StringVar(value=ui)
         self.form_vars['shape'] = sh
-        ttk.Label(f, text="Shape (phone only)").grid(row=7, column=0, sticky='w', padx=(0, 10), pady=4)
+        ttk.Label(f, text="Shape (phone only)").grid(row=7, column=0, sticky='nw', padx=(0, 10), pady=4)
         shf = ttk.Frame(f)
         shf.grid(row=7, column=1, columnspan=2, sticky='w')
-        ttk.Radiobutton(shf, text="16:9  sweeps sideways (2D) / scales to fit (3D)",
-                        variable=sh, value='16:9', command=self._on_field_leave).pack(anchor='w')
+        r2d = ttk.Radiobutton(shf, text="16:9 2D  sweeps sideways",
+                              variable=sh, value='16:9/2d', command=self._on_field_leave)
+        r2d.pack(anchor='w')
+        r3d = ttk.Radiobutton(shf, text="16:9 3D  asks the visitor to turn the phone to landscape",
+                              variable=sh, value='16:9/3d', command=self._on_field_leave)
+        r3d.pack(anchor='w')
         ttk.Radiobutton(shf, text="9:16  shows as today", variable=sh, value='9:16',
                         command=self._on_field_leave).pack(anchor='w')
+        ttk.Radiobutton(shf, text="none  not on the phone (the desktop keeps both tabs)",
+                        variable=sh, value='none', command=self._on_field_leave).pack(anchor='w')
+        if fig3d is True:
+            r2d.state(['disabled'])
+            note = "the landscape file is a 3D figure, so 16:9 means 3D here"
+        elif fig3d is False:
+            r3d.state(['disabled'])
+            note = "the landscape file is a 2D figure, so 16:9 means 2D here"
+        else:
+            r2d.state(['disabled'])
+            r3d.state(['disabled'])
+            note = "no landscape file to read, so the 16:9 choices are off"
+        ttk.Label(shf, text=note, foreground='#777777').pack(anchor='w')
 
         self._entry(f, 'live', c.get('live') or '', 8, "Live scene URL")
         ttk.Button(f, text="Pick...", command=self._pick_live).grid(row=8, column=2, padx=4)
@@ -669,7 +729,8 @@ class GalleryEditor:
             new = {
                 'title': self.form_vars['title'].get().strip(),
                 'description': text_of(self.form_vars['description']),
-                'shape': self.form_vars['shape'].get(),
+                'shape': ('16:9' if self.form_vars['shape'].get().startswith('16:9')
+                          else self.form_vars['shape'].get()),
                 'live': self.form_vars['live'].get().strip() or None,
                 'featured': bool(self.form_vars['featured'].get()),
                 'sources': [s.strip() for s in text_of(self.form_vars['sources']).splitlines() if s.strip()],

@@ -30,6 +30,10 @@ the category prompt is skipped when gallery_config.json is version 2.
 Module updated: September 6, 2026 with Anthropic's Claude Fable 5.1 (L-288):
 live_scene_urls() moved here from the editor; add_live_card() writes an
 INTERACTIVE card (live scene, no file) into storage for Gallery Studio.
+Module updated: September 22, 2026 with Anthropic's Claude Opus 5.5 (card
+pass): a re-export keeps a card's shape "none" (not on the phone) instead
+of resetting it from the file's slot; that setting is Tony's, made in the
+gallery editor.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -164,7 +168,8 @@ def _v2_entry(metadata, safe_name, title, description, size_kb, mode):
         if filename in files.values() or v.get("id") == safe_name:
             v["files"] = {slot: filename}
             v["size_kb"] = {slot: round(size_kb, 1)}
-            v["shape"] = "9:16" if slot == "portrait" else "16:9"
+            if v.get("shape") != "none":      # not on the phone: Tony's call, kept
+                v["shape"] = "9:16" if slot == "portrait" else "16:9"
             v["converted"] = now
             if description:
                 v["description"] = description

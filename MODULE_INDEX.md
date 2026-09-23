@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** September 22, 2026 by `module_atlas.py`  
+**Generated:** September 23, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 37  
-**Total Lines of Code (non-blank):** 19,221  
+**Total Lines of Code (non-blank):** 19,293  
 **Total Public Functions/Classes:** 267
 
 ## Classification Coverage
@@ -100,17 +100,17 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `debug_encke_tp.py` | - run the EXACT same live Horizons query gallery_cache_builder.py's fetch_solution_tp() makes for Encke, and print the complete raw response text. (61 lines) |
 | `fingerprint.py` | L-080 semantic fingerprint. (98 lines) |
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
-| `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,073 lines) |
+| `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,133 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
 | `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,037 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
-| `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (847 lines) |
+| `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (852 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (589 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (825 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (123 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
-| `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (145 lines) |
+| `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (120 lines) |
 | `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (983 lines) |
 

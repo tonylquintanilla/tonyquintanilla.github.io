@@ -11,7 +11,8 @@ exceptions can be checked one per class rather than one per card.
 The rule, exactly as index.html's sweepWanted() has it:
   - a card whose shape is 9:16                 -> no sweep (portrait shape)
   - a card with a portrait file                -> no sweep (portrait slot serves)
-  - a card whose figure has a 3D scene         -> no sweep (scales to fit)
+  - a card whose figure has a 3D scene         -> no sweep (on a phone held
+    upright it asks the visitor to turn the phone; 2026-09-22)
   - otherwise (2D, landscape-only, not 9:16)   -> SWEEPS, at the figure's
     own width/height if the file carries them, else 16:9; and if that
     width fits the phone anyway, nothing scrolls.
@@ -28,6 +29,9 @@ Reads gallery/gallery_metadata.json and each landscape figure JSON.
 Writes nothing. Network not needed.
 
 Module created: September 6, 2026 with Anthropic's Claude Fable 5.1 (L-286)
+Module updated: September 22, 2026 with Anthropic's Claude Opus 5.5 (card
+pass): a card with shape "none" is its own class, not on the phone; the 3D
+class says the phone asks the visitor to turn it, as the page now does.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -71,6 +75,8 @@ def classify(card):
     title = card.get("title") or card.get("id")
     live = card.get("live")
 
+    if shape == "none":
+        return "not on the phone (shape none)", title, room, ""
     if not files:
         return "no file (interactive scene only)", title, room, ""
     if shape == "9:16":
@@ -92,7 +98,7 @@ def classify(card):
     if err:
         return "FILE UNREADABLE", title, room, "%s -- %s" % (land, err)
     if has_scene:
-        return "no sweep: 3D scene (scales to fit)", title, room, land
+        return "no sweep: 3D scene (asks to turn the phone)", title, room, land
 
     aspect = (w / h) if (w and h) else 16.0 / 9.0
     swept_w = int(round(ROOM_H * aspect))
@@ -132,7 +138,8 @@ def main():
         "SWEEPS a little -- stored taller than wide",
         "SWEEPS -- Mapbox figure (map has its own drag)",
         "sweeps by rule, but fits: nothing scrolls",
-        "no sweep: 3D scene (scales to fit)",
+        "no sweep: 3D scene (asks to turn the phone)",
+        "not on the phone (shape none)",
         "no sweep: hidden on the phone (portrait sibling)",
         "no sweep: portrait file serves",
         "no sweep: shape 9:16",

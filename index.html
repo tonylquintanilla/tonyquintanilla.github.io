@@ -20,7 +20,15 @@
          shape, and a live room, list in both. inCurrentMode() is the
          one place it is decided; the room lists, the lobby and the
          exhibit count all read it. It replaces L-287's "every card
-         shows in every mode". -->
+         shows in every mode".
+     Updated: September 22, 2026 with Anthropic's Claude Opus 5.5
+       - The phone setting (Tony's ruling from the card pass, card 5):
+         a card whose shape is "none" is not listed on a phone. A 3D
+         figure served from a landscape file, on a phone held upright,
+         shows a card asking the visitor to turn the phone instead of
+         a scene squeezed to fit; turning the phone draws the figure,
+         and turning it back brings the card back. The desktop, both
+         tabs, is unchanged. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1003,6 +1011,30 @@
         .error-text {
             color: var(--cat-inner);
             font-size: 0.9rem;
+        }
+
+        /* Turn-the-phone card (2026-09-22): a 3D figure from a landscape
+           file, on a phone held upright, shows this instead of the scene */
+        .turn-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px 28px;
+            gap: 14px;
+        }
+
+        .turn-card-title {
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .turn-card-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
         }
 
         /* Plotly modebar overrides */
@@ -1992,7 +2024,72 @@
             if (!phone || !portrait) return false;
             var files = viz.files || {};
             if (files.portrait) return false;              // a portrait file serves instead
-            if (layout && layout.scene) return false;      // 3D scales to fit
+            if (layout && layout.scene) return false;      // 3D: see turnWanted
+            return true;
+        }
+
+        // ---- The turn-the-phone card (Tony's ruling, 2026-09-22) ----
+        // A 3D figure served from a landscape file, on a phone held
+        // upright, used to be squeezed to fit, and it looked broken. The
+        // phone now shows a card asking the visitor to turn it; when they
+        // do, the figure is drawn, and turning back brings the card back.
+        // Same tests as sweepWanted, with the 3D test the other way round:
+        // a 2D figure sweeps, a 3D figure asks. 9:16 and a portrait file
+        // are untouched. is3d is the figure's own layout.scene, read from
+        // the file, never from the card, so the card cannot disagree.
+        var turnIs3d = false;         // the current figure has a 3D scene
+
+        function turnWanted(viz, is3d) {
+            if (!viz || !is3d || viz.shape === '9:16') return false;
+            var phone = window.innerWidth < 768;
+            var portrait = window.innerHeight > window.innerWidth;
+            if (!phone || !portrait) return false;
+            var files = viz.files || {};
+            if (files.portrait) return false;
+            return true;
+        }
+
+        function showTurnCard(viz) {
+            loadingOverlay.classList.remove('visible');
+            if (typeof Plotly !== 'undefined') Plotly.purge('plotly-graph');
+            plotlyGraph.style.display = 'none';
+            zoomControls.classList.remove('visible');
+            panControls.classList.remove('visible');
+            resetStandalone.classList.remove('visible');
+            flytoControls.classList.remove('visible');
+            var kmz = document.getElementById('kmz-handoff-btn');
+            if (kmz) { kmz.style.display = 'none'; kmz.href = '#'; }
+            linkReset();
+            welcomeState.innerHTML =
+                '<div class="turn-card" id="turnCard">' +
+                '<div class="turn-card-title">' + escapeHtml(viz.title || 'Untitled') + '</div>' +
+                '<div class="turn-card-text">Turn your phone to landscape to view this card.</div>' +
+                '</div>';
+            welcomeState.style.display = 'flex';
+        }
+
+        // On rotation: redraw only when the answer changes, and only while
+        // a card is on screen (the turn card or a drawn figure), so a turn
+        // made in the lobby never opens a card. Debounced, because a phone
+        // fires several resize events per turn and more as its address bar
+        // slides.
+        var turnTimer = null;
+        function turnCheck() {
+            var viz = vizLookup[currentVizId];
+            if (!viz) return false;
+            // welcomeState keeps the turn card's markup after the figure is
+            // drawn, so "held" means the card is on screen, not merely there.
+            var held = welcomeState.style.display !== 'none' &&
+                       !!document.getElementById('turnCard');
+            var drawn = plotlyGraph.style.display !== 'none';
+            if (!held && !drawn) return false;
+            var want = turnWanted(viz, turnIs3d);
+            if (held === want) return false;
+            if (turnTimer) clearTimeout(turnTimer);
+            turnTimer = setTimeout(function () {
+                turnTimer = null;
+                if (currentVizId === viz.id) loadVisualization(viz.id);
+            }, 250);
             return true;
         }
 
@@ -2179,6 +2276,10 @@
                         var servedIds = {};
                         metadata.visualizations.forEach(function (v) { servedIds[v.id] = v; });
                         metadata.visualizations = metadata.visualizations.filter(function (v) {
+                            // A card whose phone setting is none is not on
+                            // the phone at all (Tony's ruling, 2026-09-22).
+                            // Its twin, if it has one, keeps its own setting.
+                            if (v.shape === 'none') return false;
                             var files = v.files || {};
                             var sib = v.sibling && servedIds[v.sibling];
                             var hide = !!(files.landscape && !files.portrait && sib &&
@@ -2734,6 +2835,13 @@
                 var figDict = await resp.json();
 
                 figDict.layout = figDict.layout || {};
+
+                // The turn-the-phone card (2026-09-22): see turnWanted.
+                turnIs3d = !!figDict.layout.scene;
+                if (turnWanted(viz, turnIs3d)) {
+                    showTurnCard(viz);
+                    return;
+                }
 
                 // ---- Session 12 refactor: Studio is WYSIWYG authority ----
                 // The studio makes ALL content curation decisions.
@@ -3581,6 +3689,7 @@
 
             // Window resize -> Plotly resize + recalculate min-height
             window.addEventListener('resize', function() {
+                if (turnCheck()) return;      // the turn card or the figure, redrawn
                 if (plotlyGraph.style.display !== 'none') {
                     var swept = applySweep(vizLookup[currentVizId], plotlyGraph.layout);
                     if (!swept && currentAspect >= 0.8) {
