@@ -71,6 +71,9 @@ Module created: September 17, 2026 with Anthropic's Claude Opus 5
 (L-322, the gallery half: piece 3 of the build manifest).
 Module updated: September 22, 2026 with Anthropic's Claude Opus 5.5
 (L-322 Stage C2-b: the pointer join gains the read check, read_walk()).
+Module updated: September 22, 2026 with Anthropic's Claude Opus 5.5
+(the join's last line carries the read check's counts, because the
+maintenance run shows only a check's last line).
 """
 
 import json
@@ -262,9 +265,13 @@ def join_check(root):
         print("")
         print("%d link(s) block the join." % len(failures))
         return 1
+    # The maintenance run shows only this last line, so it carries the
+    # read check's counts too: a pass says what it examined.
     print("Every link is accounted for: %d link(s) against orrery %s, "
-          "%d fallback named."
-          % (len(links), (sha or "(no SHA recorded)")[:8], len(fallback)))
+          "%d fallback named; read check: %d of %d measured rows reached "
+          "carry a read."
+          % (len(links), (sha or "(no SHA recorded)")[:8], len(fallback),
+             counts[3], counts[2]))
     return 0
 
 

@@ -11,15 +11,15 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 38  
-**Total Lines of Code (non-blank):** 19,582  
-**Total Public Functions/Classes:** 276
+**Total Lines of Code (non-blank):** 19,286  
+**Total Public Functions/Classes:** 268
 
 ## Classification Coverage
 
 **Undetermined role (7).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L322_C2_2_gallery_hovers_and_read_check_20260922.py`
+- `patch_L322_C2_3_join_names_read_check_20260922.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -29,7 +29,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 **Undetermined domain (6).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L322_C2_2_gallery_hovers_and_read_check_20260922.py`
+- `patch_L322_C2_3_join_names_read_check_20260922.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -98,7 +98,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 |--------|-------------|
 | `add_docstrings.py` | Two related tools for module-level docstrings. (1,210 lines) |
 | `check_cache_in_step.py` | - the served cache holds the same shells as data/objects_config.json. (176 lines) |
-| `check_constants_links.py` | - two checks over the gallery's links into the orrery's store, sharing the mirror's own reading so one cause prints one explanation. (248 lines) |
+| `check_constants_links.py` | - two checks over the gallery's links into the orrery's store, sharing the mirror's own reading so one cause prints one explanation. (255 lines) |
 | `debug_encke_tp.py` | - run the EXACT same live Horizons query gallery_cache_builder.py's fetch_solution_tp() makes for Encke, and print the complete raw response text. (61 lines) |
 | `fingerprint.py` | L-080 semantic fingerprint. (98 lines) |
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
@@ -123,7 +123,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (574 lines) |
-| `patch_L322_C2_2_gallery_hovers_and_read_check_20260922.py` | - L-322 Stage C2-b. (368 lines) |
+| `patch_L322_C2_3_join_names_read_check_20260922.py` | - L-322 Stage C2-b follow-up. (65 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (460 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (287 lines) |
