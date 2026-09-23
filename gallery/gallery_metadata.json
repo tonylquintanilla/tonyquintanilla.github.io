@@ -2593,25 +2593,6 @@
       }
     },
     {
-      "id": "paloma_social_view_2005_02_04",
-      "title": "Inner Solar System",
-      "description": "Inner planets on February 4, 2005.",
-      "room": "solar_system",
-      "shape": "9:16",
-      "files": {
-        "portrait": "paloma_social_view_2005_02_04.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [
-        "JPL Horizons"
-      ],
-      "converted": "2026-02-11 00:38",
-      "size_kb": {
-        "portrait": 622.8
-      }
-    },
-    {
       "id": "near_earth_asteroids_social_view_20260211_0024",
       "title": "Near Earth Asteroids on 2026 02 11 00:24",
       "description": "Near-Earth asteroids.",
@@ -2680,6 +2661,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-09-22 13:08",
-  "total_count": 145
+  "last_updated": "2026-09-22 22:11",
+  "total_count": 144
 }
