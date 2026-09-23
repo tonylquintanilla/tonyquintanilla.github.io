@@ -28,7 +28,18 @@
          shows a card asking the visitor to turn the phone instead of
          a scene squeezed to fit; turning the phone draws the figure,
          and turning it back brings the card back. The desktop, both
-         tabs, is unchanged. -->
+         tabs, is unchanged.
+     Updated: September 23, 2026 with Anthropic's Claude Opus 5.5
+       - From Tony's phone test of the above. The turn card carries its
+         own way back to the gallery, and scrolls itself to the top: on
+         his phone, after turning back upright, the menu button was
+         gone and only a reload brought it back.
+       - A touch screen whose short side is a phone's counts as a phone
+         at load, so a page first opened with the phone held sideways
+         still leaves out the cards a phone leaves out ("none", and a
+         landscape card with a served portrait twin). Before, a phone
+         opened sideways was treated as a tablet at load and listed
+         them. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1035,6 +1046,19 @@
             color: var(--text-secondary);
             font-size: 0.9rem;
             line-height: 1.5;
+        }
+
+        .turn-card-back {
+            margin-top: 10px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* Plotly modebar overrides */
@@ -2060,12 +2084,20 @@
             var kmz = document.getElementById('kmz-handoff-btn');
             if (kmz) { kmz.style.display = 'none'; kmz.href = '#'; }
             linkReset();
+            // Its own way back (2026-09-23): on Tony's phone, after turning
+            // back upright, the menu button had gone from the screen and
+            // only a reload brought it back, so the card does not rely on it.
             welcomeState.innerHTML =
                 '<div class="turn-card" id="turnCard">' +
                 '<div class="turn-card-title">' + escapeHtml(viz.title || 'Untitled') + '</div>' +
                 '<div class="turn-card-text">Turn your phone to landscape to view this card.</div>' +
+                '<button type="button" class="turn-card-back" id="turnCardBack">Back to the gallery</button>' +
                 '</div>';
             welcomeState.style.display = 'flex';
+            var back = document.getElementById('turnCardBack');
+            if (back) back.addEventListener('click', function () { goHome(); });
+            window.scrollTo(0, 0);
+            welcomeState.scrollTop = 0;
         }
 
         // On rotation: redraw only when the answer changes, and only while
@@ -2271,8 +2303,15 @@
                     // hide a landscape card that has a portrait sibling -- and
                     // only when that sibling is itself served. A landscape card
                     // with no sibling still shows and still sweeps. Desktop and
-                    // tablet show everything. Phone is the sweep's own test.
-                    if (window.innerWidth < 768) {
+                    // tablet show everything. Phone is the sweep's own test,
+                    // plus (2026-09-23) a touch screen whose SHORT side is a
+                    // phone's, so a page first opened with the phone held
+                    // sideways still counts as a phone here. A narrow desktop
+                    // window still counts, as before; a short one does not.
+                    var sideways = !!(window.matchMedia &&
+                        window.matchMedia('(pointer: coarse)').matches &&
+                        Math.min(screen.width, screen.height) < 768);
+                    if (window.innerWidth < 768 || sideways) {
                         var servedIds = {};
                         metadata.visualizations.forEach(function (v) { servedIds[v.id] = v; });
                         metadata.visualizations = metadata.visualizations.filter(function (v) {
