@@ -39,7 +39,15 @@
          still leaves out the cards a phone leaves out ("none", and a
          landscape card with a served portrait twin). Before, a phone
          opened sideways was treated as a tablet at load and listed
-         them. -->
+         them.
+     Updated: September 23, 2026 with Anthropic's Claude Opus 5.5
+       - A tilt made with a finger now stays (card pass, card 6, Inner
+         Solar System Animation). Plotly records a 3D scene's new angle
+         in the figure when a MOUSE lets go, not when a finger does, and
+         every redraw -- each frame of an animation -- draws the angle on
+         record. On a phone that was the starting view, so a tilt made
+         before Play snapped back and one made while it ran lasted half
+         a second. The page now records the angle as a finger turns it. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2105,6 +2113,35 @@
         // made in the lobby never opens a card. Debounced, because a phone
         // fires several resize events per turn and more as its address bar
         // slides.
+        // ---- A finger's tilt is kept (2026-09-23) ----
+        // Plotly 2.35.2 writes a 3D scene's camera back into the figure
+        // (gd.layout.<scene>.camera) when a mouse button is released, and
+        // not when a touch ends. Every redraw draws the camera on record,
+        // and an animation redraws at every frame, so on a phone a tilt
+        // was undone by the next frame. While a finger moves on the plot,
+        // and when it lifts, copy each scene's live camera into the record.
+        // Reads the scene's getCamera(), which is Plotly-internal: pinned
+        // to 2.35.2 with the script tag, and wrapped so a change in a
+        // later version costs only this, never the page.
+        function keepTouchCamera() {
+            try {
+                var fl = plotlyGraph._fullLayout;
+                if (!fl || !plotlyGraph.layout) return;
+                Object.keys(fl).forEach(function (k) {
+                    if (k.indexOf('scene') !== 0 || !fl[k] || !fl[k]._scene) return;
+                    var cam = fl[k]._scene.getCamera();
+                    if (!cam) return;
+                    plotlyGraph.layout[k] = plotlyGraph.layout[k] || {};
+                    plotlyGraph.layout[k].camera = cam;
+                    fl[k].camera = cam;
+                });
+            } catch (e) { /* a later Plotly: the tilt is simply not kept */ }
+        }
+        plotlyGraph.addEventListener('touchmove', keepTouchCamera,
+                                     { passive: true, capture: true });
+        plotlyGraph.addEventListener('touchend', keepTouchCamera,
+                                     { passive: true, capture: true });
+
         var turnTimer = null;
         function turnCheck() {
             var viz = vizLookup[currentVizId];
