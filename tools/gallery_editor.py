@@ -64,6 +64,14 @@ card's landscape file (a 3D scene or not), because the page decides from
 the file too, so the editor cannot record a choice the page will not
 follow. "none" saves shape "none" and the phone leaves the card out; the
 desktop, both tabs, is unchanged.
+Module updated: September 24, 2026 with Anthropic's Claude Opus 5.5 (card
+pass, card 8, Apophis Closest Approach): a 16:9 card with a 9:16 twin is
+never on the phone -- the page shows the twin instead -- yet its phone
+setting still offered "16:9 3D", which said it would ask the visitor to
+turn the phone. For such a card the four choices are now greyed out and
+the note says which card the phone shows, or that it shows neither when
+the twin is set to none. The same test the page makes, so a twin kept in
+Storage does not count.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -670,10 +678,12 @@ class GalleryEditor:
         r3d = ttk.Radiobutton(shf, text="16:9 3D  asks the visitor to turn the phone to landscape",
                               variable=sh, value='16:9/3d', command=self._on_field_leave)
         r3d.pack(anchor='w')
-        ttk.Radiobutton(shf, text="9:16  shows as today", variable=sh, value='9:16',
-                        command=self._on_field_leave).pack(anchor='w')
-        ttk.Radiobutton(shf, text="none  not on the phone (the desktop keeps both tabs)",
-                        variable=sh, value='none', command=self._on_field_leave).pack(anchor='w')
+        r916 = ttk.Radiobutton(shf, text="9:16  shows as today", variable=sh, value='9:16',
+                               command=self._on_field_leave)
+        r916.pack(anchor='w')
+        rnone = ttk.Radiobutton(shf, text="none  not on the phone (the desktop keeps both tabs)",
+                                variable=sh, value='none', command=self._on_field_leave)
+        rnone.pack(anchor='w')
         if fig3d is True:
             r2d.state(['disabled'])
             note = "the landscape file is a 3D figure, so 16:9 means 3D here"
@@ -684,7 +694,33 @@ class GalleryEditor:
             r2d.state(['disabled'])
             r3d.state(['disabled'])
             note = "no landscape file to read, so the 16:9 choices are off"
-        ttk.Label(shf, text=note, foreground='#777777').pack(anchor='w')
+        # A 16:9 card with a served 9:16 twin is never on the phone
+        # (2026-09-24): the page drops it for the twin, whatever this
+        # setting says. The same test as the page's phone filter in
+        # index.html: this card has a landscape file and no portrait file,
+        # and its sibling has a portrait file and is in a room (Storage is
+        # removed before that filter runs, so a twin in Storage does not
+        # count and this card keeps its own setting). A twin set to none
+        # still counts, so the phone then shows neither; the note says so.
+        files = c.get('files') or {}
+        twin = self._card_by_id(c['sibling']) if c.get('sibling') else None
+        if (files.get('landscape') and not files.get('portrait') and twin
+                and (twin.get('files') or {}).get('portrait')
+                and twin.get('room', STORAGE_KEY) != STORAGE_KEY):
+            for rb in (r2d, r3d, r916, rnone):
+                rb.state(['disabled'])
+            # No choice shows as picked, since none applies; saving keeps
+            # whatever the card already stores (see _apply_form).
+            sh.set('twin')
+            tname = twin.get('title') or twin.get('id')
+            if twin.get('shape') == 'none':
+                note = ("not on the phone, and neither is its 9:16 twin, '%s', "
+                        "which is set to none; change that on the twin" % tname)
+            else:
+                note = ("not on the phone: the phone shows its 9:16 twin, '%s', "
+                        "instead; set the phone on that card" % tname)
+        ttk.Label(shf, text=note, foreground='#777777', wraplength=460,
+                  justify='left').pack(anchor='w')
 
         self._entry(f, 'live', c.get('live') or '', 8, "Live scene URL")
         ttk.Button(f, text="Pick...", command=self._pick_live).grid(row=8, column=2, padx=4)
@@ -729,7 +765,8 @@ class GalleryEditor:
             new = {
                 'title': self.form_vars['title'].get().strip(),
                 'description': text_of(self.form_vars['description']),
-                'shape': ('16:9' if self.form_vars['shape'].get().startswith('16:9')
+                'shape': (c.get('shape', '16:9') if self.form_vars['shape'].get() == 'twin'
+                          else '16:9' if self.form_vars['shape'].get().startswith('16:9')
                           else self.form_vars['shape'].get()),
                 'live': self.form_vars['live'].get().strip() or None,
                 'featured': bool(self.form_vars['featured'].get()),
