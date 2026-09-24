@@ -219,7 +219,7 @@
       "title": "Earth Barycenter Shells 20260207 1635",
       "description": "Plot of Earth-Moon system with barycenter. Shows Earth's geological, atmospheric and magnetic structure.",
       "room": "solar_system/earth",
-      "shape": "16:9",
+      "shape": "none",
       "files": {
         "landscape": "earth_barycenter_shells_20260207_1635.json"
       },
@@ -486,7 +486,7 @@
       "title": "Near Earth Asteroids 20260207 2114",
       "description": "Plot of near-Earth asteroids between Venus and Mars.",
       "room": "solar_system/earth",
-      "shape": "16:9",
+      "shape": "none",
       "files": {
         "landscape": "near_earth_asteroids_20260207_2114.json"
       },
@@ -2558,23 +2558,6 @@
       }
     },
     {
-      "id": "near_earth_asteroids_social_view_20260211_0024",
-      "title": "Near Earth Asteroids on 2026 02 11 00:24",
-      "description": "Near-Earth asteroids.",
-      "room": "solar_system/earth",
-      "shape": "9:16",
-      "files": {
-        "portrait": "near_earth_asteroids_social_view_20260211_0024.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
-      "converted": "2026-02-11 00:39",
-      "size_kb": {
-        "portrait": 2001.0
-      }
-    },
-    {
       "id": "earth-apophis_20290401_29",
       "title": "Apophis Closest Approach, 4-13-2029",
       "description": "Apophis Closest Approach, 4-13-2029",
@@ -2626,6 +2609,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-09-23 08:33",
-  "total_count": 142
+  "last_updated": "2026-09-24 15:29",
+  "total_count": 141
 }
