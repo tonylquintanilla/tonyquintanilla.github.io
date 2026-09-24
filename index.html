@@ -47,7 +47,17 @@
          every redraw -- each frame of an animation -- draws the angle on
          record. On a phone that was the starting view, so a tilt made
          before Play snapped back and one made while it ran lasted half
-         a second. The page now records the angle as a finger turns it. -->
+         a second. The page now records the angle as a finger turns it.
+     Updated: September 23, 2026 with Anthropic's Claude Opus 5.5
+       - In Mobile mode the info card is the only hover display (card
+         pass, card 7, Earth and Moon). A figure Studio exported with
+         its hover routed to the panel (layout._hover_mode) carries a
+         see-through hover label, but Plotly replaces a fully see-through
+         label colour with grey (#444) and the traces' own font size
+         outsizes the label's, so a tap drew an empty grey box over the
+         render beside the info card. On such a figure in Mobile mode
+         the page now turns Plotly's label off; taps still open the
+         card. The Desktop tab is unchanged. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3015,6 +3025,42 @@
                 sweepAspect = (origWidth && origHeight) ? origWidth / origHeight : 0;
                 sweepDragmode = (figDict.layout.dragmode === undefined) ? null : figDict.layout.dragmode;
                 if (sweepWanted(viz, figDict.layout)) figDict.layout.dragmode = false;
+
+                // The info card is the hover display in Mobile mode
+                // (2026-09-23). The card is wired below for exactly these
+                // figures -- Mobile mode, layout._hover_mode -- so turn
+                // Plotly's own label off for them. Their label was meant to
+                // be see-through, but Plotly 2.35.2 draws a label whose
+                // colour has zero opacity in grey (#444) instead, and each
+                // trace's hoverlabel.font.size outranks the layout's 1px, so
+                // every tap left an empty grey box over the render.
+                // A 3D scene: its hovermode off stops the label, and its
+                // click is still sent (gl3d emits plotly_click outside the
+                // hovermode test). A 2D plot: hoverinfo 'none', which Plotly
+                // documents as no label with click events still fired, and
+                // no hovertemplate, which would otherwise override it.
+                // Frames too, so an animation does not bring the label back.
+                if (currentMode === 'portrait' && figDict.layout._hover_mode) {
+                    var hasScene = false;
+                    Object.keys(figDict.layout).forEach(function (k) {
+                        if (/^scene\d*$/.test(k) && figDict.layout[k]) {
+                            figDict.layout[k].hovermode = false;
+                            hasScene = true;
+                        }
+                    });
+                    if (!hasScene) {
+                        var quiet = function (t) {
+                            if (t && t.hoverinfo !== 'skip') {
+                                t.hoverinfo = 'none';
+                                delete t.hovertemplate;
+                            }
+                        };
+                        (figDict.data || []).forEach(quiet);
+                        (figDict.frames || []).forEach(function (f) {
+                            (f.data || []).forEach(quiet);
+                        });
+                    }
+                }
 
                 // Apply responsive width to annotations before render
                 if (figDict.layout && figDict.layout.annotations && figDict.layout.annotations.length > 0) {
