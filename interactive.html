@@ -118,6 +118,10 @@
         are read from the served cache's frame_constants before anything
         is drawn, and their warnings reach the room's notes; Earth's
         driver hands the served pole of date to the room)
+     Updated: September 25, 2026 with Anthropic's Claude Opus 5.5
+       (the tap lag on a phone: a marker tap focuses once, not on every
+        redraw Plotly makes while the point stays picked, and every new
+        press in the plot closes Plotly's own hover box)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2299,6 +2303,17 @@ async function initSunExhibit() {
         // trace index and is always present.
         gd.on("plotly_click", function (ev) {
             if (!ev || !ev.points || !ev.points.length) { return; }
+            // The tap lag (2026-09-25; ledger row to be filed): ONE focus per tap. On a touch screen
+            // Plotly 2.35.2's gl3d scene re-emits plotly_click on EVERY
+            // redraw while the tapped point stays picked (scene.js render:
+            // "selection.distance < 5 && (selection.buttons || tabletmode)"),
+            // and the focus below relayouts, which redraws, which clicks
+            // again: measured headless at 127 clicks and 63 relayouts in
+            // 10 s, running until something moved the pick. On Tony's
+            // phone that kept the page busy and his next tap took about
+            // 12 s to close the box. A tap is counted at pointerdown.
+            if (sunClickServedTap === sunTapSerial) { return; }
+            sunClickServedTap = sunTapSerial;
             const k = sunTraceGroup[ev.points[0].curveNumber];
             // L-267 click deferral, 2026-09-02. DO NOT call sunFocusOn
             // straight from here. Its relayout re-enters Plotly's
@@ -2921,11 +2936,43 @@ function sunTapInstall(gd) {
 // of Plotly's own handling of the same pointer or event (the L-278
 // lesson). Pointers are tracked by id from the plot to wherever they lift,
 // and a second finger makes the gesture a pinch, not a tap.
+// The tap lag (2026-09-25; ledger row to be filed): Plotly's own hover box, the one a marker tap opens,
+// is held up by gl-plot3d's pick, and the pick moves only when the browser
+// sends a mouse event. A phone may send none for the tap meant to close
+// it. So every new press drops the old pick itself -- the same fields
+// gl-plot3d's own mouse handler clears -- and asks for a redraw, and
+// scene.js's render then removes the box and emits plotly_unhover. If the
+// press lands on a marker, the browser's own events pick it again. Reaches
+// into the pinned Plotly's internals, like sunTapPicking; if they are not
+// where 2.35.2 keeps them this does nothing.
+let sunTapSerial = 0;          // counts presses in the plot
+let sunClickServedTap = -1;    // the press whose plotly_click was acted on
+function sunPlotlyHoverDrop(gd) {
+    try {
+        const scene = gd && gd._fullLayout && gd._fullLayout.scene
+            && gd._fullLayout.scene._scene;
+        const glplot = scene && scene.glplot;
+        const sel = glplot && glplot.selection;
+        if (!sel || !sel.object) { return false; }
+        if (typeof sel.object.highlight === "function") { sel.object.highlight(null); }
+        sel.object = null;
+        sel.distance = Infinity;
+        sel.screen = null;
+        sel.dataCoordinate = sel.dataPosition = null;
+        if (typeof glplot.update === "function") { glplot.update({}); }
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
 function sunLabelInstall(gd) {
     if (!gd || sunLabelBound) { return; }
     sunLabelBound = true;
     const down = new Map();
     gd.addEventListener("pointerdown", function (ev) {
+        sunTapSerial += 1;             // tap lag: one focus per press
+        sunPlotlyHoverDrop(gd);        // tap lag: a new press closes Plotly's box
         down.set(ev.pointerId, { x: ev.clientX, y: ev.clientY, t: Date.now(), multi: down.size > 0 });
         if (down.size > 1) { down.forEach(function (d) { d.multi = true; }); }
     }, true);
