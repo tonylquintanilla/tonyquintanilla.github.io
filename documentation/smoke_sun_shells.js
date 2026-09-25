@@ -2,6 +2,16 @@ const fs = require("fs");
 const g = {};
 new Function("window", fs.readFileSync(process.argv[2], "utf8"))(g);
 const GF = g.GalleryFeatures;
+// L-322 Stage D, patch D7: the renderers take KM_PER_AU and the frame's
+// angle from the SERVED cache, exactly as the page does. A missing row
+// fails this check rather than letting it test nothing.
+const FRAME_NOTES = GF.setFrameConstants(JSON.parse(require("fs").readFileSync(
+  require("path").join(__dirname, "..", "data", "solar-system", "coverage_index.json"),
+  "utf8")).frame_constants);
+if (FRAME_NOTES.length) {
+  console.log("FAIL frame constants not served: " + FRAME_NOTES.join("; "));
+  process.exit(1);
+}
 const AU = 149597870.7, RSUN_KM = 695700.0;
 let fail = 0;
 function check(n, ok, d) { console.log((ok?"  OK   ":"  FAIL ")+n+(d?"  ["+d+"]":"")); if(!ok) fail++; }

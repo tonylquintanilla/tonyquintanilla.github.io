@@ -283,7 +283,12 @@ async function ensureRuntime() {
   log("Assembler written to Pyodide FS.", "ok");
 
   log("Fetching served cache (../data/) ...");
-  PY.globals.set("COV_JSON", await fetchText("../data/solar-system/coverage_index.json"));
+  const covText = await fetchText("../data/solar-system/coverage_index.json");
+  PY.globals.set("COV_JSON", covText);
+  // L-322 Stage D, patch D7: the renderers take kilometres per AU and the
+  // frame's angle from the served cache; nothing draws until they have them.
+  GalleryFeatures.setFrameConstants(JSON.parse(covText).frame_constants)
+    .forEach(w => log("frame: " + w, "err"));
   PY.globals.set("CFG_JSON", await fetchText("../data/objects_config.json"));
   log("Served cache loaded.", "ok");
   return PY;

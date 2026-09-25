@@ -50,6 +50,12 @@
  * Updated September 15, 2026 with Anthropic's Claude Opus 5 (L-318 round
  * 4: the four hovers written here break inside a sentence only with
  * GalleryFeatures.SOFT_BR, so the phone's label can rejoin the sentence).
+ * Updated September 25, 2026 with Anthropic's Claude Opus 5.5 (L-322
+ * Stage D, patch D7: the room draws Earth's pole of date as the cache
+ * builder served it, for the axis, the equator, the geostationary ring
+ * and the belts alike, with the frame's axis as a stated fallback; the
+ * axis hover prints the served tilt at its served count with its date,
+ * and no longer derives one from the frame's angle).
  */
 (function (global) {
   "use strict";
@@ -200,6 +206,10 @@
         pole.ra.unit === "deg" && pole.dec.unit === "deg" &&
         isNum(pole.ra.value) && isNum(pole.dec.value)) {
       basis = opts.poleBasis(pole.ra.value, pole.dec.value);
+      if (!basis) {
+        warn(name + "/orientation: the frame angle is not served -- axis, " +
+             "equator and geostationary tilt not drawn");
+      }
     } else {
       warn(name + "/orientation: pole not served as {ra, dec} in degrees -- " +
            "axis, equator and geostationary tilt not drawn");
@@ -252,14 +262,31 @@
           name: gAxis, legendgroup: gAxis, showlegend: false, hoverinfo: "skip"
         });
       }
-      // Tilt of the pole from the frame's z (the ecliptic pole), derived
-      // from the served pole and the renderer's sourced mean obliquity.
-      var tiltDeg = Math.acos(Math.max(-1, Math.min(1, zb[2]))) * 180 / Math.PI;
+      // L-322 Stage D, patch D7: the tilt is the cache builder's, served
+      // with the pole of date it rests on. The page prints it at its
+      // served figure count and does not compute it. With no pole of date
+      // served, the axis drawn is the frame's own and no tilt is printed.
       var tip = [c[0] + zb[0] * axisHalf, c[1] + zb[1] * axisHalf, c[2] + zb[2] * axisHalf];
+      var tiltLines;
+      var tl = pole.tilt;
+      if (pole.ofDate && tl && tl.unit === "deg" && isNum(tl.value) &&
+          typeof tl.figures === "number") {
+        tiltLines = "Tilt: " + global.GalleryFeatures._fmtServed(tl.value, tl.figures) +
+          " deg on " + pole.ofDate + "," + SB +
+          "measured against the orbit of the Earth-Moon barycenter," + SB +
+          "the gravitational center of the Earth-Moon system," + SB +
+          "around the Sun that day (JPL Horizons).<br>" +
+          "The axis slowly circles over thousands of years and nods" + SB +
+          "slightly, so the pole and the tilt belong to that date.<br>";
+      } else if (pole.ofDate) {
+        tiltLines = "Tilt: not served for " + pole.ofDate + ".<br>";
+      } else {
+        tiltLines = "Tilt: not shown. No pole of date was served, so the" + SB +
+          "axis drawn is the frame's, Earth's average pole of the year 2000.<br>";
+      }
       var hAxis = "<b>" + gAxis + "</b><br><br>" +
         "North pole up the gold line; the ring is the equator on the crust.<br>" +
-        "Tilt from the ecliptic pole (this frame's z): " + tiltDeg.toFixed(2) + " deg," + SB +
-        "derived from the served pole and the renderer's mean obliquity.<br>" +
+        tiltLines +
         "Axis drawn to " + kmAndAu(K, axisHalf) + " -- a drawing length.<br><br>" +
         "The curved arrows at both ends show the sense of the turning:" + SB +
         "prograde, west to east, counter-clockwise seen from above the" + SB +
@@ -435,6 +462,25 @@
     var K = GF._KM_PER_AU;
     var features = payload.features || [];
 
+    // L-322 Stage D, patch D7: ONE pole for the whole room. When the cache
+    // builder served a pole of date, it replaces the served orientation
+    // block's pole before anything is drawn, so the axis, the equator, the
+    // geostationary ring and the belts all hang off the same pole. Without
+    // this the rings kept the frame's axis while the axis moved, 0.15 deg
+    // apart -- found by the Earth geometry smoke on 2026-09-25.
+    var pod = payload.poleOfDate || null;
+    if (pod && pod.ra && pod.dec) {
+      features = features.map(function (f) {
+        if (f.object !== "earth" || f.feature !== "orientation") return f;
+        var params = {};
+        for (var pk in (f.params || {})) {
+          if (f.params.hasOwnProperty(pk)) params[pk] = f.params[pk];
+        }
+        params.pole = { ra: pod.ra, dec: pod.dec };
+        return { object: f.object, feature: f.feature, params: params };
+      });
+    }
+
     var built = GF.buildFeatureTraces(
       features,
       { earth: { name: "Earth", position: [0, 0, 0] } },
@@ -462,10 +508,29 @@
       crustAu = planetRadius.value / K;
     }
     var orient = byKey.orientation || {};
-    var pole = orient.pole ? {
-      ra: orient.pole.ra, dec: orient.pole.dec,
-      source: orient.source, orrery_constant: orient.orrery_constant
-    } : null;
+    // L-322 Stage D, patch D7: the pole drawn is the pole of date the cache
+    // builder served from JPL Horizons, handed over by the Python driver
+    // as payload.poleOfDate. The served orientation block, the frame's own
+    // axis, is the fallback, and the warnings say which one was drawn.
+    var pole = null;
+    if (pod && pod.ra && pod.dec) {
+      pole = {
+        ra: pod.ra, dec: pod.dec, ofDate: pod.date || null,
+        tilt: pod.tilt || null,
+        source: "JPL Horizons: Earth's north pole on " + pod.date +
+          " (observer quantity 32, target 399), and the tilt against the" +
+          " Earth-Moon barycenter's orbit that day (target 3), served by" +
+          " the gallery cache builder",
+        orrery_constant: null
+      };
+    } else if (orient.pole) {
+      pole = {
+        ra: orient.pole.ra, dec: orient.pole.dec, ofDate: null, tilt: null,
+        source: orient.source, orrery_constant: orient.orrery_constant
+      };
+      warnings.push("earth/orientation: no pole of date served -- the axis " +
+                    "drawn is the frame's, Earth's average pole of the year 2000");
+    }
 
     // Named absences: groups the dispatcher had no renderer for.
     var absent = [];

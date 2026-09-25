@@ -113,6 +113,11 @@
         all ten entries clear + and -; and the rooms' "In this scene" bar
         and grid chip, which two later display rules had let through,
         are hidden on the Explorer again)
+     Updated: September 25, 2026 with Anthropic's Claude Opus 5.5
+       (L-322 Stage D, patch D7: kilometres per AU and the frame's angle
+        are read from the served cache's frame_constants before anything
+        is drawn, and their warnings reach the room's notes; Earth's
+        driver hands the served pole of date to the room)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1589,6 +1594,15 @@ try:
 except Exception as _e:
     _notes.append("moon: trusted arc not derived (%s)" % _e)
 
+# L-322 Stage D, patch D7: Earth's pole and tilt of date, as the cache
+# builder served them (JPL Horizons). Handed over untouched; the page
+# draws the pole and prints the tilt, and computes neither.
+_pod = None
+try:
+    _pod = _cache.record("earth").get("pole_of_date")
+except Exception as _e:
+    _notes.append("earth: pole of date not read (%s)" % _e)
+
 json.dumps({
     "figure": result.figure,
     "features": result.report["features"],
@@ -1596,6 +1610,7 @@ json.dumps({
     "sun": _sun,
     "moonArc": _arc,
     "epochJd": _jd,
+    "poleOfDate": _pod,
 })
 `;
 
@@ -2190,6 +2205,10 @@ async function initSunExhibit() {
         const cov = await fetchTextOrThrow(
             "data/solar-system/coverage_index.json");
         const cfg = await fetchTextOrThrow("data/objects_config.json");
+        // L-322 Stage D, patch D7: kilometres per AU and the frame's
+        // angle come from the served cache, before anything is drawn.
+        const frameNotes = GalleryFeatures.setFrameConstants(
+            JSON.parse(cov).frame_constants);
         pyodide.globals.set("COV_JSON", cov);
         pyodide.globals.set("CFG_JSON", cfg);
         pyodide.globals.set(
@@ -2204,7 +2223,8 @@ async function initSunExhibit() {
         const built = EX.compose(payload);
         sunAbsent = built.absent || [];
 
-        const notes = (payload.warnings || []).concat(built.warnings || []);
+        const notes = frameNotes.concat(payload.warnings || [],
+                                        built.warnings || []);
         for (let i = 0; i < notes.length; i++) {
             console.warn(EXHIBIT + " exhibit: " + notes[i]);
         }
@@ -2491,7 +2511,7 @@ function sunGridChipUpdate() {
     // a visitor, so the chip gives km too -- the hover convention, on
     // the one surface that lacked it. Earth's arrival grid is 2e-5 AU.
     let label = d.toFixed(dec) + " AU";
-    if (d < 1e-3) {
+    if (d < 1e-3 && GalleryFeatures._KM_PER_AU) {
         const km = d * GalleryFeatures._KM_PER_AU;
         label += " (" + km.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km)";
     }

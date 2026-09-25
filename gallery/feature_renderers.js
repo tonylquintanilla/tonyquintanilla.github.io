@@ -58,20 +58,48 @@
  *   the belts print their edges and the outer belt's band at the counts
  *   served, and the tilt with its epoch and served rate; four unit
  *   asserts move to the tokens the store now gives the coefficients).
+ * Module updated: September 25, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-322 Stage D, patch D7: KM_PER_AU and the frame's angle are no
+ *   longer typed here; setFrameConstants() takes them from the served
+ *   cache, nothing is drawn without KM_PER_AU, and no pole is placed
+ *   without the angle -- each missing row is a warning).
  */
 
 (function (global) {
   "use strict";
 
-  // --- Constants ----------------------------------------------------------
+  // --- The frame rows, SERVED --------------------------------------------
 
-  // Source: IAU 2012 Resolution B2 -- exact definition.
-  // Mirrors constants_new.py::KM_PER_AU.
-  var KM_PER_AU = 149597870.7;
+  // L-322 Stage D, patch D7: kilometres per AU and the frame's angle are
+  // no longer typed here. The cache builder serves them as frame_constants
+  // in data/solar-system/coverage_index.json, read from the orrery's
+  // constants export (KM_PER_AU; EARTH_OBLIQUITY_J2000_DEG, the angle that
+  // turns sky coordinates into the drawing's frame). The page, and every
+  // smoke check, calls setFrameConstants() once before drawing anything.
+  // Until then both are null and nothing is drawn: a missing row is a
+  // warning, never a remembered number.
+  var KM_PER_AU = null;
+  var OBLIQUITY_RAD = null;
 
-  // Source: IAU 2006 / J2000 mean obliquity of the ecliptic.
-  // Mirrors idealized_orbits.py::create_planet_transformation_matrix.
-  var OBLIQUITY_RAD = 23.439291 * Math.PI / 180.0;
+  function setFrameConstants(frame) {
+    var warnings = [];
+    var rows = (frame && typeof frame === "object" && frame.rows) || {};
+    var km = rows.KM_PER_AU, ob = rows.EARTH_OBLIQUITY_J2000_DEG;
+    KM_PER_AU = (km && km.unit === "km" && typeof km.value === "number" &&
+                 isFinite(km.value) && km.value > 0) ? km.value : null;
+    OBLIQUITY_RAD = (ob && ob.unit === "deg" && typeof ob.value === "number" &&
+                     isFinite(ob.value)) ? ob.value * Math.PI / 180.0 : null;
+    if (KM_PER_AU === null) {
+      warnings.push("frame_constants: KM_PER_AU is not served in km -- no " +
+                    "feature is drawn, because every served distance needs it");
+    }
+    if (OBLIQUITY_RAD === null) {
+      warnings.push("frame_constants: EARTH_OBLIQUITY_J2000_DEG is not served " +
+                    "in degrees -- no pole can be placed, so no axis is drawn " +
+                    "and rings and belts are drawn with no tilt");
+    }
+    return warnings;
+  }
 
   // Reserved child keys inside a slug-keyed feature node. Anything else that
   // is a dict is treated as a drawable member; anything unrecognized is
@@ -530,6 +558,8 @@
    * orbits -- a real bug the orrery hit in June 2026 and caught by render.
    */
   function poleBasis(raDeg, decDeg) {
+    // L-322 Stage D: no served frame angle, no pole (see setFrameConstants).
+    if (OBLIQUITY_RAD === null) return null;
     var ra = raDeg * Math.PI / 180.0;
     var dec = decDeg * Math.PI / 180.0;
 
@@ -575,7 +605,12 @@
     var ra = measured(pole.ra, "deg", slug + "/orientation/pole/ra", warn);
     var dec = measured(pole.dec, "deg", slug + "/orientation/pole/dec", warn);
     if (ra === null || dec === null) return null;
-    return poleBasis(ra, dec);
+    var basis = poleBasis(ra, dec);
+    if (!basis) {
+      warn(slug + "/orientation: the frame angle is not served -- drawn " +
+           "with no tilt");
+    }
+    return basis;
   }
 
   // --- Geometry -----------------------------------------------------------
@@ -2274,6 +2309,15 @@
     var sunDir = (opts && Array.isArray(opts.sunDir)) ? opts.sunDir : null;
     function warn(msg) { warnings.push(msg); }
 
+    // L-322 Stage D: every served distance is converted with the served
+    // KM_PER_AU. Without it nothing can be placed, so nothing is drawn,
+    // and the reason is the one warning returned.
+    if (KM_PER_AU === null) {
+      warn("features: KM_PER_AU is not served (frame_constants in " +
+           "coverage_index.json) -- no feature drawn");
+      return { traces: [], warnings: warnings };
+    }
+
     var traces = [];
     var orientations = {};
     var i;
@@ -2345,13 +2389,15 @@
     return { traces: traces, warnings: warnings };
   }
 
-  global.GalleryFeatures = {
+  var api = {
     buildFeatureTraces: buildFeatureTraces,
+    // L-322 Stage D: the page calls this once, with coverage_index.json's
+    // frame_constants, before drawing; it returns the warnings to show.
+    setFrameConstants: setFrameConstants,
     // L-320: the marker offset off the pole, shared with earth_geometry.js.
     infoMarkerOffsetDeg: INFO_MARKER_OFFSET_DEG,
     // Exported for the smoke test; not part of the drawing interface.
     _poleBasis: poleBasis,
-    _KM_PER_AU: KM_PER_AU,
     // L-342: the served-figures formatter, so the hover suite can run
     // every declared count through the code the page actually uses
     // rather than a second copy of the same arithmetic.
@@ -2363,5 +2409,11 @@
     // the page's label wrapper and the hover budget suite.
     SOFT_BR: SOFT_BR
   };
+  // L-322 Stage D: read at the moment of use, because the served value
+  // arrives after this file has loaded. null until setFrameConstants.
+  Object.defineProperty(api, "_KM_PER_AU", {
+    enumerable: true, get: function () { return KM_PER_AU; }
+  });
+  global.GalleryFeatures = api;
 
 })(typeof window !== "undefined" ? window : globalThis);

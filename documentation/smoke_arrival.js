@@ -44,6 +44,16 @@ global.window = global;
 require(path.join(root, "gallery", "feature_renderers.js"));
 require(path.join(root, "gallery", "earth_geometry.js"));
 require(path.join(root, "gallery", "arrival.js"));
+// L-322 Stage D, patch D7: the renderers take KM_PER_AU and the frame's
+// angle from the SERVED cache, exactly as the page does. A missing row
+// fails this check rather than letting it test nothing.
+const FRAME_NOTES = global.GalleryFeatures.setFrameConstants(JSON.parse(require("fs").readFileSync(
+  require("path").join(__dirname, "..", "data", "solar-system", "coverage_index.json"),
+  "utf8")).frame_constants);
+if (FRAME_NOTES.length) {
+  console.log("FAIL frame constants not served: " + FRAME_NOTES.join("; "));
+  process.exit(1);
+}
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

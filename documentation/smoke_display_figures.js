@@ -59,6 +59,11 @@
 // The fixture was re-recorded with those four changed and is now
 // fixture_hovers_L322c2_on_42fd97dd.json; the old one is left in place,
 // unreferenced, and recorded on the ledger rather than deleted.
+// Updated September 25, 2026 with Anthropic's Claude Opus 5.5 (L-322
+// Stage D, patch D7): the axis hover's tilt of date is graded against the
+// served block and held in the fixture as a marker, because it changes
+// with every cache build; the self-test gains two ways to go red. The
+// fixture is fixture_hovers_L322d7_on_d892ed6e.json.
 
 "use strict";
 const fs = require("fs");
@@ -68,13 +73,26 @@ const root = path.dirname(__dirname);
 global.window = global;
 require(path.join(root, "gallery", "feature_renderers.js"));
 require(path.join(root, "gallery", "earth_geometry.js"));
+// L-322 Stage D, patch D7: the renderers take KM_PER_AU and the frame's
+// angle from the SERVED cache, exactly as the page does. A missing row
+// fails this check rather than letting it test nothing.
+const FRAME_NOTES = global.GalleryFeatures.setFrameConstants(JSON.parse(require("fs").readFileSync(
+  require("path").join(__dirname, "..", "data", "solar-system", "coverage_index.json"),
+  "utf8")).frame_constants);
+if (FRAME_NOTES.length) {
+  console.log("FAIL frame constants not served: " + FRAME_NOTES.join("; "));
+  process.exit(1);
+}
 
 const KM_PER_AU = 149597870.7;
 const SOFT_BR = "<br soft>";
-// Recorded at gallery 42fd97dd with the L-322 C2-b patch applied.
-const FIXTURE_AT = "42fd97dd";
+// Recorded at gallery d892ed6e with the L-322 Stage D patch D7 applied:
+// the axis hover's tilt line is held as a marker, graded separately. The
+// fixture before it, fixture_hovers_L322c2_on_42fd97dd.json, is left in
+// place unreferenced, as that one left its own predecessor.
+const FIXTURE_AT = "d892ed6e";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L322c2_on_42fd97dd.json");
+                          "fixture_hovers_L322d7_on_d892ed6e.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }
@@ -373,10 +391,43 @@ const SUN_OPTS = { sceneHalfRangeAu: 0.25 };
 /* The Earth room's frame elements -- the Moon, the axis, the Sun
    direction, the terminator -- come from earth_geometry.js and this
    build does not touch them. Built so the fixture covers them. */
+/* L-322 Stage D, patch D7: the axis hover prints the tilt of date the
+   cache builder served, at its served count, with its date. That line is
+   GRADED here against the served block, then replaced by a marker, so
+   the rest of the hover is still held byte for byte. The tilt and its
+   date change with every cache build; a fixture holding them would fail
+   the next build for no fault. */
+const AXIS_GROUP = "Earth: Rotation Axis and Equator";
+const TILT_MARK = "Tilt: [the served tilt of date, graded above],";
+function fmtCount(v, count) { return fmtKm(v, count).slice(0, -3); }
+function gradeAxisTilt(frame, pod) {
+  if (!pod || !pod.tilt || typeof pod.tilt.figures !== "number") {
+    fail("the served cache carries no pole_of_date tilt with a figure count " +
+         "for earth, so the axis hover's tilt could not be graded");
+    return;
+  }
+  const h = frame[AXIS_GROUP];
+  if (typeof h !== "string") { fail("the axis hover was never built"); return; }
+  const want = "Tilt: " + fmtCount(pod.tilt.value, pod.tilt.figures) +
+               " deg on " + pod.date + ",";
+  if (h.indexOf(want) < 0) {
+    fail("the axis hover does not print the served tilt of date at its " +
+         "count: expected \"" + want + "\"");
+    return;
+  }
+  hoversExamined += 1;
+  numbersExamined += numbersIn(want).length;
+  examinedNames.push(AXIS_GROUP + " (the tilt of date)");
+  frame[AXIS_GROUP] = h.split(want).join(TILT_MARK);
+}
+
 function sceneHovers(shellGroups) {
   const payload = readJson(path.join(root, "documentation",
                                      "payload_earth_scene.json"));
   payload.features = requestsFrom("earth", cacheFeatures("earth"));
+  // L-322 Stage D, patch D7: the page's driver hands over the served pole
+  // of date; so does this check, from the file the browser fetches.
+  payload.poleOfDate = (cov.objects.earth || {}).pole_of_date || null;
   const scene = EarthGeometry.composeScene(payload, {
     GF: GalleryFeatures, halfRangeAu: 6.155e-5, epochIso: "2026-09-09" });
   // A shell's own hover is examined already, by the room's build above.
@@ -388,7 +439,9 @@ function sceneHovers(shellGroups) {
     return !Object.prototype.hasOwnProperty.call(
       shellGroups, t.legendgroup || "");
   });
-  return collect(frame);
+  const hovers = collect(frame);
+  gradeAxisTilt(hovers, payload.poleOfDate);
+  return hovers;
 }
 
 // -------------------------------------------------- number accounting
@@ -641,6 +694,26 @@ function selfTest() {
   }
   failures.length = g0;
   numbersExamined = counted;
+  // 5. the tilt grader goes red on a tilt printed at the wrong count
+  //    (L-322 Stage D, patch D7)
+  const pod = { date: "2026-09-25",
+                tilt: { value: 23.438159889434395, figures: 7 } };
+  const t0 = failures.length, e0 = hoversExamined, n0 = examinedNames.length;
+  const okFrame = {}; okFrame[AXIS_GROUP] = "x<br>Tilt: 23.43816 deg on 2026-09-25,<br>";
+  gradeAxisTilt(okFrame, pod);
+  if (failures.length !== t0 || okFrame[AXIS_GROUP].indexOf(TILT_MARK) < 0) {
+    notes.push("the tilt grader failed a tilt printed right");
+  }
+  const badFrame = {}; badFrame[AXIS_GROUP] = "x<br>Tilt: 23.44 deg on 2026-09-25,<br>";
+  const t1 = failures.length;
+  gradeAxisTilt(badFrame, pod);
+  if (failures.length === t1) {
+    notes.push("the tilt grader passed a tilt printed at the wrong count");
+  }
+  failures.length = t0;
+  hoversExamined = e0;
+  examinedNames.length = n0;
+  numbersExamined = counted;
   return notes;
 }
 
@@ -655,7 +728,7 @@ if (selfNotes.length) {
               "cannot be trusted to grade anything else.\n");
 } else {
   console.log("Self-test: the rules and the graders go red on demand " +
-              "(13 ways).\n");
+              "(15 ways).\n");
 }
 
 // The served cache is what the browser fetches, so it is what is graded.

@@ -85,6 +85,16 @@ eval(code);
 if (geomPath) { eval(fs.readFileSync(geomPath, "utf8")); }
 const GF = global.GalleryFeatures;
 const EG = global.EarthGeometry;
+// L-322 Stage D, patch D7: the renderers take KM_PER_AU and the frame's
+// angle from the SERVED cache, exactly as the page does. A missing row
+// fails this check rather than letting it test nothing.
+const FRAME_NOTES = GF.setFrameConstants(JSON.parse(require("fs").readFileSync(
+  require("path").join(__dirname, "..", "data", "solar-system", "coverage_index.json"),
+  "utf8")).frame_constants);
+if (FRAME_NOTES.length) {
+  console.log("FAIL frame constants not served: " + FRAME_NOTES.join("; "));
+  process.exit(1);
+}
 
 let failures = 0;
 function check(label, ok, note) {

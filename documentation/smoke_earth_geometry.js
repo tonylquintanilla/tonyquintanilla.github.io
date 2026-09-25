@@ -17,6 +17,11 @@
 // info marker on the z axis).
 // Updated September 15, 2026 with Anthropic's Claude Opus 5 (L-318 round 4:
 // a soft break is a line too, and the tilt's epoch may sit across one).
+// Updated September 25, 2026 with Anthropic's Claude Opus 5.5 (L-322
+// Stage D, patch D7: the frame rows come from the served cache; the axis
+// is checked against the served pole of date and its hover against the
+// served tilt; the fallback with no pole of date, and the case with no
+// frame angle, are each composed and checked).
 
 const fs = require("fs");
 const path = require("path");
@@ -25,6 +30,16 @@ const g = {};
 new Function("window", fs.readFileSync(process.argv[2], "utf8") + "\n//# sourceURL=feature_renderers.js")(g);
 new Function("window", fs.readFileSync(process.argv[3], "utf8") + "\n//# sourceURL=earth_geometry.js")(g);
 const GF = g.GalleryFeatures, EG = g.EarthGeometry;
+// L-322 Stage D, patch D7: the renderers take KM_PER_AU and the frame's
+// angle from the SERVED cache, exactly as the page does. A missing row
+// fails this check rather than letting it test nothing.
+const FRAME_NOTES = GF.setFrameConstants(JSON.parse(require("fs").readFileSync(
+  require("path").join(__dirname, "..", "data", "solar-system", "coverage_index.json"),
+  "utf8")).frame_constants);
+if (FRAME_NOTES.length) {
+  console.log("FAIL frame constants not served: " + FRAME_NOTES.join("; "));
+  process.exit(1);
+}
 
 let failures = 0;
 function check(name, ok, detail) {
@@ -43,6 +58,18 @@ const deg = r => r * 180 / Math.PI;
 const angleDeg = (a, b) => deg(Math.acos(Math.min(1, Math.abs(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))));
 
 const payload = JSON.parse(fs.readFileSync(path.join(__dirname, "payload_earth_scene.json"), "utf8"));
+// L-322 Stage D, patch D7: the recorded payload predates the pole of date.
+// The page's driver now hands over the served block untouched, so this
+// check does the same, from the file the browser fetches.
+const COV = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "solar-system",
+                                                 "coverage_index.json"), "utf8"));
+const POD = (COV.objects.earth || {}).pole_of_date || null;
+if (!POD || !POD.tilt) {
+  console.log("FAIL the served cache carries no pole_of_date with a tilt for earth");
+  process.exit(1);
+}
+const fallbackPayload = JSON.parse(JSON.stringify(payload));
+payload.poleOfDate = POD;
 const HALF = 6.155e-5;                      // Earth's arrival floor, as the page uses it
 const out = EG.composeScene(payload, { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" });
 const T = out.traces;
@@ -93,6 +120,50 @@ const geo = T.find(t => /Geostationary/.test(t.name) && t.showlegend === true);
 check("GEO ring and the equator share one plane", angleDeg(normal(geo), normal(equator)) < 0.05);
 let eqR = 0; for (let i = 0; i < equator.x.length; i++) eqR = Math.max(eqR, Math.hypot(equator.x[i], equator.y[i], equator.z[i]));
 check("equator drawn on the crust (1.002 R_earth)", Math.abs(eqR / rCrust - 1.002) < 1e-6, (eqR / rCrust).toFixed(5));
+
+// L-322 Stage D, patch D7: the axis is the SERVED pole of date, and its
+// hover prints the served tilt with its date. The frame's own axis, the
+// fallback, sits about 0.15 deg away after 26 years of precession, so the
+// two cannot be mistaken for each other at these tolerances.
+const podDir = GF._poleBasis(POD.ra.value, POD.dec.value).zb;
+const frameDir = GF._poleBasis(0.0, 90.0).zb;
+check("the axis is the served pole of date (" + POD.date + ")",
+      angleDeg(axisDir, podDir) < 1e-6,
+      angleDeg(axisDir, podDir).toExponential(2) + " deg from it, " +
+      angleDeg(axisDir, frameDir).toFixed(3) + " deg from the frame's axis");
+check("the pole of date is not the frame's axis",
+      angleDeg(axisDir, frameDir) > 0.05, angleDeg(axisDir, frameDir).toFixed(3) + " deg");
+const axisHover = axisG.map(t => Array.isArray(t.text) ? t.text[0] : t.text)
+                       .find(h => typeof h === "string" && /Tilt/.test(h)) || "";
+const wantTilt = "Tilt: " + POD.tilt.value.toPrecision(POD.tilt.figures) + " deg on " + POD.date + ",";
+check("the axis hover prints the served tilt at its figure count with its date",
+      axisHover.indexOf(wantTilt) >= 0, wantTilt);
+check("the axis hover no longer derives a tilt from the frame angle",
+      !/renderer's mean obliquity/.test(axisHover));
+
+// The fallback: no pole of date served. The frame's axis is drawn, no
+// tilt is printed, and exactly one warning says so.
+const fb = EG.composeScene(fallbackPayload, { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" });
+const fbAxis = fb.traces.find(t => t.legendgroup === "Earth: Rotation Axis and Equator" &&
+                                   t.mode === "lines" && t.x.length === 2);
+const fbDir = (() => { const v = [fbAxis.x[1]-fbAxis.x[0], fbAxis.y[1]-fbAxis.y[0], fbAxis.z[1]-fbAxis.z[0]]; const m = Math.hypot(...v); return v.map(c => c/m); })();
+check("no pole of date: the frame's axis is drawn", angleDeg(fbDir, frameDir) < 1e-6,
+      angleDeg(fbDir, frameDir).toExponential(2) + " deg");
+check("no pole of date: one warning says which axis is drawn",
+      fb.warnings.length === 1 && /no pole of date served/.test(fb.warnings[0]), fb.warnings.join(" | "));
+const fbHover = fb.traces.filter(t => t.legendgroup === "Earth: Rotation Axis and Equator")
+  .map(t => Array.isArray(t.text) ? t.text[0] : t.text).find(h => typeof h === "string" && /Tilt/.test(h)) || "";
+check("no pole of date: the hover prints no tilt and says why", /Tilt: not shown/.test(fbHover));
+
+// No frame angle served: no pole can be placed, so no axis, and a warning.
+const saved = COV.frame_constants;
+GF.setFrameConstants({ rows: { KM_PER_AU: saved.rows.KM_PER_AU } });
+const na = EG.composeScene(JSON.parse(JSON.stringify(payload)), { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" });
+GF.setFrameConstants(saved);
+check("no frame angle: no axis is drawn",
+      !na.traces.some(t => t.legendgroup === "Earth: Rotation Axis and Equator"));
+check("no frame angle: a warning says so",
+      na.warnings.some(w => /frame angle is not served/.test(w)), na.warnings.join(" | "));
 
 const sunG = groups["Earth: Sun Direction"];
 const sunLine = sunG.find(t => t.mode === "lines");

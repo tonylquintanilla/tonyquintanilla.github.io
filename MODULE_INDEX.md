@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** September 24, 2026 by `module_atlas.py`  
+**Generated:** September 25, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 40  
-**Total Lines of Code (non-blank):** 20,110  
+**Total Lines of Code (non-blank):** 20,178  
 **Total Public Functions/Classes:** 291
 
 ## Classification Coverage
@@ -19,7 +19,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 **Undetermined role (8).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L286_3_rooms_and_header_20260924.py`
+- `patch_L322_D_7_gallery_page_reads_served_pole_20260925.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -30,7 +30,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 **Undetermined domain (6).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L286_3_rooms_and_header_20260924.py`
+- `patch_L322_D_7_gallery_page_reads_served_pole_20260925.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -125,7 +125,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (574 lines) |
-| `patch_L286_3_rooms_and_header_20260924.py` | - L-286, the rooms and the header. (140 lines) |
+| `patch_L322_D_7_gallery_page_reads_served_pole_20260925.py` | - L-322 Stage D, gallery patch 2 of 3: the page reads the served pole and frame rows, and stops typing its own numbers. (208 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (460 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (287 lines) |
