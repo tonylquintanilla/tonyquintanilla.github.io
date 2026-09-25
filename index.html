@@ -57,7 +57,29 @@
          outsizes the label's, so a tap drew an empty grey box over the
          render beside the info card. On such a figure in Mobile mode
          the page now turns Plotly's label off; taps still open the
-         card. The Desktop tab is unchanged. -->
+         card. The Desktop tab is unchanged.
+     Updated: September 24, 2026 with Anthropic's Claude Opus 5.5
+       - Rooms in four levels (L-286, Tony's ruling of 2026-09-24 and
+         the mockup he approved). Each room is its own screen: its
+         title and counts, its own cards, then the rooms inside it; a
+         room with no cards stays in the list, greyed, marked "under
+         construction". A door in the lobby opens its door's screen.
+         Before, the page kept only two parts of a room path, so the
+         Moon's cards listed under Earth.
+       - A header across the top of every screen: "Paloma's Orrery"
+         returns to the lobby, then the chain of where you are in short
+         names ("Solar: Earth: Moon"), each link opening that room. On
+         a card, the card's title sits under the chain with its buttons
+         (labels, the i card, links, share, Google Earth) beside it,
+         on the desktop as on the phone.
+       - The Desktop and Mobile tabs move into the header, on every
+         desktop screen, the lobby included; none on a phone, and none
+         on a phone first opened sideways.
+       - The side menu is retired. Its markup stays, hidden, until a
+         later cleanup; nothing opens it.
+       - Rooms and cards have their own addresses (#room=<path>, and
+         #<card> as before), and opening one adds to the browser's
+         history, so Back returns to the room a card was opened from. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1620,6 +1642,149 @@
         }
 
         /* ================================================================
+           THE HEADER AND THE ROOMS (L-286, September 24, 2026)
+           The header replaces the floating menu button. The side menu
+           is retired: its button and the old toolbar are hidden here.
+           ================================================================ */
+        .nav-btn, .viz-toolbar, .overlay-selector, .overlay-backdrop { display: none !important; }
+        .site-header {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+            min-height: 52px;
+            padding: 6px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            z-index: 210;
+        }
+        .site-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-width: 0;
+        }
+        .site-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .site-home {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: none;
+            border: none;
+            padding: 8px 0;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .site-header.at-lobby .site-home { cursor: default; }
+        .site-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+        .site-header.no-chain .site-sep { display: none; }
+        .site-chain {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .site-chain button {
+            background: none;
+            border: none;
+            font: inherit;
+            padding: 8px 0;
+            cursor: pointer;
+        }
+        .site-chain .chain-colon { color: var(--text-dim); }
+        .site-chain .chain-here { color: var(--text-primary); font-weight: 500; }
+        .site-right { display: flex; align-items: center; flex-shrink: 0; }
+        .site-header .mode-toggle { padding: 0; border-bottom: none; }
+        .site-header .mode-btn { flex: none; padding: 6px 14px; }
+        body.is-phone .site-header .mode-toggle { display: none; }
+        .site-title-row { display: none; align-items: center; gap: 8px; min-width: 0; }
+        .site-header.on-card .site-title-row { display: flex; }
+        .site-card-title {
+            flex: 1;
+            min-width: 0;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .site-tools { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .site-tools > * {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            z-index: auto !important;
+        }
+        @media (max-width: 600px) {
+            .site-header { padding: 6px 12px; }
+            .site-left { gap: 10px; }
+            .site-home { font-size: 1.02rem; }
+            .site-chain { font-size: 0.85rem; }
+        }
+
+        .room { width: 100%; max-width: 960px; text-align: left; position: relative; z-index: 1; }
+        .room-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            line-height: 1.1;
+        }
+        .room-sentence {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-style: italic;
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .room-meta { font-size: 0.8rem; color: var(--text-secondary); margin: 6px 0 24px; }
+        .room-section { margin-bottom: 26px; }
+        .room-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+        @media (min-width: 768px) {
+            .room-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1025px) {
+            .room-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        .room-card { min-height: 0; }
+        .room-card .lobby-card-title { margin-top: 0; font-size: 0.9rem; }
+        .room-card-desc {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.45;
+            margin-top: 4px;
+        }
+        .room-card-meta { font-size: 0.7rem; color: var(--text-dim); margin-top: 6px; }
+        .room-rows .lobby-door-name {
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0;
+            text-transform: none;
+            color: var(--text-primary);
+        }
+        .room-rows .lobby-door-bar { width: 5px; min-height: 34px; }
+        .room-rows .lobby-door.empty { cursor: default; }
+        .room-rows .lobby-door.empty:hover { background: none; }
+        .room-rows .lobby-door.empty .lobby-door-name { color: var(--text-dim); }
+        .room-special {
+            font-size: 0.62rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-left: 10px;
+        }
+
+        /* ================================================================
            RESPONSIVE
            ================================================================ */
         @media (max-width: 1024px) {
@@ -1772,6 +1937,22 @@
 
     <!-- Main app container (always full-screen) -->
     <div class="app-container">
+        <!-- The header (L-286): home, the chain, the tabs; on a card, its
+             title and buttons. Filled by setHeader(). -->
+        <header class="site-header at-lobby no-chain" id="siteHeader">
+            <div class="site-header-row">
+                <div class="site-left">
+                    <button type="button" class="site-home" id="siteHome">Paloma's Orrery</button>
+                    <span class="site-sep"></span>
+                    <nav class="site-chain" id="siteChain" aria-label="Where you are"></nav>
+                </div>
+                <div class="site-right" id="siteRight"></div>
+            </div>
+            <div class="site-title-row">
+                <div class="site-card-title" id="siteCardTitle"></div>
+                <div class="site-tools" id="siteTools"></div>
+            </div>
+        </header>
         <div class="viz-toolbar" id="vizToolbar"></div>
         <div class="viz-container" id="vizContainer">
             <!-- Loading overlay -->
@@ -1970,6 +2151,8 @@
         var ROOM_SENTENCES = {};     // schema v2: room path -> placard sentence
         var DOORS = [];              // schema v2: the door records, in config order (L-282)
         var ROOM_ORDER = {};         // room path -> position in a pre-order walk of the tree (L-286)
+        var ROOM_NODES = {};         // room path -> { node, parent } from the same walk (L-286 rooms)
+        var currentRoom = null;      // the room screen on show, or null (L-286 rooms)
 
         // ---- DOM refs ----
         var navBtn         = document.getElementById('navBtn');
@@ -2109,11 +2292,15 @@
                 '<div class="turn-card" id="turnCard">' +
                 '<div class="turn-card-title">' + escapeHtml(viz.title || 'Untitled') + '</div>' +
                 '<div class="turn-card-text">Turn your phone to landscape to view this card.</div>' +
-                '<button type="button" class="turn-card-back" id="turnCardBack">Back to the gallery</button>' +
+                '<button type="button" class="turn-card-back" id="turnCardBack">' +
+                escapeHtml(ROOM_NODES[viz.room] ? 'Back to ' + (ROOM_LABELS[viz.room] || 'the room')
+                                                : 'Back to the gallery') + '</button>' +
                 '</div>';
             welcomeState.style.display = 'flex';
             var back = document.getElementById('turnCardBack');
-            if (back) back.addEventListener('click', function () { goHome(); });
+            if (back) back.addEventListener('click', function () {
+                if (ROOM_NODES[viz.room]) showRoom(viz.room, true); else goHome();
+            });
             window.scrollTo(0, 0);
             welcomeState.scrollTop = 0;
         }
@@ -2229,6 +2416,7 @@
                     var path = prefix ? prefix + '/' + r.key : r.key;
                     ROOM_ORDER[path] = roomSeq++;
                     ROOM_LABELS[path] = r.label || r.key;
+                    ROOM_NODES[path] = { node: r, parent: prefix || null };
                     if (r.sentence) ROOM_SENTENCES[path] = r.sentence;
                     if (r.rooms) walk(r.rooms, path);
                 }
@@ -2398,18 +2586,28 @@
             // Setup event listeners
             setupEvents();
 
-            // On mobile: move nav and share buttons into the toolbar
-            // so they sit above the chart instead of floating over it
-            if (window.innerWidth < 1024) {
-                var toolbar = document.getElementById('vizToolbar');
-                if (toolbar) {
-                    toolbar.appendChild(navBtn);
-                    toolbar.appendChild(annToggleBtn);
-                    toolbar.appendChild(encBtn);
-                    toolbar.appendChild(linkBtn);
-                    toolbar.appendChild(shareBtn);
-                }
+            // The header (L-286, 2026-09-24) holds a card's buttons on
+            // every screen size, where the phone's toolbar and the
+            // desktop's floating buttons held them before; the tabs move
+            // into it from the retired side menu. A phone -- narrow, or a
+            // touch screen whose short side is a phone's, so a phone
+            // first opened sideways too -- shows no tabs.
+            var tools = document.getElementById('siteTools');
+            if (tools) {
+                [document.getElementById('kmz-handoff-btn'), annToggleBtn, encBtn,
+                 linkBtn, shareBtn].forEach(function (el) { if (el) tools.appendChild(el); });
             }
+            var tabs = document.querySelector('.mode-toggle');
+            var right = document.getElementById('siteRight');
+            if (tabs && right) right.appendChild(tabs);
+            var phoneSideways = !!(window.matchMedia &&
+                window.matchMedia('(pointer: coarse)').matches &&
+                Math.min(screen.width, screen.height) < 768);
+            if (window.innerWidth < 768 || phoneSideways) document.body.classList.add('is-phone');
+            var home = document.getElementById('siteHome');
+            if (home) home.addEventListener('click', function () {
+                if (currentVizId || currentRoom) goHome();
+            });
 
             // Auto-detect default mode from screen width
             // Phones (<768px): force portrait, no toggle visible
@@ -2611,17 +2809,20 @@
             welcomeState.innerHTML = html;
             welcomeState.style.display = 'flex';
             updateWelcomeCount();
+            setHeader(null, null);
 
+            // A door opens its own screen (L-286, 2026-09-24), where it
+            // opened the side menu before.
             var doorEls = welcomeState.querySelectorAll('.lobby-door');
             for (var e = 0; e < doorEls.length; e++) {
                 doorEls[e].addEventListener('click', function () {
-                    openDoor(this.getAttribute('data-door'));
+                    showRoom(this.getAttribute('data-door'), true);
                 });
             }
             var cardEls = welcomeState.querySelectorAll('.lobby-card');
             for (var c = 0; c < cardEls.length; c++) {
                 cardEls[c].addEventListener('click', function () {
-                    loadVisualization(this.getAttribute('data-viz-id'));
+                    openCard(this.getAttribute('data-viz-id'));
                 });
             }
             var about = document.getElementById('lobby-about-btn');
@@ -2642,6 +2843,239 @@
             var target = selectorNav.querySelector('.category-header[data-cat="' + doorKey + '"]');
             if (target) {
                 setTimeout(function () { target.scrollIntoView({ block: 'start' }); }, 320);
+            }
+        }
+
+        // ---- Rooms in four levels and the header (L-286, 2026-09-24) ----
+        // A room path is its keys joined by "/" from the door down, as the
+        // editor writes it on each card. ROOM_NODES comes from the walk in
+        // readRoomTree(), so a room the config gains later needs nothing
+        // here.
+        function roomColor(path) {
+            var doorKey = (path || '').split('/')[0];
+            return CATEGORY_COLORS[doorKey] || CATEGORY_COLORS.other;
+        }
+        function roomShort(path) {
+            var rec = ROOM_NODES[path];
+            if (!rec) return ROOM_LABELS[path] || path;
+            return rec.node.short || rec.node.label || rec.node.key;
+        }
+        // The rooms from the door down to this one, door first.
+        function roomChain(path) {
+            var chain = [];
+            var p = path;
+            while (p && ROOM_NODES[p]) {
+                chain.unshift(p);
+                p = ROOM_NODES[p].parent;
+            }
+            return chain;
+        }
+        function inSubtree(room, path) {
+            room = room || '';
+            return room === path || room.indexOf(path + '/') === 0;
+        }
+
+        // One writer for the header. room: the room whose chain shows
+        // (null in the lobby); viz: the open card, or null.
+        function setHeader(room, viz) {
+            var header = document.getElementById('siteHeader');
+            var chainEl = document.getElementById('siteChain');
+            var titleEl = document.getElementById('siteCardTitle');
+            if (!header || !chainEl) return;
+            var chain = room ? roomChain(room) : [];
+            var html = '';
+            for (var i = 0; i < chain.length; i++) {
+                var here = (i === chain.length - 1) && !viz;
+                if (i) html += '<span class="chain-colon">:</span>';
+                if (here) {
+                    html += '<span class="chain-here" aria-current="page">' +
+                            escapeHtml(roomShort(chain[i])) + '</span>';
+                } else {
+                    html += '<button type="button" data-room="' + escapeHtml(chain[i]) +
+                            '" style="color: ' + roomColor(chain[i]) + ';">' +
+                            escapeHtml(roomShort(chain[i])) + '</button>';
+                }
+            }
+            chainEl.innerHTML = html;
+            var links = chainEl.querySelectorAll('button[data-room]');
+            for (var j = 0; j < links.length; j++) {
+                links[j].addEventListener('click', function () {
+                    showRoom(this.getAttribute('data-room'), true);
+                });
+            }
+            header.classList.toggle('at-lobby', !room && !viz);
+            header.classList.toggle('no-chain', !chain.length);
+            header.classList.toggle('on-card', !!viz);
+            if (titleEl) titleEl.textContent = viz ? (viz.title || 'Untitled') : '';
+        }
+
+        // Opening a card from a room or the lobby adds it to the browser's
+        // history, so Back returns to where it was opened. A live card
+        // leaves the page, and its own page is what Back returns from.
+        function openCard(vizId) {
+            var viz = vizLookup[vizId];
+            if (!viz) return;
+            if (!viz.live) history.pushState(null, '', '#' + vizId);
+            loadVisualization(vizId);
+        }
+
+        // Take down whatever a card put on screen. goHome() and
+        // showRoom() both call it.
+        function leaveCard() {
+            currentVizId = null;
+            navBtnLabel.innerHTML = '<span class="nav-label-home">Paloma\'s Orrery</span>';
+            shareBtn.classList.remove('visible');
+            if (typeof Plotly !== 'undefined' && plotlyGraph.style.display !== 'none') {
+                Plotly.purge('plotly-graph');
+            }
+            plotlyGraph.style.display = 'none';
+            plotlyGraph.style.minHeight = '';
+            plotlyGraph.style.width = '';
+            plotlyGraph.style.height = '';
+            plotlyGraph.parentElement.classList.remove('swept');
+            currentAspect = 0;
+            loadingOverlay.classList.remove('visible');
+            if (activeCard) {
+                activeCard.classList.remove('active');
+                activeCard = null;
+            }
+            closeOverlay();
+            dismissInfoCard();
+            zoomControls.classList.remove('visible');
+            panControls.classList.remove('visible');
+            resetStandalone.classList.remove('visible');
+            flytoControls.classList.remove('visible');
+            flytoControls.innerHTML = '';
+            annToggleBtn.classList.remove('visible');
+            annStored = null;
+            linkReset();
+            encHideButton();
+            var kmz = document.getElementById('kmz-handoff-btn');
+            if (kmz) kmz.style.display = 'none';
+        }
+
+        function showRoom(path, push) {
+            if (!ROOM_NODES[path]) { goHome(); return; }
+            leaveCard();
+            currentRoom = path;
+            if (push) history.pushState(null, '', '#room=' + path);
+            renderRoom(path);
+        }
+
+        function renderRoom(path) {
+            var rec = ROOM_NODES[path];
+            var node = rec.node;
+            var color = roomColor(path);
+            var vizs = (metadata && metadata.visualizations) || [];
+            var shown = [];
+            for (var i = 0; i < vizs.length; i++) {
+                if (inCurrentMode(vizs[i])) shown.push(vizs[i]);
+            }
+            var roomCards = {};
+            for (var s = 0; s < shown.length; s++) roomCards[shown[s].room || 'other'] = true;
+
+            var here = [], live = 0;
+            for (var h = 0; h < shown.length; h++) {
+                if ((shown[h].room || '') === path) {
+                    here.push(shown[h]);
+                    if (shown[h].live) live++;
+                }
+            }
+            here = treeSort(here);
+
+            var kids = node.rooms || [];
+            var kidRows = [], deeper = 0, kidsWithCards = 0, lastKidWithCards = null;
+            for (var k = 0; k < kids.length; k++) {
+                var kp = path + '/' + kids[k].key;
+                var n = 0, nLive = 0;
+                for (var m = 0; m < shown.length; m++) {
+                    if (inSubtree(shown[m].room, kp)) {
+                        n++;
+                        if (shown[m].live) nLive++;
+                    }
+                }
+                deeper += n;
+                if (n) { kidsWithCards++; lastKidWithCards = kp; }
+                kidRows.push({ path: kp, node: kids[k], count: n, live: nLive });
+            }
+            var empty = countEmptyRooms({ key: path, rooms: kids }, roomCards);
+
+            var meta = [plural(here.length, 'exhibit') + (kids.length ? ' here' : '')];
+            if (live) meta.push(plural(live, 'interactive scene'));
+            if (deeper) {
+                meta.push(deeper + ' more in ' + (kidsWithCards === 1 ?
+                          (ROOM_LABELS[lastKidWithCards] || '') : kidsWithCards + ' rooms'));
+            }
+            if (empty) meta.push(plural(empty, 'room') + ' under construction');
+
+            var html = '<div class="room">';
+            html += '<div class="room-title" style="color: ' + color + ';">' +
+                    escapeHtml(node.label || node.key) + '</div>';
+            if (node.sentence) {
+                html += '<div class="room-sentence">' + escapeHtml(node.sentence) + '</div>';
+            }
+            html += '<div class="room-meta">' + escapeHtml(meta.join(' \u00b7 ')) + '</div>';
+
+            if (here.length) {
+                html += '<div class="room-section"><div class="lobby-heading">Exhibits here</div>';
+                html += '<div class="room-grid">';
+                for (var c = 0; c < here.length; c++) {
+                    var v = here[c];
+                    html += '<div class="lobby-card room-card" data-viz-id="' + escapeHtml(v.id) + '">';
+                    html += '<div class="lobby-card-bar" style="background: ' + color + ';"></div>';
+                    html += '<div class="lobby-card-body">';
+                    html += '<div class="lobby-card-title">' + escapeHtml(v.title || 'Untitled') + '</div>';
+                    if (v.description && v.description !== v.title) {
+                        html += '<div class="room-card-desc">' + escapeHtml(v.description) + '</div>';
+                    }
+                    if (!v.live && v.size_kb) {
+                        html += '<div class="room-card-meta">' + escapeHtml(sizeLabel(v)) + '</div>';
+                    }
+                    if (v.live) html += '<div class="viz-card-featured">Interactive</div>';
+                    html += '</div></div>';
+                }
+                html += '</div></div>';
+            }
+
+            if (kidRows.length) {
+                html += '<div class="room-section"><div class="lobby-heading">Rooms</div>';
+                html += '<div class="room-rows">';
+                for (var r = 0; r < kidRows.length; r++) {
+                    var row = kidRows[r];
+                    var rMeta = row.count ? [plural(row.count, 'exhibit')] : ['under construction'];
+                    if (row.live) rMeta.push(plural(row.live, 'interactive scene'));
+                    html += '<div class="lobby-door' + (row.count ? '' : ' empty') +
+                            '" data-room="' + escapeHtml(row.path) + '">';
+                    html += '<div class="lobby-door-bar" style="background: ' + color + ';"></div>';
+                    html += '<div class="lobby-door-body">';
+                    html += '<div class="lobby-door-name">' + escapeHtml(row.node.label || row.node.key);
+                    if (row.node.special) html += '<span class="room-special">special exhibit</span>';
+                    html += '</div>';
+                    html += '<div class="lobby-door-meta">' + escapeHtml(rMeta.join(' \u00b7 ')) + '</div>';
+                    html += '</div>';
+                    if (row.count) html += '<div class="lobby-door-chevron">&#9654;</div>';
+                    html += '</div>';
+                }
+                html += '</div></div>';
+            }
+            html += '</div>';
+
+            welcomeState.innerHTML = html;
+            welcomeState.style.display = 'flex';
+            welcomeState.scrollTop = 0;
+            setHeader(path, null);
+
+            var cardEls = welcomeState.querySelectorAll('.room-card');
+            for (var e = 0; e < cardEls.length; e++) {
+                cardEls[e].addEventListener('click', function () {
+                    openCard(this.getAttribute('data-viz-id'));
+                });
+            }
+            var rowEls = welcomeState.querySelectorAll('.room-rows .lobby-door:not(.empty)');
+            for (var f = 0; f < rowEls.length; f++) {
+                rowEls[f].addEventListener('click', function () {
+                    showRoom(this.getAttribute('data-room'), true);
+                });
             }
         }
 
@@ -2892,6 +3326,8 @@
             // Update nav button label to show current viz title
             navBtnLabel.innerHTML = '<span class="nav-label-title">' +
                 escapeHtml(viz.title || 'Untitled') + '</span>';
+            // The header shows the card's own room and its title (L-286)
+            setHeader(ROOM_NODES[viz.room] ? viz.room : null, viz);
 
             // Show share button
             shareBtn.classList.add('visible');
@@ -3886,7 +4322,9 @@
             // Re-render nav list filtered by mode
             if (metadata) {
                 renderNavList(metadata.visualizations || []);
-                if (!currentVizId) renderLobby(); else updateWelcomeCount();
+                if (currentVizId) updateWelcomeCount();
+                else if (currentRoom) renderRoom(currentRoom);
+                else renderLobby();
             }
         }
 
@@ -3981,6 +4419,11 @@
                 a.textContent = ld.name;
                 linkDropdown.appendChild(a);
             });
+            // Under its button in the header (L-286)
+            var lr = linkBtn.getBoundingClientRect();
+            linkDropdown.style.top = Math.round(lr.bottom + 6) + 'px';
+            linkDropdown.style.left = 'auto';
+            linkDropdown.style.right = Math.max(8, Math.round(window.innerWidth - lr.right)) + 'px';
             linkDropdown.classList.add('open');
         }
 
@@ -4116,6 +4559,16 @@
         // ---- URL hash routing ----
         function handleHash() {
             var hash = window.location.hash.replace('#', '');
+            // A room's address (L-286): #room=<path>
+            if (hash.indexOf('room=') === 0) {
+                showRoom(decodeURIComponent(hash.slice(5)), false);
+                return;
+            }
+            // Back to the page's own address: the lobby
+            if (!hash) {
+                if (currentVizId || currentRoom) goHome(true);
+                return;
+            }
             // A link to a landscape card hidden on this phone (L-303)
             // opens its portrait sibling instead of nothing.
             if (hash && !vizLookup[hash] && hiddenSibling[hash]) hash = hiddenSibling[hash];
@@ -4125,43 +4578,13 @@
         }
 
         // ---- Home navigation ----
-        function goHome() {
-            // Clear hash
-            history.pushState(null, '', window.location.pathname);
-            currentVizId = null;
-
-            // Reset nav button label
-            navBtnLabel.innerHTML = '<span class="nav-label-home">Paloma\'s Orrery</span>';
-
-            // Hide share button
-            shareBtn.classList.remove('visible');
-
-            // Hide plot, show welcome
-            plotlyGraph.style.display = 'none';
-            plotlyGraph.style.minHeight = '';
-            plotlyGraph.style.width = '';
-            plotlyGraph.style.height = '';
-            plotlyGraph.parentElement.classList.remove('swept');
-            currentAspect = 0;
+        // noPush is true only when the browser's own Back brought us here;
+        // a click handler passes an event, which must still push.
+        function goHome(noPush) {
+            if (noPush !== true) history.pushState(null, '', window.location.pathname);
+            leaveCard();
+            currentRoom = null;
             renderLobby();
-
-            // Deselect active card
-            if (activeCard) {
-                activeCard.classList.remove('active');
-                activeCard = null;
-            }
-
-            // Close overlay
-            closeOverlay();
-            dismissInfoCard();
-            zoomControls.classList.remove('visible');
-            panControls.classList.remove('visible');
-            resetStandalone.classList.remove('visible');
-            flytoControls.classList.remove('visible');
-            flytoControls.innerHTML = '';           
-            annToggleBtn.classList.remove('visible');
-            annStored = null;
-            document.getElementById('kmz-handoff-btn').style.display = 'none'; // NEW
         }
 
         // ---- Utility ----
