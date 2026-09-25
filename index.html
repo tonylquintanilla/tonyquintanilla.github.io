@@ -79,7 +79,20 @@
          later cleanup; nothing opens it.
        - Rooms and cards have their own addresses (#room=<path>, and
          #<card> as before), and opening one adds to the browser's
-         history, so Back returns to the room a card was opened from. -->
+         history, so Back returns to the room a card was opened from.
+     Updated: September 24, 2026 with Anthropic's Claude Opus 5.5
+       - The look (L-283, Tony's ruling of 2026-09-24 and the mockup he
+         approved). The lobby and the room screens stand on a dusk-blue
+         wall, a gradient sampled from the logo art, with the art over
+         it: 60% in the lobby, 35% in a room. The header and cards are
+         tinted to match. Behind an open card the wall stays black with
+         no art, because the figures' own colors were chosen against
+         black and L-283's rule is that the chrome loses when it
+         competes with a trace.
+       - The art is palomas_orrery_wall.jpg, made from Tony's original
+         (Gemini_palomas_orrery_logo.png) by cropping off the corner
+         that carries Gemini's mark. The credit moves to the About card
+         in Tony's words: "Logo created with Gemini (Google)." -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -964,6 +977,8 @@
             opacity: 0.14;
             pointer-events: none;
         }
+        /* The dusk wall (L-283, 2026-09-24) carries the art now. */
+        body[data-screen] .welcome-state::before { display: none; }
 
         .welcome-title {
             font-family: 'Cormorant Garamond', Georgia, serif;
@@ -1733,6 +1748,38 @@
             .site-chain { font-size: 0.85rem; }
         }
 
+        /* ---- The dusk wall (L-283, Tony's ruling of 2026-09-24) ----
+           setHeader() marks the body lobby, room or card. The lobby and
+           the rooms stand on a gradient sampled from the logo art, with
+           the art over it; an open card keeps the black wall and no art,
+           because the figures' colors were chosen against black. */
+        .app-container { position: relative; }
+        .app-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url('palomas_orrery_wall.jpg');
+            background-repeat: no-repeat;
+            background-position: center bottom;
+            background-size: cover;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .viz-container { z-index: 1; }
+        body[data-screen="lobby"] .app-container,
+        body[data-screen="room"] .app-container {
+            background: linear-gradient(180deg, #050c1a 0%, #0a1829 45%, #132a45 78%, #1d3a5a 100%);
+            --border: #26364f;
+            --bg-tertiary: #13243d;
+        }
+        body[data-screen="lobby"] .app-container::before { opacity: 0.6; }
+        body[data-screen="room"] .app-container::before { opacity: 0.35; }
+        body[data-screen="lobby"] .site-header,
+        body[data-screen="room"] .site-header { background: rgba(8, 18, 34, 0.82); }
+        body[data-screen="lobby"] .lobby-card,
+        body[data-screen="room"] .lobby-card { background: rgba(9, 20, 38, 0.78); }
+
         .room { width: 100%; max-width: 960px; text-align: left; position: relative; z-index: 1; }
         .room-title {
             font-family: 'Cormorant Garamond', Georgia, serif;
@@ -1868,7 +1915,7 @@
         }
     </style>
 </head>
-<body>
+<body data-screen="lobby">
 
     <!-- Floating nav button -->
     <button class="nav-btn" id="navBtn" aria-label="Open gallery navigation">
@@ -2093,7 +2140,7 @@
                         Source code
                     </a>
                 </div>
-                <p class="about-credit">Created by Tony Quintanilla with Claude (Anthropic)</p>
+                <p class="about-credit">Created by Tony Quintanilla with Claude (Anthropic). Logo created with Gemini (Google).</p>
             </div>
         </div>
     </div>
@@ -2906,6 +2953,7 @@
             header.classList.toggle('at-lobby', !room && !viz);
             header.classList.toggle('no-chain', !chain.length);
             header.classList.toggle('on-card', !!viz);
+            document.body.setAttribute('data-screen', viz ? 'card' : (room ? 'room' : 'lobby'));
             if (titleEl) titleEl.textContent = viz ? (viz.title || 'Untitled') : '';
         }
 
