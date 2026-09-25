@@ -279,6 +279,9 @@
       "canonical_frame": "heliocentric",
       "trajectory_of": null,
       "trace_policy": "none",
+      "pole_of_date": {
+        "_declared": "Asks the cache builder to serve Earth's pole and tilt of the build's date; it holds no measurement. The builder fetches Earth's north pole from JPL Horizons (observer quantity 32, target 399, seen from the Sun) and the osculating orbit of the Earth-Moon barycenter (target 3 about the Sun, against the ecliptic of J2000), works out the tilt between them with tools/pole_of_date.py, and serves all three with their source blocks as pole_of_date in coverage_index.json. The queries are named in that module, not here. Tony's rulings, 2026-09-23 (L-322 Stage D, build manifest rev 3, section 0)."
+      },
       "arrival": {
         "_declared": "Drawing choices for the view a visitor arrives at, not measurements, so there is no orrery_constant link. drawn lists the served shells shown when the room opens, by key; every other shell starts unticked in the drawer. The frame elements the page builds (axis, Sun direction, terminator) are always shown. moon false starts the Moon unticked. The opening view fits what is drawn. Tony's ruling, 2026-09-17 (L-334).",
         "drawn": ["crust"],

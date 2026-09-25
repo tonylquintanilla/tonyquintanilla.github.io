@@ -107,6 +107,7 @@ ROLE_MAP = {
     # data
     'catalog':                             'data',
     'models':                              'data',
+    'pole_of_date':                        'data',
 
     # cache
     'cache_reader':                        'cache',

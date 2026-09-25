@@ -22,6 +22,11 @@ Module updated: September 21, 2026 with Anthropic's Claude Opus 5 (L-216:
 the builder's [SWAP] line and the maintenance run's swap line agree, the
 maintenance run reads every rename, and main() prints its next steps after
 a good hand run and only then).
+
+Module updated: September 24, 2026 with Anthropic's Claude Opus 5.5 (L-322
+Stage D, gallery patch G1: Earth's pole of date and the frame rows are
+served and checked -- the pole fetch is mocked with a real Horizons day, a
+failed pole fetch still builds, and #P refuses a tampered tilt).
 """
 import json
 import math
@@ -128,7 +133,25 @@ def fake_solution_tp(name, horizons_id=None, id_type='smallbody', hkwargs=None):
     return ('not_present', None)
 
 
+# L-322 Stage D: Earth's pole and the Earth-Moon barycenter's orbit plane.
+# The values are a real Horizons day, 2026-09-24, copied from the orrery's
+# data/earth_pole_cache.json at orrery fb8d927e; tools/test_pole_of_date.py
+# holds the same day against the orrery and ERFA.
+FAKE_POLE = (0.71925, 89.85021)
+FAKE_ORBIT_PLANE = (0.003485492460527331, 174.282459138182)
+
+
+def fake_pole_radec(jd):
+    return FAKE_POLE
+
+
+def fake_orbit_plane(jd):
+    return FAKE_ORBIT_PLANE
+
+
 def install_mocks():
+    b.fetch_pole_radec = fake_pole_radec
+    b.fetch_orbit_plane = fake_orbit_plane
     b.fetch_elements = fake_elements
     b.fetch_vectors_range = fake_vectors
     b.fetch_solution_tp = fake_solution_tp
@@ -199,6 +222,48 @@ def main():
               idx.get('scene_features') == ['asteroid_belt', 'kuiper_belt', 'heliosphere'],
               "B-3: serving_base + scene_features restored for v0.6 parity")
         check('step_hours' in v['positions'], "B-3: positions block carries step_hours")
+
+        # --- L-322 Stage D: Earth's pole of date and the frame rows ---
+        pod_blk = e.get('pole_of_date')
+        check(isinstance(pod_blk, dict) and pod_blk.get('date') == '2026-07-09',
+              "earth.pole_of_date served for the build's date (%s)"
+              % (pod_blk or {}).get('date'))
+        probs = b.pole_block_problems(pod_blk) if pod_blk else ['absent']
+        check(probs == [], "earth.pole_of_date passes the #P checker (%s)"
+              % (probs or 'no problems'))
+        exp_rows = json.load(open(Path(__file__).resolve().parents[1]
+                                  / 'data' / 'constants_export.json'))['rows']
+        frame_deg = (exp_rows.get('EARTH_OBLIQUITY_J2000_DEG') or {}).get('value')
+        want_tilt = (b.tilt_of_date_deg(FAKE_POLE[0], FAKE_POLE[1],
+                                        FAKE_ORBIT_PLANE[0], FAKE_ORBIT_PLANE[1],
+                                        frame_deg)
+                     if isinstance(frame_deg, float) else 'no frame row')
+        got_tilt = ((pod_blk or {}).get('tilt') or {}).get('value')
+        check(got_tilt is not None and got_tilt == want_tilt,
+              "earth tilt of date is the geometry's on the served inputs "
+              "(%r deg)" % got_tilt)
+        fc = (idx.get('frame_constants') or {}).get('rows', {})
+        check(sorted(fc) == ['EARTH_OBLIQUITY_J2000_DEG', 'KM_PER_AU']
+              and all(fc[k]['value'] == exp_rows.get(k, {}).get('value') for k in fc),
+              "frame_constants serves KM_PER_AU and EARTH_OBLIQUITY_J2000_DEG "
+              "from the export (%s)" % ', '.join(sorted(fc)))
+        others = [s for s, o in objs.items() if s != 'earth' and 'pole_of_date' in o]
+        check(not others, "no other object carries pole_of_date (%s)"
+              % (', '.join(others) or 'none'))
+        tampered = json.loads(json.dumps(idx))
+        try:
+            tampered['objects']['earth']['pole_of_date']['tilt']['value'] += 1e-6
+        except (KeyError, TypeError):
+            said = 'no served tilt to tamper with'
+        else:
+            try:
+                b.assert_structural(tampered, out)
+                said = 'no abort'
+            except b.ValidationAbort as exc:
+                said = str(exc)
+        check(said.startswith('#P earth'),
+              "#P aborts a build whose served tilt is not its inputs' (%s)"
+              % said[:60])
 
         # as_of_today in km (earth |r| ~ KM_PER_AU, not ~1)
         r_km = math.sqrt(sum(e['as_of_today'][k] ** 2 for k in 'xyz'))
@@ -881,6 +946,29 @@ def main():
         check(t and t['osculating'] is not None, "A-3: Titan conic served from last-good")
         check(t and t['as_of_today'] is None, "A-3: Titan as_of_today NULLED (no stale marker)")
         check(rm['structural_validation'] == 'pass', "A-3: run validates with a stale object")
+
+    # --- L-322 Stage D: a pole that cannot be fetched never stops a build ---
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / 'data' / 'solar-system'; out.mkdir(parents=True)
+        _fp = b.fetch_pole_radec
+        def failing_pole(jd):
+            raise RuntimeError("simulated Horizons outage")
+        b.fetch_pole_radec = failing_pole
+        try:
+            rm = b.run_build(cfg, out, mode='first-build', do_commit=False)
+        finally:
+            b.fetch_pole_radec = _fp
+        idx = json.load(open(out / 'coverage_index.json'))
+        ea = idx['objects'].get('earth') or {}
+        check(rm['structural_validation'] == 'pass',
+              "pole fetch fails: the build still validates (%s)"
+              % rm['structural_validation'])
+        check('pole_of_date' in ea and ea['pole_of_date'] is None
+              and ea.get('osculating') is not None,
+              "pole fetch fails: Earth served, orbit kept, pole_of_date null")
+        said = (rm.get('pole_of_date') or {}).get('earth')
+        check(said == 'not served (fetch failed)',
+              "pole fetch fails: the run manifest says so (%s)" % said)
 
     # --- N4/#B3: served km must equal raw AU x KM_PER_AU (convert/serialize) ---
     with tempfile.TemporaryDirectory() as td:

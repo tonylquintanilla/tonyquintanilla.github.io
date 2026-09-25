@@ -12,6 +12,18 @@ commit. No orrery imports; hard-won fetch specifics are COPIED WITH PROVENANCE
 from the orrery and kept in sync on change (see per-function comments). See
 GALLERY_BUILDER_MANIFEST v2 + GALLERY_DATA_SOURCE_HANDOFF v0.4.
 
+Earth's pole and tilt of date (L-322 Stage D): for an object whose config
+entry carries a pole_of_date block -- Earth only -- the builder also fetches
+Earth's north pole for the build's date (Horizons observer quantity 32,
+target 399) and the Earth-Moon barycenter's osculating orbit (target 3 about
+the Sun), works out the tilt between them with tools/pole_of_date.py, and
+serves all three as pole_of_date in coverage_index.json with both source
+blocks. It also serves frame_constants, the two rows the page needs to draw
+any pole (KM_PER_AU and EARTH_OBLIQUITY_J2000_DEG), read from
+data/constants_export.json so the page no longer types them. A failed pole
+fetch never stops a build: the object is served without a pole of date,
+and the run's warnings and a [POLE] line say so.
+
 Operational notes (read before hand-editing anything under data/):
     - objects_config.json lives at data/objects_config.json -- a SIBLING of,
       and deliberately OUTSIDE, data/solar-system/. The atomic swap replaces
@@ -56,6 +68,10 @@ Module updated: September 21, 2026 with Anthropic's Claude Opus 5 (L-216:
 every good swap prints one [SWAP] line saying how it went, and main() ends
 a good hand run with numbered next steps, the gallery maintenance run
 first -- so neither the outcome nor the order depends on memory).
+Module updated: September 24, 2026 with Anthropic's Claude Opus 5.5
+(L-322 Stage D, gallery patch G1: Earth's pole and tilt of date fetched,
+derived and served as pole_of_date, checked before the swap as #P; the
+frame rows served as frame_constants from data/constants_export.json).
 
 Role: cache
 Domain: cache_builder
@@ -85,6 +101,16 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 from gallery.assembler.render_orbits import solve_kepler, _elements_to_xyz_au
+
+# L-322 Stage D: the tilt geometry, the gallery's copy of the orrery's
+# earth_pole_of_date.py. A same-repo import from this script's own folder,
+# added to the path so the builder imports the same way whether it is run
+# from the repo root or imported by a test.
+_TOOLS_DIR = Path(__file__).resolve().parent
+if str(_TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(_TOOLS_DIR))
+from pole_of_date import (ORBIT_QUERY, POLE_QUERY, TILT_FIGURES,
+                          pole_block_problems, tilt_of_date_deg)
 
 # astroquery/astropy are imported lazily so the module stays importable (and the
 # offline smoke test can run) on a machine without them; the fetch functions
@@ -1055,11 +1081,156 @@ def _validate_feature_shapes(slug, node):
             _validate_feature_shapes(slug, val)
 
 
-def derive_served(staging, results, defaults, warn=None):
+# ===========================================================================
+# EARTH'S POLE OF DATE, AND THE FRAME ROWS (L-322 Stage D, gallery patch G1)
+# ===========================================================================
+
+CONSTANTS_EXPORT = _REPO_ROOT / 'data' / 'constants_export.json'
+
+# The two rows the page needs to draw any body's pole: kilometres per AU,
+# and the angle that turns sky coordinates into the drawing's frame. Served
+# as frame_constants so gallery/feature_renderers.js stops typing them.
+FRAME_ROWS = ('KM_PER_AU', 'EARTH_OBLIQUITY_J2000_DEG')
+FRAME_ANGLE_ROW = 'EARTH_OBLIQUITY_J2000_DEG'
+
+
+def load_frame_constants(warn, path=None):
+    """The frame rows from data/constants_export.json, as served.
+
+    Returns {'export', 'orrery_sha', 'rows'}. A row that is missing, or has
+    no number, is left out and named in a warning; the page then warns and
+    draws no tilt rather than falling back to a remembered number. The
+    export is pulled from the orrery by tools/pull_constants_export.py, and
+    the orrery commit it came from is served beside the rows.
+    """
+    path = Path(path) if path else CONSTANTS_EXPORT
+    out = {'export': 'data/constants_export.json', 'orrery_sha': None,
+           'rows': {}}
+    try:
+        with open(path, 'r', encoding='utf-8') as handle:
+            rows = json.load(handle).get('rows', {})
+    except (OSError, ValueError) as exc:
+        warn("frame_constants: could not read %s (%s) -- no frame rows "
+             "served; the page will warn and draw no pole" % (path, exc))
+        return out
+    try:
+        with open(path.with_suffix('.sha'), 'r', encoding='utf-8') as handle:
+            out['orrery_sha'] = handle.read().strip() or None
+    except OSError:
+        warn("frame_constants: no %s beside the export -- the orrery "
+             "commit the rows came from is not served" % path.with_suffix('.sha').name)
+    for name in FRAME_ROWS:
+        row = rows.get(name)
+        if not (isinstance(row, dict) and isinstance(row.get('value'), (int, float))
+                and not isinstance(row.get('value'), bool)):
+            warn("frame_constants: %s is not in the export -- not served; "
+                 "the page will warn" % name)
+            continue
+        out['rows'][name] = {'value': row['value'], 'unit': row.get('unit'),
+                             'figures': row.get('figures'),
+                             'status': row.get('status'),
+                             'orrery_constant': name}
+    return out
+
+
+def fetch_pole_radec(jd):
+    """(ra_deg, dec_deg) of Earth's north pole on JD `jd` (UT), in the ICRF.
+
+    Source: earth_pole_of_date.py fetch_pole (orrery fb8d927e), the same
+    query: observer quantity 32 for target 399, seen from the Sun.
+    astroquery names the two columns NPole_RA and NPole_DEC.
+    """
+    _require_astro()
+    obj = Horizons(id=POLE_QUERY['target'], location=POLE_QUERY['observer'],
+                   epochs=jd)
+    table = obj.ephemerides(quantities=POLE_QUERY['quantity'])
+    return float(table['NPole_RA'][0]), float(table['NPole_DEC'][0])
+
+
+def fetch_orbit_plane(jd):
+    """(inclination_deg, node_deg) of the Earth-Moon barycenter's orbit.
+
+    Source: earth_pole_of_date.py fetch_orbit (orrery fb8d927e), the same
+    query: osculating elements of target 3 about the Sun, against the
+    ecliptic of J2000. Horizons reads an element epoch as TDB and the
+    pole's as UT; the same Julian day is passed to both, as the orrery
+    does. The two differ by about a minute, over which neither direction
+    moves by anything drawn.
+    """
+    _require_astro()
+    obj = Horizons(id=ORBIT_QUERY['target'], location=ORBIT_QUERY['center'],
+                   epochs=jd)
+    table = obj.elements(refplane=ORBIT_QUERY['refplane'])
+    return float(table['incl'][0]), float(table['Omega'][0])
+
+
+def build_pole_of_date(obj, day, frame, warn):
+    """The served pole_of_date block for `obj` on `day` (0h UT), or None.
+
+    None means the fetch failed; the reason is in the warnings and in a
+    [POLE] line, and the page draws the frame's year-2000 axis and says
+    so. When the frame angle row is missing the pole is still served, with
+    tilt None and the reason in tilt_missing, because drawing the pole of
+    date does not depend on the tilt.
+    """
+    slug = obj['slug']
+    jd = _dt_to_jd(day)
+    try:
+        ra, dec = fetch_pole_radec(jd)
+        incl, node = fetch_orbit_plane(jd)
+    except Exception as exc:                                  # noqa: BLE001
+        msg = ("%s: pole of date NOT served (%s) -- the page draws the "
+               "frame's year-2000 axis and says so" % (slug, exc))
+        warn(msg)
+        print("[POLE] %s" % msg, flush=True)
+        return None
+    now = datetime.now(timezone.utc).isoformat()
+    block = {
+        'date': day.strftime('%Y-%m-%d'),
+        'epoch_jd': jd,
+        'ra': {'value': ra, 'unit': 'deg'},
+        'dec': {'value': dec, 'unit': 'deg'},
+        'orbit': {'i_deg': incl, 'node_deg': node,
+                  'frame': 'ecliptic of J2000'},
+        'tilt': None,
+        'pole_source': {'query_target': POLE_QUERY['target'],
+                        'observer': POLE_QUERY['observer'],
+                        'quantity': POLE_QUERY['quantity'],
+                        'epoch_jd_ut': jd, 'retrieved': now},
+        'orbit_source': {'query_target': ORBIT_QUERY['target'],
+                         'center': ORBIT_QUERY['center'],
+                         'refplane': ORBIT_QUERY['refplane'],
+                         'epoch_jd': jd, 'retrieved': now},
+    }
+    row = frame['rows'].get(FRAME_ANGLE_ROW)
+    if row is None or row.get('unit') != 'deg':
+        block['tilt_missing'] = ('%s was not served in degrees, so the tilt '
+                                 'could not be worked out' % FRAME_ANGLE_ROW)
+        warn("%s: tilt of date not served -- %s" % (slug, block['tilt_missing']))
+        print("[POLE] %s: pole of %s served (RA %.5f, Dec %.5f deg); NO tilt: %s"
+              % (slug, block['date'], ra, dec, block['tilt_missing']), flush=True)
+        return block
+    tilt = tilt_of_date_deg(ra, dec, incl, node, row['value'])
+    block['tilt'] = {
+        'value': tilt, 'unit': 'deg', 'figures': TILT_FIGURES,
+        'frame_obliquity_deg': row['value'], 'frame_row': FRAME_ANGLE_ROW,
+        'derived': ("the angle between Earth's pole of date and the pole of "
+                    "the Earth-Moon barycenter's orbit of date, both turned "
+                    "into the ecliptic of J2000 by the frame angle"),
+    }
+    print("[POLE] %s: pole of %s served (RA %.5f, Dec %.5f deg); tilt %.*g deg"
+          % (slug, block['date'], ra, dec, TILT_FIGURES, tilt), flush=True)
+    return block
+
+
+def derive_served(staging, results, defaults, warn=None, frame=None):
     """Assemble coverage_index.json (v0.6 schema parity + conic additions) and
     write it under the staging tree. warn (M2, optional): callback for
     FLAG-3 served_window-null warnings; defaults to a no-op so existing
-    callers (e.g. the shape-validator regression test) are unaffected."""
+    callers (e.g. the shape-validator regression test) are unaffected.
+    frame (L-322 Stage D, optional): load_frame_constants' result, served
+    as frame_constants; an object whose config asks for a pole of date
+    gets pole_of_date, None when the fetch failed."""
     if warn is None:
         warn = lambda msg: None
     objects = {}
@@ -1081,6 +1252,8 @@ def derive_served(staging, results, defaults, warn=None):
         }
         if r['comet']:
             block['comet'] = r['comet']
+        if obj.get('pole_of_date') is not None:     # L-322 Stage D
+            block['pole_of_date'] = r.get('pole_of_date')
         objects[slug] = block
 
     # M2 sec 5.5, corrected L-149: global served_window. Participants are
@@ -1125,6 +1298,8 @@ def derive_served(staging, results, defaults, warn=None):
                   'subtraction': 'not-used'},
         'objects': objects,
     }
+    if frame is not None:                           # L-322 Stage D
+        index['frame_constants'] = frame
     with open(staging / 'coverage_index.json', 'w') as f:
         json.dump(index, f, indent=2)
     features_out = {}
@@ -1157,6 +1332,13 @@ def assert_structural(index, staging):
     """Structural invariants (builder-correctness gates): abort on failure."""
     gen_jd = _iso_to_jd(index['generated'])
     for slug, o in index['objects'].items():
+        # #P (L-322 Stage D): a served pole of date is whole, names the
+        # queries the tilt rests on, and its tilt is what its own inputs
+        # give. The page draws Earth's axis from it, so a bad one aborts.
+        if o.get('pole_of_date') is not None:
+            problems = pole_block_problems(o['pole_of_date'])
+            if problems:
+                raise ValidationAbort("#P %s: %s" % (slug, '; '.join(problems)))
         if o['canonical_frame'] == FEATURES_ONLY_FRAME:
             # L-234: invariants #2/#3/#C/#B3 are all about an orbit
             # this entry does not have. Assert the absence POSITIVELY
@@ -1890,7 +2072,23 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                 warn("%s: FETCH FAILED (%s); no last-good -- object dropped this run" % (obj['slug'], e))
                 run_manifest['objects'][obj['slug']] = 'failed: %s (dropped)' % e
 
-    index = derive_served(staging, results, defaults, warn)
+    # L-322 Stage D: the frame rows, and Earth's pole of date at the same
+    # 0h UT epoch the osculating elements use. Kept apart from the orbit's
+    # try/except above, so a pole that cannot be fetched never costs the
+    # orbit, and an orbit served from last-good still gets a pole.
+    frame = load_frame_constants(warn)
+    run_manifest['frame_constants'] = sorted(frame['rows'])
+    pole_day = _utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    for r in results:
+        if r['obj'].get('pole_of_date') is not None:
+            r['pole_of_date'] = build_pole_of_date(r['obj'], pole_day, frame, warn)
+            got = r['pole_of_date']
+            run_manifest.setdefault('pole_of_date', {})[r['slug']] = (
+                'not served (fetch failed)' if got is None else
+                'served %s, tilt %s' % (got['date'], 'none' if got['tilt'] is None
+                                        else '%.*g deg' % (TILT_FIGURES, got['tilt']['value'])))
+
+    index = derive_served(staging, results, defaults, warn, frame=frame)
 
     # N3: object-set continuity -- a run must not silently DROP an object the
     # prior generation served (a first appearance on first-build is fine). This

@@ -100,6 +100,9 @@ same cross-repo reach that put this runner in the gallery in the first
 place.
 
 Module created: August 2026 with Anthropic's Claude Opus 5 (L-236).
+Module updated: September 24, 2026 with Anthropic's Claude Opus 5.5
+(L-322 Stage D, gallery patch G1: the "Pole of date" checker runs
+tools/test_pole_of_date.py).
 """
 
 import hashlib
@@ -155,6 +158,14 @@ GENERATORS = [
 OFFLINE_CHECKERS = [
     ("Cache builder suite", "python",
      ["test_gallery_cache_builder_offline.py"], "tools", None, False),
+
+    # L-322 Stage D (2026-09-24): the builder's copy of the orrery's tilt
+    # geometry, held to the orrery's own results on two real Horizons
+    # days and to ERFA, and each of those checks re-run with one input
+    # altered, where it must fail. Needs astropy, which the builder
+    # needs anyway; without it the ERFA checks FAIL, never skip.
+    ("Pole of date", "python",
+     ["tools/test_pole_of_date.py"], ".", None, False),
 
     # L-322, the gallery half. The suite proves the mirror's verdicts on
     # fixtures, because no link in the real config can produce a
