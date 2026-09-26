@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-09-26T01:21:27.834665+00:00",
+  "generated": "2026-09-26T17:52:21.730384+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2460986.0147511056,
-    "end_jd": 2461633.098393215
+    "start_jd": 2460986.702874899,
+    "end_jd": 2461633.786517008
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -468,7 +468,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461309.5,
-          "retrieved": "2026-09-26T01:20:47.913194+00:00"
+          "retrieved": "2026-09-26T17:52:15.765902+00:00"
         }
       },
       "positions": null,
@@ -1159,14 +1159,14 @@
           "observer": "@sun",
           "quantity": "32",
           "epoch_jd_ut": 2461309.5,
-          "retrieved": "2026-09-26T01:21:27.834340+00:00"
+          "retrieved": "2026-09-26T17:52:21.730198+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
           "epoch_jd": 2461309.5,
-          "retrieved": "2026-09-26T01:21:27.834340+00:00"
+          "retrieved": "2026-09-26T17:52:21.730198+00:00"
         }
       }
     },
@@ -1193,7 +1193,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461309.5,
-          "retrieved": "2026-09-26T01:20:51.662822+00:00"
+          "retrieved": "2026-09-26T17:52:15.895865+00:00"
         }
       },
       "positions": null,
@@ -1310,7 +1310,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461309.5,
-          "retrieved": "2026-09-26T01:20:55.690757+00:00"
+          "retrieved": "2026-09-26T17:52:16.008193+00:00"
         }
       },
       "positions": null,
@@ -1419,7 +1419,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461309.5,
-          "retrieved": "2026-09-26T01:20:59.523899+00:00"
+          "retrieved": "2026-09-26T17:52:16.384638+00:00"
         }
       },
       "positions": null,
@@ -1482,7 +1482,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461309.5,
-          "retrieved": "2026-09-26T01:21:07.161741+00:00"
+          "retrieved": "2026-09-26T17:52:16.490430+00:00"
         }
       },
       "positions": null,
@@ -1545,7 +1545,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461309.5,
-          "retrieved": "2026-09-26T01:21:10.846385+00:00"
+          "retrieved": "2026-09-26T17:52:16.612699+00:00"
         }
       },
       "positions": null,
@@ -1608,7 +1608,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461309.5,
-          "retrieved": "2026-09-26T01:21:13.747469+00:00"
+          "retrieved": "2026-09-26T17:52:16.725361+00:00"
         }
       },
       "positions": null,
@@ -1671,7 +1671,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461309.5,
-          "retrieved": "2026-09-26T01:21:17.763811+00:00"
+          "retrieved": "2026-09-26T17:52:16.839909+00:00"
         }
       },
       "positions": null,
@@ -1734,7 +1734,7 @@
           "query_target": "99942",
           "center": "@sun",
           "epoch": 2461309.5,
-          "retrieved": "2026-09-26T01:21:21.294222+00:00"
+          "retrieved": "2026-09-26T17:52:16.962251+00:00"
         }
       },
       "positions": null,
@@ -1819,19 +1819,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2460239.97775229,
-        "a_au": 2.218617489586211,
-        "e": 0.8469330752567753,
-        "i_deg": 11.33650089093048,
-        "node_deg": 334.0187378165669,
-        "peri_deg": 187.2883042983931,
-        "M0_deg": 359.9849267784282,
-        "n_deg_per_day": 0.2982499815768302,
+        "epoch_jd": 2460240.009056779,
+        "a_au": 2.218618004137804,
+        "e": 0.8469330971707979,
+        "i_deg": 11.33649584446783,
+        "node_deg": 334.0187425489166,
+        "peri_deg": 187.2883007116615,
+        "M0_deg": 359.9942620718112,
+        "n_deg_per_day": 0.2982498778196756,
         "source": {
           "query_target": "90000091",
           "center": "@sun",
-          "epoch": 2460239.97775229,
-          "retrieved": "2026-09-26T01:21:23.951798+00:00"
+          "epoch": 2460240.009056779,
+          "retrieved": "2026-09-26T17:52:18.755769+00:00"
         }
       },
       "positions": null,
@@ -1848,31 +1848,31 @@
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2460239.97775229,
+        "element_epoch_jd": 2460240.009056779,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 6.132705353201203e-05
+            "error_deg": 6.195134547404316e-05
           },
           {
             "offset_days": 30.0,
-            "error_deg": 7.853159960257497e-05
+            "error_deg": 7.761487251714734e-05
           }
         ],
-        "error_rate_deg_per_day": 2.6177199867524992e-06,
+        "error_rate_deg_per_day": 2.5871624172382444e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 603.5205737427058,
-        "cap_applied": 603.5205737427058,
+        "window_days": 603.520783699464,
+        "cap_applied": 603.520783699464,
         "window": {
-          "start_jd": 2459636.4571785475,
-          "end_jd": 2460843.498326033
+          "start_jd": 2459636.4882730795,
+          "end_jd": 2460843.5298404787
         }
       },
       "comet": {
-        "Tp_jd": 2460240.028291176,
-        "solution_Tp_jd": 2460239.97775229,
+        "Tp_jd": 2460240.02829544,
+        "solution_Tp_jd": 2460240.009056779,
         "max_distance_au": 100
       }
     },
@@ -1899,7 +1899,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-09-26T01:21:24.977986+00:00"
+          "retrieved": "2026-09-26T17:52:20.863450+00:00"
         }
       },
       "positions": null,
@@ -1947,7 +1947,7 @@
   },
   "frame_constants": {
     "export": "data/constants_export.json",
-    "orrery_sha": "62e938569382120e24373c14a98e5d85d1d36971",
+    "orrery_sha": "de4eadc58e3de746183515dff422aaab3943fe6a",
     "rows": {
       "KM_PER_AU": {
         "value": 149597870.7,

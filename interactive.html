@@ -132,6 +132,15 @@
         moves its chain. A link steps back in history instead of
         forward when the gallery screen it names is the one the visitor
         came from)
+     Updated: September 26, 2026 with Anthropic's Claude Opus 5.5
+       (the grid numbers on the desktop, Tony's ruling of 2026-09-26: they
+        drew at 9 px in #5a5a6a on the #060a12 scene and were too small
+        and faint to read. Everywhere but a portrait phone they now draw
+        at 12 px in the page's secondary grey, #9a9a9a; on a portrait
+        phone they fall off screen and the triad and grid chip carry
+        direction and spacing, so they stay as they were. One function,
+        axisTickFont(), serves the Explorer and every exhibit room, and a
+        room re-reads it when the window turns)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1448,7 +1457,7 @@ function buildLayout(range, dateDisplay) {
         showbackground: true,
         backgroundcolor: '#060a12',
         title: { text: '', font: { size: 1 } },
-        tickfont: { size: 9, color: '#5a5a6a' },
+        tickfont: axisTickFont(),
         showspikes: false,
     };
 
@@ -2162,7 +2171,7 @@ function buildSunLayout(halfRangeAu) {
         zerolinecolor: "rgba(255,255,255,0.1)",
         showbackground: true,
         backgroundcolor: "#060a12",
-        tickfont: { size: 9, color: "#5a5a6a" },
+        tickfont: axisTickFont(),
         // L-289 (rebuilt 2026-09-05): Plotly's tick numbers are back
         // on. The frame HUD (triad + grid chip) carries direction and
         // spacing; per-axis gridcolor below matches the triad.
@@ -2266,6 +2275,15 @@ function sunMargins() {
 // text box uses the same one, and the two cannot drift apart.
 function sunPhonePortrait() {
     return window.innerHeight > window.innerWidth && window.innerWidth <= 768;
+}
+// The grid numbers along the box edges (Tony's ruling of 2026-09-26).
+// On a portrait phone they fall off screen, and the triad and grid chip
+// carry direction and spacing (L-289), so they keep their old small,
+// dim setting. Everywhere else they were too small and faint to read,
+// and draw at 12 px in the page's secondary grey (--text-secondary).
+function axisTickFont() {
+    return sunPhonePortrait() ? { size: 9, color: "#5a5a6a" }
+                              : { size: 12, color: "#9a9a9a" };
 }
 function navPlaceCross() {
     if (!navCluster || typeof navCluster.crossApart !== "function") { return; }
@@ -3492,7 +3510,13 @@ function onSunResize() {
             sunMeasureDrawer();
         }
         if (sunPlotDiv && window.Plotly) {
-            Plotly.relayout(sunPlotDiv, { margin: sunMargins() });
+            const tf = axisTickFont();
+            Plotly.relayout(sunPlotDiv, {
+                margin: sunMargins(),
+                "scene.xaxis.tickfont": tf,
+                "scene.yaxis.tickfont": tf,
+                "scene.zaxis.tickfont": tf
+            });
         }
         navPlaceCross();
         sunTapPicking(sunPlotDiv);
