@@ -141,6 +141,12 @@
         direction and spacing, so they stay as they were. One function,
         axisTickFont(), serves the Explorer and every exhibit room, and a
         room re-reads it when the window turns)
+     Updated: September 26, 2026 with Anthropic's Claude Opus 5.5
+       (the grid numbers carry their unit, Tony's ruling of 2026-09-26:
+        "we should add the units, AU in this case." Every axis number in
+        the Explorer and the exhibit rooms ends in " AU", and is written
+        out in full -- 0.00005 AU, 200,000 AU -- rather than in Plotly's
+        default shorthand, which would have read 50u AU and 200k AU)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1458,6 +1464,9 @@ function buildLayout(range, dateDisplay) {
         backgroundcolor: '#060a12',
         title: { text: '', font: { size: 1 } },
         tickfont: axisTickFont(),
+        // The unit on every number (Tony, 2026-09-26), written in full.
+        ticksuffix: ' AU',
+        exponentformat: 'none',
         showspikes: false,
     };
 
@@ -2172,6 +2181,11 @@ function buildSunLayout(halfRangeAu) {
         showbackground: true,
         backgroundcolor: "#060a12",
         tickfont: axisTickFont(),
+        // The unit on every number (Tony, 2026-09-26), written in full:
+        // Plotly's shorthand would read 50u AU in Earth's frame and 200k
+        // AU at the Oort cloud's edge.
+        ticksuffix: " AU",
+        exponentformat: "none",
         // L-289 (rebuilt 2026-09-05): Plotly's tick numbers are back
         // on. The frame HUD (triad + grid chip) carries direction and
         // spacing; per-axis gridcolor below matches the triad.
