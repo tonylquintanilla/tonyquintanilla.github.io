@@ -1,0 +1,31 @@
+{
+  "run_id": "20260926T012045Z",
+  "started": "2026-09-26T01:20:45.068646+00:00",
+  "mode": "nightly",
+  "objects": {
+    "sun": "features-only (frame origin; no ephemeris fetched)",
+    "earth": "nightly(8)",
+    "jupiter": "nightly(8)",
+    "saturn": "nightly(8)",
+    "moon": "nightly(8)",
+    "io": "nightly(8)",
+    "titan": "nightly(8)",
+    "pluto": "nightly(8)",
+    "charon": "nightly(8)",
+    "apophis": "nightly(8)",
+    "voyager_1": "nightly(8)",
+    "encke": "nightly(8)",
+    "halley": "nightly(8)"
+  },
+  "guard_warnings": [],
+  "structural_validation": "pass",
+  "committed": false,
+  "frame_constants": [
+    "EARTH_OBLIQUITY_J2000_DEG",
+    "KM_PER_AU"
+  ],
+  "pole_of_date": {
+    "earth": "served 2026-09-26, tilt 23.43816 deg"
+  },
+  "finished": "2026-09-26T01:21:27.978711+00:00"
+}
