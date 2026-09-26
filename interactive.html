@@ -122,6 +122,16 @@
        (the tap lag on a phone: a marker tap focuses once, not on every
         redraw Plotly makes while the point stays picked, and every new
         press in the plot closes Plotly's own hover box)
+     Updated: September 25, 2026 with Anthropic's Claude Opus 5.5
+       (L-286: the gallery's chain comes to the exhibit rooms. The top
+        bar reads "Paloma's Orrery | Solar : Earth" as the gallery's
+        header does, each part a link to that screen of the gallery,
+        with the room's title under it; the "Gallery" link it replaces
+        is gone. The chain is built from the gallery's own config and
+        the card that opens this room, so a card moved in the editor
+        moves its chain. A link steps back in history instead of
+        forward when the gallery screen it names is the one the visitor
+        came from)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -225,12 +235,44 @@
         }
         .back-link:hover { color: var(--accent); }
         .back-link svg { width: 16px; height: 16px; }
-        .top-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
+        /* The chain (L-286, 2026-09-25): the same top-left block as the
+           gallery's header, and the room's title on a second line. */
+        .top-bar { flex-wrap: wrap; row-gap: 2px; padding: 6px 16px; }
+        .top-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+        .site-home {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 17px;
             font-weight: 600;
-            color: var(--text-primary);
-            text-align: center;
+            color: var(--accent);
+            text-decoration: none;
+            white-space: nowrap;
+            padding: 6px 0;
+            flex-shrink: 0;
+        }
+        .top-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+        .top-chain {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .top-chain:empty { display: none; }
+        .top-chain a { text-decoration: none; padding: 6px 0; }
+        .top-chain .chain-colon { color: var(--text-dim); }
+        .top-title {
+            order: 3;
+            flex-basis: 100%;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12.5px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .top-right {
             width: 60px;
@@ -757,7 +799,11 @@
         /* Mobile: hide Plotly modebar */
         @media (max-width: 768px) {
             .modebar { display: none !important; }
-            .top-title { font-size: 14px; }
+            .top-title { font-size: 12px; }
+            .top-bar { padding: 6px 12px; }
+            .top-left { gap: 10px; }
+            .site-home { font-size: 16px; }
+            .top-chain { font-size: 13.5px; }
         }
     </style>
 </head>
@@ -765,10 +811,10 @@
     <div class="app">
         <!-- Top bar -->
         <div class="top-bar">
-            <a href="index.html" class="back-link">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                Gallery
-            </a>
+            <div class="top-left">
+                <a href="index.html" class="site-home" id="site-home">Paloma's Orrery</a>
+                <nav class="top-chain" id="top-chain" aria-label="Where you are"></nav>
+            </div>
             <div class="top-title" id="top-title">Solar System Explorer</div>
             <div class="top-right">
                 <button class="info-btn" id="info-toggle" aria-label="Show info">
@@ -950,27 +996,81 @@ let activePlanets = new Set(Object.keys(PLANETS));
 let computing = false;
 
 // ====================================================================
-// BACK TO THE GALLERY (L-282, September 5, 2026)
+// THE CHAIN (L-286, September 25, 2026; replaces BACK TO THE GALLERY,
+// L-282, September 5, 2026)
 // ====================================================================
-// A plain link to index.html goes FORWARD, leaving lobby -> exhibit ->
-// lobby in the browser's history; Safari's back then lands on the
-// exhibit, which is what Tony saw on the phone. When the page behind
-// us is our own gallery, step back instead. Opened from a shared link
-// with no gallery behind, the link works as written. Runs on both
-// exhibit paths (the Sun never calls initControls).
+// "Paloma's Orrery" and each part of the chain link to a screen of the
+// gallery: the lobby, or index.html#room=<path>. A plain link goes
+// FORWARD, leaving gallery -> exhibit -> gallery in the history, and
+// Safari's back then lands on the exhibit (what Tony saw on the phone,
+// L-282). So when the page behind us is our own gallery AND the screen
+// a link names is the one the visitor came from -- index.html records
+// it in sessionStorage as "po_gallery_from" when it opens a live card
+// -- the link steps back instead. Otherwise it works as written.
+// The chain is read from the gallery's own files: the card whose live
+// link opens this room gives the room's path, and the config gives each
+// level's short name and the door's colour. No room names are kept
+// here. If either file fails to load, only "Paloma's Orrery" shows.
+// Runs on every exhibit path (the Sun never calls initControls).
 (function () {
-    const link = document.querySelector(".top-bar .back-link");
-    if (!link) { return; }
-    link.addEventListener("click", function (ev) {
+    const exhibitOf = (search) => (new URLSearchParams(search).get("exhibit") ||
+                                   "solar-system-explorer").toLowerCase();
+    const here = exhibitOf(window.location.search);
+    function stepBackIfCameFrom(ev, hash) {
         let ref = null;
         try { ref = document.referrer ? new URL(document.referrer) : null; } catch (e) { ref = null; }
         const fromGallery = ref && ref.origin === window.location.origin &&
             (/\/index\.html$/.test(ref.pathname) || /\/$/.test(ref.pathname));
-        if (fromGallery && window.history.length > 1) {
+        let from = null;
+        try { from = window.sessionStorage.getItem("po_gallery_from"); } catch (e) { from = null; }
+        if (fromGallery && from === hash && window.history.length > 1) {
             ev.preventDefault();
             window.history.back();
         }
-    });
+    }
+    const home = document.getElementById("site-home");
+    if (home) { home.addEventListener("click", (ev) => stepBackIfCameFrom(ev, "")); }
+    const chainEl = document.getElementById("top-chain");
+    if (!chainEl) { return; }
+    Promise.all([
+        fetch("gallery/gallery_config.json").then((r) => r.json()),
+        fetch("gallery/gallery_metadata.json").then((r) => r.json())
+    ]).then(([config, metadata]) => {
+        const card = ((metadata && metadata.visualizations) || []).find((v) =>
+            v.live && /^interactive\.html(\?|$)/.test(v.live) &&
+            exhibitOf(v.live.split("?")[1] || "") === here);
+        if (!card || !card.room) { return; }
+        let level = (config && config.doors) || [];
+        let path = "";
+        let color = null;
+        const crumbs = [];
+        for (const key of card.room.split("/")) {
+            const node = level.find((r) => r.key === key);
+            if (!node) { return; }
+            path = path ? path + "/" + key : key;
+            if (!color) { color = node.color || null; }
+            crumbs.push({ path: path, label: node.short || node.label || node.key });
+            level = node.rooms || [];
+        }
+        chainEl.textContent = "";
+        const sep = document.createElement("span");
+        sep.className = "top-sep";
+        chainEl.parentNode.insertBefore(sep, chainEl);
+        crumbs.forEach((c, i) => {
+            if (i) {
+                const colon = document.createElement("span");
+                colon.className = "chain-colon";
+                colon.textContent = ":";
+                chainEl.appendChild(colon);
+            }
+            const a = document.createElement("a");
+            a.href = "index.html#room=" + c.path;
+            a.textContent = c.label;
+            if (color) { a.style.color = color; }
+            a.addEventListener("click", (ev) => stepBackIfCameFrom(ev, "#room=" + c.path));
+            chainEl.appendChild(a);
+        });
+    }).catch(() => {});
 })();
 
 // ====================================================================

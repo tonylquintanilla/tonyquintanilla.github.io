@@ -92,7 +92,12 @@
        - The art is palomas_orrery_wall.jpg, made from Tony's original
          (Gemini_palomas_orrery_logo.png) by cropping off the corner
          that carries Gemini's mark. The credit moves to the About card
-         in Tony's words: "Logo created with Gemini (Google)." -->
+         in Tony's words: "Logo created with Gemini (Google)."
+     Updated: September 25, 2026 with Anthropic's Claude Opus 5.5
+       - Opening a live card records the screen it was opened from
+         (sessionStorage "po_gallery_from"), so the chain in
+         interactive.html can step back to that screen instead of
+         going forward to a new copy of it (L-286). -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2964,6 +2969,9 @@
             var viz = vizLookup[vizId];
             if (!viz) return;
             if (!viz.live) history.pushState(null, '', '#' + vizId);
+            else {
+                try { sessionStorage.setItem('po_gallery_from', window.location.hash); } catch (e) {}
+            }
             loadVisualization(vizId);
         }
 
