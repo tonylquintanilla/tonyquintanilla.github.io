@@ -165,6 +165,27 @@ function overlayProse(features) {
 if (EG) {
     const p = fixture("payload_earth_scene.json");
     overlayProse(p.features);
+    // L-322 Stage D, gallery patch 3: the fixture predates the magnetotail's
+    // rows and the rotation period, so its magnetosphere, and the period,
+    // come from the served cache -- the file the browser fetches -- or the
+    // two longest new hovers would never be measured.
+    const served = (JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data",
+        "solar-system", "coverage_index.json"), "utf8")).objects.earth || {}).features || {};
+    if (!served.earth_magnetosphere || !served.earth_magnetosphere.magnetotail ||
+        !(served.orientation || {}).rotation_period) {
+        console.log("  FAIL  the served cache has no magnetotail or no rotation " +
+                    "period for earth; the Earth room was not fully measured");
+        failures++;
+    }
+    for (const f of p.features) {
+        if (f.object !== "earth") { continue; }
+        if (f.feature === "earth_magnetosphere" && served.earth_magnetosphere) {
+            f.params = JSON.parse(JSON.stringify(served.earth_magnetosphere));
+        }
+        if (f.feature === "orientation" && served.orientation) {
+            f.params.rotation_period = served.orientation.rotation_period;
+        }
+    }
     const out = EG.composeScene(p, {
         GF: GF,
         halfRangeAu: 6.155e-5,

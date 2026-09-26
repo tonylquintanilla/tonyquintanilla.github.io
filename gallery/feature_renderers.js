@@ -63,6 +63,14 @@
  *   longer typed here; setFrameConstants() takes them from the served
  *   cache, nothing is drawn without KM_PER_AU, and no pole is placed
  *   without the angle -- each missing row is a warning).
+ * Module updated: September 26, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-322 Stage D, gallery patch 3: Earth's magnetotail is drawn as its
+ *   own shell from the served rows, continuing Shue's surface from where
+ *   it stops -- a straight widening to the flare end, then the drawn
+ *   radius to the drawn end, round -- with its own hover and i panel;
+ *   a belt with served edges is drawn as evenly spaced rings from edge
+ *   to edge on the step that lands on its peak, the peak ring brighter
+ *   and larger, and the typed 0.5 belt thickness fallback is gone).
  */
 
 (function (global) {
@@ -165,6 +173,15 @@
   // info marker sits, in degrees, keeping it clear of the +x axis line.
   var BELT_MARKER_SIZE = 2.2;
   var BELT_MARKER_DEG = 10;
+  // L-322 Stage D, gallery patch 3 (Tony, 2026-09-25, the orrery's D9):
+  // a belt with served edges is drawn as evenly spaced rings, and the ring
+  // at the served peak is drawn brighter and larger, as its own trace so
+  // each can keep one colour and one size. Rendering settings, not
+  // measurements. BELT_MAX_RINGS refuses a step so small that it would
+  // draw hundreds of rings, the orrery's cap of 25.
+  var BELT_PEAK_OPACITY = 1.0;
+  var BELT_PEAK_SIZE_FACTOR = 2.0;
+  var BELT_MAX_RINGS = 25;
 
   // --- Small helpers ------------------------------------------------------
 
@@ -855,6 +872,55 @@
     return [lo.value, hi.value, servedFigures(lo), servedFigures(hi)];
   }
 
+  /*
+   * Ring radii for one belt, evenly spaced from its inner edge to its outer
+   * edge on the largest step that also lands exactly on its peak, and which
+   * ring is the peak. L-322 Stage D, gallery patch 3, the page's copy of the
+   * orrery's _even_belt_rings() in earth_visualization_shells.py (patch D9):
+   * the step is the greatest common divisor of the two distances, edge to
+   * peak and peak to edge, taken on the served decimal values. The two
+   * repositories cannot share code, so the rule is written twice and both
+   * are held to the same answers: ten rings every 0.1 with the peak fifth
+   * for the inner belt, nine every 0.5 with the peak fourth for the outer.
+   *
+   * The decimals are read to a thousandth, as the orrery's
+   * limit_denominator(1000) reads them. Returns {radii, peak} or {error}.
+   */
+  function evenBeltRings(inner, peak, outer) {
+    function thousandths(v) { return Math.round(v * 1000); }
+    function gcd(a, b) { while (b) { var t = a % b; a = b; b = t; } return a; }
+    var a = thousandths(inner), p = thousandths(peak), b = thousandths(outer);
+    if (!(a < p && p < b)) {
+      return { error: "belt values out of order: inner " + inner + ", peak " +
+                      peak + ", outer " + outer };
+    }
+    var step = gcd(p - a, b - p);
+    var count = (b - a) / step + 1;
+    if (count > BELT_MAX_RINGS) {
+      return { error: "a belt from " + inner + " to " + outer + " with its " +
+                      "peak at " + peak + " needs " + count + " evenly spaced " +
+                      "rings to put one on the peak; the cap is " +
+                      BELT_MAX_RINGS };
+    }
+    var radii = [];
+    for (var k = 0; k < count; k++) { radii.push((a + step * k) / 1000); }
+    return { radii: radii, peak: (p - a) / step };
+  }
+
+  // One flat loop per radius, in the body's own plane (the caller tilts it).
+  function ringLoops(radiiAu, nPoints) {
+    var xs = [], ys = [], zs = [];
+    for (var i = 0; i < radiiAu.length; i++) {
+      for (var j = 0; j < nPoints; j++) {
+        var ang = (j / nPoints) * 2 * Math.PI;
+        xs.push(radiiAu[i] * Math.cos(ang));
+        ys.push(radiiAu[i] * Math.sin(ang));
+        zs.push(0);
+      }
+    }
+    return { x: xs, y: ys, z: zs };
+  }
+
   function renderBelts(slug, bodyName, featureKey, params, center, basis,
                        warn, halfRangeAu) {
     // L-231, Tony's ruling of 2026-09-15: belts ARE pole-oriented, drawn in
@@ -941,8 +1007,13 @@
     var abouts = Array.isArray(params.abouts) ? params.abouts : [];
     var opacity = (typeof declared.opacity === "number") ? declared.opacity : 0.3;
 
-    var thickness = (typeof params.belt_thickness === "number")
-      ? params.belt_thickness : 0.5;
+    // L-322 Stage D, gallery patch 3: the typed 0.5 fallback is gone. A
+    // belt whose edges are served is drawn across them (evenBeltRings); a
+    // body that serves a belt_thickness instead -- Jupiter, which has no
+    // edge rows yet -- keeps its band; one with neither is drawn as a
+    // single ring at its distance, and a warning says so.
+    var thickness = (typeof params.belt_thickness === "number" &&
+                     params.belt_thickness > 0) ? params.belt_thickness : null;
     var nRings = params.n_rings || 5;
     var nPoints = params.n_points || 80;
 
@@ -954,18 +1025,60 @@
              " has no served or declared name/colour; using a fallback");
       }
       var label = bodyName + ": " + name;
-      var pts = beltPoints(distances[i] * radiusAu, thickness * radiusAu,
-                           nRings, nPoints);
+      var span = beltSpan(params, i);
+      // L-322 Stage D, gallery patch 3: which rings, and which is the peak.
+      var ringRadii = null, peakRing = -1, pts;
+      if (span) {
+        var even = evenBeltRings(span[0], distances[i], span[1]);
+        if (even.error) {
+          warn(slug + "/" + featureKey + ": belt " + i + ": " + even.error +
+               " -- not drawn");
+          continue;
+        }
+        ringRadii = even.radii;
+        peakRing = even.peak;
+      } else if (thickness === null) {
+        warn(slug + "/" + featureKey + ": belt " + i + " has no served " +
+             "edges and no belt_thickness -- drawn as one ring at its distance");
+        ringRadii = [distances[i]];
+      }
+      if (ringRadii) {
+        var edgeAu = [];
+        for (var ri = 0; ri < ringRadii.length; ri++) {
+          if (ri !== peakRing) edgeAu.push(ringRadii[ri] * radiusAu);
+        }
+        pts = ringLoops(edgeAu, nPoints);
+      } else {
+        pts = beltPoints(distances[i] * radiusAu, thickness * radiusAu,
+                         nRings, nPoints);
+      }
       var built = geometryTrace(pts, center, basis, label, color, opacity,
                                 BELT_MARKER_SIZE);
+      // The peak ring, brighter and larger, as its own trace in the same
+      // legend group, so the drawer still shows one row per belt.
+      var peakBuilt = null;
+      if (peakRing >= 0) {
+        peakBuilt = geometryTrace(ringLoops([ringRadii[peakRing] * radiusAu],
+                                            nPoints),
+                                  center, basis, label, color,
+                                  BELT_PEAK_OPACITY,
+                                  BELT_MARKER_SIZE * BELT_PEAK_SIZE_FACTOR);
+        peakBuilt.trace.showlegend = false;
+      }
       // L-291 step 3: a belt larger than the arrival frame goes to the
       // drawer, as a shell does. Earth's inner belt at 1.5 R_earth sits
       // just outside the exhibit's 6.155e-5 AU floor and was drawn lit,
       // setting the frame the design had ruled it should not.
+      var beltOuter = ringRadii ? ringRadii[ringRadii.length - 1]
+                                : distances[i] + thickness / 2;
       var beltBeyond = (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
-                        (distances[i] + thickness / 2) * radiusAu > halfRangeAu);
-      if (beltBeyond) built.trace.visible = "legendonly";
+                        beltOuter * radiusAu > halfRangeAu);
+      if (beltBeyond) {
+        built.trace.visible = "legendonly";
+        if (peakBuilt) peakBuilt.trace.visible = "legendonly";
+      }
       traces.push(built.trace);
+      if (peakBuilt) traces.push(peakBuilt.trace);
 
       // L-305 item 7 (2026-09-14): a belt served in L is a shell label, not
       // a distance, and the ring is drawn where that shell crosses the
@@ -985,7 +1098,6 @@
       // figure. It names its model and epoch because the tilt drifts.
       // If no tilt row is served -- Jupiter's belts have none -- the
       // sentence still runs, just without the number.
-      var span = beltSpan(params, i);
       // Soft read: absent is normal (Jupiter), a wrong unit is not.
       var tilt = null;
       if (isDict(params.magnetic_tilt)) {
@@ -1053,14 +1165,26 @@
                 fmtServed(Math.abs(tiltRate),
                           servedFigures(params.magnetic_tilt_rate), 4) +
                 " degrees a year."));
+      // L-322 Stage D, gallery patch 3: where the rings run across the
+      // belt, the hover says what they are, as the orrery's does since D9.
+      // The drawn-width line is only for a band served as a thickness.
+      var ringsLine = (peakRing >= 0)
+        ? wrapHover("The belt is one continuous region; its evenly spaced" +
+            " rings only mark its extent, and the brighter ring marks where" +
+            " it is most intense.") + "<br>"
+        : "";
+      var widthLine = (thickness !== null && !ringRadii)
+        ? "Drawn " + thickness.toFixed(1) + " radii wide, a width chosen for" +
+          " the picture.<br>"
+        : "";
       var hover = label + "<br><br>" + descLine({description: descs[i]}) +
+        ringsLine +
         drawnLines +
         (span
           ? "Measured extent: " + fmtServed(span[0], span[2], 1) + " to " +
             fmtServed(span[1], span[3], 1) + " " + bodyName + " radii<br>"
           : "") +
-        "Drawn " + thickness.toFixed(1) + " radii wide, a width chosen for" +
-        " the picture.<br>" +
+        widthLine +
         ringLines;
       // L-231 follow-up (2026-09-15): the citation and the served note
       // both moved to the i panel. Earth's belts are flux PEAKS rather than
@@ -1073,8 +1197,11 @@
       // index is computed from n_points so the angle holds if the ring
       // sampling changes. MODE-5 KNOB: raise or lower BELT_MARKER_DEG.
       var markerIdx = Math.round(nPoints * (BELT_MARKER_DEG / 360)) % nPoints;
-      var beltMarker = infoMarker(built.x[markerIdx], built.y[markerIdx],
-                                  built.z[markerIdx],
+      // L-322 Stage D, gallery patch 3: on the peak ring where there is one,
+      // as the orrery's marker sits on its peak ring since D9.
+      var onRing = peakBuilt || built;
+      var beltMarker = infoMarker(onRing.x[markerIdx], onRing.y[markerIdx],
+                                  onRing.z[markerIdx],
                                   color, hover, label,
                                   Array.isArray(params.info_borders)
                                     ? params.info_borders[i] : undefined);
@@ -1093,13 +1220,15 @@
       if (notes[i]) linkCfg.note = notes[i];
       if (typeof abouts[i] === "string" && abouts[i]) linkCfg.about = abouts[i];
       traces.push(beltMarker);
-      stampLink([built.trace, beltMarker], linkCfg);
+      var beltTraces = peakBuilt ? [built.trace, peakBuilt.trace, beltMarker]
+                                 : [built.trace, beltMarker];
+      stampLink(beltTraces, linkCfg);
       // L-334 stage B: a belt is served as a member of parallel lists
       // (names, colors) rather than under a key of its own, so there is
       // no per-belt key to stamp and both belts carry the feature key.
       // An arrival block naming "van_allen_belts" therefore draws both,
       // which is what the served shape supports.
-      stampShell([built.trace, beltMarker], featureKey);
+      stampShell(beltTraces, featureKey);
     }
     return traces;
   }
@@ -1970,6 +2099,11 @@
   var MAG_N_THETA = 24;
   var MAG_N_PHI = 48;
   var MAG_MARKER_SIZE = 2.0;
+  // L-322 Stage D, gallery patch 3: rings along the magnetotail, from the
+  // end of Shue's surface to the end of the drawing, as the orrery's
+  // n_tail_rings. The ring where the widening stops is added to them, so
+  // the bend is drawn where the served row puts it. MODE-5 KNOB.
+  var TAIL_N_RINGS = 20;
   // Where the single info marker sits, in the surface's own coordinates.
   // Off the nose, because the nose lies on the Sun line where the Sun
   // Direction trace runs through it; and on opposite sides for the two
@@ -2107,8 +2241,10 @@
     var mpCut = measured(mpS.cut_angle, "deg",
                          where + "/magnetopause/cut_angle", warn);
 
+    var mpDrawn = false;
     if (r0 !== null && a6 !== null && a7 !== null && a8 !== null &&
         bz !== null && dp !== null && mpCut !== null && dp > 0) {
+      mpDrawn = true;
       var alpha = (a6 + a7 * bz) * (1 + a8 * Math.log(dp));
       var mpLabel = bodyName + ": " + (mp.name || "Magnetopause");
       var mpCutRad = mpCut * Math.PI / 180;
@@ -2143,9 +2279,8 @@
         " nPa<br>" +
         "Drawn to " + fmtServed(mpCut, servedFigures(mpS.cut_angle), 0) +
         " deg from the nose, as far as the" +
-        " paper" + SOFT_BR + "plots its model. That is where the drawing stops," +
-        " not where" + SOFT_BR +
-        "the surface ends: it widens down the tail without limit.<br>" +
+        " paper" + SOFT_BR + "plots its model. Beyond that angle the boundary" +
+        " is drawn" + SOFT_BR + "as the magnetotail.<br>" +
         "Not tilted: the model is symmetric about the Sun line.";
       mpHover = withTail(mpHover);
 
@@ -2162,6 +2297,143 @@
       stampLink([mpBuilt.trace, mpMarker],
                 { info_url: mp.info_url, source: mp.source, about: mp.about,
                   detail: mpS._model, note: mp.note });
+    }
+
+    // --- Magnetotail, Slavin et al. (1985) ---------------------------------
+    // L-322 Stage D, gallery patch 3 (Tony, 2026-09-26: its own entry in
+    // the list). The same tail the orrery draws since patch D8. It starts
+    // where Shue's surface stops, at the served cut angle: its starting
+    // distance behind Earth and its starting radius are worked out here
+    // from the served Shue rows, not served. From there its radius grows in
+    // a straight line to the served drawn radius at the served flare end,
+    // then stays at that radius to the served drawn end. It is round.
+    // The flare end and the width are measurements (Slavin et al. 1985);
+    // the drawn radius and the drawn end are rules over them, declared on
+    // their rows in constants_new.py, and used here only for the shape.
+    // The hover prints the measured rows with their served uncertainties.
+    var tl = params.magnetotail;
+    if (mpDrawn && isDict(tl) && typeof tl.name === "string") {
+      var tlWhere = where + "/magnetotail";
+      var flareEnd = measured(tl.flare_end, "r_earth", tlWhere + "/flare_end",
+                              warn);
+      var tailWidth = measured(tl.diameter, "r_earth", tlWhere + "/diameter",
+                               warn);
+      var tailRadius = measured(tl.drawn_radius, "r_earth",
+                                tlWhere + "/drawn_radius", warn);
+      var tailEnd = measured(tl.drawn_end, "r_earth", tlWhere + "/drawn_end",
+                             warn);
+      var tailReach = measured(tl.observed_extent, "r_earth",
+                               tlWhere + "/observed_extent", warn);
+      var rCut = shueRadius(r0, alpha, mpCutRad);
+      var startBehind = -rCut * Math.cos(mpCutRad);
+      var startRadius = rCut * Math.sin(mpCutRad);
+      if (flareEnd !== null && tailWidth !== null && tailRadius !== null &&
+          tailEnd !== null && tailReach !== null) {
+        if (!(startBehind < flareEnd && flareEnd < tailEnd)) {
+          warn(tlWhere + ": the served rows are out of order -- the surface " +
+               "stops " + startBehind.toFixed(1) + " Earth radii behind " +
+               "Earth, the widening ends at " + flareEnd + " and the drawing " +
+               "at " + tailEnd + " -- not drawn");
+        } else {
+          var tailAt = function (behind) {
+            var r = (behind < flareEnd)
+              ? startRadius + (tailRadius - startRadius) *
+                (behind - startBehind) / (flareEnd - startBehind)
+              : tailRadius;
+            return [-behind * radiusAu, r * radiusAu];
+          };
+          // The rings: evenly spaced from the cut (whose ring is the
+          // surface's last, so it is not drawn twice) to the end, with the
+          // flare end added so the bend sits where the row puts it.
+          var stations = [];
+          for (var ti = 1; ti <= TAIL_N_RINGS; ti++) {
+            stations.push(startBehind +
+                          (tailEnd - startBehind) * ti / TAIL_N_RINGS);
+          }
+          stations.push(flareEnd);
+          stations.sort(function (p, q) { return p - q; });
+          var tx = [], ty = [], tz = [];
+          for (var si = 0; si < stations.length; si++) {
+            if (si > 0 && stations[si] === stations[si - 1]) continue;
+            var row = tailAt(stations[si]);
+            for (var tj = 0; tj < MAG_N_PHI; tj++) {
+              var tp = sunPlace(frame, center, row[0], row[1],
+                                2 * Math.PI * tj / MAG_N_PHI);
+              tx.push(tp[0]); ty.push(tp[1]); tz.push(tp[2]);
+            }
+          }
+          var tlLabel = bodyName + ": " + tl.name;
+          var tlColor = tl.color || mp.color || "rgb(180, 180, 255)";
+          var tlOpacity = (typeof tl.opacity === "number") ? tl.opacity
+                        : (typeof mp.opacity === "number") ? mp.opacity : 0.25;
+          var tlTrace = {
+            type: "scatter3d", mode: "markers",
+            x: tx, y: ty, z: tz,
+            marker: { size: MAG_MARKER_SIZE, color: tlColor,
+                      opacity: tlOpacity },
+            name: tlLabel, legendgroup: tlLabel,
+            hoverinfo: "skip", showlegend: true
+          };
+          var tlEdge = Math.sqrt(tailEnd * tailEnd + tailRadius * tailRadius) *
+                       radiusAu;
+          var tlBeyond = (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
+                          tlEdge > halfRangeAu);
+          if (tlBeyond) tlTrace.visible = "legendonly";
+          traces.push(tlTrace);
+
+          // The hover. Its two measured sizes print at their served counts
+          // with their served uncertainties; the kilometres are those rows
+          // times Earth's radius, at the fewer of the two counts, as the
+          // belts' kilometre line is. The words were approved by Tony
+          // before this patch ran.
+          var flareFig = servedFigureField(tl.flare_end);
+          var widthFig = servedFigureField(tl.diameter);
+          var flareUnc = (isDict(tl.flare_end) &&
+                          typeof tl.flare_end.uncertainty === "string")
+            ? tl.flare_end.uncertainty : null;
+          var widthUnc = (isDict(tl.diameter) &&
+                          typeof tl.diameter.uncertainty === "string")
+            ? tl.diameter.uncertainty : null;
+          var tlHover = tlLabel + "<br><br>" + descLine(tl) +
+            wrapHover("Spacecraft found the tail stops widening about " +
+              fmtServed(flareEnd, servedFigures(tl.flare_end), 0) +
+              " Earth radii behind Earth" +
+              (flareUnc ? ", plus or minus " + flareUnc : "") +
+              ", and is about " +
+              fmtServed(tailWidth, servedFigures(tl.diameter), 0) +
+              " Earth radii wide beyond there" +
+              (widthUnc ? ", plus or minus " + widthUnc : "") + ".") + "<br>" +
+            wrapHover("That is about " +
+              kmAndAu(flareEnd * radiusKm,
+                      figProduct([[flareEnd, flareFig],
+                                  [radiusKm, radiusFigures]])) +
+              " and " +
+              kmAndAu(tailWidth * radiusKm,
+                      figProduct([[tailWidth, widthFig],
+                                  [radiusKm, radiusFigures]])) +
+              ".") + "<br>" +
+            wrapHover("The straight widening up to that point is our choice;" +
+              " the measurements give only its two ends.") + "<br>" +
+            wrapHover("The drawing stops at " +
+              fmtServed(tailReach, servedFigures(tl.observed_extent), 0) +
+              " Earth radii, which is how far the spacecraft went, not where" +
+              " the tail ends.") + "<br>" +
+            wrapHover("Drawn round, its average shape; at any moment it is" +
+              " often flattened.");
+          tlHover = withTail(tlHover);
+          var tlMk = sunPlace(frame, center, tailAt(flareEnd)[0],
+                              tailAt(flareEnd)[1],
+                              MAG_MARKER_PHI_DEG.magnetopause * Math.PI / 180);
+          var tlMarker = infoMarker(tlMk[0], tlMk[1], tlMk[2], tlColor,
+                                    tlHover, tlLabel, tl.info_border);
+          if (tlBeyond) tlMarker.visible = "legendonly";
+          stampShell([tlTrace, tlMarker], "magnetotail");
+          traces.push(tlMarker);
+          stampLink([tlTrace, tlMarker],
+                    { info_url: tl.info_url, source: tl.source,
+                      about: tl.about, note: tl.note });
+        }
+      }
     }
 
     // --- Bow shock, Jelinek et al. (2012) ---------------------------------
@@ -2402,6 +2674,9 @@
     // every declared count through the code the page actually uses
     // rather than a second copy of the same arithmetic.
     _fmtServed: fmtServed,
+    // L-322 Stage D, gallery patch 3: the belt ring rule, so the smoke
+    // checks hold it to the orrery's answers.
+    _evenBeltRings: evenBeltRings,
     // L-231 follow-up (2026-09-15): earth_geometry.js ends its own hovers
     // with these exact words rather than a second copy.
     HOVER_TAIL: HOVER_TAIL,

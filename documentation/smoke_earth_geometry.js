@@ -22,6 +22,16 @@
 // is checked against the served pole of date and its hover against the
 // served tilt; the fallback with no pole of date, and the case with no
 // frame angle, are each composed and checked).
+// Updated September 26, 2026 with Anthropic's Claude Opus 5.5 (L-322
+// Stage D, gallery patch 3: the magnetosphere and the rotation period are
+// taken from the served cache, as the pole of date is; the magnetotail is
+// checked as a shape -- where it starts, where it bends, where it ends,
+// round -- and its hover against the served rows; the belts' rings against
+// the orrery's answers for the served edges and peak, the peak ring
+// brighter and larger with the marker on it; the axis hover's period
+// against the served row. normal() now picks three points that span the
+// trace, because a trace of several rings put its first, third and
+// two-thirds points on one radial line and read as a false tilt.)
 
 const fs = require("fs");
 const path = require("path");
@@ -47,10 +57,20 @@ function check(name, ok, detail) {
   if (!ok) failures++;
 }
 function normal(t) {
-  const n = t.x.length, i1 = Math.floor(n / 3), i2 = Math.floor(2 * n / 3);
-  const a = [t.x[i1]-t.x[0], t.y[i1]-t.y[0], t.z[i1]-t.z[0]];
-  const b = [t.x[i2]-t.x[0], t.y[i2]-t.y[0], t.z[i2]-t.z[0]];
-  const c = [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+  // L-322 Stage D, gallery patch 3: the second point is the one farthest
+  // from the first, the third the one farthest from the line through
+  // both, so the three always span the plane, whatever order the rings'
+  // points come in.
+  const n = t.x.length;
+  const p = i => [t.x[i], t.y[i], t.z[i]];
+  const sub = (u, v) => [u[0]-v[0], u[1]-v[1], u[2]-v[2]];
+  const cross = (u, v) => [u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]];
+  const p0 = p(0);
+  let i1 = 0, best = -1;
+  for (let i = 1; i < n; i++) { const d = Math.hypot(...sub(p(i), p0)); if (d > best) { best = d; i1 = i; } }
+  const a = sub(p(i1), p0);
+  let c = [0, 0, 0]; best = -1;
+  for (let i = 1; i < n; i++) { const x = cross(a, sub(p(i), p0)); const m = Math.hypot(...x); if (m > best) { best = m; c = x; } }
   const m = Math.hypot(c[0], c[1], c[2]);
   return [c[0]/m, c[1]/m, c[2]/m];
 }
@@ -70,6 +90,30 @@ if (!POD || !POD.tilt) {
 }
 const fallbackPayload = JSON.parse(JSON.stringify(payload));
 payload.poleOfDate = POD;
+// L-322 Stage D, gallery patch 3: the recorded payload predates the
+// magnetotail's rows and the rotation period's pointer. Both are taken
+// from the served cache, the file the browser fetches, as the pole of
+// date is above; everything else stays the recording's.
+const SERVED_EARTH = (COV.objects.earth || {}).features || {};
+const SERVED_TAIL = (SERVED_EARTH.earth_magnetosphere || {}).magnetotail;
+const SERVED_PERIOD = (SERVED_EARTH.orientation || {}).rotation_period;
+if (!SERVED_TAIL || !SERVED_PERIOD) {
+  console.log("FAIL the served cache carries no magnetotail or no rotation_period for earth");
+  process.exit(1);
+}
+payload.features = payload.features.map(f => {
+  if (f.object !== "earth") return f;
+  if (f.feature === "earth_magnetosphere") {
+    return { object: f.object, feature: f.feature,
+             params: JSON.parse(JSON.stringify(SERVED_EARTH.earth_magnetosphere)) };
+  }
+  if (f.feature === "orientation") {
+    const params = JSON.parse(JSON.stringify(f.params));
+    params.rotation_period = SERVED_PERIOD;
+    return { object: f.object, feature: f.feature, params: params };
+  }
+  return f;
+});
 const HALF = 6.155e-5;                      // Earth's arrival floor, as the page uses it
 const out = EG.composeScene(payload, { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" });
 const T = out.traces;
@@ -91,8 +135,8 @@ check("no scene-centre marker survives", !T.some(t => t.legendgroup === "center"
 const groups = {};
 T.forEach(t => { if (t.legendgroup) (groups[t.legendgroup] = groups[t.legendgroup] || []).push(t); });
 const names = Object.keys(groups);
-check("drawer rows: 16 served + axis + Sun + terminator + Moon = 20 groups",
-      names.length === 20, names.length + ": " + names.join(", "));
+check("drawer rows: 17 served (the magnetotail since gallery patch 3) + axis + Sun + terminator + Moon = 21 groups",
+      names.length === 21, names.length + ": " + names.join(", "));
 
 // Arrival policy: what is lit.
 const lit = names.filter(k => groups[k].some(t => t.showlegend === true && t.visible !== "legendonly" && t.visible !== false));
@@ -104,7 +148,7 @@ check("arrival lights exactly the eight shells (LEO as two edges) plus axis and 
       lit.join(", "));
 check("Moon, terminator, GEO, belts, geocorona, Hill sphere and both magnetosphere surfaces wait in the drawer",
       ["moon", "Terminator", "Geostationary", "Radiation Belt", "Geocorona", "Hill",
-       "Magnetopause", "Bow Shock"].every(w =>
+       "Magnetopause", "Bow Shock", "Magnetotail"].every(w =>
         names.filter(n => n.indexOf(w) >= 0).every(n => groups[n].every(t => t.visible === "legendonly"))));
 
 // Geometry.
@@ -213,9 +257,29 @@ check("axis hover states the sense of rotation in words",
       /prograde, west to east/.test(axisG.find(t => t.mode === "markers").text[0]));
 check("...and its citation is in the panel entry, not lost",
       /Archinal/.test((axisG.find(t => t.mode === "markers").meta || {}).source || ""));
-check("axis hover says the rotation is not shown and states no period",
-      /turning itself is not shown/.test(axisG.find(t => t.mode === "markers").text[0]) &&
-      /period is stated because none is served/.test(axisG.find(t => t.mode === "markers").text[0]));
+// L-322 Stage D, gallery patch 3: the period is the served row at its
+// served count, and the hover says why the turning is not animated.
+const axisHoverText = axisG.find(t => t.mode === "markers").text[0].split("<br soft>").join(" ");
+const wantPeriod = "Earth turns once every " + SERVED_PERIOD.value.toPrecision(SERVED_PERIOD.figures) +
+                   " hours measured against the stars.";
+check("axis hover states the served sidereal period at its count",
+      axisHoverText.indexOf(wantPeriod) >= 0, wantPeriod);
+check("axis hover says the turning is not animated, and why",
+      /The turning is not animated, because nothing on the crust marks a longitude to watch it by\./.test(axisHoverText) &&
+      !/none is served/.test(axisHoverText));
+check("...and the period's source reaches the panel",
+      /Period: /.test((axisG.find(t => t.mode === "markers").meta || {}).source || ""));
+check("...and the sense of rotation is credited to the report's own definition, not an Earth angle it does not give",
+      /sec\. 2, p\. 6/.test((axisG.find(t => t.mode === "markers").meta || {}).source || "") &&
+      !/Earth's prime-meridian angle W increases/.test((axisG.find(t => t.mode === "markers").meta || {}).source || ""));
+// With no period row served, the hover says so and prints no number.
+const noPeriod = JSON.parse(JSON.stringify(payload));
+noPeriod.features.forEach(f => { if (f.feature === "orientation") delete f.params.rotation_period; });
+const npOut = EG.composeScene(noPeriod, { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" });
+const npHover = npOut.traces.filter(t => t.legendgroup === "Earth: Rotation Axis and Equator")
+  .map(t => Array.isArray(t.text) ? t.text[0] : t.text).find(h => typeof h === "string" && /Tilt/.test(h)) || "";
+check("no period row: the hover says none is served and prints no period",
+      /no\s*(<br soft>)?\s*rotation period is served/.test(npHover) && !/turns once every/.test(npHover));
 
 const moonG = groups["moon"];
 const arc = moonG.find(t => t.name === "Moon trusted arc");
@@ -329,11 +393,90 @@ const magParams = earthParams.earth_magnetosphere;
         Math.min(...pts.map(p => Math.hypot(p[0]-mk.x[0], p[1]-mk.y[0], p[2]-mk.z[0]))) < standoffAu * 0.05);
   // L-331 (2026-09-16): same pin, plain words -- "A DRAWING LIMIT, not an
   // edge" is now a sentence a visitor can read.
-  check(label + ": the hover says the cut is where the drawing stops, not an edge",
-        /where the drawing stops, not where(<br[^>]*>| )the/.test(mk.text[0]));
+  // L-322 Stage D, gallery patch 3: the magnetopause's drawing no longer
+  // stops at its cut; the magnetotail carries it on, and its hover says so.
+  if (label === "Earth: Magnetopause") {
+    check(label + ": the hover says the boundary is drawn on as the magnetotail",
+          /Beyond that angle the boundary is drawn(<br[^>]*>| )as the magnetotail\./.test(mk.text[0]) &&
+          !/without limit/.test(mk.text[0]));
+  } else {
+    check(label + ": the hover says the cut is where the drawing stops, not an edge",
+          /where the drawing stops, not where(<br[^>]*>| )the/.test(mk.text[0]));
+  }
 });
 
+// --- L-322 Stage D, gallery patch 3: the magnetotail ----------------------
+// It continues Shue's surface from the served cut: straight to the served
+// drawn radius at the served flare end, then that radius to the served
+// drawn end, round. Every leg reads the traces, never the code.
+(() => {
+  const label = "Earth: Magnetotail";
+  const tg = groups[label];
+  check(label + ": drawn, one geometry trace and one info marker",
+        !!tg && tg.filter(t => t.hoverinfo === "skip").length === 1 &&
+        tg.filter(t => t.marker && t.marker.symbol === "cross").length === 1);
+  if (!tg) return;
+  const RE = R_E_KM / K;
+  const tail = tg.find(t => t.hoverinfo === "skip");
+  const pts = tail.x.map((_, i) => [tail.x[i], tail.y[i], tail.z[i]]);
+  const rings = {};
+  pts.forEach(p => { const k = (-along(p) / RE).toFixed(6); (rings[k] = rings[k] || []).push(across(p) / RE); });
+  const stations = Object.keys(rings).map(Number).sort((a, b) => a - b);
+  const radiusAt = d => { const v = rings[d.toFixed(6)]; return v ? v[0] : null; };
+  const worst = Math.max(...Object.values(rings).map(v => Math.max(...v) - Math.min(...v)));
+  check(label + ": round -- every ring one radius", worst < 1e-6, worst.toExponential(2) + " R_E spread");
+  // Where the surface stops: Shue's radius at the served cut.
+  const mpS = magParams.magnetopause.surface;
+  const alpha = (mpS.a6.value + mpS.a7.value * mpS.bz.value) * (1 + mpS.a8.value * Math.log(mpS.pressure.value));
+  const cut = mpS.cut_angle.value * Math.PI / 180;
+  const rCut = magParams.magnetopause.standoff.value * Math.pow(2 / (1 + Math.cos(cut)), alpha);
+  const startBehind = -rCut * Math.cos(cut), startRadius = rCut * Math.sin(cut);
+  const tl = magParams.magnetotail;
+  const flare = tl.flare_end.value, width = tl.drawn_radius.value, end = tl.drawn_end.value;
+  check(label + ": starts where the magnetopause stops, not before",
+        stations[0] > startBehind && stations[0] < startBehind + (end - startBehind) / 10,
+        "first ring " + stations[0].toFixed(2) + " R_E behind; the surface stops at " + startBehind.toFixed(2));
+  check(label + ": bends at the served flare end, at the served drawn radius",
+        radiusAt(flare) !== null && Math.abs(radiusAt(flare) - width) < 1e-6,
+        "at " + flare + ": " + radiusAt(flare));
+  check(label + ": ends at the served drawn end",
+        Math.abs(stations[stations.length - 1] - end) < 1e-6, stations[stations.length - 1].toFixed(3));
+  const lineOK = stations.every(d => {
+    const want = d < flare ? startRadius + (width - startRadius) * (d - startBehind) / (flare - startBehind) : width;
+    return Math.abs(radiusAt(d) - want) < 1e-6;
+  });
+  check(label + ": a straight widening to the flare end, then constant", lineOK);
+  check(label + ": the drawn radius is half the served diameter",
+        Math.abs(width * 2 - tl.diameter.value) < 1e-9 && end === tl.observed_extent.value);
+  const mk = tg.find(t => t.marker && t.marker.symbol === "cross");
+  const mkP = [mk.x[0], mk.y[0], mk.z[0]];
+  check(label + ": its info marker sits on the tail at the flare end",
+        Math.abs(-along(mkP) / RE - flare) < 1e-6 && Math.abs(across(mkP) / RE - width) < 1e-6);
+  check(label + ": the same colour as the magnetopause",
+        tail.marker.color === groups["Earth: Magnetopause"].find(t => t.hoverinfo === "skip").marker.color);
+  check(label + ": stamped with its own shell key",
+        tg.every(t => t.meta && t.meta.shell_key === "magnetotail"));
+  const h = mk.text[0].split("<br soft>").join(" ");
+  check(label + ": the hover prints the two measured sizes with their served uncertainties",
+        h.indexOf("stops widening about " + flare.toFixed(0) + " Earth radii behind Earth, plus or minus " +
+                  tl.flare_end.uncertainty) >= 0 &&
+        h.indexOf("about " + tl.diameter.value.toFixed(0) + " Earth radii wide beyond there, plus or minus " +
+                  tl.diameter.uncertainty) >= 0);
+  check(label + ": the hover says where the drawing stops and why",
+        h.indexOf("The drawing stops at " + tl.observed_extent.value.toFixed(0) +
+                  " Earth radii, which is how far the spacecraft went, not where the tail ends.") >= 0);
+  check(label + ": its sources reach the panel",
+        /Slavin et al\. \(1985\)/.test((mk.meta || {}).source || "") && /Maezawa/.test((mk.meta || {}).source || ""));
+})();
+
 // --- L-231: the belts sit in the equatorial plane and are flat ----------
+const beltP = earthParams.van_allen_belts;
+const beltRows = {
+  "Earth: Inner Radiation Belt": [beltP.inner_belt_inner_edge.value, beltP.inner_belt_distance.value,
+                                  beltP.inner_belt_outer_edge.value, 10, 4],
+  "Earth: Outer Radiation Belt": [beltP.outer_belt_inner_edge.value, beltP.outer_belt_distance.value,
+                                  beltP.outer_belt_outer_edge.value, 9, 3]
+};
 ["Earth: Inner Radiation Belt", "Earth: Outer Radiation Belt"].forEach(label => {
   const belt = groups[label].find(t => t.hoverinfo === "skip");
   const n = normal(belt);
@@ -352,8 +495,36 @@ const magParams = earthParams.earth_magnetosphere;
   // replaced "drawing choice" and "Sourced span". The description itself
   // is measured by smoke_hover_budget.js, which overlays the store; this
   // suite renders a fixture that predates the field.
-  check(label + ": the hover says the drawn width is chosen for the picture",
-        /a width chosen for the picture/.test(mk.text[0]));
+  // L-322 Stage D, gallery patch 3: the rings run from the served inner
+  // edge to the served outer edge, evenly spaced, one on the served peak;
+  // the orrery's answers for these rows are ten with the peak fifth and
+  // nine with the peak fourth. Read off the traces.
+  const RE = R_E_KM / K;
+  const [lo, pk, hi, wantN, wantPeak] = beltRows[label];
+  const skips = groups[label].filter(t => t.hoverinfo === "skip");
+  const radii = {};
+  skips.forEach(t => t.x.forEach((_, i) => { radii[(Math.hypot(t.x[i], t.y[i], t.z[i]) / RE).toFixed(6)] = true; }));
+  const rr = Object.keys(radii).map(Number).sort((a, b) => a - b);
+  const steps = rr.slice(1).map((r, i) => r - rr[i]);
+  check(label + ": " + wantN + " rings, evenly spaced from the served inner edge to the served outer edge",
+        rr.length === wantN && Math.abs(rr[0] - lo) < 1e-6 && Math.abs(rr[rr.length - 1] - hi) < 1e-6 &&
+        Math.max(...steps) - Math.min(...steps) < 1e-6, rr.map(r => r.toFixed(3)).join(" "));
+  const peakT = skips.find(t => t.showlegend === false);
+  const edgeT = skips.find(t => t.showlegend === true);
+  const peakR = peakT ? Math.hypot(peakT.x[0], peakT.y[0], peakT.z[0]) / RE : null;
+  check(label + ": the ring at the served peak (ring " + (wantPeak + 1) + " from the inside) is its own trace, brighter and larger",
+        !!peakT && Math.abs(peakR - pk) < 1e-6 && Math.abs(rr[wantPeak] - pk) < 1e-6 &&
+        peakT.marker.opacity > edgeT.marker.opacity && peakT.marker.size > edgeT.marker.size,
+        peakT ? "peak " + peakR.toFixed(3) + ", opacity " + peakT.marker.opacity + " vs " + edgeT.marker.opacity : "none");
+  check(label + ": the info marker sits on the peak ring",
+        Math.abs(Math.hypot(mk.x[0], mk.y[0], mk.z[0]) / RE - pk) < 1e-6);
+  const beltText = mk.text[0].split("<br soft>").join(" ");
+  check(label + ": the hover says the rings only mark the extent, and which ring is brighter",
+        beltText.indexOf("The belt is one continuous region; its evenly spaced rings only mark its " +
+                         "extent, and the brighter ring marks where it is most intense.") >= 0 &&
+        !/a width chosen for the picture/.test(beltText));
+  check(label + ": _evenBeltRings gives the orrery's answer for these rows",
+        (() => { const e = GF._evenBeltRings(lo, pk, hi); return e.radii.length === wantN && e.peak === wantPeak; })());
   check(label + ": the hover gives the measured extent from the served edges",
         /Measured extent: \d/.test(mk.text[0]), mk.text[0].indexOf("Measured extent") >= 0);
   // L-231: the tilt is quoted only because the store carries it and it is

@@ -39,6 +39,12 @@ WHAT IT COVERS, one case each
     15. the rounding allowance: a config holding the unrounded number
         against an export rounded to declared figures is a relabel, not
         a conflict
+    17. an uncertainty the export serves is written beside the value, as
+        the string the row gives, trailing zero kept; a row with none
+        gets no field; an export from before schema 4, which carries no
+        uncertainty at all, leaves the entry as it was
+    18. Earth's pole links to the store's fallback rows and is SERVED;
+        the real config no longer holds a planet_poles['Earth'] link
 
 RUN COMMAND
 
@@ -52,6 +58,9 @@ Domain: gallery
 
 Module created: September 17, 2026 with Anthropic's Claude Opus 5
 (L-322, the gallery half: piece 2 of the build manifest).
+Module updated: September 26, 2026 with Anthropic's Claude Opus 5.5
+(L-322 Stage D, gallery patch 3: cases 17 and 18; case 9's link outside
+the store is Jupiter's pole now, because Earth's is served).
 """
 
 import json
@@ -325,8 +334,12 @@ SHAPES_CONFIG = '''{
       "orrery_constant": "constants_new.py::EARTH_STANDOFF_RADII"
     },
     "under_pole": {
-      "pole": { "ra": 0.0, "dec": 90.0 },
-      "orrery_constant": "idealized_orbits.py::planet_poles['Earth']"
+      "pole": { "ra": 268.05, "dec": 64.49 },
+      "orrery_constant": "idealized_orbits.py::planet_poles['Jupiter']"
+    },
+    "earth_pole_ra": {
+      "value": 0.0, "unit": "deg",
+      "orrery_constant": "constants_new.py::EARTH_POLE_RA_J2000_DEG"
     },
     "no_slot": {
       "name": "a served row with nowhere to put it",
@@ -350,6 +363,7 @@ SHAPES_EXPORT = export_with(
         "EARTH_BELT_RADII": row(1.5, "r_earth"),
         "EARTH_STANDOFF_RADII": row(10.25, "r_earth"),
         "EARTH_MANTLE_KM": row(2890.0, "km"),
+        "EARTH_POLE_RA_J2000_DEG": row(0.0, "deg", "exact"),
     },
     not_exported={"EARTH_THERMOPAUSE_RADII": "no # Unit: line",
                   "EARTH_GEOCORONA_KM": "no # Unit: line"},
@@ -370,9 +384,13 @@ def shape_cases():
           "8: a fallback's number is left alone; only a unit written in "
           "another case than the token is normalised. Got %r"
           % [c.field for c in waiting.changes])
-    check(verdicts.get("planet_poles['Earth']") == "ABSENT",
+    check(verdicts.get("planet_poles['Jupiter']") == "ABSENT",
           "9: a link outside the store is ABSENT, got %r"
-          % verdicts.get("planet_poles['Earth']"))
+          % verdicts.get("planet_poles['Jupiter']"))
+    # 18 (L-322 Stage D, gallery patch 3): Earth's pole is a store row now.
+    check(verdicts.get("EARTH_POLE_RA_J2000_DEG") == "SERVED",
+          "18: Earth's pole links to the store's fallback row and is SERVED, "
+          "got %r" % verdicts.get("EARTH_POLE_RA_J2000_DEG"))
     check(verdicts.get("EARTH_MANTLE_KM") == "NO SLOT",
           "10: a served link with no value slot is refused")
     for name in ("EARTH_FIELD_NT", "EARTH_BELT_RADII",
@@ -394,6 +412,84 @@ def shape_cases():
           "rows")
     check("figures" not in written["features"]["waiting"]["radius"],
           "8: a fallback gets no figure count, because none is served")
+
+
+# ------------------------------------------------------------------
+# 17: the uncertainty field (L-322 Stage D, gallery patch 3).
+# ------------------------------------------------------------------
+
+UNC_CONFIG = '''{
+  "features": {
+    "stated": {
+      "value": 120.0, "unit": "r_earth", "figures": 2,
+      "orrery_constant": "constants_new.py::EARTH_FLARE_RADII"
+    },
+    "trailing_zero": {
+      "value": 10.22, "unit": "r_earth", "figures": 4,
+      "orrery_constant": "constants_new.py::EARTH_A1_RADII"
+    },
+    "none_stated": {
+      "value": 220.0, "unit": "r_earth", "figures": 2,
+      "orrery_constant": "constants_new.py::EARTH_REACH_RADII"
+    }
+  }
+}
+'''
+
+
+def with_uncertainty(entry, uncertainty):
+    entry = dict(entry)
+    entry["uncertainty"] = uncertainty
+    return entry
+
+
+def uncertainty_cases():
+    export = export_with({
+        "EARTH_FLARE_RADII": with_uncertainty(row(120.0, "r_earth", 2), "10"),
+        "EARTH_A1_RADII": with_uncertainty(row(10.22, "r_earth", 4), "0.10"),
+        "EARTH_REACH_RADII": with_uncertainty(row(220.0, "r_earth", 2), None),
+    })
+    links, failures, by_name = plan_of(UNC_CONFIG, export)
+    check(not failures, "17: nothing here is refused, got %r"
+          % [f.name for f in failures])
+    written = json.loads(mirror.apply_changes(UNC_CONFIG, links))["features"]
+    check(written["stated"].get("uncertainty") == "10",
+          "17: a stated uncertainty is written, got %r"
+          % written["stated"].get("uncertainty"))
+    check(written["trailing_zero"].get("uncertainty") == "0.10",
+          "17: the uncertainty keeps its trailing zero as a string, got %r"
+          % written["trailing_zero"].get("uncertainty"))
+    check("uncertainty" not in written["none_stated"],
+          "17: a row with no uncertainty gets no field")
+    once = mirror.apply_changes(UNC_CONFIG, links)
+    second, _f, _b = plan_of(once, export)
+    check(not any(l.changes for l in second),
+          "17: a second run changes nothing")
+    # An export from before schema 4 has no uncertainty key at all.
+    old = export_with({
+        "EARTH_FLARE_RADII": row(120.0, "r_earth", 2),
+        "EARTH_A1_RADII": row(10.22, "r_earth", 4),
+        "EARTH_REACH_RADII": row(220.0, "r_earth", 2),
+    })
+    for r in old["rows"].values():
+        r.pop("uncertainty", None)
+    links3, failures3, _ = plan_of(UNC_CONFIG, old)
+    check(not failures3 and not any(l.changes for l in links3),
+          "17: an export before schema 4 leaves the entries as they were")
+
+
+def real_config_earth_pole(root):
+    """18: the real config links Earth's pole to the store, not the dict."""
+    path = os.path.join(root, mirror.CONFIG)
+    if not os.path.exists(path):
+        check(False, "18: %s not found" % mirror.CONFIG)
+        return
+    with open(path, "r", encoding="utf-8") as handle:
+        text = handle.read()
+    check("planet_poles['Earth']" not in text,
+          "18: the real config still links Earth's pole to planet_poles")
+    check("constants_new.py::EARTH_POLE_DEC_J2000_DEG" in text,
+          "18: the real config does not link Earth's pole to the store")
 
 
 def report_mode_writes_nothing(root):
@@ -421,6 +517,8 @@ def main():
     token_cases()
     definition_case()
     shape_cases()
+    uncertainty_cases()
+    real_config_earth_pole(root)
     report_mode_writes_nothing(root)
 
     if FAILURES:
@@ -433,7 +531,8 @@ def main():
     print("All %d mirror checks passed: served, spelling, relabel refused "
           "and accepted, conflict refused, definition as exactly 1, "
           "fallback and absent named, no-slot refused, five shapes, "
-          "formatting kept, idempotent, report writes nothing."
+          "formatting kept, idempotent, report writes nothing, "
+          "uncertainty written as served, Earth's pole served."
           % CHECKS[0])
     return 0
 

@@ -30,9 +30,10 @@
  * Provenance. No number is typed here. The pole and the planet radius are
  * read from the served rows (value / unit / source / orrery_constant); the
  * Sun direction and the arc come from Horizons elements through the
- * assembler; the one constant used, the mean obliquity, is the renderer's
- * own sourced OBLIQUITY (feature_renderers.js, IAU 2006), reached through
- * GalleryFeatures._poleBasis so it is not re-declared. Colours, widths
+ * assembler; the frame's angle is the served frame row the renderers hold
+ * (setFrameConstants in feature_renderers.js, since patch D7), reached
+ * through GalleryFeatures._poleBasis so it is not re-declared; and the
+ * axis hover's rotation period is the served rotation_period row. Colours, widths
  * and point counts are the DECLARED zone (style, no source expected); the
  * axis gold and the Sun-direction yellow match the orrery
  * (planet_visualization_utilities.py _AXIS_COLOR,
@@ -56,6 +57,14 @@
  * and the belts alike, with the frame's axis as a stated fallback; the
  * axis hover prints the served tilt at its served count with its date,
  * and no longer derives one from the frame's angle).
+ * Updated September 26, 2026 with Anthropic's Claude Opus 5.5 (L-322
+ * Stage D, gallery patch 3: the axis hover states Earth's sidereal
+ * rotation period from the served row at its served count, and says the
+ * turning is not animated because nothing on the crust marks a longitude
+ * to watch it by; the sense of rotation is credited to the IAU working
+ * group's definition and its statement that Earth's rotation is direct,
+ * with the pole's source beside it, since the report gives no Earth
+ * rotation angle of its own).
  */
 (function (global) {
   "use strict";
@@ -173,6 +182,8 @@
    *   kmPerAu         from GalleryFeatures._KM_PER_AU
    *   poleBasis       GalleryFeatures._poleBasis
    *   pole            { ra: {value, unit:"deg"}, dec: {...}, source, orrery_constant }
+ *   rotationPeriod  the served rotation_period row {value, unit:"hours",
+ *                     figures, source}, or null
    *   planetRadius    { value, unit:"km", source, orrery_constant }
    *   crustRadiusAu   the drawn crust radius (1 R_earth) in AU
    *   halfRangeAu     arrival half-range; the axis and Sun line are sized from it
@@ -284,18 +295,37 @@
         tiltLines = "Tilt: not shown. No pole of date was served, so the" + SB +
           "axis drawn is the frame's, Earth's average pole of the year 2000.<br>";
       }
+      // L-322 Stage D, gallery patch 3: the sidereal period, from the served
+      // row at its served count. Without it the sentence says none is
+      // served rather than printing a remembered number.
+      var period = null;
+      var rp = opts.rotationPeriod;
+      if (rp && rp.unit === "hours" && isNum(rp.value) &&
+          typeof rp.figures === "number") {
+        period = rp;
+      } else if (rp) {
+        warn(name + "/orientation/rotation_period: not served in hours with " +
+             "a figure count -- no period stated");
+      }
+      var periodLines = (period
+        ? "Earth turns once every " +
+          global.GalleryFeatures._fmtServed(period.value, period.figures) +
+          " hours" + SB + "measured against the stars. The turning is not" +
+          " animated, because" + SB + "nothing on the crust marks a longitude" +
+          " to watch it by.<br><br>"
+        : "The turning is not animated, and no" + SB +
+          "rotation period is served.<br><br>");
       var hAxis = "<b>" + gAxis + "</b><br><br>" +
         "North pole up the gold line; the ring is the equator on the crust.<br>" +
         tiltLines +
         "Axis drawn to " + kmAndAu(K, axisHalf) + " -- a drawing length.<br><br>" +
         "The curved arrows at both ends show the sense of the turning:" + SB +
         "prograde, west to east, counter-clockwise seen from above the" + SB +
-        "north pole. This scene is one epoch: the axis is the line Earth" + SB +
-        "turns about; the turning itself is not shown, and no rotation" + SB +
-        "period is stated because none is served.<br><br>" +
+        "north pole. " + periodLines +
         tail();
       traces.push(infoMarker(tip, AXIS_COLOR, hAxis, gAxis, { meta: {
-        source: "IAU WGCCRE, Archinal et al. (2018), Cel. Mech. Dyn. Astron. 130:22 -- the sense of rotation: Earth's prime-meridian angle W increases with time. Pole: " + (pole.source || "pole source not served"),
+        source: "Sense of rotation: Archinal et al. (2018), Report of the IAU Working Group on Cartographic Coordinates and Rotational Elements: 2015, Cel. Mech. Dyn. Astron. 130:22 -- sec. 2, p. 6: a body whose prime-meridian angle W increases with time has direct (prograde) rotation; sec. 7, p. 27: the rotations of the Earth, Sun and Moon are direct. The report gives no rotation angle for Earth and sends users to the IERS. Pole: " + (pole.source || "pole source not served") +
+          (period ? " Period: " + (period.source || "source not served") : ""),
         detail: pole.orrery_constant ? "Store: " + pole.orrery_constant : null
       } }));
     }
@@ -585,6 +615,8 @@
     var geom = build({
       bodyName: "Earth", center: [0, 0, 0], kmPerAu: K,
       poleBasis: GF._poleBasis, pole: pole, planetRadius: planetRadius,
+      // L-322 Stage D, gallery patch 3: the served sidereal period.
+      rotationPeriod: orient.rotation_period || null,
       crustRadiusAu: crustAu, halfRangeAu: half, epochIso: ctx.epochIso,
       sun: payload.sun || null, moonArc: moonArc
     });

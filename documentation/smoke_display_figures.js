@@ -64,6 +64,14 @@
 // served block and held in the fixture as a marker, because it changes
 // with every cache build; the self-test gains two ways to go red. The
 // fixture is fixture_hovers_L322d7_on_d892ed6e.json.
+// Updated September 26, 2026 with Anthropic's Claude Opus 5.5 (L-322
+// Stage D, gallery patch 3): the magnetotail's hover is graded line by
+// line against the served rows and Tony's approved wording; the axis
+// hover's rotation period against the served row, at its served count;
+// the belts and the magnetopause lose their retired sentences. The
+// self-test gains two ways to go red. The fixture is re-recorded as
+// fixture_hovers_L322d_p3_on_c6000f03.json; the D7 one is left in place,
+// unreferenced, as that one left its own predecessor.
 
 "use strict";
 const fs = require("fs");
@@ -86,13 +94,14 @@ if (FRAME_NOTES.length) {
 
 const KM_PER_AU = 149597870.7;
 const SOFT_BR = "<br soft>";
-// Recorded at gallery d892ed6e with the L-322 Stage D patch D7 applied:
-// the axis hover's tilt line is held as a marker, graded separately. The
-// fixture before it, fixture_hovers_L322c2_on_42fd97dd.json, is left in
+// Recorded at gallery c6000f03 with the L-322 Stage D gallery patch 3
+// applied: the axis hover's tilt line is held as a marker, graded
+// separately, and its period line is graded against the served row. The
+// fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "d892ed6e";
+const FIXTURE_AT = "c6000f03";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L322d7_on_d892ed6e.json");
+                          "fixture_hovers_L322d_p3_on_c6000f03.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }
@@ -293,8 +302,21 @@ const ACCEPTANCE_LINES = {
     lines: ["Sunward standoff: 10.3 Earth radii",
             "That is about 65,000 km (0.00044 AU).",
             "Spacecraft that cross the real boundary typically find it " +
-            "within 1.23 Earth radii of this model."],
-    absent: ["10.25", "65,376", "0.000437"] },
+            "within 1.23 Earth radii of this model.",
+            "Beyond that angle the boundary is drawn as the magnetotail."],
+    absent: ["10.25", "65,376", "0.000437", "without limit"] },
+  // L-322 Stage D, gallery patch 3: the magnetotail, Tony's approved words
+  // of 2026-09-26, with the numbers the store serves at orrery 43ba290b.
+  "Earth: Magnetotail": {
+    lines: ["Spacecraft found the tail stops widening about 120 Earth radii " +
+            "behind Earth, plus or minus 10, and is about 60 Earth radii wide " +
+            "beyond there, plus or minus 5.",
+            "That is about 770,000 km (0.0051 AU) and 380,000 km (0.0026 AU).",
+            "The straight widening up to that point is our choice; the " +
+            "measurements give only its two ends.",
+            "The drawing stops at 220 Earth radii, which is how far the " +
+            "spacecraft went, not where the tail ends."],
+    absent: ["100 Earth radii", "765,", "382,"] },
   "Earth: Bow Shock": {
     lines: ["Sunward standoff: 13.5 Earth radii",
             "That is about 86,200 km (0.000576 AU).",
@@ -309,7 +331,8 @@ const ACCEPTANCE_LINES = {
             "once a day.",
             "That tilt is for 2020 (IGRF-13 model) and shrinks by 0.0493 " +
             "degrees a year."],
-    absent: ["9,567", "2.0 Earth radii", "9.6 degrees", "2020-2025"] },
+    absent: ["9,567", "2.0 Earth radii", "9.6 degrees", "2020-2025",
+             "a width chosen for the picture"] },
   "Earth: Outer Radiation Belt": {
     lines: ["Drawn at 4.5 Earth radii: halfway across the band, 4 to 5 " +
             "Earth radii out at the magnetic equator, where the belt is " +
@@ -322,7 +345,7 @@ const ACCEPTANCE_LINES = {
             "That tilt is for 2020 (IGRF-13 model) and shrinks by 0.0493 " +
             "degrees a year."],
     absent: ["28,70", "L = 4.5", "3.0 to 7.0", "flux peaks", "9.6 degrees",
-             "2020-2025"] }
+             "2020-2025", "a width chosen for the picture"] }
 };
 
 // ------------------------------------------------------------- building
@@ -421,6 +444,28 @@ function gradeAxisTilt(frame, pod) {
   frame[AXIS_GROUP] = h.split(want).join(TILT_MARK);
 }
 
+/* L-322 Stage D, gallery patch 3: the axis hover states Earth's sidereal
+   period, from the served rotation_period row at its served count. Graded
+   here against the served row; the fixture then holds the rest. */
+function gradeAxisPeriod(frame, row) {
+  if (!row || typeof row.figures !== "number" || row.unit !== "hours") {
+    fail("the served cache carries no rotation_period in hours with a figure " +
+         "count for earth, so the axis hover's period could not be graded");
+    return;
+  }
+  const h = frame[AXIS_GROUP];
+  if (typeof h !== "string") { fail("the axis hover was never built"); return; }
+  const want = "Earth turns once every " + fmtCount(row.value, row.figures) +
+               " hours measured against the stars.";
+  if (h.split(SOFT_BR).join(" ").indexOf(want) < 0) {
+    fail("the axis hover does not print the served rotation period at its " +
+         "count: expected \"" + want + "\"");
+    return;
+  }
+  numbersExamined += numbersIn(want).length;
+  examinedNames.push(AXIS_GROUP + " (the rotation period)");
+}
+
 function sceneHovers(shellGroups) {
   const payload = readJson(path.join(root, "documentation",
                                      "payload_earth_scene.json"));
@@ -440,6 +485,7 @@ function sceneHovers(shellGroups) {
       shellGroups, t.legendgroup || "");
   });
   const hovers = collect(frame);
+  gradeAxisPeriod(hovers, (cacheFeatures("earth").orientation || {}).rotation_period);
   gradeAxisTilt(hovers, payload.poleOfDate);
   return hovers;
 }
@@ -714,6 +760,26 @@ function selfTest() {
   hoversExamined = e0;
   examinedNames.length = n0;
   numbersExamined = counted;
+  // 6. the period grader goes red on a period printed at the wrong count
+  //    (L-322 Stage D, gallery patch 3)
+  const row = { value: 23.93446966, unit: "hours", figures: 7 };
+  const p0 = failures.length;
+  const okP = {}; okP[AXIS_GROUP] = "x<br>Earth turns once every 23.93447 hours" +
+    SOFT_BR + "measured against the stars.<br>";
+  gradeAxisPeriod(okP, row);
+  if (failures.length !== p0) {
+    notes.push("the period grader failed a period printed right");
+  }
+  const badP = {}; badP[AXIS_GROUP] = "x<br>Earth turns once every 23.93 hours" +
+    SOFT_BR + "measured against the stars.<br>";
+  const p1 = failures.length;
+  gradeAxisPeriod(badP, row);
+  if (failures.length === p1) {
+    notes.push("the period grader passed a period printed at the wrong count");
+  }
+  failures.length = p0;
+  examinedNames.length = n0;
+  numbersExamined = counted;
   return notes;
 }
 
@@ -728,7 +794,7 @@ if (selfNotes.length) {
               "cannot be trusted to grade anything else.\n");
 } else {
   console.log("Self-test: the rules and the graders go red on demand " +
-              "(15 ways).\n");
+              "(17 ways).\n");
 }
 
 // The served cache is what the browser fetches, so it is what is graded.
@@ -848,7 +914,7 @@ linesGraded.slice().sort().forEach(function (n) {
 });
 console.log("  " + fixtureCompared + " hover(s) held byte for byte " +
             "against the fixture recorded at\n  gallery " + FIXTURE_AT +
-            ", the four above among them.");
+            ", the hovers graded by line among them.");
 console.log("  " + Object.keys(bothKeys).length + " hover(s) compared " +
             "between the cache and the config, in every room" +
             (drifted ? " (" + drifted + " differ)" : " (all agree)") + ".\n");

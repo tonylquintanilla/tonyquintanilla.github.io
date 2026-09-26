@@ -10,15 +10,16 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 39  
-**Total Lines of Code (non-blank):** 19,970  
-**Total Public Functions/Classes:** 289
+**Total Python Files:** 40  
+**Total Lines of Code (non-blank):** 20,390  
+**Total Public Functions/Classes:** 294
 
 ## Classification Coverage
 
-**Undetermined role (7).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (8).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
+- `patch_L322_D_p3_gallery_tail_belts_20260926.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -26,9 +27,10 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (5).** No valid `Domain:` tag.
+**Undetermined domain (6).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
+- `patch_L322_D_p3_gallery_tail_belts_20260926.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -108,7 +110,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (852 lines) |
-| `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (589 lines) |
+| `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (604 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (826 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (123 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
@@ -123,10 +125,11 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (574 lines) |
+| `patch_L322_D_p3_gallery_tail_belts_20260926.py` | - L-322 Stage D, gallery patch 3 of 3: the magnetotail, the belts' rings, the uncertainty field, the rotation period, and three corrected source strings. (315 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (460 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (287 lines) |
-| `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (380 lines) |
+| `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (470 lines) |
 | `test_pole_of_date.py` | Offline checks of Earth's pole and tilt of date as the gallery cache builder computes them. (228 lines) |
 | `test_store_writer.py` | - the in-place writer does what it says, and refuses what it must. L-334 piece 5, the writer's half. (451 lines) |
 

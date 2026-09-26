@@ -30,15 +30,19 @@ RUN COMMAND
 WHAT IT WRITES, PER LINK
 
     SERVED     the export has the row: value, unit and figures are
-               written into the slot the link governs. Nothing else on
-               the entry is touched -- not the source, not the
+               written into the slot the link governs, and so is the
+               row's uncertainty where the export serves one (schema 4
+               and later; a row with none gets no field). Nothing else
+               on the entry is touched -- not the source, not the
                description, not the presentation.
     FALLBACK   the export names the row in not_exported (no unit line
                yet, or a retired token). The hand-typed value stays, and
                the link is named with the export's reason. Store drift
                still watches these.
-    ABSENT     the link points outside the store (the four planet_poles
-               entries and the galactic tide default). Named, untouched.
+    ABSENT     the link points outside the store (the three planet_poles
+               entries -- the Sun's, Jupiter's and Saturn's; Earth's pole
+               points at the store's fallback rows since L-322 Stage D --
+               and the galactic tide default). Named, untouched.
 
 IT EDITS IN PLACE, AND WHY
 
@@ -103,6 +107,11 @@ Domain: gallery
 Module created: September 17, 2026 with Anthropic's Claude Opus 5
 (L-322, the gallery half: piece 1 of
 documentation/BUILD_MANIFEST_L322_gallery_half_20260917.md).
+Module updated: September 26, 2026 with Anthropic's Claude Opus 5.5
+(L-322 Stage D, gallery patch 3: the export's "uncertainty" is written
+beside value, unit and figures, so a served link carries the uncertainty
+its row states, as a string that keeps its trailing zeros; Earth's pole
+is no longer one of the planet_poles links).
 """
 
 import json
@@ -112,7 +121,11 @@ import sys
 CONFIG = os.path.join("data", "objects_config.json")
 EXPORT = os.path.join("data", "constants_export.json")
 STORE_FILE = "constants_new.py"
-FIELDS = ("value", "unit", "figures")
+# L-322 Stage D, gallery patch 3: "uncertainty" joins them. The export
+# serves it from schema 4, as the string the row's # Figures: line gives
+# ("0.10", "10"), or null; a null is never inserted, so a row with no
+# stated uncertainty leaves its entry as it was.
+FIELDS = ("value", "unit", "figures", "uncertainty")
 REFUSALS = ("UNIT CONFLICT", "TOKEN CHANGE", "NO SLOT")
 
 
@@ -442,14 +455,16 @@ def plan(text, export, accept=()):
 
         held_unit = slot.value.get("unit")
         held_value = slot.value.get("value")
-        wanted = dict((field, row[field]) for field in FIELDS)
+        # .get: an export before schema 4 carries no "uncertainty".
+        wanted = dict((field, row.get(field)) for field in FIELDS)
 
         defines = defined_token(name, export)
         if defines is not None and same_token(held_unit, defines):
             # The row that defines this slot's own unit: one of it, exactly.
             link.detail = ("1 %s by definition: this row is what the token "
                            "table calls one %s" % (defines, defines))
-            wanted = {"value": 1.0, "unit": defines, "figures": "exact"}
+            wanted = {"value": 1.0, "unit": defines, "figures": "exact",
+                      "uncertainty": None}
         elif held_unit is not None and not same_token(held_unit, row["unit"]):
             if same_number(held_value, row["value"], row["figures"]):
                 link.verdict = "TOKEN CHANGE"
