@@ -147,6 +147,13 @@
         the Explorer and the exhibit rooms ends in " AU", and is written
         out in full -- 0.00005 AU, 200,000 AU -- rather than in Plotly's
         default shorthand, which would have read 50u AU and 200k AU)
+     Updated: September 26, 2026 with Anthropic's Claude Opus 5.5
+       (the portrait phone gets the larger grid numbers too, Tony's
+        ruling of 2026-09-26 from his own phone: "I think we should add
+        the larger numbers to the upright phone view also because this is
+        relevant too." The numbers do show on an upright phone, along the
+        left and bottom edges, which the earlier comment had wrong. Every
+        screen now draws them at 12 px in #9a9a9a)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2290,14 +2297,16 @@ function sunMargins() {
 function sunPhonePortrait() {
     return window.innerHeight > window.innerWidth && window.innerWidth <= 768;
 }
-// The grid numbers along the box edges (Tony's ruling of 2026-09-26).
-// On a portrait phone they fall off screen, and the triad and grid chip
-// carry direction and spacing (L-289), so they keep their old small,
-// dim setting. Everywhere else they were too small and faint to read,
-// and draw at 12 px in the page's secondary grey (--text-secondary).
+// The grid numbers along the box edges (Tony's rulings of 2026-09-26).
+// At 9 px in #5a5a6a they were too small and faint to read. They draw at
+// 12 px in the page's secondary grey (--text-secondary) on every screen:
+// first everywhere but a portrait phone, then, from Tony's own phone,
+// the portrait phone too, where they show along the left and bottom
+// edges beside the triad and the grid chip. One function still serves
+// the Explorer and the rooms, and a room still re-reads it when the
+// window turns, so a later change needs one edit here.
 function axisTickFont() {
-    return sunPhonePortrait() ? { size: 9, color: "#5a5a6a" }
-                              : { size: 12, color: "#9a9a9a" };
+    return { size: 12, color: "#9a9a9a" };
 }
 function navPlaceCross() {
     if (!navCluster || typeof navCluster.crossApart !== "function") { return; }
