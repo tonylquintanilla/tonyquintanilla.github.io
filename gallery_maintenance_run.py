@@ -100,9 +100,11 @@ same cross-repo reach that put this runner in the gallery in the first
 place.
 
 Module created: August 2026 with Anthropic's Claude Opus 5 (L-236).
-Module updated: September 26, 2026 with Anthropic's Claude Opus 5.5
-(L-281: the "Guest book" checker runs documentation/smoke_guestbook.js,
-and the --live pass fetches gallery/guestbook.js and data/guestbook.json).
+Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5
+(L-281: the "Guest book updater" checker runs
+tools/test_guestbook_updater.py; since September 26 the "Guest book"
+checker runs documentation/smoke_guestbook.js, and the --live pass
+fetches gallery/guestbook.js and data/guestbook.json).
 """
 
 import hashlib
@@ -284,6 +286,15 @@ OFFLINE_CHECKERS = [
     # red on a broken renderer first. Gates.
     ("Guest book", "node",
      ["documentation/smoke_guestbook.js"], ".", None, False),
+
+    # L-281 (2026-09-27): the tool that writes data/guestbook.json. Three
+    # scripted runs in a throwaway folder against made-up submissions:
+    # approve, decline, later, a reply, an entry of Tony's with a
+    # misspelt link refused, a removal. Nothing real is written and
+    # nothing is fetched. Its self-test first shows the link check
+    # refusing made-up pages and accepting real ones. Gates.
+    ("Guest book updater", "python",
+     ["tools/test_guestbook_updater.py"], ".", None, False),
 
     # L-237: this used to call the test directly and print FAIL every
     # run, which made a real regression indistinguishable from the known

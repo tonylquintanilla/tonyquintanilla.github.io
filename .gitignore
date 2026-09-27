@@ -29,3 +29,12 @@ data/_backup/
 # documentation/check_cache_siblings.py names whatever is there.
 data/solar-system (*)/
 data/[0-9]*-solar-system/
+
+# The guest book updater's own file (L-281): the private address of the
+# form's responses, and fingerprints of the messages already decided.
+# Anyone with that address can read every submission, approved or not,
+# so it never goes to the public repo. The .tmp is the updater's
+# half-written copy, which exists only for the moment of a save.
+tools/guestbook_local.json
+tools/guestbook_local.json.tmp
+data/guestbook.json.tmp
