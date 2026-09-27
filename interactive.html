@@ -164,6 +164,14 @@
         behind today. The other planets and Pluto follow once they are
         served. The info panel now shows a body's source even when it
         has no link, and says "body" rather than "shell" in this room)
+     Updated: September 26, 2026 with Anthropic's Claude Opus 5.5
+       (L-363: the Solar System room draws the moment it is opened --
+        "now", Tony's ruling, since a visitor cannot yet choose a time --
+        and states that moment right under its title, in UTC (Tony: UTC
+        only, no local time). Tony: that date is the reason for the
+        exhibit at all. The line is read from the epoch the assembler
+        actually used. The Sun and Earth rooms still draw today at 00:00
+        UTC and show no line)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1857,9 +1865,32 @@ for _slug in _bodies:
 json.dumps({
     "figure": result.figure,
     "bodies": _served,
+    "epoch_jd": result.context.resolved_epoch_jd,
     "warnings": result.report["warnings"],
 })
 `;
+
+// The line under the room's title: the moment the positions are for.
+// Tony, 2026-09-26: this date is the reason for the exhibit at all, and
+// the room draws NOW -- the minute it is opened (epochNow in its EXHIBITS
+// row) -- since a visitor cannot choose a time yet. The line is converted
+// from the epoch the assembler RESOLVED (a Julian date, returned by the
+// driver), so it states what was drawn, not what the page meant to ask
+// for. UTC only, Tony's ruling: no local time.
+const SOLAR_SYSTEM_MONTHS = ["January", "February", "March", "April",
+    "May", "June", "July", "August", "September", "October", "November",
+    "December"];
+function solarSystemEpochStamp(jd) {
+    if (typeof jd !== "number" || !isFinite(jd)) { return null; }
+    // Julian date 2440587.5 is 1970-01-01 00:00 UTC, the Unix epoch.
+    // Rounded to the minute, which is what the page asked for.
+    const d = new Date(Math.round((jd - 2440587.5) * 1440) * 60000);
+    if (isNaN(d.getTime())) { return null; }
+    const pad = function (n) { return String(n).padStart(2, "0"); };
+    return "Positions for " + d.getUTCDate() + " " +
+        SOLAR_SYSTEM_MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear() +
+        ", " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + " UTC";
+}
 
 // The source line for a body, from its served Horizons query. Every
 // value is printed as served.
@@ -1875,7 +1906,8 @@ const SOLAR_SYSTEM_INFO_HTML = [
     "<div class=\"info-focus\" id=\"sun-info-focus\"></div>",
     "<h3>The Solar System</h3>",
     "<p>The Sun, Earth, Jupiter, Saturn and the asteroid Apophis, each",
-    " drawn as its symbol on its orbit, where it is today. Name a body",
+    " drawn as its symbol on its orbit, where it is now: at the minute",
+    " you opened this room, as the line under the title says. Name a body",
     " and the view moves to hold its orbit; its source appears above.</p>",
     "<p>This room is being built up. The other planets and Pluto join",
     " it as the gallery's data service begins to carry them, and each",
@@ -1888,7 +1920,7 @@ const SOLAR_SYSTEM_INFO_HTML = [
     " inventor's daughter. Every orbit here comes from JPL Horizons, the",
     " observatory's own service, fetched fresh each night: the page",
     " carries a small set of orbit values for each body and works out",
-    " where it sits today.</div>"
+    " where it sits now.</div>"
 ].join("");
 
 // ONE table, three rooms. What differs between the rooms is data:
@@ -1945,6 +1977,9 @@ const EXHIBITS = {
         driver: SOLAR_SYSTEM_DRIVER,
         infoHtml: SOLAR_SYSTEM_INFO_HTML,
         focusNoun: "body",
+        // Draw the minute the room is opened (Tony, 2026-09-26). The Sun
+        // and Earth rooms leave this out and draw today at 00:00 UTC.
+        epochNow: true,
         pyGlobals: { BODIES_JSON: JSON.stringify(SOLAR_SYSTEM_BODIES) },
         // The assembler's figure only: no features are built, so no
         // shells. Each body's position marker names its drawer row
@@ -1979,7 +2014,13 @@ const EXHIBITS = {
                     t.meta = Object.assign({}, t.meta || {}, { label_target: true });
                 }
             }
-            return { traces: traces, warnings: warnings, absent: [] };
+            // The date under the title. Missing is reported, not hidden.
+            const stamp = solarSystemEpochStamp(payload.epoch_jd);
+            if (!stamp) {
+                warnings.push("the scene's date was not reported by the assembler");
+            }
+            return { traces: traces, warnings: warnings, absent: [],
+                     subtitle: stamp };
         }
     }
 };
@@ -2332,6 +2373,28 @@ function mountNavCluster() {
     navPlaceCross();
 }
 
+// The line under the scene title, set from the room's compose, or null.
+let sunSceneSubtitle = null;
+
+// Where the scene title sits. As it always has, except in a room with a
+// line under its title on an upright phone: there the arrow cross sits in
+// the top-right corner (L-316) and would cover the date, so the title and
+// its date move down to just below the cross. The Sun and Earth rooms have
+// no such line, so theirs does not move.
+function sunTitlePlacement() {
+    const base = { y: 0.97, yref: "container", yanchor: "auto" };
+    if (!sunSceneSubtitle || !sunPhonePortrait()) { return base; }
+    const plot = document.getElementById("plotly-container");
+    const cross = document.querySelector(".nav-cross-apart");
+    if (!plot || !cross) { return base; }
+    const pr = plot.getBoundingClientRect();
+    const cr = cross.getBoundingClientRect();
+    if (!pr.height || !cr.height || cr.bottom <= pr.top) { return base; }
+    const below = cr.bottom - pr.top + 10;
+    return { y: Math.max(0.05, 1 - below / pr.height), yref: "container",
+             yanchor: "top" };
+}
+
 function buildSunLayout(halfRangeAu) {
     const r = halfRangeAu || EX.halfRangeAu;
     const axisTemplate = {
@@ -2403,12 +2466,15 @@ function buildSunLayout(halfRangeAu) {
         paper_bgcolor: "#060a12",
         plot_bgcolor: "#060a12",
         font: { family: "DM Sans, system-ui", color: "#e8e6e3" },
-        title: {
+        title: Object.assign({
             text: EX.sceneTitle,
             font: { family: "Cormorant Garamond, serif", size: 16,
                     color: "#e8e6e3" },
-            x: 0.5, xanchor: "center", y: 0.97,
-        },
+            x: 0.5, xanchor: "center",
+        }, sunTitlePlacement(), sunSceneSubtitle ? { subtitle: {
+            text: sunSceneSubtitle,
+            font: { family: "DM Sans, system-ui", size: 12, color: "#b8b4ae" },
+        } } : {}),
         // NO LEGEND. L-267 Stage A: the eighteen entries moved into
         // the drawer, because as an overlay they covered 58 percent of
         // a portrait phone with the Sun behind them. The legend block
@@ -2510,9 +2576,13 @@ async function initSunExhibit() {
             JSON.parse(cov).frame_constants);
         pyodide.globals.set("COV_JSON", cov);
         pyodide.globals.set("CFG_JSON", cfg);
+        // Today at 00:00 UTC, or, for a room that asks, the current
+        // minute (the Solar System room, epochNow).
         pyodide.globals.set(
             "EPOCH_ISO",
-            new Date().toISOString().slice(0, 10) + "T00:00:00Z");
+            EX.epochNow
+                ? new Date().toISOString().slice(0, 16) + ":00Z"
+                : new Date().toISOString().slice(0, 10) + "T00:00:00Z");
         // A room's own inputs to its driver, if it has any.
         const pyGlobals = EX.pyGlobals || {};
         for (const name of Object.keys(pyGlobals)) {
@@ -2525,6 +2595,9 @@ async function initSunExhibit() {
 
         // Per room: how the payload becomes traces (the EXHIBITS table).
         const built = EX.compose(payload);
+        // A room may put a line under its title (the Solar System room's
+        // date). The Sun and Earth rooms return none, so theirs is as it was.
+        sunSceneSubtitle = built.subtitle || null;
         sunAbsent = built.absent || [];
 
         const notes = frameNotes.concat(payload.warnings || [],
@@ -3719,6 +3792,13 @@ function onSunResize() {
             });
         }
         navPlaceCross();
+        // A room with a date under its title keeps it clear of the cross
+        // when the phone turns (the Sun and Earth rooms have none).
+        if (sunSceneSubtitle && sunPlotDiv && window.Plotly) {
+            const tp = sunTitlePlacement();
+            Plotly.relayout(sunPlotDiv, { "title.y": tp.y, "title.yref": tp.yref,
+                                          "title.yanchor": tp.yanchor });
+        }
         sunTapPicking(sunPlotDiv);
     }, 180);
 }

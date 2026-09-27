@@ -72,6 +72,13 @@ turn the phone. For such a card the four choices are now greyed out and
 the note says which card the phone shows, or that it shows neither when
 the twin is set to none. The same test the page makes, so a twin kept in
 Storage does not count.
+Module updated: September 26, 2026 with Anthropic's Claude Opus 5.5
+(L-363): Save All refuses to write over a file that changed on disk since
+the editor loaded it. On 2026-09-26 a card Gallery Studio had just written
+was lost when gallery_metadata.json was rewritten from an older copy, and
+nothing said so. Now any window holding an older copy stops and says to
+Reload from disk first. The status bar and the console name the file the
+editor opened, so it is plain which copy it is working on.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -83,6 +90,7 @@ import json
 import os
 import re
 import copy
+import hashlib
 import webbrowser
 import urllib.request
 from datetime import datetime
@@ -121,6 +129,15 @@ from json_converter import live_scene_urls  # noqa: E402
 # ============================================================
 # File I/O (line-ending preserving, ASCII output)
 # ============================================================
+
+def disk_fingerprint(path):
+    """MD5 of the file's bytes as they are on disk now, or None if absent."""
+    try:
+        with open(path, 'rb') as f:
+            return hashlib.md5(f.read()).hexdigest()
+    except OSError:
+        return None
+
 
 def read_json(path):
     """Return (data, was_crlf). Raises on missing or invalid file."""
@@ -407,13 +424,20 @@ class GalleryEditor:
         self.config.setdefault('doors', [])
         self.config.setdefault('storage', {'key': STORAGE_KEY, 'label': 'Storage', 'hidden': True})
         self.snapshot = (copy.deepcopy(self.config), copy.deepcopy(self.data))
+        # What the two files were when loaded. Save All compares these with
+        # the disk before writing, so an older copy cannot overwrite newer
+        # work (L-363).
+        self.loaded_sigs = {self.cfg_path: disk_fingerprint(self.cfg_path),
+                            self.meta_path: disk_fingerprint(self.meta_path)}
+        print(f"Gallery editor loaded {self.meta_path}")
         self.dirty = False
         self._update_title()
         self._refresh_tree()
         n = len(self.data.get('visualizations', []))
         stored = sum(1 for c in self.data['visualizations'] if c.get('room', STORAGE_KEY) == STORAGE_KEY)
         self.status_var.set(f"Loaded {n} cards ({stored} in Storage), "
-                            f"{sum(1 for _ in walk_rooms(self.config['doors']))} rooms")
+                            f"{sum(1 for _ in walk_rooms(self.config['doors']))} rooms, "
+                            f"from {self.meta_path}")
 
     def _reload(self):
         if self.dirty and not messagebox.askyesno(
@@ -1245,6 +1269,23 @@ class GalleryEditor:
         if not self.dirty:
             self.status_var.set("No changes to save")
             return
+        # L-363: refuse to write over a file that changed since it was
+        # loaded -- another program (Gallery Studio) or another editor
+        # window wrote it, and saving now would silently undo that work.
+        moved = [os.path.basename(p) for p, sig in self.loaded_sigs.items()
+                 if disk_fingerprint(p) != sig]
+        if moved:
+            messagebox.showerror(
+                "Not saved -- the file changed on disk",
+                f"{' and '.join(moved)} changed on disk after this editor "
+                "loaded it: another program or window wrote it.\n\n"
+                "Nothing was saved. Saving now would undo that change.\n\n"
+                "Note the edits you made here, use File > Reload from disk, "
+                "and make them again.")
+            print(f"NOT SAVED: {', '.join(moved)} changed on disk since the "
+                  "editor loaded it. Reload from disk first.")
+            self.status_var.set("Not saved: the file changed on disk. Reload from disk first.")
+            return
         try:
             report = self._save_report()
             self.data['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M')
@@ -1261,6 +1302,8 @@ class GalleryEditor:
         print(f"  {len(report)} change{'s' if len(report) != 1 else ''}. "
               "Git is the backup; undo is Discard Changes in GitHub Desktop.")
         self.snapshot = (copy.deepcopy(self.config), copy.deepcopy(self.data))
+        self.loaded_sigs = {self.cfg_path: disk_fingerprint(self.cfg_path),
+                            self.meta_path: disk_fingerprint(self.meta_path)}
         self.dirty = False
         self._update_title()
         keep = None
