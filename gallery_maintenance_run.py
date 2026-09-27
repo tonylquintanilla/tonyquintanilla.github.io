@@ -100,9 +100,9 @@ same cross-repo reach that put this runner in the gallery in the first
 place.
 
 Module created: August 2026 with Anthropic's Claude Opus 5 (L-236).
-Module updated: September 24, 2026 with Anthropic's Claude Opus 5.5
-(L-322 Stage D, gallery patch G1: the "Pole of date" checker runs
-tools/test_pole_of_date.py).
+Module updated: September 26, 2026 with Anthropic's Claude Opus 5.5
+(L-281: the "Guest book" checker runs documentation/smoke_guestbook.js,
+and the --live pass fetches gallery/guestbook.js and data/guestbook.json).
 """
 
 import hashlib
@@ -276,6 +276,15 @@ OFFLINE_CHECKERS = [
     ("Display figures", "node",
      ["documentation/smoke_display_figures.js"], ".", None, False),
 
+    # L-281 (2026-09-26): the lobby's guest book. It renders the real
+    # data/guestbook.json with the real gallery/guestbook.js and fails
+    # on a missing time, name or text, or a link the page would drop;
+    # then checks newest-first order, escaping, and that a visitor's
+    # entry never carries a link. Its self-test makes every check go
+    # red on a broken renderer first. Gates.
+    ("Guest book", "node",
+     ["documentation/smoke_guestbook.js"], ".", None, False),
+
     # L-237: this used to call the test directly and print FAIL every
     # run, which made a real regression indistinguishable from the known
     # one. The pin runs the same test and compares its five verdicts, and
@@ -315,6 +324,10 @@ SERVED_FILES = [
     "gallery/arrival.js",
     "gallery/nav_cluster.js",
     "data/objects_config.json",
+    # L-281 (2026-09-26): the lobby's guest book. The page loads the
+    # script with a tag and fetches the entries file.
+    "gallery/guestbook.js",
+    "data/guestbook.json",
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing

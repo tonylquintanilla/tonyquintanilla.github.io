@@ -97,7 +97,16 @@
        - Opening a live card records the screen it was opened from
          (sessionStorage "po_gallery_from"), so the chain in
          interactive.html can step back to that screen instead of
-         going forward to a new copy of it (L-286). -->
+         going forward to a new copy of it (L-286).
+     Updated: September 26, 2026 with Anthropic's Claude Opus 5.5
+       - The guest book (L-281, Tony's decision of 2026-09-26). The
+         "Under construction" row at the foot of the lobby becomes the
+         guest book: entries from data/guestbook.json, newest first,
+         drawn by gallery/guestbook.js. Visitors will write through a
+         Google Form; nothing a visitor writes appears until Tony
+         approves it with the guest book updater. Links are drawn only
+         on Tony's own entries and replies, and only to pages of this
+         gallery. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -127,6 +136,9 @@
 
     <!-- Plotly.js from CDN -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+
+    <!-- The lobby's guest book (L-281) -->
+    <script src="gallery/guestbook.js"></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -957,6 +969,23 @@
         }
         .lobby-row-name { font-size: 0.95rem; color: var(--text-primary); }
         .lobby-row-meta { font-size: 0.74rem; color: var(--text-dim); margin-top: 2px; }
+        /* The guest book (L-281): entries newest first, replies indented */
+        .gb-note { font-size: 0.76rem; color: var(--text-dim); margin: 0 0 10px 2px; line-height: 1.45; }
+        .gb-sign { color: var(--accent); text-decoration: none; font-weight: 600; }
+        .gb-sign:hover { text-decoration: underline; }
+        .gb-empty { font-size: 0.84rem; color: var(--text-secondary); padding: 12px 4px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .gb-list { border-bottom: 1px solid var(--border); }
+        .gb-entry { padding: 12px 4px; border-top: 1px solid var(--border); }
+        .gb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+        .gb-name { font-size: 0.9rem; color: var(--text-primary); }
+        .gb-date { font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; }
+        .gb-text { font-size: 0.86rem; color: var(--text-secondary); line-height: 1.5; margin-top: 4px; overflow-wrap: anywhere; }
+        .gb-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; font-size: 0.8rem; }
+        .gb-link { color: var(--accent); text-decoration: none; }
+        .gb-link:hover { text-decoration: underline; }
+        .gb-reply { margin: 10px 0 0 14px; padding-left: 12px; border-left: 2px solid var(--border); }
+        .gb-reply .gb-name { font-size: 0.8rem; color: var(--text-secondary); font-style: italic; }
+        .gb-more summary { cursor: pointer; padding: 12px 4px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-secondary); }
         .lobby-footer {
             display: flex;
             align-items: center;
@@ -2845,11 +2874,10 @@
                 html += '</div></div>';
             }
 
-            // Guest book: L-281, not yet built
-            html += '<div class="lobby-section">';
-            html += '<div class="lobby-row"><div class="lobby-row-icon">&#8220;</div><div>';
-            html += '<div class="lobby-row-name">Guest book</div>';
-            html += '<div class="lobby-row-meta">Under construction</div></div></div></div>';
+            // Guest book (L-281): fillGuestbook() draws the entries into
+            // this box once data/guestbook.json has arrived.
+            html += '<div class="lobby-section"><div class="lobby-heading">Guest book</div>';
+            html += '<div id="guestbook"></div></div>';
 
             // Footer
             html += '<div class="lobby-footer">';
@@ -2862,6 +2890,7 @@
             welcomeState.style.display = 'flex';
             updateWelcomeCount();
             setHeader(null, null);
+            fillGuestbook();
 
             // A door opens its own screen (L-286, 2026-09-24), where it
             // opened the side menu before.
@@ -2879,6 +2908,36 @@
             }
             var about = document.getElementById('lobby-about-btn');
             if (about) about.addEventListener('click', openAbout);
+        }
+
+        // The guest book (L-281). The entries file is fetched once per
+        // page load and kept; every later visit to the lobby redraws from
+        // the kept copy. 'no-cache' asks the server whether the file has
+        // changed, so a new entry shows on the next load after a push.
+        // What is drawn, and the safety rules, live in gallery/guestbook.js.
+        var guestbookText = null;
+        var guestbookFailed = false;
+        function fillGuestbook() {
+            function draw() {
+                var box = document.getElementById('guestbook');
+                if (!box) return;
+                if (!window.GalleryGuestbook || guestbookFailed) {
+                    box.innerHTML = '<div class="gb-note">The guest book could not be loaded just now.</div>';
+                    return;
+                }
+                box.innerHTML = window.GalleryGuestbook.renderHtml(guestbookText);
+            }
+            if (guestbookText !== null || guestbookFailed || !window.GalleryGuestbook) {
+                draw();
+                return;
+            }
+            fetch('data/guestbook.json', { cache: 'no-cache' })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.text();
+                })
+                .then(function (t) { guestbookText = t; draw(); })
+                .catch(function () { guestbookFailed = true; draw(); });
         }
 
         // Open the menu with one door expanded and scrolled into view.
