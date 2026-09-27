@@ -336,6 +336,21 @@
       }
     },
     {
+      "id": "solar_system",
+      "title": "Solar System",
+      "description": "Live data from JPL Horizons. Work in progress.",
+      "room": "solar_system",
+      "shape": "9:16",
+      "files": {},
+      "live": "interactive.html?exhibit=solar-system",
+      "featured": false,
+      "sources": [
+        "JPL Horizons"
+      ],
+      "converted": "2026-09-26 22:03",
+      "size_kb": {}
+    },
+    {
       "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy",
       "title": "Inner Solar System Animation",
       "description": "Animation of the inner solar system from February 4, 2005 for 21 years.",
@@ -354,26 +369,6 @@
         "landscape": 10082.0
       },
       "sibling": "inner_solar_system_animation_2-4-2005_21_years_social_copy2"
-    },
-    {
-      "id": "inner_solar_system_animation_2-4-2005_21_years_social_copy2",
-      "title": "Inner Solar System Animation",
-      "description": "Animation of the inner solar system from February 4, 2005 for 21 years.",
-      "room": "solar_system",
-      "shape": "9:16",
-      "files": {
-        "portrait": "inner_solar_system_animation_2-4-2005_21_years_social.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [
-        "JPL Horizons"
-      ],
-      "converted": "2026-02-17 23:24",
-      "size_kb": {
-        "portrait": 10857.8
-      },
-      "sibling": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy"
     },
     {
       "id": "3iatlas_jupiter_20260316_1222",
@@ -2609,21 +2604,26 @@
       "size_kb": {}
     },
     {
-      "id": "solar_system",
-      "title": "Solar System",
-      "description": "Live data from JPL Horizons.",
-      "room": "other",
-      "shape": "16:9",
-      "files": {},
-      "live": "interactive.html?exhibit=solar-system",
+      "id": "inner_solar_system_animation_2-4-2005_21_years_social_copy2",
+      "title": "Inner Solar System Animation",
+      "description": "Animation of the inner solar system from February 4, 2005 for 21 years.",
+      "room": "solar_system",
+      "shape": "9:16",
+      "files": {
+        "portrait": "inner_solar_system_animation_2-4-2005_21_years_social.json"
+      },
+      "live": null,
       "featured": false,
       "sources": [
         "JPL Horizons"
       ],
-      "converted": "2026-09-26 22:03",
-      "size_kb": {}
+      "converted": "2026-02-17 23:24",
+      "size_kb": {
+        "portrait": 10857.8
+      },
+      "sibling": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy"
     }
   ],
-  "last_updated": "2026-09-26 22:03",
+  "last_updated": "2026-09-26 22:22",
   "total_count": 142
 }
