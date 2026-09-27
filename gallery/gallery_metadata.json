@@ -2607,8 +2607,23 @@
       ],
       "converted": "2026-09-10 09:44",
       "size_kb": {}
+    },
+    {
+      "id": "solar_system",
+      "title": "Solar System",
+      "description": "Live data from JPL Horizons.",
+      "room": "other",
+      "shape": "16:9",
+      "files": {},
+      "live": "interactive.html?exhibit=solar-system",
+      "featured": false,
+      "sources": [
+        "JPL Horizons"
+      ],
+      "converted": "2026-09-26 22:03",
+      "size_kb": {}
     }
   ],
-  "last_updated": "2026-09-24 15:29",
-  "total_count": 141
+  "last_updated": "2026-09-26 22:03",
+  "total_count": 142
 }

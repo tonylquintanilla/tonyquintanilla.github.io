@@ -34,6 +34,10 @@ Module updated: September 22, 2026 with Anthropic's Claude Opus 5.5 (card
 pass): a re-export keeps a card's shape "none" (not on the phone) instead
 of resetting it from the file's slot; that setting is Tony's, made in the
 gallery editor.
+Module updated: September 26, 2026 with Anthropic's Claude Opus 5.5 (L-363):
+live_scene_urls() reads a room key written in quotes, as a key with a
+hyphen must be (`"solar-system": {`), so Studio's New Interactive Card
+lists the Solar System room.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -244,7 +248,11 @@ def live_scene_urls(repo_root):
     keys = set(re.findall(r'EXHIBIT\s*===?\s*["\']([a-z0-9_-]+)["\']', src))
     table = re.search(r'const EXHIBITS\s*=\s*\{(.*?)\n\};', src, re.S)
     if table:
-        keys.update(re.findall(r'^    ([a-z0-9_-]+):\s*\{', table.group(1), re.M))
+        # L-363 (2026-09-26): a key may be written in quotes. JavaScript
+        # needs them for a key with a hyphen, such as "solar-system", and
+        # the unquoted-only pattern missed that room silently.
+        keys.update(re.findall(r'^    ["\']?([a-z0-9_-]+)["\']?:\s*\{',
+                               table.group(1), re.M))
     for key in sorted(keys):
         if m and key == m.group(1):
             continue

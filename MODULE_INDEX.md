@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 39  
-**Total Lines of Code (non-blank):** 20,075  
+**Total Lines of Code (non-blank):** 20,083  
 **Total Public Functions/Classes:** 292
 
 ## Classification Coverage
@@ -107,7 +107,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,047 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
-| `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (852 lines) |
+| `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (860 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (604 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (826 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (123 lines) |
