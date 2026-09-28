@@ -123,6 +123,7 @@ ROLE_MAP = {
     'add_docstrings':                      'devtool',
     'check_cache_in_step':                 'devtool',
     'check_constants_links':               'devtool',
+    'daily_run':                           'devtool',
     'debug_encke_tp':                      'devtool',
     'fingerprint':                         'devtool',
     'gallery_cleanup':                     'devtool',
@@ -130,6 +131,7 @@ ROLE_MAP = {
     'gallery_json_fixer':                  'devtool',
     'gallery_maintenance_run':             'devtool',
     'gallery_studio':                      'devtool',
+    'guestbook_updater':                   'devtool',
     'inspect_staging':                     'devtool',
     'json_converter':                      'devtool',
     'mirror_constants':                    'devtool',
@@ -139,6 +141,7 @@ ROLE_MAP = {
     'sweep_report':                        'devtool',
     'test_artifact1_earth':                'devtool',
     'test_gallery_cache_builder_offline':  'devtool',
+    'test_guestbook_updater':              'devtool',
 }
 # ROLE-MAP:END
 

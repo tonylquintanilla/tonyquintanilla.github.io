@@ -10,34 +10,32 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 42  
-**Total Lines of Code (non-blank):** 21,606  
-**Total Public Functions/Classes:** 319
+**Total Python Files:** 44  
+**Total Lines of Code (non-blank):** 22,939  
+**Total Public Functions/Classes:** 326
 
 ## Classification Coverage
 
-**Undetermined role (10).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (9).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `tools/guestbook_updater.py`
 - `patch_L281_2_guestbook_updater.py`
+- `patch_L281_3_daily_run.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
-- `tools/test_guestbook_updater.py`
 - `tools/test_mirror_constants.py`
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (8).** No valid `Domain:` tag.
+**Undetermined domain (7).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `tools/guestbook_updater.py`
 - `patch_L281_2_guestbook_updater.py`
+- `patch_L281_3_daily_run.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
-- `tools/test_guestbook_updater.py`
 - `tools/test_store_writer.py`
 
 
@@ -105,13 +103,15 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `add_docstrings.py` | Two related tools for module-level docstrings. (1,210 lines) |
 | `check_cache_in_step.py` | - the served cache holds the same shells as data/objects_config.json. (176 lines) |
 | `check_constants_links.py` | - two checks over the gallery's links into the orrery's store, sharing the mirror's own reading so one cause prints one explanation. (255 lines) |
+| `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (169 lines) |
 | `debug_encke_tp.py` | - run the EXACT same live Horizons query gallery_cache_builder.py's fetch_solution_tp() makes for Encke, and print the complete raw response text. (61 lines) |
 | `fingerprint.py` | L-080 semantic fingerprint. (98 lines) |
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,211 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,069 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,076 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
+| `guestbook_updater.py` | - look after the lobby's guest book (L-281). (477 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (860 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (604 lines) |
@@ -121,6 +121,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (120 lines) |
 | `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (1,062 lines) |
+| `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (244 lines) |
 
 ---
 
@@ -129,12 +130,11 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (574 lines) |
-| `guestbook_updater.py` | - look after the lobby's guest book (L-281). (443 lines) |
 | `patch_L281_2_guestbook_updater.py` | - the guest book updater (L-281, step 2). (805 lines) |
+| `patch_L281_3_daily_run.py` | - the Daily Run, gallery half (L-281, step 3). (1,091 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (460 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (287 lines) |
-| `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (212 lines) |
 | `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (470 lines) |
 | `test_pole_of_date.py` | Offline checks of Earth's pole and tilt of date as the gallery cache builder computes them. (228 lines) |
 | `test_store_writer.py` | - the in-place writer does what it says, and refuses what it must. L-334 piece 5, the writer's half. (451 lines) |

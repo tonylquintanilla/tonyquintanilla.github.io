@@ -101,7 +101,8 @@ place.
 
 Module created: August 2026 with Anthropic's Claude Opus 5 (L-236).
 Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5
-(L-281: the "Guest book updater" checker runs
+(L-281: the "Daily run steps" checker runs daily_run.py --check, and the
+"Guest book updater" checker runs
 tools/test_guestbook_updater.py; since September 26 the "Guest book"
 checker runs documentation/smoke_guestbook.js, and the --live pass
 fetches gallery/guestbook.js and data/guestbook.json).
@@ -295,6 +296,13 @@ OFFLINE_CHECKERS = [
     # refusing made-up pages and accepting real ones. Gates.
     ("Guest book updater", "python",
      ["tools/test_guestbook_updater.py"], ".", None, False),
+
+    # L-281 (2026-09-27): the Daily Run calls three scripts by path. This
+    # fails, naming the path, if any of them is missing -- so a rename
+    # that would break the Daily Run fails here the same day, not the
+    # next morning. Runs nothing. Gates.
+    ("Daily run steps", "python",
+     ["daily_run.py", "--check"], ".", None, False),
 
     # L-237: this used to call the test directly and print FAIL every
     # run, which made a real regression indistinguishable from the known

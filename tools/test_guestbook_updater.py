@@ -30,7 +30,14 @@ WHAT MAKES IT FAIL
     must be refused and real ones that must be accepted, so a check that
     accepts everything or nothing fails here before it can pass below.
 
+Role: devtool
+Domain: dev_tools
+
 Module created: September 27, 2026 with Anthropic's Claude Opus 5.5 (L-281).
+Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5 (L-281,
+Daily Run patch): the made-up sheet uses the real form's columns; the
+rating is shown privately and never written; a sheet whose message
+column cannot be named is refused rather than guessed.
 """
 
 import builtins
@@ -46,12 +53,14 @@ REPO = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import guestbook_updater as gu  # noqa: E402
 
+# The columns of Tony's real form, 2026-09-27: name, rating, note.
 SHEET = (
-    "Timestamp,Your name,Your message\r\n"
-    "9/20/2026 10:15:00,Ana,\"Loved the Sun room.\nThe shells are beautiful.\"\r\n"
-    "9/21/2026 11:00:00,Spam Bot,Buy things at example dot com\r\n"
-    "9/22/2026 12:30:00,Ben,Please add Saturn's moons\r\n"
-    "9/23/2026 08:00:00,,A message with no name\r\n"
+    "Timestamp,Your Name,Overall Gallery Experience Rating,"
+    "Leave a note about the gallery\r\n"
+    "9/20/2026 10:15:00,Ana,5,\"Loved the Sun room.\nThe shells are beautiful.\"\r\n"
+    "9/21/2026 11:00:00,Spam Bot,1,Buy things at example dot com\r\n"
+    "9/22/2026 12:30:00,Ben,4,Please add Saturn's moons\r\n"
+    "9/23/2026 08:00:00,,,A message with no name\r\n"
 )
 
 FAILURES = []
@@ -175,6 +184,10 @@ def main():
         check("Buy things" not in local_text and "Spam" not in local_text,
               "run 1: the declined message is not stored")
         check("CHANGED: commit data/guestbook.json" in out, "run 1: says to commit")
+        check("(private, not published) Overall Gallery Experience Rating: 5" in out,
+              "run 1: the rating shown to Tony while he decides")
+        check(b"Rating" not in raw and b'"5"' not in raw,
+              "run 1: the rating not written to the book")
 
         # ---- run 2: only Ben and the nameless one come back ----
         code, out = run(root, [
@@ -224,6 +237,26 @@ def main():
               "columns found by their headings, whatever the order")
         rows, problem = gu.read_rows("Timestamp\n9/24/2026 09:00:00\n")
         check(bool(problem), "a sheet without name and message columns is reported")
+        # The form as it first was: an email column third, and no heading
+        # with "message". The old fallback read the third column as the
+        # message -- the email addresses. Now nothing is read.
+        rows, problem = gu.read_rows(
+            "Timestamp,Your Name,Your Email Address,Your comments\n"
+            "9/24/2026 09:00:00,Dee,dee@example.com,Hello\n")
+        check(bool(problem) and not rows and "Headings found" in problem,
+              "no message or note heading: nothing read, headings named")
+        # Deleted questions can leave empty columns behind.
+        rows, problem = gu.read_rows(
+            "Timestamp,Your Name,Your Email Address,Overall Gallery Experience Rating,"
+            "Which exhibit or installation was your favorite,Leave a note about the gallery\n"
+            "9/24/2026 09:00:00,Eve,,3,,Nice\n")
+        check(not problem and bool(rows) and rows[0]["message"] == "Nice" and rows[0]["name"] == "Eve"
+              and rows[0]["extras"] == [("Overall Gallery Experience Rating", "3")],
+              "empty left-behind columns ignored; note and rating read")
+        rows, problem = gu.read_rows(
+            "Form_Responses,,\nTimestamp,Your Name,Leave a note\n9/24/2026 09:00:00,Fay,Hi\n")
+        check(not problem and rows and rows[0]["name"] == "Fay",
+              "a title row above the headings is skipped")
     finally:
         shutil.rmtree(root, ignore_errors=True)
 

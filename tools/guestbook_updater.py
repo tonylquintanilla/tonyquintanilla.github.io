@@ -26,6 +26,10 @@ WHAT IT DOES
     than published as a dead link. A visitor's message never carries a
     link -- the lobby shows it as plain text whatever it says.
 
+    Anything else the form asks -- today, the overall rating -- is shown
+    to you beside each message while you decide, and never written to
+    the guest book. It stays private in your sheet.
+
     It does not commit or push. When it finishes it says whether the
     guest book changed; if it did, commit data/guestbook.json in
     GitHub Desktop and push.
@@ -52,12 +56,27 @@ HOW TO RUN IT
     It works from the gallery repo root (the folder above tools/),
     wherever it is started.
 
+WHICH COLUMNS IT READS
+    The message is the column whose heading contains "message" or
+    "note" -- the form's is "Leave a note about the gallery". The name
+    is the column whose heading contains "name". The first column is
+    Google's timestamp. If no heading names a message or a note, the
+    tool reads nothing and says so, rather than guess a column: a guess
+    once pointed at an email column (2026-09-27).
+
 THE CHECK
     tools/test_guestbook_updater.py runs this tool against made-up
     submissions with scripted answers. The gallery maintenance run
     runs it.
 
+Role: devtool
+Domain: dev_tools
+
 Module created: September 27, 2026 with Anthropic's Claude Opus 5.5 (L-281).
+Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5 (L-281,
+Daily Run patch): the message column is found by "message" or "note",
+with no fallback to a column by position; the heading row is found by
+its "Timestamp" cell; other answers are shown privately during review.
 """
 
 import csv
@@ -221,33 +240,49 @@ def fetch_csv(url):
 
 
 def read_rows(text):
-    """The sheet's rows as submissions. The first column is Google's
-    timestamp; the name and message columns are found by their headings,
-    and fall back to the second and third columns."""
+    """The sheet's rows as submissions. The heading row is the first row
+    with a "Timestamp" cell. The message column is the one whose heading
+    holds "message" or "note", and there is no fallback: with neither,
+    nothing is read. The name column holds "name"; without one, every
+    message is from "A visitor". Every other column is kept as an extra,
+    shown to Tony privately and never written to the book."""
     rows = list(csv.reader(io.StringIO(text)))
     if not rows:
         return [], "the sheet is empty"
-    head = [h.strip().lower() for h in rows[0]]
-    name_col = next((i for i, h in enumerate(head) if "name" in h), 1)
-    msg_col = next((i for i, h in enumerate(head) if "message" in h), 2)
-    if len(head) <= max(name_col, msg_col):
-        return [], ("the sheet has %d column(s); it needs a timestamp, a "
-                    "name and a message" % len(head))
+    start = next((i for i, r in enumerate(rows)
+                  if any(c.strip().lower() == "timestamp" for c in r)), 0)
+    raw_head = [h.strip() for h in rows[start]]
+    head = [h.lower() for h in raw_head]
+    msg_col = next((i for i, h in enumerate(head)
+                    if "message" in h or "note" in h), None)
+    if msg_col is None:
+        return [], ("no column heading contains 'message' or 'note', so "
+                    "nothing was read. Headings found: %s"
+                    % ", ".join(raw_head))
+    name_col = next((i for i, h in enumerate(head)
+                     if "name" in h and i != msg_col), None)
     out = []
-    for row in rows[1:]:
-        if len(row) <= max(name_col, msg_col):
+    for row in rows[start + 1:]:
+        if len(row) <= msg_col:
             continue
         time_raw = row[0].strip()
-        name = row[name_col].strip()
+        name = row[name_col].strip() if name_col is not None and len(row) > name_col else ""
         message = row[msg_col].strip()
         if not message:
             continue
+        extras = []
+        for i, cell in enumerate(row):
+            if i in (0, msg_col, name_col) or i >= len(raw_head):
+                continue
+            if cell.strip():
+                extras.append((raw_head[i] or "column %d" % (i + 1), cell.strip()))
         out.append({
             "key": fingerprint(time_raw, name, message),
             "time_raw": time_raw,
             "time": parse_time(time_raw),
             "name": name,
             "message": message,
+            "extras": extras,
         })
     out.sort(key=lambda r: r["time"] or "")
     return out, None
@@ -346,6 +381,8 @@ def review(rows, book, local, save, targets, by_word):
                                          row["time_raw"]))
         for line in row["message"].splitlines() or [""]:
             print("   " + line)
+        for heading, value in row.get("extras", []):
+            print("   (private, not published) %s: %s" % (heading, value))
         answer = ask("a approve, d decline, l later, q stop > ", {"a", "d", "l", "q"})
         if answer == "q":
             counts["later"] += len(pending) - n + 1
