@@ -16,6 +16,8 @@ WHAT IT DOES
         w  write an entry of your own
         r  reply publicly under an entry
         x  remove an entry from the guest book
+        p  pin or unpin an entry. A pinned entry stays at the top of
+           the guest book; unpinned, it goes back to its place by date
         f  set the form's public address, which turns on the lobby's
            "Sign the guest book" link
         s  change the sheet's private address -- after you stop
@@ -83,6 +85,8 @@ Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5 (L-281,
 Daily Run patch): the message column is found by "message" or "note",
 with no fallback to a column by position; the heading row is found by
 its "Timestamp" cell; other answers are shown privately during review.
+Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5 (L-281,
+patch 7): the menu's p choice pins or unpins an entry.
 Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5 (L-281,
 patch 5): the menu's s choice changes the sheet's private address and
 fetches from the new one at once; a failed fetch says to use it.
@@ -355,8 +359,9 @@ def pick_entry(book):
         return None
     shown = entries[:SHOW_RECENT]
     for i, e in enumerate(shown, 1):
-        print("   %2d. %s, %s: %s" % (i, e.get("name", "?"), (e.get("time") or "")[:10],
-                                    short(e.get("text"), 50)))
+        print("   %2d. %s%s, %s: %s" % (i, "[pinned] " if e.get("pinned") is True else "",
+                                      e.get("name", "?"), (e.get("time") or "")[:10],
+                                      short(e.get("text"), 45)))
     answer = ask("   Which number (Enter to cancel)? ")
     if not answer:
         return None
@@ -514,9 +519,9 @@ def main():
     # 2. The menu.
     while True:
         print("")
-        answer = ask("w write an entry, r reply, x remove an entry, f form address, "
+        answer = ask("w write, r reply, x remove, p pin/unpin, f form address, "
                      "s sheet address, q finish > ",
-                     {"w", "r", "x", "f", "s", "q"})
+                     {"w", "r", "x", "p", "f", "s", "q"})
         if answer == "q":
             break
         if answer == "w":
@@ -544,6 +549,16 @@ def main():
                     book["entries"].remove(entry)
                     save()
                     print("   Removed.")
+        elif answer == "p":
+            entry = pick_entry(book)
+            if entry is not None:
+                if entry.get("pinned") is True:
+                    del entry["pinned"]
+                    print("   Unpinned: it goes back to its place by date.")
+                else:
+                    entry["pinned"] = True
+                    print("   Pinned: it stays at the top of the guest book.")
+                save()
         elif answer == "s":
             new = ask_sheet_address([
                 "The sheet's private address changes when you stop publishing",

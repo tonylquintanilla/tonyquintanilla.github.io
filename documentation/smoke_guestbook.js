@@ -7,7 +7,8 @@
 //   data/guestbook.json, then a set of made-up files, and fails unless:
 //   - the real file parses and every entry in it has a time, a name
 //     and text, and every link in it is one the page will draw
-//   - entries come out newest first (Tony, 2026-09-26)
+//   - entries come out newest first (Tony, 2026-09-26), with a pinned
+//     entry above them all and marked "Pinned" (Tony, 2026-09-28)
 //   - only the newest few show, and the rest sit behind "Show all"
 //   - text is escaped, so a visitor cannot add a tag or a script
 //   - a visitor's entry never carries a link, even if the file has one
@@ -22,6 +23,8 @@
 // ran, so a pass carries its evidence.
 //
 // Written September 26, 2026 with Anthropic's Claude Opus 5.5.
+// Updated September 28, 2026 with Anthropic's Claude Opus 5.5 (L-281,
+// patch 7): the pinned check, and "pinned" must be true or absent.
 
 "use strict";
 const fs = require("fs");
@@ -42,6 +45,11 @@ const FIXTURES = {
     entry("2026-09-20T09:00", "Middle", "visitor", "second"),
     entry("2026-09-25T09:00", "Newest", "visitor", "first"),
     entry("2026-09-10T09:00", "Oldest", "visitor", "third")
+  ] },
+  pinned: { form_url: "", entries: [
+    entry("2026-09-20T09:00", "Middle", "visitor", "second"),
+    Object.assign(entry("2026-09-01T09:00", "Welcome", "host", "pinned one"), { pinned: true }),
+    entry("2026-09-25T09:00", "Newest", "visitor", "first")
   ] },
   many: { form_url: "", entries: [1, 2, 3, 4, 5, 6, 7].map(function (n) {
     return entry("2026-09-0" + n + "T09:00", "V" + n, "visitor", "note " + n);
@@ -71,6 +79,14 @@ const CHECKS = [
     const h = render(JSON.stringify(FIXTURES.order));
     const a = h.indexOf("Newest"), b = h.indexOf("Middle"), c = h.indexOf("Oldest");
     return (a >= 0 && a < b && b < c) ? [] : ["order was not Newest, Middle, Oldest"];
+  }],
+  ["pinned first, then newest first", function (render) {
+    const h = render(JSON.stringify(FIXTURES.pinned));
+    const w = h.indexOf("Welcome"), a = h.indexOf("Newest"), b = h.indexOf("Middle");
+    const probs = [];
+    if (!(w >= 0 && w < a && a < b)) probs.push("order was not Welcome (pinned), Newest, Middle");
+    if ((h.match(/Pinned/g) || []).length !== 1) probs.push("'Pinned' not shown exactly once");
+    return probs;
   }],
   ["newest few shown, rest behind Show all", function (render) {
     const h = render(JSON.stringify(FIXTURES.many));
@@ -174,6 +190,7 @@ if (realText !== undefined) {
       if (!e || !e.name) probs.push(tag + ": no name");
       if (!e || !e.text) probs.push(tag + ": no text");
       if (e && e.by !== "host" && e.by !== "visitor") probs.push(tag + ": by is neither host nor visitor");
+      if (e && "pinned" in e && e.pinned !== true) probs.push(tag + ": pinned is set but not true");
       const all = [].concat(e && e.links || []);
       (e && e.replies || []).forEach(function (r) { all.push.apply(all, r.links || []); });
       all.forEach(function (l) {

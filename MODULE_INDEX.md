@@ -10,18 +10,16 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 45  
-**Total Lines of Code (non-blank):** 23,100  
-**Total Public Functions/Classes:** 329
+**Total Python Files:** 43  
+**Total Lines of Code (non-blank):** 22,413  
+**Total Public Functions/Classes:** 323
 
 ## Classification Coverage
 
-**Undetermined role (10).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (8).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L281_3_daily_run.py`
-- `patch_L281_5_sheet_address.py`
-- `patch_L281_6_guestbook_white_text.py`
+- `patch_L281_7_pin.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -29,12 +27,10 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (8).** No valid `Domain:` tag.
+**Undetermined domain (6).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L281_3_daily_run.py`
-- `patch_L281_5_sheet_address.py`
-- `patch_L281_6_guestbook_white_text.py`
+- `patch_L281_7_pin.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -113,7 +109,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
 | `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,076 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
-| `guestbook_updater.py` | - look after the lobby's guest book (L-281). (510 lines) |
+| `guestbook_updater.py` | - look after the lobby's guest book (L-281). (525 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (860 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (604 lines) |
@@ -123,7 +119,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (120 lines) |
 | `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (1,062 lines) |
-| `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (266 lines) |
+| `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (281 lines) |
 
 ---
 
@@ -132,9 +128,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (574 lines) |
-| `patch_L281_3_daily_run.py` | - the Daily Run, gallery half (L-281, step 3). (1,091 lines) |
-| `patch_L281_5_sheet_address.py` | - change the sheet's address from the updater (L-281, step 5). GALLERY repo. (840 lines) |
-| `patch_L281_6_guestbook_white_text.py` | - the guest book's names and text in white (L-281, step 6, Mode 5). GALLERY repo. (68 lines) |
+| `patch_L281_7_pin.py` | - pin and unpin guest book entries (L-281, step 7, Tony's request of 2026-09-28). GALLERY repo. (1,282 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (460 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (287 lines) |

@@ -16,6 +16,10 @@
 // THE RULES THE PAGE ENFORCES, whatever the file says:
 //   - Newest first. Entries are sorted by their "time" field, newest at
 //     the top (Tony, 2026-09-26). An entry with no time sorts last.
+//   - Pinned first. An entry with "pinned": true sits above all the
+//     others, marked "Pinned" beside its date; several pinned entries
+//     are newest first among themselves. Unpinned, an entry goes back
+//     to its place by time (Tony, 2026-09-28).
 //   - The newest SHOW_FIRST entries are shown; the rest sit behind a
 //     "Show all" line that opens without any script (a details box).
 //   - Every piece of text is escaped. Nothing in the file can add a tag,
@@ -33,7 +37,7 @@
 //   { "form_url": "",
 //     "entries": [
 //       { "id": "...", "time": "2026-09-26T12:00", "name": "Tony",
-//         "by": "host" | "visitor", "text": "...",
+//         "by": "host" | "visitor", "text": "...", "pinned": true (optional),
 //         "links": [ { "label": "...", "href": "#room=solar_system/earth" } ],
 //         "replies": [ { "time": "...", "name": "Tony", "text": "...",
 //                        "links": [ ... ] } ] } ] }
@@ -41,6 +45,8 @@
 // RUN THE CHECK:  node documentation/smoke_guestbook.js   (from the root)
 //
 // Written September 26, 2026 with Anthropic's Claude Opus 5.5.
+// Updated September 28, 2026 with Anthropic's Claude Opus 5.5 (L-281,
+// patch 7): pinned entries first, marked "Pinned".
 
 (function (global) {
   "use strict";
@@ -106,6 +112,8 @@
       }
     }
     list.sort(function (a, b) {
+      var pa = a.entry.pinned === true, pb = b.entry.pinned === true;
+      if (pa !== pb) return pa ? -1 : 1;
       var ta = typeof a.entry.time === "string" ? a.entry.time : "";
       var tb = typeof b.entry.time === "string" ? b.entry.time : "";
       if (ta !== tb) {
@@ -152,7 +160,8 @@
     var host = entry.by === "host";
     var html = '<div class="gb-entry' + (host ? " gb-host" : "") + '">';
     html += '<div class="gb-head"><span class="gb-name">' + esc(entry.name || "A visitor") + "</span>";
-    html += '<span class="gb-date">' + esc(formatDate(entry.time)) + "</span></div>";
+    html += '<span class="gb-date">' + (entry.pinned === true ? "Pinned &middot; " : "") +
+            esc(formatDate(entry.time)) + "</span></div>";
     html += '<div class="gb-text">' + textHtml(entry.text) + "</div>";
     if (host) html += linksHtml(entry.links);
     var replies = Array.isArray(entry.replies) ? entry.replies : [];

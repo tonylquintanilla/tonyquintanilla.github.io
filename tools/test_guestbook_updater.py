@@ -39,6 +39,8 @@ Daily Run patch): the made-up sheet uses the real form's columns; the
 rating is shown privately and never written; a sheet whose message
 column cannot be named is refused rather than guessed.
 Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5 (L-281,
+patch 7): a fifth and sixth run pin and unpin an entry with p.
+Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5 (L-281,
 patch 5): a fourth run changes the sheet address with s, checks a wrong
 one is refused, the new one is saved and fetched at once, and earlier
 decisions survive the change.
@@ -254,6 +256,20 @@ def main():
         check(sorted(local.get("seen", {}).values()) == ["approved", "approved", "approved", "declined"],
               "run 4: decisions kept across the address change")
 
+        # ---- run 5: pin the oldest entry, then unpin it ----
+        # newest first in the pick list: Tony (now), A visitor, Ana, Tony (seed) -> 4
+        code, out = run(root, ["p", "4", "q"])
+        raw, book = book_of(root)
+        seed = [e for e in book["entries"] if e["id"] == "seed"][0]
+        check(code == 0 and seed.get("pinned") is True, "run 5: the oldest entry pinned")
+        check(sum(1 for e in book["entries"] if "pinned" in e) == 1,
+              "run 5: only that entry carries a pin")
+        code, out = run(root, ["p", "4", "q"])
+        check("[pinned] Tony" in out, "run 5: the pick list marks the pinned entry")
+        raw, book = book_of(root)
+        seed = [e for e in book["entries"] if e["id"] == "seed"][0]
+        check(code == 0 and "pinned" not in seed, "run 5: unpinned, the pin is gone from the file")
+
         # ---- columns in another order ----
         rows, problem = gu.read_rows("Timestamp,Message,Name\n9/24/2026 09:00:00,Hi,Cy\n")
         check(not problem and rows and rows[0]["name"] == "Cy" and rows[0]["message"] == "Hi",
@@ -287,7 +303,7 @@ def main():
     if FAILURES:
         print("=== GUEST BOOK UPDATER: %d of %d checks FAILED" % (len(FAILURES), CHECKS[0]))
         return 1
-    print("=== GUEST BOOK UPDATER: all %d checks passed (4 scripted runs, "
+    print("=== GUEST BOOK UPDATER: all %d checks passed (6 scripted runs, "
           "self-test first)" % CHECKS[0])
     return 0
 
