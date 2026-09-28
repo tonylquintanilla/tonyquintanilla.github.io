@@ -1,6 +1,6 @@
 {
   "about": "The lobby's guest book (L-281). The guest book updater writes this file; the lobby reads it through gallery/guestbook.js. Visitor entries arrive only after Tony approves them. Newest first is decided by the page, from each entry's time.",
-  "form_url": "",
+  "form_url": "https://forms.gle/JD6iLZRoZd5UHmJA9",
   "entries": [
     {
       "id": "2026-09-26-host-1",
@@ -9,10 +9,37 @@
       "by": "host",
       "text": "Welcome to the guest book. Leave a note about what you found here, or what you would like to see next.",
       "links": [
-        {"label": "Start with Earth", "href": "#room=solar_system/earth"},
-        {"label": "The Sun, interactive", "href": "interactive.html?exhibit=sun"}
+        {
+          "label": "Start with Earth",
+          "href": "#room=solar_system/earth"
+        },
+        {
+          "label": "The Sun, interactive",
+          "href": "interactive.html?exhibit=sun"
+        }
       ],
       "replies": []
+    },
+    {
+      "id": "2026-09-27T22:51-v-f5fcd4",
+      "time": "2026-09-27T22:51",
+      "name": "Tony",
+      "by": "visitor",
+      "text": "This is a test of the Paloma's Orrery Guest Book.",
+      "links": [],
+      "replies": [
+        {
+          "time": "2026-09-27T22:58",
+          "name": "Tony",
+          "text": "Successful!",
+          "links": [
+            {
+              "label": "Earth",
+              "href": "#room=solar_system/earth"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

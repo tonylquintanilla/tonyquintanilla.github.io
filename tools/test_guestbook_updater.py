@@ -38,6 +38,10 @@ Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5 (L-281,
 Daily Run patch): the made-up sheet uses the real form's columns; the
 rating is shown privately and never written; a sheet whose message
 column cannot be named is refused rather than guessed.
+Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5 (L-281,
+patch 5): a fourth run changes the sheet address with s, checks a wrong
+one is refused, the new one is saved and fetched at once, and earlier
+decisions survive the change.
 """
 
 import builtins
@@ -65,6 +69,7 @@ SHEET = (
 
 FAILURES = []
 CHECKS = [0]
+FETCHED = []
 
 
 def check(ok, what):
@@ -110,7 +115,7 @@ def run(root, answers, sheet=SHEET):
 
     builtins.input = fake_input
     gu.find_root = lambda: root
-    gu.fetch_csv = lambda url: sheet
+    gu.fetch_csv = lambda url: (FETCHED.append(url), sheet)[1]
     sys.stdout = printed
     cwd = os.getcwd()
     try:
@@ -231,6 +236,24 @@ def main():
         check([e["name"] for e in book["entries"]] == ["Tony", "Ana", "A visitor", "Tony"],
               "run 3: Ben's entry removed, the rest kept")
 
+        # ---- run 4: the sheet republished at a new address ----
+        new_url = "https://docs.google.com/spreadsheets/d/e/NEW/pub?output=csv"
+        del FETCHED[:]
+        code, out = run(root, [
+            "s", "https://example.com/pub?output=csv",   # refused
+            "s", new_url,                                 # saved, fetched at once
+            "q",
+        ])
+        check(code == 0, "run 4 finished (%s)" % code)
+        check("Not saved." in out, "run 4: a non-Google sheet address refused")
+        local = json.load(open(os.path.join(root, gu.LOCAL)))
+        check(local.get("csv_url") == new_url, "run 4: the new sheet address saved")
+        check(FETCHED == [url, new_url],
+              "run 4: fetched from the old address, then at once from the new (%s)"
+              % [u.split("/")[-2] for u in FETCHED])
+        check(sorted(local.get("seen", {}).values()) == ["approved", "approved", "approved", "declined"],
+              "run 4: decisions kept across the address change")
+
         # ---- columns in another order ----
         rows, problem = gu.read_rows("Timestamp,Message,Name\n9/24/2026 09:00:00,Hi,Cy\n")
         check(not problem and rows and rows[0]["name"] == "Cy" and rows[0]["message"] == "Hi",
@@ -264,7 +287,7 @@ def main():
     if FAILURES:
         print("=== GUEST BOOK UPDATER: %d of %d checks FAILED" % (len(FAILURES), CHECKS[0]))
         return 1
-    print("=== GUEST BOOK UPDATER: all %d checks passed (3 scripted runs, "
+    print("=== GUEST BOOK UPDATER: all %d checks passed (4 scripted runs, "
           "self-test first)" % CHECKS[0])
     return 0
 
