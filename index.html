@@ -106,7 +106,12 @@
          Google Form; nothing a visitor writes appears until Tony
          approves it with the guest book updater. Links are drawn only
          on Tony's own entries and replies, and only to pages of this
-         gallery. -->
+         gallery.
+     Updated: September 28, 2026 with Anthropic's Claude Opus 5.5
+       - The guest book's names and message text are white, names bold,
+         text regular, with a soft dark shadow so they stay readable
+         where they cross the bright doves in the background (Tony,
+         Mode 5, 2026-09-28). Dates and the note line are unchanged. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -977,14 +982,14 @@
         .gb-list { border-bottom: 1px solid var(--border); }
         .gb-entry { padding: 12px 4px; border-top: 1px solid var(--border); }
         .gb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-        .gb-name { font-size: 0.9rem; color: var(--text-primary); }
+        .gb-name { font-size: 0.9rem; color: #ffffff; font-weight: 700; text-shadow: 0 0 4px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8); }
         .gb-date { font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; }
-        .gb-text { font-size: 0.86rem; color: var(--text-secondary); line-height: 1.5; margin-top: 4px; overflow-wrap: anywhere; }
+        .gb-text { font-size: 0.86rem; color: #ffffff; font-weight: 400; line-height: 1.5; margin-top: 4px; overflow-wrap: anywhere; text-shadow: 0 0 4px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8); }
         .gb-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; font-size: 0.8rem; }
         .gb-link { color: var(--accent); text-decoration: none; }
         .gb-link:hover { text-decoration: underline; }
         .gb-reply { margin: 10px 0 0 14px; padding-left: 12px; border-left: 2px solid var(--border); }
-        .gb-reply .gb-name { font-size: 0.8rem; color: var(--text-secondary); font-style: italic; }
+        .gb-reply .gb-name { font-size: 0.8rem; font-style: italic; }
         .gb-more summary { cursor: pointer; padding: 12px 4px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-secondary); }
         .lobby-footer {
             display: flex;
