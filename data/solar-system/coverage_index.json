@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-09-28T13:29:00.788574+00:00",
+  "generated": "2026-09-29T03:22:10.201749+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2460988.519960773,
-    "end_jd": 2461635.603668591
+    "start_jd": 2460989.098524306,
+    "end_jd": 2461636.1822674004
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -85,6 +85,30 @@
           "sun_radius": {
             "value": 695700.0,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 0.004650467260962158,
+                "figures": "exact",
+                "prints": 4
+              },
+              "km": {
+                "value": 695700.0,
+                "figures": "exact",
+                "prints": 4
+              },
+              "r_earth": {
+                "value": 109.07574478727847,
+                "figures": "exact",
+                "prints": 5
+              },
+              "r_sun": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              }
+            },
+            "prints": 4,
+            "figures": "exact",
             "source": "IAU 2015 Resolution B3 -- nominal solar radius",
             "orrery_constant": "constants_new.py::SUN_RADIUS_KM"
           }
@@ -135,8 +159,31 @@
           "chromosphere": {
             "name": "Chromosphere (2,000 km skin)",
             "radius": {
-              "value": 1.002874802357338,
-              "unit": "r_sun"
+              "value": 1.003,
+              "unit": "r_sun",
+              "in": {
+                "au": {
+                  "value": 0.00466,
+                  "figures": 3,
+                  "prints": null
+                },
+                "km": {
+                  "value": 698000.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 109.4,
+                  "figures": 4,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 1.003,
+                  "figures": 4,
+                  "prints": null
+                }
+              },
+              "figures": 4
             },
             "description": "A thin, reddish layer of the Sun's atmosphere just above the visible surface, about 2,000 km deep.",
             "about": "The chromosphere sits between the photosphere and the corona and takes its name from the Greek word for color, because the hydrogen in it glows red. It is far less dense than the surface, and its temperature rises with height, from a few thousand kelvin at the bottom to about 20,000 at the top. It is never still: jets of gas called spicules rise and fall like geysers, and cooler prominences hang in it, held up by magnetic fields.",
@@ -146,7 +193,7 @@
             "n_points": 25,
             "marker_size": 3.0,
             "source": "Carroll & Ostlie, An Introduction to Modern Astrophysics, Ch. 11 -- chromosphere extends about 2000 km above the photosphere",
-            "orrery_constant": "constants_new.py::CHROMOSPHERE_PHYSICAL_RADII",
+            "orrery_constant": "constants_new.py::CHROMOSPHERE_TOP_KM",
             "note": "Derived: 1 + 2000 km / 695700 km. The sourced claim is the 2000 km thickness, not the ratio. Drawn at true physical scale since 2026-08-16."
           },
           "inner_corona": {
@@ -217,6 +264,30 @@
           "sun_radius": {
             "value": 695700.0,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 0.004650467260962158,
+                "figures": "exact",
+                "prints": 4
+              },
+              "km": {
+                "value": 695700.0,
+                "figures": "exact",
+                "prints": 4
+              },
+              "r_earth": {
+                "value": 109.07574478727847,
+                "figures": "exact",
+                "prints": 5
+              },
+              "r_sun": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              }
+            },
+            "prints": 4,
+            "figures": "exact",
             "source": "IAU 2015 Resolution B3 -- nominal solar radius",
             "orrery_constant": "constants_new.py::SUN_RADIUS_KM"
           }
@@ -257,6 +328,30 @@
           "sun_radius": {
             "value": 695700.0,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 0.004650467260962158,
+                "figures": "exact",
+                "prints": 4
+              },
+              "km": {
+                "value": 695700.0,
+                "figures": "exact",
+                "prints": 4
+              },
+              "r_earth": {
+                "value": 109.07574478727847,
+                "figures": "exact",
+                "prints": 5
+              },
+              "r_sun": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              }
+            },
+            "prints": 4,
+            "figures": "exact",
             "source": "IAU 2015 Resolution B3 -- nominal solar radius",
             "orrery_constant": "constants_new.py::SUN_RADIUS_KM"
           }
@@ -456,19 +551,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461311.5,
-        "a_au": 0.999127959184088,
-        "e": 0.01666131910388374,
-        "i_deg": 0.004803682588449999,
-        "node_deg": 175.6144046199944,
-        "peri_deg": 290.3622146052251,
-        "M0_deg": 260.4218163193278,
-        "n_deg_per_day": 0.9868997926037939,
+        "epoch_jd": 2461312.5,
+        "a_au": 0.9992034984057058,
+        "e": 0.01655588719177615,
+        "i_deg": 0.00436016418287394,
+        "node_deg": 174.6469262207971,
+        "peri_deg": 291.1225081929034,
+        "M0_deg": 261.6051400408361,
+        "n_deg_per_day": 0.9867878811163869,
         "source": {
           "query_target": "399",
           "center": "@sun",
-          "epoch": 2461311.5,
-          "retrieved": "2026-09-28T13:28:46.542796+00:00"
+          "epoch": 2461312.5,
+          "retrieved": "2026-09-29T03:22:00.716834+00:00"
         }
       },
       "positions": null,
@@ -482,6 +577,28 @@
             "radius": {
               "value": 1221.5,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 8.165e-06,
+                  "figures": 4,
+                  "prints": null
+                },
+                "km": {
+                  "value": 1221.5,
+                  "figures": 5,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 0.19151,
+                  "figures": 5,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.0017558,
+                  "figures": 5,
+                  "prints": null
+                }
+              },
               "figures": 5
             },
             "info_url": "https://en.wikipedia.org/wiki/Earth%27s_inner_core",
@@ -499,6 +616,28 @@
             "radius": {
               "value": 3480.0,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 2.3262e-05,
+                  "figures": 5,
+                  "prints": null
+                },
+                "km": {
+                  "value": 3480.0,
+                  "figures": 5,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 0.54561,
+                  "figures": 5,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.0050022,
+                  "figures": 5,
+                  "prints": null
+                }
+              },
               "figures": 5
             },
             "info_url": "https://en.wikipedia.org/wiki/Earth%27s_outer_core",
@@ -517,6 +656,28 @@
             "radius": {
               "value": 5710.0,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 3.82e-05,
+                  "figures": 3,
+                  "prints": null
+                },
+                "km": {
+                  "value": 5710.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 0.895,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.00821,
+                  "figures": 3,
+                  "prints": null
+                }
+              },
               "figures": 3
             },
             "info_url": "https://en.wikipedia.org/wiki/Lower_mantle",
@@ -535,6 +696,28 @@
             "radius": {
               "value": 6346.6,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 4.2424e-05,
+                  "figures": 5,
+                  "prints": null
+                },
+                "km": {
+                  "value": 6346.6,
+                  "figures": 5,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 0.99506,
+                  "figures": 5,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.0091226,
+                  "figures": 5,
+                  "prints": null
+                }
+              },
               "figures": 5
             },
             "info_url": "https://en.wikipedia.org/wiki/Upper_mantle",
@@ -551,22 +734,67 @@
             "description": "Earth's thin, solid outer skin: the ground we live on, the ocean floors, and everything that has ever lived.",
             "about": "The crust is thin compared with the planet: 5 to 10 km under the oceans, where it is mostly basalt, and 30 to 50 km under the continents, where it is mostly granite. Surface temperatures range from about minus 80 to 60 degrees Celsius. It holds all known life and every resource we can reach.",
             "radius": {
-              "value": 1.0,
+              "value": 0.9988811,
               "unit": "r_earth",
-              "figures": "exact"
+              "in": {
+                "au": {
+                  "value": 4.25875e-05,
+                  "figures": 7,
+                  "prints": null
+                },
+                "km": {
+                  "value": 6371.0,
+                  "figures": 7,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 0.9988811,
+                  "figures": 7,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.009157683,
+                  "figures": 7,
+                  "prints": null
+                }
+              },
+              "figures": 7
             },
             "info_url": "https://en.wikipedia.org/wiki/Earth%27s_crust",
             "color": "rgb(70, 120, 160)",
             "opacity": 1.0,
             "n_points": 40,
             "marker_size": 3.0,
-            "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1 -- equatorial radius",
-            "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM",
-            "note": "Drawn at the equatorial radius. Crust thickness (5-10 km oceanic, 30-50 km continental) is below the drawn resolution."
+            "source": "NASA Planetary Fact Sheet, Earth -- volumetric mean radius, 6371.000 km. The Earth radius used as a unit is the equatorial radius: Prsa et al. (2016), AJ 152:41, on IAU 2015 Resolution B3 -- an Earth radius not qualified as equatorial or polar is the equatorial one, following common usage.",
+            "orrery_constant": "constants_new.py::EARTH_MEAN_RADIUS_KM",
+            "note": "Drawn at the mean radius, the sphere the interior layers (PREM) are measured against (Tony, 2026-09-28). Crust thickness (5-10 km oceanic, 30-50 km continental) is below the drawn resolution.",
+            "radius_note": "This is Earth's mean radius: the radius of a ball with the same volume as the smooth, slightly flattened shape fitted to sea level. The Earth radius used as a unit here is the equatorial radius, as the International Astronomical Union recommends, so the mean radius is a little less than one. The ground itself rises and falls from this by kilometres."
           },
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 4.263521e-05,
+                "figures": 8,
+                "prints": null
+              },
+              "km": {
+                "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              },
+              "r_sun": {
+                "value": 0.0091679411,
+                "figures": 8,
+                "prints": null
+              }
+            },
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -579,13 +807,57 @@
             "description": "The air where weather happens and the ozone layer sits: the troposphere and stratosphere, holding nearly all the atmosphere's mass.",
             "about": "The troposphere, the lowest 12 km or so, is where clouds and weather form; above it the stratosphere, to about 50 km, holds the ozone layer. Together they contain 99 percent of the atmosphere's mass, mostly nitrogen and oxygen. Temperature falls from about 15 degrees Celsius at sea level to minus 60 at the top of the troposphere, then warms again toward the stratopause as ozone absorbs sunlight.",
             "radius": {
-              "value": 1.008,
+              "value": 1.0078,
               "unit": "r_earth",
-              "figures": 4
+              "in": {
+                "au": {
+                  "value": 4.297e-05,
+                  "figures": 4,
+                  "prints": null
+                },
+                "km": {
+                  "value": 6428.0,
+                  "figures": 4,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 1.0078,
+                  "figures": 5,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.00924,
+                  "figures": 4,
+                  "prints": null
+                }
+              },
+              "figures": 5
             },
             "altitude": {
               "value": 50.0,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 3.3e-07,
+                  "figures": 2,
+                  "prints": null
+                },
+                "km": {
+                  "value": 50.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 0.0078,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 7.2e-05,
+                  "figures": 2,
+                  "prints": null
+                }
+              },
               "figures": 2,
               "orrery_constant": "constants_new.py::EARTH_STRATOPAUSE_ALTITUDE_KM"
             },
@@ -595,7 +867,7 @@
             "n_points": 20,
             "marker_size": 3.0,
             "source": "NOAA JetStream, \"Layers of the Atmosphere\"; NASA, \"Earth's Atmospheric Layers\" -- stratopause at about 50 km",
-            "orrery_constant": "constants_new.py::EARTH_STRATOPAUSE_RADII",
+            "orrery_constant": "constants_new.py::EARTH_STRATOPAUSE_RADIUS_KM",
             "note": "Troposphere and stratosphere, 99% of atmospheric mass. Drawn at the physical boundary since 2026-09-07 (L-295); before that at a visibility fraction its own hover contradicted."
           },
           "upper_atmosphere": {
@@ -603,13 +875,57 @@
             "description": "The thin upper air where meteors burn up, the aurora glows, and the Space Station orbits, fading toward space.",
             "about": "Above 50 km lie the mesosphere, where most meteors burn up, the thermosphere, where the aurora appears and the International Space Station flies, and, higher still, the beginning of the exosphere. In the thermosphere the gas can reach 2,000 degrees Celsius, yet it is so thin it would feel cold to the skin.",
             "radius": {
-              "value": 1.09,
+              "value": 1.094,
               "unit": "r_earth",
-              "figures": 3
+              "in": {
+                "au": {
+                  "value": 4.66e-05,
+                  "figures": 3,
+                  "prints": null
+                },
+                "km": {
+                  "value": 6980.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 1.094,
+                  "figures": 4,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.01003,
+                  "figures": 4,
+                  "prints": null
+                }
+              },
+              "figures": 4
             },
             "altitude": {
               "value": 600.0,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 4e-06,
+                  "figures": 2,
+                  "prints": null
+                },
+                "km": {
+                  "value": 600.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 0.094,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.00086,
+                  "figures": 2,
+                  "prints": null
+                }
+              },
               "figures": 2,
               "orrery_constant": "constants_new.py::EARTH_THERMOPAUSE_ALTITUDE_KM"
             },
@@ -619,12 +935,34 @@
             "n_points": 20,
             "marker_size": 3.0,
             "source": "NOAA JetStream, \"Layers of the Atmosphere\"; NASA, \"Earth's Atmospheric Layers\" -- thermosphere to about 600 km",
-            "orrery_constant": "constants_new.py::EARTH_THERMOPAUSE_RADII",
+            "orrery_constant": "constants_new.py::EARTH_THERMOPAUSE_RADIUS_KM",
             "note": "Mesosphere and thermosphere. The thermopause moves with solar activity over roughly 500-1,000 km; 600 km is the nominal figure."
           },
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 4.263521e-05,
+                "figures": 8,
+                "prints": null
+              },
+              "km": {
+                "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              },
+              "r_sun": {
+                "value": 0.0091679411,
+                "figures": 8,
+                "prints": null
+              }
+            },
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -639,6 +977,28 @@
             "radius": {
               "value": 100.0,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 0.004,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 600000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 100.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.9,
+                  "figures": 1,
+                  "prints": null
+                }
+              },
               "figures": 1
             },
             "info_url": "https://en.wikipedia.org/wiki/Geocorona",
@@ -653,6 +1013,28 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 4.263521e-05,
+                "figures": 8,
+                "prints": null
+              },
+              "km": {
+                "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              },
+              "r_sun": {
+                "value": 0.0091679411,
+                "figures": 8,
+                "prints": null
+              }
+            },
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -665,19 +1047,86 @@
             "description": "The lower edge of low Earth orbit, the band of space where most satellites and the Space Station fly.",
             "about": "Low Earth orbit is the region from roughly 200 to 2,000 km up. Satellites there circle at every angle to the equator, so together they form a shell around Earth rather than a ring, and each completes an orbit in about 90 to 120 minutes. The International Space Station, the Hubble Space Telescope, Starlink and most weather and Earth-observing satellites live here; the moving lights seen at dusk and dawn are usually these.",
             "radius": {
-              "value": 1.0313571,
+              "value": 1.03135712,
               "unit": "r_earth",
-              "figures": 8
+              "in": {
+                "au": {
+                  "value": 4.3972127e-05,
+                  "figures": 8,
+                  "prints": null
+                },
+                "km": {
+                  "value": 6578.1366,
+                  "figures": 8,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 1.03135712,
+                  "figures": 9,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.0094554213,
+                  "figures": 8,
+                  "prints": null
+                }
+              },
+              "figures": 9
             },
             "radius_km": {
               "value": 6578.1366,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 4.3972127e-05,
+                  "figures": 8,
+                  "prints": null
+                },
+                "km": {
+                  "value": 6578.1366,
+                  "figures": 8,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 1.03135712,
+                  "figures": 9,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.0094554213,
+                  "figures": 8,
+                  "prints": null
+                }
+              },
               "figures": 8,
               "orrery_constant": "constants_new.py::EARTH_LEO_INNER_KM"
             },
             "altitude": {
               "value": 200.0,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 1.3369174244536892e-06,
+                  "figures": "exact",
+                  "prints": 3
+                },
+                "km": {
+                  "value": 200.0,
+                  "figures": "exact",
+                  "prints": 3
+                },
+                "r_earth": {
+                  "value": 0.03135712082428589,
+                  "figures": "exact",
+                  "prints": 3
+                },
+                "r_sun": {
+                  "value": 0.0002874802357337933,
+                  "figures": "exact",
+                  "prints": 3
+                }
+              },
+              "prints": 3,
               "figures": "exact",
               "orrery_constant": "constants_new.py::EARTH_LEO_LOWER_ALTITUDE_KM"
             },
@@ -687,26 +1136,93 @@
             "n_points": 30,
             "marker_size": 2.5,
             "source": "Drawing floor: the LEO region begins at the surface (IADC-02-01 Rev. 3); 200 km marks where orbits stop decaying within days. Declared, not measured.",
-            "orrery_constant": "constants_new.py::EARTH_LEO_INNER_RADII"
+            "orrery_constant": "constants_new.py::EARTH_LEO_INNER_KM"
           },
           "leo_outer": {
             "name": "Low Earth Orbit, outer edge (2,000 km)",
             "description": "The upper edge of low Earth orbit, about 2,000 km up, above which the sky belongs to higher orbits.",
             "about": "Low Earth orbit is the region from roughly 200 to 2,000 km up. Satellites there circle at every angle to the equator, so together they form a shell around Earth rather than a ring, and each completes an orbit in about 90 to 120 minutes. The International Space Station, the Hubble Space Telescope, Starlink and most weather and Earth-observing satellites live here; the moving lights seen at dusk and dawn are usually these.",
             "radius": {
-              "value": 1.3135712,
+              "value": 1.31357121,
               "unit": "r_earth",
-              "figures": 8
+              "in": {
+                "au": {
+                  "value": 5.6004384e-05,
+                  "figures": 8,
+                  "prints": null
+                },
+                "km": {
+                  "value": 8378.1366,
+                  "figures": 8,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 1.31357121,
+                  "figures": 9,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.0120427434,
+                  "figures": 9,
+                  "prints": null
+                }
+              },
+              "figures": 9
             },
             "radius_km": {
               "value": 8378.1366,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 5.6004384e-05,
+                  "figures": 8,
+                  "prints": null
+                },
+                "km": {
+                  "value": 8378.1366,
+                  "figures": 8,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 1.31357121,
+                  "figures": 9,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.0120427434,
+                  "figures": 9,
+                  "prints": null
+                }
+              },
               "figures": 8,
               "orrery_constant": "constants_new.py::EARTH_LEO_OUTER_KM"
             },
             "altitude": {
               "value": 2000.0,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 1.3369174244536892e-05,
+                  "figures": "exact",
+                  "prints": 4
+                },
+                "km": {
+                  "value": 2000.0,
+                  "figures": "exact",
+                  "prints": 4
+                },
+                "r_earth": {
+                  "value": 0.3135712082428589,
+                  "figures": "exact",
+                  "prints": 4
+                },
+                "r_sun": {
+                  "value": 0.002874802357337933,
+                  "figures": "exact",
+                  "prints": 4
+                }
+              },
+              "prints": 4,
               "figures": "exact",
               "orrery_constant": "constants_new.py::EARTH_LEO_UPPER_ALTITUDE_KM"
             },
@@ -716,11 +1232,33 @@
             "n_points": 30,
             "marker_size": 2.5,
             "source": "IADC Space Debris Mitigation Guidelines, IADC-02-01 Rev. 3 (June 2021), sec. 3.3.2 -- the LEO Protected Region extends to 2,000 km altitude",
-            "orrery_constant": "constants_new.py::EARTH_LEO_OUTER_RADII"
+            "orrery_constant": "constants_new.py::EARTH_LEO_OUTER_KM"
           },
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 4.263521e-05,
+                "figures": 8,
+                "prints": null
+              },
+              "km": {
+                "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              },
+              "r_sun": {
+                "value": 0.0091679411,
+                "figures": 8,
+                "prints": null
+              }
+            },
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -736,11 +1274,55 @@
             "radius": {
               "value": 6.610735,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 0.0002818501,
+                  "figures": 7,
+                  "prints": null
+                },
+                "km": {
+                  "value": 42164.17,
+                  "figures": 7,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 6.610735,
+                  "figures": 7,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.06060683,
+                  "figures": 7,
+                  "prints": null
+                }
+              },
               "figures": 7
             },
             "radius_km": {
               "value": 42164.17,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 0.0002818501,
+                  "figures": 7,
+                  "prints": null
+                },
+                "km": {
+                  "value": 42164.17,
+                  "figures": 7,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 6.610735,
+                  "figures": 7,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.06060683,
+                  "figures": 7,
+                  "prints": null
+                }
+              },
               "figures": 7,
               "orrery_constant": "constants_new.py::EARTH_GEOSTATIONARY_RADIUS_KM"
             },
@@ -750,12 +1332,34 @@
             "n_points": 120,
             "marker_size": 2.0,
             "source": "Derived: (GM_E / omega^2)^(1/3) from IERS Conventions (2010) TN36 Table 1.1 -- GM_E = 3.986004418e14 m^3 s^-2, nominal mean angular velocity 7.292115e-5 rad s^-1",
-            "orrery_constant": "constants_new.py::EARTH_GEOSTATIONARY_RADII",
+            "orrery_constant": "constants_new.py::EARTH_GEOSTATIONARY_RADIUS_KM",
             "note": "A ring in the equatorial plane, not a sphere, tilted with Earth's equator by the served pole. 42,164 km from Earth's centre, 35,786 km up."
           },
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 4.263521e-05,
+                "figures": 8,
+                "prints": null
+              },
+              "km": {
+                "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              },
+              "r_sun": {
+                "value": 0.0091679411,
+                "figures": 8,
+                "prints": null
+              }
+            },
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -798,6 +1402,7 @@
               "bz": {
                 "value": 0.0,
                 "unit": "nt",
+                "prints": 1,
                 "figures": "exact",
                 "_declared": "A neutral midpoint chosen for this scene, NOT a figure from the paper. Both boundaries are evaluated at the same conditions so the two surfaces can be compared.",
                 "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_BZ_NT"
@@ -805,6 +1410,7 @@
               "pressure": {
                 "value": 2.0,
                 "unit": "npa",
+                "prints": 1,
                 "figures": "exact",
                 "_declared": "The solar wind dynamic pressure both fits are evaluated at. Declared for this scene, not measured.",
                 "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_PRESSURE_NPA"
@@ -812,6 +1418,7 @@
               "cut_angle": {
                 "value": 120.0,
                 "unit": "deg",
+                "prints": 3,
                 "figures": "exact",
                 "_declared": "Where the drawn surface stops, measured from the nose. Shue's surface has no end: at this flaring the radius grows without bound as theta approaches 180 degrees, so a drawing must choose a stop. Shue et al. (1998) fig. 6, p. 17,695 plots the model out to 120 degrees, the furthest the authors evaluate it. A drawing limit, not an edge.",
                 "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_CUT_ANGLE_DEG"
@@ -820,26 +1427,56 @@
             "standoff": {
               "value": 10.3,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 0.00044,
+                  "figures": 2,
+                  "prints": null
+                },
+                "km": {
+                  "value": 65000.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 10.3,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.094,
+                  "figures": 2,
+                  "prints": null
+                }
+              },
               "uncertainty": "0.13",
               "figures": 3
-            },
-            "standoff_km": {
-              "value": 65000.0,
-              "unit": "km",
-              "uncertainty": "850",
-              "figures": 2,
-              "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_STANDOFF_KM"
-            },
-            "standoff_au": {
-              "value": 0.00044,
-              "unit": "au",
-              "uncertainty": "0.0000057",
-              "figures": 2,
-              "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_STANDOFF_AU"
             },
             "scatter": {
               "value": 1.23,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 5.2e-05,
+                  "figures": 2,
+                  "prints": null
+                },
+                "km": {
+                  "value": 7800.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 1.23,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.0113,
+                  "figures": 3,
+                  "prints": null
+                }
+              },
               "figures": 3,
               "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_SCATTER_RADII"
             },
@@ -860,6 +1497,28 @@
               "r0": {
                 "value": 15.02,
                 "unit": "r_earth",
+                "in": {
+                  "au": {
+                    "value": 0.00064,
+                    "figures": 3,
+                    "prints": null
+                  },
+                  "km": {
+                    "value": 95800.0,
+                    "figures": 3,
+                    "prints": null
+                  },
+                  "r_earth": {
+                    "value": 15.02,
+                    "figures": 4,
+                    "prints": null
+                  },
+                  "r_sun": {
+                    "value": 0.1377,
+                    "figures": 4,
+                    "prints": null
+                  }
+                },
                 "figures": 4,
                 "source": "Jelinek, Nemecek and Safrankova (2012), J. Geophys. Res. 117:A05208, doi:10.1029/2011JA017252 -- eq. 14, p. 5: R_BS = 15.02 p^(-1/6.55), so 15.02 R_E is the bow shock standoff at p = 1 nPa.",
                 "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_R0_RADII"
@@ -881,6 +1540,7 @@
               "pressure": {
                 "value": 2.0,
                 "unit": "npa",
+                "prints": 1,
                 "figures": "exact",
                 "_declared": "The same declared pressure as the magnetopause. Both surfaces must be evaluated at the same conditions or their relative positions mean nothing.",
                 "orrery_constant": "constants_new.py::EARTH_SOLAR_WIND_PRESSURE_NPA"
@@ -888,6 +1548,7 @@
               "cut_angle": {
                 "value": 105.0,
                 "unit": "deg",
+                "prints": 3,
                 "figures": "exact",
                 "_declared": "Where the drawn surface stops, measured from the nose. Jelinek et al. fitted crossings within 7 hours of local noon either side, and 7 hours of Earth's turn is 105 degrees. A drawing limit set by where the data was, not by where the formula fails -- the opposite reason from the magnetopause's 120.",
                 "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_CUT_ANGLE_DEG"
@@ -896,23 +1557,55 @@
             "standoff": {
               "value": 13.5,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 0.00058,
+                  "figures": 2,
+                  "prints": null
+                },
+                "km": {
+                  "value": 86000.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 13.5,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.124,
+                  "figures": 3,
+                  "prints": null
+                }
+              },
               "figures": 3
-            },
-            "standoff_km": {
-              "value": 86200.0,
-              "unit": "km",
-              "figures": 3,
-              "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_STANDOFF_KM"
-            },
-            "standoff_au": {
-              "value": 0.000576,
-              "unit": "au",
-              "figures": 3,
-              "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_STANDOFF_AU"
             },
             "scatter": {
               "value": 0.69,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 2.9e-05,
+                  "figures": 2,
+                  "prints": null
+                },
+                "km": {
+                  "value": 4400.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 0.69,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.0063,
+                  "figures": 2,
+                  "prints": null
+                }
+              },
               "figures": 2,
               "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_SCATTER_RADII"
             },
@@ -931,6 +1624,28 @@
             "flare_end": {
               "value": 120.0,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 0.005,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 800000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 120.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 1.1,
+                  "figures": 2,
+                  "prints": null
+                }
+              },
               "figures": 2,
               "uncertainty": "10",
               "source": "Slavin, Smith, Sibeck, Baker, Zwickl and Akasofu (1985), 'An ISEE 3 study of average and substorm conditions in the distant magnetotail', J. Geophys. Res. 90(A11):10875, doi:10.1029/JA090iA11p10875 -- abstract: flaring ceases on average at |X| = 120 +/- 10 R_E.",
@@ -939,6 +1654,28 @@
             "diameter": {
               "value": 60.0,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 0.003,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 400000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 60.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.6,
+                  "figures": 1,
+                  "prints": null
+                }
+              },
               "figures": 2,
               "uncertainty": "5",
               "source": "Slavin et al. (1985), doi:10.1029/JA090iA11p10875 -- abstract: from 756 magnetopause crossings, a low-latitude magnetotail diameter of 60 +/- 5 R_E at |X| = 130 - 225 R_E.",
@@ -948,6 +1685,28 @@
             "drawn_radius": {
               "value": 30.0,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 0.0012790562934128715,
+                  "figures": "exact",
+                  "prints": null
+                },
+                "km": {
+                  "value": 191344.098,
+                  "figures": "exact",
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 30.0,
+                  "figures": "exact",
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 0.27503823199655025,
+                  "figures": "exact",
+                  "prints": null
+                }
+              },
               "figures": "exact",
               "_declared": "Half the measured diameter, the radius of the round tube the tail is drawn as beyond flare_end. A rule, not a measurement; its reasons are on the row in constants_new.py.",
               "orrery_constant": "constants_new.py::EARTH_MAGNETOTAIL_DRAWN_RADIUS_RADII"
@@ -955,6 +1714,28 @@
             "drawn_end": {
               "value": 220.0,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 0.009379746151694391,
+                  "figures": "exact",
+                  "prints": null
+                },
+                "km": {
+                  "value": 1403190.052,
+                  "figures": "exact",
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 220.0,
+                  "figures": "exact",
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 2.0169470346413685,
+                  "figures": "exact",
+                  "prints": null
+                }
+              },
               "figures": "exact",
               "_declared": "Where the drawing stops: equal to observed_extent, how far ISEE-3 went. A drawing limit, not an edge of anything physical.",
               "orrery_constant": "constants_new.py::EARTH_MAGNETOTAIL_DRAWN_END_RADII"
@@ -962,6 +1743,28 @@
             "observed_extent": {
               "value": 220.0,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 0.009,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 1400000.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 220.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 2.0,
+                  "figures": 2,
+                  "prints": null
+                }
+              },
               "figures": 2,
               "source": "Slavin, Tsurutani, Smith, Jones and Sibeck (1983), 'Average configuration of the distant (less than 220-earth-radii) magnetotail - Initial ISEE-3 magnetic field results', Geophys. Res. Lett. 10(10):973, doi:10.1029/GL010i010p00973 -- the abstract states that the magnetotail retains much of its near-Earth structure out to X = -220 Earth radii. Abstract open at ntrs.nasa.gov/citations/19830066648. The same abstract's figures for where flaring ends and for the tail's diameter are superseded by the same mission's 1985 averages, served here as flare_end and diameter.",
               "orrery_constant": "constants_new.py::EARTH_MAGNETOTAIL_OBSERVED_RADII",
@@ -976,6 +1779,28 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 4.263521e-05,
+                "figures": 8,
+                "prints": null
+              },
+              "km": {
+                "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              },
+              "r_sun": {
+                "value": 0.0091679411,
+                "figures": 8,
+                "prints": null
+              }
+            },
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -1001,6 +1826,28 @@
           "inner_belt_distance": {
             "value": 1.5,
             "unit": "r_earth",
+            "in": {
+              "au": {
+                "value": 6e-05,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 9600.0,
+                "figures": 2,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1.5,
+                "figures": 2,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.014,
+                "figures": 2,
+                "prints": null
+              }
+            },
             "figures": 2,
             "source": "Baker et al. (2018), Space Sci. Rev. 214:17, doi:10.1007/s11214-017-0452-7 -- sec. 2, inner-zone proton fluxes peak near geocentric r ~ 1.5 R_E",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_RADII",
@@ -1009,6 +1856,28 @@
           "inner_belt_inner_edge": {
             "value": 1.1,
             "unit": "r_earth",
+            "in": {
+              "au": {
+                "value": 5e-05,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 7000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1.1,
+                "figures": 2,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.01,
+                "figures": 2,
+                "prints": null
+              }
+            },
             "figures": 2,
             "source": "Meredith, Horne, Kersten, Fraser and Grew (2014), J. Geophys. Res. Space Physics 119:5328, doi:10.1002/2014JA020064 -- introduction, first paragraph: the inner belt extends from about 1.1 to 2 Earth radii in the geomagnetic equatorial plane. Open full text at nora.nerc.ac.uk. Meredith states this as background and passes it on from Baker et al. (2007), which is the layer below rather than the source.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_BELT_INNER_EDGE",
@@ -1017,6 +1886,28 @@
           "inner_belt_outer_edge": {
             "value": 2.0,
             "unit": "r_earth",
+            "in": {
+              "au": {
+                "value": 9e-05,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 10000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 2.0,
+                "figures": 1,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.02,
+                "figures": 1,
+                "prints": null
+              }
+            },
             "figures": 1,
             "source": "Meredith et al. (2014), doi:10.1002/2014JA020064 -- introduction, first paragraph, the outer end of the same stated span.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_BELT_OUTER_EDGE",
@@ -1025,6 +1916,7 @@
           "outer_belt_distance": {
             "value": 4.5,
             "unit": "l_shell",
+            "prints": 2,
             "figures": "exact",
             "source": "Li et al. (2025), J. Geophys. Res. Space Physics, doi:10.1029/2024JA033504 -- sec. 1, the outer belt is most intense around L = 4 and 5; the value served is our midpoint of that band. Kellerman et al. (2014), as reported in arXiv:1809.00902 -- maximum electron flux at L = 4-5; the arXiv paper is the document opened and Kellerman is the layer below it.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_RADII",
@@ -1045,6 +1937,28 @@
           "outer_belt_inner_edge": {
             "value": 3.0,
             "unit": "r_earth",
+            "in": {
+              "au": {
+                "value": 0.0001,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 20000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 3.0,
+                "figures": 1,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.03,
+                "figures": 1,
+                "prints": null
+              }
+            },
             "figures": 1,
             "source": "Meredith et al. (2014), doi:10.1002/2014JA020064, and Li, Tu, Selesnick and Huang (2024), J. Geophys. Res. Space Physics 129:e2023JA032171, doi:10.1029/2023JA032171 -- both state the outer belt extending from 3 Earth radii, in their introductions. Open full text at nora.nerc.ac.uk and par.nsf.gov.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BELT_INNER_EDGE",
@@ -1053,6 +1967,28 @@
           "outer_belt_outer_edge": {
             "value": 7.0,
             "unit": "r_earth",
+            "in": {
+              "au": {
+                "value": 0.0003,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 40000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 7.0,
+                "figures": 1,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.06,
+                "figures": 1,
+                "prints": null
+              }
+            },
             "figures": 1,
             "source": "Meredith et al. (2014), doi:10.1002/2014JA020064, and Li, Tu et al. (2024), doi:10.1029/2023JA032171 -- both state the outer belt extending to 7 Earth radii, in their introductions.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BELT_OUTER_EDGE",
@@ -1087,6 +2023,28 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 4.263521e-05,
+                "figures": 8,
+                "prints": null
+              },
+              "km": {
+                "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              },
+              "r_sun": {
+                "value": 0.0091679411,
+                "figures": 8,
+                "prints": null
+              }
+            },
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -1101,11 +2059,55 @@
             "radius": {
               "value": 235.0,
               "unit": "r_earth",
+              "in": {
+                "au": {
+                  "value": 0.01,
+                  "figures": 3,
+                  "prints": null
+                },
+                "km": {
+                  "value": 1500000.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 235.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 2.15,
+                  "figures": 3,
+                  "prints": null
+                }
+              },
               "figures": 3
             },
             "radius_km": {
               "value": 1500000.0,
               "unit": "km",
+              "in": {
+                "au": {
+                  "value": 0.01,
+                  "figures": 3,
+                  "prints": null
+                },
+                "km": {
+                  "value": 1500000.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 235.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 2.15,
+                  "figures": 3,
+                  "prints": null
+                }
+              },
               "figures": 3,
               "orrery_constant": "constants_new.py::EARTH_HILL_SPHERE_KM"
             },
@@ -1115,12 +2117,34 @@
             "n_points": 20,
             "marker_size": 3.0,
             "source": "Derived: r_H = a (GM_E / 3 GM_Sun)^(1/3) with a = 1 AU; GM_E from IERS Conventions (2010) TN36 Table 1.1, GM_Sun from IAU 2015 Resolution B3",
-            "orrery_constant": "constants_new.py::EARTH_HILL_SPHERE_RADII",
+            "orrery_constant": "constants_new.py::EARTH_HILL_SPHERE_KM",
             "note": "About 1.50 million km. The Moon at about 60 Earth radii sits well inside it, which is why it stays bound. a = 1 AU exactly; Earth's semi-major axis is 1.00000011 AU (NASA Earth Fact Sheet)."
           },
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
+            "in": {
+              "au": {
+                "value": 4.263521e-05,
+                "figures": 8,
+                "prints": null
+              },
+              "km": {
+                "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              },
+              "r_sun": {
+                "value": 0.0091679411,
+                "figures": 8,
+                "prints": null
+              }
+            },
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -1155,55 +2179,55 @@
       },
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": 149454968.37501088,
-        "y": 11823578.703318017,
-        "z": -1946.5599719276654
+        "t": 2461312.500694444,
+        "x": 149188810.47875798,
+        "y": 14376824.437524743,
+        "z": -2148.4620921788733
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461311.5,
+        "element_epoch_jd": 2461312.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.007020960891968125
+            "error_deg": 0.005051836178116875
           },
           {
             "offset_days": 30.0,
-            "error_deg": 0.010713175751606664
+            "error_deg": 0.01111326077592177
           }
         ],
-        "error_rate_deg_per_day": 0.0003571058583868888,
+        "error_rate_deg_per_day": 0.00037044202586405896,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 364.77867631341934,
-        "cap_applied": 364.77867631341934,
+        "window_days": 364.82004581645214,
+        "cap_applied": 364.82004581645214,
         "window": {
-          "start_jd": 2460946.7213236867,
-          "end_jd": 2461676.2786763133
+          "start_jd": 2460947.6799541838,
+          "end_jd": 2461677.3200458162
         }
       },
       "pole_of_date": {
-        "date": "2026-09-28",
-        "epoch_jd": 2461311.5,
+        "date": "2026-09-29",
+        "epoch_jd": 2461312.5,
         "ra": {
-          "value": 0.71839,
+          "value": 0.71204,
           "unit": "deg"
         },
         "dec": {
-          "value": 89.85021,
+          "value": 89.8502,
           "unit": "deg"
         },
         "orbit": {
-          "i_deg": 0.003492615115827393,
-          "node_deg": 174.2995936604662,
+          "i_deg": 0.003494606983333785,
+          "node_deg": 174.3057750442991,
           "frame": "ecliptic of J2000"
         },
         "tilt": {
-          "value": 23.438143129218755,
+          "value": 23.438124697265184,
           "unit": "deg",
           "figures": 7,
           "frame_obliquity_deg": 23.439291111111114,
@@ -1214,15 +2238,15 @@
           "query_target": "399",
           "observer": "@sun",
           "quantity": "32",
-          "epoch_jd_ut": 2461311.5,
-          "retrieved": "2026-09-28T13:29:00.788279+00:00"
+          "epoch_jd_ut": 2461312.5,
+          "retrieved": "2026-09-29T03:22:10.201537+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
-          "epoch_jd": 2461311.5,
-          "retrieved": "2026-09-28T13:29:00.788279+00:00"
+          "epoch_jd": 2461312.5,
+          "retrieved": "2026-09-29T03:22:10.201537+00:00"
         }
       }
     },
@@ -1237,19 +2261,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461311.5,
-        "a_au": 5.202506207302624,
-        "e": 0.04840234797588961,
-        "i_deg": 1.303669722752653,
-        "node_deg": 100.5198787379218,
-        "peri_deg": 273.610397850179,
-        "M0_deg": 111.7330365155765,
-        "n_deg_per_day": 0.08309834070477343,
+        "epoch_jd": 2461312.5,
+        "a_au": 5.202994297672567,
+        "e": 0.04818936015331411,
+        "i_deg": 1.303467182845052,
+        "node_deg": 100.514663047018,
+        "peri_deg": 273.6367618935393,
+        "M0_deg": 111.8166015674367,
+        "n_deg_per_day": 0.083086647856491,
         "source": {
           "query_target": "599",
           "center": "@sun",
-          "epoch": 2461311.5,
-          "retrieved": "2026-09-28T13:28:47.759562+00:00"
+          "epoch": 2461312.5,
+          "retrieved": "2026-09-29T03:22:01.789756+00:00"
         }
       },
       "positions": null,
@@ -1311,35 +2335,35 @@
       },
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": -519566587.6691366,
-        "y": 600022103.4662812,
-        "z": 9132111.225179493
+        "t": 2461312.500694444,
+        "x": -520433427.600871,
+        "y": 599334605.692317,
+        "z": 9154357.642154217
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461311.5,
+        "element_epoch_jd": 2461312.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 4.150980127592141e-06
+            "error_deg": 0.00010985106901104966
           },
           {
             "offset_days": 30.0,
-            "error_deg": 6.173483370227649e-05
+            "error_deg": 9.586399348502755e-05
           }
         ],
-        "error_rate_deg_per_day": 2.057827790075883e-06,
+        "error_rate_deg_per_day": 3.661702300368322e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 4332.216467221475,
-        "cap_applied": 4332.216467221475,
+        "window_days": 4332.826143399112,
+        "cap_applied": 4332.826143399112,
         "window": {
-          "start_jd": 2456979.2835327787,
-          "end_jd": 2465643.7164672213
+          "start_jd": 2456979.673856601,
+          "end_jd": 2465645.326143399
         }
       }
     },
@@ -1354,19 +2378,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461311.5,
-        "a_au": 9.537106579865766,
-        "e": 0.05524792955604048,
-        "i_deg": 2.487339498323323,
-        "node_deg": 113.5743650933215,
-        "peri_deg": 339.1506610072185,
-        "M0_deg": 284.2172416204583,
-        "n_deg_per_day": 0.03346887965516783,
+        "epoch_jd": 2461312.5,
+        "a_au": 9.536313393164761,
+        "e": 0.05520455046815995,
+        "i_deg": 2.487169556698396,
+        "node_deg": 113.5571802124799,
+        "peri_deg": 339.2442542027684,
+        "M0_deg": 284.1709291201881,
+        "n_deg_per_day": 0.03347305542327973,
         "source": {
           "query_target": "699",
           "center": "@sun",
-          "epoch": 2461311.5,
-          "retrieved": "2026-09-28T13:28:49.036506+00:00"
+          "epoch": 2461312.5,
+          "retrieved": "2026-09-29T03:22:02.778276+00:00"
         }
       },
       "positions": null,
@@ -1420,35 +2444,35 @@
       },
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": 1385755555.4920182,
-        "y": 261842272.41540265,
-        "z": -59721734.72414179
+        "t": 2461312.500694444,
+        "x": 1385553997.5508735,
+        "y": 262660110.1571166,
+        "z": -59727912.679428875
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461311.5,
+        "element_epoch_jd": 2461312.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.00010373523888822722
+            "error_deg": 0.0001453872214297463
           },
           {
             "offset_days": 30.0,
-            "error_deg": 6.272461302070511e-05
+            "error_deg": 0.00010353674822531812
           }
         ],
-        "error_rate_deg_per_day": 3.4578412962742405e-06,
+        "error_rate_deg_per_day": 4.8462407143248765e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 10756.260852143985,
-        "cap_applied": 10756.260852143985,
+        "window_days": 10754.919007173405,
+        "cap_applied": 10754.919007173405,
         "window": {
-          "start_jd": 2450555.239147856,
-          "end_jd": 2472067.760852144
+          "start_jd": 2450557.5809928267,
+          "end_jd": 2472067.4190071733
         }
       }
     },
@@ -1463,19 +2487,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "earth",
-        "epoch_jd": 2461311.5,
-        "a_au": 0.002581145573458781,
-        "e": 0.04403057022304815,
-        "i_deg": 5.17216356611237,
-        "node_deg": 329.0285202823128,
-        "peri_deg": 102.773906229053,
-        "M0_deg": 313.2050977237147,
-        "n_deg_per_day": 13.10548263300124,
+        "epoch_jd": 2461312.5,
+        "a_au": 0.002573776604561016,
+        "e": 0.04076817404315153,
+        "i_deg": 5.167032825017467,
+        "node_deg": 328.933428532696,
+        "peri_deg": 103.4879129346581,
+        "M0_deg": 325.5094437747187,
+        "n_deg_per_day": 13.16180627771945,
         "source": {
           "query_target": "301",
           "center": "@399",
-          "epoch": 2461311.5,
-          "retrieved": "2026-09-28T13:28:50.094392+00:00"
+          "epoch": 2461312.5,
+          "retrieved": "2026-09-29T03:22:03.760293+00:00"
         }
       },
       "positions": null,
@@ -1483,35 +2507,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": 348919.05635219143,
-        "y": 134533.26360620288,
-        "z": 26694.426051784365
+        "t": 2461312.500694444,
+        "x": 303588.4451599205,
+        "y": 213320.29599554377,
+        "z": 30689.59384379405
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461311.5,
-        "delta_days": 3.43367743563174,
+        "element_epoch_jd": 2461312.5,
+        "delta_days": 3.4189836144433183,
         "samples": [
           {
-            "offset_days": -3.43367743563174,
-            "error_deg": 0.09256478251516016
+            "offset_days": -3.4189836144433183,
+            "error_deg": 0.036703561728006234
           },
           {
-            "offset_days": 3.43367743563174,
-            "error_deg": 0.1691899283162149
+            "offset_days": 3.4189836144433183,
+            "error_deg": 0.14298334816883712
           }
         ],
-        "error_rate_deg_per_day": 0.049273681493930646,
+        "error_rate_deg_per_day": 0.041820425100843245,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 3.43367743563174,
-        "cap_applied": 3.43367743563174,
+        "window_days": 3.4189836144433183,
+        "cap_applied": 3.4189836144433183,
         "window": {
-          "start_jd": 2461308.066322564,
-          "end_jd": 2461314.933677436
+          "start_jd": 2461309.0810163855,
+          "end_jd": 2461315.9189836145
         }
       }
     },
@@ -1526,19 +2550,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "jupiter",
-        "epoch_jd": 2461311.5,
-        "a_au": 0.002821022310936091,
-        "e": 0.003591329411785144,
-        "i_deg": 2.226989717098735,
-        "node_deg": 338.4133580863925,
-        "peri_deg": 48.00923761947212,
-        "M0_deg": 166.6686879069993,
-        "n_deg_per_day": 203.2422127081786,
+        "epoch_jd": 2461312.5,
+        "a_au": 0.002821230702887291,
+        "e": 0.004826119065468055,
+        "i_deg": 2.22707309719967,
+        "node_deg": 338.4132024385024,
+        "peri_deg": 46.90025094702963,
+        "M0_deg": 11.26200658408063,
+        "n_deg_per_day": 203.2196942063635,
         "source": {
           "query_target": "501",
           "center": "@599",
-          "epoch": 2461311.5,
-          "retrieved": "2026-09-28T13:28:51.298998+00:00"
+          "epoch": 2461312.5,
+          "retrieved": "2026-09-29T03:22:04.733838+00:00"
         }
       },
       "positions": null,
@@ -1546,35 +2570,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": -412024.7594463987,
-        "y": -97441.09787447818,
-        "z": -9418.40981912998
+        "t": 2461312.500694444,
+        "x": 336134.09982568707,
+        "y": 251526.82356520728,
+        "z": 13904.973136401897
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461311.5,
-        "delta_days": 0.2214106971203486,
+        "element_epoch_jd": 2461312.5,
+        "delta_days": 0.22143523134280407,
         "samples": [
           {
-            "offset_days": -0.2214106971203486,
-            "error_deg": 0.005661560839211362
+            "offset_days": -0.22143523134280407,
+            "error_deg": 0.005314338139076065
           },
           {
-            "offset_days": 0.2214106971203486,
-            "error_deg": 0.005670594883160009
+            "offset_days": 0.22143523134280407,
+            "error_deg": 0.005182571721243096
           }
         ],
-        "error_rate_deg_per_day": 0.025611205587224795,
+        "error_rate_deg_per_day": 0.02399951492293895,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 0.2214106971203486,
-        "cap_applied": 0.2214106971203486,
+        "window_days": 0.22143523134280407,
+        "cap_applied": 0.22143523134280407,
         "window": {
-          "start_jd": 2461311.2785893027,
-          "end_jd": 2461311.7214106973
+          "start_jd": 2461312.278564769,
+          "end_jd": 2461312.721435231
         }
       }
     },
@@ -1589,19 +2613,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "saturn",
-        "epoch_jd": 2461311.5,
-        "a_au": 0.008168000024471394,
-        "e": 0.02877215264896823,
-        "i_deg": 27.70576248168161,
-        "node_deg": 169.0806172053271,
-        "peri_deg": 178.3460896984261,
-        "M0_deg": 327.685652872853,
-        "n_deg_per_day": 22.57482434573844,
+        "epoch_jd": 2461312.5,
+        "a_au": 0.008168247376614203,
+        "e": 0.02880463268019349,
+        "i_deg": 27.70573227471018,
+        "node_deg": 169.0806485512966,
+        "peri_deg": 178.3567880715887,
+        "M0_deg": 350.2511378061994,
+        "n_deg_per_day": 22.57379893196647,
         "source": {
           "query_target": "606",
           "center": "@699",
-          "epoch": 2461311.5,
-          "retrieved": "2026-09-28T13:28:52.648684+00:00"
+          "epoch": 2461312.5,
+          "retrieved": "2026-09-29T03:22:05.757484+00:00"
         }
       },
       "positions": null,
@@ -1609,35 +2633,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": 833148.9548344582,
-        "y": -789232.8435021488,
-        "z": 324075.5297782557
+        "t": 2461312.500694444,
+        "x": 1099264.286038588,
+        "y": -433825.3245745867,
+        "z": 114344.05414292013
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461311.5,
-        "delta_days": 1.993370991987137,
+        "element_epoch_jd": 2461312.5,
+        "delta_days": 1.9934615407722125,
         "samples": [
           {
-            "offset_days": -1.993370991987137,
-            "error_deg": 0.0007279047091526934
+            "offset_days": -1.9934615407722125,
+            "error_deg": 0.00016434956641632264
           },
           {
-            "offset_days": 1.993370991987137,
-            "error_deg": 0.0008763574621515175
+            "offset_days": 1.9934615407722125,
+            "error_deg": 0.0011124908414288852
           }
         ],
-        "error_rate_deg_per_day": 0.0004396359060477251,
+        "error_rate_deg_per_day": 0.000558069879290441,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 1.993370991987137,
-        "cap_applied": 1.993370991987137,
+        "window_days": 1.9934615407722125,
+        "cap_applied": 1.9934615407722125,
         "window": {
-          "start_jd": 2461309.506629008,
-          "end_jd": 2461313.493370992
+          "start_jd": 2461310.506538459,
+          "end_jd": 2461314.493461541
         }
       }
     },
@@ -1652,19 +2676,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "pluto_barycenter",
-        "epoch_jd": 2461311.5,
-        "a_au": 1.424504028756613e-05,
-        "e": 0.000339752113950403,
-        "i_deg": 112.8877782067143,
-        "node_deg": 227.3930839099082,
-        "peri_deg": 359.3835181494345,
-        "M0_deg": 166.5198188676513,
-        "n_deg_per_day": 56.38433223429731,
+        "epoch_jd": 2461312.5,
+        "a_au": 1.424744921609724e-05,
+        "e": 0.0001823594596337419,
+        "i_deg": 112.8877692614276,
+        "node_deg": 227.3930817039519,
+        "peri_deg": 27.28996572482584,
+        "M0_deg": 194.9752012453151,
+        "n_deg_per_day": 56.37003282359728,
         "source": {
           "query_target": "999",
           "center": "@9",
-          "epoch": 2461311.5,
-          "retrieved": "2026-09-28T13:28:54.039859+00:00"
+          "epoch": 2461312.5,
+          "retrieved": "2026-09-29T03:22:06.759361+00:00"
         }
       },
       "positions": null,
@@ -1672,35 +2696,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": 1251.8183702949736,
-        "y": 1658.3028830136884,
-        "z": 476.72130519266665
+        "t": 2461312.500694444,
+        "x": 1478.0861603983321,
+        "y": 782.7740526830136,
+        "z": -1321.7191910242282
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461311.5,
-        "delta_days": 0.7980940487688798,
+        "element_epoch_jd": 2461312.5,
+        "delta_days": 0.7982965016327324,
         "samples": [
           {
-            "offset_days": -0.7980940487688798,
-            "error_deg": 0.002864006167910999
+            "offset_days": -0.7982965016327324,
+            "error_deg": 0.0021166412996155024
           },
           {
-            "offset_days": 0.7980940487688798,
-            "error_deg": 0.0004651872827428611
+            "offset_days": 0.7982965016327324,
+            "error_deg": 0.0008856799230013592
           }
         ],
-        "error_rate_deg_per_day": 0.003588557228723788,
+        "error_rate_deg_per_day": 0.00265144754522461,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 6.384752390151038,
-        "cap_applied": 6.384752390151038,
+        "window_days": 6.386372013061859,
+        "cap_applied": 6.386372013061859,
         "window": {
-          "start_jd": 2461305.11524761,
-          "end_jd": 2461317.88475239
+          "start_jd": 2461306.113627987,
+          "end_jd": 2461318.886372013
         }
       }
     },
@@ -1715,19 +2739,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "pluto_barycenter",
-        "epoch_jd": 2461311.5,
-        "a_au": 0.0001167425912785063,
-        "e": 0.0001563284363088687,
-        "i_deg": 112.887772903947,
-        "node_deg": 227.3930715438481,
-        "peri_deg": 170.1779126413484,
-        "M0_deg": 175.7282763084015,
-        "n_deg_per_day": 56.36176252435416,
+        "epoch_jd": 2461312.5,
+        "a_au": 0.000116740165168506,
+        "e": 0.0001735165628390055,
+        "i_deg": 112.887773883517,
+        "node_deg": 227.3930718273652,
+        "peri_deg": 172.642335989133,
+        "M0_deg": 229.6265127467488,
+        "n_deg_per_day": 56.3635195102115,
         "source": {
           "query_target": "901",
           "center": "@9",
-          "epoch": 2461311.5,
-          "retrieved": "2026-09-28T13:28:55.782592+00:00"
+          "epoch": 2461312.5,
+          "retrieved": "2026-09-29T03:22:07.710729+00:00"
         }
       },
       "positions": null,
@@ -1735,35 +2759,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": -10256.600150680739,
-        "y": -13588.054819888977,
-        "z": -3907.5313640906943
+        "t": 2461312.500694444,
+        "x": -12110.761657548337,
+        "y": -6414.725893425114,
+        "z": 10827.897294864113
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461311.5,
-        "delta_days": 0.7984136404633426,
+        "element_epoch_jd": 2461312.5,
+        "delta_days": 0.7983887519984846,
         "samples": [
           {
-            "offset_days": -0.7984136404633426,
-            "error_deg": 0.00020292935535444197
+            "offset_days": -0.7983887519984846,
+            "error_deg": 0.00011122652403158823
           },
           {
-            "offset_days": 0.7984136404633426,
-            "error_deg": 9.31929372767556e-05
+            "offset_days": 0.7983887519984846,
+            "error_deg": 0.00025304611717539535
           }
         ],
-        "error_rate_deg_per_day": 0.00025416569190460744,
+        "error_rate_deg_per_day": 0.0003169459947199703,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 0.7984136404633426,
-        "cap_applied": 0.7984136404633426,
+        "window_days": 0.7983887519984846,
+        "cap_applied": 0.7983887519984846,
         "window": {
-          "start_jd": 2461310.7015863596,
-          "end_jd": 2461312.2984136404
+          "start_jd": 2461311.701611248,
+          "end_jd": 2461313.298388752
         }
       }
     },
@@ -1778,19 +2802,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461311.5,
-        "a_au": 0.922333596944253,
-        "e": 0.1911835707808102,
-        "i_deg": 3.341090462730431,
-        "node_deg": 203.8926326881428,
-        "peri_deg": 126.6840947388088,
-        "M0_deg": 298.83427944017,
-        "n_deg_per_day": 1.112684481623438,
+        "epoch_jd": 2461312.5,
+        "a_au": 0.9223336304659019,
+        "e": 0.1911836152559549,
+        "i_deg": 3.341090380250375,
+        "node_deg": 203.892631274112,
+        "peri_deg": 126.6840922699397,
+        "M0_deg": 299.9469721204309,
+        "n_deg_per_day": 1.112684420963688,
         "source": {
           "query_target": "99942",
           "center": "@sun",
-          "epoch": 2461311.5,
-          "retrieved": "2026-09-28T13:28:57.310103+00:00"
+          "epoch": 2461312.5,
+          "retrieved": "2026-09-29T03:22:08.666140+00:00"
         }
       },
       "positions": null,
@@ -1798,35 +2822,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": -48132461.933352195,
-        "y": -120250621.70537004,
-        "z": 5280462.284884021
+        "t": 2461312.500694444,
+        "x": -45331135.54260495,
+        "y": -120778276.94989574,
+        "z": 5374863.975822054
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461311.5,
+        "element_epoch_jd": 2461312.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 1.933620622635209e-05
+            "error_deg": 1.776996119924556e-05
           },
           {
             "offset_days": 30.0,
-            "error_deg": 6.84641251396335e-06
+            "error_deg": 5.3405902698788995e-06
           }
         ],
-        "error_rate_deg_per_day": 6.445402075450696e-07,
+        "error_rate_deg_per_day": 5.923320399748519e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 323.5418539088007,
-        "cap_applied": 323.5418539088007,
+        "window_days": 323.5418715471963,
+        "cap_applied": 323.5418715471963,
         "window": {
-          "start_jd": 2460987.958146091,
-          "end_jd": 2461635.041853909
+          "start_jd": 2460988.9581284528,
+          "end_jd": 2461636.0418715472
         }
       }
     },
@@ -1843,19 +2867,19 @@
       "positions": {
         "file": "positions/voyager_1.json",
         "start": "1977-09-06",
-        "end": "2026-09-28",
+        "end": "2026-09-29",
         "step_hours": 24.0,
-        "n_points": 182,
+        "n_points": 183,
         "size_kb": 14
       },
       "presets": null,
       "features": {},
       "orbit_type": null,
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": -4810983298.050517,
-        "y": -20465141339.403255,
-        "z": 14806928127.36122
+        "t": 2461312.500694444,
+        "x": -4811162141.009507,
+        "y": -20466317355.61751,
+        "z": 14807777610.531694
       },
       "event_link": null,
       "trust": {
@@ -1887,7 +2911,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460240.009056779,
-          "retrieved": "2026-09-28T13:28:59.128198+00:00"
+          "retrieved": "2026-09-29T03:22:09.656516+00:00"
         }
       },
       "positions": null,
@@ -1895,10 +2919,10 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": 314886734.0877304,
-        "y": 75142439.3089704,
-        "z": 41239552.17195276
+        "t": 2461312.500694444,
+        "x": 313214762.3660546,
+        "y": 75691499.98730785,
+        "z": 41191598.0604753
       },
       "event_link": null,
       "trust": {
@@ -1955,7 +2979,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-09-28T13:28:59.793884+00:00"
+          "retrieved": "2026-09-29T03:22:10.123795+00:00"
         }
       },
       "positions": null,
@@ -1963,10 +2987,10 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461311.500694444,
-        "x": -2895835336.4823337,
-        "y": 4109160437.6303983,
-        "z": -1474194487.0344958
+        "t": 2461312.500694444,
+        "x": -2895753446.233161,
+        "y": 4109178411.9114976,
+        "z": -1474174822.6743097
       },
       "event_link": null,
       "trust": {
@@ -2003,7 +3027,7 @@
   },
   "frame_constants": {
     "export": "data/constants_export.json",
-    "orrery_sha": "fc581703683ca98c354b291369448b4a986ad2cf",
+    "orrery_sha": "b61d19821009f5edc183fed4aa7bbfb81ff21c3b",
     "rows": {
       "KM_PER_AU": {
         "value": 149597870.7,

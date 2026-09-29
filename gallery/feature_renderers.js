@@ -71,6 +71,24 @@
  *   a belt with served edges is drawn as evenly spaced rings from edge
  *   to edge on the step that lands on its peak, the peak ring brighter
  *   and larger, and the typed 0.5 belt thickness fallback is gone).
+ * Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-322 Stage D, gallery patch 4, build manifest section 6: an exact
+ *   row prints by the print count its row states in constants_new.py,
+ *   which the export serves and the mirror copies as "prints", never by a
+ *   width chosen on the line -- provenance-discipline 2.20, Rule 7. An
+ *   exact row served with no count is printed in full and reported as a
+ *   warning. The magnetopause and bow shock hovers now read "Bz 0 nT" and
+ *   "2 nPa", and the crust's "Radius: 1 Earth radius" (Tony,
+ *   2026-09-27); every other hover prints as before).
+ * Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-345, carrying gallery patch 4's work: a hover prints km and AU
+ *   from the served "in" -- the orrery's own conversion, from full
+ *   digits, rounded once -- and never converts a served number to print
+ *   it (interactive-exhibit 1.5). The AU stays at three figures, except
+ *   where cutting a served value would round a tie, which prints the
+ *   served digits (the inner core, Tony 2026-09-28). The Sun's radius
+ *   line prints by a served count and is singular at 1; a shell may
+ *   serve a radius_note, which the crust uses at the mean radius.)
  */
 
 (function (global) {
@@ -87,6 +105,12 @@
   // Until then both are null and nothing is drawn: a missing row is a
   // warning, never a remembered number.
   var KM_PER_AU = null;
+  // L-322 Stage D, gallery patch 4: exact rows this build printed with no
+  // print count, by name. buildFeatureTraces empties it on the way in and
+  // turns each into a warning on the way out, so the page REPORTS such a
+  // row rather than choosing a width for it (provenance-discipline 2.20,
+  // Rule 7). The smoke checks fail on any warning.
+  var exactUncounted = [];
   var OBLIQUITY_RAD = null;
 
   function setFrameConstants(frame) {
@@ -195,8 +219,26 @@
      or null. L-322: the mirror writes "figures" beside "value" and
      "unit"; a number this page computes has none. */
   function servedFigures(node) {
-    return (isDict(node) && typeof node.figures === "number")
-      ? node.figures : null;
+    if (!isDict(node)) { return null; }
+    if (typeof node.figures === "number") { return node.figures; }
+    /* L-322 Stage D, gallery patch 4 (provenance-discipline 2.20, Rule 7):
+       an exact value prints by the print count served beside it as
+       "prints" -- an exact row's count, copied by the mirror from its row
+       in constants_new.py, or 1 for the crust's one Earth radius by
+       definition, which the mirror writes too. An EXACT ROW -- a node
+       pointing at a row of constants_new.py -- served with no count is
+       named for the warnings and answered "exact", which the formatters
+       print in full instead of to a width. */
+    if (node.figures === "exact") {
+      if (typeof node.prints === "number") { return node.prints; }
+      if (typeof node.orrery_constant === "string") {
+        if (exactUncounted.indexOf(node.orrery_constant) < 0) {
+          exactUncounted.push(node.orrery_constant);
+        }
+        return "exact";
+      }
+    }
+    return null;
   }
 
   /* The whole figure FIELD: a number, the string "exact", or null for a
@@ -219,6 +261,9 @@
      than the row declares, never more. With a declared count, format to
      it; without one, keep the format this hover has always used. */
   function fmtServed(value, figures, digits) {
+    // L-322 Stage D, gallery patch 4: an exact row with no print count is
+    // printed in full, its own digits, and servedFigures() has reported it.
+    if (figures === "exact") { return String(value); }
     return (typeof figures === "number")
       ? sigFigures(value, figures) : value.toFixed(digits);
   }
@@ -397,6 +442,10 @@
      ignored it, so the outer core read "3,480 km" beside a radius
      declared to five figures. */
   function fmtKm(km, figures) {
+    // L-322 Stage D, gallery patch 4: in full, as fmtServed() does.
+    if (figures === "exact") {
+      return km.toLocaleString("en-US", { maximumFractionDigits: 20 }) + " km";
+    }
     if (typeof figures !== "number") {
       return km.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km";
     }
@@ -422,6 +471,69 @@
     var n = (typeof figures === "number") ? Math.min(3, figures) : 3;
     if (n < 1) { n = 1; }
     return fmtKm(km, figures) + " (" + (km / KM_PER_AU).toPrecision(n) + " AU)";
+  }
+
+  /* ---- A unit the export SERVES (L-345, interactive-exhibit 1.5) ------
+
+     The orrery's export serves each length row's value in km, AU, Earth
+     radii and solar radii as "in", each worked out from the row's full
+     digits and rounded once (provenance-discipline 2.22, Rule 3), and
+     the mirror copies it onto the node. A hover prints a unit from there
+     and never multiplies or divides a served number to print another:
+     a served number is already rounded, and converting it is the rounded
+     intermediate Rule 4 forbids. A node with no "in" -- an unvisited
+     slice -- prints exactly as it did before. The page still converts
+     freely to DRAW. */
+  function inEntry(node, unit) {
+    if (!isDict(node) || !isDict(node["in"])) { return null; }
+    var e = node["in"][unit];
+    return (isDict(e) && typeof e.value === "number") ? e : null;
+  }
+
+  /* The count an "in" entry prints by: its figure count, or an exact
+     entry's print count. null for neither. */
+  function inCount(e) {
+    if (!e) { return null; }
+    if (typeof e.figures === "number") { return e.figures; }
+    if (e.figures === "exact" && typeof e.prints === "number") {
+      return e.prints;
+    }
+    return null;
+  }
+
+  /* Would cutting a served value of `count` figures to three round a
+     tie? Its dropped digits are then exactly 5, 50, 500..., and which
+     way the full value leaned cannot be read from the served number. */
+  function auTie(value, count) {
+    if (count <= 3) { return false; }
+    var digits = Math.abs(value).toExponential(count - 1)
+      .split("e")[0].replace(".", "");
+    return digits.charAt(3) === "5" && /^0*$/.test(digits.slice(4));
+  }
+
+  /* The AU in brackets, from a served entry. Three figures or the served
+     count, whichever is fewer: provenance-discipline Rule 7's one named
+     format exception, a comparison aid kept short. EXCEPT where cutting
+     the served, already-rounded value to three figures would round a
+     tie: there the served digits print in full, because the page cannot
+     know which way to round (Tony, 2026-09-28; the inner core's
+     0.000008165 AU). An exact entry is unrounded and has no tie. */
+  function auServed(e) {
+    var c = inCount(e);
+    if (c === null) { return null; }
+    var n = Math.min(3, c);
+    if (typeof e.figures === "number" && auTie(e.value, c)) { n = c; }
+    return e.value.toPrecision(Math.max(1, n));
+  }
+
+  /* "<km> (<au> AU)" from a node's served "in", or null where the node
+     serves no km and AU. */
+  function kmAndAuServed(node) {
+    var k = inEntry(node, "km"), a = inEntry(node, "au");
+    if (!k || !a) { return null; }
+    var kc = inCount(k), au = auServed(a);
+    if (kc === null || au === null) { return null; }
+    return fmtKm(k.value, kc) + " (" + au + " AU)";
   }
 
   /* ---- A figure count through arithmetic (provenance-discipline 2.15,
@@ -498,12 +610,17 @@
     if (!isDict(radius) || typeof radius.value !== "number") { return null; }
     if (typeof radiusAu !== "number") { return null; }
     var rf = servedFigureField(radius);
+    // L-345: radiusText and altitudeText are the whole "<km> (<au> AU)"
+    // printed from a served "in" where the node carries one; the callers
+    // print them in place of the numbers below.
     var out = { radiusKm: null, radiusFigures: null,
-                altitudeKm: null, altitudeFigures: null };
+                altitudeKm: null, altitudeFigures: null,
+                radiusText: null, altitudeText: null };
 
     if (radius.unit === "km") {
       out.radiusKm = radius.value;              // Rule S: served in km
       out.radiusFigures = rf;
+      out.radiusText = kmAndAuServed(radius);
       return out;
     }
 
@@ -517,6 +634,7 @@
       out.radiusKm = radiusAu * KM_PER_AU;
       out.radiusFigures = figProduct([[radius.value, rf],
                                       [KM_PER_AU, "exact"]]);
+      out.radiusText = kmAndAuServed(radius);
       return out;
     }
     if (typeof bodyRadiusKm !== "number") { return null; }
@@ -526,6 +644,10 @@
     var rad = (isDict(cfg.radius_km) && typeof cfg.radius_km.value === "number")
       ? cfg.radius_km : null;
 
+    // L-345: the served "in", on the kilometre row's own node where there
+    // is one, else on the radius, which since the pointer moves names the
+    // row it comes from.
+    out.radiusText = kmAndAuServed(rad) || kmAndAuServed(radius);
     if (rad) {
       out.radiusKm = rad.value;                 // Rule S
       out.radiusFigures = servedFigureField(rad);
@@ -545,8 +667,13 @@
 
     if (radius.value > 1) {
       if (alt) {
+        out.altitudeText = kmAndAuServed(alt);  // L-345
         out.altitudeKm = alt.value;             // Rule S
-        out.altitudeFigures = servedFigureField(alt);
+        // L-322 Stage D, gallery patch 4: an exact altitude (the two LEO
+        // edges) prints by its row's print count; the figure field is for
+        // arithmetic, where an exact input is skipped.
+        out.altitudeFigures = (servedFigureField(alt) === "exact")
+          ? servedFigures(alt) : servedFigureField(alt);
       } else if (rad) {                         // Rule P: radius - planet
         out.altitudeKm = rad.value - bodyRadiusKm;
         out.altitudeFigures = figSum(out.altitudeKm,
@@ -954,6 +1081,12 @@
     var notes = [];
     var units = [];
     var figures = [];
+    // L-322 Stage D, gallery patch 4: what each belt's distance PRINTS by.
+    // figures[] stays the figure field, for arithmetic; counts[] is what a
+    // hover formats to, which for an exact row is its print count.
+    var counts = [];
+    // L-345: each belt's served node, so its km and AU print from "in".
+    var beltNodes = [];
     // L-291: a belt distance may be a measured entry {value, unit
     // "R_earth", source, orrery_constant} (Earth) or a bare number in
     // planet radii (Jupiter, unchanged). Read either; carry the source.
@@ -983,6 +1116,8 @@
         notes.push(node.note || null);
         units.push(node.unit || "r_earth");
         figures.push(servedFigureField(node));
+        counts.push(servedFigures(node));
+        beltNodes.push(node);
         return node.value;
       }
       return null;
@@ -1127,22 +1262,23 @@
       // print at their served counts. "L" is said in words (distance out at
       // the magnetic equator) rather than named.
       var drawnLines = band
-        ? wrapHover("Drawn at " + fmtServed(distances[i], figures[i], 1) +
+        ? wrapHover("Drawn at " + fmtServed(distances[i], counts[i], 1) +
             " " + bodyName + " radii: halfway across the band, " +
             fmtServed(band[0], band[2], 1) + " to " +
             fmtServed(band[1], band[3], 1) + " " + bodyName +
             " radii out at the magnetic equator, where the belt is most" +
             " intense. The halfway point is our choice for the picture, not" +
             " a measured peak.") + "<br>"
-        : "Drawn at " + fmtServed(distances[i], figures[i], 1) + " " +
+        : "Drawn at " + fmtServed(distances[i], counts[i], 1) + " " +
           bodyName + " radii, where the measured particle flux peaks" +
           (units[i] === "l_shell"
-            ? SOFT_BR + "(given as L = " + fmtServed(distances[i], figures[i], 1) +
+            ? SOFT_BR + "(given as L = " + fmtServed(distances[i], counts[i], 1) +
               ": where that field line crosses the magnetic equator)<br>"
             : "<br>") +
-          "= " + kmAndAu(distances[i] * radiusKm,
-                         figProduct([[distances[i], figures[i]],
-                                     [radiusKm, radiusFigures]])) + "<br>";
+          "= " + (kmAndAuServed(beltNodes[i]) ||
+                  kmAndAu(distances[i] * radiusKm,
+                          figProduct([[distances[i], figures[i]],
+                                      [radiusKm, radiusFigures]]))) + "<br>";
       // L-322 C2-b: the tilt prints at its served count, with the epoch
       // and model it belongs to and, where served, its rate. The epoch and
       // the model name are typed here: the store computes the tilt from
@@ -1866,15 +2002,19 @@
     var km = shellKmLines(cfg, radiusAu, starRadiusKm, starRadiusFigures);
     var hover = label + "<br><br>" + descLine(cfg);
     if (cfg.radius.unit === "r_earth") {
-      hover += "Radius: " +
-        fmtServed(cfg.radius.value, servedFigures(cfg.radius), 4) +
-        " Earth radii<br>";
+      // L-322 Stage D, gallery patch 4: the crust's exact 1 prints as "1",
+      // and one of anything is singular (Tony, 2026-09-27).
+      var radiusText = fmtServed(cfg.radius.value, servedFigures(cfg.radius),
+                                 4);
+      hover += "Radius: " + radiusText +
+        (radiusText === "1" ? " Earth radius<br>" : " Earth radii<br>");
       if (km && km.altitudeKm !== null) {
-        hover += "Altitude: " +
-          kmAndAu(km.altitudeKm, km.altitudeFigures) + "<br>";
+        hover += "Altitude: " + (km.altitudeText ||
+          kmAndAu(km.altitudeKm, km.altitudeFigures)) + "<br>";
       }
     }
-    hover += "= " + (km ? kmAndAu(km.radiusKm, km.radiusFigures)
+    hover += "= " + (km ? (km.radiusText ||
+                           kmAndAu(km.radiusKm, km.radiusFigures))
                         : kmAndAu(radiusAu * KM_PER_AU)) + "<br>" +
              "A ring in the equatorial plane, not a sphere: satellites here" +
              SOFT_BR +
@@ -2011,19 +2151,34 @@
       var km = shellKmLines(cfg, radiusAu, starRadiusKm, starRadiusFigures);
       var hover = label + "<br><br>" + descLine(cfg);
       if (cfg.radius.unit === "r_sun") {
-        hover += "Radius: " + cfg.radius.value + " solar radii<br>";
+        // L-345: a served count prints by it (the chromosphere's 1.003);
+        // with none the value prints exactly as it always has, never to a
+        // width chosen here. One of anything is singular.
+        var sunF = servedFigures(cfg.radius);
+        var sunText = (typeof sunF === "number")
+          ? fmtServed(cfg.radius.value, sunF, 0) : String(cfg.radius.value);
+        hover += "Radius: " + sunText +
+          (sunText === "1" ? " solar radius<br>" : " solar radii<br>");
       } else if (cfg.radius.unit === "r_earth") {
         // L-291: Earth radii, with the altitude the hover convention asks for.
-        hover += "Radius: " +
-        fmtServed(cfg.radius.value, servedFigures(cfg.radius), 4) +
-        " Earth radii<br>";
+        // L-322 Stage D, gallery patch 4: as the shell set path above.
+        var rText = fmtServed(cfg.radius.value, servedFigures(cfg.radius), 4);
+        hover += "Radius: " + rText +
+          (rText === "1" ? " Earth radius<br>" : " Earth radii<br>");
         if (km && km.altitudeKm !== null) {
-          hover += "Altitude: " +
-            kmAndAu(km.altitudeKm, km.altitudeFigures) + "<br>";
+          hover += "Altitude: " + (km.altitudeText ||
+            kmAndAu(km.altitudeKm, km.altitudeFigures)) + "<br>";
         }
       }
-      hover += "= " + (km ? kmAndAu(km.radiusKm, km.radiusFigures)
+      hover += "= " + (km ? (km.radiusText ||
+                             kmAndAu(km.radiusKm, km.radiusFigures))
                           : kmAndAu(radiusAu * KM_PER_AU));
+      // L-345: a served sentence under the radius, where the number needs
+      // one to be read rightly -- the crust at the mean radius, a little
+      // less than one Earth radius (Tony's approved words, 2026-09-28).
+      if (typeof cfg.radius_note === "string" && cfg.radius_note) {
+        hover += "<br>" + wrapHover(cfg.radius_note);
+      }
       hover = withTail(hover);
       var marker = infoMarker(mx, my, mz, color, hover, label, cfg.info_border);
       if (beyondFrame) {
@@ -2403,14 +2558,18 @@
               fmtServed(tailWidth, servedFigures(tl.diameter), 0) +
               " Earth radii wide beyond there" +
               (widthUnc ? ", plus or minus " + widthUnc : "") + ".") + "<br>" +
+            // L-345: the kilometres and AU are the two rows' served "in",
+            // each counted from its own row and its stated uncertainty.
             wrapHover("That is about " +
-              kmAndAu(flareEnd * radiusKm,
-                      figProduct([[flareEnd, flareFig],
-                                  [radiusKm, radiusFigures]])) +
+              (kmAndAuServed(tl.flare_end) ||
+               kmAndAu(flareEnd * radiusKm,
+                       figProduct([[flareEnd, flareFig],
+                                   [radiusKm, radiusFigures]]))) +
               " and " +
-              kmAndAu(tailWidth * radiusKm,
-                      figProduct([[tailWidth, widthFig],
-                                  [radiusKm, radiusFigures]])) +
+              (kmAndAuServed(tl.diameter) ||
+               kmAndAu(tailWidth * radiusKm,
+                       figProduct([[tailWidth, widthFig],
+                                   [radiusKm, radiusFigures]]))) +
               ".") + "<br>" +
             wrapHover("The straight widening up to that point is our choice;" +
               " the measurements give only its two ends.") + "<br>" +
@@ -2546,6 +2705,9 @@
   function standoffLines(entry, kmFallback, figFallback, where, noun, warn) {
     var kmNode = entry.standoff_km, auNode = entry.standoff_au;
     var scNode = entry.scatter;
+    // L-345: the standoff's own served "in" first. The two conversion
+    // rows it replaces are retired from the store at D20.
+    var servedPair = kmAndAuServed(entry.standoff);
     var km = isDict(kmNode) ? measured(kmNode, "km", where + "/standoff_km",
                                        warn) : null;
     var au = isDict(auNode) ? measured(auNode, "au", where + "/standoff_au",
@@ -2555,6 +2717,10 @@
     var scatter = (sc === null) ? "" :
       "Spacecraft that cross the real " + noun + " typically find it within " +
       fmtServed(sc, servedFigures(scNode), 2) + " Earth radii of this model.";
+    if (servedPair) {
+      return wrapHover("That is about " + servedPair + "." +
+                       (scatter ? " " + scatter : "")) + "<br>";
+    }
     if (km === null || au === null) {
       return "= " + kmAndAu(kmFallback, figFallback) + "<br>" +
         (scatter ? wrapHover(scatter) + "<br>" : "");
@@ -2580,6 +2746,7 @@
       ? opts.sceneHalfRangeAu : null;
     var sunDir = (opts && Array.isArray(opts.sunDir)) ? opts.sunDir : null;
     function warn(msg) { warnings.push(msg); }
+    exactUncounted.length = 0;
 
     // L-322 Stage D: every served distance is converted with the served
     // KM_PER_AU. Without it nothing can be placed, so nothing is drawn,
@@ -2658,6 +2825,13 @@
       }
     }
 
+    // L-322 Stage D, gallery patch 4: report, never a width.
+    for (i = 0; i < exactUncounted.length; i++) {
+      warn(exactUncounted[i] + ": an exact row printed with no print " +
+           "count, so it was printed in full; its row in constants_new.py " +
+           "states none (provenance-discipline Rule 7)");
+    }
+    exactUncounted.length = 0;
     return { traces: traces, warnings: warnings };
   }
 
@@ -2674,6 +2848,12 @@
     // every declared count through the code the page actually uses
     // rather than a second copy of the same arithmetic.
     _fmtServed: fmtServed,
+    // L-322 Stage D, gallery patch 4: so the hover suite can check that an
+    // exact row prints by its served count.
+    _servedFigures: servedFigures,
+    // L-345: so the hover suite can name a served AU printed in full
+    // because three figures would round a tie.
+    _auTie: auTie,
     // L-322 Stage D, gallery patch 3: the belt ring rule, so the smoke
     // checks hold it to the orrery's answers.
     _evenBeltRings: evenBeltRings,

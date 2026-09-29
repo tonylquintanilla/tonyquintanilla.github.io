@@ -45,6 +45,15 @@ WHAT IT COVERS, one case each
         uncertainty at all, leaves the entry as it was
     18. Earth's pole links to the store's fallback rows and is SERVED;
         the real config no longer holds a planet_poles['Earth'] link
+    19. a print count the export serves is written beside the value as
+        "prints"; a row with none gets no field; the crust's 1 by
+        definition gets 1; a second run changes nothing; an export
+        from before schema 5 leaves the entries as they were
+    20. the export's "in" is written beside the value as served; a slot
+        measured in another unit from its row is written from the row's
+        "in" entry for that unit, with no uncertainty carried across; a
+        second run changes nothing; a slot in another unit whose row
+        serves no "in" is still refused as a UNIT CONFLICT (L-345)
 
 RUN COMMAND
 
@@ -61,6 +70,10 @@ Module created: September 17, 2026 with Anthropic's Claude Opus 5
 Module updated: September 26, 2026 with Anthropic's Claude Opus 5.5
 (L-322 Stage D, gallery patch 3: cases 17 and 18; case 9's link outside
 the store is Jupiter's pole now, because Earth's is served).
+Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5
+(L-322 Stage D, gallery patch 4: case 19, the print count).
+Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5
+(L-345: case 20, the served "in" and a slot served in another unit).
 """
 
 import json
@@ -478,6 +491,134 @@ def uncertainty_cases():
           "17: an export before schema 4 leaves the entries as they were")
 
 
+# ------------------------------------------------------------------
+# 19: the print count (L-322 Stage D, gallery patch 4).
+# ------------------------------------------------------------------
+
+PRINTS_CONFIG = '''{
+  "features": {
+    "counted": {
+      "value": 2.0, "unit": "npa", "figures": "exact",
+      "orrery_constant": "constants_new.py::EARTH_PRESSURE_NPA"
+    },
+    "uncounted": {
+      "value": 30.0, "unit": "r_earth", "figures": "exact",
+      "orrery_constant": "constants_new.py::EARTH_DRAWN_RADII"
+    }
+  }
+}
+'''
+
+
+def with_prints(entry, prints):
+    entry = dict(entry)
+    entry["prints"] = prints
+    return entry
+
+
+def prints_cases():
+    export = export_with({
+        "EARTH_PRESSURE_NPA": with_prints(row(2.0, "npa", "exact"), 1),
+        "EARTH_DRAWN_RADII": with_prints(row(30.0, "r_earth", "exact"), None),
+    })
+    links, failures, by_name = plan_of(PRINTS_CONFIG, export)
+    check(not failures, "19: nothing here is refused, got %r"
+          % [f.name for f in failures])
+    written = json.loads(mirror.apply_changes(PRINTS_CONFIG, links))
+    written = written["features"]
+    check(written["counted"].get("prints") == 1,
+          "19: a served print count is written, got %r"
+          % written["counted"].get("prints"))
+    check("prints" not in written["uncounted"],
+          "19: a row with no print count gets no field")
+    once = mirror.apply_changes(PRINTS_CONFIG, links)
+    second, _f, _b = plan_of(once, export)
+    check(not any(l.changes for l in second),
+          "19: a second run changes nothing")
+    # The crust's 1 by definition: exact, and it prints its one digit.
+    dlinks, _df, _db = plan_of(DEFINITION_CONFIG, DEFINITION_EXPORT)
+    slot = json.loads(mirror.apply_changes(DEFINITION_CONFIG, dlinks))
+    slot = slot["features"]["crust"]["radius"]
+    check(slot.get("prints") == 1,
+          "19: a definition's 1 prints as 1, got %r" % slot.get("prints"))
+    # An export from before schema 5 has no "prints" key at all.
+    old = export_with({
+        "EARTH_PRESSURE_NPA": row(2.0, "npa", "exact"),
+        "EARTH_DRAWN_RADII": row(30.0, "r_earth", "exact"),
+    })
+    for r in old["rows"].values():
+        r.pop("prints", None)
+    links3, failures3, _ = plan_of(PRINTS_CONFIG, old)
+    check(not failures3 and not any(l.changes for l in links3),
+          "19: an export before schema 5 leaves the entries as they were")
+
+
+# ------------------------------------------------------------------
+# 20: the served "in" (L-345).
+# ------------------------------------------------------------------
+
+IN_CONFIG = '''{
+  "features": {
+    "same_unit": {
+      "value": 6378.1366, "unit": "km", "figures": 8,
+      "orrery_constant": "constants_new.py::EARTH_EQUATORIAL_RADIUS_KM"
+    },
+    "ring": {
+      "name": "Ring",
+      "radius": {"value": 6.6, "unit": "r_earth"},
+      "orrery_constant": "constants_new.py::EARTH_RING_KM"
+    },
+    "unconverted": {
+      "radius": {"value": 2.0, "unit": "r_earth"},
+      "orrery_constant": "constants_new.py::EARTH_OLD_KM"
+    }
+  }
+}
+'''
+
+RING_IN = {"km": {"value": 42164.17, "figures": 7, "prints": None},
+           "r_earth": {"value": 6.610735, "figures": 7, "prints": None}}
+
+
+def in_cases():
+    equatorial = row(6378.1366, "km", 8)
+    equatorial["in"] = {"km": {"value": 6378.1366, "figures": 8,
+                               "prints": None},
+                        "r_earth": {"value": 1.0, "figures": "exact",
+                                    "prints": 1}}
+    ring = row(42164.17, "km", 7)
+    ring["uncertainty"] = "0.01"
+    ring["in"] = RING_IN
+    export = export_with({"EARTH_EQUATORIAL_RADIUS_KM": equatorial,
+                          "EARTH_RING_KM": ring,
+                          "EARTH_OLD_KM": row(12756.2732, "km", 8)})
+    links, failures, by_name = plan_of(IN_CONFIG, export)
+    check([f.name for f in failures] == ["EARTH_OLD_KM"] and
+          by_name["EARTH_OLD_KM"].verdict == "UNIT CONFLICT",
+          "20: a slot in another unit with no \"in\" is still a UNIT "
+          "CONFLICT, got %r" % [(f.name, f.verdict) for f in failures])
+    written = json.loads(mirror.apply_changes(IN_CONFIG, links))["features"]
+    check(written["same_unit"].get("in") == equatorial["in"],
+          "20: \"in\" is written as served, got %r"
+          % written["same_unit"].get("in"))
+    radius = written["ring"]["radius"]
+    check((radius.get("value"), radius.get("unit"), radius.get("figures"))
+          == (6.610735, "r_earth", 7),
+          "20: the slot in Earth radii is written from \"in\", got %r"
+          % radius)
+    check("uncertainty" not in radius,
+          "20: the row's uncertainty in km is not carried into Earth radii")
+    check(radius.get("in") == RING_IN,
+          "20: the converted slot carries the row's \"in\" too")
+    check(written["unconverted"]["radius"] == {"value": 2.0,
+                                               "unit": "r_earth"},
+          "20: a refused link is left exactly as it was")
+    once = mirror.apply_changes(IN_CONFIG, links)
+    second, _f, _b = plan_of(once, export)
+    check(not any(l.changes for l in second),
+          "20: a second run changes nothing")
+
+
 def real_config_earth_pole(root):
     """18: the real config links Earth's pole to the store, not the dict."""
     path = os.path.join(root, mirror.CONFIG)
@@ -518,6 +659,8 @@ def main():
     definition_case()
     shape_cases()
     uncertainty_cases()
+    prints_cases()
+    in_cases()
     real_config_earth_pole(root)
     report_mode_writes_nothing(root)
 
@@ -532,7 +675,9 @@ def main():
           "and accepted, conflict refused, definition as exactly 1, "
           "fallback and absent named, no-slot refused, five shapes, "
           "formatting kept, idempotent, report writes nothing, "
-          "uncertainty written as served, Earth's pole served."
+          "uncertainty written as served, Earth's pole served, print "
+          "count written as served, \"in\" written as served and a slot "
+          "served in another unit from it."
           % CHECKS[0])
     return 0
 

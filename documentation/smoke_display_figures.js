@@ -47,7 +47,10 @@
 //                    figures with a thousands separator and keeps a
 //                    significant trailing zero; no count prints exactly
 //                    as it does today; the AU in brackets shows three
-//                    figures or the count, whichever is fewer.
+//                    figures or the count, whichever is fewer. An exact
+//                    row prints by the print count its row states,
+//                    served as "prints" (provenance-discipline 2.20,
+//                    Rule 7; gallery patch 4).
 //
 // Written September 20, 2026 with Anthropic's Claude Opus 5, from the
 // build manifest of the same date by Claude Fable 5.1.
@@ -72,6 +75,29 @@
 // self-test gains two ways to go red. The fixture is re-recorded as
 // fixture_hovers_L322d_p3_on_c6000f03.json; the D7 one is left in place,
 // unreferenced, as that one left its own predecessor.
+// Updated September 27, 2026 with Anthropic's Claude Opus 5.5 (L-322
+// Stage D, gallery patch 4): an exact row prints by its served print
+// count. The LEO altitude rule reads it; the magnetopause and bow shock
+// are graded on their new lines, "Bz 0 nT, dynamic pressure 2 nPa" and
+// "at dynamic pressure 2 nPa", and fail on the old "0.0" and "2.0"; the
+// crust's radius line reads "Radius: 1 Earth radius" (Tony, 2026-09-27). The
+// self-test gains two ways to go red: the page not reading a served
+// count, and the page not reporting an exact row served without one.
+// The fixture is re-recorded as fixture_hovers_L322d_p4_on_70a77347.json;
+// the patch 3 one is left in place, unreferenced.
+// Updated September 28, 2026 with Anthropic's Claude Opus 5.5 (L-345, the
+// gallery patch that carries patch 4's work): a node carrying the served
+// "in" prints its km and AU from there (interactive-exhibit 1.5), and
+// this check works its expected lines from "in" by its own arithmetic,
+// the AU cut to three figures except where that would round a served
+// tie, which prints the served digits and is NAMED in the report (Tony,
+// 2026-09-28). The crust is drawn at the mean radius with its served
+// sentence (Tony's approved words, 2026-09-28). The bow shock, the
+// magnetotail and the inner belt are graded on their new lines, and the
+// Sun's chromosphere and photosphere on theirs. The self-test gains two
+// ways to go red. Patch 4 never ran on its own, so its fixture was never
+// filed; this one is fixture_hovers_L345_on_2df02f3b.json, and the patch
+// 3 one is left in place, unreferenced.
 
 "use strict";
 const fs = require("fs");
@@ -99,9 +125,9 @@ const SOFT_BR = "<br soft>";
 // separately, and its period line is graded against the served row. The
 // fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "c6000f03";
+const FIXTURE_AT = "2df02f3b";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L322d_p3_on_c6000f03.json");
+                          "fixture_hovers_L345_on_2df02f3b.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }
@@ -115,6 +141,15 @@ function figures(node) {
   if (typeof node.figures === "number") return node.figures;
   if (node.figures === "exact") return "exact";
   return null;
+}
+
+/* What a served entry PRINTS by, as distinct from the count it
+   declares for arithmetic: an exact row's print count where one is
+   served, otherwise figures(). L-322 Stage D, gallery patch 4. */
+function printCount(node) {
+  if (node && typeof node === "object" && node.figures === "exact" &&
+      typeof node.prints === "number") return node.prints;
+  return figures(node);
 }
 
 /* Rule 3, products and quotients: the fewest figures among the
@@ -181,22 +216,66 @@ function kmAndAu(km, count) {
   return fmtKm(km, count) + " (" + fmtAu(km, count) + ")";
 }
 
+/* L-345: the unit a node is SERVED as "in", and the count it prints by. */
+function served(node, unit) {
+  if (!node || typeof node !== "object" || !node["in"] ||
+      typeof node["in"] !== "object") return null;
+  const e = node["in"][unit];
+  return (e && typeof e.value === "number") ? e : null;
+}
+function servedCount(e) {
+  if (!e) return null;
+  if (typeof e.figures === "number") return e.figures;
+  if (e.figures === "exact" && typeof e.prints === "number") return e.prints;
+  return null;
+}
+
+/* The served AU cut to three figures, unless the served digits past the
+   third are exactly a 5 and zeros: then the cut would round a tie from a
+   number already rounded, and the served digits print in full. Worked
+   here from the digit string, not by the page's own function. */
+const tiesSeen = [];
+function servedAuText(e, label) {
+  const c = servedCount(e);
+  if (c === null) return null;
+  let n = Math.min(3, c);
+  if (typeof e.figures === "number" && c > 3) {
+    const m = e.value.toExponential(c - 1).replace("-", "").split("e")[0]
+      .replace(".", "");
+    if (m[3] === "5" && /^0*$/.test(m.slice(4))) {
+      n = c;
+      if (label && tiesSeen.indexOf(label) < 0) tiesSeen.push(label);
+    }
+  }
+  return e.value.toPrecision(Math.max(1, n)) + " AU";
+}
+
+/* "<km> (<au> AU)" from a node's served "in", or null without one. */
+function servedKmAu(node, label) {
+  const k = served(node, "km"), a = served(node, "au");
+  if (!k || !a || servedCount(k) === null) return null;
+  const au = servedAuText(a, label);
+  return au === null ? null : fmtKm(k.value, servedCount(k)) + " (" + au + ")";
+}
+
 // ------------------------------------------- what each Earth shell owes
 
 /* The km radius and the altitude a shell's hover must show, worked from
    the served entries by the rules above. Returns null for a line the
    hover does not carry. */
-function expected(shell, planetNode) {
+function expected(shell, planetNode, label) {
   const radius = shell.radius;
   if (!radius || typeof radius.value !== "number") return null;
   const rf = figures(radius);
   const out = { radiusKm: null, radiusFig: null,
-                altKm: null, altFig: null };
+                altKm: null, altFig: null,
+                radiusText: null, altText: null };
 
   if (radius.unit === "km") {
     // Served in kilometres already: Rule S, print it.
     out.radiusKm = radius.value;
     out.radiusFig = rf;
+    out.radiusText = servedKmAu(radius, label);
     return out;
   }
   if (radius.unit !== "r_earth") return null;
@@ -210,6 +289,9 @@ function expected(shell, planetNode) {
   const servedRad = (shell.radius_km && typeof shell.radius_km.value === "number")
     ? shell.radius_km : null;
 
+  // L-345: the served "in" wins where it is served, on the kilometre
+  // node or on the radius itself.
+  out.radiusText = servedKmAu(servedRad, label) || servedKmAu(radius, label);
   if (servedRad) {                       // Rule S
     out.radiusKm = servedRad.value;
     out.radiusFig = figures(servedRad);
@@ -224,8 +306,9 @@ function expected(shell, planetNode) {
 
   if (radius.value > 1) {
     if (servedAlt) {                     // Rule S
+      out.altText = servedKmAu(servedAlt, label);
       out.altKm = servedAlt.value;
-      out.altFig = figures(servedAlt);
+      out.altFig = printCount(servedAlt);  // gallery patch 4
     } else if (servedRad) {              // Rule P, a difference of primaries
       out.altKm = servedRad.value - planet;
       out.altFig = figSum(out.altKm,
@@ -245,13 +328,14 @@ function expected(shell, planetNode) {
    assumed. */
 function radiiLine(shell) {
   const r = shell.radius;
-  const f = figures(r);
+  const f = printCount(r);            // gallery patch 4
   const shown = (typeof f === "number")
     ? Number(r.value.toPrecision(f)).toFixed(
         Math.max(0, Math.min(20, f - 1 -
           Math.floor(Math.log10(Math.abs(Number(r.value.toPrecision(f))))))))
     : r.value.toFixed(4);
-  return "Radius: " + shown + " Earth radii";
+  // gallery patch 4: the crust's exact 1 prints as "1", and singular.
+  return "Radius: " + shown + (shown === "1" ? " Earth radius" : " Earth radii");
 }
 
 // ---------------------------------------- the manifest's acceptance table
@@ -268,7 +352,8 @@ const ACCEPTANCE = {
   "Earth: Outer Core":                    { radius: "3,480.0 km" },
   "Earth: Lower Mantle":                  { radius: "5,710 km" },
   "Earth: Upper Mantle":                  { radius: "6,346.6 km" },
-  "Earth: Crust":                         { radius: "6,378.1366 km" },
+  // L-345: at the mean radius since 2026-09-28 (Tony).
+  "Earth: Crust":                         { radius: "6,371.000 km" },
   "Earth: Lower Atmosphere (to the stratopause)":
       { radius: "6,428 km", altitude: "50 km" },
   "Earth: Upper Atmosphere (to the thermopause)":
@@ -297,42 +382,60 @@ const ACCEPTANCE = {
    as well, which catches any line not listed. If a served number
    legitimately moves, change the row here and say in the ledger which
    number moved and why. */
+/* L-345: the Sun room's two hovers that move, graded the same way. */
+const SUN_LINES = {
+  "Sun: Chromosphere (2,000 km skin)": {
+    lines: ["Radius: 1.003 solar radii", "= 698,000 km (0.00466 AU)"],
+    absent: ["1.002874802357338", "697,700", "0.00467"] },
+  "Sun: Photosphere": {
+    lines: ["Radius: 1 solar radius"],
+    absent: ["1 solar radii"] }
+};
+
 const ACCEPTANCE_LINES = {
   "Earth: Magnetopause": {
     lines: ["Sunward standoff: 10.3 Earth radii",
             "That is about 65,000 km (0.00044 AU).",
             "Spacecraft that cross the real boundary typically find it " +
             "within 1.23 Earth radii of this model.",
-            "Beyond that angle the boundary is drawn as the magnetotail."],
-    absent: ["10.25", "65,376", "0.000437", "without limit"] },
+            "Beyond that angle the boundary is drawn as the magnetotail.",
+            // gallery patch 4: the two declared conditions print by
+            // their rows' print counts (Tony, 2026-09-27).
+            "Bz 0 nT, dynamic pressure 2 nPa"],
+    absent: ["10.25", "65,376", "0.000437", "without limit",
+             "0.0 nT", "2.0 nPa"] },
   // L-322 Stage D, gallery patch 3: the magnetotail, Tony's approved words
   // of 2026-09-26, with the numbers the store serves at orrery 43ba290b.
   "Earth: Magnetotail": {
     lines: ["Spacecraft found the tail stops widening about 120 Earth radii " +
             "behind Earth, plus or minus 10, and is about 60 Earth radii wide " +
             "beyond there, plus or minus 5.",
-            "That is about 770,000 km (0.0051 AU) and 380,000 km (0.0026 AU).",
+            // L-345: each counted from its row and its plus or minus.
+            "That is about 800,000 km (0.005 AU) and 400,000 km (0.003 AU).",
             "The straight widening up to that point is our choice; the " +
             "measurements give only its two ends.",
             "The drawing stops at 220 Earth radii, which is how far the " +
             "spacecraft went, not where the tail ends."],
-    absent: ["100 Earth radii", "765,", "382,"] },
+    absent: ["100 Earth radii", "765,", "382,", "770,000", "380,000"] },
   "Earth: Bow Shock": {
     lines: ["Sunward standoff: 13.5 Earth radii",
-            "That is about 86,200 km (0.000576 AU).",
+            // L-345: counted from the standoff row alone, two figures.
+            "That is about 86,000 km (0.00058 AU).",
             "Spacecraft that cross the real shock typically find it " +
-            "within 0.69 Earth radii of this model."],
-    absent: ["13.51", "86,180"] },
+            "within 0.69 Earth radii of this model.",
+            // gallery patch 4, as the magnetopause.
+            "Jelinek et al. (2012), at dynamic pressure 2 nPa"],
+    absent: ["13.51", "86,180", "2.0 nPa", "86,200", "0.000576"] },
   "Earth: Inner Radiation Belt": {
     lines: ["Drawn at 1.5 Earth radii, where the measured particle flux peaks",
-            "= 9,600 km (0.000064 AU)",
+            "= 9,600 km (0.00006 AU)",       // L-345
             "Measured extent: 1.1 to 2 Earth radii",
             "which is tilted 9.4105 degrees from it and turns with Earth " +
             "once a day.",
             "That tilt is for 2020 (IGRF-13 model) and shrinks by 0.0493 " +
             "degrees a year."],
     absent: ["9,567", "2.0 Earth radii", "9.6 degrees", "2020-2025",
-             "a width chosen for the picture"] },
+             "a width chosen for the picture", "0.000064"] },
   "Earth: Outer Radiation Belt": {
     lines: ["Drawn at 4.5 Earth radii: halfway across the band, 4 to 5 " +
             "Earth radii out at the magnetic equator, where the belt is " +
@@ -519,7 +622,7 @@ let numbersExamined = 0;
 const examinedNames = [];
 
 function checkEarthShell(group, key, shell, planetNode, hover, label) {
-  const want = expected(shell, planetNode);
+  const want = expected(shell, planetNode, label);
   if (!want) {
     fail("earth/" + group + "/" + key +
          ": this check could not read a radius to work from");
@@ -529,7 +632,8 @@ function checkEarthShell(group, key, shell, planetNode, hover, label) {
   const pin = ACCEPTANCE[label] || {};
 
   // The radius line, written "= <km> (<au> AU)".
-  const radiusLine = "= " + kmAndAu(want.radiusKm, want.radiusFig);
+  const radiusLine = "= " + (want.radiusText ||
+                             kmAndAu(want.radiusKm, want.radiusFig));
   if (hover.indexOf(radiusLine) < 0) {
     fail(label + ": the radius line reads\n        " +
          (lineStartingWith(hover, "= ") || "(no line starting \"= \")") +
@@ -545,7 +649,8 @@ function checkEarthShell(group, key, shell, planetNode, hover, label) {
 
   // The altitude line, where the hover carries one.
   if (want.altKm !== null) {
-    const altLine = "Altitude: " + kmAndAu(want.altKm, want.altFig);
+    const altLine = "Altitude: " + (want.altText ||
+                                    kmAndAu(want.altKm, want.altFig));
     if (hover.indexOf(altLine) < 0) {
       fail(label + ": the altitude line reads\n        " +
            (lineStartingWith(hover, "Altitude: ") || "(no altitude line)") +
@@ -578,7 +683,8 @@ function checkEarthShell(group, key, shell, planetNode, hover, label) {
   }
 
   const left = unaccounted(hover, verified,
-    [shell.name, shell.description, shell.note, shell.about]);
+    [shell.name, shell.description, shell.note, shell.about,
+     shell.radius_note]);
   if (left.length) {
     fail(label + ": " + left.length + " number(s) in this hover that " +
          "nothing examined: " + left.join(", "));
@@ -777,6 +883,60 @@ function selfTest() {
   if (failures.length === p1) {
     notes.push("the period grader passed a period printed at the wrong count");
   }
+  // 7. gallery patch 4: the page prints an exact row by its served
+  // print count, and reports one served without a count.
+  const sf = GalleryFeatures._servedFigures;
+  if (sf({ value: 2.0, figures: "exact", prints: 1,
+           orrery_constant: "constants_new.py::X" }) !== 1) {
+    notes.push("the page did not read a served print count");
+  }
+  const bare = JSON.parse(JSON.stringify(cacheFeatures("earth") || {}));
+  const mpNode = bare.earth_magnetosphere &&
+    bare.earth_magnetosphere.magnetopause &&
+    bare.earth_magnetosphere.magnetopause.surface &&
+    bare.earth_magnetosphere.magnetopause.surface.bz;
+  if (!mpNode) {
+    notes.push("no served magnetopause Bz to test the report with");
+  } else {
+    delete mpNode.prints;
+    const reported = hoversOf("earth", bare, EARTH_OPTS).warnings
+      .filter(function (w) { return w.indexOf("EARTH_SOLAR_WIND_BZ_NT") >= 0; });
+    if (reported.length !== 1) {
+      notes.push("the page did not report an exact row served with no " +
+                 "print count");
+    }
+  }
+  // 8. L-345: the check reads a served "in", and goes red on a hover that
+  // converted the served kilometres instead of printing the served AU;
+  // the page and this check agree on what a tie is.
+  const inShell = { name: "Test", radius: { value: 1.0078, unit: "r_earth",
+    figures: 5, "in": { km: { value: 6428.0, figures: 4 },
+                        au: { value: 4.297e-05, figures: 4 } } },
+    altitude: { value: 50.0, unit: "km", figures: 2,
+      "in": { km: { value: 50.0, figures: 2 },
+              au: { value: 3.3e-07, figures: 2 } } } };
+  const inGood = "Earth: Test<br><br>Radius: 1.0078 Earth radii<br>" +
+                 "Altitude: 50 km (3.3e-7 AU)<br>" +
+                 "= 6,428 km (0.0000430 AU)<br>";
+  const s0 = failures.length;
+  checkEarthShell("g", "k", inShell, planet, inGood, "Earth: Test");
+  if (failures.length !== s0) {
+    notes.push("the check failed a hover printed from its served \"in\"");
+  }
+  const s1 = failures.length;
+  checkEarthShell("g", "k", inShell, planet,
+                  inGood.replace("0.0000430", "0.0000429"), "Earth: Test");
+  if (failures.length === s1) {
+    notes.push("the check passed an AU not printed from the served \"in\"");
+  }
+  failures.length = s0;
+  hoversExamined -= 2;
+  examinedNames.pop(); examinedNames.pop();
+  if (GalleryFeatures._auTie(8.165e-06, 4) !== true ||
+      GalleryFeatures._auTie(8.166e-06, 4) !== false ||
+      servedAuText({ value: 8.165e-06, figures: 4 }) !== "0.000008165 AU") {
+    notes.push("the page and this check do not agree on a served AU tie");
+  }
   failures.length = p0;
   examinedNames.length = n0;
   numbersExamined = counted;
@@ -794,7 +954,7 @@ if (selfNotes.length) {
               "cannot be trusted to grade anything else.\n");
 } else {
   console.log("Self-test: the rules and the graders go red on demand " +
-              "(17 ways).\n");
+              "(21 ways).\n");
 }
 
 // The served cache is what the browser fetches, so it is what is graded.
@@ -840,7 +1000,9 @@ let drifted = 0;
 });
 
 const seen = checkEarth(earthCacheFeatures, earthBuilt.hovers);
-const linesGraded = checkLines(earthBuilt.hovers, ACCEPTANCE_LINES);
+const linesGraded = checkLines(earthBuilt.hovers, ACCEPTANCE_LINES)
+  .concat(checkLines(hoversOf("sun", cacheFeatures("sun"), SUN_OPTS).hovers,
+                     SUN_LINES));
 
 // Everything whose numbers carry no count must not move by one byte.
 const unchanged = {};
@@ -915,6 +1077,9 @@ linesGraded.slice().sort().forEach(function (n) {
 console.log("  " + fixtureCompared + " hover(s) held byte for byte " +
             "against the fixture recorded at\n  gallery " + FIXTURE_AT +
             ", the hovers graded by line among them.");
+console.log("  " + tiesSeen.length + " served AU printed in full because " +
+            "three figures would round a tie" +
+            (tiesSeen.length ? ": " + tiesSeen.sort().join(", ") : "") + ".");
 console.log("  " + Object.keys(bothKeys).length + " hover(s) compared " +
             "between the cache and the config, in every room" +
             (drifted ? " (" + drifted + " differ)" : " (all agree)") + ".\n");

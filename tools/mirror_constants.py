@@ -32,6 +32,10 @@ WHAT IT WRITES, PER LINK
     SERVED     the export has the row: value, unit and figures are
                written into the slot the link governs, and so is the
                row's uncertainty where the export serves one (schema 4
+               and later; a row with none gets no field), and the print
+               count an exact row states, as "prints" (schema 5 and
+               later; a row with none gets no field), and the row's
+               value in every unit of its dimension, as "in" (schema 6
                and later; a row with none gets no field). Nothing else
                on the entry is touched -- not the source, not the
                description, not the presentation.
@@ -73,7 +77,17 @@ IT CONVERTS NOTHING, AND TELLS TWO KINDS OF CHANGE APART
     commit. The mirror refuses it by default and writes it when the run
     names the link with --accept-relabel.
 
-    UNIT CONFLICT, a conversion. The number is different too. The Sun's
+    SERVED IN ANOTHER UNIT (L-345, schema 6). The export serves each
+    length row's value in every unit of its dimension as "in", worked
+    out in the orrery from the row's full digits and rounded once. So a
+    slot measured in a different unit from its row -- Earth's
+    geostationary ring drawn in Earth radii, pointing at the kilometre
+    row it comes from -- is written from the row's "in" entry for the
+    slot's unit: value, figures and print count, exactly as served.
+    Nothing is multiplied here; the export did the one conversion.
+
+    UNIT CONFLICT, a conversion. The number is different too, and the
+    export serves no value in the slot's unit. The Sun's
     core sits in the config as 0.2 R_sun, and the store holds CORE_AU in
     AU; mirroring it blindly would write 0.00093 AU into a slot the
     renderer draws in solar radii, and the shell would silently
@@ -95,7 +109,10 @@ A LINK TO THE ROW THAT DEFINES ITS OWN UNIT IS EXACTLY ONE
     radii. The value is 1, exactly, by definition.
 
     So when a link points at a token's defining constant and its slot is
-    measured in that token, the mirror writes 1 with figures "exact".
+    measured in that token, the mirror writes 1 with figures "exact",
+    and "prints": 1, because the definition's one is its one digit: the
+    crust's hover reads "1 Earth radius", not "1.0000" (L-322 Stage D,
+    gallery patch 4, Tony's ruling of 2026-09-27).
     The rule reads the token table the export already carries, so no
     factor is typed here either, and the 1.0 becomes a number with a
     source rather than an assertion. (Fable's proposal, Tony's decision,
@@ -112,6 +129,18 @@ Module updated: September 26, 2026 with Anthropic's Claude Opus 5.5
 beside value, unit and figures, so a served link carries the uncertainty
 its row states, as a string that keeps its trailing zeros; Earth's pole
 is no longer one of the planet_poles links).
+Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5
+(L-322 Stage D, gallery patch 4: the export's "prints", the print count
+an exact row states, is written beside the value, so the page prints an
+exact row by that count; the crust's 1 Earth radius by definition gets
+"prints": 1, its one digit, so the crust reads "1 Earth radius" and not
+"1.0000" (Tony, 2026-09-27). provenance-discipline 2.20, Rule 7).
+Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5
+(L-345, the gallery patch: the export's "in" -- a row's value in every
+unit of its dimension, computed in the orrery from full digits -- is
+written beside the value, and a slot measured in another unit from its
+row is written from that row's "in" entry for the slot's unit, as
+served. Nothing is converted here.)
 """
 
 import json
@@ -125,7 +154,14 @@ STORE_FILE = "constants_new.py"
 # serves it from schema 4, as the string the row's # Figures: line gives
 # ("0.10", "10"), or null; a null is never inserted, so a row with no
 # stated uncertainty leaves its entry as it was.
-FIELDS = ("value", "unit", "figures", "uncertainty")
+# L-322 Stage D, gallery patch 4: "prints" joins them, the print count
+# of an exact row a display prints (schema 5), or null, which is never
+# inserted.
+# L-345: "in" joins them, the row's value in every unit of its dimension
+# (schema 6), copied as served, or null, which is never inserted. The
+# page prints a unit from here and never converts a served number
+# (interactive-exhibit 1.5).
+FIELDS = ("value", "unit", "figures", "uncertainty", "prints", "in")
 REFUSALS = ("UNIT CONFLICT", "TOKEN CHANGE", "NO SLOT")
 
 
@@ -455,8 +491,15 @@ def plan(text, export, accept=()):
 
         held_unit = slot.value.get("unit")
         held_value = slot.value.get("value")
-        # .get: an export before schema 4 carries no "uncertainty".
+        # .get: an export before schema 4 carries no "uncertainty", one
+        # before schema 5 no "prints", and one before schema 6 no "in".
         wanted = dict((field, row.get(field)) for field in FIELDS)
+        served_in = row.get("in") if isinstance(row.get("in"), dict) else {}
+        other = None
+        if held_unit is not None:
+            for token, entry in served_in.items():
+                if same_token(held_unit, token) and isinstance(entry, dict):
+                    other = (token, entry)
 
         defines = defined_token(name, export)
         if defines is not None and same_token(held_unit, defines):
@@ -464,7 +507,19 @@ def plan(text, export, accept=()):
             link.detail = ("1 %s by definition: this row is what the token "
                            "table calls one %s" % (defines, defines))
             wanted = {"value": 1.0, "unit": defines, "figures": "exact",
-                      "uncertainty": None}
+                      "uncertainty": None, "prints": 1,
+                      "in": row.get("in")}
+        elif (held_unit is not None and not same_token(held_unit, row["unit"])
+              and other is not None):
+            # L-345: the row's value in the slot's own unit, as the export
+            # serves it. The row's uncertainty is in the row's unit, so it
+            # is not written here.
+            token, entry = other
+            link.detail = ("served in %s from the row's \"in\", as the "
+                           "export computed it" % token)
+            wanted = {"value": entry.get("value"), "unit": token,
+                      "figures": entry.get("figures"), "uncertainty": None,
+                      "prints": entry.get("prints"), "in": row.get("in")}
         elif held_unit is not None and not same_token(held_unit, row["unit"]):
             if same_number(held_value, row["value"], row["figures"]):
                 link.verdict = "TOKEN CHANGE"
