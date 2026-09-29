@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-09-29T03:22:10.201749+00:00",
+  "generated": "2026-09-29T20:55:34.725679+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2460989.098524306,
-    "end_jd": 2461636.1822674004
+    "start_jd": 2460989.830058148,
+    "end_jd": 2461636.9138012426
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -563,7 +563,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461312.5,
-          "retrieved": "2026-09-29T03:22:00.716834+00:00"
+          "retrieved": "2026-09-29T20:55:33.574738+00:00"
         }
       },
       "positions": null,
@@ -2239,14 +2239,14 @@
           "observer": "@sun",
           "quantity": "32",
           "epoch_jd_ut": 2461312.5,
-          "retrieved": "2026-09-29T03:22:10.201537+00:00"
+          "retrieved": "2026-09-29T20:55:34.725468+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
           "epoch_jd": 2461312.5,
-          "retrieved": "2026-09-29T03:22:10.201537+00:00"
+          "retrieved": "2026-09-29T20:55:34.725468+00:00"
         }
       }
     },
@@ -2273,7 +2273,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461312.5,
-          "retrieved": "2026-09-29T03:22:01.789756+00:00"
+          "retrieved": "2026-09-29T20:55:33.673472+00:00"
         }
       },
       "positions": null,
@@ -2390,7 +2390,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461312.5,
-          "retrieved": "2026-09-29T03:22:02.778276+00:00"
+          "retrieved": "2026-09-29T20:55:33.765384+00:00"
         }
       },
       "positions": null,
@@ -2499,7 +2499,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461312.5,
-          "retrieved": "2026-09-29T03:22:03.760293+00:00"
+          "retrieved": "2026-09-29T20:55:33.857894+00:00"
         }
       },
       "positions": null,
@@ -2562,7 +2562,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461312.5,
-          "retrieved": "2026-09-29T03:22:04.733838+00:00"
+          "retrieved": "2026-09-29T20:55:33.948427+00:00"
         }
       },
       "positions": null,
@@ -2625,7 +2625,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461312.5,
-          "retrieved": "2026-09-29T03:22:05.757484+00:00"
+          "retrieved": "2026-09-29T20:55:34.040980+00:00"
         }
       },
       "positions": null,
@@ -2688,7 +2688,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461312.5,
-          "retrieved": "2026-09-29T03:22:06.759361+00:00"
+          "retrieved": "2026-09-29T20:55:34.137275+00:00"
         }
       },
       "positions": null,
@@ -2751,7 +2751,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461312.5,
-          "retrieved": "2026-09-29T03:22:07.710729+00:00"
+          "retrieved": "2026-09-29T20:55:34.230098+00:00"
         }
       },
       "positions": null,
@@ -2814,7 +2814,7 @@
           "query_target": "99942",
           "center": "@sun",
           "epoch": 2461312.5,
-          "retrieved": "2026-09-29T03:22:08.666140+00:00"
+          "retrieved": "2026-09-29T20:55:34.348730+00:00"
         }
       },
       "positions": null,
@@ -2911,7 +2911,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460240.009056779,
-          "retrieved": "2026-09-29T03:22:09.656516+00:00"
+          "retrieved": "2026-09-29T20:55:34.513573+00:00"
         }
       },
       "positions": null,
@@ -2979,7 +2979,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-09-29T03:22:10.123795+00:00"
+          "retrieved": "2026-09-29T20:55:34.632052+00:00"
         }
       },
       "positions": null,
@@ -3027,7 +3027,7 @@
   },
   "frame_constants": {
     "export": "data/constants_export.json",
-    "orrery_sha": "b61d19821009f5edc183fed4aa7bbfb81ff21c3b",
+    "orrery_sha": "2a7d26b9fc200a1ceae6afb3af541e5d60c33f54",
     "rows": {
       "KM_PER_AU": {
         "value": 149597870.7,
