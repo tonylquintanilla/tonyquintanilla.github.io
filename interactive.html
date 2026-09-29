@@ -184,6 +184,13 @@
         (JPL is a laboratory) are gone. On an upright phone the title
         and its line stay at the top when they clear the buttons, and
         move to just below the arrow cross only when they would not)
+     Updated: September 27, 2026 with Anthropic's Claude Opus 5.5
+       (L-363, Tony's ruling: the title inside each scene drops
+        "Paloma's Orrery -- ", which the top bar and the address already
+        say, so it reads "The Sun", "Earth", "The Solar System". On an
+        upright phone, if the title and its line would touch a button,
+        they first centre in the space between the zoom buttons and the
+        arrow cross, and move below the cross only if that fails too)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1953,7 +1960,7 @@ const SOLAR_SYSTEM_INFO_HTML = [
 const EXHIBITS = {
     sun: {
         title: "The Sun",
-        sceneTitle: "Paloma's Orrery \u2014 The Sun",
+        sceneTitle: "The Sun",
         pngName: "palomas_orrery_sun",
         halfRangeAu: SUN_HALF_RANGE_AU,
         driver: SUN_DRIVER,
@@ -1976,7 +1983,7 @@ const EXHIBITS = {
     },
     earth: {
         title: "Earth",
-        sceneTitle: "Paloma's Orrery \u2014 Earth",
+        sceneTitle: "Earth",
         pngName: "palomas_orrery_earth",
         halfRangeAu: EARTH_HALF_RANGE_AU,
         driver: EARTH_DRIVER,
@@ -2008,7 +2015,7 @@ const EXHIBITS = {
     },
     "solar-system": {
         title: "The Solar System",
-        sceneTitle: "Paloma's Orrery \u2014 The Solar System",
+        sceneTitle: "The Solar System",
         pngName: "palomas_orrery_solar_system",
         halfRangeAu: SOLAR_SYSTEM_HALF_RANGE_AU,
         driver: SOLAR_SYSTEM_DRIVER,
@@ -2413,13 +2420,27 @@ function mountNavCluster() {
 // The line under the scene title, set from the room's compose, or null.
 let sunSceneSubtitle = null;
 
-// Where the scene title and its line sit. At the top, as always. On an
-// upright phone the arrow cross sits in the top-right corner (L-316); if
-// the drawn title or line would touch any button there, both move down
-// to just below the cross (Tony, 2026-09-27: at the top when they fit).
-// Measured on the DRAWN text, because the width depends on the fonts the
-// phone actually has.
-const SUN_TITLE_TOP = { y: 0.97, yref: "container", yanchor: "auto" };
+// Where the scene title and its line sit. At the top, centred, as always.
+// On an upright phone the arrow cross sits in the top-right corner
+// (L-316). If the drawn title or line would touch any button, they first
+// centre in the space between the zoom buttons and the cross; only if
+// they still touch do they move to just below the cross (Tony,
+// 2026-09-27: at the top when they fit). Measured on the DRAWN text,
+// because its width depends on the fonts the phone actually has.
+const SUN_TITLE_TOP = { x: 0.5, y: 0.97, yref: "container", yanchor: "auto" };
+function sunTitleInGap() {
+    const plot = document.getElementById("plotly-container");
+    const zoom = document.querySelector(".nav-btn[aria-label='Zoom in']");
+    const cross = document.querySelector(".nav-cross-apart");
+    if (!plot || !zoom || !cross) { return null; }
+    const pr = plot.getBoundingClientRect();
+    const zr = zoom.getBoundingClientRect();
+    const cr = cross.getBoundingClientRect();
+    if (!pr.width || !zr.width || !cr.width || cr.left <= zr.right) { return null; }
+    const mid = (zr.right + cr.left) / 2 - pr.left;
+    return { x: mid / pr.width, y: SUN_TITLE_TOP.y, yref: SUN_TITLE_TOP.yref,
+             yanchor: SUN_TITLE_TOP.yanchor };
+}
 function sunTitleBelowCross() {
     const plot = document.getElementById("plotly-container");
     const cross = document.querySelector(".nav-cross-apart");
@@ -2428,8 +2449,8 @@ function sunTitleBelowCross() {
     const cr = cross.getBoundingClientRect();
     if (!pr.height || !cr.height || cr.bottom <= pr.top) { return null; }
     const below = cr.bottom - pr.top + 10;
-    return { y: Math.max(0.05, 1 - below / pr.height), yref: "container",
-             yanchor: "top" };
+    return { x: 0.5, y: Math.max(0.05, 1 - below / pr.height),
+             yref: "container", yanchor: "top" };
 }
 function sunTitleTouchesButtons() {
     const texts = document.querySelectorAll(
@@ -2450,11 +2471,16 @@ function sunTitleTouchesButtons() {
 async function sunFitTitle() {
     if (!sunPlotDiv || !window.Plotly) { return; }
     const set = function (p) {
-        return Plotly.relayout(sunPlotDiv, { "title.y": p.y,
+        return Plotly.relayout(sunPlotDiv, { "title.x": p.x, "title.y": p.y,
             "title.yref": p.yref, "title.yanchor": p.yanchor });
     };
     await set(SUN_TITLE_TOP);
     if (!sunPhonePortrait() || !sunTitleTouchesButtons()) { return; }
+    const gap = sunTitleInGap();
+    if (gap) {
+        await set(gap);
+        if (!sunTitleTouchesButtons()) { return; }
+    }
     const below = sunTitleBelowCross();
     if (below) { await set(below); }
 }
