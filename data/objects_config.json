@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "attribution": "Data: JPL/NASA Horizons",
-  "_comment": "Single authority for the gallery cache builder (L-098 Phase 1b). Seed = the 11-object tranche. slug/horizons_id/id_type/canonical_center/center_slug/parent/canonical_frame/features carried from export_orbit_cache.py TEST_OBJECTS @ orrery 4e2629c; trace_policy is MODEL-derived (conic model: none for every non-spacecraft, full-arc only for spacecraft) and is NOT the retired Stage-2 serve/none field. canonical_center is the Horizons fetch center; center_slug (== stored_center) is the served frame slug. An entry may carry \"serve_positions\": false (L-234, 2026-08-24): it is served for its features only, no Horizons fetch is made for it, and its canonical_frame keeps it out of the served_window participants. The Sun is the first such entry. info_url on every drawable feature (and the belt info_urls) curated 2026-09-03 (L-265, with Anthropic's Claude Fable 5.1): NASA page where one is specific to the feature, else English Wikipedia; the served feature_configs.json / coverage_index.json copies follow on the next builder run.",
+  "_comment": "Single authority for the gallery cache builder (L-098 Phase 1b). Seed = the 11-object tranche. slug/horizons_id/id_type/canonical_center/center_slug/parent/canonical_frame/features carried from export_orbit_cache.py TEST_OBJECTS @ orrery 4e2629c; trace_policy is MODEL-derived (conic model: none for every non-spacecraft, full-arc only for spacecraft) and is NOT the retired Stage-2 serve/none field. canonical_center is the Horizons fetch center; center_slug (== stored_center) is the served frame slug. An entry may carry \"serve_positions\": false (L-234, 2026-08-24): it is served for its features only, no Horizons fetch is made for it, and its canonical_frame keeps it out of the served_window participants. The Sun is the first such entry. info_url on every drawable feature (and the belt info_urls) curated 2026-09-03 (L-265, with Anthropic's Claude Fable 5.1): NASA page where one is specific to the feature, else English Wikipedia; the served feature_configs.json / coverage_index.json copies follow on the next builder run. A top-level rooms section (L-363, 2026-09-30) holds the settings of a room that is not one body -- what it opens on and its drawer rows -- keyed by the room's ?exhibit= key; the builder reads only objects.",
   "defaults": {
     "cadence_hours": 24,
     "guard_k": 2.0,
@@ -1038,6 +1038,38 @@
       }
     },
     {
+      "slug": "mercury", "name": "Mercury", "horizons_id": "199", "id_type": "majorbody",
+      "category": "planet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none",
+      "_comment": "Mercury, Venus, Mars, Uranus and Neptune were added on 2026-09-30 for the Solar System room (L-363, Half 2), with no features: each body's shells arrive with its own room. Their horizons_id values are the ones in the orrery's dictionary, OBJECT_DEFINITIONS in celestial_objects.py at orrery 10012821, the dictionary L-395 makes the source for the gallery's objects.",
+      "features": {}
+    },
+    {
+      "slug": "venus", "name": "Venus", "horizons_id": "299", "id_type": "majorbody",
+      "category": "planet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "mars", "name": "Mars", "horizons_id": "499", "id_type": "majorbody",
+      "category": "planet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "uranus", "name": "Uranus", "horizons_id": "799", "id_type": "majorbody",
+      "category": "planet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "neptune", "name": "Neptune", "horizons_id": "899", "id_type": "majorbody",
+      "category": "planet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
       "slug": "moon", "name": "Moon", "horizons_id": "301", "id_type": "majorbody",
       "category": "moon", "availability": "analytic", "parent": "earth",
       "canonical_center": "@399", "center_slug": "earth", "canonical_frame": "parent-relative",
@@ -1054,6 +1086,14 @@
       "category": "moon", "availability": "analytic", "parent": "saturn",
       "canonical_center": "@699", "center_slug": "saturn", "canonical_frame": "parent-relative",
       "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "pluto_barycenter", "name": "Pluto-Charon Barycenter", "horizons_id": "9", "id_type": "majorbody",
+      "category": "dwarf_planet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none",
+      "_comment": "The shared centre of Pluto and Charon, about the Sun: where the Solar System room draws Pluto (L-363, 2026-09-30). The orrery's barycentre rule draws the shared centre when it lies outside the bigger body, and names Pluto-Charon as such a pair (orrery-coding-conventions). The pluto entry below is measured FROM this centre and cannot join a Sun-centred scene, because the assembler never translates between centres; it stays for a future Pluto room. Name and horizons_id as in the orrery's dictionary, OBJECT_DEFINITIONS in celestial_objects.py at orrery 10012821. category names the system; the builder's trust cap reads it (one orbital period, as for any dwarf planet).",
+      "features": {}
     },
     {
       "slug": "pluto", "name": "Pluto", "horizons_id": "999", "id_type": "majorbody",
@@ -1116,6 +1156,32 @@
       },
       "notes": "id='90000030' pinned to a specific Horizons record (1P/Halley), matching the pattern already proven for Encke (id='90000091'). Verified this session: Halley's ~76-year period means only one apparition is ever current (unlike Encke's ~3.3-year cadence, where a new record supersedes the last every few years) -- no live disambiguation search needed, this record is necessarily the current one. The orrery's own data-arc comment (1835-08-21 to 1994-01-11, celestial_objects.py) describes the observational fit-arc used to derive the elements, not a hard propagation cutoff -- Halley is an exceptionally well-characterized orbit. NOT yet live-verified against a 2026-epoch dry-run (no Horizons access from this session) -- run the routine --dry-run --object halley check before --first-build, same as any newly added object.",
       "features": {}
-    }    
-  ]
+    }
+  ],
+  "rooms": {
+    "_comment": "Settings for a room that is not one body, keyed by the room's ?exhibit= key. A body's own room keeps its arrival block on its entry in objects above. The page reads this section directly, as it reads an arrival block, so a change here reaches a visitor on the push alone. The cache builder, the assembler and the checks read only objects and ignore this section. Tony's ruling, 2026-09-30 (L-363, L-392).",
+    "solar-system": {
+      "arrival": {
+        "_declared": "Drawing choices for the view a visitor arrives at, not measurements, so there is no orrery_constant link. drawn lists the bodies ticked when the room opens, by slug; the Sun is the fixed centre and is always drawn. highlight is the body whose drawer row is highlighted, and whose name the closed drawer's handle shows. The opening view fits 1.1 times the largest distance among what is drawn. Tony's rulings, 2026-09-29 (the front-door design, section 3).",
+        "drawn": ["earth"],
+        "highlight": "earth"
+      },
+      "drawer": {
+        "_declared": "The drawer's rows, by slug, in order outward from the Sun. A row marked see_more is shown only after the visitor presses See more, in its place in this order. Every row except the Sun can be ticked, and ticking a row also opens it. Apophis is one See more row until the near-Earth asteroids get their own design. Tony's rulings, 2026-09-29 and 2026-09-30 (L-363).",
+        "rows": [
+          { "slug": "sun" },
+          { "slug": "mercury" },
+          { "slug": "venus" },
+          { "slug": "earth" },
+          { "slug": "apophis", "see_more": true },
+          { "slug": "mars" },
+          { "slug": "jupiter" },
+          { "slug": "saturn" },
+          { "slug": "uranus" },
+          { "slug": "neptune" },
+          { "slug": "pluto_barycenter" }
+        ]
+      }
+    }
+  }
 }

@@ -2211,9 +2211,15 @@
         }
       }
     },
+    "mercury": {},
+    "venus": {},
+    "mars": {},
+    "uranus": {},
+    "neptune": {},
     "moon": {},
     "io": {},
     "titan": {},
+    "pluto_barycenter": {},
     "pluto": {},
     "charon": {},
     "apophis": {},

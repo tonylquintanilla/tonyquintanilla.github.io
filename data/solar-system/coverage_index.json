@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-09-30T14:57:46.026988+00:00",
+  "generated": "2026-09-30T22:24:55.676060+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2460990.581559646,
-    "end_jd": 2461637.6653391263
+    "start_jd": 2461226.46520144,
+    "end_jd": 2461402.402754024
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -563,7 +563,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461313.5,
-          "retrieved": "2026-09-30T14:57:31.309749+00:00"
+          "retrieved": "2026-09-30T22:24:39.010566+00:00"
         }
       },
       "positions": null,
@@ -2239,14 +2239,14 @@
           "observer": "@sun",
           "quantity": "32",
           "epoch_jd_ut": 2461313.5,
-          "retrieved": "2026-09-30T14:57:46.026765+00:00"
+          "retrieved": "2026-09-30T22:24:55.675867+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
           "epoch_jd": 2461313.5,
-          "retrieved": "2026-09-30T14:57:46.026765+00:00"
+          "retrieved": "2026-09-30T22:24:55.675867+00:00"
         }
       }
     },
@@ -2273,7 +2273,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461313.5,
-          "retrieved": "2026-09-30T14:57:32.650755+00:00"
+          "retrieved": "2026-09-30T22:24:39.970157+00:00"
         }
       },
       "positions": null,
@@ -2390,7 +2390,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461313.5,
-          "retrieved": "2026-09-30T14:57:34.063963+00:00"
+          "retrieved": "2026-09-30T22:24:40.928875+00:00"
         }
       },
       "positions": null,
@@ -2476,6 +2476,321 @@
         }
       }
     },
+    "mercury": {
+      "name": "Mercury",
+      "horizons_id": "199",
+      "category": "planet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2461313.5,
+        "a_au": 0.3870972683012223,
+        "e": 0.2056390614918747,
+        "i_deg": 7.003375249349142,
+        "node_deg": 48.29731222768014,
+        "peri_deg": 29.20132186358361,
+        "M0_deg": 190.7656390875342,
+        "n_deg_per_day": 4.092361121443972,
+        "source": {
+          "query_target": "199",
+          "center": "@sun",
+          "epoch": 2461313.5,
+          "retrieved": "2026-09-30T22:24:41.863143+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": {},
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461313.500694444,
+        "x": -6595324.986383912,
+        "y": -69175827.70278348,
+        "z": -5048432.352659524
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "two_body_rate_v1",
+        "element_epoch_jd": 2461313.5,
+        "delta_days": 10.996097036549392,
+        "samples": [
+          {
+            "offset_days": -10.996097036549392,
+            "error_deg": 7.768610014539941e-07
+          },
+          {
+            "offset_days": 10.996097036549392,
+            "error_deg": 3.375548915422076e-06
+          }
+        ],
+        "error_rate_deg_per_day": 3.0697700322234815e-07,
+        "tolerance_deg": 0.5,
+        "guard_k": 2.0,
+        "window_days": 87.96877629239513,
+        "cap_applied": 87.96877629239513,
+        "window": {
+          "start_jd": 2461225.531223708,
+          "end_jd": 2461401.468776292
+        }
+      }
+    },
+    "venus": {
+      "name": "Venus",
+      "horizons_id": "299",
+      "category": "planet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2461313.5,
+        "a_au": 0.7233391962383882,
+        "e": 0.006763539864596255,
+        "i_deg": 3.394337998236439,
+        "node_deg": 76.60548766161453,
+        "peri_deg": 54.91978177123669,
+        "M0_deg": 220.8664325834884,
+        "n_deg_per_day": 1.602107326867043,
+        "source": {
+          "query_target": "299",
+          "center": "@sun",
+          "epoch": 2461313.5,
+          "retrieved": "2026-09-30T22:24:42.731343+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": {},
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461313.500694444,
+        "x": 107492696.17871176,
+        "y": -15302008.52041245,
+        "z": -6412402.165064081
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "two_body_rate_v1",
+        "element_epoch_jd": 2461313.5,
+        "delta_days": 28.088005869118966,
+        "samples": [
+          {
+            "offset_days": -28.088005869118966,
+            "error_deg": 0.00014354555476942964
+          },
+          {
+            "offset_days": 28.088005869118966,
+            "error_deg": 6.42498449574995e-05
+          }
+        ],
+        "error_rate_deg_per_day": 5.1105641118955025e-06,
+        "tolerance_deg": 0.5,
+        "guard_k": 2.0,
+        "window_days": 224.70404695295173,
+        "cap_applied": 224.70404695295173,
+        "window": {
+          "start_jd": 2461088.795953047,
+          "end_jd": 2461538.204046953
+        }
+      }
+    },
+    "mars": {
+      "name": "Mars",
+      "horizons_id": "499",
+      "category": "planet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2461313.5,
+        "a_au": 1.52366540468761,
+        "e": 0.09341710452579902,
+        "i_deg": 1.847454133864291,
+        "node_deg": 49.48089883077404,
+        "peri_deg": 286.6380733420037,
+        "M0_deg": 98.35273239742588,
+        "n_deg_per_day": 0.5240463900867461,
+        "source": {
+          "query_target": "499",
+          "center": "@sun",
+          "epoch": 2461313.5,
+          "retrieved": "2026-09-30T22:24:43.575916+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": {},
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461313.500694444,
+        "x": 21042817.49858503,
+        "y": 231935135.52963293,
+        "z": 4344538.447380364
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "two_body_rate_v1",
+        "element_epoch_jd": 2461313.5,
+        "delta_days": 30.0,
+        "samples": [
+          {
+            "offset_days": -30.0,
+            "error_deg": 0.00011033688044904757
+          },
+          {
+            "offset_days": 30.0,
+            "error_deg": 0.0001270858124232463
+          }
+        ],
+        "error_rate_deg_per_day": 4.2361937474415435e-06,
+        "tolerance_deg": 0.5,
+        "guard_k": 2.0,
+        "window_days": 686.9620835293011,
+        "cap_applied": 686.9620835293011,
+        "window": {
+          "start_jd": 2460626.537916471,
+          "end_jd": 2462000.462083529
+        }
+      }
+    },
+    "uranus": {
+      "name": "Uranus",
+      "horizons_id": "799",
+      "category": "planet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2461313.5,
+        "a_au": 19.26283644688798,
+        "e": 0.04752237307661746,
+        "i_deg": 0.7734638091886095,
+        "node_deg": 74.00572619029273,
+        "peri_deg": 92.54622887994692,
+        "M0_deg": 261.4187391967112,
+        "n_deg_per_day": 0.01165824554206016,
+        "source": {
+          "query_target": "799",
+          "center": "@sun",
+          "epoch": 2461313.5,
+          "retrieved": "2026-09-30T22:24:44.402723+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": {},
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461313.500694444,
+        "x": 1336546077.2047498,
+        "y": 2583094033.183472,
+        "z": -7736464.97104609
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "two_body_rate_v1",
+        "element_epoch_jd": 2461313.5,
+        "delta_days": 30.0,
+        "samples": [
+          {
+            "offset_days": -30.0,
+            "error_deg": 1.5503239995980053e-05
+          },
+          {
+            "offset_days": 30.0,
+            "error_deg": 3.738333239340225e-06
+          }
+        ],
+        "error_rate_deg_per_day": 5.167746665326684e-07,
+        "tolerance_deg": 0.5,
+        "guard_k": 2.0,
+        "window_days": 30879.43196094182,
+        "cap_applied": 30879.43196094182,
+        "window": {
+          "start_jd": 2430434.0680390582,
+          "end_jd": 2492192.9319609418
+        }
+      }
+    },
+    "neptune": {
+      "name": "Neptune",
+      "horizons_id": "899",
+      "category": "planet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2461313.5,
+        "a_au": 30.07090026207991,
+        "e": 0.01002213012901365,
+        "i_deg": 1.766839658966358,
+        "node_deg": 131.6512498861989,
+        "peri_deg": 281.6692979793337,
+        "M0_deg": 310.2191307053156,
+        "n_deg_per_day": 0.005977170055717815,
+        "source": {
+          "query_target": "899",
+          "center": "@sun",
+          "epoch": 2461313.5,
+          "retrieved": "2026-09-30T22:24:45.237272+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": {},
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461313.500694444,
+        "x": 4463662456.911341,
+        "y": 205996642.04688588,
+        "z": -107105859.20480174
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "two_body_rate_v1",
+        "element_epoch_jd": 2461313.5,
+        "delta_days": 30.0,
+        "samples": [
+          {
+            "offset_days": -30.0,
+            "error_deg": 2.026028194374272e-05
+          },
+          {
+            "offset_days": 30.0,
+            "error_deg": 2.2374348815200068e-05
+          }
+        ],
+        "error_rate_deg_per_day": 7.458116271733356e-07,
+        "tolerance_deg": 0.5,
+        "guard_k": 2.0,
+        "window_days": 60229.17143801534,
+        "cap_applied": 60229.17143801534,
+        "window": {
+          "start_jd": 2401084.3285619845,
+          "end_jd": 2521542.6714380155
+        }
+      }
+    },
     "moon": {
       "name": "Moon",
       "horizons_id": "301",
@@ -2499,7 +2814,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461313.5,
-          "retrieved": "2026-09-30T14:57:35.592851+00:00"
+          "retrieved": "2026-09-30T22:24:46.026933+00:00"
         }
       },
       "positions": null,
@@ -2562,7 +2877,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461313.5,
-          "retrieved": "2026-09-30T14:57:37.223578+00:00"
+          "retrieved": "2026-09-30T22:24:46.881429+00:00"
         }
       },
       "positions": null,
@@ -2625,7 +2940,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461313.5,
-          "retrieved": "2026-09-30T14:57:38.759645+00:00"
+          "retrieved": "2026-09-30T22:24:47.769970+00:00"
         }
       },
       "positions": null,
@@ -2665,6 +2980,69 @@
         }
       }
     },
+    "pluto_barycenter": {
+      "name": "Pluto-Charon Barycenter",
+      "horizons_id": "9",
+      "category": "dwarf_planet",
+      "availability": "analytic",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "heliocentric",
+      "trajectory_of": null,
+      "osculating": {
+        "center": "sun",
+        "epoch_jd": 2461313.5,
+        "a_au": 39.34491688436156,
+        "e": 0.2479662585286236,
+        "i_deg": 17.17477204084198,
+        "node_deg": 110.3353009992852,
+        "peri_deg": 113.0586925371482,
+        "M0_deg": 54.36358824976363,
+        "n_deg_per_day": 0.003993660355966388,
+        "source": {
+          "query_target": "9",
+          "center": "@sun",
+          "epoch": 2461313.5,
+          "retrieved": "2026-09-30T22:24:48.667151+00:00"
+        }
+      },
+      "positions": null,
+      "presets": null,
+      "features": {},
+      "orbit_type": "elliptical",
+      "as_of_today": {
+        "t": 2461313.500694444,
+        "x": 2986205098.684712,
+        "y": -4393845935.429833,
+        "z": -393497532.53071254
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "two_body_rate_v1",
+        "element_epoch_jd": 2461313.5,
+        "delta_days": 30.0,
+        "samples": [
+          {
+            "offset_days": -30.0,
+            "error_deg": 8.597620335699005e-07
+          },
+          {
+            "offset_days": 30.0,
+            "error_deg": 1.268235918324776e-06
+          }
+        ],
+        "error_rate_deg_per_day": 4.227453061082587e-08,
+        "tolerance_deg": 0.5,
+        "guard_k": 2.0,
+        "window_days": 90142.86842449501,
+        "cap_applied": 90142.86842449501,
+        "window": {
+          "start_jd": 2371170.631575505,
+          "end_jd": 2551456.368424495
+        }
+      }
+    },
     "pluto": {
       "name": "Pluto",
       "horizons_id": "999",
@@ -2688,7 +3066,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461313.5,
-          "retrieved": "2026-09-30T14:57:40.296833+00:00"
+          "retrieved": "2026-09-30T22:24:49.495760+00:00"
         }
       },
       "positions": null,
@@ -2751,7 +3129,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461313.5,
-          "retrieved": "2026-09-30T14:57:41.628518+00:00"
+          "retrieved": "2026-09-30T22:24:50.247116+00:00"
         }
       },
       "positions": null,
@@ -2814,7 +3192,7 @@
           "query_target": "99942",
           "center": "@sun",
           "epoch": 2461313.5,
-          "retrieved": "2026-09-30T14:57:42.968119+00:00"
+          "retrieved": "2026-09-30T22:24:51.141209+00:00"
         }
       },
       "positions": null,
@@ -2869,8 +3247,8 @@
         "start": "1977-09-06",
         "end": "2026-09-30",
         "step_hours": 24.0,
-        "n_points": 184,
-        "size_kb": 14
+        "n_points": 200,
+        "size_kb": 16
       },
       "presets": null,
       "features": {},
@@ -2911,7 +3289,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460240.009056779,
-          "retrieved": "2026-09-30T14:57:44.699060+00:00"
+          "retrieved": "2026-09-30T22:24:54.781357+00:00"
         }
       },
       "positions": null,
@@ -2979,7 +3357,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-09-30T14:57:45.213145+00:00"
+          "retrieved": "2026-09-30T22:24:55.603994+00:00"
         }
       },
       "positions": null,

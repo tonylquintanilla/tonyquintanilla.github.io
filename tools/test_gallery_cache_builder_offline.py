@@ -27,6 +27,11 @@ Module updated: September 24, 2026 with Anthropic's Claude Opus 5.5 (L-322
 Stage D, gallery patch G1: Earth's pole of date and the frame rows are
 served and checked -- the pole fetch is mocked with a real Horizons day, a
 failed pole fetch still builds, and #P refuses a tampered tilt).
+
+Module updated: September 30, 2026 with Anthropic's Claude Opus 5.5 (L-363,
+Half 2 step 2: mocks for Mercury, Venus, Mars, Uranus, Neptune and the
+Pluto-Charon barycentre; the served-window check reads its heliocentric
+participants from the config instead of a hand-typed list).
 """
 import json
 import math
@@ -48,6 +53,11 @@ ELEMS = {
     '999': (1.39e-5, 0.001), '901': (1.17e-4, 0.0002),
     '99942': (0.922, 0.191), '90000091': (2.215, 0.848),
     '90000030': (17.8, 0.967),
+    # L-363, 2026-09-30: Mercury, Venus, Mars, Uranus, Neptune and the
+    # Pluto-Charon barycentre. Rough test values like the rest of this
+    # table, used only by the mocks; never served.
+    '199': (0.387, 0.206), '299': (0.723, 0.007), '499': (1.524, 0.093),
+    '799': (19.2, 0.047), '899': (30.1, 0.009), '9': (39.5, 0.25),
 }
 
 
@@ -453,7 +463,14 @@ def main():
         # participant's window, never by pluto's (canonical_frame ==
         # barycenter-relative, excluded). Uses each object's OWN reported
         # window_days -- no hand-derived expectation to get wrong.
-        helio_slugs = ('earth', 'jupiter', 'saturn', 'apophis', 'halley', 'encke')
+        # L-363: was a hand-typed tuple of six slugs, stale the moment a
+        # seventh heliocentric body was added. The builder decides who
+        # participates by canonical_frame, so the test reads the same field.
+        helio_slugs = tuple(o['slug'] for o in cfg['objects']
+                            if o.get('canonical_frame') == 'heliocentric')
+        check(len(helio_slugs) >= 6,
+              "L-363: the heliocentric participants are read from the config "
+              "(%d: %s)" % (len(helio_slugs), ", ".join(helio_slugs)))
         expected_min = min(objs[s]['trust']['window_days'] for s in helio_slugs)
         sw_half = (sw['end_jd'] - sw['start_jd']) / 2.0
         check(abs(sw_half - expected_min) < 1e-6,
