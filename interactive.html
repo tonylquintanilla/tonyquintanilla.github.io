@@ -191,6 +191,21 @@
         upright phone, if the title and its line would touch a button,
         they first centre in the space between the zoom buttons and the
         arrow cross, and move below the cross only if that fails too)
+     Updated: September 28, 2026 with Anthropic's Claude Opus 5.5
+       (L-363, Tony's ruling: every room carries a link to
+        palomasorrery.com just under the grid chip, drawn as part of the
+        scene so that the camera button's picture carries it too -- the
+        picture shows only what the scene shows, so the credit has to be
+        something the scene shows. The phone's label box keeps it)
+     Updated: September 28, 2026 with Anthropic's Claude Opus 5.5
+       (Tony found the + and - buttons snapping the view back to the
+        opening orientation. Every relayout the rooms and the Explorer
+        make now carries the live camera -- the rule the drawer label
+        already followed (interactive-exhibit, the touch path): Plotly's
+        3D replot re-applies the layout's stored camera, which a touch
+        rotation never updates. Fixed at the same time: framing a body
+        from the drawer, turning the phone, and the title and credit
+        placement, which all snapped back the same way)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2184,12 +2199,12 @@ function sunFrameOn(k) {
     const rad = sunGroupRadius(k);
     const r = rad > 0 ? rad * 1.1 : (EX ? EX.halfRangeAu : SUN_HALF_RANGE_AU);
     const d = sunGridDtick(2 * r);
-    return Plotly.relayout(sunPlotDiv, {
+    return Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv, {
         "scene.xaxis.range": [-r, r], "scene.xaxis.dtick": d,
         "scene.yaxis.range": [-r, r], "scene.yaxis.dtick": d,
         "scene.zaxis.range": [-r, r], "scene.zaxis.dtick": d,
         "scene.xaxis.tick0": 0, "scene.yaxis.tick0": 0, "scene.zaxis.tick0": 0
-    }).then(sunHudUpdate);
+    })).then(sunHudUpdate);
 }
 
 function sunOutermostShown() {
@@ -2297,7 +2312,7 @@ function navFrameZoom(direction) {
         update["scene.yaxis.dtick"] = d;
         update["scene.zaxis.dtick"] = d;
     }
-    return Plotly.relayout(gd, update).then(sunHudUpdate);
+    return Plotly.relayout(gd, sunKeepCamera(gd, update)).then(sunHudUpdate);
 }
 
 function navHome() {
@@ -2468,11 +2483,56 @@ function sunTitleTouchesButtons() {
     }
     return false;
 }
+// The site credit: a link to palomasorrery.com just under the grid chip
+// (Tony, 2026-09-28). It is a Plotly annotation, part of the scene, not
+// a page element, so the camera button's picture carries it: the
+// picture shows only what the scene shows (Tony: "why would the camera
+// button snapshot something that is not displayed?"). Its place is
+// measured from the chip, which is page chrome, after drawing and again
+// when the screen turns.
+const SITE_CREDIT_NAME = "site-credit";
+function sunSiteCredit() {
+    const gd = sunPlotDiv;
+    const chip = document.getElementById("sun-grid-chip");
+    const base = {
+        name: SITE_CREDIT_NAME, showarrow: false,
+        // The colour is set on the text itself: without it the screen drew
+        // the link in the browser's link blue while the picture drew it
+        // grey, and the two must match.
+        text: "<a href=\"https://palomasorrery.com/\" target=\"_blank\">" +
+              "<span style=\"color:#9a9a9a\">palomasorrery.com</span></a>",
+        font: { family: "DM Sans, system-ui", size: 11, color: "#9a9a9a" },
+        xref: "paper", yref: "paper", xanchor: "right", yanchor: "top",
+        x: 1, y: 0
+    };
+    if (!gd || !gd._fullLayout || !gd._fullLayout._size || !chip) { return base; }
+    const size = gd._fullLayout._size;
+    const pr = gd.getBoundingClientRect();
+    const cr = chip.getBoundingClientRect();
+    if (!cr.width || !size.w || !size.h) { return base; }
+    base.x = (cr.right - pr.left - size.l) / size.w;
+    base.y = 1 - (cr.bottom - pr.top + 6 - size.t) / size.h;
+    return base;
+}
+// The page-level annotations in use, with the credit (and only one).
+function sunWithCredit(pageAnns) {
+    const rest = (pageAnns || []).filter(function (a) {
+        return !a || a.name !== SITE_CREDIT_NAME;
+    });
+    return rest.concat([sunSiteCredit()]);
+}
+function sunPlaceCredit() {
+    if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
+    return Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv,
+        { annotations: sunWithCredit(sunPlotDiv.layout.annotations) }));
+}
+
 async function sunFitTitle() {
     if (!sunPlotDiv || !window.Plotly) { return; }
     const set = function (p) {
-        return Plotly.relayout(sunPlotDiv, { "title.x": p.x, "title.y": p.y,
-            "title.yref": p.yref, "title.yanchor": p.yanchor });
+        return Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv, {
+            "title.x": p.x, "title.y": p.y,
+            "title.yref": p.yref, "title.yanchor": p.yanchor }));
     };
     await set(SUN_TITLE_TOP);
     if (!sunPhonePortrait() || !sunTitleTouchesButtons()) { return; }
@@ -2811,6 +2871,8 @@ async function initSunExhibit() {
         // The title and its line: at the top, unless on an upright phone
         // they would sit under a button.
         await sunFitTitle();
+        // The link to palomasorrery.com, under the grid chip.
+        await sunPlaceCredit();
         // Arrival names its focus without reframing: newPlot has already
         // set the arrival view, floor and all, and that is the one frame
         // the floor is right for.
@@ -3095,6 +3157,18 @@ function sunHudUpdate() {
 // the triad watches the camera itself, one read per animation frame,
 // and redraws only when it moved. gl3d exposes it as getCamera(); the
 // layout copy is the fallback.
+// Add the live camera to a relayout, so the view stays where the visitor
+// turned it. Plotly's 3D replot re-applies the layout's STORED camera,
+// which a touch rotation never updates (interactive-exhibit, the touch
+// path: a scene relayout carries the live camera). Without this the +
+// and - buttons, framing from the drawer and turning the phone all
+// snapped the view back to where it opened (Tony, 2026-09-28).
+function sunKeepCamera(gd, update) {
+    const cam = gd ? sunLiveCamera(gd) : null;
+    if (cam && cam.eye) { update["scene.camera"] = cam; }
+    return update;
+}
+
 function sunLiveCamera(gd) {
     try {
         const sc = gd._fullLayout && gd._fullLayout.scene && gd._fullLayout.scene._scene;
@@ -3240,10 +3314,12 @@ function sunLabelSide(gd, m) {
 // L-318 round 5: the label is a scene annotation (desktop, with its arrow)
 // or a page-level one (phone, no arrow). Whichever form is not in use is
 // sent EMPTY, so turning the phone with a box open never leaves a stale
-// copy of the other. The rooms' layouts carry no page-level annotations of
-// their own, so the label may replace that list outright.
+// copy of the other. The rooms' page-level annotations are the label and
+// the site credit, so the label replaces that list with itself plus the
+// credit (2026-09-28).
 function sunLabelRelayout(sceneAnns, pageAnns) {
-    const upd = { "scene.annotations": sceneAnns, "annotations": pageAnns };
+    const upd = { "scene.annotations": sceneAnns,
+                  "annotations": sunWithCredit(pageAnns) };
     const cam = sunLiveCamera(sunPlotDiv);
     if (cam && cam.eye) { upd["scene.camera"] = cam; }
     return Plotly.relayout(sunPlotDiv, upd);
@@ -3877,17 +3953,18 @@ function onSunResize() {
         }
         if (sunPlotDiv && window.Plotly) {
             const tf = axisTickFont();
-            Plotly.relayout(sunPlotDiv, {
+            Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv, {
                 margin: sunMargins(),
                 "scene.xaxis.tickfont": tf,
                 "scene.yaxis.tickfont": tf,
                 "scene.zaxis.tickfont": tf
-            });
+            }));
         }
         navPlaceCross();
         // The title and its line: at the top, or below the cross if the
         // turned screen puts them under a button.
         sunFitTitle();
+        sunPlaceCredit();
         sunTapPicking(sunPlotDiv);
     }, 180);
 }
