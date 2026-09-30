@@ -1,6 +1,6 @@
 """
-check_cache_in_step.py -- the served cache holds the same shells as
-data/objects_config.json.
+check_cache_in_step.py -- the served cache holds the same objects and the
+same shells as data/objects_config.json.
 
 WHY THIS EXISTS
 
@@ -29,14 +29,30 @@ RUN COMMAND
 
 WHAT IT CHECKS
 
-    For every object in the config that serves features, the features
-    held for it in coverage_index.json and in feature_configs.json equal
-    the config's, value for value. It prints how many objects and how
-    many shells it compared, so a pass names what it looked at.
+    1. EVERY object in the config is in both cache files, and nothing is
+       in either cache file that the config does not list. For each one,
+       coverage_index.json holds the config's name, Horizons id,
+       category, availability, parent, centre and frame. (Since
+       2026-09-30, L-397: the check used to look only at objects that
+       serve shells, so a body added to the config with no shells --
+       Mercury, say -- could be pushed with no rebuild and nothing
+       noticed.)
+    2. For every object in the config that serves features, the features
+       held for it in coverage_index.json and in feature_configs.json
+       equal the config's, value for value.
+    It prints the objects and the shells it compared, so a pass names
+    what it looked at. Before comparing, it shows that part 1 can fail:
+    it adds an object to a copy of the config, and changes a name in
+    another copy, and each must be reported.
 
 WHAT MAKES IT FAIL
 
     - a cache file is missing or is not JSON
+    - an object in the config is not in a cache file, or an object in a
+      cache file is not in the config
+    - one of an object's identity fields differs between the config and
+      coverage_index.json
+    - the self-test above did not produce the failures it must
     - an object that serves features has no record in a cache file
     - any value differs. Each difference is named by its path, with the
       value on each side, up to eight per object and a count of the rest
@@ -54,8 +70,14 @@ Domain: gallery
 
 Module created: September 17, 2026 with Anthropic's Claude Fable 5.1
 (L-334 session; the gap L-322's deployment exposed).
+
+Module updated: September 30, 2026 with Anthropic's Claude Opus 5.5
+(L-397: every object is compared, not only those serving shells -- its
+presence in both cache files and its identity fields -- and that
+comparison is shown able to fail on each run).
 """
 
+import copy
 import json
 import os
 import sys
@@ -66,6 +88,19 @@ CACHES = (
     (os.path.join("data", "solar-system", "feature_configs.json"), "features"),
 )
 SHOWN = 8
+
+# Identity fields: (the config's name for it, coverage_index.json's name).
+# The builder copies each one across (tools/gallery_cache_builder.py); the
+# centre is center_slug in the config and stored_center in the cache.
+IDENTITY = (
+    ("name", "name"),
+    ("horizons_id", "horizons_id"),
+    ("category", "category"),
+    ("availability", "availability"),
+    ("parent", "parent"),
+    ("center_slug", "stored_center"),
+    ("canonical_frame", "canonical_frame"),
+)
 
 
 def load(root, relative):
@@ -135,13 +170,77 @@ def count_shells(features):
     return total
 
 
+def compare_objects(config, caches):
+    """Failures for the object LIST and identity: an object in the config
+    and not in a cache file, one in a cache file and not in the config,
+    and, in coverage_index.json, an identity field that differs. caches is
+    a list of (shown, holder, parsed)."""
+    failures = []
+    listed = [obj for obj in config.get("objects", []) if isinstance(obj, dict)]
+    by_slug = dict((obj.get("slug"), obj) for obj in listed)
+    for shown, holder, cache in caches:
+        records = cache.get(holder)
+        if not isinstance(records, dict):
+            failures.append((shown, "holds no \"%s\" mapping, so no object "
+                                    "could be compared" % holder))
+            continue
+        for obj in listed:
+            if obj.get("slug") not in records:
+                failures.append((shown, "%s is in the config and not in this "
+                                        "file" % obj.get("slug")))
+        for slug in records:
+            if slug not in by_slug:
+                failures.append((shown, "%s is in this file and not in the "
+                                        "config" % slug))
+        if holder != "objects":
+            continue
+        for obj in listed:
+            record = records.get(obj.get("slug"))
+            if not isinstance(record, dict):
+                continue
+            for mine, theirs in IDENTITY:
+                if obj.get(mine) != record.get(theirs):
+                    failures.append((shown, "%s/%s: config %s, cache %s"
+                                     % (obj.get("slug"), mine,
+                                        short(obj.get(mine)),
+                                        short(record.get(theirs)))))
+    return failures
+
+
+def self_test(config, caches):
+    """Show compare_objects able to fail, on copies of the real config:
+    an object added and not built, and a name changed. Returns the list
+    of failures it did NOT produce; empty means it can fail."""
+    missing = []
+    listed = [obj for obj in config.get("objects", []) if isinstance(obj, dict)]
+    if not listed:
+        return ["the config lists no objects, so nothing could be probed"]
+    probe = copy.deepcopy(config)
+    added = copy.deepcopy(listed[0])
+    added["slug"] = "__probe_not_built__"
+    probe["objects"].append(added)
+    if not any("__probe_not_built__ is in the config" in message
+               for _where, message in compare_objects(probe, caches)):
+        missing.append("an object added to the config and not built was "
+                       "not reported")
+    probe = copy.deepcopy(config)
+    first = [obj for obj in probe["objects"] if isinstance(obj, dict)][0]
+    first["name"] = "%s (probe)" % first.get("name")
+    if not any(message.startswith("%s/name:" % first.get("slug"))
+               for _where, message in compare_objects(probe, caches)):
+        missing.append("a name changed in the config was not reported")
+    return missing
+
+
 def check(root):
     """(failures, facts). Each failure is (where, message)."""
     failures = []
-    facts = {"objects": [], "shells": 0}
+    facts = {"objects": [], "shells": 0, "all": []}
     config, problem = load(root, CONFIG)
     if problem:
         return [("(config)", problem)], facts
+    facts["all"] = [obj.get("slug") for obj in config.get("objects", [])
+                    if isinstance(obj, dict)]
     serving = [obj for obj in config.get("objects", [])
                if isinstance(obj, dict) and obj.get("features")]
     if not serving:
@@ -150,12 +249,24 @@ def check(root):
     facts["objects"] = [obj.get("slug") for obj in serving]
     facts["shells"] = sum(count_shells(obj["features"]) for obj in serving)
 
+    caches = []
     for relative, holder in CACHES:
         shown = relative.replace(os.sep, "/")
         cache, problem = load(root, relative)
         if problem:
             failures.append((shown, problem))
             continue
+        caches.append((shown, holder, cache))
+
+    # Part 1: every object, present and the same body (L-397).
+    if caches:
+        for missed in self_test(config, caches):
+            failures.append(("(self-test)", "the object comparison could "
+                             "not fail: %s" % missed))
+        failures.extend(compare_objects(config, caches))
+
+    # Part 2: the shells of every object that serves them.
+    for shown, holder, cache in caches:
         for obj in serving:
             slug = obj.get("slug")
             held = cached_features(cache, holder, slug)
@@ -183,8 +294,12 @@ def main():
           % CONFIG.replace(os.sep, "/"))
     print("=" * 70)
     print("")
+    if facts["all"]:
+        print("Compared all %d object(s) by presence and identity (%s),"
+              % (len(facts["all"]), ", ".join(facts["all"])))
+        print("after showing that comparison able to fail;")
     if facts["objects"]:
-        print("Compared %d object(s) serving features (%s), %d named shell(s),"
+        print("and %d object(s) serving features (%s), %d named shell(s),"
               % (len(facts["objects"]), ", ".join(facts["objects"]),
                  facts["shells"]))
         print("against %s." % " and ".join(
@@ -200,9 +315,10 @@ def main():
               "builder and commit its output with the config."
               % len(failures))
         return 1
-    print("The served cache holds the config's features exactly: %d "
-          "object(s), %d named shell(s), in both cache files."
-          % (len(facts["objects"]), facts["shells"]))
+    print("The served cache holds the config's %d object(s) and their "
+          "features exactly: %d object(s) with %d named shell(s), in both "
+          "cache files." % (len(facts["all"]), len(facts["objects"]),
+                            facts["shells"]))
     return 0
 
 

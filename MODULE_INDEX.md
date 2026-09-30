@@ -10,9 +10,9 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 42  
-**Total Lines of Code (non-blank):** 21,333  
-**Total Public Functions/Classes:** 323
+**Total Python Files:** 43  
+**Total Lines of Code (non-blank):** 21,580  
+**Total Public Functions/Classes:** 326
 
 ## Classification Coverage
 
@@ -97,7 +97,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `add_docstrings.py` | Two related tools for module-level docstrings. (1,210 lines) |
-| `check_cache_in_step.py` | - the served cache holds the same shells as data/objects_config.json. (176 lines) |
+| `check_cache_in_step.py` | - the served cache holds the same objects and the same shells as data/objects_config.json. (284 lines) |
 | `check_constants_links.py` | - two checks over the gallery's links into the orrery's store, sharing the mirror's own reading so one cause prints one explanation. (255 lines) |
 | `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (169 lines) |
 | `debug_encke_tp.py` | - run the EXACT same live Horizons query gallery_cache_builder.py's fetch_solution_tp() makes for Encke, and print the complete raw response text. (61 lines) |
@@ -112,6 +112,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (860 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (658 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (829 lines) |
+| `patch_L397_cache_in_step_all_objects_20260930.py` | - the "Cache in step" check compares every object, not only those that serve shells (L-397). (139 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (123 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
