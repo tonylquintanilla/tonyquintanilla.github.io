@@ -136,7 +136,6 @@ ROLE_MAP = {
     'json_converter':                      'devtool',
     'mirror_constants':                    'devtool',
     'module_atlas':                        'devtool',
-    'patch_L363_8_room_step3a_20260930':   'devtool',
     'pull_constants_export':               'devtool',
     'serve_gallery':                       'devtool',
     'sweep_report':                        'devtool',

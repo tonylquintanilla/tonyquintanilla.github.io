@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** September 30, 2026 by `module_atlas.py`  
+**Generated:** October 01, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,9 +10,9 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 43  
-**Total Lines of Code (non-blank):** 21,641  
-**Total Public Functions/Classes:** 326
+**Total Python Files:** 42  
+**Total Lines of Code (non-blank):** 21,455  
+**Total Public Functions/Classes:** 325
 
 ## Classification Coverage
 
@@ -112,7 +112,6 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (860 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (658 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (830 lines) |
-| `patch_L363_8_room_step3a_20260930.py` | - the Solar System room, Half 2, step 3a: every planet and Pluto, with the words Tony approved (L-363). (186 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (123 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
