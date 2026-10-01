@@ -13,6 +13,10 @@ markers stay above everything Python emits so they remain interactable.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
 
+Module updated: September 30, 2026 with Anthropic's Claude Opus 5.5 (L-363:
+colours for Mercury, Venus, Mars, Uranus, Neptune and the Pluto-Charon
+barycentre, from the orrery's color_map).
+
 Role: rendering
 Domain: assembler
 """
@@ -51,6 +55,16 @@ _COLORS = {
     "charon": "#9aa0b0",
     "voyager_1": "#ff6f61",
     "apophis": "#e07a5f",
+    # L-363, 2026-09-30: the bodies the Solar System room added, in the
+    # orrery's own colours (color_map in constants_new.py, orrery
+    # 10012821). The Pluto-Charon barycentre takes Pluto's, since the
+    # room draws it as Pluto. A first choice for Tony's Mode 5 check.
+    "mercury": "rgb(128, 128, 128)",
+    "venus": "rgb(255, 255, 224)",
+    "mars": "rgb(188, 39, 50)",
+    "uranus": "rgb(173, 216, 230)",
+    "neptune": "rgb(0, 0, 255)",
+    "pluto_barycenter": "rgb(205, 92, 92)",
 }
 _DEFAULT_COLOR = "#8ab4f8"
 

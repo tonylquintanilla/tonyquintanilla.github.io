@@ -206,6 +206,17 @@
         rotation never updates. Fixed at the same time: framing a body
         from the drawer, turning the phone, and the title and credit
         placement, which all snapped back the same way)
+     Updated: September 30, 2026 with Anthropic's Claude Opus 5.5
+       (L-363 Half 2, step 3a: the Solar System room draws the Sun, the
+        eight planets and Pluto, in the order and with the opening view
+        the "rooms" section of data/objects_config.json serves -- the
+        Sun and Earth drawn, Earth's row highlighted. Pluto is the
+        Pluto-Charon barycentre, named Pluto. A body's text box gives its
+        distance written out, with the figures its measured error earns
+        at the minute drawn; its source line names the Horizons id and
+        writes Horizons' shorthand out; its orbit's cross names the
+        orbit only. Tony's rulings of 2026-09-30. The drawer's See more,
+        opened rows and Home's memory follow in step 3b)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1846,23 +1857,25 @@ const EARTH_INFO_HTML = [
 // (solar-system-explorer, the default) stays as it is until this room
 // has every planet and Tony has accepted it; this key is permanent.
 //
-// Which bodies: only those the served cache stands behind TODAY.
-// Measured on gallery a5c35f5f, 2026-09-26: Pluto is stored relative to
-// the Pluto-Charon barycentre and the assembler refuses a Sun-centred
-// scene with it (by design: it never translates between frames);
-// Voyager 1 needs render_spacecraft, not yet built, and assemble_scene
-// leaves it out without a warning; today falls outside the trust
-// windows of 1P/Halley (ended 2024-02) and 2P/Encke (ended 2025-06).
-// Mercury, Venus, Mars, Uranus and Neptune are not served yet. The
-// compose step below counts one position marker per body asked for,
-// so a body the assembler drops is reported rather than missed.
+// Which bodies, in what order, and what the room opens on are SERVED,
+// not listed here: the "rooms" section of data/objects_config.json
+// (Tony's ruling, 2026-09-30, L-363 Half 2). The driver reads it, so
+// this page names no body. A row's words -- Pluto's "label", "about"
+// and "source_note" -- are served there too.
+//
+// Pluto is drawn as the Pluto-Charon barycentre (Horizons id 9, about
+// the Sun). The served "pluto" record is measured FROM that centre and
+// the assembler refuses a Sun-centred scene with it, by design: it never
+// translates between centres. Voyager 1 needs render_spacecraft, not yet
+// built; 1P/Halley's and 2P/Encke's trust windows have ended. The
+// compose step counts one position marker per body asked for, so a body
+// the assembler drops is reported rather than missed.
 //
 // What GO on the Sun frames (a camera setting, not a measurement): the
 // Sun's marker has no extent, so the view falls back to this, which
 // holds Earth's orbit with room to spare. The opening view does not use
 // it -- that fits 1.1 x the largest thing drawn, like every room.
 const SOLAR_SYSTEM_HALF_RANGE_AU = 1.2;
-const SOLAR_SYSTEM_BODIES = ["earth", "jupiter", "saturn", "apophis"];
 
 const SOLAR_SYSTEM_DRIVER = `
 import json
@@ -1874,7 +1887,14 @@ from assembler.cache_reader import CacheReader
 from assembler.assemble import assemble_scene
 
 _cache = CacheReader(json.loads(COV_JSON))
-_bodies = json.loads(BODIES_JSON)
+_cfg = json.loads(CFG_JSON)
+
+# The room's served settings (data/objects_config.json, "rooms"): its
+# drawer rows in order, and what it opens on. Every row but the Sun's is
+# a body to draw; the Sun is the scene's centre.
+_room = (_cfg.get("rooms") or {}).get("solar-system") or {}
+_bodies = [_r.get("slug") for _r in ((_room.get("drawer") or {}).get("rows") or [])
+           if isinstance(_r, dict) and _r.get("slug") and _r.get("slug") != "sun"]
 
 result = assemble_scene(
     {
@@ -1885,23 +1905,31 @@ result = assemble_scene(
         "center": "sun",
         "epoch": EPOCH_ISO,
     },
-    Catalog(json.loads(CFG_JSON)),
+    Catalog(_cfg),
     _cache,
 )
 
-# Each body's display name and the Horizons query its elements came
-# from, read from the served record, so the panel can name the source.
+# Each body's display name, the Horizons query its elements came from,
+# and the builder's measurement of how fast its worked-out position
+# drifts from JPL Horizons -- all read from the served record. The panel
+# names the source; the text box prints the figures that drift earns.
 _served = {}
 for _slug in _bodies:
     _rec = _cache.record(_slug)
+    _trust = _rec.get("trust") or {}
     _served[_slug] = {
         "name": _rec.get("name"),
         "source": (_rec.get("osculating") or {}).get("source"),
+        "trust": {
+            "rate_deg_per_day": _trust.get("error_rate_deg_per_day"),
+            "element_epoch_jd": _trust.get("element_epoch_jd"),
+        },
     }
 
 json.dumps({
     "figure": result.figure,
     "bodies": _served,
+    "room": _room,
     "epoch_jd": result.context.resolved_epoch_jd,
     "warnings": result.report["warnings"],
 })
@@ -1935,28 +1963,122 @@ function sceneMomentStamp(jd) {
 const SUN_DATE_LINE = "Long-term averages \u00b7 no date";
 
 // The source line for a body, from its served Horizons query. Every
-// value is printed as served.
-function solarSystemSourceLine(src) {
+// value is printed as served; Horizons' own shorthand is written out
+// (Tony, 2026-09-30: "target" was the Horizons id, and a name is fine
+// where it is explained, not shorthand). A served source_note names
+// what the id is when the row's label does not (Pluto's).
+const SOLAR_SYSTEM_MONTHS = ["January", "February", "March", "April",
+    "May", "June", "July", "August", "September", "October", "November",
+    "December"];
+function solarSystemDay(d) {
+    if (!d || isNaN(d.getTime())) { return null; }
+    return d.getUTCDate() + " " + SOLAR_SYSTEM_MONTHS[d.getUTCMonth()] +
+        " " + d.getUTCFullYear();
+}
+function solarSystemSourceLine(src, sourceNote) {
     if (!src) { return null; }
-    return "JPL Horizons, osculating orbital elements: target " +
-        src.query_target + ", centre " + src.center + ", epoch JD " +
-        src.epoch + ", retrieved " + String(src.retrieved).slice(0, 10) +
+    // Julian date 2440587.5 is 1970-01-01 00:00, the Unix epoch.
+    const dated = (typeof src.epoch === "number")
+        ? solarSystemDay(new Date(Math.round((src.epoch - 2440587.5) * 86400000)))
+        : null;
+    const got = solarSystemDay(new Date(String(src.retrieved)));
+    const centre = (src.center === "@sun")
+        ? "measured from the Sun's centre"
+        : "measured from the Horizons centre " + src.center;
+    return "JPL Horizons, Horizons id: " + src.query_target +
+        (sourceNote ? ", " + sourceNote : "") +
+        ". Osculating orbital elements " + centre +
+        (dated ? ", dated " + dated : "") +
+        " (Julian date " + src.epoch + ")" +
+        (got ? ", retrieved " + got : "") +
         ". The position shown is worked out from these for the minute" +
         " under the title.";
+}
+
+// The distance line in a body's text box, with the figures its measured
+// error earns at the minute drawn (Tony's ruling, 2026-09-30, written
+// into provenance-discipline Rule 3). The builder measured how fast the
+// worked-out position drifts from JPL Horizons, in degrees per day; at
+// the minute drawn the error is that rate times the days since the
+// elements' date, taken as a distance at the body's distance. The place
+// printed is the Report test's: the one whose half unit is nearest that
+// error on a log scale, a tie going coarser. Never finer than whole
+// kilometres, and never fewer than one figure. The measurement checks
+// direction, not distance; it is the only measure the cache holds, so
+// it serves for both. Numbers are written out (Tony: no exponents).
+const SOLAR_SYSTEM_FINEST_KM = 0.5;   // half a kilometre: whole km at most
+function solarSystemReportPlace(uncertainty) {
+    return Math.floor(Math.log10(2 * uncertainty) + 0.5);
+}
+function solarSystemRound(value, place) {
+    const lead = Math.floor(Math.log10(Math.abs(value)));
+    const p = Math.min(place, lead);   // never fewer than one figure
+    return { value: Math.round(value / Math.pow(10, p)) * Math.pow(10, p),
+             place: p };
+}
+function solarSystemWithCommas(n) {
+    return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+function solarSystemDistanceLine(t, trust, epochJd) {
+    const kmPerAu = GalleryFeatures._KM_PER_AU;
+    if (!(typeof kmPerAu === "number" && kmPerAu > 0)) {
+        return { line: null, why: "kilometres per AU is not served" };
+    }
+    const x = t.x[0], y = t.y[0], z = t.z[0];
+    const rAu = Math.sqrt(x * x + y * y + z * z);
+    if (!(rAu > 0 && isFinite(rAu))) {
+        return { line: null, why: "its position is not a number" };
+    }
+    if (!trust || typeof trust.rate_deg_per_day !== "number" ||
+            typeof trust.element_epoch_jd !== "number" ||
+            typeof epochJd !== "number") {
+        return { line: null, why: "no measured error is served for it, " +
+                                  "so no figures are earned" };
+    }
+    const rKm = rAu * kmPerAu;
+    const days = Math.abs(epochJd - trust.element_epoch_jd);
+    const errKm = Math.max(rKm * trust.rate_deg_per_day * days * Math.PI / 180,
+                           SOLAR_SYSTEM_FINEST_KM);
+    const km = solarSystemRound(rKm, solarSystemReportPlace(errKm));
+    const au = solarSystemRound(rAu, solarSystemReportPlace(errKm / kmPerAu));
+    const auText = au.place < 0 ? au.value.toFixed(-au.place)
+                                : solarSystemWithCommas(au.value);
+    return { line: auText + " AU from the Sun (" +
+                   solarSystemWithCommas(km.value) + " km)" };
+}
+
+// Break a served sentence for the desktop text box, at spaces, with the
+// renderers' soft break, so the phone's label can rewrap it.
+function solarSystemSoftWrap(text, width) {
+    const words = String(text).split(" ");
+    const lines = [];
+    let line = "";
+    for (const w of words) {
+        if (line && (line.length + 1 + w.length) > width) {
+            lines.push(line);
+            line = w;
+        } else {
+            line = line ? line + " " + w : w;
+        }
+    }
+    if (line) { lines.push(line); }
+    return lines.join(GalleryFeatures.SOFT_BR);
 }
 
 const SOLAR_SYSTEM_INFO_HTML = [
     "<div class=\"info-focus\" id=\"sun-info-focus\"></div>",
     "<h3>The Solar System</h3>",
-    "<p>The Sun, Earth, Jupiter, Saturn and the asteroid Apophis, each",
-    " drawn as its symbol on its orbit, where it is now: at the minute",
-    " you opened this room, as the line under the title says. Name a body",
-    " and the view moves to hold its orbit; its source appears above.</p>",
-    "<p>This room is being built up. The other planets and Pluto join",
-    " it as the gallery's data service begins to carry them, and each",
-    " body's own shells &mdash; its atmosphere, rings and magnetic",
-    " surroundings &mdash; live in that body's room. The Solar System",
-    " Explorer, the gallery's first room, still shows every planet.</p>",
+    "<p>The Sun, the eight planets and Pluto, each drawn as its symbol on",
+    " its orbit, where it is now: at the minute you opened this room, as",
+    " the line under the title says. The room opens on the Sun and Earth.",
+    " Open the list below and tick any of the others to add them. Name a",
+    " body and the view moves to hold its orbit; its source appears",
+    " above.</p>",
+    "<p>This room is being built up. The asteroids, comets and spacecraft",
+    " join it later, each in its place in the list. Each body's own",
+    " shells &mdash; its atmosphere, rings and magnetic surroundings",
+    " &mdash; live in that body's own room; so far the Sun and Earth have",
+    " one.</p>",
     "<p>The computation runs in your browser via <strong>Pyodide</strong>,",
     " using the same Python the desktop orrery uses. No server.</p>",
     "<div class=\"info-note\">Part of Paloma's Orrery &mdash; named for the",
@@ -2039,32 +2161,97 @@ const EXHIBITS = {
         // Draw the minute the room is opened (Tony, 2026-09-26). The Sun
         // and Earth rooms leave this out and draw today at 00:00 UTC.
         epochNow: true,
-        pyGlobals: { BODIES_JSON: JSON.stringify(SOLAR_SYSTEM_BODIES) },
         // The assembler's figure only: no features are built, so no
         // shells. Each body's position marker names its drawer row
         // (without it the row would read "Earth osculating orbit"),
         // carries its source, and is what naming the body opens as a
         // text box. A body with no marker is reported.
         compose: function (payload) {
-            const traces = payload.figure.data;
+            const room = payload.room || {};
+            const rows = ((room.drawer || {}).rows || []).filter(function (r) {
+                return r && typeof r.slug === "string";
+            });
+            const arrival = room.arrival || {};
             const bodies = payload.bodies || {};
             const warnings = [];
-            for (const slug of SOLAR_SYSTEM_BODIES) {
+            if (!rows.length) {
+                warnings.push("data/objects_config.json serves no rows for " +
+                              "this room, so only the Sun is drawn");
+            }
+            // Traces in the served row order, the Sun first, so the
+            // drawer lists the rows as served. A stable sort: each
+            // body's own traces keep the assembler's order.
+            const rank = { center: 0 };
+            rows.forEach(function (r, i) { rank[r.slug] = i + 1; });
+            const traces = payload.figure.data
+                .map(function (t, i) { return { t: t, i: i }; })
+                .sort(function (p, q) {
+                    const a = rank.hasOwnProperty(p.t.legendgroup) ? rank[p.t.legendgroup] : rows.length + 1;
+                    const b = rank.hasOwnProperty(q.t.legendgroup) ? rank[q.t.legendgroup] : rows.length + 1;
+                    return (a - b) || (p.i - q.i);
+                })
+                .map(function (p) { return p.t; });
+            // What the room opens on: the Sun is the centre and always
+            // drawn; every other body is drawn only if arrival names it.
+            const drawn = {};
+            (arrival.drawn || []).forEach(function (s) { drawn[s] = true; });
+            const epochJd = payload.epoch_jd;
+            for (const row of rows) {
+                const slug = row.slug;
+                if (slug === "sun") { continue; }
                 const b = bodies[slug] || {};
+                const label = (typeof row.label === "string" && row.label) ? row.label : b.name;
                 let found = 0;
                 for (const t of traces) {
-                    if (t.legendgroup !== slug || t.name !== b.name) { continue; }
+                    if (t.legendgroup !== slug) { continue; }
+                    if (!drawn[slug]) { t.visible = SUN_HIDDEN; }
+                    // The name floating beside the symbol, and the orbit's
+                    // info cross. The cross sits at a point of the orbit
+                    // chosen for drawing, so its distance is not the
+                    // body's: it names the orbit and nothing more.
+                    if (t.mode === "text" && t.name === b.name + " label") {
+                        t.text = [label];
+                        continue;
+                    }
+                    if (t.mode === "markers" && t.name === b.name + " osculating orbit info") {
+                        t.text = [label + "'s orbit"];
+                        continue;
+                    }
+                    if (t.name !== b.name) { continue; }
                     found++;
                     t.showlegend = true;
+                    t.name = label;
+                    const lines = [label];
+                    if (typeof row.about === "string" && row.about) {
+                        lines.push(solarSystemSoftWrap(row.about, 60));
+                    }
+                    const dist = solarSystemDistanceLine(t, b.trust, epochJd);
+                    if (dist.line) {
+                        lines.push(dist.line);
+                    } else {
+                        warnings.push(label + ": no distance shown -- " + dist.why);
+                    }
+                    t.text = [lines.join("<br>")];
                     const extra = { label_target: true };
-                    const line = solarSystemSourceLine(b.source);
+                    const line = solarSystemSourceLine(b.source, row.source_note);
                     if (line) { extra.source = line; }
+                    if (b.source && b.source.center !== "@sun") {
+                        warnings.push(label + " is served measured from " +
+                                      b.source.center + ", not the Sun");
+                    }
+                    if (typeof row.about === "string" && row.about) { extra.about = row.about; }
                     t.meta = Object.assign({}, t.meta || {}, extra);
                 }
                 if (found !== 1) {
-                    warnings.push((b.name || slug) + " was asked for and " +
+                    warnings.push((label || slug) + " was asked for and " +
                         (found ? "drawn " + found + " times" : "not drawn") +
                         " by the assembler");
+                }
+            }
+            for (const s of (arrival.drawn || []).concat(arrival.highlight ? [arrival.highlight] : [])) {
+                if (!rank.hasOwnProperty(s)) {
+                    warnings.push("the room's arrival names \"" + s +
+                                  "\", which is not one of its rows");
                 }
             }
             // The Sun's marker gets its text box too.
@@ -2074,12 +2261,14 @@ const EXHIBITS = {
                 }
             }
             // The date under the title. Missing is reported, not hidden.
-            const stamp = sceneMomentStamp(payload.epoch_jd);
+            const stamp = sceneMomentStamp(epochJd);
             if (!stamp) {
                 warnings.push("the scene's date was not reported by the assembler");
             }
             return { traces: traces, warnings: warnings, absent: [],
-                     subtitle: stamp };
+                     subtitle: stamp,
+                     focusGroup: (typeof arrival.highlight === "string")
+                         ? arrival.highlight : null };
         }
     }
 };
@@ -2875,8 +3064,16 @@ async function initSunExhibit() {
         await sunPlaceCredit();
         // Arrival names its focus without reframing: newPlot has already
         // set the arrival view, floor and all, and that is the one frame
-        // the floor is right for.
+        // the floor is right for. A room may name the row it opens on
+        // (the Solar System room's served highlight, L-363); the Sun and
+        // Earth rooms name none and keep the outermost row drawn.
         sunFocusIdx = sunOutermostShown();
+        if (built.focusGroup) {
+            const named = sunGroups.findIndex(function (g) {
+                return g.key === built.focusGroup;
+            });
+            if (named >= 0) { sunFocusIdx = named; }
+        }
         renderSunDrawer();
 
         bar.style.width = "100%";
@@ -3606,6 +3803,7 @@ function buildSunDrawer(traces) {
         if (!g) { continue; }
         if (!byName[g]) {
             byName[g] = {
+                key: g,
                 name: t.name || g,
                 color: sunSwatchColor(t),
                 link: sunLinkOf(t),

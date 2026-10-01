@@ -1167,7 +1167,7 @@
         "highlight": "earth"
       },
       "drawer": {
-        "_declared": "The drawer's rows, by slug, in order outward from the Sun. A row marked see_more is shown only after the visitor presses See more, in its place in this order. Every row except the Sun can be ticked, and ticking a row also opens it. Apophis is one See more row until the near-Earth asteroids get their own design. Tony's rulings, 2026-09-29 and 2026-09-30 (L-363).",
+        "_declared": "The drawer's rows, by slug, in order outward from the Sun. A row marked see_more is shown only after the visitor presses See more, in its place in this order. Every row except the Sun can be ticked, and ticking a row also opens it. Apophis is one See more row until the near-Earth asteroids get their own design. A row may carry the words a visitor sees for it: label, the name shown in the drawer and text box when it is not the served name; about, a sentence shown in the text box and the panel; source_note, what the Horizons id in the source line is. Tony's rulings, 2026-09-29 and 2026-09-30 (L-363).",
         "rows": [
           { "slug": "sun" },
           { "slug": "mercury" },
@@ -1179,7 +1179,9 @@
           { "slug": "saturn" },
           { "slug": "uranus" },
           { "slug": "neptune" },
-          { "slug": "pluto_barycenter" }
+          { "slug": "pluto_barycenter", "label": "Pluto",
+            "about": "The symbol marks the gravitational center (barycenter) that Pluto and its moon Charon orbit together. It lies outside Pluto itself.",
+            "source_note": "the Pluto-Charon barycenter" }
         ]
       }
     }

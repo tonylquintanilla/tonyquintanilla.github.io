@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 43  
-**Total Lines of Code (non-blank):** 21,580  
+**Total Lines of Code (non-blank):** 21,641  
 **Total Public Functions/Classes:** 326
 
 ## Classification Coverage
@@ -41,7 +41,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `presentation.py` | Layout, axes, colors, title, and layer ordering. (161 lines) |
+| `presentation.py` | Layout, axes, colors, title, and layer ordering. (174 lines) |
 | `render_events.py` | Perihelion and event_link markers. (20 lines) |
 | `render_objects.py` | Object markers, center marker, and labels. (63 lines) |
 | `render_orbits.py` | Osculating (and mean-elements) conics. (159 lines) |
@@ -111,8 +111,8 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (860 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (658 lines) |
-| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (829 lines) |
-| `patch_L397_cache_in_step_all_objects_20260930.py` | - the "Cache in step" check compares every object, not only those that serve shells (L-397). (139 lines) |
+| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (830 lines) |
+| `patch_L363_8_room_step3a_20260930.py` | - the Solar System room, Half 2, step 3a: every planet and Pluto, with the words Tony approved (L-363). (186 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (123 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
