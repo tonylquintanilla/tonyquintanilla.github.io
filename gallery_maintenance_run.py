@@ -279,6 +279,18 @@ OFFLINE_CHECKERS = [
     ("Display figures", "node",
      ["documentation/smoke_display_figures.js"], ".", None, False),
 
+    # L-398 (2026-10-01): the Solar System room prints each distance to
+    # the place the larger of two errors earns -- the measured drift and
+    # JPL's own accuracy for the body's group. It requires the real
+    # gallery/solar_system_figures.js, works six cases by hand, checks
+    # that every drawer body points at its group's row, prints each
+    # body's distance from the SERVED cache naming which error set its
+    # figures, and fails unless Uranus, Neptune and Pluto print to JPL's
+    # ten-thousands place. Its self-test breaks the real file three ways
+    # first, so a green run has shown it can go red. Gates.
+    ("Solar System figures", "node",
+     ["documentation/smoke_solar_system_figures.js"], ".", "===", False),
+
     # L-281 (2026-09-26): the lobby's guest book. It renders the real
     # data/guestbook.json with the real gallery/guestbook.js and fails
     # on a missing time, name or text, or a link the page would drop;
@@ -342,6 +354,8 @@ SERVED_FILES = [
     # sees on opening with nothing saying so.
     "gallery/arrival.js",
     "gallery/nav_cluster.js",
+    # L-398 (2026-10-01): the page loads it with a script tag.
+    "gallery/solar_system_figures.js",
     "data/objects_config.json",
     # L-281 (2026-09-26): the lobby's guest book. The page loads the
     # script with a tag and fetches the entries file.

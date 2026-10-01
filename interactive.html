@@ -217,6 +217,13 @@
         writes Horizons' shorthand out; its orbit's cross names the
         orbit only. Tony's rulings of 2026-09-30. The drawer's See more,
         opened rows and Home's memory follow in step 3b)
+     Updated: October 1, 2026 with Anthropic's Claude Opus 5.5
+       (L-398: a body's distance prints to the place the larger of two
+        errors earns -- the measured drift, and JPL's own accuracy for
+        the body's group, served as its "position_accuracy". Pluto,
+        Uranus and Neptune now print to ten-thousands of km. Apophis,
+        with no row yet, says so in Tony's sentence of 2026-10-01. The
+        figures logic moved out to gallery/solar_system_figures.js)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -242,6 +249,9 @@
          (L-334). It left this page in stage B so that a check can
          require it as a file. -->
     <script src="gallery/arrival.js"></script>
+    <!-- The figures a body's distance prints with in the Solar System
+         room (L-398). Its own file so that a check can require it. -->
+    <script src="gallery/solar_system_figures.js"></script>
     <!-- The three-button navigation cluster (+, -, Home). One control
          set for the whole site; this page decides what the buttons do
          (see navFrameZoom / navHome below). -->
@@ -1911,8 +1921,13 @@ result = assemble_scene(
 
 # Each body's display name, the Horizons query its elements came from,
 # and the builder's measurement of how fast its worked-out position
-# drifts from JPL Horizons -- all read from the served record. The panel
-# names the source; the text box prints the figures that drift earns.
+# drifts from JPL Horizons -- all read from the served record. And
+# JPL's own accuracy for the body's group, read from its entry in the
+# config, where the mirror writes it from the orrery's row (L-398). The
+# panel names the source; the text box prints the figures the larger
+# of the two errors earns.
+_objs = {_o.get("slug"): _o for _o in (_cfg.get("objects") or [])
+         if isinstance(_o, dict)}
 _served = {}
 for _slug in _bodies:
     _rec = _cache.record(_slug)
@@ -1924,6 +1939,7 @@ for _slug in _bodies:
             "rate_deg_per_day": _trust.get("error_rate_deg_per_day"),
             "element_epoch_jd": _trust.get("element_epoch_jd"),
         },
+        "accuracy": (_objs.get(_slug) or {}).get("position_accuracy"),
     }
 
 json.dumps({
@@ -1995,57 +2011,11 @@ function solarSystemSourceLine(src, sourceNote) {
         " under the title.";
 }
 
-// The distance line in a body's text box, with the figures its measured
-// error earns at the minute drawn (Tony's ruling, 2026-09-30, written
-// into provenance-discipline Rule 3). The builder measured how fast the
-// worked-out position drifts from JPL Horizons, in degrees per day; at
-// the minute drawn the error is that rate times the days since the
-// elements' date, taken as a distance at the body's distance. The place
-// printed is the Report test's: the one whose half unit is nearest that
-// error on a log scale, a tie going coarser. Never finer than whole
-// kilometres, and never fewer than one figure. The measurement checks
-// direction, not distance; it is the only measure the cache holds, so
-// it serves for both. Numbers are written out (Tony: no exponents).
-const SOLAR_SYSTEM_FINEST_KM = 0.5;   // half a kilometre: whole km at most
-function solarSystemReportPlace(uncertainty) {
-    return Math.floor(Math.log10(2 * uncertainty) + 0.5);
-}
-function solarSystemRound(value, place) {
-    const lead = Math.floor(Math.log10(Math.abs(value)));
-    const p = Math.min(place, lead);   // never fewer than one figure
-    return { value: Math.round(value / Math.pow(10, p)) * Math.pow(10, p),
-             place: p };
-}
-function solarSystemWithCommas(n) {
-    return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-function solarSystemDistanceLine(t, trust, epochJd) {
-    const kmPerAu = GalleryFeatures._KM_PER_AU;
-    if (!(typeof kmPerAu === "number" && kmPerAu > 0)) {
-        return { line: null, why: "kilometres per AU is not served" };
-    }
-    const x = t.x[0], y = t.y[0], z = t.z[0];
-    const rAu = Math.sqrt(x * x + y * y + z * z);
-    if (!(rAu > 0 && isFinite(rAu))) {
-        return { line: null, why: "its position is not a number" };
-    }
-    if (!trust || typeof trust.rate_deg_per_day !== "number" ||
-            typeof trust.element_epoch_jd !== "number" ||
-            typeof epochJd !== "number") {
-        return { line: null, why: "no measured error is served for it, " +
-                                  "so no figures are earned" };
-    }
-    const rKm = rAu * kmPerAu;
-    const days = Math.abs(epochJd - trust.element_epoch_jd);
-    const errKm = Math.max(rKm * trust.rate_deg_per_day * days * Math.PI / 180,
-                           SOLAR_SYSTEM_FINEST_KM);
-    const km = solarSystemRound(rKm, solarSystemReportPlace(errKm));
-    const au = solarSystemRound(rAu, solarSystemReportPlace(errKm / kmPerAu));
-    const auText = au.place < 0 ? au.value.toFixed(-au.place)
-                                : solarSystemWithCommas(au.value);
-    return { line: auText + " AU from the Sun (" +
-                   solarSystemWithCommas(km.value) + " km)" };
-}
+// The distance line in a body's text box is built by
+// gallery/solar_system_figures.js (L-398): the place the larger of the
+// measured drift and JPL's own accuracy earns, written out. It left this
+// page so that documentation/smoke_solar_system_figures.js can check it
+// as a file (Tony's ruling of 2026-09-18, L-338).
 
 // Break a served sentence for the desktop text box, at spaces, with the
 // renderers' soft break, so the phone's label can rewrap it.
@@ -2225,11 +2195,19 @@ const EXHIBITS = {
                     if (typeof row.about === "string" && row.about) {
                         lines.push(solarSystemSoftWrap(row.about, 60));
                     }
-                    const dist = solarSystemDistanceLine(t, b.trust, epochJd);
+                    const dist = SolarSystemFigures.distanceLine(
+                        { x: t.x[0], y: t.y[0], z: t.z[0] }, b.trust,
+                        epochJd, b.accuracy, GalleryFeatures._KM_PER_AU);
                     if (dist.line) {
                         lines.push(dist.line);
+                        if (dist.note) {
+                            lines.push(solarSystemSoftWrap(dist.note, 60));
+                        }
                     } else {
                         warnings.push(label + ": no distance shown -- " + dist.why);
+                    }
+                    if (dist.accuracyWhy) {
+                        warnings.push(label + ": " + dist.accuracyWhy);
                     }
                     t.text = [lines.join("<br>")];
                     const extra = { label_target: true };

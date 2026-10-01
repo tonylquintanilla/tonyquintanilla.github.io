@@ -297,6 +297,13 @@
         "moon": false
       },
       "_comment": "L-291 (2026-09-07): entry rebuilt in the measured shape. Every rendered number carries value/unit/source/orrery_constant and is the orrery store's exact value at 5aed0590; the live store-drift run checks each by name. Groups earth_geostationary and earth_magnetosphere have no renderer yet (step 3) and the dispatch says so. Earth-Moon Lagrange points are L-297 and are not here.",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
+        "value": 1.0, "unit": "km",
+        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
+        "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
+        "orrery_constant": "constants_new.py::DE430_TERRESTRIAL_POSITION_PLACE_KM"
+      },
       "features": {
         "earth_interior": {
           "inner_core": {
@@ -982,6 +989,13 @@
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
+        "value": 100.0, "unit": "km",
+        "in": {"au": {"value": 6.684587122268446e-07, "figures": "exact", "prints": null}, "km": {"value": 100.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.015678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.00014374011786689664, "figures": "exact", "prints": null}}, "figures": "exact",
+        "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
+        "orrery_constant": "constants_new.py::DE430_JUPITER_SATURN_POSITION_PLACE_KM"
+      },
       "features": {
         "ring_system": {
           "main_ring": { "inner_radius_km": 122500, "outer_radius_km": 129000, "thickness_km": 30 },
@@ -1016,6 +1030,13 @@
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
+        "value": 100.0, "unit": "km",
+        "in": {"au": {"value": 6.684587122268446e-07, "figures": "exact", "prints": null}, "km": {"value": 100.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.015678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.00014374011786689664, "figures": "exact", "prints": null}}, "figures": "exact",
+        "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
+        "orrery_constant": "constants_new.py::DE430_JUPITER_SATURN_POSITION_PLACE_KM"
+      },
       "features": {
         "ring_system": {
           "d_ring": { "inner_radius_km": 66900,  "outer_radius_km": 74500 },
@@ -1043,31 +1064,70 @@
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
       "_comment": "Mercury, Venus, Mars, Uranus and Neptune were added on 2026-09-30 for the Solar System room (L-363, Half 2), with no features: each body's shells arrive with its own room. Their horizons_id values are the ones in the orrery's dictionary, OBJECT_DEFINITIONS in celestial_objects.py at orrery 10012821, the dictionary L-395 makes the source for the gallery's objects.",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
+        "value": 1.0, "unit": "km",
+        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
+        "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
+        "orrery_constant": "constants_new.py::DE430_TERRESTRIAL_POSITION_PLACE_KM"
+      },
       "features": {}
     },
     {
       "slug": "venus", "name": "Venus", "horizons_id": "299", "id_type": "majorbody",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
-      "trajectory_of": null, "trace_policy": "none", "features": {}
+      "trajectory_of": null, "trace_policy": "none",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
+        "value": 1.0, "unit": "km",
+        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
+        "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
+        "orrery_constant": "constants_new.py::DE430_TERRESTRIAL_POSITION_PLACE_KM"
+      },
+      "features": {}
     },
     {
       "slug": "mars", "name": "Mars", "horizons_id": "499", "id_type": "majorbody",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
-      "trajectory_of": null, "trace_policy": "none", "features": {}
+      "trajectory_of": null, "trace_policy": "none",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
+        "value": 1.0, "unit": "km",
+        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
+        "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
+        "orrery_constant": "constants_new.py::DE430_TERRESTRIAL_POSITION_PLACE_KM"
+      },
+      "features": {}
     },
     {
       "slug": "uranus", "name": "Uranus", "horizons_id": "799", "id_type": "majorbody",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
-      "trajectory_of": null, "trace_policy": "none", "features": {}
+      "trajectory_of": null, "trace_policy": "none",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
+        "value": 10000.0, "unit": "km",
+        "in": {"au": {"value": 6.684587122268446e-05, "figures": "exact", "prints": null}, "km": {"value": 10000.0, "figures": "exact", "prints": null}, "r_earth": {"value": 1.5678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.014374011786689666, "figures": "exact", "prints": null}}, "figures": "exact",
+        "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
+        "orrery_constant": "constants_new.py::DE430_URANUS_NEPTUNE_PLUTO_POSITION_PLACE_KM"
+      },
+      "features": {}
     },
     {
       "slug": "neptune", "name": "Neptune", "horizons_id": "899", "id_type": "majorbody",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
-      "trajectory_of": null, "trace_policy": "none", "features": {}
+      "trajectory_of": null, "trace_policy": "none",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
+        "value": 10000.0, "unit": "km",
+        "in": {"au": {"value": 6.684587122268446e-05, "figures": "exact", "prints": null}, "km": {"value": 10000.0, "figures": "exact", "prints": null}, "r_earth": {"value": 1.5678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.014374011786689666, "figures": "exact", "prints": null}}, "figures": "exact",
+        "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
+        "orrery_constant": "constants_new.py::DE430_URANUS_NEPTUNE_PLUTO_POSITION_PLACE_KM"
+      },
+      "features": {}
     },
     {
       "slug": "moon", "name": "Moon", "horizons_id": "301", "id_type": "majorbody",
@@ -1093,6 +1153,13 @@
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
       "_comment": "The shared centre of Pluto and Charon, about the Sun: where the Solar System room draws Pluto (L-363, 2026-09-30). The orrery's barycentre rule draws the shared centre when it lies outside the bigger body, and names Pluto-Charon as such a pair (orrery-coding-conventions). The pluto entry below is measured FROM this centre and cannot join a Sun-centred scene, because the assembler never translates between centres; it stays for a future Pluto room. Name and horizons_id as in the orrery's dictionary, OBJECT_DEFINITIONS in celestial_objects.py at orrery 10012821. category names the system; the builder's trust cap reads it (one orbital period, as for any dwarf planet).",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
+        "value": 10000.0, "unit": "km",
+        "in": {"au": {"value": 6.684587122268446e-05, "figures": "exact", "prints": null}, "km": {"value": 10000.0, "figures": "exact", "prints": null}, "r_earth": {"value": 1.5678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.014374011786689666, "figures": "exact", "prints": null}}, "figures": "exact",
+        "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
+        "orrery_constant": "constants_new.py::DE430_URANUS_NEPTUNE_PLUTO_POSITION_PLACE_KM"
+      },
       "features": {}
     },
     {
