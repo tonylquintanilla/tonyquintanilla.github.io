@@ -310,6 +310,17 @@ OFFLINE_CHECKERS = [
     ("Solar System figures", "node",
      ["documentation/smoke_solar_system_figures.js"], ".", "===", False),
 
+    # L-363 step 3b (2026-10-02): the Solar System room's drawer. It
+    # requires the real gallery/solar_system_drawer.js, works the design's
+    # rules on a small list of rows -- the Sun never ticked, See more
+    # hiding only what is not ticked, Home falling back through the tick
+    # order, All / none leaving the Sun alone, a room offered only where
+    # one exists -- reads the room's rows from the served config, and
+    # fails if interactive.html stops asking the file. Its self-test
+    # breaks the logic three ways first. Gates.
+    ("Solar System drawer", "node",
+     ["documentation/smoke_solar_system_drawer.js"], ".", "===", False),
+
     # L-281 (2026-09-26): the lobby's guest book. It renders the real
     # data/guestbook.json with the real gallery/guestbook.js and fails
     # on a missing time, name or text, or a link the page would drop;
@@ -375,6 +386,8 @@ SERVED_FILES = [
     "gallery/nav_cluster.js",
     # L-398 (2026-10-01): the page loads it with a script tag.
     "gallery/solar_system_figures.js",
+    # L-363 step 3b (2026-10-02): likewise.
+    "gallery/solar_system_drawer.js",
     "data/objects_config.json",
     # L-281 (2026-09-26): the lobby's guest book. The page loads the
     # script with a tag and fetches the entries file.

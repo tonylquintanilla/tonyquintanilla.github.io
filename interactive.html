@@ -224,6 +224,17 @@
         Uranus and Neptune now print to ten-thousands of km. Apophis,
         with no row yet, says so in Tony's sentence of 2026-10-01. The
         figures logic moved out to gallery/solar_system_figures.js)
+     Updated: October 2, 2026 with Anthropic's Claude Opus 5.5
+       (L-363 Half 2, step 3b: the Solar System room's drawer. The Sun's
+        row cannot be ticked; a row opens, offering "Enter the Sun room"
+        or "Enter the Earth room", or saying "No room or cards yet";
+        Apophis waits under See more; ticking a body opens its row;
+        tapping a body in the scene highlights its row without moving
+        the view; Home goes back to the last body ticked, falling back
+        through the order. The room frames on where its bodies are now,
+        plus 20%, not on their whole orbits (Tony, 2026-10-02). The logic
+        is in gallery/solar_system_drawer.js; the Sun and Earth rooms'
+        drawer is unchanged)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -252,6 +263,10 @@
     <!-- The figures a body's distance prints with in the Solar System
          room (L-398). Its own file so that a check can require it. -->
     <script src="gallery/solar_system_figures.js"></script>
+    <!-- What the Solar System room's drawer does: See more, opened rows,
+         the Sun's fixed row, Home's memory (L-363 step 3b). Its own file
+         so that a check can require it. -->
+    <script src="gallery/solar_system_drawer.js"></script>
     <!-- The three-button navigation cluster (+, -, Home). One control
          set for the whole site; this page decides what the buttons do
          (see navFrameZoom / navHome below). -->
@@ -602,6 +617,36 @@
         }
         .sun-row.focused .rname {
             color: var(--accent); font-weight: 500;
+        }
+        /* L-363 step 3b, the Solar System room's drawer only. A hidden
+           row must stay hidden against .sun-row's display: flex (the
+           touch-path rule: write the hidden rule at least as specific). */
+        .sun-row[hidden], .sun-row-open[hidden], .sun-see-more[hidden] {
+            display: none;
+        }
+        /* The Sun is the scene's fixed centre: no box to tick, no GO. Its
+           box keeps its space so the names stay in one column. */
+        .sun-row.fixed .box { visibility: hidden; }
+        .sun-row.fixed .go { display: none; }
+        /* An opened row, under its row, lined up with the names (65 px is
+           the row's left end: 16 + 18 + 10 + 9 + 12). */
+        .sun-row-open {
+            padding: 2px 16px 12px 65px;
+            font: 400 13px 'DM Sans', system-ui, sans-serif;
+            color: var(--text-dim);
+        }
+        .sun-row-open a.enter {
+            display: inline-block; min-height: 36px; line-height: 36px;
+            padding: 0 14px; border: 1px solid var(--accent);
+            border-radius: 6px; color: var(--accent);
+            text-decoration: none; font-weight: 500;
+        }
+        .sun-row-open a.enter:hover { background: rgba(201,168,76,0.12); }
+        .sun-see-more {
+            display: block; min-height: 44px; margin: 0 16px 0 65px;
+            padding: 0; background: none; border: none; cursor: pointer;
+            color: var(--interactive); text-align: left;
+            font: 600 12px 'DM Sans', sans-serif; letter-spacing: 0.6px;
         }
         .drawer-btn .fswatch {
             width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
@@ -2047,12 +2092,16 @@ const SOLAR_SYSTEM_INFO_HTML = [
     "<h3>The Solar System</h3>",
     "<p>The Sun, the eight planets and Pluto, each drawn as its symbol on",
     " its orbit, where it is now: at the minute you opened this room, as",
-    " the line under the title says. The room opens on the Sun and Earth.",
-    " Open the list below and tick any of the others to add them. Name a",
-    " body and the view moves to hold its orbit; its source appears",
-    " above.</p>",
-    "<p>This room is being built up. The asteroids, comets and spacecraft",
-    " join it later, each in its place in the list. Each body's own",
+    " the line under the title says. Open the list below. Tick a body to",
+    " draw it, and the view widens to hold every body drawn. Tap a body's",
+    " name to open its row; a body with a room of its own has a button",
+    " to enter it. Tap a body in the picture to find its row. GO takes the",
+    " view to a body, and Home goes back to the last one you ticked. The",
+    " body named on the list's handle has its description and source at",
+    " the top of this panel.</p>",
+    "<p>This room is being built up. Apophis, the first asteroid here,",
+    " waits under See more; the other asteroids, the comets and the",
+    " spacecraft join later, each in its place in the list. Each body's own",
     " shells &mdash; its atmosphere, rings and magnetic surroundings",
     " &mdash; live in that body's own room; so far the Sun and Earth have",
     " one.</p>",
@@ -2135,6 +2184,15 @@ const EXHIBITS = {
         driver: SOLAR_SYSTEM_DRIVER,
         infoHtml: SOLAR_SYSTEM_INFO_HTML,
         focusNoun: "body",
+        // How this room frames (Tony, 2026-10-02, choosing option B "but
+        // with a buffer of 20%"): on how far each body is from the Sun
+        // NOW, not on its whole orbit, with a 20% margin. The body is
+        // always in view; part of a stretched orbit (Pluto's, Apophis's)
+        // may run past the box and is cut off at its edge until the
+        // visitor zooms out. The farthest body ticked sets the frame.
+        // The Sun and Earth rooms keep framing whole shapes at 10%.
+        frameOnPosition: true,
+        frameMargin: 1.2,
         // Draw the minute the room is opened (Tony, 2026-09-26). The Sun
         // and Earth rooms leave this out and draw today at 00:00 UTC.
         epochNow: true,
@@ -2263,7 +2321,12 @@ const EXHIBITS = {
             return { traces: traces, warnings: warnings, absent: [],
                      subtitle: stamp,
                      focusGroup: (typeof arrival.highlight === "string")
-                         ? arrival.highlight : null };
+                         ? arrival.highlight : null,
+                     // L-363 step 3b: the rows as served, and what the
+                     // room opens on, for this room's drawer.
+                     drawer: { rows: rows,
+                               drawn: (arrival.drawn || []).slice(),
+                               highlight: arrival.highlight } };
         }
     }
 };
@@ -2357,12 +2420,40 @@ function sunTraceExtentAu(trace) {
 function sunGroupRadius(k) {
     const grp = sunGroups[k];
     if (!grp) { return 0; }
+    // A room that frames on where its bodies are NOW (the Solar System
+    // room) measures the body's distance from the Sun, not its orbit.
+    if (EX && EX.frameOnPosition) {
+        return sunPositionRadius(sunPlotDiv ? sunPlotDiv.data : null, grp.indices);
+    }
     let maxR = 0;
     for (let j = 0; j < grp.indices.length; j++) {
         const e = sunExtents[grp.indices[j]] || 0;
         if (e > maxR) { maxR = e; }
     }
     return maxR;
+}
+
+// How far a group's body is from the scene's centre now: the position
+// marker the room names as its text box (meta.label_target), or 0 when
+// the group has none -- the Sun, at the centre.
+function sunPositionRadius(traces, indices) {
+    if (!traces) { return 0; }
+    for (let j = 0; j < indices.length; j++) {
+        const t = traces[indices[j]];
+        if (t && t.meta && t.meta.label_target === true &&
+            Array.isArray(t.x) && Array.isArray(t.y) && Array.isArray(t.z)) {
+            const x = t.x[0], y = t.y[0], z = t.z[0];
+            const r = Math.sqrt(x * x + y * y + z * z);
+            return isFinite(r) ? r : 0;
+        }
+    }
+    return 0;
+}
+
+// The margin a frame leaves round what it holds: 10%, or a room's own
+// (the Solar System room's 20%, Tony 2026-10-02).
+function sunFrameMargin() {
+    return (EX && typeof EX.frameMargin === "number") ? EX.frameMargin : 1.1;
 }
 
 // Tick spacing, 1/2/5 per decade. Without it the grid keeps whatever
@@ -2381,7 +2472,7 @@ function sunGridDtick(span) {
 function sunFrameOn(k) {
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
     const rad = sunGroupRadius(k);
-    const r = rad > 0 ? rad * 1.1 : (EX ? EX.halfRangeAu : SUN_HALF_RANGE_AU);
+    const r = rad > 0 ? rad * sunFrameMargin() : (EX ? EX.halfRangeAu : SUN_HALF_RANGE_AU);
     const d = sunGridDtick(2 * r);
     return Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv, {
         "scene.xaxis.range": [-r, r], "scene.xaxis.dtick": d,
@@ -2502,6 +2593,8 @@ function navFrameZoom(direction) {
 function navHome() {
     const gd = navPlotDiv();
     if (!gd || !window.Plotly) { return Promise.resolve(); }
+    // The Solar System room's Home follows the tick order (L-363 3b).
+    if (ssDrawer) { return ssHome(gd); }
     const isSun = document.body.classList.contains("sun-exhibit");
     const update = { "scene.camera": isSun ? NAV_SUN_CAMERA : NAV_EXPLORER_CAMERA };
     if (navArrivalR) {
@@ -2963,7 +3056,19 @@ async function initSunExhibit() {
             if (vis === "legendonly" || vis === false) { continue; }
             if (extents[i] > arrivalR) { arrivalR = extents[i]; }
         }
-        if (arrival.applied && arrivalR > 0) {
+        if (EX.frameOnPosition) {
+            // The Solar System room opens framed the way it frames a
+            // tick: the farthest body drawn, by its distance now, times
+            // the room's margin (Tony, 2026-10-02). Only the Sun drawn:
+            // the room's own half-range.
+            let far = 0;
+            for (let i = 0; i < traces.length; i++) {
+                const vis = traces[i].visible;
+                if (vis === "legendonly" || vis === false) { continue; }
+                far = Math.max(far, sunPositionRadius(traces, [i]));
+            }
+            arrivalR = far > 0 ? far * sunFrameMargin() : EX.halfRangeAu;
+        } else if (arrival.applied && arrivalR > 0) {
             // Fit what is drawn. A served min_half_range_au, if
             // there is one, is the only floor.
             arrivalR = Math.max(arrivalR * 1.1, arrival.minHalfRangeAu);
@@ -3034,7 +3139,11 @@ async function initSunExhibit() {
             // The context was the whole bug. setTimeout 0 lets Plotly
             // finish dispatching first. Confirmed live before patching.
             if (typeof k === "number") {
-                setTimeout(function () { sunFocusOn(k); }, 0);
+                // The Solar System room: a tap on a body highlights its
+                // row and moves nothing (L-363 step 3b, design 3.5).
+                setTimeout(function () {
+                    if (ssDrawer) { ssSelect(k, false); } else { sunFocusOn(k); }
+                }, 0);
             }
         });
         sunLabelInstall(gd);   // L-318: tap in the scene closes the drawer label
@@ -3045,6 +3154,10 @@ async function initSunExhibit() {
         // declined to draw cannot appear as a row for something that
         // is not there.
         sunPlotDiv = gd;
+        // L-363 step 3b: a room that hands its served rows to the drawer
+        // (the Solar System room) gets the body drawer; the Sun and Earth
+        // rooms hand none and keep theirs.
+        ssDrawer = built.drawer ? ssDrawerState(built.drawer) : null;
         buildSunDrawer(traces);
         // L-289: the three axis lines through the origin go in AFTER the
         // drawer, so the drawer has no row for them, and after the
@@ -3090,6 +3203,10 @@ async function initSunExhibit() {
 // ====================================================================
 // SUN DRAWER (L-267 Stage A) -- what the legend used to be
 // ====================================================================
+// THE SOLAR SYSTEM ROOM'S DRAWER (L-363 Half 2, step 3b) is further
+// down, just above buildSunDrawer: ssDrawer and the ss* functions. It is
+// the same drawer with four things added for a room whose rows are bodies.
+//
 // One row per legendgroup, which is exactly what the legend showed, and
 // a row toggles every trace in its group, which is exactly what a legend
 // click did. Measured at gallery 1cd0dcbb: buildFeatureTraces returns 18
@@ -3789,6 +3906,255 @@ function sunSwatchColor(trace) {
     return "#7a7a8a";
 }
 
+// ====================================================================
+// THE SOLAR SYSTEM ROOM'S DRAWER (L-363 Half 2, step 3b, October 2026)
+// ====================================================================
+// The Sun and Earth rooms' drawer is unchanged. This room's rows are
+// bodies, and Tony's design (L-363; the front-door design, sections 3 and
+// 4) gives them four things the shell rows do not have. Each decision is
+// made in gallery/solar_system_drawer.js, which a check requires as a
+// file; this part only touches the page and Plotly.
+//   - The Sun's row cannot be ticked: it is the scene's fixed centre.
+//   - A row opens: "Enter the ... room" where the body has a room in
+//     EXHIBITS, "No room or cards yet" where it has none.
+//   - See more / See fewer for the rows the room marks see_more.
+//   - Home remembers the order bodies were ticked, for this tab only.
+// Selecting and ticking are different acts. Ticking draws a body, frames
+// everything drawn, and opens and names its row (Tony, 2026-09-30).
+// Tapping a name names the row and opens or closes it. Tapping a body in
+// the scene names its row. Neither of those moves the camera; GO does,
+// as in the other rooms.
+// null in the Sun and Earth rooms, so every branch that asks is skipped.
+let ssDrawer = null;
+
+function ssDrawerState(served) {
+    const SSD = window.SolarSystemDrawer;
+    const rows = SSD.rowsFromServed(served.rows);
+    const byKey = {};
+    rows.forEach(function (r) { byKey[r.key] = r; });
+    return {
+        rows: rows,
+        byKey: byKey,
+        opening: { drawn: (served.drawn || []).slice(),
+                   highlight: served.highlight },
+        order: SSD.openingOrder(rows, served.drawn, served.highlight),
+        open: null,       // the key of the opened row, or null
+        seeMore: false    // See more pressed
+    };
+}
+
+function ssIndex(key) {
+    return sunGroups.findIndex(function (g) { return g.key === key; });
+}
+
+function ssShownByKey() {
+    const m = {};
+    sunGroups.forEach(function (g) { m[g.key] = !!g.shown; });
+    return m;
+}
+
+// The served rows the scene actually drew. A row the assembler did not
+// draw has no group; compose has already reported it.
+function ssDrawnRows() {
+    return ssDrawer.rows.filter(function (r) { return ssIndex(r.key) >= 0; });
+}
+
+function ssWireRow(row, grp, k, list) {
+    const SSD = window.SolarSystemDrawer;
+    const served = ssDrawer.byKey[grp.key] ||
+        { key: grp.key, slug: grp.key, seeMore: false };
+    if (!SSD.tickable(grp.key)) { row.classList.add("fixed"); }
+    row.setAttribute("aria-expanded", "false");
+    row.onclick = function (ev) {
+        const t = ev.target;
+        const at = function (sel) {
+            return !!(t && typeof t.closest === "function" && t.closest(sel));
+        };
+        if (at(".go")) { ssGo(k); return; }
+        if (at(".pick") && SSD.tickable(grp.key)) { ssTick(k, !grp.shown); return; }
+        ssSelect(k, true);
+    };
+    list.appendChild(row);
+    // The opened row: hidden until this row is opened.
+    const panel = document.createElement("div");
+    panel.className = "sun-row-open";
+    panel.setAttribute("data-open-for", grp.key);
+    panel.hidden = true;
+    const room = SSD.roomFor(served, Object.keys(EXHIBITS));
+    if (room) {
+        const a = document.createElement("a");
+        a.className = "enter";
+        a.href = "interactive.html?exhibit=" + encodeURIComponent(room);
+        a.textContent = SSD.WORDS.enter(grp.name);
+        panel.appendChild(a);
+    } else {
+        panel.textContent = SSD.WORDS.noRoom;
+    }
+    list.appendChild(panel);
+}
+
+function ssAddSeeMore(list) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "sun-see-more";
+    b.id = "sun-see-more";
+    b.hidden = true;
+    b.onclick = function () {
+        ssDrawer.seeMore = !ssDrawer.seeMore;
+        renderSunDrawer();
+        sunMeasureDrawer();
+    };
+    list.appendChild(b);
+}
+
+// renderSunDrawer's part for this room: which rows show, which row is
+// open, the See more button's words. Returns the count line.
+function ssRender() {
+    const SSD = window.SolarSystemDrawer;
+    const shown = ssShownByKey();
+    const list = document.getElementById("sun-drawer-list");
+    const rows = list.querySelectorAll(".sun-row[data-k]");
+    const seen = {};
+    for (let r = 0; r < rows.length; r++) {
+        const grp = sunGroups[Number(rows[r].dataset.k)];
+        if (!grp) { continue; }
+        const served = ssDrawer.byKey[grp.key];
+        const vis = !served || SSD.visible(served, shown[grp.key], ssDrawer.seeMore);
+        rows[r].hidden = !vis;
+        seen[grp.key] = vis;
+        rows[r].setAttribute("aria-expanded",
+            (vis && ssDrawer.open === grp.key) ? "true" : "false");
+    }
+    const panels = list.querySelectorAll(".sun-row-open");
+    for (let p = 0; p < panels.length; p++) {
+        const key = panels[p].getAttribute("data-open-for");
+        panels[p].hidden = !(seen[key] && ssDrawer.open === key);
+    }
+    const drawn = ssDrawnRows();
+    const b = document.getElementById("sun-see-more");
+    if (b) {
+        const words = SSD.seeMoreLabel(drawn, shown, ssDrawer.seeMore);
+        b.hidden = !words;
+        b.textContent = words || "";
+    }
+    return SSD.countLine(drawn, shown);
+}
+
+// A name tapped in the drawer (fromDrawer) names the row and opens it, or
+// closes it if it is the row already open. A body tapped in the scene
+// names its row and leaves what is open alone. Nothing here calls Plotly.
+function ssSelect(k, fromDrawer) {
+    const grp = sunGroups[k];
+    if (!grp) { return; }
+    if (fromDrawer) {
+        ssDrawer.open = (ssDrawer.open === grp.key && sunFocusIdx === k)
+            ? null : grp.key;
+    }
+    sunFocusIdx = k;
+    renderSunDrawer();
+    if (fromDrawer) { sunMeasureDrawer(); }
+}
+
+// The box. Ticking draws the body, names its row and opens it; unticking
+// takes it out of Home's order. Either way the frame holds every body
+// drawn -- the farthest one's distance from the Sun now, plus 20% (design
+// 4.2; Tony's ruling of 2026-10-02) -- and the drawer stays open, so
+// several can be ticked in a row.
+function ssTick(k, on) {
+    const SSD = window.SolarSystemDrawer;
+    const grp = sunGroups[k];
+    if (!grp || !SSD.tickable(grp.key)) { return Promise.resolve(); }
+    grp.shown = on;
+    if (on) {
+        ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);
+        sunFocusIdx = k;
+        ssDrawer.open = grp.key;
+    } else {
+        ssDrawer.order = SSD.orderRemove(ssDrawer.order, grp.key);
+        if (ssDrawer.open === grp.key) { ssDrawer.open = null; }
+    }
+    const done = sunApplyVisibility(true, sunOutermostShown());
+    sunMeasureDrawer();
+    return done;
+}
+
+// GO, as in the other rooms: a body not drawn is ticked first; then the
+// view goes to it, the drawer closes and its text box opens.
+function ssGo(k) {
+    const SSD = window.SolarSystemDrawer;
+    const grp = sunGroups[k];
+    if (!grp) { return Promise.resolve(); }
+    if (!grp.shown && SSD.tickable(grp.key)) {
+        grp.shown = true;
+        ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);
+        sunFocusIdx = k;
+        setSunDrawer(false);
+        return sunApplyVisibility(true)
+            .then(function () { return sunLabelShow(k); });
+    }
+    return sunFocusOn(k).then(function () { return sunLabelShow(k); });
+}
+
+// All / none, leaving the Sun alone. The order follows: everything newly
+// ticked is added in served order; none empties it.
+function ssToggleAll() {
+    const SSD = window.SolarSystemDrawer;
+    const next = SSD.toggleAll(ssDrawnRows(), ssShownByKey(), ssDrawer.order);
+    sunGroups.forEach(function (g) {
+        if (next.shown.hasOwnProperty(g.key)) { g.shown = next.shown[g.key]; }
+    });
+    ssDrawer.order = next.order;
+    if (ssDrawer.open && !next.shown[ssDrawer.open] &&
+        SSD.tickable(ssDrawer.open)) {
+        ssDrawer.open = null;
+    }
+    return sunApplyVisibility(false);
+}
+
+// Home (design 4.3): the opening camera angle, the drawer closed, the
+// frame holding everything drawn, and the last body ticked that is still
+// ticked named. If nothing is ticked, what the room opened on is put back
+// and the opening frame with it -- the one time Home changes what is
+// drawn. (The design wrote "ticks Earth again", when the room opened on
+// Earth alone; what the room opens on is now served and can change.)
+function ssHome(gd) {
+    const SSD = window.SolarSystemDrawer;
+    let key = SSD.homeTarget(ssDrawer.order, ssShownByKey());
+    let first = Promise.resolve();
+    let r;
+    if (key === null) {
+        const want = {};
+        ssDrawer.opening.drawn.forEach(function (s) { want[s] = true; });
+        sunGroups.forEach(function (g) {
+            const row = ssDrawer.byKey[g.key];
+            if (row && SSD.tickable(g.key)) { g.shown = !!want[row.slug]; }
+        });
+        ssDrawer.order = SSD.openingOrder(ssDrawer.rows,
+            ssDrawer.opening.drawn, ssDrawer.opening.highlight);
+        key = SSD.homeTarget(ssDrawer.order, ssShownByKey());
+        first = sunApplyVisibility(true, sunOutermostShown());
+        r = navArrivalR || EX.halfRangeAu;
+    } else {
+        const rad = sunGroupRadius(sunOutermostShown());
+        r = rad > 0 ? rad * sunFrameMargin() : EX.halfRangeAu;
+    }
+    sunFocusIdx = (key !== null) ? ssIndex(key) : sunOutermostShown();
+    ssDrawer.open = null;
+    setSunDrawer(false);
+    renderSunDrawer();
+    const d = sunGridDtick(2 * r);
+    const update = {
+        "scene.camera": NAV_SUN_CAMERA,
+        "scene.xaxis.range": [-r, r], "scene.xaxis.dtick": d,
+        "scene.yaxis.range": [-r, r], "scene.yaxis.dtick": d,
+        "scene.zaxis.range": [-r, r], "scene.zaxis.dtick": d,
+        "scene.xaxis.tick0": 0, "scene.yaxis.tick0": 0, "scene.zaxis.tick0": 0
+    };
+    return first
+        .then(function () { return Plotly.relayout(gd, update); })
+        .then(sunHudUpdate);
+}
+
 function buildSunDrawer(traces) {
     sunGroups = [];
     const byName = {};
@@ -3845,6 +4211,13 @@ function buildSunDrawer(traces) {
             '<span class="go">go</span>';
         row.querySelector(".swatch").style.background = grp.color;
         row.querySelector(".rname").textContent = grp.name;
+        // Each row names its group, so renderSunDrawer finds it however
+        // many other things sit between the rows (L-363 step 3b).
+        row.dataset.k = String(k);
+        if (ssDrawer) {
+            ssWireRow(row, grp, k, list);
+            return;
+        }
         // L-267 Stage B. ONE JOB PER CONTROL. The box decides whether a
         // shell is drawn; everything else on the row moves the camera to
         // it. Before this, clicking anywhere toggled the shell, so
@@ -3903,22 +4276,30 @@ function buildSunDrawer(traces) {
         row.querySelector(".rname").textContent = what + " -- not yet drawn";
         list.appendChild(row);
     }
+    if (ssDrawer) { ssAddSeeMore(list); }
 
     renderSunDrawer();
 }
 
 function renderSunDrawer() {
     let n = 0;
-    const rows = document.getElementById("sun-drawer-list").children;
-    for (let i = 0; i < rows.length && i < sunGroups.length; i++) {
+    // A row is matched to its group by the group it names (data-k), not
+    // by its place in the list: the Solar System room puts opened rows
+    // and a See more button between them. In the Sun and Earth rooms the
+    // k-th row is group k, as before, and the "not yet drawn" rows after
+    // them name no group and are passed over, as before.
+    const rows = document.querySelectorAll("#sun-drawer-list .sun-row[data-k]");
+    for (let r = 0; r < rows.length; r++) {
+        const i = Number(rows[r].dataset.k);
+        if (!sunGroups[i]) { continue; }
         const on = sunGroups[i].shown;
-        rows[i].classList.toggle("on", on);
-        rows[i].classList.toggle("focused", i === sunFocusIdx);
-        rows[i].querySelector(".box").innerHTML = on ? "&#10003;" : "";
+        rows[r].classList.toggle("on", on);
+        rows[r].classList.toggle("focused", i === sunFocusIdx);
+        rows[r].querySelector(".box").innerHTML = on ? "&#10003;" : "";
         if (on) { n++; }
     }
     document.getElementById("sun-drawer-count").textContent =
-        n + " of " + sunGroups.length;
+        ssDrawer ? ssRender() : n + " of " + sunGroups.length;
 
     // L-267 Stage B. The handle stops reporting the count -- the drawer
     // head above already does -- and names where the camera is. The
@@ -4072,7 +4453,10 @@ function renderSunInfo(grp) {
 // the scene showing the old cube until the modebar's reset camera forced
 // a redraw: the "nothing happens until I click reset" symptom in Tony's
 // Mode 5 report, 2026-08-30.
-function sunApplyVisibility(keepFocus) {
+// frameIdx, if given, is the group to frame on instead of the focus:
+// the Solar System room frames everything drawn while naming the body
+// just ticked (L-363 step 3b). The Sun and Earth rooms never pass it.
+function sunApplyVisibility(keepFocus, frameIdx) {
     if (!keepFocus) { sunFocusIdx = sunOutermostShown(); }
     renderSunDrawer();
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
@@ -4084,7 +4468,7 @@ function sunApplyVisibility(keepFocus) {
         }
     }
     if (!idx.length) { return Promise.resolve(); }
-    const focusAt = sunFocusIdx;
+    const focusAt = (typeof frameIdx === "number") ? frameIdx : sunFocusIdx;
     return Plotly.restyle(sunPlotDiv, { visible: vis }, idx)
         .then(function () { return sunFrameOn(focusAt); })
         .then(sunLabelIfHidden);   // L-318: an unticked shell loses its label
@@ -4125,6 +4509,9 @@ function wireSunDrawer() {
         sunLabelClose();
     };
     document.getElementById("sun-drawer-all").onclick = function () {
+        // The Solar System room leaves the Sun alone and keeps Home's
+        // order (L-363 step 3b).
+        if (ssDrawer) { ssToggleAll(); return; }
         const anyOff = sunGroups.some(function (g) { return !g.shown; });
         sunGroups.forEach(function (g) { g.shown = anyOff; });
         sunApplyVisibility(false);
