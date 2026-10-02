@@ -151,6 +151,16 @@ GENERATORS = [
 
     ("Config mirror", ["tools/mirror_constants.py", "--write"], ".",
      ["data/objects_config.json"]),
+
+    # L-395 (2026-10-01): the orrery's object list is the one definition
+    # of each object. The pull brings its export at a recorded SHA; the
+    # mirror writes each linked object's name, Horizons id, description
+    # and NASA link into the config, and prints every field it moved.
+    ("Objects export pull", ["tools/pull_objects_export.py"], ".",
+     ["data/objects_export.json", "data/objects_export.sha"]),
+
+    ("Objects mirror", ["tools/mirror_objects.py", "--write"], ".",
+     ["data/objects_config.json"]),
 ]
 
 # ---- offline checkers ------------------------------------------------
@@ -197,6 +207,15 @@ OFFLINE_CHECKERS = [
     # screen in the middle of a check.
     ("Store editor suite", "python",
      ["tools/test_exhibit_store_editor.py"], ".", None, False),
+
+    # L-395: the mirror's refusals, each forced on a fixture, then the
+    # real config; and the config's copies against the export, so a
+    # hand edit to a linked object's words fails the run.
+    ("Objects mirror suite", "python",
+     ["test_mirror_objects.py"], "tools", "MIRROR OBJECTS SUITE:", False),
+
+    ("Objects mirror check", "python",
+     ["tools/mirror_objects.py"], ".", "OBJECTS MIRROR:", False),
 
     ("Config mirror check", "python",
      ["tools/check_constants_links.py", "--mirror"], ".", None, False),

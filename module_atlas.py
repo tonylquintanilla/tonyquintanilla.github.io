@@ -135,13 +135,16 @@ ROLE_MAP = {
     'inspect_staging':                     'devtool',
     'json_converter':                      'devtool',
     'mirror_constants':                    'devtool',
+    'mirror_objects':                      'devtool',
     'module_atlas':                        'devtool',
     'pull_constants_export':               'devtool',
+    'pull_objects_export':                 'devtool',
     'serve_gallery':                       'devtool',
     'sweep_report':                        'devtool',
     'test_artifact1_earth':                'devtool',
     'test_gallery_cache_builder_offline':  'devtool',
     'test_guestbook_updater':              'devtool',
+    'test_mirror_objects':                 'devtool',
 }
 # ROLE-MAP:END
 

@@ -52,6 +52,10 @@ ELEMS = {
     '301': (0.00257, 0.055), '501': (0.002819, 0.004), '606': (0.00817, 0.0288),
     '999': (1.39e-5, 0.001), '901': (1.17e-4, 0.0002),
     '99942': (0.922, 0.191), '90000091': (2.215, 0.848),
+    # L-395, 2026-10-01: Apophis under the orrery's id, which the
+    # objects mirror writes into the config. The old key stays so the
+    # suite passes on either side of the mirror's first run.
+    '2004 MN4': (0.922, 0.191),
     '90000030': (17.8, 0.967),
     # L-363, 2026-09-30: Mercury, Venus, Mars, Uranus, Neptune and the
     # Pluto-Charon barycentre. Rough test values like the rest of this

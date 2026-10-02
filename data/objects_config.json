@@ -11,6 +11,8 @@
   "objects": [
     {
       "slug": "sun", "name": "Sun", "horizons_id": "10", "id_type": "majorbody",
+      "description": "NASA: \"The Sun's gravity holds the solar system together, keeping everything in its orbit.\"",
+      "info_url": "https://science.nasa.gov/sun/",
       "category": "star", "availability": "analytic", "parent": null,
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "frame-origin",
       "trajectory_of": null, "trace_policy": "none", "serve_positions": false,
@@ -280,6 +282,8 @@
       "name": "Earth",
       "horizons_id": "399",
       "id_type": "majorbody",
+      "description": "Our home planet.",
+      "info_url": "https://science.nasa.gov/earth/",
       "category": "planet",
       "availability": "analytic",
       "parent": "sun",
@@ -986,6 +990,8 @@
     },
     {
       "slug": "jupiter", "name": "Jupiter", "horizons_id": "599", "id_type": "majorbody",
+      "description": "NASA: \"Jupiter is the largest and oldest planet in our solar system.\"",
+      "info_url": "https://science.nasa.gov/jupiter/",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
@@ -1027,6 +1033,8 @@
     },
     {
       "slug": "saturn", "name": "Saturn", "horizons_id": "699", "id_type": "majorbody",
+      "description": "NASA: \"Saturn is the sixth planet from the Sun and the second largest planet in our solar system.\"",
+      "info_url": "https://science.nasa.gov/saturn/",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
@@ -1060,6 +1068,8 @@
     },
     {
       "slug": "mercury", "name": "Mercury", "horizons_id": "199", "id_type": "majorbody",
+      "description": "NASA: \"Mercury is the smallest planet in our solar system and the nearest to the Sun.\"",
+      "info_url": "https://science.nasa.gov/mercury/",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
@@ -1075,6 +1085,8 @@
     },
     {
       "slug": "venus", "name": "Venus", "horizons_id": "299", "id_type": "majorbody",
+      "description": "NASA: \"Venus is the second planet from the Sun, and the sixth largest planet. It's the hottest planet in our solar system.\"",
+      "info_url": "https://science.nasa.gov/venus/",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
@@ -1089,6 +1101,8 @@
     },
     {
       "slug": "mars", "name": "Mars", "horizons_id": "499", "id_type": "majorbody",
+      "description": "NASA: \"Mars is one of the easiest planets to spot in the night sky -- it looks like a bright red point of light.\"",
+      "info_url": "https://science.nasa.gov/mars/",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
@@ -1103,6 +1117,8 @@
     },
     {
       "slug": "uranus", "name": "Uranus", "horizons_id": "799", "id_type": "majorbody",
+      "description": "NASA: \"Uranus is the seventh planet from the Sun, and the third largest planet in our solar system -- about four times wider than Earth.\"",
+      "info_url": "https://science.nasa.gov/uranus/",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
@@ -1117,6 +1133,8 @@
     },
     {
       "slug": "neptune", "name": "Neptune", "horizons_id": "899", "id_type": "majorbody",
+      "description": "NASA: \"Dark, cold and whipped by supersonic winds, giant Neptune is the eighth and most distant major planet orbiting our Sun.\"",
+      "info_url": "https://science.nasa.gov/neptune/",
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
@@ -1149,6 +1167,8 @@
     },
     {
       "slug": "pluto_barycenter", "name": "Pluto-Charon Barycenter", "horizons_id": "9", "id_type": "majorbody",
+      "description": "Center of mass for Pluto-Charon binary planet system.",
+      "info_url": "https://science.nasa.gov/dwarf-planets/pluto/",
       "category": "dwarf_planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
@@ -1175,7 +1195,9 @@
       "trajectory_of": null, "trace_policy": "none", "features": {}
     },
     {
-      "slug": "apophis", "name": "Apophis", "horizons_id": "99942", "id_type": "smallbody",
+      "slug": "apophis", "name": "Apophis", "horizons_id": "2004 MN4", "id_type": "smallbody",
+      "description": "A near-Earth asteroid that will make a close approach in 2029. Future OSIRIS-APEX target.",
+      "info_url": "https://cneos.jpl.nasa.gov/apophis/",
       "category": "asteroid", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none", "features": {}

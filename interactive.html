@@ -1940,11 +1940,18 @@ for _slug in _bodies:
             "element_epoch_jd": _trust.get("element_epoch_jd"),
         },
         "accuracy": (_objs.get(_slug) or {}).get("position_accuracy"),
+        # L-395: what the body is and where to read more, written into
+        # the config by tools/mirror_objects.py from the orrery's own
+        # object list. The panel shows both; the hover does not.
+        "description": (_objs.get(_slug) or {}).get("description"),
+        "info_url": (_objs.get(_slug) or {}).get("info_url"),
     }
 
 json.dumps({
     "figure": result.figure,
     "bodies": _served,
+    "sun": {"description": (_objs.get("sun") or {}).get("description"),
+            "info_url": (_objs.get("sun") or {}).get("info_url")},
     "room": _room,
     "epoch_jd": result.context.resolved_epoch_jd,
     "warnings": result.report["warnings"],
@@ -2217,7 +2224,13 @@ const EXHIBITS = {
                         warnings.push(label + " is served measured from " +
                                       b.source.center + ", not the Sun");
                     }
+                    // The panel's words: the row's own sentence where the
+                    // room has one (Pluto's barycentre), otherwise the
+                    // orrery's description. The link is the orrery's
+                    // (L-395, Tony's rulings of 2026-10-01).
                     if (typeof row.about === "string" && row.about) { extra.about = row.about; }
+                    else if (typeof b.description === "string" && b.description) { extra.about = b.description; }
+                    if (typeof b.info_url === "string" && b.info_url) { extra.info_url = b.info_url; }
                     t.meta = Object.assign({}, t.meta || {}, extra);
                 }
                 if (found !== 1) {
@@ -2235,7 +2248,11 @@ const EXHIBITS = {
             // The Sun's marker gets its text box too.
             for (const t of traces) {
                 if (t.legendgroup === "center" && t.mode === "markers") {
-                    t.meta = Object.assign({}, t.meta || {}, { label_target: true });
+                    const sunWords = { label_target: true };
+                    const sun = payload.sun || {};
+                    if (typeof sun.description === "string" && sun.description) { sunWords.about = sun.description; }
+                    if (typeof sun.info_url === "string" && sun.info_url) { sunWords.info_url = sun.info_url; }
+                    t.meta = Object.assign({}, t.meta || {}, sunWords);
                 }
             }
             // The date under the title. Missing is reported, not hidden.
