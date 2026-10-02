@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 46  
-**Total Lines of Code (non-blank):** 22,018  
+**Total Lines of Code (non-blank):** 21,986  
 **Total Public Functions/Classes:** 339
 
 ## Classification Coverage
@@ -19,7 +19,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 **Undetermined role (8).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L395_2_objects_mirror_20261001.py`
+- `patch_L281_8_welcome_link.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -30,7 +30,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 **Undetermined domain (6).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L395_2_objects_mirror_20261001.py`
+- `patch_L281_8_welcome_link.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -131,7 +131,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (574 lines) |
-| `patch_L395_2_objects_mirror_20261001.py` | - GALLERY repo. The website takes each Solar System body's name, Horizons id, description and NASA link from the orrery's object list. (114 lines) |
+| `patch_L281_8_welcome_link.py` | - point the guest book's pinned welcome at the Solar System room (L-281, Tony's request of 2026-10-01). GALLERY repo. (82 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (460 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (287 lines) |

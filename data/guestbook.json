@@ -10,12 +10,8 @@
       "text": "Welcome to the guest book. Leave a note about what you found here, or what you would like to see next.",
       "links": [
         {
-          "label": "Start with Earth",
-          "href": "#room=solar_system/earth"
-        },
-        {
-          "label": "The Sun, interactive",
-          "href": "interactive.html?exhibit=sun"
+          "label": "START HERE: Solar System Interactive Exhibit",
+          "href": "interactive.html?exhibit=solar-system"
         }
       ],
       "replies": [],
