@@ -1252,7 +1252,7 @@
     "solar-system": {
       "arrival": {
         "_declared": "Drawing choices for the view a visitor arrives at, not measurements, so there is no orrery_constant link. drawn lists the bodies ticked when the room opens, by slug; the Sun is the fixed centre and is always drawn. highlight is the body whose drawer row is highlighted, and whose name the closed drawer's handle shows. The opening view fits 1.1 times the largest distance among what is drawn. Tony's rulings, 2026-09-29 (the front-door design, section 3).",
-        "drawn": ["earth"],
+        "drawn": ["mercury", "venus", "earth", "mars"],
         "highlight": "earth"
       },
       "drawer": {
