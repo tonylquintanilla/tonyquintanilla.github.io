@@ -3,7 +3,7 @@
   "visualizations": [
     {
       "id": "solar_system",
-      "title": "Solar System",
+      "title": "START HERE",
       "description": "Live data from JPL Horizons. Work in progress.",
       "room": "solar_system",
       "shape": "9:16",
@@ -2624,6 +2624,6 @@
       "sibling": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy"
     }
   ],
-  "last_updated": "2026-10-01 22:00",
+  "last_updated": "2026-10-01 22:13",
   "total_count": 142
 }
