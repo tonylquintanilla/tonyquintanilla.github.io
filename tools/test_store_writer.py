@@ -32,12 +32,21 @@ editor manifest's section 6.
   8. The shell list matches the rule the cache check counts by, so the
      editor's list, that check's count and what a visitor can tick all
      mean one thing.
+  9. A room kept in the "rooms" section (L-404) is a room: room_ids()
+     lists it beside the body rooms, its `drawn` and `highlight` write,
+     each naming a drawer row other than the Sun, and nothing else in
+     the section is writable. Fails if the section's room is missing
+     from the list -- the bug of 2026-10-01, when the editor offered
+     only the Sun and Earth -- or if a row's slug, the Sun or an unknown
+     row gets through.
 
   THE REAL CONFIG is then read, if it is there, and checks 1, 2 and 5
   run against it as well. If it is missing, that is REPORTED and the
   run fails rather than passing quietly on the fixtures alone.
 
 Written September 2026 with Anthropic's Claude Opus 5.
+Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: check
+9, and the real config's rooms-section rooms).
 """
 
 import difflib
@@ -137,14 +146,37 @@ FIXTURE = """{
           }
         }
       }
+    },
+    {
+      "slug": "farbody",
+      "name": "Far Body"
     }
-  ]
+  ],
+  "rooms": {
+    "_comment": "Not a room.",
+    "testroom": {
+      "arrival": {
+        "_declared": "Why this block exists.",
+        "drawn": ["testbody"],
+        "highlight": "testbody"
+      },
+      "drawer": {
+        "rows": [
+          {"slug": "sun"},
+          {"slug": "testbody", "label": "Test Body"},
+          {"slug": "farbody", "see_more": true}
+        ]
+      }
+    }
+  }
 }
 """
 
 CRUST = "/objects/0/features/interior/crust"
 DRAWN = "/objects/0/arrival/drawn"
 MOON = "/objects/0/arrival/moon"
+ROOM_DRAWN = "/rooms/testroom/arrival/drawn"
+ROOM_HIGHLIGHT = "/rooms/testroom/arrival/highlight"
 
 
 def one_line(before, after, adding):
@@ -213,7 +245,7 @@ def fixture_checks():
     cfg0 = json.loads(text)
     allowed = W.editable_paths(cfg0)
     check("the allow list holds the shell words and nothing else",
-          len(allowed) == 2 * len(W.WORD_FIELDS) + 2 * 2 + 2,
+          len(allowed) == 2 * len(W.WORD_FIELDS) + 2 * 2 + 2 + 2,
           "%d path(s): %s" % (len(allowed), sorted(allowed)[:3]))
 
     #    The six that get their OWN sentence, because "not editable" is
@@ -350,6 +382,69 @@ def fixture_checks():
     check("a group served as a names list is one row covering several",
           len(belts) == 1 and belts[0][0] == "belts", repr(belts))
 
+    # 9. A room kept in the "rooms" section (L-404).
+    check("room_ids lists the body room and the section's room",
+          W.room_ids(cfg) == ["testbody", "testroom"], repr(W.room_ids(cfg)))
+    check("the section's _comment is not a room",
+          "_comment" not in W.room_ids(cfg))
+    choices = W.arrival_choices(cfg, "testroom")
+    check("a section room ticks its rows, the Sun aside, labelled as served",
+          choices == [("testbody", "Test Body", 1),
+                      ("farbody", "Far Body (a See more row)", 1)],
+          repr(choices))
+    check("a section room's arrival paths are drawn and highlight",
+          W.arrival_paths(cfg, "testroom") == {"drawn": ROOM_DRAWN,
+                                               "highlight": ROOM_HIGHLIGHT})
+    check("a section room has no shells",
+          W.shell_fields(cfg, "testroom") == [])
+    out = W.edit(text, [(ROOM_DRAWN, ["testbody", "farbody"])])
+    check("a section room's drawn writes as one line",
+          delta(text, out) == (1, 1), "%d removed, %d added" % delta(text, out))
+    check("and reads back",
+          json.loads(out)["rooms"]["testroom"]["arrival"]["drawn"]
+          == ["testbody", "farbody"])
+    out = W.edit(text, [(ROOM_HIGHLIGHT, "farbody")])
+    check("a section room's highlight writes as one line",
+          delta(text, out) == (1, 1), "%d removed, %d added" % delta(text, out))
+    check("and reads back",
+          json.loads(out)["rooms"]["testroom"]["arrival"]["highlight"]
+          == "farbody")
+    refuses("drawn naming the Sun refuses, saying it is always drawn",
+            lambda: W.edit(text, [(ROOM_DRAWN, ["sun"])]),
+            expect_in="always drawn")
+    refuses("drawn naming no row refuses",
+            lambda: W.edit(text, [(ROOM_DRAWN, ["testbody", "nosuch"])]),
+            expect_in="nosuch")
+    refuses("the highlight naming the Sun refuses",
+            lambda: W.edit(text, [(ROOM_HIGHLIGHT, "sun")]),
+            expect_in="highlight")
+    refuses("the highlight naming no row refuses",
+            lambda: W.edit(text, [(ROOM_HIGHLIGHT, "nosuch")]),
+            expect_in="nosuch")
+    refuses("the highlight may not be emptied",
+            lambda: W.edit(text, [(ROOM_HIGHLIGHT, "")]))
+    refuses("a list offered to the highlight refuses",
+            lambda: W.edit(text, [(ROOM_HIGHLIGHT, ["farbody"])]))
+    for name, where in (
+            ("a drawer row's slug", "/rooms/testroom/drawer/rows/1/slug"),
+            ("a drawer row's label", "/rooms/testroom/drawer/rows/1/label"),
+            ("a row's See more flag", "/rooms/testroom/drawer/rows/2/see_more"),
+            ("a room key nobody serves", "/rooms/nosuch/arrival/drawn")):
+        refuses("refuse " + name,
+                lambda w=where: W.edit(text, [(w, "x")]),
+                expect_in="not something this editor changes")
+    refuses("refuse the section room's _declared",
+            lambda: W.edit(text, [("/rooms/testroom/arrival/_declared", "x")]),
+            expect_in="is not editable here")
+    refuses("refuse the section's _comment",
+            lambda: W.edit(text, [("/rooms/_comment", "x")]),
+            expect_in="is not editable here")
+    out = W.edit(text, [(ROOM_DRAWN, ["farbody"]), (DRAWN, ["mantle"])])
+    back = json.loads(out)
+    check("one save may change a body room and a section room together",
+          back["rooms"]["testroom"]["arrival"]["drawn"] == ["farbody"]
+          and back["objects"][0]["arrival"]["drawn"] == ["mantle"])
+
     # Nothing above touched the fixture text itself.
     check("the fixture text is unchanged by all of that", text == FIXTURE)
 
@@ -387,6 +482,55 @@ def real_config_checks():
         print("    not rooms, so not editable here: %s" % ", ".join(others))
     if not rooms:
         return
+
+    # 9 on the real file. Every key of the "rooms" section that holds an
+    # arrival block must be in the room list -- worked out here from the
+    # raw JSON rather than by asking room_ids(), so the check does not
+    # agree with the code by construction. On 2026-10-01 the Solar
+    # System room was missing from it.
+    section = cfg.get(W.ROOMS) if isinstance(cfg.get(W.ROOMS), dict) else {}
+    expected = [k for k, v in section.items()
+                if not k.startswith("_") and isinstance(v, dict)
+                and isinstance(v.get("arrival"), dict)]
+    listed = W.room_ids(cfg)
+    for key in expected:
+        check("real config: the room list holds %s" % key, key in listed,
+              "listed: %s" % ", ".join(listed))
+    collided = sorted(set(expected) & set(rooms))
+    check("real config: no rooms-section key is also a body room's slug",
+          not collided, ", ".join(collided))
+    for key in expected:
+        if key not in listed:
+            continue
+        paths = W.arrival_paths(cfg, key)
+        choices = W.arrival_choices(cfg, key)
+        keys = [k for k, _l, _c in choices]
+        labels = [l for _k, l, _c in choices]
+        check("real config: %s has rows to tick" % key, bool(keys))
+        check("real config: %s's tick labels are all different" % key,
+              len(set(labels)) == len(labels), repr(labels))
+        check("real config: %s does not offer the Sun as a tick" % key,
+              W.CENTRE_ROW not in keys)
+        writes = 0
+        if "drawn" in paths:
+            out = W.edit(text, [(paths["drawn"], keys)])
+            ok, how = one_line(text, out, adding=False)
+            check("real config: %s's drawn, every row ticked, is one line"
+                  % key, ok, how)
+            check("real config: %s's drawn stays ASCII" % key,
+                  all(ord(c) < 128 for c in out))
+            writes += 1
+        if "highlight" in paths:
+            for choice in keys:
+                out = W.edit(text, [(paths["highlight"], choice)])
+                if out == text:
+                    continue        # the row already highlighted
+                ok, how = one_line(text, out, adding=False)
+                check("real config: %s highlight %s is one line"
+                      % (key, choice), ok, how)
+                writes += 1
+        print("    %s: %d tick(s) (%s); %d opening-view write(s) tried, "
+              "each one line" % (key, len(keys), ", ".join(keys), writes))
 
     for slug in rooms:
         shells = W.shell_fields(cfg, slug)
@@ -429,9 +573,10 @@ def real_config_checks():
         print("    %s: %d word(s) replaced and %d added, across %d shell(s)"
               % (slug, replaced, added, len(shells)))
     real_allowed = W.editable_paths(cfg)
-    print("    the allow list holds %d path(s) across %d room(s); every "
-          "other path in the file is refused"
-          % (len(real_allowed), len(rooms)))
+    print("    the allow list holds %d path(s) across %d room(s) (%s); "
+          "every other path in the file is refused"
+          % (len(real_allowed), len(W.room_ids(cfg)),
+             ", ".join(W.room_ids(cfg))))
     check("real config: nothing outside a room is editable",
           not any(p.startswith("/objects/%d/" % W.object_index(cfg, other))
                   for other in others for p in real_allowed),
@@ -491,7 +636,7 @@ def main():
         return 1
     print("All %d store-writer checks passed: an allow list that lets "
           "through only a shell's words, a belt's words and the arrival "
-          "settings; a no-edit round trip; one line per change; empty "
+          "settings, the rooms section's included; a no-edit round trip; one line per change; empty "
           "words handled; a refused batch writing nothing; awkward text; "
           "and the shell list matching the cache check's rule."
           % CHECKS[0])

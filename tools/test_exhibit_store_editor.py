@@ -37,6 +37,13 @@ WHAT IT CHECKS, and what would make each fail.
      in step" gets its sentence. Fails if a red verdict is shown with
      nothing said about it.
   9. The line measure counts what it says it counts.
+ 10. Every room the config serves is in the room list, from both places
+     a room can live (L-404). The expected list is worked out here from
+     the raw JSON, not by asking the editor. A rooms-section room offers
+     no shell rows and says why, ticks its bodies but never the Sun, and
+     its ticks and highlight produce changes the writer accepts. Fails
+     on the bug of 2026-10-01: the Solar System room missing from the
+     list, so its opening view could not be set.
 
   WITH --window, and only then, it also opens the real window under a
   display and walks EVERY row of EVERY room, switching rooms and
@@ -47,6 +54,8 @@ WHAT IT CHECKS, and what would make each fail.
   On Windows, without xvfb, it opens and closes a real window.
 
 Written September 2026 with Anthropic's Claude Opus 5.
+Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: check
+10, and the window walk covers a room with no shells).
 """
 
 import json
@@ -78,11 +87,30 @@ def logic_checks():
     if not slugs:
         return
 
+    # 10. Every room, from both places a room can live. Expected from
+    #     the raw JSON, so this cannot agree with the editor by sharing
+    #     its code.
+    expected = [o["slug"] for o in cfg.get("objects", [])
+                if isinstance(o.get("arrival"), dict)
+                and isinstance(o.get("slug"), str)]
+    section = cfg.get("rooms") if isinstance(cfg.get("rooms"), dict) else {}
+    section_keys = [k for k, v in section.items()
+                    if not k.startswith("_") and isinstance(v, dict)
+                    and isinstance(v.get("arrival"), dict)]
+    expected += section_keys
+    check("the room list is every room in the config", slugs == expected,
+          "listed %s, expected %s" % (slugs, expected))
+    print("    rooms listed: %s" % ", ".join(slugs))
+
     allowed = SW.editable_paths(cfg)
     for slug in slugs:
         rows = E.word_rows(cfg, slug)
         choices, drawn, _moon = E.arrival_state(cfg, slug)
-        check("%s offers rows to edit" % slug, bool(rows))
+        if slug in section_keys:
+            check("%s offers no shell rows -- its rows are bodies" % slug,
+                  rows == [], "%d row(s)" % len(rows))
+        else:
+            check("%s offers rows to edit" % slug, bool(rows))
         check("%s offers ticks" % slug, bool(choices))
 
         # 4. Every box the form would show is writable.
@@ -197,6 +225,41 @@ def logic_checks():
     print("    widths: longest label %d (cap %d), longest source %d chars "
           "(wrapped)" % (longest_label, E.LIST_MAX, longest_source))
 
+    # 10, continued. What a rooms-section room's panel produces.
+    check("the form's note for a room with no shells says why",
+          "bodies, not shells" in E.ROOM_WORDS_NOTE)
+    for key in section_keys:
+        if key not in slugs:
+            continue
+        choices, drawn, moon = E.arrival_state(cfg, key)
+        order = [k for k, _l, _c in choices]
+        current = E.highlight_state(cfg, key)
+        check("%s: the Sun is not a tick" % key, "sun" not in order)
+        check("%s: no Moon" % key, moon is False)
+        check("%s: the served highlight is one of its ticks" % key,
+              current is None or current in order, repr(current))
+        check("%s: nothing moved means no change" % key,
+              E.arrival_changes(cfg, key, set(drawn), None, current) == [])
+        check("%s: no highlight chosen writes no highlight" % key,
+              E.arrival_changes(cfg, key, set(drawn), None, None) == [])
+        # Tick every row, in an order other than the served one: the
+        # list written must come back in the room's served order.
+        changes = E.arrival_changes(cfg, key, set(reversed(order)), None)
+        check("%s: ticking every row writes one list, in served order"
+              % key, changes == [(SW.arrival_paths(cfg, key)["drawn"],
+                                  order)], repr(changes))
+        check("%s: and the writer accepts it" % key, _accepted(text, changes))
+        other = [k for k in order if k != current]
+        if other:
+            changes = E.arrival_changes(cfg, key, set(drawn), None, other[0])
+            check("%s: a new highlight writes one change" % key,
+                  changes == [(SW.arrival_paths(cfg, key)["highlight"],
+                               other[0])], repr(changes))
+            check("%s: and the writer accepts it" % key,
+                  _accepted(text, changes))
+        print("    %s: %d tick(s), highlight %s, drawn %s"
+              % (key, len(order), current, ", ".join(drawn) or "nothing"))
+
     # 7. The save message.
     check("no change says so", "Nothing had changed"
           in E.save_message(0, 0))
@@ -265,7 +328,22 @@ def window_walk():
             window.room.set(slug)
             window._switch_room()
             root.update_idletasks()
-            check("the window loaded %s" % slug, bool(window.rows))
+            if SW.is_section_room(window.config, slug):
+                # No shells: the form must hold the note, not the last
+                # room's form, and the highlight picker must be there.
+                shown = [child.cget("text") for child in
+                         window.form.winfo_children()
+                         if child.winfo_class() == "TLabel"]
+                check("the window loaded %s with its note" % slug,
+                      shown == [E.ROOM_WORDS_NOTE], repr(shown)[:120])
+                check("%s has its highlighted-row picker" % slug,
+                      window.highlight is not None)
+                if window.highlight is not None:
+                    for label in window.highlight_by_label:
+                        window.highlight.set(label)
+                        root.update_idletasks()
+            else:
+                check("the window loaded %s" % slug, bool(window.rows))
             for index in range(len(window.rows)):
                 label = window.rows[index]["label"]
                 try:

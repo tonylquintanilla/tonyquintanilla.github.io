@@ -8,7 +8,10 @@ A window opens. Nothing is written until you press Save.
 WHAT IT EDITS. data/objects_config.json, and only the parts of it
 tools/store_writer.py allows: a served shell's six words (name,
 description, about, note, source, info_url), a radiation belt's parallel
-words, and the arrival block's `drawn` and `moon`. Numbers, their units,
+words, and the arrival block's `drawn` and `moon`. For a room kept in
+the config's "rooms" section -- the Solar System room -- it edits which
+bodies the room opens on and which row it highlights, and nothing else
+yet (L-404; the rows' own words are not in this build). Numbers, their units,
 their figure counts and their `orrery_constant` links are shown in grey
 and cannot be typed into. A number changes in the orrery's
 constants_new.py and arrives here through the export and the mirror.
@@ -42,7 +45,17 @@ own file -- applied one floor over: logic that needs no WINDOW must be
 reachable without one, or the only way to test it is to open it and
 look.
 
+THE ROOM LIST IS EVERY ROOM, from both places a room can live
+(store_writer.room_ids): a body's own room on its entry in `objects`,
+and a room that is not one body in the "rooms" section. A room added to
+either place appears in the list with nothing else to change. Until
+2026-10-01 the list read only `objects`, so the Solar System room did
+not appear (L-404, Tony's question of that day).
+
 Written September 2026 with Anthropic's Claude Opus 5.
+Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: the
+room list holds every room; the Solar System room's opening view and
+highlighted row can be set).
 """
 
 import json
@@ -78,6 +91,13 @@ LONG_FIELDS = ("description", "about", "note", "source")
 BELT_FIELD_LISTS = {"name": "names", "description": "descriptions",
                     "about": "abouts", "info_url": "info_urls"}
 
+# What the form says for a room whose drawer rows are bodies, not shells.
+ROOM_WORDS_NOTE = ("This room's drawer rows are bodies, not shells, so "
+                   "there is no shell list here. Their words -- a row's "
+                   "label, about and source note -- are not edited in "
+                   "this window yet. What the room opens on, and the row "
+                   "it highlights, are set on the right.")
+
 BELT_LOCKED_NOTE = ("A belt's words are served as parallel lists, which "
                     "hold no note and no source. Its caveat and its "
                     "citation sit on its measured distance row, with the "
@@ -96,10 +116,9 @@ def load(root=None):
 
 
 def rooms(config_value):
-    """The slugs this editor offers: the objects carrying an arrival block."""
-    return [entry.get("slug") for entry in config_value.get("objects", [])
-            if isinstance(entry.get("arrival"), dict)
-            and isinstance(entry.get("slug"), str)]
+    """Every room this editor offers, from both places a room can live:
+    the body rooms by slug, then the "rooms" section's by key."""
+    return SW.room_ids(config_value)
 
 
 def numbers_under(member, prefix=""):
@@ -181,13 +200,27 @@ def arrival_state(config_value, slug):
     """(choices, drawn, moon) for the room's opening view.
 
     choices is [(key, label, covers)] -- `covers` is how many drawn
-    shells that one tick controls, which is 2 for Earth's belts.
+    shells that one tick controls, which is 2 for Earth's belts. For a
+    rooms-section room each choice is a body and covers 1, and moon is
+    False: it has none.
     """
-    index = SW.object_index(config_value, slug)
     choices = SW.arrival_choices(config_value, slug)
-    arrival = config_value["objects"][index].get("arrival", {})
+    if SW.is_section_room(config_value, slug):
+        arrival = config_value[SW.ROOMS][slug].get("arrival", {})
+    else:
+        index = SW.object_index(config_value, slug)
+        arrival = config_value["objects"][index].get("arrival", {})
     drawn = [k for k in arrival.get("drawn", []) if isinstance(k, str)]
     return choices, drawn, arrival.get("moon") is True
+
+
+def highlight_state(config_value, slug):
+    """The row a room highlights on opening, or None where it names none
+    -- every body room, today."""
+    if not SW.is_section_room(config_value, slug):
+        return None
+    held = config_value[SW.ROOMS][slug].get("arrival", {}).get("highlight")
+    return held if isinstance(held, str) else None
 
 
 def field_value(config_value, path):
@@ -253,8 +286,12 @@ def pending(original, current):
     return changes
 
 
-def arrival_changes(config_value, slug, ticked, moon):
-    """[(path, value)] for the arrival block, or [] if nothing moved."""
+def arrival_changes(config_value, slug, ticked, moon, highlight=None):
+    """[(path, value)] for the arrival block, or [] if nothing moved.
+
+    highlight is the row key chosen for a room that serves one, or None
+    for no choice made -- which writes nothing.
+    """
     paths = SW.arrival_paths(config_value, slug)
     choices, drawn, was_moon = arrival_state(config_value, slug)
     order = [key for key, _label, _covers in choices]
@@ -266,6 +303,9 @@ def arrival_changes(config_value, slug, ticked, moon):
     # nothing to write and nothing to compare against.
     if moon is not None and "moon" in paths and bool(moon) != was_moon:
         changes.append((paths["moon"], bool(moon)))
+    if (highlight is not None and "highlight" in paths
+            and highlight != highlight_state(config_value, slug)):
+        changes.append((paths["highlight"], highlight))
     return changes
 
 
@@ -404,7 +444,7 @@ def window_class():
             top.pack(fill="x")
             ttk.Label(top, text="Room").pack(side="left")
             self.room = tk.StringVar(value=self.slug)
-            picker = ttk.Combobox(top, textvariable=self.room, width=12,
+            picker = ttk.Combobox(top, textvariable=self.room, width=16,
                                   state="readonly", values=self.slugs)
             picker.pack(side="left", padx=(6, 0))
             picker.bind("<<ComboboxSelected>>", lambda _e: self._switch_room())
@@ -414,7 +454,8 @@ def window_class():
 
             left = ttk.Frame(body)
             left.pack(side="left", fill="y")
-            ttk.Label(left, text="Shells").pack(anchor="w")
+            self.list_heading = ttk.Label(left, text="Shells")
+            self.list_heading.pack(anchor="w")
             self.listbox = tk.Listbox(left, width=LIST_MIN, height=20,
                                       exportselection=False)
             self.listbox.pack(fill="y", expand=True)
@@ -456,18 +497,32 @@ def window_class():
                 for path in row["fields"].values():
                     self.original[path] = field_value(self.config, path)
             self._build_ticks()
+            self.selected = 0
             if self.rows:
+                self.list_heading.configure(text="Shells")
                 self.listbox.selection_set(0)
-                self.selected = 0
                 self._show_row(0)
+            else:
+                # A rooms-section room has no shells. Clear the last
+                # room's form rather than leave it on screen under this
+                # room's name, and say why the list is empty.
+                self.list_heading.configure(text="Shells (none here)")
+                for child in self.form.winfo_children():
+                    child.destroy()
+                self.boxes = {}
+                ttk.Label(self.form, text=ROOM_WORDS_NOTE, wraplength=380,
+                          foreground=LOCKED_TEXT).pack(anchor="w")
 
         def _build_ticks(self):
             for child in self.tick_area.winfo_children():
                 child.destroy()
             choices, drawn, moon = arrival_state(self.config, self.slug)
+            if SW.is_section_room(self.config, self.slug):
+                what = "one tick per body; the Sun is always drawn"
+            else:
+                what = "one tick per served shell"
             self.arrival_heading.configure(
-                text="What %s opens on\n(one tick per served shell)"
-                     % self.slug)
+                text="What %s opens on\n(%s)" % (self.slug, what))
             self.ticks = {}
             self.tick_rows = {}
             for key, label, covers in choices:
@@ -493,6 +548,30 @@ def window_class():
                 tk.Checkbutton(holder, text="Moon", variable=self.moon,
                                anchor="w", background=TICK_GROUND,
                                activebackground=TICK_GROUND).pack(fill="x")
+            # The highlighted row appears ONLY where the room serves a
+            # `highlight` -- the Solar System room. It is a choice of one,
+            # so it is a list to pick from, not another column of ticks.
+            self.highlight = None
+            self.highlight_by_label = {}
+            if "highlight" in SW.arrival_paths(self.config, self.slug):
+                self.highlight_by_label = dict(
+                    (label, key) for key, label, _c in choices)
+                current = highlight_state(self.config, self.slug)
+                shown = ""
+                for key, label, _c in choices:
+                    if key == current:
+                        shown = label
+                holder = tk.Frame(self.tick_area, background=TICK_GROUND)
+                holder.pack(fill="x", pady=(10, 0))
+                tk.Label(holder, text="Highlighted row (named on the\n"
+                                      "closed drawer's handle)",
+                         background=TICK_GROUND, anchor="w",
+                         justify="left").pack(fill="x")
+                self.highlight = tk.StringVar(value=shown)
+                ttk.Combobox(holder, textvariable=self.highlight, width=28,
+                             state="readonly",
+                             values=[label for _k, label, _c in choices]).pack(
+                                 anchor="w")
 
         # -- the form -------------------------------------------------
         def _show_row(self, index):
@@ -589,9 +668,12 @@ def window_class():
             words = pending(self.original, self._current())
             ticked = set(key for key, var in self.ticks.items()
                          if var.get())
+            chosen = None
+            if self.highlight is not None:
+                chosen = self.highlight_by_label.get(self.highlight.get())
             arrival = arrival_changes(self.config, self.slug, ticked,
                                       self.moon.get() if self.has_moon
-                                      else None)
+                                      else None, chosen)
             if not words and not arrival:
                 self.status.configure(text="Nothing had changed.")
                 return

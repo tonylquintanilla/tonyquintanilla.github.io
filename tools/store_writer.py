@@ -19,9 +19,9 @@ tools cannot come to disagree about the file's layout.
 WHAT IT WILL CHANGE. Three kinds of value, each replacing one that is
 already there:
     a string              a name, a description, an about, a note,
-                          a source, a link
-    a list of strings     the arrival block's "drawn"
-    true or false         the arrival block's "moon"
+                          a source, a link; a room's "highlight"
+    a list of strings     an arrival block's "drawn"
+    true or false         an arrival block's "moon"
 
 WHAT IT WILL TOUCH IS A LIST, NOT AN EXCEPTION LIST. editable_paths()
 reads the config and returns every path this writer may write, with the
@@ -47,6 +47,8 @@ So the editable surface is exactly:
                                       notes, info_urls -- by index, for
                                       a group served as parallel lists
     the arrival block                 drawn, moon
+    a room in the "rooms" section     its arrival block's drawn and
+                                      highlight
 Numbers, their units, their figure counts, their `orrery_constant`
 links, `_declared`, `_comment`, slugs, colours, opacities, point counts
 and everything else are outside it, and a refusal says so.
@@ -65,7 +67,24 @@ refusals above raise WriteRefused before any text is built, and the
 finished text is parsed and compared against the intended values before
 it is returned. A refused batch leaves the file exactly as it was.
 
+TWO KINDS OF ROOM (L-404). A room that is one body -- the Sun, Earth --
+keeps its arrival block on its own entry in `objects`, and is named by
+its slug. A room that is NOT one body -- the Solar System room -- keeps
+its settings in the config's top-level "rooms" section, keyed by its
+?exhibit= key (Tony's ruling of 2026-09-30, L-392). Its arrival block
+holds `drawn`, the bodies ticked when it opens, by slug, and
+`highlight`, the one row highlighted and named on the closed drawer's
+handle. Every drawer row except the Sun may be named in either; the Sun
+is the fixed centre and is always drawn. room_ids() lists both kinds,
+so a room added to either place reaches the editor's room list without
+anyone remembering to add it. Until 2026-10-01 this writer read only
+`objects`, and the Solar System room, built on 2026-09-30, could not be
+chosen in the editor at all.
+
 Written September 2026 with Anthropic's Claude Opus 5.
+Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: the
+rooms section's drawn and highlight are editable, and room_ids() lists
+every room in either place).
 """
 
 import json
@@ -79,6 +98,15 @@ if _HERE not in sys.path:
 from mirror_constants import parse_with_spans, render   # noqa: E402
 
 CONFIG = os.path.join("data", "objects_config.json")
+
+# The config's section for rooms that are not one body, keyed by the
+# room's ?exhibit= key (L-392). Its `_comment` is not a room.
+ROOMS = "rooms"
+
+# The drawer row that is the room's fixed centre. It is always drawn,
+# so it is never a tick and never the highlight -- the page skips it in
+# the same way (interactive.html, the Solar System room's compose).
+CENTRE_ROW = "sun"
 
 # The last step of a path that this writer will never touch.
 # Kept as the names whose refusal gets its OWN sentence, because "not
@@ -204,9 +232,11 @@ def editable_paths(config_value):
     whole editable surface AND the window's source for what to show, so
     the two cannot come to disagree about what is editable.
 
-    A ROOM is an object carrying an arrival block. Jupiter and Saturn
-    have feature blocks and no room, and their members carry no served
-    `name` (L-231), so nothing of theirs is here.
+    A ROOM is an object carrying an arrival block, or an entry in the
+    "rooms" section carrying one (L-404). Jupiter and Saturn have
+    feature blocks and no room, and their members carry no served
+    `name` (L-231), so nothing of theirs is here. A rooms-section room
+    has no shells, so only its `drawn` and `highlight` are here.
     """
     out = {}
     for index, entry in enumerate(config_value.get("objects", [])):
@@ -236,7 +266,42 @@ def editable_paths(config_value):
                     for position in range(len(held)):
                         out["%s/features/%s/%s/%d"
                             % (base, group, listname, position)] = "string"
+    for room in section_rooms(config_value):
+        arrival = config_value[ROOMS][room]["arrival"]
+        base = "/%s/%s/arrival" % (ROOMS, room)
+        if isinstance(arrival.get("drawn"), list):
+            out[base + "/drawn"] = "string_list"
+        if isinstance(arrival.get("highlight"), str):
+            out[base + "/highlight"] = "string"
     return out
+
+
+def section_rooms(config_value):
+    """The rooms kept in the "rooms" section: each key whose entry holds
+    an arrival block. `_comment` and any other key starting with an
+    underscore is the file's own note, not a room. A key holding a "/"
+    could not be written as a path, so it is not offered."""
+    section = config_value.get(ROOMS)
+    if not isinstance(section, dict):
+        return []
+    return [key for key, entry in section.items()
+            if not key.startswith("_") and "/" not in key
+            and isinstance(entry, dict)
+            and isinstance(entry.get("arrival"), dict)]
+
+
+def room_ids(config_value):
+    """Every room, in file order: the body rooms by slug, then the
+    rooms-section rooms by key. This is the editor's room list."""
+    bodies = [entry.get("slug") for entry in config_value.get("objects", [])
+              if isinstance(entry.get("arrival"), dict)
+              and isinstance(entry.get("slug"), str)]
+    return bodies + section_rooms(config_value)
+
+
+def is_section_room(config_value, room):
+    """True for a room kept in the "rooms" section."""
+    return room in section_rooms(config_value)
 
 
 def drawable_keys(config_value, slug):
@@ -284,11 +349,25 @@ def plan(text, changes):
         if kind == "string_list":
             room = _slug_at(config_value, steps)
             unknown = sorted(set(new) - drawable_keys(config_value, room))
+            if unknown and steps[0] == ROOMS:
+                raise WriteRefused(
+                    "%s names %s, which is not a row %s can tick. Every "
+                    "drawer row can be ticked except the Sun, which is "
+                    "always drawn; the page would warn about anything else"
+                    % (path, ", ".join(repr(u) for u in unknown), room))
             if unknown:
                 raise WriteRefused(
                     "%s names %s, which %s does not draw -- the Arrival "
                     "check would go red on it"
                     % (path, ", ".join(repr(u) for u in unknown), room))
+        if kind == "string" and steps[0] == ROOMS and field == "highlight":
+            room = steps[1]
+            if new not in drawable_keys(config_value, room):
+                raise WriteRefused(
+                    "%s names %r, which is not a row %s can highlight. It "
+                    "must be one of the drawer's rows other than the Sun; "
+                    "the page would warn and highlight nothing"
+                    % (path, new, room))
 
         parent = _walk_node(node, steps[:-1], path)
         if isinstance(parent.value, dict) and field not in parent.members:
@@ -314,7 +393,10 @@ def plan(text, changes):
 
 
 def _slug_at(config_value, steps):
-    """The room slug for a path that starts /objects/<index>/..."""
+    """The room a path belongs to: the slug for /objects/<index>/...,
+    the key for /rooms/<key>/..."""
+    if steps and steps[0] == ROOMS and len(steps) > 1:
+        return steps[1]
     try:
         return config_value["objects"][int(steps[1])].get("slug", "?")
     except (KeyError, IndexError, ValueError):
@@ -332,8 +414,9 @@ def _not_editable(path, field):
                 "why a block exists, and this editor does not offer it."
                 % path)
     return ("%s is not something this editor changes. It writes a served "
-            "shell's words (%s), a belt's parallel words, and the arrival "
-            "block's drawn and moon. Everything else in this file -- "
+            "shell's words (%s), a belt's parallel words, an arrival "
+            "block's drawn and moon, and a room's highlight. Everything "
+            "else in this file -- "
             "slugs, colours, opacities, point counts, numbers and their "
             "links -- is outside it."
             % (path, ", ".join(WORD_FIELDS)))
@@ -509,7 +592,12 @@ def arrival_choices(config_value, slug):
     many drawn shells that one tick controls: 1 for a normal shell, 2
     for Earth's radiation belts, which are served under one group key
     with a `names` list and therefore tick together.
+
+    A ROOMS-SECTION ROOM ticks BODIES, not shells: one row per drawer
+    row in served order, the Sun aside (see _row_choices).
     """
+    if is_section_room(config_value, slug):
+        return _row_choices(config_value, slug)
     index = object_index(config_value, slug)
     out = []
     if index is None:
@@ -527,8 +615,47 @@ def arrival_choices(config_value, slug):
     return out
 
 
+def _row_choices(config_value, room):
+    """[(slug, label, 1)] for a rooms-section room.
+
+    One tick per drawer row, in served order, except the Sun, which is
+    the fixed centre and always drawn. The label is what a visitor sees:
+    the row's own `label` where it serves one (Pluto's row), otherwise
+    the body's served `name`, otherwise the slug. A row the room serves
+    behind See more says so, because ticking it is still allowed.
+    """
+    entry = config_value[ROOMS][room]
+    rows = (entry.get("drawer") or {}).get("rows") or []
+    names = {}
+    for body in config_value.get("objects", []):
+        if isinstance(body, dict) and isinstance(body.get("name"), str):
+            names[body.get("slug")] = body["name"]
+    out = []
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get("slug"), str):
+            continue
+        slug = row["slug"]
+        if slug == CENTRE_ROW:
+            continue
+        label = row.get("label")
+        if not (isinstance(label, str) and label):
+            label = names.get(slug, slug)
+        if row.get("see_more") is True:
+            label += " (a See more row)"
+        out.append((slug, label, 1))
+    return out
+
+
 def arrival_paths(config_value, slug):
-    """{'drawn': path, 'moon': path} for one room; missing keys omitted."""
+    """{'drawn': path, 'moon': path} for one room; missing keys omitted.
+
+    A rooms-section room gives {'drawn': path, 'highlight': path}
+    instead: it has no Moon.
+    """
+    if is_section_room(config_value, slug):
+        arrival = config_value[ROOMS][slug]["arrival"]
+        return dict((key, "/%s/%s/arrival/%s" % (ROOMS, slug, key))
+                    for key in ("drawn", "highlight") if key in arrival)
     index = object_index(config_value, slug)
     out = {}
     if index is None:
