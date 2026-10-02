@@ -2,19 +2,18 @@
   "version": 2,
   "visualizations": [
     {
-      "id": "solar_system_explorer",
-      "title": "Solar System Explorer",
-      "description": "Premade simulation of the solar system.",
+      "id": "solar_system",
+      "title": "Solar System",
+      "description": "Live data from JPL Horizons. Work in progress.",
       "room": "solar_system",
       "shape": "9:16",
       "files": {},
-      "live": "interactive.html",
+      "live": "interactive.html?exhibit=solar-system",
       "featured": true,
       "sources": [
-        "Uses standard Keplerian mechanics.",
-        "No live JPL Horizons data."
+        "JPL Horizons"
       ],
-      "converted": "2026-09-06 15:02",
+      "converted": "2026-09-26 22:03",
       "size_kb": {}
     },
     {
@@ -336,18 +335,19 @@
       }
     },
     {
-      "id": "solar_system",
-      "title": "Solar System",
-      "description": "Live data from JPL Horizons. Work in progress.",
+      "id": "solar_system_explorer",
+      "title": "Solar System Explorer",
+      "description": "Premade simulation of the solar system.",
       "room": "solar_system",
       "shape": "9:16",
       "files": {},
-      "live": "interactive.html?exhibit=solar-system",
+      "live": "interactive.html",
       "featured": false,
       "sources": [
-        "JPL Horizons"
+        "Uses standard Keplerian mechanics.",
+        "No live JPL Horizons data."
       ],
-      "converted": "2026-09-26 22:03",
+      "converted": "2026-09-06 15:02",
       "size_kb": {}
     },
     {
@@ -2624,6 +2624,6 @@
       "sibling": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy"
     }
   ],
-  "last_updated": "2026-09-26 22:22",
+  "last_updated": "2026-10-01 22:00",
   "total_count": 142
 }
