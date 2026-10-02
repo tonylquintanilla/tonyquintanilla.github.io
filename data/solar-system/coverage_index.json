@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-10-02T02:40:38.071061+00:00",
+  "generated": "2026-10-02T16:40:48.950324+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2461227.6427700156,
-    "end_jd": 2461403.5803334806
+    "start_jd": 2461228.2262292663,
+    "end_jd": 2461404.1637927312
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -563,7 +563,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:14.101828+00:00"
+          "retrieved": "2026-10-02T16:40:47.140174+00:00"
         }
       },
       "positions": null,
@@ -2239,14 +2239,14 @@
           "observer": "@sun",
           "quantity": "32",
           "epoch_jd_ut": 2461315.5,
-          "retrieved": "2026-10-02T02:40:38.069867+00:00"
+          "retrieved": "2026-10-02T16:40:48.950074+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
           "epoch_jd": 2461315.5,
-          "retrieved": "2026-10-02T02:40:38.069867+00:00"
+          "retrieved": "2026-10-02T16:40:48.950074+00:00"
         }
       }
     },
@@ -2273,7 +2273,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:16.451262+00:00"
+          "retrieved": "2026-10-02T16:40:47.244059+00:00"
         }
       },
       "positions": null,
@@ -2390,7 +2390,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:18.906456+00:00"
+          "retrieved": "2026-10-02T16:40:47.347310+00:00"
         }
       },
       "positions": null,
@@ -2499,7 +2499,7 @@
           "query_target": "199",
           "center": "@sun",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:20.956675+00:00"
+          "retrieved": "2026-10-02T16:40:47.453949+00:00"
         }
       },
       "positions": null,
@@ -2562,7 +2562,7 @@
           "query_target": "299",
           "center": "@sun",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:22.873071+00:00"
+          "retrieved": "2026-10-02T16:40:47.554430+00:00"
         }
       },
       "positions": null,
@@ -2625,7 +2625,7 @@
           "query_target": "499",
           "center": "@sun",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:24.744047+00:00"
+          "retrieved": "2026-10-02T16:40:47.660020+00:00"
         }
       },
       "positions": null,
@@ -2688,7 +2688,7 @@
           "query_target": "799",
           "center": "@sun",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:26.274264+00:00"
+          "retrieved": "2026-10-02T16:40:47.771315+00:00"
         }
       },
       "positions": null,
@@ -2751,7 +2751,7 @@
           "query_target": "899",
           "center": "@sun",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:27.668931+00:00"
+          "retrieved": "2026-10-02T16:40:47.867705+00:00"
         }
       },
       "positions": null,
@@ -2814,7 +2814,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:29.033087+00:00"
+          "retrieved": "2026-10-02T16:40:47.969171+00:00"
         }
       },
       "positions": null,
@@ -2877,7 +2877,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:30.297749+00:00"
+          "retrieved": "2026-10-02T16:40:48.066858+00:00"
         }
       },
       "positions": null,
@@ -2940,7 +2940,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:31.326744+00:00"
+          "retrieved": "2026-10-02T16:40:48.170905+00:00"
         }
       },
       "positions": null,
@@ -3003,7 +3003,7 @@
           "query_target": "9",
           "center": "@sun",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:32.314050+00:00"
+          "retrieved": "2026-10-02T16:40:48.266284+00:00"
         }
       },
       "positions": null,
@@ -3066,7 +3066,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:33.478204+00:00"
+          "retrieved": "2026-10-02T16:40:48.366955+00:00"
         }
       },
       "positions": null,
@@ -3129,7 +3129,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:34.440774+00:00"
+          "retrieved": "2026-10-02T16:40:48.471573+00:00"
         }
       },
       "positions": null,
@@ -3192,7 +3192,7 @@
           "query_target": "2004 MN4",
           "center": "@sun",
           "epoch": 2461315.5,
-          "retrieved": "2026-10-02T02:40:35.705631+00:00"
+          "retrieved": "2026-10-02T16:40:48.569232+00:00"
         }
       },
       "positions": null,
@@ -3289,7 +3289,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460240.009056779,
-          "retrieved": "2026-10-02T02:40:36.876437+00:00"
+          "retrieved": "2026-10-02T16:40:48.738319+00:00"
         }
       },
       "positions": null,
@@ -3357,7 +3357,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-10-02T02:40:37.385693+00:00"
+          "retrieved": "2026-10-02T16:40:48.860213+00:00"
         }
       },
       "positions": null,
@@ -3405,7 +3405,7 @@
   },
   "frame_constants": {
     "export": "data/constants_export.json",
-    "orrery_sha": "feb5e369e31b8713f77703c8dafd02554e13aec9",
+    "orrery_sha": "5ed1101d2ebb606861f0a0e49c999bab3ba55056",
     "rows": {
       "KM_PER_AU": {
         "value": 149597870.7,
