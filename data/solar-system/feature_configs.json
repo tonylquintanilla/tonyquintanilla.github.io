@@ -392,30 +392,51 @@
           "note": "The clumping is illustrative. That the cloud is lumpy is expected from stellar perturbations; where the lumps are is not known and is not claimed here."
         },
         "galactic_tide": {
-          "name": "Galactic Tide (thinned at the plane)",
+          "name": "Galactic Tide (sparse at the plane and poles)",
           "shape": "tide_field",
-          "description": "How the Milky Way's gravity shapes the Oort cloud: its bodies drawn thinned out near the plane of the galaxy.",
-          "about": "The Sun sits inside the Milky Way, and the galaxy's gravity pulls differently on the near and far sides of the Oort cloud. Over millions of years that tide sculpts the cloud, thinning it in some directions and thickening it in others, and it is one of the forces that send outer Oort cloud comets falling toward the Sun. The drawing shows the idea rather than a map: the cloud has never been imaged.",
+          "description": "How the Milky Way's gravity sends comets in from the outer Oort cloud: drawn thickest halfway between the galaxy's plane and its poles.",
+          "about": "The Sun sits inside the Milky Way, and the galaxy's gravity pulls differently on the near and far sides of the Oort cloud. Over millions of years this tide reshapes the orbits of comets in the outer cloud until some fall toward the Sun. It acts most strongly on comets halfway between the galaxy's plane and its poles, and least on those along the plane or toward a pole. The cloud has never been imaged.",
           "info_url": "https://en.wikipedia.org/wiki/Galactic_tide",
           "color": "rgb(140, 200, 200)",
-          "typical_radius": {
-            "value": 50000,
+          "inner_radius": {
+            "value": 20000,
             "unit": "au",
-            "source": "DECLARED -- a mid-cloud distance between the Hills cloud and the outer edge, chosen for the illustration. Not a measurement.",
-            "orrery_constant": "solar_visualization_shells.py::create_sun_galactic_tide default"
+            "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+            "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
+          },
+          "outer_radius": {
+            "value": 100000,
+            "unit": "au",
+            "source": "Oort (1950); Weissman (1996)",
+            "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
+          },
+          "galactic_pole": {
+            "ra": {
+              "value": 192.85948125,
+              "unit": "deg",
+              "figures": "exact",
+              "orrery_constant": "constants_new.py::GALACTIC_NORTH_POLE_RA_J2000_DEG"
+            },
+            "dec": {
+              "value": 27.128251111111112,
+              "unit": "deg",
+              "figures": "exact",
+              "orrery_constant": "constants_new.py::GALACTIC_NORTH_POLE_DEC_J2000_DEG"
+            },
+            "source": "Murray (1989), the standard adopted for Hipparcos, as printed in Liu, Zhu and Hu, arXiv:1110.6268, eq. (2) -- the north galactic pole of J2000"
+          },
+          "density": {
+            "_declared": "No number: the rule the drawing's density follows. Points per piece of sky go as |sin b cos b|, b the galactic latitude -- none at the galaxy's plane or its poles, most at 45 degrees -- because that is how the tide's pull on a comet's orbit varies with where the orbit's far end points. Tony's ruling, 2026-10-02 (L-406).",
+            "source": "Delsemme (1987), A&A 187:913 -- the aphelia of 152 long-period comets avoid both galactic polar caps and a strip along the galactic equator; Matese and Whitmire, arXiv:1004.4584, sec. 2.2 -- the tide's main term goes as |sin B cos B|. Higuchi (2020), AJ 160:134, reads the pattern differently"
           },
           "drawing": {
-            "_declared": "Drawing choices, not measurements. The radial spread, the clip and the strength of the plane asymmetry are all illustrative.",
+            "_declared": "Drawing choices, not measurements: how many points, the seed that makes the drawing repeat, and how they look. The plane, the density and the distances are not here; they come from the galactic_pole, density, inner_radius and outer_radius fields above. The 50,000 AU distance, the 0.3 spread, the 0.5 and 1.5 cut-offs and the 0.5 asymmetry this block held until 2026-10-02 were removed rather than promoted (L-406).",
             "n_points": 2000,
-            "radial_spread": 0.3,
-            "clip_low": 0.5,
-            "clip_high": 1.5,
-            "asymmetry": 0.5,
             "seed": 20260825,
             "opacity": 0.3,
             "marker_size": 1.2
           },
-          "note": "Objects are drawn thinned near the galactic plane, where the Milky Way's tide is most disruptive. The shape of the asymmetry is illustrative, not fitted to a survey."
+          "note": "The thinning at the plane and the poles follows the tide's strength, and comets arriving for the first time show it. Where the comets in the cloud really are is not known."
         },
         "inner_oort_limit": {
           "name": "Inner Limit of Oort Cloud",

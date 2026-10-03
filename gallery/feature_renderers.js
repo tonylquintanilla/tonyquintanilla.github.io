@@ -89,6 +89,14 @@
  *   served digits (the inner core, Tony 2026-09-28). The Sun's radius
  *   line prints by a served count and is singular at 1; a shell may
  *   serve a radius_note, which the crust uses at the mean radius.)
+ * Module updated: October 2, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-406: the galactic tide is drawn tilted into the galaxy's plane,
+ *   by the galactic pole its entry serves and poleBasis(), between its
+ *   served inner and outer edges, with points per piece of sky going as
+ *   |sin b cos b| -- sparse at the plane and the poles, thickest between.
+ *   It had been drawn about the ecliptic at a typed 50,000 AU, densest
+ *   at the poles, while its words said the galaxy's plane. Its hover is
+ *   in Tony's approved words of 2026-10-02.)
  */
 
 (function (global) {
@@ -1550,19 +1558,19 @@
   var CLUMPS_CAVEAT =
     "Drawn in clumps to show the cloud is not smooth; where the" + SOFT_BR +
     "clumps really are is not known.";
-  // The Galactic Tide's distance is a point chosen for the illustration;
-  // fmtAu() supplies "50,000 AU (7.48e+12 km)" from the served value.
-  function tideCaveat(rr) {
-    return "Drawn at " + fmtAu(rr) + ": a point chosen for the picture," +
-      SOFT_BR + "midway between the Hills cloud and the cloud's outer edge.<br>" +
-      "It is not a measured distance.";
-  }
+  // L-406, Tony's approved words of 2026-10-02. The distances above it
+  // are the served inner and outer edges, printed as the clumps' are.
+  var TIDE_CAVEAT =
+    "Drawn tilted to the galaxy's plane; how thick it is at each" + SOFT_BR +
+    "latitude follows how strongly the tide pulls there.<br>" +
+    "Where the comets really are is not known.";
 
   /*
    * L-331 (2026-09-16). A shell set's `source` sits at the top of its
    * config and stampLink() reads it there. The Sun's custom shapes keep
    * their citations on their MEASURED FIELDS instead -- cusp_radius,
-   * fade_radius, inner_radius, outer_radius, typical_radius -- which is
+   * fade_radius, inner_radius, outer_radius, and the galactic tide's
+   * galactic_pole and density (L-406; typical_radius until then) -- which is
    * why those four hovers were carrying them and the i panel was not.
    * Gather them into one string, labelled the way the hover used to
    * label them, on a shallow copy of the config that stampLink() can read
@@ -1763,29 +1771,35 @@
   }
 
   /*
-   * A shell thinned near the galactic plane. The orrery draws latitudes
-   * from a weighted choice over a hundred bins; this inverts the same
-   * weight by rejection, which needs no cumulative table and gives the
-   * same distribution.
+   * Where the galaxy's tide sends comets in from (L-406). Points between
+   * the served inner and outer edges, spread evenly in distance as the
+   * clumps are, about the served galactic pole: `basis` is poleBasis()
+   * of that pole, so the drawing's z is the galaxy's pole and its x-y
+   * plane is the galaxy's plane, turned into the ecliptic frame.
+   * Points per piece of sky go as |sin b cos b|, b the galactic latitude
+   * (the density field's source: Delsemme 1987; Matese and Whitmire,
+   * arXiv:1004.4584): draw sin(b) evenly, which gives every piece of sky
+   * the same chance, and keep a draw with probability |sin 2b|, at most
+   * 1 at 45 degrees. Same rule as the orrery's create_sun_galactic_tide;
+   * the two draw different random points, as every seeded shape here
+   * does.
    */
-  function tideFieldPoints(radiusAu, d) {
+  function tideFieldPoints(innerAu, outerAu, d, basis) {
     var rand = seededRandom(d.seed);
     var xs = [], ys = [], zs = [];
-    var wMax = 1 + d.asymmetry;
     for (var i = 0; i < d.n_points; i++) {
-      var r = radiusAu + radiusAu * d.radial_spread * gaussian(rand);
-      r = Math.min(radiusAu * d.clip_high,
-                   Math.max(radiusAu * d.clip_low, r));
-      var th = 2 * Math.PI * rand();
-      var ph, tries = 0;
+      var r = innerAu + (outerAu - innerAu) * rand();
+      var lon = 2 * Math.PI * rand();
+      var u, tries = 0;
       do {
-        ph = Math.PI * (rand() - 0.5);
+        u = 2 * rand() - 1;
         tries++;
-      } while (rand() * wMax > 1 + d.asymmetry * Math.abs(Math.sin(ph)) &&
-               tries < 50);
-      xs.push(r * Math.cos(ph) * Math.cos(th));
-      ys.push(r * Math.cos(ph) * Math.sin(th));
-      zs.push(r * Math.sin(ph));
+      } while (rand() > Math.abs(2 * u * Math.sqrt(1 - u * u)) &&
+               tries < 200);
+      var c = Math.sqrt(1 - u * u);
+      var p = applyBasis(basis, r * c * Math.cos(lon), r * c * Math.sin(lon),
+                         r * u);
+      xs.push(p[0]); ys.push(p[1]); zs.push(p[2]);
     }
     return {x: xs, y: ys, z: zs};
   }
@@ -1808,11 +1822,32 @@
       hover += "From " + fmtAu(lo) + " to " + fmtAu(hi) + "<br>" +
         (shape === "torus" ? HILLS_CAVEAT : CLUMPS_CAVEAT);
     } else {
-      var rr = measuredAu(cfg.typical_radius, where + "/typical_radius", warn);
-      if (rr === null) return [];
-      pts = tideFieldPoints(rr, d);
-      marker = [rr * 1.02, 0, 0];
-      hover += tideCaveat(rr);
+      // L-406: the tide is drawn between its served edges, about the
+      // galactic pole it serves. With no pole, or no frame angle to turn
+      // it, it is not drawn: drawn about the ecliptic it would say the
+      // wrong plane, which is the error this replaced.
+      var tlo = measuredAu(cfg.inner_radius, where + "/inner_radius", warn);
+      var thi = measuredAu(cfg.outer_radius, where + "/outer_radius", warn);
+      if (tlo === null || thi === null) return [];
+      var gp = cfg.galactic_pole;
+      if (!isDict(gp)) {
+        warn(where + ": no galactic_pole served -- the tide is not drawn, " +
+             "because drawn about the ecliptic it would show the wrong plane");
+        return [];
+      }
+      var gra = measured(gp.ra, "deg", where + "/galactic_pole/ra", warn);
+      var gdec = measured(gp.dec, "deg", where + "/galactic_pole/dec", warn);
+      if (gra === null || gdec === null) return [];
+      var gbasis = poleBasis(gra, gdec);
+      if (!gbasis) {
+        warn(where + ": the frame angle is not served, so the galactic pole " +
+             "cannot be placed -- the tide is not drawn");
+        return [];
+      }
+      pts = tideFieldPoints(tlo, thi, d, gbasis);
+      marker = [thi * 1.02, 0, 0];
+      hover += "From " + fmtAu(tlo) + " to " + fmtAu(thi) + "<br>" +
+        TIDE_CAVEAT;
     }
     // L-331 (2026-09-16): the citations that sat in these hovers reach the
     // i panel through withGatheredSource() at the dispatcher, and the
@@ -2079,11 +2114,12 @@
         } else if (cfg.shape === "torus" ||
                    cfg.shape === "clump_field" ||
                    cfg.shape === "tide_field") {
-          // These three are measured in AU and carry no tilt: the
-          // Oort cloud is not organized about the solar equator, and
-          // the galactic-plane asymmetry is drawn in the ecliptic
-          // frame as the orrery draws it. Both are drawing choices
-          // and the hovers say so.
+          // These three are measured in AU. The torus and the clumps
+          // carry no tilt: the Oort cloud is not organized about the
+          // solar equator. The galactic tide is tilted by the galactic
+          // pole it serves (L-406). Until 2026-10-02 this comment said
+          // the tide was drawn in the ecliptic frame and that the
+          // hovers said so; it was, and they did not.
           var oortTraces = renderOortShape(
             cfg.shape, bodyName, cfg, where + "/" + key, center, warn);
           if (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
@@ -2099,7 +2135,8 @@
           traces = traces.concat(stampShell(stampLink(oortTraces,
             withGatheredSource(cfg, [["inner_radius", "Inner edge"],
                                      ["outer_radius", "Outer edge"],
-                                     ["typical_radius", "Distance"]])), key));
+                                     ["galactic_pole", "Galactic pole"],
+                                     ["density", "Shape"]])), key));
           drawn += 1;
         } else {
           warn(where + "/" + key + ": unknown shape " +

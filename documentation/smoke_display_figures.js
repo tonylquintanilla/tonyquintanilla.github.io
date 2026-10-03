@@ -98,6 +98,13 @@
 // ways to go red. Patch 4 never ran on its own, so its fixture was never
 // filed; this one is fixture_hovers_L345_on_2df02f3b.json, and the patch
 // 3 one is left in place, unreferenced.
+//
+// L-406 (2026-10-02): the galactic tide is redrawn in the galaxy's plane
+// and its hover is reworded in Tony's approved words, so its fixture key
+// changes with its name. The fixture is re-recorded as
+// fixture_hovers_L406_on_0ffa4518.json: the L-345 one with that single
+// hover replaced, the other 43 byte for byte. The L-345 one is left in
+// place, unreferenced.
 
 "use strict";
 const fs = require("fs");
@@ -125,9 +132,9 @@ const SOFT_BR = "<br soft>";
 // separately, and its period line is graded against the served row. The
 // fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "2df02f3b";
+const FIXTURE_AT = "0ffa4518";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L345_on_2df02f3b.json");
+                          "fixture_hovers_L406_on_0ffa4518.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

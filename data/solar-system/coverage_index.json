@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-10-02T16:40:48.950324+00:00",
+  "generated": "2026-10-03T03:21:31.048019+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2461228.2262292663,
-    "end_jd": 2461404.1637927312
+    "start_jd": 2461228.67115792,
+    "end_jd": 2461404.6087274505
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -423,30 +423,51 @@
             "note": "The clumping is illustrative. That the cloud is lumpy is expected from stellar perturbations; where the lumps are is not known and is not claimed here."
           },
           "galactic_tide": {
-            "name": "Galactic Tide (thinned at the plane)",
+            "name": "Galactic Tide (sparse at the plane and poles)",
             "shape": "tide_field",
-            "description": "How the Milky Way's gravity shapes the Oort cloud: its bodies drawn thinned out near the plane of the galaxy.",
-            "about": "The Sun sits inside the Milky Way, and the galaxy's gravity pulls differently on the near and far sides of the Oort cloud. Over millions of years that tide sculpts the cloud, thinning it in some directions and thickening it in others, and it is one of the forces that send outer Oort cloud comets falling toward the Sun. The drawing shows the idea rather than a map: the cloud has never been imaged.",
+            "description": "How the Milky Way's gravity sends comets in from the outer Oort cloud: drawn thickest halfway between the galaxy's plane and its poles.",
+            "about": "The Sun sits inside the Milky Way, and the galaxy's gravity pulls differently on the near and far sides of the Oort cloud. Over millions of years this tide reshapes the orbits of comets in the outer cloud until some fall toward the Sun. It acts most strongly on comets halfway between the galaxy's plane and its poles, and least on those along the plane or toward a pole. The cloud has never been imaged.",
             "info_url": "https://en.wikipedia.org/wiki/Galactic_tide",
             "color": "rgb(140, 200, 200)",
-            "typical_radius": {
-              "value": 50000,
+            "inner_radius": {
+              "value": 20000,
               "unit": "au",
-              "source": "DECLARED -- a mid-cloud distance between the Hills cloud and the outer edge, chosen for the illustration. Not a measurement.",
-              "orrery_constant": "solar_visualization_shells.py::create_sun_galactic_tide default"
+              "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+              "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
+            },
+            "outer_radius": {
+              "value": 100000,
+              "unit": "au",
+              "source": "Oort (1950); Weissman (1996)",
+              "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
+            },
+            "galactic_pole": {
+              "ra": {
+                "value": 192.85948125,
+                "unit": "deg",
+                "figures": "exact",
+                "orrery_constant": "constants_new.py::GALACTIC_NORTH_POLE_RA_J2000_DEG"
+              },
+              "dec": {
+                "value": 27.128251111111112,
+                "unit": "deg",
+                "figures": "exact",
+                "orrery_constant": "constants_new.py::GALACTIC_NORTH_POLE_DEC_J2000_DEG"
+              },
+              "source": "Murray (1989), the standard adopted for Hipparcos, as printed in Liu, Zhu and Hu, arXiv:1110.6268, eq. (2) -- the north galactic pole of J2000"
+            },
+            "density": {
+              "_declared": "No number: the rule the drawing's density follows. Points per piece of sky go as |sin b cos b|, b the galactic latitude -- none at the galaxy's plane or its poles, most at 45 degrees -- because that is how the tide's pull on a comet's orbit varies with where the orbit's far end points. Tony's ruling, 2026-10-02 (L-406).",
+              "source": "Delsemme (1987), A&A 187:913 -- the aphelia of 152 long-period comets avoid both galactic polar caps and a strip along the galactic equator; Matese and Whitmire, arXiv:1004.4584, sec. 2.2 -- the tide's main term goes as |sin B cos B|. Higuchi (2020), AJ 160:134, reads the pattern differently"
             },
             "drawing": {
-              "_declared": "Drawing choices, not measurements. The radial spread, the clip and the strength of the plane asymmetry are all illustrative.",
+              "_declared": "Drawing choices, not measurements: how many points, the seed that makes the drawing repeat, and how they look. The plane, the density and the distances are not here; they come from the galactic_pole, density, inner_radius and outer_radius fields above. The 50,000 AU distance, the 0.3 spread, the 0.5 and 1.5 cut-offs and the 0.5 asymmetry this block held until 2026-10-02 were removed rather than promoted (L-406).",
               "n_points": 2000,
-              "radial_spread": 0.3,
-              "clip_low": 0.5,
-              "clip_high": 1.5,
-              "asymmetry": 0.5,
               "seed": 20260825,
               "opacity": 0.3,
               "marker_size": 1.2
             },
-            "note": "Objects are drawn thinned near the galactic plane, where the Milky Way's tide is most disruptive. The shape of the asymmetry is illustrative, not fitted to a survey."
+            "note": "The thinning at the plane and the poles follows the tide's strength, and comets arriving for the first time show it. Where the comets in the cloud really are is not known."
           },
           "inner_oort_limit": {
             "name": "Inner Limit of Oort Cloud",
@@ -551,19 +572,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461315.5,
-        "a_au": 0.9996560064725831,
-        "e": 0.01630212762843002,
-        "i_deg": 0.002851997344134132,
-        "node_deg": 167.9162600320224,
-        "peri_deg": 296.36041295843,
-        "M0_deg": 266.0346194105323,
-        "n_deg_per_day": 0.986117932247174,
+        "epoch_jd": 2461316.5,
+        "a_au": 0.9998553617083713,
+        "e": 0.01626172394311512,
+        "i_deg": 0.002410463614918143,
+        "node_deg": 163.8246648789797,
+        "peri_deg": 299.7565254193438,
+        "M0_deg": 267.7131460146641,
+        "n_deg_per_day": 0.985823022631769,
         "source": {
           "query_target": "399",
           "center": "@sun",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:47.140174+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:02.084409+00:00"
         }
       },
       "positions": null,
@@ -2179,55 +2200,55 @@
       },
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 148128285.37514842,
-        "y": 22009247.909741897,
-        "z": -2614.817929096521
+        "t": 2461316.500694444,
+        "x": 147687475.4598923,
+        "y": 24541892.751043677,
+        "z": -2722.501808447763
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
+        "element_epoch_jd": 2461316.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.0020995383592027307
+            "error_deg": 0.0044375664364061035
           },
           {
             "offset_days": 30.0,
-            "error_deg": 0.009027634149751221
+            "error_deg": 0.007344805181768042
           }
         ],
-        "error_rate_deg_per_day": 0.0003009211383250407,
+        "error_rate_deg_per_day": 0.00024482683939226806,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 365.06789728448496,
-        "cap_applied": 365.06789728448496,
+        "window_days": 365.17710758969514,
+        "cap_applied": 365.17710758969514,
         "window": {
-          "start_jd": 2460950.4321027156,
-          "end_jd": 2461680.5678972844
+          "start_jd": 2460951.32289241,
+          "end_jd": 2461681.67710759
         }
       },
       "pole_of_date": {
-        "date": "2026-10-02",
-        "epoch_jd": 2461315.5,
+        "date": "2026-10-03",
+        "epoch_jd": 2461316.5,
         "ra": {
-          "value": 0.69321,
+          "value": 0.69134,
           "unit": "deg"
         },
         "dec": {
-          "value": 89.85014,
+          "value": 89.85011,
           "unit": "deg"
         },
         "orbit": {
-          "i_deg": 0.003501142370442442,
-          "node_deg": 174.3298906688804,
+          "i_deg": 0.003503513790796908,
+          "node_deg": 174.3400052207183,
           "frame": "ecliptic of J2000"
         },
         "tilt": {
-          "value": 23.438069917770193,
+          "value": 23.43806315168441,
           "unit": "deg",
           "figures": 7,
           "frame_obliquity_deg": 23.439291111111114,
@@ -2238,15 +2259,15 @@
           "query_target": "399",
           "observer": "@sun",
           "quantity": "32",
-          "epoch_jd_ut": 2461315.5,
-          "retrieved": "2026-10-02T16:40:48.950074+00:00"
+          "epoch_jd_ut": 2461316.5,
+          "retrieved": "2026-10-03T03:21:31.047084+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
-          "epoch_jd": 2461315.5,
-          "retrieved": "2026-10-02T16:40:48.950074+00:00"
+          "epoch_jd": 2461316.5,
+          "retrieved": "2026-10-03T03:21:31.047084+00:00"
         }
       }
     },
@@ -2261,19 +2282,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461315.5,
-        "a_au": 5.202995404923656,
-        "e": 0.04823888108641122,
-        "i_deg": 1.303497348953929,
-        "node_deg": 100.5154194657784,
-        "peri_deg": 273.6598139133932,
-        "M0_deg": 112.0358303777332,
-        "n_deg_per_day": 0.0830866213339489,
+        "epoch_jd": 2461316.5,
+        "a_au": 5.201341001431779,
+        "e": 0.04838926363167539,
+        "i_deg": 1.303958618435068,
+        "node_deg": 100.5274760578003,
+        "peri_deg": 273.3058701204398,
+        "M0_deg": 112.4593955708098,
+        "n_deg_per_day": 0.08312626583898465,
         "source": {
           "query_target": "599",
           "center": "@sun",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:47.244059+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:03.719850+00:00"
         }
       },
       "positions": null,
@@ -2335,35 +2356,35 @@
       },
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": -523027446.59393156,
-        "y": 597264995.6869373,
-        "z": 9220992.070183933
+        "t": 2461316.500694444,
+        "x": -523889990.16974616,
+        "y": 596572744.4970186,
+        "z": 9243168.042671531
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
+        "element_epoch_jd": 2461316.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.00012523634366597413
+            "error_deg": 0.00026817549998743665
           },
           {
             "offset_days": 30.0,
-            "error_deg": 9.995349332405952e-05
+            "error_deg": 0.0002960122964009211
           }
         ],
-        "error_rate_deg_per_day": 4.174544788865804e-06,
+        "error_rate_deg_per_day": 9.86707654669737e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 4332.827526504622,
-        "cap_applied": 4332.827526504622,
+        "window_days": 4330.761118240521,
+        "cap_applied": 4330.761118240521,
         "window": {
-          "start_jd": 2456982.6724734954,
-          "end_jd": 2465648.3275265046
+          "start_jd": 2456985.7388817593,
+          "end_jd": 2465647.2611182407
         }
       }
     },
@@ -2378,19 +2399,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461315.5,
-        "a_au": 9.536021561546171,
-        "e": 0.05503968617787329,
-        "i_deg": 2.487463866232255,
-        "node_deg": 113.5871828621769,
-        "peri_deg": 339.2032806288405,
-        "M0_deg": 284.2636647759612,
-        "n_deg_per_day": 0.03347459200286112,
+        "epoch_jd": 2461316.5,
+        "a_au": 9.536611219612606,
+        "e": 0.05501706524738117,
+        "i_deg": 2.487727235971364,
+        "node_deg": 113.6140333868417,
+        "peri_deg": 339.1049161482363,
+        "M0_deg": 284.3647264862,
+        "n_deg_per_day": 0.03347148740035238,
         "source": {
           "query_target": "699",
           "center": "@sun",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:47.347310+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:05.572651+00:00"
         }
       },
       "positions": null,
@@ -2444,35 +2465,35 @@
       },
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 1384946664.2773962,
-        "y": 265113009.8875705,
-        "z": -59746320.54880419
+        "t": 2461316.500694444,
+        "x": 1384743316.997207,
+        "y": 265930496.94443417,
+        "z": -59752443.57885113
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
+        "element_epoch_jd": 2461316.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.0001318229732658452
+            "error_deg": 9.015393698074675e-05
           },
           {
             "offset_days": 30.0,
-            "error_deg": 9.908208031117761e-05
+            "error_deg": 5.818620279828438e-05
           }
         ],
-        "error_rate_deg_per_day": 4.394099108861507e-06,
+        "error_rate_deg_per_day": 3.0051312326915584e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 10754.425325609056,
-        "cap_applied": 10754.425325609056,
+        "window_days": 10755.422837773562,
+        "cap_applied": 10755.422837773562,
         "window": {
-          "start_jd": 2450561.0746743907,
-          "end_jd": 2472069.9253256093
+          "start_jd": 2450561.0771622267,
+          "end_jd": 2472071.9228377733
         }
       }
     },
@@ -2487,19 +2508,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461315.5,
-        "a_au": 0.3870972842601197,
-        "e": 0.2056390170294519,
-        "i_deg": 7.003374689952444,
-        "node_deg": 48.29730847254712,
-        "peri_deg": 29.20131860227749,
-        "M0_deg": 198.9503701462466,
-        "n_deg_per_day": 4.092360868369719,
+        "epoch_jd": 2461316.5,
+        "a_au": 0.3870972931568049,
+        "e": 0.2056389924306857,
+        "i_deg": 7.003374400137449,
+        "node_deg": 48.2973062226863,
+        "peri_deg": 29.2013174095963,
+        "M0_deg": 203.0427350013804,
+        "n_deg_per_day": 4.09236072728718,
         "source": {
           "query_target": "199",
           "center": "@sun",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:47.453949+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:07.299654+00:00"
         }
       },
       "positions": null,
@@ -2507,35 +2528,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 121444.49621904889,
-        "y": -69138420.05673556,
-        "z": -5661413.490991458
+        "t": 2461316.500694444,
+        "x": 3484223.881537124,
+        "y": -68812550.21958973,
+        "z": -5943204.22206153
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
-        "delta_days": 10.996097716555171,
+        "element_epoch_jd": 2461316.5,
+        "delta_days": 10.996098095641347,
         "samples": [
           {
-            "offset_days": -10.996097716555171,
-            "error_deg": 9.938163841484369e-07
+            "offset_days": -10.996098095641347,
+            "error_deg": 1.3537569881805386e-06
           },
           {
-            "offset_days": 10.996097716555171,
-            "error_deg": 3.4009622767135106e-06
+            "offset_days": 10.996098095641347,
+            "error_deg": 3.3969415169605234e-06
           }
         ],
-        "error_rate_deg_per_day": 3.0928810968942125e-07,
+        "error_rate_deg_per_day": 3.0892244570890185e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 87.96878173244137,
-        "cap_applied": 87.96878173244137,
+        "window_days": 87.96878476513078,
+        "cap_applied": 87.96878476513078,
         "window": {
-          "start_jd": 2461227.5312182675,
-          "end_jd": 2461403.4687817325
+          "start_jd": 2461228.5312152347,
+          "end_jd": 2461404.4687847653
         }
       }
     },
@@ -2550,19 +2571,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461315.5,
-        "a_au": 0.7233396869397504,
-        "e": 0.006762679257719483,
-        "i_deg": 3.394338849565437,
-        "node_deg": 76.60536864320565,
-        "peri_deg": 54.91931014268378,
-        "M0_deg": 224.0711755584908,
-        "n_deg_per_day": 1.602105696603706,
+        "epoch_jd": 2461316.5,
+        "a_au": 0.7233399328395673,
+        "e": 0.006762238868798217,
+        "i_deg": 3.394339453314553,
+        "node_deg": 76.60530605111512,
+        "peri_deg": 54.91901832454097,
+        "M0_deg": 225.6736030539562,
+        "n_deg_per_day": 1.602104879648677,
         "source": {
           "query_target": "299",
           "center": "@sun",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:47.554430+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:09.051116+00:00"
         }
       },
       "positions": null,
@@ -2570,35 +2591,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 108150942.97238381,
-        "y": -9317730.826210208,
-        "z": -6368158.469423829
+        "t": 2461316.500694444,
+        "x": 108355200.79946637,
+        "y": -6313670.025701551,
+        "z": -6338667.987062071
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
-        "delta_days": 28.088034450782633,
+        "element_epoch_jd": 2461316.5,
+        "delta_days": 28.088048773603372,
         "samples": [
           {
-            "offset_days": -28.088034450782633,
-            "error_deg": 0.0001497525219625053
+            "offset_days": -28.088048773603372,
+            "error_deg": 0.0001530460730574904
           },
           {
-            "offset_days": 28.088034450782633,
-            "error_deg": 7.673363991471666e-05
+            "offset_days": 28.088048773603372,
+            "error_deg": 8.377040648539467e-05
           }
         ],
-        "error_rate_deg_per_day": 5.331541522597807e-06,
+        "error_rate_deg_per_day": 5.44879689903274e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 224.70427560626106,
-        "cap_applied": 224.70427560626106,
+        "window_days": 224.70439018882698,
+        "cap_applied": 224.70439018882698,
         "window": {
-          "start_jd": 2461090.795724394,
-          "end_jd": 2461540.204275606
+          "start_jd": 2461091.7956098113,
+          "end_jd": 2461541.2043901887
         }
       }
     },
@@ -2613,19 +2634,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461315.5,
-        "a_au": 1.523668624983348,
-        "e": 0.09341644471069693,
-        "i_deg": 1.847453267499531,
-        "node_deg": 49.48087942811298,
-        "peri_deg": 286.639360548362,
-        "M0_deg": 99.39956614981338,
-        "n_deg_per_day": 0.5240447287181551,
+        "epoch_jd": 2461316.5,
+        "a_au": 1.523670251382674,
+        "e": 0.09341610385922561,
+        "i_deg": 1.847452814531124,
+        "node_deg": 49.48086899691853,
+        "peri_deg": 286.6400099468824,
+        "M0_deg": 99.92297599027387,
+        "n_deg_per_day": 0.5240438896529782,
         "source": {
           "query_target": "499",
           "center": "@sun",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:47.660020+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:10.882674+00:00"
         }
       },
       "positions": null,
@@ -2633,35 +2654,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 17028652.06058956,
-        "y": 232632706.42305195,
-        "z": 4457584.942095339
+        "t": 2461316.500694444,
+        "x": 15019494.586191434,
+        "y": 232954258.7067947,
+        "z": 4513588.326940446
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
+        "element_epoch_jd": 2461316.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.00011296779396491345
+            "error_deg": 0.00011423460248949648
           },
           {
             "offset_days": 30.0,
-            "error_deg": 0.00012801839561892467
+            "error_deg": 0.00012845736134469284
           }
         ],
-        "error_rate_deg_per_day": 4.267279853964156e-06,
+        "error_rate_deg_per_day": 4.281912044823095e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 686.964261391545,
-        "cap_applied": 686.964261391545,
+        "window_days": 686.9653613142822,
+        "cap_applied": 686.9653613142822,
         "window": {
-          "start_jd": 2460628.5357386083,
-          "end_jd": 2462002.4642613917
+          "start_jd": 2460629.5346386856,
+          "end_jd": 2462003.4653613144
         }
       }
     },
@@ -2676,19 +2697,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461315.5,
-        "a_au": 19.26388167759515,
-        "e": 0.04752465470017418,
-        "i_deg": 0.772185995935291,
-        "node_deg": 74.0247776370995,
-        "peri_deg": 92.46015394979317,
-        "M0_deg": 261.5106586502694,
-        "n_deg_per_day": 0.01165729671530173,
+        "epoch_jd": 2461316.5,
+        "a_au": 19.26321270638917,
+        "e": 0.04752652062615217,
+        "i_deg": 0.7735134104254454,
+        "node_deg": 74.00502814475203,
+        "peri_deg": 92.52219326634986,
+        "M0_deg": 261.4794041691516,
+        "n_deg_per_day": 0.01165790397098121,
         "source": {
           "query_target": "799",
           "center": "@sun",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:47.771315+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:12.459911+00:00"
         }
       },
       "positions": null,
@@ -2696,35 +2717,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 1335490385.651151,
-        "y": 2583579069.0603313,
-        "z": -7720982.170199989
+        "t": 2461316.500694444,
+        "x": 1334962446.9230685,
+        "y": 2583821432.8457255,
+        "z": -7713232.878046752
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
+        "element_epoch_jd": 2461316.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 6.719239956437483e-06
+            "error_deg": 1.0593637654075663e-05
           },
           {
             "offset_days": 30.0,
-            "error_deg": 1.308822596424567e-05
+            "error_deg": 7.4583502432785125e-06
           }
         ],
-        "error_rate_deg_per_day": 4.36274198808189e-07,
+        "error_rate_deg_per_day": 3.5312125513585543e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 30881.945342220963,
-        "cap_applied": 30881.945342220963,
+        "window_days": 30880.336713710287,
+        "cap_applied": 30880.336713710287,
         "window": {
-          "start_jd": 2430433.554657779,
-          "end_jd": 2492197.445342221
+          "start_jd": 2430436.1632862897,
+          "end_jd": 2492196.8367137103
         }
       }
     },
@@ -2739,19 +2760,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461315.5,
-        "a_au": 30.07564252371423,
-        "e": 0.009927196434588535,
-        "i_deg": 1.771056691503546,
-        "node_deg": 131.8195301326068,
-        "peri_deg": 279.8332447687778,
-        "M0_deg": 311.8692015066732,
-        "n_deg_per_day": 0.005975756410764318,
+        "epoch_jd": 2461316.5,
+        "a_au": 30.06766598032657,
+        "e": 0.009766048576697621,
+        "i_deg": 1.775109665538764,
+        "node_deg": 131.9799719451332,
+        "peri_deg": 280.8902223383022,
+        "M0_deg": 310.659477711933,
+        "n_deg_per_day": 0.005978134498979757,
         "source": {
           "query_target": "899",
           "center": "@sun",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:47.867705+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:14.309703+00:00"
         }
       },
       "positions": null,
@@ -2759,35 +2780,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 4463611236.063723,
-        "y": 206939780.06779322,
-        "z": -107124033.20520023
+        "t": 2461316.500694444,
+        "x": 4463585613.300472,
+        "y": 207411316.69719243,
+        "z": -107133194.22521669
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
+        "element_epoch_jd": 2461316.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 1.1990721638753847e-05
+            "error_deg": 2.3579254496768405e-05
           },
           {
             "offset_days": 30.0,
-            "error_deg": 2.5327550647106274e-05
+            "error_deg": 2.07340907253238e-05
           }
         ],
-        "error_rate_deg_per_day": 8.442516882368758e-07,
+        "error_rate_deg_per_day": 7.859751498922802e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 60243.41945256013,
-        "cap_applied": 60243.41945256013,
+        "window_days": 60219.45475824247,
+        "cap_applied": 60219.45475824247,
         "window": {
-          "start_jd": 2401072.08054744,
-          "end_jd": 2521558.91945256
+          "start_jd": 2401097.0452417573,
+          "end_jd": 2521535.9547582427
         }
       }
     },
@@ -2802,19 +2823,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "earth",
-        "epoch_jd": 2461315.5,
-        "a_au": 0.002547090816619092,
-        "e": 0.03071728493315529,
-        "i_deg": 5.165153704153828,
-        "node_deg": 328.7000936641522,
-        "peri_deg": 107.3466702728889,
-        "M0_deg": 1.579790035737463,
-        "n_deg_per_day": 13.36919083590184,
+        "epoch_jd": 2461316.5,
+        "a_au": 0.002542584726635286,
+        "e": 0.02887674556720574,
+        "i_deg": 5.166371063159038,
+        "node_deg": 328.6712117174258,
+        "peri_deg": 108.8657043867173,
+        "M0_deg": 13.59026414624724,
+        "n_deg_per_day": 13.40474685475631,
         "source": {
           "query_target": "301",
           "center": "@399",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:47.969171+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:16.211200+00:00"
         }
       },
       "positions": null,
@@ -2822,35 +2843,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 77708.84352255719,
-        "y": 359701.4786462213,
-        "z": 31431.920381194268
+        "t": 2461316.500694444,
+        "x": -13186.535934232414,
+        "y": 368422.62081732147,
+        "z": 27834.318591368476
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
-        "delta_days": 3.3659479135533226,
+        "element_epoch_jd": 2461316.5,
+        "delta_days": 3.357019754836547,
         "samples": [
           {
-            "offset_days": -3.3659479135533226,
-            "error_deg": 0.10614296746349568
+            "offset_days": -3.357019754836547,
+            "error_deg": 0.1085970136307432
           },
           {
-            "offset_days": 3.3659479135533226,
-            "error_deg": 0.02803933961144623
+            "offset_days": 3.357019754836547,
+            "error_deg": 0.07730097686292015
           }
         ],
-        "error_rate_deg_per_day": 0.031534346397964305,
+        "error_rate_deg_per_day": 0.03234923282005851,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 3.3659479135533226,
-        "cap_applied": 3.3659479135533226,
+        "window_days": 3.357019754836547,
+        "cap_applied": 3.357019754836547,
         "window": {
-          "start_jd": 2461312.1340520866,
-          "end_jd": 2461318.8659479134
+          "start_jd": 2461313.142980245,
+          "end_jd": 2461319.857019755
         }
       }
     },
@@ -2865,19 +2886,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "jupiter",
-        "epoch_jd": 2461315.5,
-        "a_au": 0.002821070888520062,
-        "e": 0.004174380770000015,
-        "i_deg": 2.227228776294822,
-        "node_deg": 338.4107885729895,
-        "peri_deg": 34.62798570109982,
-        "M0_deg": 274.0103727157224,
-        "n_deg_per_day": 203.2369631202337,
+        "epoch_jd": 2461316.5,
+        "a_au": 0.002821089005552569,
+        "e": 0.004007944004725103,
+        "i_deg": 2.227324491162776,
+        "node_deg": 338.4102651625522,
+        "peri_deg": 50.3468247373285,
+        "M0_deg": 101.7725754589427,
+        "n_deg_per_day": 203.2350053418286,
         "source": {
           "query_target": "501",
           "center": "@599",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:48.066858+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:18.060166+00:00"
         }
       },
       "positions": null,
@@ -2885,35 +2906,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 121422.94792438357,
-        "y": -403850.91372618615,
-        "z": -12867.11208948199
+        "t": 2461316.500694444,
+        "x": -277828.5086308662,
+        "y": 318061.9395877166,
+        "z": 7526.649331216264
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
-        "delta_days": 0.2214164161338028,
+        "element_epoch_jd": 2461316.5,
+        "delta_days": 0.2214185490551335,
         "samples": [
           {
-            "offset_days": -0.2214164161338028,
-            "error_deg": 0.005582820121333467
+            "offset_days": -0.2214185490551335,
+            "error_deg": 0.00563356642701713
           },
           {
-            "offset_days": 0.2214164161338028,
-            "error_deg": 0.005907089415659122
+            "offset_days": 0.2214185490551335,
+            "error_deg": 0.005396359196497533
           }
         ],
-        "error_rate_deg_per_day": 0.026678642527071906,
+        "error_rate_deg_per_day": 0.025443064508630507,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 0.2214164161338028,
-        "cap_applied": 0.2214164161338028,
+        "window_days": 0.2214185490551335,
+        "cap_applied": 0.2214185490551335,
         "window": {
-          "start_jd": 2461315.278583584,
-          "end_jd": 2461315.721416416
+          "start_jd": 2461316.278581451,
+          "end_jd": 2461316.721418549
         }
       }
     },
@@ -2928,19 +2949,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "saturn",
-        "epoch_jd": 2461315.5,
-        "a_au": 0.008168212085623926,
-        "e": 0.02876763267708338,
-        "i_deg": 27.70567952522421,
-        "node_deg": 169.0806020608285,
-        "peri_deg": 178.5103908226818,
-        "M0_deg": 57.8298518154693,
-        "n_deg_per_day": 22.57394522822521,
+        "epoch_jd": 2461316.5,
+        "a_au": 0.008168216054201783,
+        "e": 0.02874611373028809,
+        "i_deg": 27.70567809487569,
+        "node_deg": 169.0806011403295,
+        "peri_deg": 178.5264959407686,
+        "M0_deg": 80.39028518541282,
+        "n_deg_per_day": 22.57392877669264,
         "source": {
           "query_target": "606",
           "center": "@699",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:48.170905+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:20.149760+00:00"
         }
       },
       "positions": null,
@@ -2948,35 +2969,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 778767.2299868693,
-        "y": 782243.6822108005,
-        "z": -480817.10908236215
+        "t": 2461316.500694444,
+        "x": 364449.5281565478,
+        "y": 1016941.3681091482,
+        "z": -560619.7410278483
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
-        "delta_days": 1.9934486216319198,
+        "element_epoch_jd": 2461316.5,
+        "delta_days": 1.9934500744266572,
         "samples": [
           {
-            "offset_days": -1.9934486216319198,
-            "error_deg": 0.0010333801723809656
+            "offset_days": -1.9934500744266572,
+            "error_deg": 0.0006749668292652673
           },
           {
-            "offset_days": 1.9934486216319198,
-            "error_deg": 0.00043759465637711973
+            "offset_days": 1.9934500744266572,
+            "error_deg": 0.0003651124569024179
           }
         ],
-        "error_rate_deg_per_day": 0.0005183881646947077,
+        "error_rate_deg_per_day": 0.00033859229178809344,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 1.9934486216319198,
-        "cap_applied": 1.9934486216319198,
+        "window_days": 1.9934500744266572,
+        "cap_applied": 1.9934500744266572,
         "window": {
-          "start_jd": 2461313.5065513784,
-          "end_jd": 2461317.4934486216
+          "start_jd": 2461314.5065499255,
+          "end_jd": 2461318.4934500745
         }
       }
     },
@@ -2991,19 +3012,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461315.5,
-        "a_au": 39.34493753093572,
-        "e": 0.2479711763840415,
-        "i_deg": 17.17476472181129,
-        "node_deg": 110.3352945932039,
-        "peri_deg": 113.0580249481515,
-        "M0_deg": 54.37163389201002,
-        "n_deg_per_day": 0.003993657212408448,
+        "epoch_jd": 2461316.5,
+        "a_au": 39.34494697734608,
+        "e": 0.2479736451480342,
+        "i_deg": 17.17476119553996,
+        "node_deg": 110.3352915052031,
+        "peri_deg": 113.0576841319431,
+        "M0_deg": 54.37566153292824,
+        "n_deg_per_day": 0.003993655774140301,
         "source": {
           "query_target": "9",
           "center": "@sun",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:48.266284+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:22.359704+00:00"
         }
       },
       "positions": null,
@@ -3011,35 +3032,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 2987006931.8452096,
-        "y": -4393528826.905395,
-        "z": -393763968.22737926
+        "t": 2461316.500694444,
+        "x": 2987407819.8008084,
+        "y": -4393370231.104459,
+        "z": -393897182.1968625
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
+        "element_epoch_jd": 2461316.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 9.042642972798993e-07
+            "error_deg": 9.262062180071712e-07
           },
           {
             "offset_days": 30.0,
-            "error_deg": 1.2999108412527134e-06
+            "error_deg": 1.3152575998981715e-06
           }
         ],
-        "error_rate_deg_per_day": 4.3330361375090446e-08,
+        "error_rate_deg_per_day": 4.384191999660572e-08,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 90142.93937934033,
-        "cap_applied": 90142.93937934033,
+        "window_days": 90142.97184325954,
+        "cap_applied": 90142.97184325954,
         "window": {
-          "start_jd": 2371172.5606206595,
-          "end_jd": 2551458.4393793405
+          "start_jd": 2371173.5281567406,
+          "end_jd": 2551459.4718432594
         }
       }
     },
@@ -3054,19 +3075,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "pluto_barycenter",
-        "epoch_jd": 2461315.5,
-        "a_au": 1.424884650534108e-05,
-        "e": 0.000115204227247595,
-        "i_deg": 112.8877709491703,
-        "node_deg": 227.3930712586319,
-        "peri_deg": 12.2178245874077,
-        "M0_deg": 19.14085700881745,
-        "n_deg_per_day": 56.36174127773607,
+        "epoch_jd": 2461316.5,
+        "a_au": 1.424634134683712e-05,
+        "e": 0.000156746938325384,
+        "i_deg": 112.8877709129095,
+        "node_deg": 227.3930707891587,
+        "peri_deg": 299.2743695208949,
+        "M0_deg": 148.4475162612781,
+        "n_deg_per_day": 56.37660838982259,
         "source": {
           "query_target": "999",
           "center": "@9",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:48.366955+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:24.105320+00:00"
         }
       },
       "positions": null,
@@ -3074,35 +3095,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": -1549.422063840691,
-        "y": -1046.5572908694892,
-        "z": 1023.0965549042162
+        "t": 2461316.500694444,
+        "x": -665.8319407660051,
+        "y": 499.747184417606,
+        "z": 1962.2036756542889
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
-        "delta_days": 0.7984139414403761,
+        "element_epoch_jd": 2461316.5,
+        "delta_days": 0.7982033911802974,
         "samples": [
           {
-            "offset_days": -0.7984139414403761,
-            "error_deg": 0.0012615038155619777
+            "offset_days": -0.7982033911802974,
+            "error_deg": 0.0004469096920164667
           },
           {
-            "offset_days": 0.7984139414403761,
-            "error_deg": 0.0012711240413004997
+            "offset_days": 0.7982033911802974,
+            "error_deg": 0.0026326301433343908
           }
         ],
-        "error_rate_deg_per_day": 0.001592061429948646,
+        "error_rate_deg_per_day": 0.003298194636133455,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 6.387311531523009,
-        "cap_applied": 6.387311531523009,
+        "window_days": 6.385627129442379,
+        "cap_applied": 6.385627129442379,
         "window": {
-          "start_jd": 2461309.1126884683,
-          "end_jd": 2461321.8873115317
+          "start_jd": 2461310.1143728704,
+          "end_jd": 2461322.8856271296
         }
       }
     },
@@ -3117,19 +3138,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "pluto_barycenter",
-        "epoch_jd": 2461315.5,
-        "a_au": 0.0001167387740838404,
-        "e": 0.0001547872333723628,
-        "i_deg": 112.8877732894143,
-        "node_deg": 227.3930739059187,
-        "peri_deg": 166.5817107381485,
-        "M0_deg": 44.77393226346391,
-        "n_deg_per_day": 56.36452697318021,
+        "epoch_jd": 2461316.5,
+        "a_au": 0.0001167412752631642,
+        "e": 0.0001699915169812862,
+        "i_deg": 112.8877734031387,
+        "node_deg": 227.3930742419982,
+        "peri_deg": 171.8392562176584,
+        "M0_deg": 95.87888811673177,
+        "n_deg_per_day": 56.36271556970663,
         "source": {
           "query_target": "901",
           "center": "@9",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:48.471573+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:25.734247+00:00"
         }
       },
       "positions": null,
@@ -3137,35 +3158,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 12694.012571824414,
-        "y": 8573.336323977906,
-        "z": -8383.305232253473
+        "t": 2461316.500694444,
+        "x": 5454.245166913338,
+        "y": -4096.107892902732,
+        "z": -16077.428719748128
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
-        "delta_days": 0.7983744815495788,
+        "element_epoch_jd": 2461316.5,
+        "delta_days": 0.79840013997101,
         "samples": [
           {
-            "offset_days": -0.7983744815495788,
-            "error_deg": 0.0002985824675900263
+            "offset_days": -0.79840013997101,
+            "error_deg": 0.00020296358739745204
           },
           {
-            "offset_days": 0.7983744815495788,
-            "error_deg": 6.160830817776728e-06
+            "offset_days": 0.79840013997101,
+            "error_deg": 0.00017566724980051988
           }
         ],
-        "error_rate_deg_per_day": 0.0003739879899599276,
+        "error_rate_deg_per_day": 0.00025421286549977517,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 0.7983744815495788,
-        "cap_applied": 0.7983744815495788,
+        "window_days": 0.79840013997101,
+        "cap_applied": 0.79840013997101,
         "window": {
-          "start_jd": 2461314.7016255185,
-          "end_jd": 2461316.2983744815
+          "start_jd": 2461315.70159986,
+          "end_jd": 2461317.29840014
         }
       }
     },
@@ -3180,19 +3201,19 @@
       "trajectory_of": null,
       "osculating": {
         "center": "sun",
-        "epoch_jd": 2461315.5,
-        "a_au": 0.9223337358354436,
-        "e": 0.1911837277064088,
-        "i_deg": 3.341090082718209,
-        "node_deg": 203.892625690892,
-        "peri_deg": 126.6840821978838,
-        "M0_deg": 303.2850506771051,
-        "n_deg_per_day": 1.112684230290226,
+        "epoch_jd": 2461316.5,
+        "a_au": 0.9223337712761889,
+        "e": 0.1911837580162617,
+        "i_deg": 3.341089971072538,
+        "node_deg": 203.8926234064474,
+        "peri_deg": 126.6840781398153,
+        "M0_deg": 304.3977434846437,
+        "n_deg_per_day": 1.112684166157762,
         "source": {
           "query_target": "2004 MN4",
           "center": "@sun",
-          "epoch": 2461315.5,
-          "retrieved": "2026-10-02T16:40:48.569232+00:00"
+          "epoch": 2461316.5,
+          "retrieved": "2026-10-03T03:21:27.789144+00:00"
         }
       },
       "positions": null,
@@ -3200,35 +3221,35 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": -36806284.489823885,
-        "y": -122024176.15649493,
-        "z": 5642935.601474993
+        "t": 2461316.500694444,
+        "x": -33928047.53174988,
+        "y": -122324199.74298707,
+        "z": 5727005.638438775
       },
       "event_link": null,
       "trust": {
         "schema_version": 1,
         "method": "two_body_rate_v1",
-        "element_epoch_jd": 2461315.5,
+        "element_epoch_jd": 2461316.5,
         "delta_days": 30.0,
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 1.308421600226926e-05
+            "error_deg": 1.154089012386066e-05
           },
           {
             "offset_days": 30.0,
-            "error_deg": 3.1616645131759297e-06
+            "error_deg": 4.567274721460763e-06
           }
         ],
-        "error_rate_deg_per_day": 4.361405334089753e-07,
+        "error_rate_deg_per_day": 3.84696337462022e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 323.54192699046314,
-        "cap_applied": 323.54192699046314,
+        "window_days": 323.5419456386489,
+        "cap_applied": 323.5419456386489,
         "window": {
-          "start_jd": 2460991.9580730097,
-          "end_jd": 2461639.0419269903
+          "start_jd": 2460992.9580543614,
+          "end_jd": 2461640.0419456386
         }
       }
     },
@@ -3245,19 +3266,19 @@
       "positions": {
         "file": "positions/voyager_1.json",
         "start": "1977-09-06",
-        "end": "2026-10-02",
+        "end": "2026-10-03",
         "step_hours": 24.0,
-        "n_points": 202,
+        "n_points": 203,
         "size_kb": 16
       },
       "presets": null,
       "features": {},
       "orbit_type": null,
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": -4811698665.032006,
-        "y": -20469845403.77388,
-        "z": 14810326054.984766
+        "t": 2461316.500694444,
+        "x": -4811877504.757071,
+        "y": -20471021419.685165,
+        "z": 14811175534.783651
       },
       "event_link": null,
       "trust": {
@@ -3289,7 +3310,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460240.009056779,
-          "retrieved": "2026-10-02T16:40:48.738319+00:00"
+          "retrieved": "2026-10-03T03:21:29.428959+00:00"
         }
       },
       "positions": null,
@@ -3297,10 +3318,10 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": 308144261.43715805,
-        "y": 77325325.61027643,
-        "z": 41040554.7209479
+        "t": 2461316.500694444,
+        "x": 306435609.66375667,
+        "y": 77865331.57431993,
+        "z": 40987757.55411414
       },
       "event_link": null,
       "trust": {
@@ -3357,7 +3378,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-10-02T16:40:48.860213+00:00"
+          "retrieved": "2026-10-03T03:21:30.039292+00:00"
         }
       },
       "positions": null,
@@ -3365,10 +3386,10 @@
       "features": {},
       "orbit_type": "elliptical",
       "as_of_today": {
-        "t": 2461315.500694444,
-        "x": -2895507652.5135417,
-        "y": 4109232157.883314,
-        "z": -1474115768.515964
+        "t": 2461316.500694444,
+        "x": -2895425680.2857485,
+        "y": 4109250014.2268276,
+        "z": -1474096063.4366693
       },
       "event_link": null,
       "trust": {
@@ -3405,7 +3426,7 @@
   },
   "frame_constants": {
     "export": "data/constants_export.json",
-    "orrery_sha": "5ed1101d2ebb606861f0a0e49c999bab3ba55056",
+    "orrery_sha": "f7ad52dbf9f8bef81fdcb35ea7c3a442fc5f6fb2",
     "rows": {
       "KM_PER_AU": {
         "value": 149597870.7,

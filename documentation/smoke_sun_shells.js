@@ -164,18 +164,71 @@ check("torus ring sits at the mid-radius, not at the cloud bounds",
 const [cl, ch] = span(clumps);
 check("clumps stay inside the outer bound", ch <= 100000 && cl >= 20000,
       Math.round(cl) + " - " + Math.round(ch) + " AU");
+// L-406 (2026-10-02). The tide is drawn between its served edges, about
+// the galactic pole it serves. Until then this check measured latitude
+// against the drawing's z axis -- the ECLIPTIC's pole -- under the name
+// "thinned at the galactic plane", so it passed on the wrong plane.
+// Latitudes are now measured against the galactic pole, turned into the
+// drawing's frame by this check's own arithmetic, not by poleBasis().
+const tideCfg = sun.features.oort_cloud.galactic_tide;
 const [dl, dh] = span(tide);
-check("tide clipped to 0.5-1.5 of 50,000 AU",
-      Math.abs(dl - 25000) < 1 && Math.abs(dh - 75000) < 1,
+check("tide drawn between its served edges, 20,000 to 100,000 AU",
+      tideCfg.inner_radius?.value === 20000 && tideCfg.outer_radius?.value === 100000 &&
+      dl >= 20000 && dh <= 100000 && dl < 22000 && dh > 98000,
       Math.round(dl) + " - " + Math.round(dh) + " AU");
-let nearPlane = 0;
-for (let i = 0; i < tide.x.length; i++) {
-  if (Math.abs(Math.asin(tide.z[i] / radAt(tide, i)) * 180 / Math.PI) < 15) nearPlane++;
+const OB = JSON.parse(fs.readFileSync(require("path").join(__dirname, "..", "data",
+  "solar-system", "coverage_index.json"), "utf8")).frame_constants.rows
+  .EARTH_OBLIQUITY_J2000_DEG.value * Math.PI / 180;
+function poleInDrawing(raDeg, decDeg) {
+  const a = raDeg * Math.PI / 180, d = decDeg * Math.PI / 180;
+  const x = Math.cos(d) * Math.cos(a), y = Math.cos(d) * Math.sin(a), z = Math.sin(d);
+  return [x, y * Math.cos(OB) + z * Math.sin(OB), -y * Math.sin(OB) + z * Math.cos(OB)];
 }
-const uniform = tide.x.length * Math.sin(15 * Math.PI / 180);
-check("tide is genuinely thinned at the galactic plane",
-      nearPlane < 0.7 * uniform,
-      nearPlane + " points vs ~" + Math.round(uniform) + " for a uniform shell");
+const gpc = tideCfg.galactic_pole || {};
+const servedPole = !!(gpc.ra && gpc.dec);
+check("the tide's entry serves a galactic pole", servedPole,
+      servedPole ? "" : "no galactic_pole -- measured against the ecliptic below, which fails");
+const GP = servedPole ? poleInDrawing(gpc.ra.value, gpc.dec.value) : [0, 0, 1];
+const gTilt = Math.acos(GP[2]) * 180 / Math.PI;
+check("the galactic pole sits about 60 degrees from the ecliptic's",
+      gTilt > 59 && gTilt < 61.5, gTilt.toFixed(2) + " degrees");
+// Share of points within 15 degrees of a plane, and within 15 degrees of
+// its poles, against a uniform shell's share (sin 15 and 1 - cos 15).
+function shares(pole) {
+  let plane = 0, poles = 0;
+  for (let i = 0; i < tide.x.length; i++) {
+    const s = (tide.x[i] * pole[0] + tide.y[i] * pole[1] + tide.z[i] * pole[2]) / radAt(tide, i);
+    const b = Math.abs(Math.asin(Math.max(-1, Math.min(1, s)))) * 180 / Math.PI;
+    if (b < 15) plane++;
+    if (b > 75) poles++;
+  }
+  return [plane / tide.x.length, poles / tide.x.length];
+}
+const U_PLANE = Math.sin(15 * Math.PI / 180), U_POLES = 1 - Math.cos(15 * Math.PI / 180);
+const [gPlane, gPoles] = shares(GP);
+check("tide is thinned at the galaxy's plane",
+      gPlane < 0.6 * U_PLANE,
+      (100 * gPlane).toFixed(1) + "% of points within 15 deg vs " +
+      (100 * U_PLANE).toFixed(1) + "% for a uniform shell");
+check("tide is thinned at the galaxy's poles too",
+      gPoles < 0.75 * U_POLES,
+      (100 * gPoles).toFixed(1) + "% within 15 deg of a pole vs " +
+      (100 * U_POLES).toFixed(1) + "% for a uniform shell");
+// The same measure against the ecliptic must NOT show the galactic
+// pattern, or the check could not tell the two planes apart -- the
+// failure this replaced.
+const [ePlane] = shares([0, 0, 1]);
+check("the measure tells the planes apart: not thinned at the ecliptic",
+      ePlane > 0.8 * U_PLANE,
+      (100 * ePlane).toFixed(1) + "% within 15 deg of the ecliptic vs " +
+      (100 * U_PLANE).toFixed(1) + "% uniform");
+const tideHover = info.map(t => String(t.hovertext || t.text || ""))
+  .find(h => h.indexOf("Galactic Tide") !== -1) || "";
+check("tide hover gives its edges and says what is not known",
+      tideHover.indexOf("From 20,000 AU") !== -1 &&
+      tideHover.indexOf("to 100,000 AU") !== -1 &&
+      tideHover.indexOf("Where the comets really are is not known") !== -1,
+      tideHover.replace(/<br>/g, " / ").slice(0, 160));
 const again = GF.buildFeatureTraces(features, bodies, {sceneHalfRangeAu: 1.1});
 const clumps2 = again.traces.filter(t => t.showlegend === true)
   .find(t => t.name.indexOf("clumps") !== -1);
