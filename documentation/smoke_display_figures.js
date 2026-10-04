@@ -105,6 +105,15 @@
 // fixture_hovers_L406_on_0ffa4518.json: the L-345 one with that single
 // hover replaced, the other 43 byte for byte. The L-345 one is left in
 // place, unreferenced.
+//
+// L-371 (2026-10-03): the Sun's distance cards. Its far shells say their
+// radius in AU at the served count, the Oort shapes' "From ... to ..."
+// lines and the streamer band print by served counts, and five shells
+// carry Tony's approved notes. The fixture is re-recorded as
+// fixture_hovers_L371_on_d4b408e6.json, built from the config after the
+// mirror wrote the Sun's new rows; every Sun hover that changed is listed
+// in the session's approval file. The L-406 one is left in place,
+// unreferenced.
 
 "use strict";
 const fs = require("fs");
@@ -132,9 +141,9 @@ const SOFT_BR = "<br soft>";
 // separately, and its period line is graded against the served row. The
 // fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "0ffa4518";
+const FIXTURE_AT = "d4b408e6";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L406_on_0ffa4518.json");
+                          "fixture_hovers_L371_on_d4b408e6.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

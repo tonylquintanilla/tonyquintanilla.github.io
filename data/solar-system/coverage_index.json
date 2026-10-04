@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-10-04T14:31:35.358935+00:00",
+  "generated": "2026-10-04T20:51:54.760586+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2461230.136482413,
-    "end_jd": 2461406.0740583027
+    "start_jd": 2461230.4005958578,
+    "end_jd": 2461406.3381717475
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -96,6 +96,11 @@
                 "figures": "exact",
                 "prints": 4
               },
+              "pc": {
+                "value": 2.2546101516664486e-08,
+                "figures": "exact",
+                "prints": 4
+              },
               "r_earth": {
                 "value": 109.07574478727847,
                 "figures": "exact",
@@ -124,12 +129,138 @@
             "cusp_radius": {
               "value": 4.0,
               "unit": "r_sun",
+              "in": {
+                "au": {
+                  "value": 0.018601869043848633,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "km": {
+                  "value": 2782800.0,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "pc": {
+                  "value": 9.018440606665795e-08,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_earth": {
+                  "value": 436.30297914911387,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_sun": {
+                  "value": 4.0,
+                  "figures": "exact",
+                  "prints": 1
+                }
+              },
+              "prints": 1,
+              "figures": "exact",
               "source": "Suess and Nerney (2004) -- extent of the closed-field helmet, not of the streamer as a whole",
               "orrery_constant": "constants_new.py::HELMET_CUSP_RADII"
             },
+            "range": {
+              "low": {
+                "value": 2,
+                "unit": "r_sun",
+                "in": {
+                  "au": {
+                    "value": 0.009,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "km": {
+                    "value": 1000000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "pc": {
+                    "value": 5e-08,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_earth": {
+                    "value": 200.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_sun": {
+                    "value": 2.0,
+                    "figures": 1,
+                    "prints": null
+                  }
+                },
+                "figures": 1,
+                "orrery_constant": "constants_new.py::HELMET_CUSP_LOW_RADII"
+              },
+              "high": {
+                "value": 4,
+                "unit": "r_sun",
+                "in": {
+                  "au": {
+                    "value": 0.02,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "km": {
+                    "value": 3000000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "pc": {
+                    "value": 9e-08,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_earth": {
+                    "value": 400.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_sun": {
+                    "value": 4.0,
+                    "figures": 1,
+                    "prints": null
+                  }
+                },
+                "figures": 1,
+                "orrery_constant": "constants_new.py::HELMET_CUSP_HIGH_RADII"
+              }
+            },
+            "cusp_note": "Helmets reach no higher than {low} to {high} solar radii; drawn at {drawn}.",
             "fade_radius": {
               "value": 19.7,
               "unit": "r_sun",
+              "in": {
+                "au": {
+                  "value": 0.092,
+                  "figures": 2,
+                  "prints": null
+                },
+                "km": {
+                  "value": 13700000.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 4.44e-07,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 2150.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 19.7,
+                  "figures": 3,
+                  "prints": null
+                }
+              },
+              "figures": 3,
               "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- the band dissolves across the Alfven surface",
               "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
             },
@@ -172,6 +303,11 @@
                   "figures": 3,
                   "prints": null
                 },
+                "pc": {
+                  "value": 2.26e-08,
+                  "figures": 3,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 109.4,
                   "figures": 4,
@@ -200,7 +336,36 @@
             "name": "Inner Corona",
             "radius": {
               "value": 3,
-              "unit": "r_sun"
+              "unit": "r_sun",
+              "in": {
+                "au": {
+                  "value": 0.013951401782886473,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "km": {
+                  "value": 2087100.0,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "pc": {
+                  "value": 6.763830454999345e-08,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_earth": {
+                  "value": 327.22723436183543,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_sun": {
+                  "value": 3.0,
+                  "figures": "exact",
+                  "prints": 1
+                }
+              },
+              "prints": 1,
+              "figures": "exact"
             },
             "description": "The lowest part of the Sun's outer atmosphere: a thin gas at millions of degrees, shaped by the Sun's magnetic field.",
             "about": "The inner corona is the part of the corona nearest the surface. It is thin, far thinner than the photosphere, and yet at one to three million kelvin it is much hotter, a puzzle known as the coronal heating problem. The magnetic field rules it: closed loops trap glowing gas in bright arcs, open regions called coronal holes let gas escape as the solar wind, and streamers reach outward. Because it is so faint it is seen directly only at a total eclipse or with special instruments.",
@@ -215,9 +380,72 @@
           "roche_limit": {
             "name": "Roche Limit (Comets)",
             "radius": {
-              "value": 3.45,
-              "unit": "r_sun"
+              "value": 3.0,
+              "unit": "r_sun",
+              "in": {
+                "au": {
+                  "value": 0.02,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 2000000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 8e-08,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 400.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 3.0,
+                  "figures": 1,
+                  "prints": null
+                }
+              },
+              "figures": 1
             },
+            "drawn_radius": {
+              "value": 3.45,
+              "unit": "r_sun",
+              "in": {
+                "au": {
+                  "value": 0.016044112050319446,
+                  "figures": "exact",
+                  "prints": 3
+                },
+                "km": {
+                  "value": 2400165.0,
+                  "figures": "exact",
+                  "prints": 3
+                },
+                "pc": {
+                  "value": 7.778405023249248e-08,
+                  "figures": "exact",
+                  "prints": 3
+                },
+                "r_earth": {
+                  "value": 376.3113195161107,
+                  "figures": "exact",
+                  "prints": 3
+                },
+                "r_sun": {
+                  "value": 3.45,
+                  "figures": "exact",
+                  "prints": 3
+                }
+              },
+              "prints": 3,
+              "figures": "exact",
+              "orrery_constant": "constants_new.py::ROCHE_LIMIT_DRAWN_RADII"
+            },
+            "radius_note": "Known only roughly, because comets differ in density. It is drawn where the formula's middle answer falls; the true limit could lie inside or outside the inner corona.",
             "description": "The distance inside which the Sun's tides would pull a loosely held comet apart.",
             "about": "Inside the Roche limit the difference in the Sun's pull across a body outweighs the body's own gravity. The limit drawn here is for a comet held together only by its own gravity, at a typical comet density. It is not a hard wall: the strength of the ice and rock can hold a nucleus together well inside it, and several sungrazing comets have survived far closer than this line before breaking up or escaping.",
             "info_url": "https://en.wikipedia.org/wiki/Roche_limit",
@@ -233,7 +461,35 @@
             "name": "Alfven Surface",
             "radius": {
               "value": 19.7,
-              "unit": "r_sun"
+              "unit": "r_sun",
+              "in": {
+                "au": {
+                  "value": 0.092,
+                  "figures": 2,
+                  "prints": null
+                },
+                "km": {
+                  "value": 13700000.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 4.44e-07,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 2150.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 19.7,
+                  "figures": 3,
+                  "prints": null
+                }
+              },
+              "figures": 3
             },
             "description": "The true outer edge of the Sun's atmosphere, where the outflowing gas becomes the solar wind and can no longer signal back to the Sun.",
             "about": "Inside the Alfven surface the gas is tied to the Sun by its magnetic field, and a disturbance there can travel back to the surface. Outside it the gas moves faster than magnetic waves can carry a signal inward, so it is on its own, and is called the solar wind. NASA's Parker Solar Probe crossed this boundary in April 2021, the first spacecraft to fly inside the corona. The surface is not a smooth sphere: it is lower over the poles and higher over the streamer belt.",
@@ -249,7 +505,36 @@
             "name": "Outer Corona",
             "radius": {
               "value": 50,
-              "unit": "r_sun"
+              "unit": "r_sun",
+              "in": {
+                "au": {
+                  "value": 0.2325233630481079,
+                  "figures": "exact",
+                  "prints": 2
+                },
+                "km": {
+                  "value": 34785000.0,
+                  "figures": "exact",
+                  "prints": 2
+                },
+                "pc": {
+                  "value": 1.1273050758332243e-06,
+                  "figures": "exact",
+                  "prints": 3
+                },
+                "r_earth": {
+                  "value": 5453.787239363924,
+                  "figures": "exact",
+                  "prints": 2
+                },
+                "r_sun": {
+                  "value": 50.0,
+                  "figures": "exact",
+                  "prints": 2
+                }
+              },
+              "prints": 2,
+              "figures": "exact"
             },
             "description": "The faint outer reach of the Sun's atmosphere, where sunlight scattered by dust gives a soft glow far beyond the streamers.",
             "about": "At this distance the corona is extremely thin. Sunlight scattered by dust, the F-corona, outshines the light scattered by electrons that dominates nearer the Sun. By here the gas has long since become the solar wind; the shell marks the extent of the faint glow rather than a physical edge.",
@@ -258,7 +543,7 @@
             "opacity": 0.5,
             "n_points": 20,
             "marker_size": 3.5,
-            "source": "Mann et al. (2004), A&A 414:1127; F-corona envelope, not a sharp physical edge",
+            "radius_note": "A boundary chosen for the drawing; the faint outer corona has no sharp edge.",
             "orrery_constant": "constants_new.py::OUTER_CORONA_RADII"
           },
           "sun_radius": {
@@ -272,6 +557,11 @@
               },
               "km": {
                 "value": 695700.0,
+                "figures": "exact",
+                "prints": 4
+              },
+              "pc": {
+                "value": 2.2546101516664486e-08,
                 "figures": "exact",
                 "prints": 4
               },
@@ -296,24 +586,80 @@
           "termination_shock": {
             "name": "Termination Shock",
             "radius": {
-              "value": 94,
-              "unit": "au"
+              "value": 94.01,
+              "unit": "au",
+              "in": {
+                "au": {
+                  "value": 94.01,
+                  "figures": 4,
+                  "prints": null
+                },
+                "km": {
+                  "value": 14064000000.0,
+                  "figures": 5,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 0.0004558,
+                  "figures": 4,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 2205000.0,
+                  "figures": 5,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 20215.0,
+                  "figures": 5,
+                  "prints": null
+                }
+              },
+              "figures": 4
             },
             "description": "The place far beyond the planets where the solar wind slows suddenly from supersonic speed as it meets the gas between the stars.",
-            "about": "The solar wind streams outward at supersonic speed until the pressure of the interstellar gas brings it up short. At the termination shock it slows abruptly, and its energy of motion becomes heat. Voyager 1 crossed it at 94 AU and Voyager 2 at 84 AU; beyond it the wind moves at a few hundred kilometers a second through the turbulent region called the heliosheath.",
+            "about": "The solar wind streams outward at supersonic speed until the pressure of the interstellar gas brings it up short. At the termination shock it slows abruptly, and its energy of motion becomes heat. Voyager 1 crossed it at 94.01 AU and Voyager 2 at 84 AU; beyond it the wind moves at a few hundred kilometers a second through the turbulent region called the heliosheath.",
             "info_url": "https://en.wikipedia.org/wiki/Heliosphere",
             "color": "rgb(240, 244, 255)",
             "opacity": 0.4,
             "n_points": 20,
             "marker_size": 3.0,
-            "source": "Stone et al. (2005), Science 309:2017 -- Voyager 1 crossing at 94 AU",
+            "source": "Stone et al. (2005), Science 309:2017 -- Voyager 1 crossed the termination shock on 16 December 2004 at 94.01 AU",
             "orrery_constant": "constants_new.py::TERMINATION_SHOCK_AU"
           },
           "heliopause": {
             "name": "Heliopause",
             "radius": {
-              "value": 26148,
-              "unit": "r_sun"
+              "value": 121,
+              "unit": "au",
+              "in": {
+                "au": {
+                  "value": 121.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "km": {
+                  "value": 18100000000.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 0.00059,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 2840000.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 26000.0,
+                  "figures": 3,
+                  "prints": null
+                }
+              },
+              "figures": 3
             },
             "description": "The outer boundary of the Sun's bubble, where the solar wind's push is balanced by the gas between the stars.",
             "about": "The solar wind, a constant stream of charged particles from the Sun, inflates a vast bubble called the heliosphere around the Sun and planets. The bubble is not round: the Sun's motion through interstellar gas gives it a rounded head and a long tail. The heliopause is its outermost boundary, where the wind's pressure equals the pressure of the interstellar medium, and it shields the planets from much of the galaxy's cosmic radiation.",
@@ -322,8 +668,8 @@
             "opacity": 0.4,
             "n_points": 20,
             "marker_size": 3.0,
-            "source": "Gurnett et al. (2013), Science 341:1489",
-            "orrery_constant": "constants_new.py::HELIOPAUSE_RADII"
+            "source": "Gurnett et al. (2013), Science 341:1489 -- the first sign of the heliopause came on 28 July 2012, at 121 AU",
+            "orrery_constant": "constants_new.py::HELIOPAUSE_AU"
           },
           "sun_radius": {
             "value": 695700.0,
@@ -336,6 +682,11 @@
               },
               "km": {
                 "value": 695700.0,
+                "figures": "exact",
+                "prints": 4
+              },
+              "pc": {
+                "value": 2.2546101516664486e-08,
                 "figures": "exact",
                 "prints": 4
               },
@@ -367,13 +718,70 @@
             "inner_radius": {
               "value": 2000,
               "unit": "au",
-              "source": "Hills (1981); Oort (1950) -- inner edge estimate",
+              "in": {
+                "au": {
+                  "value": 2000.0,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "km": {
+                  "value": 299195741400.0,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "pc": {
+                  "value": 0.009696273622190736,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_earth": {
+                  "value": 46909585.06595798,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_sun": {
+                  "value": 430064.3113410953,
+                  "figures": "exact",
+                  "prints": 1
+                }
+              },
+              "prints": 1,
+              "figures": "exact",
+              "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the inner edge is thought to lie between 2,000 and 5,000 AU; drawn at the near end",
               "orrery_constant": "constants_new.py::INNER_LIMIT_OORT_CLOUD_AU"
             },
             "outer_radius": {
               "value": 20000,
               "unit": "au",
-              "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+              "in": {
+                "au": {
+                  "value": 20000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 3000000000000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 0.1,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 500000000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 4000000.0,
+                  "figures": 1,
+                  "prints": null
+                }
+              },
+              "figures": 1,
+              "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
               "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
             },
             "drawing": {
@@ -392,19 +800,76 @@
             "name": "Outer Oort Cloud (clumps)",
             "shape": "clump_field",
             "description": "The outer Oort cloud: a rough sphere of icy bodies at the very edge of the Sun's reach, drawn here as clumps.",
-            "about": "The outer Oort cloud is a roughly spherical shell of icy bodies, cometary nuclei of water ice, ammonia and methane, reaching out to about a light-year and a half from the Sun. Objects here are only loosely held, so passing stars and the galaxy's tide can nudge them inward as long-period comets, the ones that take more than two centuries to circle the Sun. Simulations suggest the cloud is lumpy rather than smooth, which is what the clumps show; where any real lump lies is not known.",
+            "about": "The outer Oort cloud is a roughly spherical shell of icy bodies, cometary nuclei of water ice, ammonia and methane, reaching out to about two light-years from the Sun. Objects here are only loosely held, so passing stars and the galaxy's tide can nudge them inward as long-period comets, the ones that take more than two centuries to circle the Sun. Simulations suggest the cloud is lumpy rather than smooth, which is what the clumps show; where any real lump lies is not known.",
             "info_url": "https://science.nasa.gov/solar-system/oort-cloud/",
             "color": "rgb(200, 200, 255)",
             "inner_radius": {
               "value": 20000,
               "unit": "au",
-              "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+              "in": {
+                "au": {
+                  "value": 20000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 3000000000000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 0.1,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 500000000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 4000000.0,
+                  "figures": 1,
+                  "prints": null
+                }
+              },
+              "figures": 1,
+              "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
               "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
             },
             "outer_radius": {
               "value": 100000,
               "unit": "au",
-              "source": "Oort (1950); Weissman (1996)",
+              "in": {
+                "au": {
+                  "value": 100000.0,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "km": {
+                  "value": 14959787069999.998,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "pc": {
+                  "value": 0.48481368110953676,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_earth": {
+                  "value": 2345479253.297899,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_sun": {
+                  "value": 21503215.567054763,
+                  "figures": "exact",
+                  "prints": 1
+                }
+              },
+              "prints": 1,
+              "figures": "exact",
+              "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the outer edge is thought to lie between 10,000 and 100,000 AU; drawn at the far end",
               "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
             },
             "drawing": {
@@ -432,13 +897,70 @@
             "inner_radius": {
               "value": 20000,
               "unit": "au",
-              "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+              "in": {
+                "au": {
+                  "value": 20000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 3000000000000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 0.1,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 500000000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 4000000.0,
+                  "figures": 1,
+                  "prints": null
+                }
+              },
+              "figures": 1,
+              "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
               "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
             },
             "outer_radius": {
               "value": 100000,
               "unit": "au",
-              "source": "Oort (1950); Weissman (1996)",
+              "in": {
+                "au": {
+                  "value": 100000.0,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "km": {
+                  "value": 14959787069999.998,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "pc": {
+                  "value": 0.48481368110953676,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_earth": {
+                  "value": 2345479253.297899,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_sun": {
+                  "value": 21503215.567054763,
+                  "figures": "exact",
+                  "prints": 1
+                }
+              },
+              "prints": 1,
+              "figures": "exact",
+              "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the outer edge is thought to lie between 10,000 and 100,000 AU; drawn at the far end",
               "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
             },
             "galactic_pole": {
@@ -473,7 +995,36 @@
             "name": "Inner Limit of Oort Cloud",
             "radius": {
               "value": 2000,
-              "unit": "au"
+              "unit": "au",
+              "in": {
+                "au": {
+                  "value": 2000.0,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "km": {
+                  "value": 299195741400.0,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "pc": {
+                  "value": 0.009696273622190736,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_earth": {
+                  "value": 46909585.06595798,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_sun": {
+                  "value": 430064.3113410953,
+                  "figures": "exact",
+                  "prints": 1
+                }
+              },
+              "prints": 1,
+              "figures": "exact"
             },
             "description": "The inner edge of the Oort cloud, where the swarm of icy bodies is thought to begin.",
             "about": "The Oort cloud is a vast shell of icy bodies surrounding the solar system, believed to be the source of the long-period comets. This sphere marks where its inner part, the Hills cloud, begins; between it and the Kuiper belt lies a sparse gap in which distant objects such as Sedna travel.",
@@ -482,14 +1033,111 @@
             "opacity": 0.35,
             "n_points": 20,
             "marker_size": 3.0,
-            "source": "Hills (1981); Oort (1950) -- inner edge estimate",
-            "orrery_constant": "constants_new.py::INNER_LIMIT_OORT_CLOUD_AU"
+            "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the inner edge is thought to lie between 2,000 and 5,000 AU; drawn at the near end",
+            "orrery_constant": "constants_new.py::INNER_LIMIT_OORT_CLOUD_AU",
+            "range": {
+              "low": {
+                "value": 2000,
+                "unit": "au",
+                "in": {
+                  "au": {
+                    "value": 2000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "km": {
+                    "value": 300000000000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "pc": {
+                    "value": 0.01,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_earth": {
+                    "value": 50000000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_sun": {
+                    "value": 400000.0,
+                    "figures": 1,
+                    "prints": null
+                  }
+                },
+                "figures": 1,
+                "orrery_constant": "constants_new.py::OORT_CLOUD_INNER_EDGE_LOW_AU"
+              },
+              "high": {
+                "value": 5000,
+                "unit": "au",
+                "in": {
+                  "au": {
+                    "value": 5000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "km": {
+                    "value": 700000000000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "pc": {
+                    "value": 0.02,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_earth": {
+                    "value": 120000000.0,
+                    "figures": 2,
+                    "prints": null
+                  },
+                  "r_sun": {
+                    "value": 1100000.0,
+                    "figures": 2,
+                    "prints": null
+                  }
+                },
+                "figures": 1,
+                "orrery_constant": "constants_new.py::OORT_CLOUD_INNER_EDGE_HIGH_AU"
+              }
+            },
+            "radius_note": "Thought to lie between {low} and {high} AU; drawn at {drawn}."
           },
           "inner_oort": {
             "name": "Inner Oort Cloud",
             "radius": {
               "value": 20000,
-              "unit": "au"
+              "unit": "au",
+              "in": {
+                "au": {
+                  "value": 20000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 3000000000000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 0.1,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 500000000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 4000000.0,
+                  "figures": 1,
+                  "prints": null
+                }
+              },
+              "figures": 1
             },
             "description": "The outer edge of the inner Oort cloud, where the flattened inner swarm gives way to the spherical outer cloud.",
             "about": "The inner Oort cloud, or Hills cloud, is the more tightly bound part of the cloud, an intermediate zone between the Kuiper belt and the outer cloud. This sphere marks its outer limit. The cloud is made mostly of cometary nuclei, small icy bodies of water ice, ammonia and methane, and no one has observed it directly.",
@@ -498,24 +1146,122 @@
             "opacity": 0.35,
             "n_points": 20,
             "marker_size": 3.0,
-            "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+            "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
             "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
           },
           "outer_oort": {
             "name": "Outer Oort Cloud",
             "radius": {
               "value": 100000,
-              "unit": "au"
+              "unit": "au",
+              "in": {
+                "au": {
+                  "value": 100000.0,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "km": {
+                  "value": 14959787069999.998,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "pc": {
+                  "value": 0.48481368110953676,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_earth": {
+                  "value": 2345479253.297899,
+                  "figures": "exact",
+                  "prints": 1
+                },
+                "r_sun": {
+                  "value": 21503215.567054763,
+                  "figures": "exact",
+                  "prints": 1
+                }
+              },
+              "prints": 1,
+              "figures": "exact"
             },
-            "description": "The outer edge of the Oort cloud, about a light-year and a half from the Sun, where the Sun's realm gives way to the space between the stars.",
+            "description": "The outer edge of the Oort cloud, about two light-years from the Sun, where the Sun's realm gives way to the space between the stars.",
             "about": "At this distance the outer Oort cloud fades out. It is the usual mark for the boundary between the solar system and interstellar space by gravity, far beyond the heliopause where the solar wind stops. Objects here are loosely bound and easily disturbed by passing stars; the long-period comets come from this region.",
             "info_url": "https://science.nasa.gov/solar-system/oort-cloud/",
             "color": "rgb(255, 255, 255)",
             "opacity": 0.3,
             "n_points": 20,
             "marker_size": 3.0,
-            "source": "Oort (1950); Weissman (1996)",
-            "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
+            "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the outer edge is thought to lie between 10,000 and 100,000 AU; drawn at the far end",
+            "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU",
+            "range": {
+              "low": {
+                "value": 10000,
+                "unit": "au",
+                "in": {
+                  "au": {
+                    "value": 10000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "km": {
+                    "value": 1000000000000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "pc": {
+                    "value": 0.05,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_earth": {
+                    "value": 200000000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_sun": {
+                    "value": 2000000.0,
+                    "figures": 1,
+                    "prints": null
+                  }
+                },
+                "figures": 1,
+                "orrery_constant": "constants_new.py::OORT_CLOUD_OUTER_EDGE_LOW_AU"
+              },
+              "high": {
+                "value": 100000,
+                "unit": "au",
+                "in": {
+                  "au": {
+                    "value": 100000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "km": {
+                    "value": 10000000000000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "pc": {
+                    "value": 0.5,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_earth": {
+                    "value": 2000000000.0,
+                    "figures": 1,
+                    "prints": null
+                  },
+                  "r_sun": {
+                    "value": 20000000.0,
+                    "figures": 1,
+                    "prints": null
+                  }
+                },
+                "figures": 1,
+                "orrery_constant": "constants_new.py::OORT_CLOUD_OUTER_EDGE_HIGH_AU"
+              }
+            },
+            "radius_note": "Thought to lie between {low} and {high} AU; drawn at {drawn}."
           }
         },
         "orientation": {
@@ -537,8 +1283,36 @@
           "gravitational": {
             "name": "Gravitational Influence",
             "radius": {
-              "value": 150000,
-              "unit": "au"
+              "value": 134000.0,
+              "unit": "au",
+              "in": {
+                "au": {
+                  "value": 134000.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "km": {
+                  "value": 20100000000000.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 0.65,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 3100000000.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 29000000.0,
+                  "figures": 2,
+                  "prints": null
+                }
+              },
+              "figures": 3
             },
             "description": "The outer limit of the Sun's gravitational hold: how far out a body can still belong to the Sun rather than to the galaxy.",
             "about": "The solar system's extent can be defined in more than one way. The heliopause marks where the solar wind ends, but the Sun's gravity reaches much farther, holding Sedna, the Hills cloud and the outer Oort cloud. Astronomers count these as part of the solar system even though the Oort cloud has never been observed directly. This sphere is the outer limit of that gravitational influence.",
@@ -547,8 +1321,9 @@
             "opacity": 0.3,
             "n_points": 20,
             "marker_size": 3.0,
-            "source": "Approximate Hill sphere of the Sun in the Milky Way (model-dependent); literature estimates range 100,000-200,000 AU",
-            "orrery_constant": "constants_new.py::GRAVITATIONAL_INFLUENCE_AU"
+            "radius_note": "The Sun's Hill radius in the galaxy, calculated where the galaxy's tidal pull overtakes the Sun's gravity: about {pc} parsecs. Calculated, not measured.",
+            "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144 -- the Sun's Hill radius in the Galaxy, about 0.65 pc (captions of Figs. 2 and 3; sec. 5); the outer limit of the Oort cloud is taken to coincide with it (sec. 2.3)",
+            "orrery_constant": "constants_new.py::GRAVITATIONAL_INFLUENCE_PC"
           }
         }
       },
@@ -584,7 +1359,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:30:46.021317+00:00"
+          "retrieved": "2026-10-04T20:51:53.349158+00:00"
         }
       },
       "positions": null,
@@ -607,6 +1382,11 @@
                 "km": {
                   "value": 1221.5,
                   "figures": 5,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 3.959e-11,
+                  "figures": 4,
                   "prints": null
                 },
                 "r_earth": {
@@ -645,6 +1425,11 @@
                 },
                 "km": {
                   "value": 3480.0,
+                  "figures": 5,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 1.1278e-10,
                   "figures": 5,
                   "prints": null
                 },
@@ -688,6 +1473,11 @@
                   "figures": 3,
                   "prints": null
                 },
+                "pc": {
+                  "value": 1.85e-10,
+                  "figures": 3,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 0.895,
                   "figures": 3,
@@ -725,6 +1515,11 @@
                 },
                 "km": {
                   "value": 6346.6,
+                  "figures": 5,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 2.0568e-10,
                   "figures": 5,
                   "prints": null
                 },
@@ -768,6 +1563,11 @@
                   "figures": 7,
                   "prints": null
                 },
+                "pc": {
+                  "value": 2.0647e-10,
+                  "figures": 7,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 0.9988811,
                   "figures": 7,
@@ -802,6 +1602,11 @@
               },
               "km": {
                 "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "pc": {
+                "value": 2.0670133e-10,
                 "figures": 8,
                 "prints": null
               },
@@ -841,6 +1646,11 @@
                   "figures": 4,
                   "prints": null
                 },
+                "pc": {
+                  "value": 2.083e-10,
+                  "figures": 4,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 1.0078,
                   "figures": 5,
@@ -865,6 +1675,11 @@
                 },
                 "km": {
                   "value": 50.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 1.6e-12,
                   "figures": 2,
                   "prints": null
                 },
@@ -909,6 +1724,11 @@
                   "figures": 3,
                   "prints": null
                 },
+                "pc": {
+                  "value": 2.26e-10,
+                  "figures": 3,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 1.094,
                   "figures": 4,
@@ -933,6 +1753,11 @@
                 },
                 "km": {
                   "value": 600.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 1.9e-11,
                   "figures": 2,
                   "prints": null
                 },
@@ -973,6 +1798,11 @@
                 "figures": 8,
                 "prints": null
               },
+              "pc": {
+                "value": 2.0670133e-10,
+                "figures": 8,
+                "prints": null
+              },
               "r_earth": {
                 "value": 1.0,
                 "figures": "exact",
@@ -1006,6 +1836,11 @@
                 },
                 "km": {
                   "value": 600000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 2e-08,
                   "figures": 1,
                   "prints": null
                 },
@@ -1045,6 +1880,11 @@
                 "figures": 8,
                 "prints": null
               },
+              "pc": {
+                "value": 2.0670133e-10,
+                "figures": 8,
+                "prints": null
+              },
               "r_earth": {
                 "value": 1.0,
                 "figures": "exact",
@@ -1081,6 +1921,11 @@
                   "figures": 8,
                   "prints": null
                 },
+                "pc": {
+                  "value": 2.1318289e-10,
+                  "figures": 8,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 1.03135712,
                   "figures": 9,
@@ -1105,6 +1950,11 @@
                 },
                 "km": {
                   "value": 6578.1366,
+                  "figures": 8,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 2.1318289e-10,
                   "figures": 8,
                   "prints": null
                 },
@@ -1135,6 +1985,11 @@
                   "value": 200.0,
                   "figures": "exact",
                   "prints": 3
+                },
+                "pc": {
+                  "value": 6.4815585788887405e-12,
+                  "figures": "exact",
+                  "prints": 2
                 },
                 "r_earth": {
                   "value": 0.03135712082428589,
@@ -1177,6 +2032,11 @@
                   "figures": 8,
                   "prints": null
                 },
+                "pc": {
+                  "value": 2.7151692e-10,
+                  "figures": 8,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 1.31357121,
                   "figures": 9,
@@ -1201,6 +2061,11 @@
                 },
                 "km": {
                   "value": 8378.1366,
+                  "figures": 8,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 2.7151692e-10,
                   "figures": 8,
                   "prints": null
                 },
@@ -1231,6 +2096,11 @@
                   "value": 2000.0,
                   "figures": "exact",
                   "prints": 4
+                },
+                "pc": {
+                  "value": 6.48155857888874e-11,
+                  "figures": "exact",
+                  "prints": 3
                 },
                 "r_earth": {
                   "value": 0.3135712082428589,
@@ -1266,6 +2136,11 @@
               },
               "km": {
                 "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "pc": {
+                "value": 2.0670133e-10,
                 "figures": 8,
                 "prints": null
               },
@@ -1306,6 +2181,11 @@
                   "figures": 7,
                   "prints": null
                 },
+                "pc": {
+                  "value": 1.366448e-09,
+                  "figures": 7,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 6.610735,
                   "figures": 7,
@@ -1330,6 +2210,11 @@
                 },
                 "km": {
                   "value": 42164.17,
+                  "figures": 7,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 1.366448e-09,
                   "figures": 7,
                   "prints": null
                 },
@@ -1367,6 +2252,11 @@
               },
               "km": {
                 "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "pc": {
+                "value": 2.0670133e-10,
                 "figures": 8,
                 "prints": null
               },
@@ -1459,6 +2349,11 @@
                   "figures": 2,
                   "prints": null
                 },
+                "pc": {
+                  "value": 2.1e-09,
+                  "figures": 2,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 10.3,
                   "figures": 3,
@@ -1485,6 +2380,11 @@
                 "km": {
                   "value": 7800.0,
                   "figures": 2,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 2.54e-10,
+                  "figures": 3,
                   "prints": null
                 },
                 "r_earth": {
@@ -1527,6 +2427,11 @@
                   "km": {
                     "value": 95800.0,
                     "figures": 3,
+                    "prints": null
+                  },
+                  "pc": {
+                    "value": 3.105e-09,
+                    "figures": 4,
                     "prints": null
                   },
                   "r_earth": {
@@ -1589,6 +2494,11 @@
                   "figures": 2,
                   "prints": null
                 },
+                "pc": {
+                  "value": 2.79e-09,
+                  "figures": 3,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 13.5,
                   "figures": 3,
@@ -1614,6 +2524,11 @@
                 "km": {
                   "value": 4400.0,
                   "figures": 2,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 1.43e-10,
+                  "figures": 3,
                   "prints": null
                 },
                 "r_earth": {
@@ -1656,6 +2571,11 @@
                   "figures": 1,
                   "prints": null
                 },
+                "pc": {
+                  "value": 2e-08,
+                  "figures": 1,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 120.0,
                   "figures": 2,
@@ -1684,6 +2604,11 @@
                 "km": {
                   "value": 400000.0,
                   "figures": 1,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 1.2e-08,
+                  "figures": 2,
                   "prints": null
                 },
                 "r_earth": {
@@ -1717,6 +2642,11 @@
                   "figures": "exact",
                   "prints": null
                 },
+                "pc": {
+                  "value": 6.20103989955814e-09,
+                  "figures": "exact",
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 30.0,
                   "figures": "exact",
@@ -1746,6 +2676,11 @@
                   "figures": "exact",
                   "prints": null
                 },
+                "pc": {
+                  "value": 4.547429259675969e-08,
+                  "figures": "exact",
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 220.0,
                   "figures": "exact",
@@ -1772,6 +2707,11 @@
                 },
                 "km": {
                   "value": 1400000.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 4.5e-08,
                   "figures": 2,
                   "prints": null
                 },
@@ -1808,6 +2748,11 @@
               },
               "km": {
                 "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "pc": {
+                "value": 2.0670133e-10,
                 "figures": 8,
                 "prints": null
               },
@@ -1858,6 +2803,11 @@
                 "figures": 2,
                 "prints": null
               },
+              "pc": {
+                "value": 3.1e-10,
+                "figures": 2,
+                "prints": null
+              },
               "r_earth": {
                 "value": 1.5,
                 "figures": 2,
@@ -1888,6 +2838,11 @@
                 "figures": 1,
                 "prints": null
               },
+              "pc": {
+                "value": 2.3e-10,
+                "figures": 2,
+                "prints": null
+              },
               "r_earth": {
                 "value": 1.1,
                 "figures": 2,
@@ -1915,6 +2870,11 @@
               },
               "km": {
                 "value": 10000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "pc": {
+                "value": 4e-10,
                 "figures": 1,
                 "prints": null
               },
@@ -1969,6 +2929,11 @@
                 "figures": 1,
                 "prints": null
               },
+              "pc": {
+                "value": 6e-10,
+                "figures": 1,
+                "prints": null
+              },
               "r_earth": {
                 "value": 3.0,
                 "figures": 1,
@@ -1997,6 +2962,11 @@
               "km": {
                 "value": 40000.0,
                 "figures": 1,
+                "prints": null
+              },
+              "pc": {
+                "value": 1.4e-09,
+                "figures": 2,
                 "prints": null
               },
               "r_earth": {
@@ -2055,6 +3025,11 @@
                 "figures": 8,
                 "prints": null
               },
+              "pc": {
+                "value": 2.0670133e-10,
+                "figures": 8,
+                "prints": null
+              },
               "r_earth": {
                 "value": 1.0,
                 "figures": "exact",
@@ -2091,6 +3066,11 @@
                   "figures": 3,
                   "prints": null
                 },
+                "pc": {
+                  "value": 4.9e-08,
+                  "figures": 2,
+                  "prints": null
+                },
                 "r_earth": {
                   "value": 235.0,
                   "figures": 3,
@@ -2116,6 +3096,11 @@
                 "km": {
                   "value": 1500000.0,
                   "figures": 3,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 4.9e-08,
+                  "figures": 2,
                   "prints": null
                 },
                 "r_earth": {
@@ -2152,6 +3137,11 @@
               },
               "km": {
                 "value": 6378.1366,
+                "figures": 8,
+                "prints": null
+              },
+              "pc": {
+                "value": 2.0670133e-10,
                 "figures": 8,
                 "prints": null
               },
@@ -2260,14 +3250,14 @@
           "observer": "@sun",
           "quantity": "32",
           "epoch_jd_ut": 2461317.5,
-          "retrieved": "2026-10-04T14:31:35.358605+00:00"
+          "retrieved": "2026-10-04T20:51:54.760361+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
           "epoch_jd": 2461317.5,
-          "retrieved": "2026-10-04T14:31:35.358605+00:00"
+          "retrieved": "2026-10-04T20:51:54.760361+00:00"
         }
       }
     },
@@ -2294,7 +3284,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:30:49.044663+00:00"
+          "retrieved": "2026-10-04T20:51:53.422552+00:00"
         }
       },
       "positions": null,
@@ -2411,7 +3401,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:30:52.026604+00:00"
+          "retrieved": "2026-10-04T20:51:53.499266+00:00"
         }
       },
       "positions": null,
@@ -2520,7 +3510,7 @@
           "query_target": "199",
           "center": "@sun",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:30:55.627074+00:00"
+          "retrieved": "2026-10-04T20:51:53.567092+00:00"
         }
       },
       "positions": null,
@@ -2583,7 +3573,7 @@
           "query_target": "299",
           "center": "@sun",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:30:59.268291+00:00"
+          "retrieved": "2026-10-04T20:51:53.642249+00:00"
         }
       },
       "positions": null,
@@ -2646,7 +3636,7 @@
           "query_target": "499",
           "center": "@sun",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:31:03.204857+00:00"
+          "retrieved": "2026-10-04T20:51:53.707777+00:00"
         }
       },
       "positions": null,
@@ -2709,7 +3699,7 @@
           "query_target": "799",
           "center": "@sun",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:31:06.286984+00:00"
+          "retrieved": "2026-10-04T20:51:53.779471+00:00"
         }
       },
       "positions": null,
@@ -2772,7 +3762,7 @@
           "query_target": "899",
           "center": "@sun",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:31:09.037609+00:00"
+          "retrieved": "2026-10-04T20:51:53.847656+00:00"
         }
       },
       "positions": null,
@@ -2835,7 +3825,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:31:12.357041+00:00"
+          "retrieved": "2026-10-04T20:51:53.918604+00:00"
         }
       },
       "positions": null,
@@ -2898,7 +3888,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:31:15.067036+00:00"
+          "retrieved": "2026-10-04T20:51:53.989320+00:00"
         }
       },
       "positions": null,
@@ -2961,7 +3951,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:31:17.654306+00:00"
+          "retrieved": "2026-10-04T20:51:54.061902+00:00"
         }
       },
       "positions": null,
@@ -3024,7 +4014,7 @@
           "query_target": "9",
           "center": "@sun",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:31:19.674525+00:00"
+          "retrieved": "2026-10-04T20:51:54.172041+00:00"
         }
       },
       "positions": null,
@@ -3087,7 +4077,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:31:21.595246+00:00"
+          "retrieved": "2026-10-04T20:51:54.241750+00:00"
         }
       },
       "positions": null,
@@ -3150,7 +4140,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:31:23.701168+00:00"
+          "retrieved": "2026-10-04T20:51:54.335932+00:00"
         }
       },
       "positions": null,
@@ -3213,7 +4203,7 @@
           "query_target": "2004 MN4",
           "center": "@sun",
           "epoch": 2461317.5,
-          "retrieved": "2026-10-04T14:31:26.502435+00:00"
+          "retrieved": "2026-10-04T20:51:54.426279+00:00"
         }
       },
       "positions": null,
@@ -3310,7 +4300,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460240.026674769,
-          "retrieved": "2026-10-04T14:31:30.294182+00:00"
+          "retrieved": "2026-10-04T20:51:54.577709+00:00"
         }
       },
       "positions": null,
@@ -3378,7 +4368,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-10-04T14:31:33.103382+00:00"
+          "retrieved": "2026-10-04T20:51:54.687676+00:00"
         }
       },
       "positions": null,
@@ -3426,7 +4416,7 @@
   },
   "frame_constants": {
     "export": "data/constants_export.json",
-    "orrery_sha": "0a5eea0b0112640c6beea79a580f57184c9e59dd",
+    "orrery_sha": "e38b86adb7d1b32696b759b3c8222f3742aa2bd4",
     "rows": {
       "KM_PER_AU": {
         "value": 149597870.7,

@@ -40,8 +40,24 @@ check("photosphere drawn at 1.0 R_sun",
       radiusOf(byName["Sun: Photosphere"]).toExponential(4) + " AU");
 check("inner corona drawn at 3 R_sun",
       near(radiusOf(byName["Sun: Inner Corona"]), 3*RSUN_KM/AU, 1e-6));
-check("termination shock drawn at 94 AU",
-      near(radiusOf(byName["Sun: Termination Shock"]), 94, 1e-9));
+// L-371 (October 3, 2026, Claude Opus 5.5): the termination shock is
+// read as 94.01 AU and the heliopause as 121 AU, each in AU now; the
+// gravitational reach is the Sun's Hill radius, served in AU as
+// 134,000; and the Roche limit, reported to one figure, is DRAWN at its
+// own full digits from drawn_radius, outside the inner corona, where
+// drawn at the reported 3 it would sit on the corona's line (Tony's
+// option B, 2026-10-03).
+check("termination shock drawn at 94.01 AU",
+      near(radiusOf(byName["Sun: Termination Shock"]), 94.01, 1e-9));
+check("heliopause drawn at 121 AU",
+      near(radiusOf(byName["Sun: Heliopause"]), 121, 1e-9));
+check("gravitational influence drawn at its served 134,000 AU",
+      near(radiusOf(byName["Sun: Gravitational Influence"]), 134000, 1e-9));
+check("Roche limit drawn at 3.45 R_sun, from its drawn_radius",
+      near(radiusOf(byName["Sun: Roche Limit (Comets)"]), 3.45*RSUN_KM/AU, 1e-6));
+check("Roche limit drawn outside the inner corona",
+      radiusOf(byName["Sun: Roche Limit (Comets)"]) >
+      radiusOf(byName["Sun: Inner Corona"]) * 1.1);
 check("outer Oort drawn at 100000 AU",
       near(radiusOf(byName["Sun: Outer Oort Cloud"]), 100000, 1e-9));
 check("chromosphere is ABOVE the photosphere",

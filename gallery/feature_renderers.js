@@ -97,6 +97,17 @@
  *   It had been drawn about the ecliptic at a typed 50,000 AU, densest
  *   at the poles, while its words said the galaxy's plane. Its hover is
  *   in Tony's approved words of 2026-10-02.)
+ * Module updated: October 3, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-371, the Sun's distance cards: a far shell measured in AU says
+ *   its radius in AU at the served count, and its kilometres from the
+ *   served "in"; the Oort shapes' "From ... to ..." lines and the
+ *   streamer band's cusp and fade print by their served counts; a
+ *   served note may name served numbers in braces -- {low} and {high}
+ *   of a served range, {drawn}, {pc} -- so its words carry no typed
+ *   number; and a shell may serve drawn_radius, where it is drawn when
+ *   that differs from the radius it reports: the Roche limit, known to
+ *   one figure and drawn at its formula's full answer, Tony's option B
+ *   of 2026-10-03.)
  */
 
 (function (global) {
@@ -542,6 +553,61 @@
     var kc = inCount(k), au = auServed(a);
     if (kc === null || au === null) { return null; }
     return fmtKm(k.value, kc) + " (" + au + " AU)";
+  }
+
+  /* L-371 (2026-10-03). A served number as text at its own count, with
+     a thousands separator: 2,000 at one figure, 94.01 at four, 0.65 at
+     two. null where the node serves no count, so a caller says nothing
+     rather than choosing a width. */
+  function servedText(node) {
+    if (!isDict(node) || typeof node.value !== "number") { return null; }
+    var c = servedFigures(node);
+    if (typeof c !== "number") { return null; }
+    var parts = sigFigures(node.value, c).split(".");
+    parts[0] = Number(parts[0]).toLocaleString("en-US");
+    return parts.join(".");
+  }
+
+  /* A node's value in another unit, from its served "in", as text at
+     that entry's count. null where the node serves no such entry. */
+  function inText(node, unit) {
+    var e = inEntry(node, unit), c = inCount(e);
+    if (c === null) { return null; }
+    return servedText({ value: e.value, figures: c });
+  }
+
+  /* "<au> AU (<km> km)" for the far shapes, AU first, both at their
+     served counts. null where either is not served, and the caller
+     keeps its old line. */
+  function fmtAuServed(node) {
+    var a = servedText(node), k = inText(node, "km");
+    if (a === null || k === null) { return null; }
+    return a + " AU (" + k + " km)";
+  }
+
+  /* A served note may name served numbers in braces -- {low} and
+     {high}, the ends of the entry's served range; {drawn}, the value
+     drawn; {pc}, the radius in parsecs from its served "in" -- each
+     printed at its own count, so the words carry no typed number. A
+     brace the entry cannot fill is warned about and the note is not
+     printed, rather than printed with a hole in it. */
+  function fillNote(text, cfg, drawnNode, where, warn) {
+    var range = isDict(cfg.range) ? cfg.range : {};
+    var vals = { low: servedText(range.low), high: servedText(range.high),
+                 drawn: servedText(drawnNode),
+                 pc: isDict(cfg.radius) ? inText(cfg.radius, "pc") : null };
+    var missing = [];
+    var out = text.replace(/\{(\w+)\}/g, function (m, k) {
+      if (typeof vals[k] === "string") { return vals[k]; }
+      missing.push(k);
+      return m;
+    });
+    if (missing.length) {
+      warn(where + ": its note names {" + missing.join("}, {") +
+           "}, which is not served -- the note is not printed");
+      return null;
+    }
+    return out;
   }
 
   /* ---- A figure count through arithmetic (provenance-discipline 2.15,
@@ -1643,15 +1709,25 @@
     // pinch is where the eye goes and where the physics is. Deliberately not
     // at a pole: this is a band, and the poles are empty by design.
     var m = applyBasis(basis, cuspR * scale * 1.12, 0, 0);
+    // L-371: the cusp and the fade print by their served counts, and
+    // their km and AU from the served "in", where those are served;
+    // otherwise as before. The cusp note, Tony's approved words, takes
+    // its numbers from the served range.
+    var cuspNote = (typeof cfg.cusp_note === "string" && cfg.cusp_note)
+      ? fillNote(cfg.cusp_note, cfg, cfg.cusp_radius, where, warn) : null;
     var hover = label + "<br><br>" + descLine(cfg) +
-      "Cusp: " + cuspR + " solar radii<br>= " +
-      kmAndAu(cuspR * starRadiusKm,
-              figProduct([[cuspR, servedFigureField(cfg.cusp_radius)],
-                          [starRadiusKm, starRadiusFigures]])) + "<br>" +
-      "Fades to nothing by: " + fadeR + " solar radii<br>= " +
-      kmAndAu(fadeR * starRadiusKm,
-              figProduct([[fadeR, servedFigureField(cfg.fade_radius)],
-                          [starRadiusKm, starRadiusFigures]])) + "<br>" +
+      "Cusp: " + (servedText(cfg.cusp_radius) || cuspR) + " solar radii<br>= " +
+      (kmAndAuServed(cfg.cusp_radius) ||
+       kmAndAu(cuspR * starRadiusKm,
+               figProduct([[cuspR, servedFigureField(cfg.cusp_radius)],
+                           [starRadiusKm, starRadiusFigures]]))) + "<br>" +
+      (cuspNote !== null ? wrapHover(cuspNote) + "<br>" : "") +
+      "Fades to nothing by: " + (servedText(cfg.fade_radius) || fadeR) +
+      " solar radii<br>= " +
+      (kmAndAuServed(cfg.fade_radius) ||
+       kmAndAu(fadeR * starRadiusKm,
+               figProduct([[fadeR, servedFigureField(cfg.fade_radius)],
+                           [starRadiusKm, starRadiusFigures]]))) + "<br>" +
       STREAMER_CAVEAT;
     // L-331 (2026-09-16): the two citations that sat here reach the i
     // panel through withGatheredSource() at the dispatcher; the hover
@@ -1819,7 +1895,8 @@
       pts = (shape === "torus") ? torusPoints(lo, hi, d)
                                 : clumpFieldPoints(lo, hi, d);
       marker = [hi * 1.02, 0, 0];
-      hover += "From " + fmtAu(lo) + " to " + fmtAu(hi) + "<br>" +
+      hover += "From " + (fmtAuServed(cfg.inner_radius) || fmtAu(lo)) +
+        " to " + (fmtAuServed(cfg.outer_radius) || fmtAu(hi)) + "<br>" +
         (shape === "torus" ? HILLS_CAVEAT : CLUMPS_CAVEAT);
     } else {
       // L-406: the tide is drawn between its served edges, about the
@@ -1846,7 +1923,8 @@
       }
       pts = tideFieldPoints(tlo, thi, d, gbasis);
       marker = [thi * 1.02, 0, 0];
-      hover += "From " + fmtAu(tlo) + " to " + fmtAu(thi) + "<br>" +
+      hover += "From " + (fmtAuServed(cfg.inner_radius) || fmtAu(tlo)) +
+        " to " + (fmtAuServed(cfg.outer_radius) || fmtAu(thi)) + "<br>" +
         TIDE_CAVEAT;
     }
     // L-331 (2026-09-16): the citations that sat in these hovers reach the
@@ -2159,10 +2237,21 @@
       var size = (typeof cfg.marker_size === "number") ? cfg.marker_size : 2.5;
       var nPoints = cfg.n_points || 20;
 
-      var pts = spherePoints(radiusAu, nPoints);
+      // L-371: drawn_radius, where served, is where the shell is drawn
+      // when that differs from the radius it reports -- the Roche limit,
+      // known to one figure, drawn at its formula's full answer (Tony's
+      // option B, 2026-10-03). The hover reports `radius`.
+      var drawAu = radiusAu;
+      if (cfg.drawn_radius !== undefined) {
+        drawAu = measuredRadiusAu(cfg.drawn_radius,
+                                  where + "/" + key + "/drawn_radius",
+                                  starRadiusKm, warn);
+        if (drawAu === null || !(drawAu > 0)) continue;
+      }
+      var pts = spherePoints(drawAu, nPoints);
       var built = geometryTrace(pts, center, null, label, color, opacity, size);
       var beyondFrame = (typeof halfRangeAu === "number" &&
-                         halfRangeAu > 0 && radiusAu > halfRangeAu);
+                         halfRangeAu > 0 && drawAu > halfRangeAu);
       if (beyondFrame) {
         built.trace.visible = "legendonly";
       }
@@ -2177,9 +2266,9 @@
       // are (orrery-coding-conventions 1.5). The steps start
       // INFO_MARKER_OFFSET_DEG off the pole rather than on it (L-320).
       var polar = (Math.PI / 180) * (INFO_MARKER_OFFSET_DEG + 20 * drawn);
-      var mx = center[0] + radiusAu * 1.05 * Math.sin(polar);
+      var mx = center[0] + drawAu * 1.05 * Math.sin(polar);
       var my = center[1];
-      var mz = center[2] + radiusAu * 1.05 * Math.cos(polar);
+      var mz = center[2] + drawAu * 1.05 * Math.cos(polar);
 
       // L-342: the kilometre lines come from shellKmLines(), which
       // prints a served primary where the store holds one and computes
@@ -2196,6 +2285,10 @@
           ? fmtServed(cfg.radius.value, sunF, 0) : String(cfg.radius.value);
         hover += "Radius: " + sunText +
           (sunText === "1" ? " solar radius<br>" : " solar radii<br>");
+      } else if (cfg.radius.unit === "au" && servedText(cfg.radius) !== null) {
+        // L-371: a far shell measured in AU says its radius in AU at the
+        // served count; the line below then gives only the km.
+        hover += "Radius: " + servedText(cfg.radius) + " AU<br>";
       } else if (cfg.radius.unit === "r_earth") {
         // L-291: Earth radii, with the altitude the hover convention asks for.
         // L-322 Stage D, gallery patch 4: as the shell set path above.
@@ -2207,14 +2300,21 @@
             kmAndAu(km.altitudeKm, km.altitudeFigures)) + "<br>";
         }
       }
-      hover += "= " + (km ? (km.radiusText ||
-                             kmAndAu(km.radiusKm, km.radiusFigures))
-                          : kmAndAu(radiusAu * KM_PER_AU));
+      var kmOnly = (cfg.radius.unit === "au" && servedText(cfg.radius) !== null)
+        ? inText(cfg.radius, "km") : null;
+      hover += "= " + (kmOnly !== null ? kmOnly + " km"
+                       : km ? (km.radiusText ||
+                               kmAndAu(km.radiusKm, km.radiusFigures))
+                            : kmAndAu(radiusAu * KM_PER_AU));
       // L-345: a served sentence under the radius, where the number needs
       // one to be read rightly -- the crust at the mean radius, a little
       // less than one Earth radius (Tony's approved words, 2026-09-28).
       if (typeof cfg.radius_note === "string" && cfg.radius_note) {
-        hover += "<br>" + wrapHover(cfg.radius_note);
+        // L-371: braces in the note are filled from served numbers.
+        var noteText = fillNote(cfg.radius_note, cfg,
+                                cfg.drawn_radius || cfg.radius,
+                                where + "/" + key, warn);
+        if (noteText !== null) { hover += "<br>" + wrapHover(noteText); }
       }
       hover = withTail(hover);
       var marker = infoMarker(mx, my, mz, color, hover, label, cfg.info_border);

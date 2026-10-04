@@ -52,7 +52,7 @@
           },
           "sun_radius": {
             "value": 695700.0, "unit": "km",
-            "in": {"au": {"value": 0.004650467260962158, "figures": "exact", "prints": 4}, "km": {"value": 695700.0, "figures": "exact", "prints": 4}, "r_earth": {"value": 109.07574478727847, "figures": "exact", "prints": 5}, "r_sun": {"value": 1.0, "figures": "exact", "prints": 1}},
+            "in": {"au": {"value": 0.004650467260962158, "figures": "exact", "prints": 4}, "km": {"value": 695700.0, "figures": "exact", "prints": 4}, "pc": {"value": 2.2546101516664486e-08, "figures": "exact", "prints": 4}, "r_earth": {"value": 109.07574478727847, "figures": "exact", "prints": 5}, "r_sun": {"value": 1.0, "figures": "exact", "prints": 1}},
             "prints": 4,
             "figures": "exact",
             "source": "IAU 2015 Resolution B3 -- nominal solar radius",
@@ -67,9 +67,19 @@
             "info_url": "https://en.wikipedia.org/wiki/Helmet_streamer",
             "color": "rgb(255, 200, 80)",
             "cusp_radius": { "value": 4.0, "unit": "r_sun",
+              "in": {"au": {"value": 0.018601869043848633, "figures": "exact", "prints": 1}, "km": {"value": 2782800.0, "figures": "exact", "prints": 1}, "pc": {"value": 9.018440606665795e-08, "figures": "exact", "prints": 1}, "r_earth": {"value": 436.30297914911387, "figures": "exact", "prints": 1}, "r_sun": {"value": 4.0, "figures": "exact", "prints": 1}},
+              "prints": 1,
+              "figures": "exact",
               "source": "Suess and Nerney (2004) -- extent of the closed-field helmet, not of the streamer as a whole",
               "orrery_constant": "constants_new.py::HELMET_CUSP_RADII" },
+            "range": {
+              "low": { "value": 2, "unit": "r_sun", "in": {"au": {"value": 0.009, "figures": 1, "prints": null}, "km": {"value": 1000000.0, "figures": 1, "prints": null}, "pc": {"value": 5e-08, "figures": 1, "prints": null}, "r_earth": {"value": 200.0, "figures": 1, "prints": null}, "r_sun": {"value": 2.0, "figures": 1, "prints": null}}, "figures": 1, "orrery_constant": "constants_new.py::HELMET_CUSP_LOW_RADII" },
+              "high": { "value": 4, "unit": "r_sun", "in": {"au": {"value": 0.02, "figures": 1, "prints": null}, "km": {"value": 3000000.0, "figures": 1, "prints": null}, "pc": {"value": 9e-08, "figures": 1, "prints": null}, "r_earth": {"value": 400.0, "figures": 1, "prints": null}, "r_sun": {"value": 4.0, "figures": 1, "prints": null}}, "figures": 1, "orrery_constant": "constants_new.py::HELMET_CUSP_HIGH_RADII" }
+            },
+            "cusp_note": "Helmets reach no higher than {low} to {high} solar radii; drawn at {drawn}.",
             "fade_radius": { "value": 19.7, "unit": "r_sun",
+              "in": {"au": {"value": 0.092, "figures": 2, "prints": null}, "km": {"value": 13700000.0, "figures": 3, "prints": null}, "pc": {"value": 4.44e-07, "figures": 3, "prints": null}, "r_earth": {"value": 2150.0, "figures": 3, "prints": null}, "r_sun": {"value": 19.7, "figures": 3, "prints": null}},
+              "figures": 3,
               "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- the band dissolves across the Alfven surface",
               "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII" },
             "drawing": {
@@ -85,7 +95,7 @@
             "note": "One configuration near solar minimum. That the belt is organized about the solar equator AT ALL is a drawing choice, not a sourced boundary: the pole is sourced, anchoring the band to it is ours."
           },
           "chromosphere": {
-            "name": "Chromosphere (2,000 km skin)", "radius": { "value": 1.003, "unit": "r_sun", "in": {"au": {"value": 0.00466, "figures": 3, "prints": null}, "km": {"value": 698000.0, "figures": 3, "prints": null}, "r_earth": {"value": 109.4, "figures": 4, "prints": null}, "r_sun": {"value": 1.003, "figures": 4, "prints": null}}, "figures": 4 },
+            "name": "Chromosphere (2,000 km skin)", "radius": { "value": 1.003, "unit": "r_sun", "in": {"au": {"value": 0.00466, "figures": 3, "prints": null}, "km": {"value": 698000.0, "figures": 3, "prints": null}, "pc": {"value": 2.26e-08, "figures": 3, "prints": null}, "r_earth": {"value": 109.4, "figures": 4, "prints": null}, "r_sun": {"value": 1.003, "figures": 4, "prints": null}}, "figures": 4 },
             "description": "A thin, reddish layer of the Sun's atmosphere just above the visible surface, about 2,000 km deep.",
             "about": "The chromosphere sits between the photosphere and the corona and takes its name from the Greek word for color, because the hydrogen in it glows red. It is far less dense than the surface, and its temperature rises with height, from a few thousand kelvin at the bottom to about 20,000 at the top. It is never still: jets of gas called spicules rise and fall like geysers, and cooler prominences hang in it, held up by magnetic fields.",
             "info_url": "https://en.wikipedia.org/wiki/Chromosphere",
@@ -95,7 +105,7 @@
             "note": "Derived: 1 + 2000 km / 695700 km. The sourced claim is the 2000 km thickness, not the ratio. Drawn at true physical scale since 2026-08-16."
           },
           "inner_corona": {
-            "name": "Inner Corona", "radius": { "value": 3, "unit": "r_sun" },
+            "name": "Inner Corona", "radius": { "value": 3, "unit": "r_sun", "in": {"au": {"value": 0.013951401782886473, "figures": "exact", "prints": 1}, "km": {"value": 2087100.0, "figures": "exact", "prints": 1}, "pc": {"value": 6.763830454999345e-08, "figures": "exact", "prints": 1}, "r_earth": {"value": 327.22723436183543, "figures": "exact", "prints": 1}, "r_sun": {"value": 3.0, "figures": "exact", "prints": 1}}, "prints": 1, "figures": "exact" },
             "description": "The lowest part of the Sun's outer atmosphere: a thin gas at millions of degrees, shaped by the Sun's magnetic field.",
             "about": "The inner corona is the part of the corona nearest the surface. It is thin, far thinner than the photosphere, and yet at one to three million kelvin it is much hotter, a puzzle known as the coronal heating problem. The magnetic field rules it: closed loops trap glowing gas in bright arcs, open regions called coronal holes let gas escape as the solar wind, and streamers reach outward. Because it is so faint it is seen directly only at a total eclipse or with special instruments.",
             "info_url": "https://en.wikipedia.org/wiki/Solar_corona",
@@ -104,7 +114,9 @@
             "orrery_constant": "constants_new.py::INNER_CORONA_RADII"
           },
           "roche_limit": {
-            "name": "Roche Limit (Comets)", "radius": { "value": 3.45, "unit": "r_sun" },
+            "name": "Roche Limit (Comets)", "radius": { "value": 3.0, "unit": "r_sun", "in": {"au": {"value": 0.02, "figures": 1, "prints": null}, "km": {"value": 2000000.0, "figures": 1, "prints": null}, "pc": {"value": 8e-08, "figures": 1, "prints": null}, "r_earth": {"value": 400.0, "figures": 1, "prints": null}, "r_sun": {"value": 3.0, "figures": 1, "prints": null}}, "figures": 1 },
+            "drawn_radius": { "value": 3.45, "unit": "r_sun", "in": {"au": {"value": 0.016044112050319446, "figures": "exact", "prints": 3}, "km": {"value": 2400165.0, "figures": "exact", "prints": 3}, "pc": {"value": 7.778405023249248e-08, "figures": "exact", "prints": 3}, "r_earth": {"value": 376.3113195161107, "figures": "exact", "prints": 3}, "r_sun": {"value": 3.45, "figures": "exact", "prints": 3}}, "prints": 3, "figures": "exact", "orrery_constant": "constants_new.py::ROCHE_LIMIT_DRAWN_RADII" },
+            "radius_note": "Known only roughly, because comets differ in density. It is drawn where the formula's middle answer falls; the true limit could lie inside or outside the inner corona.",
             "description": "The distance inside which the Sun's tides would pull a loosely held comet apart.",
             "about": "Inside the Roche limit the difference in the Sun's pull across a body outweighs the body's own gravity. The limit drawn here is for a comet held together only by its own gravity, at a typical comet density. It is not a hard wall: the strength of the ice and rock can hold a nucleus together well inside it, and several sungrazing comets have survived far closer than this line before breaking up or escaping.",
             "info_url": "https://en.wikipedia.org/wiki/Roche_limit",
@@ -113,7 +125,7 @@
             "orrery_constant": "constants_new.py::ROCHE_LIMIT_RADII"
           },
           "alfven_surface": {
-            "name": "Alfven Surface", "radius": { "value": 19.7, "unit": "r_sun" },
+            "name": "Alfven Surface", "radius": { "value": 19.7, "unit": "r_sun", "in": {"au": {"value": 0.092, "figures": 2, "prints": null}, "km": {"value": 13700000.0, "figures": 3, "prints": null}, "pc": {"value": 4.44e-07, "figures": 3, "prints": null}, "r_earth": {"value": 2150.0, "figures": 3, "prints": null}, "r_sun": {"value": 19.7, "figures": 3, "prints": null}}, "figures": 3 },
             "description": "The true outer edge of the Sun's atmosphere, where the outflowing gas becomes the solar wind and can no longer signal back to the Sun.",
             "about": "Inside the Alfven surface the gas is tied to the Sun by its magnetic field, and a disturbance there can travel back to the surface. Outside it the gas moves faster than magnetic waves can carry a signal inward, so it is on its own, and is called the solar wind. NASA's Parker Solar Probe crossed this boundary in April 2021, the first spacecraft to fly inside the corona. The surface is not a smooth sphere: it is lower over the poles and higher over the streamer belt.",
             "info_url": "https://svs.gsfc.nasa.gov/14036",
@@ -122,17 +134,17 @@
             "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
           },
           "outer_corona": {
-            "name": "Outer Corona", "radius": { "value": 50, "unit": "r_sun" },
+            "name": "Outer Corona", "radius": { "value": 50, "unit": "r_sun", "in": {"au": {"value": 0.2325233630481079, "figures": "exact", "prints": 2}, "km": {"value": 34785000.0, "figures": "exact", "prints": 2}, "pc": {"value": 1.1273050758332243e-06, "figures": "exact", "prints": 3}, "r_earth": {"value": 5453.787239363924, "figures": "exact", "prints": 2}, "r_sun": {"value": 50.0, "figures": "exact", "prints": 2}}, "prints": 2, "figures": "exact" },
             "description": "The faint outer reach of the Sun's atmosphere, where sunlight scattered by dust gives a soft glow far beyond the streamers.",
             "about": "At this distance the corona is extremely thin. Sunlight scattered by dust, the F-corona, outshines the light scattered by electrons that dominates nearer the Sun. By here the gas has long since become the solar wind; the shell marks the extent of the faint glow rather than a physical edge.",
             "info_url": "https://en.wikipedia.org/wiki/Solar_corona",
             "color": "rgb(25, 25, 112)", "opacity": 0.5, "n_points": 20, "marker_size": 3.5,
-            "source": "Mann et al. (2004), A&A 414:1127; F-corona envelope, not a sharp physical edge",
+            "radius_note": "A boundary chosen for the drawing; the faint outer corona has no sharp edge.",
             "orrery_constant": "constants_new.py::OUTER_CORONA_RADII"
           },
           "sun_radius": {
             "value": 695700.0, "unit": "km",
-            "in": {"au": {"value": 0.004650467260962158, "figures": "exact", "prints": 4}, "km": {"value": 695700.0, "figures": "exact", "prints": 4}, "r_earth": {"value": 109.07574478727847, "figures": "exact", "prints": 5}, "r_sun": {"value": 1.0, "figures": "exact", "prints": 1}},
+            "in": {"au": {"value": 0.004650467260962158, "figures": "exact", "prints": 4}, "km": {"value": 695700.0, "figures": "exact", "prints": 4}, "pc": {"value": 2.2546101516664486e-08, "figures": "exact", "prints": 4}, "r_earth": {"value": 109.07574478727847, "figures": "exact", "prints": 5}, "r_sun": {"value": 1.0, "figures": "exact", "prints": 1}},
             "prints": 4,
             "figures": "exact",
             "source": "IAU 2015 Resolution B3 -- nominal solar radius",
@@ -141,26 +153,26 @@
         },
         "solar_wind": {
           "termination_shock": {
-            "name": "Termination Shock", "radius": { "value": 94, "unit": "au" },
+            "name": "Termination Shock", "radius": { "value": 94.01, "unit": "au", "in": {"au": {"value": 94.01, "figures": 4, "prints": null}, "km": {"value": 14064000000.0, "figures": 5, "prints": null}, "pc": {"value": 0.0004558, "figures": 4, "prints": null}, "r_earth": {"value": 2205000.0, "figures": 5, "prints": null}, "r_sun": {"value": 20215.0, "figures": 5, "prints": null}}, "figures": 4 },
             "description": "The place far beyond the planets where the solar wind slows suddenly from supersonic speed as it meets the gas between the stars.",
-            "about": "The solar wind streams outward at supersonic speed until the pressure of the interstellar gas brings it up short. At the termination shock it slows abruptly, and its energy of motion becomes heat. Voyager 1 crossed it at 94 AU and Voyager 2 at 84 AU; beyond it the wind moves at a few hundred kilometers a second through the turbulent region called the heliosheath.",
+            "about": "The solar wind streams outward at supersonic speed until the pressure of the interstellar gas brings it up short. At the termination shock it slows abruptly, and its energy of motion becomes heat. Voyager 1 crossed it at 94.01 AU and Voyager 2 at 84 AU; beyond it the wind moves at a few hundred kilometers a second through the turbulent region called the heliosheath.",
             "info_url": "https://en.wikipedia.org/wiki/Heliosphere",
             "color": "rgb(240, 244, 255)", "opacity": 0.4, "n_points": 20, "marker_size": 3.0,
-            "source": "Stone et al. (2005), Science 309:2017 -- Voyager 1 crossing at 94 AU",
+            "source": "Stone et al. (2005), Science 309:2017 -- Voyager 1 crossed the termination shock on 16 December 2004 at 94.01 AU",
             "orrery_constant": "constants_new.py::TERMINATION_SHOCK_AU"
           },
           "heliopause": {
-            "name": "Heliopause", "radius": { "value": 26148, "unit": "r_sun" },
+            "name": "Heliopause", "radius": { "value": 121, "unit": "au", "in": {"au": {"value": 121.0, "figures": 3, "prints": null}, "km": {"value": 18100000000.0, "figures": 3, "prints": null}, "pc": {"value": 0.00059, "figures": 2, "prints": null}, "r_earth": {"value": 2840000.0, "figures": 3, "prints": null}, "r_sun": {"value": 26000.0, "figures": 3, "prints": null}}, "figures": 3 },
             "description": "The outer boundary of the Sun's bubble, where the solar wind's push is balanced by the gas between the stars.",
             "about": "The solar wind, a constant stream of charged particles from the Sun, inflates a vast bubble called the heliosphere around the Sun and planets. The bubble is not round: the Sun's motion through interstellar gas gives it a rounded head and a long tail. The heliopause is its outermost boundary, where the wind's pressure equals the pressure of the interstellar medium, and it shields the planets from much of the galaxy's cosmic radiation.",
             "info_url": "https://en.wikipedia.org/wiki/Heliosphere",
             "color": "rgb(135, 206, 250)", "opacity": 0.4, "n_points": 20, "marker_size": 3.0,
-            "source": "Gurnett et al. (2013), Science 341:1489",
-            "orrery_constant": "constants_new.py::HELIOPAUSE_RADII"
+            "source": "Gurnett et al. (2013), Science 341:1489 -- the first sign of the heliopause came on 28 July 2012, at 121 AU",
+            "orrery_constant": "constants_new.py::HELIOPAUSE_AU"
           },
           "sun_radius": {
             "value": 695700.0, "unit": "km",
-            "in": {"au": {"value": 0.004650467260962158, "figures": "exact", "prints": 4}, "km": {"value": 695700.0, "figures": "exact", "prints": 4}, "r_earth": {"value": 109.07574478727847, "figures": "exact", "prints": 5}, "r_sun": {"value": 1.0, "figures": "exact", "prints": 1}},
+            "in": {"au": {"value": 0.004650467260962158, "figures": "exact", "prints": 4}, "km": {"value": 695700.0, "figures": "exact", "prints": 4}, "pc": {"value": 2.2546101516664486e-08, "figures": "exact", "prints": 4}, "r_earth": {"value": 109.07574478727847, "figures": "exact", "prints": 5}, "r_sun": {"value": 1.0, "figures": "exact", "prints": 1}},
             "prints": 4,
             "figures": "exact",
             "source": "IAU 2015 Resolution B3 -- nominal solar radius",
@@ -175,10 +187,15 @@
             "info_url": "https://en.wikipedia.org/wiki/Hills_cloud",
             "color": "rgb(180, 160, 255)",
             "inner_radius": { "value": 2000, "unit": "au",
-              "source": "Hills (1981); Oort (1950) -- inner edge estimate",
+              "in": {"au": {"value": 2000.0, "figures": "exact", "prints": 1}, "km": {"value": 299195741400.0, "figures": "exact", "prints": 1}, "pc": {"value": 0.009696273622190736, "figures": "exact", "prints": 1}, "r_earth": {"value": 46909585.06595798, "figures": "exact", "prints": 1}, "r_sun": {"value": 430064.3113410953, "figures": "exact", "prints": 1}},
+              "prints": 1,
+              "figures": "exact",
+              "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the inner edge is thought to lie between 2,000 and 5,000 AU; drawn at the near end",
               "orrery_constant": "constants_new.py::INNER_LIMIT_OORT_CLOUD_AU" },
             "outer_radius": { "value": 20000, "unit": "au",
-              "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+              "in": {"au": {"value": 20000.0, "figures": 1, "prints": null}, "km": {"value": 3000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.1, "figures": 1, "prints": null}, "r_earth": {"value": 500000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 4000000.0, "figures": 1, "prints": null}},
+              "figures": 1,
+              "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
               "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU" },
             "drawing": {
               "_declared": "Drawing choices, not measurements. Copied from solar_visualization_shells.py::create_sun_hills_cloud_torus defaults.",
@@ -191,14 +208,19 @@
           "outer_oort_clumpy": {
             "name": "Outer Oort Cloud (clumps)", "shape": "clump_field",
             "description": "The outer Oort cloud: a rough sphere of icy bodies at the very edge of the Sun's reach, drawn here as clumps.",
-            "about": "The outer Oort cloud is a roughly spherical shell of icy bodies, cometary nuclei of water ice, ammonia and methane, reaching out to about a light-year and a half from the Sun. Objects here are only loosely held, so passing stars and the galaxy's tide can nudge them inward as long-period comets, the ones that take more than two centuries to circle the Sun. Simulations suggest the cloud is lumpy rather than smooth, which is what the clumps show; where any real lump lies is not known.",
+            "about": "The outer Oort cloud is a roughly spherical shell of icy bodies, cometary nuclei of water ice, ammonia and methane, reaching out to about two light-years from the Sun. Objects here are only loosely held, so passing stars and the galaxy's tide can nudge them inward as long-period comets, the ones that take more than two centuries to circle the Sun. Simulations suggest the cloud is lumpy rather than smooth, which is what the clumps show; where any real lump lies is not known.",
             "info_url": "https://science.nasa.gov/solar-system/oort-cloud/",
             "color": "rgb(200, 200, 255)",
             "inner_radius": { "value": 20000, "unit": "au",
-              "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+              "in": {"au": {"value": 20000.0, "figures": 1, "prints": null}, "km": {"value": 3000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.1, "figures": 1, "prints": null}, "r_earth": {"value": 500000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 4000000.0, "figures": 1, "prints": null}},
+              "figures": 1,
+              "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
               "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU" },
             "outer_radius": { "value": 100000, "unit": "au",
-              "source": "Oort (1950); Weissman (1996)",
+              "in": {"au": {"value": 100000.0, "figures": "exact", "prints": 1}, "km": {"value": 14959787069999.998, "figures": "exact", "prints": 1}, "pc": {"value": 0.48481368110953676, "figures": "exact", "prints": 1}, "r_earth": {"value": 2345479253.297899, "figures": "exact", "prints": 1}, "r_sun": {"value": 21503215.567054763, "figures": "exact", "prints": 1}},
+              "prints": 1,
+              "figures": "exact",
+              "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the outer edge is thought to lie between 10,000 and 100,000 AU; drawn at the far end",
               "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU" },
             "drawing": {
               "_declared": "Drawing choices, not measurements. No survey has resolved individual Oort clumps; the count, sizes and concentration are illustrative of the fact that the cloud is not smooth. Copied from solar_visualization_shells.py::create_sun_outer_oort_clumpy defaults.",
@@ -216,10 +238,15 @@
             "info_url": "https://en.wikipedia.org/wiki/Galactic_tide",
             "color": "rgb(140, 200, 200)",
             "inner_radius": { "value": 20000, "unit": "au",
-              "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+              "in": {"au": {"value": 20000.0, "figures": 1, "prints": null}, "km": {"value": 3000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.1, "figures": 1, "prints": null}, "r_earth": {"value": 500000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 4000000.0, "figures": 1, "prints": null}},
+              "figures": 1,
+              "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
               "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU" },
             "outer_radius": { "value": 100000, "unit": "au",
-              "source": "Oort (1950); Weissman (1996)",
+              "in": {"au": {"value": 100000.0, "figures": "exact", "prints": 1}, "km": {"value": 14959787069999.998, "figures": "exact", "prints": 1}, "pc": {"value": 0.48481368110953676, "figures": "exact", "prints": 1}, "r_earth": {"value": 2345479253.297899, "figures": "exact", "prints": 1}, "r_sun": {"value": 21503215.567054763, "figures": "exact", "prints": 1}},
+              "prints": 1,
+              "figures": "exact",
+              "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the outer edge is thought to lie between 10,000 and 100,000 AU; drawn at the far end",
               "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU" },
             "galactic_pole": {
               "ra": { "value": 192.85948125, "unit": "deg", "figures": "exact",
@@ -240,31 +267,41 @@
             "note": "The thinning at the plane and the poles follows the tide's strength, and comets arriving for the first time show it. Where the comets in the cloud really are is not known."
           },
           "inner_oort_limit": {
-            "name": "Inner Limit of Oort Cloud", "radius": { "value": 2000, "unit": "au" },
+            "name": "Inner Limit of Oort Cloud", "radius": { "value": 2000, "unit": "au", "in": {"au": {"value": 2000.0, "figures": "exact", "prints": 1}, "km": {"value": 299195741400.0, "figures": "exact", "prints": 1}, "pc": {"value": 0.009696273622190736, "figures": "exact", "prints": 1}, "r_earth": {"value": 46909585.06595798, "figures": "exact", "prints": 1}, "r_sun": {"value": 430064.3113410953, "figures": "exact", "prints": 1}}, "prints": 1, "figures": "exact" },
             "description": "The inner edge of the Oort cloud, where the swarm of icy bodies is thought to begin.",
             "about": "The Oort cloud is a vast shell of icy bodies surrounding the solar system, believed to be the source of the long-period comets. This sphere marks where its inner part, the Hills cloud, begins; between it and the Kuiper belt lies a sparse gap in which distant objects such as Sedna travel.",
             "info_url": "https://en.wikipedia.org/wiki/Hills_cloud",
             "color": "rgb(255, 255, 255)", "opacity": 0.35, "n_points": 20, "marker_size": 3.0,
-            "source": "Hills (1981); Oort (1950) -- inner edge estimate",
-            "orrery_constant": "constants_new.py::INNER_LIMIT_OORT_CLOUD_AU"
+            "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the inner edge is thought to lie between 2,000 and 5,000 AU; drawn at the near end",
+            "orrery_constant": "constants_new.py::INNER_LIMIT_OORT_CLOUD_AU",
+            "range": {
+              "low": { "value": 2000, "unit": "au", "in": {"au": {"value": 2000.0, "figures": 1, "prints": null}, "km": {"value": 300000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.01, "figures": 1, "prints": null}, "r_earth": {"value": 50000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 400000.0, "figures": 1, "prints": null}}, "figures": 1, "orrery_constant": "constants_new.py::OORT_CLOUD_INNER_EDGE_LOW_AU" },
+              "high": { "value": 5000, "unit": "au", "in": {"au": {"value": 5000.0, "figures": 1, "prints": null}, "km": {"value": 700000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.02, "figures": 1, "prints": null}, "r_earth": {"value": 120000000.0, "figures": 2, "prints": null}, "r_sun": {"value": 1100000.0, "figures": 2, "prints": null}}, "figures": 1, "orrery_constant": "constants_new.py::OORT_CLOUD_INNER_EDGE_HIGH_AU" }
+            },
+            "radius_note": "Thought to lie between {low} and {high} AU; drawn at {drawn}."
           },
           "inner_oort": {
-            "name": "Inner Oort Cloud", "radius": { "value": 20000, "unit": "au" },
+            "name": "Inner Oort Cloud", "radius": { "value": 20000, "unit": "au", "in": {"au": {"value": 20000.0, "figures": 1, "prints": null}, "km": {"value": 3000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.1, "figures": 1, "prints": null}, "r_earth": {"value": 500000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 4000000.0, "figures": 1, "prints": null}}, "figures": 1 },
             "description": "The outer edge of the inner Oort cloud, where the flattened inner swarm gives way to the spherical outer cloud.",
             "about": "The inner Oort cloud, or Hills cloud, is the more tightly bound part of the cloud, an intermediate zone between the Kuiper belt and the outer cloud. This sphere marks its outer limit. The cloud is made mostly of cometary nuclei, small icy bodies of water ice, ammonia and methane, and no one has observed it directly.",
             "info_url": "https://en.wikipedia.org/wiki/Hills_cloud",
             "color": "rgb(255, 255, 255)", "opacity": 0.35, "n_points": 20, "marker_size": 3.0,
-            "source": "Hills (1981) -- outer edge of the inner (Hills) cloud",
+            "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
             "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
           },
           "outer_oort": {
-            "name": "Outer Oort Cloud", "radius": { "value": 100000, "unit": "au" },
-            "description": "The outer edge of the Oort cloud, about a light-year and a half from the Sun, where the Sun's realm gives way to the space between the stars.",
+            "name": "Outer Oort Cloud", "radius": { "value": 100000, "unit": "au", "in": {"au": {"value": 100000.0, "figures": "exact", "prints": 1}, "km": {"value": 14959787069999.998, "figures": "exact", "prints": 1}, "pc": {"value": 0.48481368110953676, "figures": "exact", "prints": 1}, "r_earth": {"value": 2345479253.297899, "figures": "exact", "prints": 1}, "r_sun": {"value": 21503215.567054763, "figures": "exact", "prints": 1}}, "prints": 1, "figures": "exact" },
+            "description": "The outer edge of the Oort cloud, about two light-years from the Sun, where the Sun's realm gives way to the space between the stars.",
             "about": "At this distance the outer Oort cloud fades out. It is the usual mark for the boundary between the solar system and interstellar space by gravity, far beyond the heliopause where the solar wind stops. Objects here are loosely bound and easily disturbed by passing stars; the long-period comets come from this region.",
             "info_url": "https://science.nasa.gov/solar-system/oort-cloud/",
             "color": "rgb(255, 255, 255)", "opacity": 0.3, "n_points": 20, "marker_size": 3.0,
-            "source": "Oort (1950); Weissman (1996)",
-            "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU"
+            "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the outer edge is thought to lie between 10,000 and 100,000 AU; drawn at the far end",
+            "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU",
+            "range": {
+              "low": { "value": 10000, "unit": "au", "in": {"au": {"value": 10000.0, "figures": 1, "prints": null}, "km": {"value": 1000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.05, "figures": 1, "prints": null}, "r_earth": {"value": 200000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 2000000.0, "figures": 1, "prints": null}}, "figures": 1, "orrery_constant": "constants_new.py::OORT_CLOUD_OUTER_EDGE_LOW_AU" },
+              "high": { "value": 100000, "unit": "au", "in": {"au": {"value": 100000.0, "figures": 1, "prints": null}, "km": {"value": 10000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.5, "figures": 1, "prints": null}, "r_earth": {"value": 2000000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 20000000.0, "figures": 1, "prints": null}}, "figures": 1, "orrery_constant": "constants_new.py::OORT_CLOUD_OUTER_EDGE_HIGH_AU" }
+            },
+            "radius_note": "Thought to lie between {low} and {high} AU; drawn at {drawn}."
           }
         },
         "orientation": {
@@ -278,13 +315,14 @@
         },
         "hill_sphere": {
           "gravitational": {
-            "name": "Gravitational Influence", "radius": { "value": 150000, "unit": "au" },
+            "name": "Gravitational Influence", "radius": { "value": 134000.0, "unit": "au", "in": {"au": {"value": 134000.0, "figures": 3, "prints": null}, "km": {"value": 20100000000000.0, "figures": 3, "prints": null}, "pc": {"value": 0.65, "figures": 2, "prints": null}, "r_earth": {"value": 3100000000.0, "figures": 2, "prints": null}, "r_sun": {"value": 29000000.0, "figures": 2, "prints": null}}, "figures": 3 },
             "description": "The outer limit of the Sun's gravitational hold: how far out a body can still belong to the Sun rather than to the galaxy.",
             "about": "The solar system's extent can be defined in more than one way. The heliopause marks where the solar wind ends, but the Sun's gravity reaches much farther, holding Sedna, the Hills cloud and the outer Oort cloud. Astronomers count these as part of the solar system even though the Oort cloud has never been observed directly. This sphere is the outer limit of that gravitational influence.",
             "info_url": "https://en.wikipedia.org/wiki/Hill_sphere",
             "color": "rgb(102, 187, 106)", "opacity": 0.3, "n_points": 20, "marker_size": 3.0,
-            "source": "Approximate Hill sphere of the Sun in the Milky Way (model-dependent); literature estimates range 100,000-200,000 AU",
-            "orrery_constant": "constants_new.py::GRAVITATIONAL_INFLUENCE_AU"
+            "radius_note": "The Sun's Hill radius in the galaxy, calculated where the galaxy's tidal pull overtakes the Sun's gravity: about {pc} parsecs. Calculated, not measured.",
+            "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144 -- the Sun's Hill radius in the Galaxy, about 0.65 pc (captions of Figs. 2 and 3; sec. 5); the outer limit of the Oort cloud is taken to coincide with it (sec. 2.3)",
+            "orrery_constant": "constants_new.py::GRAVITATIONAL_INFLUENCE_PC"
           }
         }
       }
@@ -316,7 +354,7 @@
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 1.0, "unit": "km",
-        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
+        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443706e-14, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
         "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
         "orrery_constant": "constants_new.py::DE430_TERRESTRIAL_POSITION_PLACE_KM"
       },
@@ -329,7 +367,7 @@
             "radius": {
               "value": 1221.5,
               "unit": "km",
-            "in": {"au": {"value": 8.165e-06, "figures": 4, "prints": null}, "km": {"value": 1221.5, "figures": 5, "prints": null}, "r_earth": {"value": 0.19151, "figures": 5, "prints": null}, "r_sun": {"value": 0.0017558, "figures": 5, "prints": null}},
+            "in": {"au": {"value": 8.165e-06, "figures": 4, "prints": null}, "km": {"value": 1221.5, "figures": 5, "prints": null}, "pc": {"value": 3.959e-11, "figures": 4, "prints": null}, "r_earth": {"value": 0.19151, "figures": 5, "prints": null}, "r_sun": {"value": 0.0017558, "figures": 5, "prints": null}},
             "figures": 5
             },
             "info_url": "https://en.wikipedia.org/wiki/Earth%27s_inner_core",
@@ -347,7 +385,7 @@
             "radius": {
               "value": 3480.0,
               "unit": "km",
-            "in": {"au": {"value": 2.3262e-05, "figures": 5, "prints": null}, "km": {"value": 3480.0, "figures": 5, "prints": null}, "r_earth": {"value": 0.54561, "figures": 5, "prints": null}, "r_sun": {"value": 0.0050022, "figures": 5, "prints": null}},
+            "in": {"au": {"value": 2.3262e-05, "figures": 5, "prints": null}, "km": {"value": 3480.0, "figures": 5, "prints": null}, "pc": {"value": 1.1278e-10, "figures": 5, "prints": null}, "r_earth": {"value": 0.54561, "figures": 5, "prints": null}, "r_sun": {"value": 0.0050022, "figures": 5, "prints": null}},
             "figures": 5
             },
             "info_url": "https://en.wikipedia.org/wiki/Earth%27s_outer_core",
@@ -366,7 +404,7 @@
             "radius": {
               "value": 5710.0,
               "unit": "km",
-            "in": {"au": {"value": 3.82e-05, "figures": 3, "prints": null}, "km": {"value": 5710.0, "figures": 3, "prints": null}, "r_earth": {"value": 0.895, "figures": 3, "prints": null}, "r_sun": {"value": 0.00821, "figures": 3, "prints": null}},
+            "in": {"au": {"value": 3.82e-05, "figures": 3, "prints": null}, "km": {"value": 5710.0, "figures": 3, "prints": null}, "pc": {"value": 1.85e-10, "figures": 3, "prints": null}, "r_earth": {"value": 0.895, "figures": 3, "prints": null}, "r_sun": {"value": 0.00821, "figures": 3, "prints": null}},
             "figures": 3
             },
             "info_url": "https://en.wikipedia.org/wiki/Lower_mantle",
@@ -385,7 +423,7 @@
             "radius": {
               "value": 6346.6,
               "unit": "km",
-            "in": {"au": {"value": 4.2424e-05, "figures": 5, "prints": null}, "km": {"value": 6346.6, "figures": 5, "prints": null}, "r_earth": {"value": 0.99506, "figures": 5, "prints": null}, "r_sun": {"value": 0.0091226, "figures": 5, "prints": null}},
+            "in": {"au": {"value": 4.2424e-05, "figures": 5, "prints": null}, "km": {"value": 6346.6, "figures": 5, "prints": null}, "pc": {"value": 2.0568e-10, "figures": 5, "prints": null}, "r_earth": {"value": 0.99506, "figures": 5, "prints": null}, "r_sun": {"value": 0.0091226, "figures": 5, "prints": null}},
             "figures": 5
             },
             "info_url": "https://en.wikipedia.org/wiki/Upper_mantle",
@@ -404,7 +442,7 @@
             "radius": {
               "value": 0.9988811,
               "unit": "r_earth",
-            "in": {"au": {"value": 4.25875e-05, "figures": 7, "prints": null}, "km": {"value": 6371.0, "figures": 7, "prints": null}, "r_earth": {"value": 0.9988811, "figures": 7, "prints": null}, "r_sun": {"value": 0.009157683, "figures": 7, "prints": null}},
+            "in": {"au": {"value": 4.25875e-05, "figures": 7, "prints": null}, "km": {"value": 6371.0, "figures": 7, "prints": null}, "pc": {"value": 2.0647e-10, "figures": 7, "prints": null}, "r_earth": {"value": 0.9988811, "figures": 7, "prints": null}, "r_sun": {"value": 0.009157683, "figures": 7, "prints": null}},
             "figures": 7
             },
             "info_url": "https://en.wikipedia.org/wiki/Earth%27s_crust",
@@ -420,7 +458,7 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
-            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
+            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "pc": {"value": 2.0670133e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -435,13 +473,13 @@
             "radius": {
               "value": 1.0078,
               "unit": "r_earth",
-            "in": {"au": {"value": 4.297e-05, "figures": 4, "prints": null}, "km": {"value": 6428.0, "figures": 4, "prints": null}, "r_earth": {"value": 1.0078, "figures": 5, "prints": null}, "r_sun": {"value": 0.00924, "figures": 4, "prints": null}},
+            "in": {"au": {"value": 4.297e-05, "figures": 4, "prints": null}, "km": {"value": 6428.0, "figures": 4, "prints": null}, "pc": {"value": 2.083e-10, "figures": 4, "prints": null}, "r_earth": {"value": 1.0078, "figures": 5, "prints": null}, "r_sun": {"value": 0.00924, "figures": 4, "prints": null}},
             "figures": 5
             },
             "altitude": {
               "value": 50.0,
               "unit": "km",
-              "in": {"au": {"value": 3.3e-07, "figures": 2, "prints": null}, "km": {"value": 50.0, "figures": 2, "prints": null}, "r_earth": {"value": 0.0078, "figures": 2, "prints": null}, "r_sun": {"value": 7.2e-05, "figures": 2, "prints": null}},
+              "in": {"au": {"value": 3.3e-07, "figures": 2, "prints": null}, "km": {"value": 50.0, "figures": 2, "prints": null}, "pc": {"value": 1.6e-12, "figures": 2, "prints": null}, "r_earth": {"value": 0.0078, "figures": 2, "prints": null}, "r_sun": {"value": 7.2e-05, "figures": 2, "prints": null}},
               "figures": 2,
               "orrery_constant": "constants_new.py::EARTH_STRATOPAUSE_ALTITUDE_KM"
             },
@@ -461,13 +499,13 @@
             "radius": {
               "value": 1.094,
               "unit": "r_earth",
-            "in": {"au": {"value": 4.66e-05, "figures": 3, "prints": null}, "km": {"value": 6980.0, "figures": 3, "prints": null}, "r_earth": {"value": 1.094, "figures": 4, "prints": null}, "r_sun": {"value": 0.01003, "figures": 4, "prints": null}},
+            "in": {"au": {"value": 4.66e-05, "figures": 3, "prints": null}, "km": {"value": 6980.0, "figures": 3, "prints": null}, "pc": {"value": 2.26e-10, "figures": 3, "prints": null}, "r_earth": {"value": 1.094, "figures": 4, "prints": null}, "r_sun": {"value": 0.01003, "figures": 4, "prints": null}},
             "figures": 4
             },
             "altitude": {
               "value": 600.0,
               "unit": "km",
-              "in": {"au": {"value": 4e-06, "figures": 2, "prints": null}, "km": {"value": 600.0, "figures": 2, "prints": null}, "r_earth": {"value": 0.094, "figures": 2, "prints": null}, "r_sun": {"value": 0.00086, "figures": 2, "prints": null}},
+              "in": {"au": {"value": 4e-06, "figures": 2, "prints": null}, "km": {"value": 600.0, "figures": 2, "prints": null}, "pc": {"value": 1.9e-11, "figures": 2, "prints": null}, "r_earth": {"value": 0.094, "figures": 2, "prints": null}, "r_sun": {"value": 0.00086, "figures": 2, "prints": null}},
               "figures": 2,
               "orrery_constant": "constants_new.py::EARTH_THERMOPAUSE_ALTITUDE_KM"
             },
@@ -483,7 +521,7 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
-            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
+            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "pc": {"value": 2.0670133e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -498,7 +536,7 @@
             "radius": {
               "value": 100.0,
               "unit": "r_earth",
-            "in": {"au": {"value": 0.004, "figures": 1, "prints": null}, "km": {"value": 600000.0, "figures": 1, "prints": null}, "r_earth": {"value": 100.0, "figures": 1, "prints": null}, "r_sun": {"value": 0.9, "figures": 1, "prints": null}},
+            "in": {"au": {"value": 0.004, "figures": 1, "prints": null}, "km": {"value": 600000.0, "figures": 1, "prints": null}, "pc": {"value": 2e-08, "figures": 1, "prints": null}, "r_earth": {"value": 100.0, "figures": 1, "prints": null}, "r_sun": {"value": 0.9, "figures": 1, "prints": null}},
             "figures": 1
             },
             "info_url": "https://en.wikipedia.org/wiki/Geocorona",
@@ -513,7 +551,7 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
-            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
+            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "pc": {"value": 2.0670133e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -528,20 +566,20 @@
             "radius": {
               "value": 1.03135712,
               "unit": "r_earth",
-            "in": {"au": {"value": 4.3972127e-05, "figures": 8, "prints": null}, "km": {"value": 6578.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.03135712, "figures": 9, "prints": null}, "r_sun": {"value": 0.0094554213, "figures": 8, "prints": null}},
+            "in": {"au": {"value": 4.3972127e-05, "figures": 8, "prints": null}, "km": {"value": 6578.1366, "figures": 8, "prints": null}, "pc": {"value": 2.1318289e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.03135712, "figures": 9, "prints": null}, "r_sun": {"value": 0.0094554213, "figures": 8, "prints": null}},
             "figures": 9
             },
             "radius_km": {
               "value": 6578.1366,
               "unit": "km",
-              "in": {"au": {"value": 4.3972127e-05, "figures": 8, "prints": null}, "km": {"value": 6578.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.03135712, "figures": 9, "prints": null}, "r_sun": {"value": 0.0094554213, "figures": 8, "prints": null}},
+              "in": {"au": {"value": 4.3972127e-05, "figures": 8, "prints": null}, "km": {"value": 6578.1366, "figures": 8, "prints": null}, "pc": {"value": 2.1318289e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.03135712, "figures": 9, "prints": null}, "r_sun": {"value": 0.0094554213, "figures": 8, "prints": null}},
               "figures": 8,
               "orrery_constant": "constants_new.py::EARTH_LEO_INNER_KM"
             },
             "altitude": {
               "value": 200.0,
               "unit": "km",
-              "in": {"au": {"value": 1.3369174244536892e-06, "figures": "exact", "prints": 3}, "km": {"value": 200.0, "figures": "exact", "prints": 3}, "r_earth": {"value": 0.03135712082428589, "figures": "exact", "prints": 3}, "r_sun": {"value": 0.0002874802357337933, "figures": "exact", "prints": 3}},
+              "in": {"au": {"value": 1.3369174244536892e-06, "figures": "exact", "prints": 3}, "km": {"value": 200.0, "figures": "exact", "prints": 3}, "pc": {"value": 6.4815585788887405e-12, "figures": "exact", "prints": 2}, "r_earth": {"value": 0.03135712082428589, "figures": "exact", "prints": 3}, "r_sun": {"value": 0.0002874802357337933, "figures": "exact", "prints": 3}},
               "prints": 3,
               "figures": "exact",
               "orrery_constant": "constants_new.py::EARTH_LEO_LOWER_ALTITUDE_KM"
@@ -561,20 +599,20 @@
             "radius": {
               "value": 1.31357121,
               "unit": "r_earth",
-            "in": {"au": {"value": 5.6004384e-05, "figures": 8, "prints": null}, "km": {"value": 8378.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.31357121, "figures": 9, "prints": null}, "r_sun": {"value": 0.0120427434, "figures": 9, "prints": null}},
+            "in": {"au": {"value": 5.6004384e-05, "figures": 8, "prints": null}, "km": {"value": 8378.1366, "figures": 8, "prints": null}, "pc": {"value": 2.7151692e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.31357121, "figures": 9, "prints": null}, "r_sun": {"value": 0.0120427434, "figures": 9, "prints": null}},
             "figures": 9
             },
             "radius_km": {
               "value": 8378.1366,
               "unit": "km",
-              "in": {"au": {"value": 5.6004384e-05, "figures": 8, "prints": null}, "km": {"value": 8378.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.31357121, "figures": 9, "prints": null}, "r_sun": {"value": 0.0120427434, "figures": 9, "prints": null}},
+              "in": {"au": {"value": 5.6004384e-05, "figures": 8, "prints": null}, "km": {"value": 8378.1366, "figures": 8, "prints": null}, "pc": {"value": 2.7151692e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.31357121, "figures": 9, "prints": null}, "r_sun": {"value": 0.0120427434, "figures": 9, "prints": null}},
               "figures": 8,
               "orrery_constant": "constants_new.py::EARTH_LEO_OUTER_KM"
             },
             "altitude": {
               "value": 2000.0,
               "unit": "km",
-              "in": {"au": {"value": 1.3369174244536892e-05, "figures": "exact", "prints": 4}, "km": {"value": 2000.0, "figures": "exact", "prints": 4}, "r_earth": {"value": 0.3135712082428589, "figures": "exact", "prints": 4}, "r_sun": {"value": 0.002874802357337933, "figures": "exact", "prints": 4}},
+              "in": {"au": {"value": 1.3369174244536892e-05, "figures": "exact", "prints": 4}, "km": {"value": 2000.0, "figures": "exact", "prints": 4}, "pc": {"value": 6.48155857888874e-11, "figures": "exact", "prints": 3}, "r_earth": {"value": 0.3135712082428589, "figures": "exact", "prints": 4}, "r_sun": {"value": 0.002874802357337933, "figures": "exact", "prints": 4}},
               "prints": 4,
               "figures": "exact",
               "orrery_constant": "constants_new.py::EARTH_LEO_UPPER_ALTITUDE_KM"
@@ -590,7 +628,7 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
-            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
+            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "pc": {"value": 2.0670133e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -606,13 +644,13 @@
             "radius": {
               "value": 6.610735,
               "unit": "r_earth",
-            "in": {"au": {"value": 0.0002818501, "figures": 7, "prints": null}, "km": {"value": 42164.17, "figures": 7, "prints": null}, "r_earth": {"value": 6.610735, "figures": 7, "prints": null}, "r_sun": {"value": 0.06060683, "figures": 7, "prints": null}},
+            "in": {"au": {"value": 0.0002818501, "figures": 7, "prints": null}, "km": {"value": 42164.17, "figures": 7, "prints": null}, "pc": {"value": 1.366448e-09, "figures": 7, "prints": null}, "r_earth": {"value": 6.610735, "figures": 7, "prints": null}, "r_sun": {"value": 0.06060683, "figures": 7, "prints": null}},
             "figures": 7
             },
             "radius_km": {
               "value": 42164.17,
               "unit": "km",
-              "in": {"au": {"value": 0.0002818501, "figures": 7, "prints": null}, "km": {"value": 42164.17, "figures": 7, "prints": null}, "r_earth": {"value": 6.610735, "figures": 7, "prints": null}, "r_sun": {"value": 0.06060683, "figures": 7, "prints": null}},
+              "in": {"au": {"value": 0.0002818501, "figures": 7, "prints": null}, "km": {"value": 42164.17, "figures": 7, "prints": null}, "pc": {"value": 1.366448e-09, "figures": 7, "prints": null}, "r_earth": {"value": 6.610735, "figures": 7, "prints": null}, "r_sun": {"value": 0.06060683, "figures": 7, "prints": null}},
               "figures": 7,
               "orrery_constant": "constants_new.py::EARTH_GEOSTATIONARY_RADIUS_KM"
             },
@@ -628,7 +666,7 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
-            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
+            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "pc": {"value": 2.0670133e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -696,11 +734,11 @@
             "standoff": {
               "value": 10.3,
               "unit": "r_earth",
-            "in": {"au": {"value": 0.00044, "figures": 2, "prints": null}, "km": {"value": 65000.0, "figures": 2, "prints": null}, "r_earth": {"value": 10.3, "figures": 3, "prints": null}, "r_sun": {"value": 0.094, "figures": 2, "prints": null}},
+            "in": {"au": {"value": 0.00044, "figures": 2, "prints": null}, "km": {"value": 65000.0, "figures": 2, "prints": null}, "pc": {"value": 2.1e-09, "figures": 2, "prints": null}, "r_earth": {"value": 10.3, "figures": 3, "prints": null}, "r_sun": {"value": 0.094, "figures": 2, "prints": null}},
             "uncertainty": "0.13",
             "figures": 3
             },
-            "scatter": {"value": 1.23, "unit": "r_earth", "in": {"au": {"value": 5.2e-05, "figures": 2, "prints": null}, "km": {"value": 7800.0, "figures": 2, "prints": null}, "r_earth": {"value": 1.23, "figures": 3, "prints": null}, "r_sun": {"value": 0.0113, "figures": 3, "prints": null}}, "figures": 3, "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_SCATTER_RADII"},
+            "scatter": {"value": 1.23, "unit": "r_earth", "in": {"au": {"value": 5.2e-05, "figures": 2, "prints": null}, "km": {"value": 7800.0, "figures": 2, "prints": null}, "pc": {"value": 2.54e-10, "figures": 3, "prints": null}, "r_earth": {"value": 1.23, "figures": 3, "prints": null}, "r_sun": {"value": 0.0113, "figures": 3, "prints": null}}, "figures": 3, "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_SCATTER_RADII"},
             "info_url": "https://en.wikipedia.org/wiki/Magnetopause",
             "color": "rgb(180, 180, 255)",
             "opacity": 0.25,
@@ -718,7 +756,7 @@
               "r0": {
                 "value": 15.02,
                 "unit": "r_earth",
-                "in": {"au": {"value": 0.00064, "figures": 3, "prints": null}, "km": {"value": 95800.0, "figures": 3, "prints": null}, "r_earth": {"value": 15.02, "figures": 4, "prints": null}, "r_sun": {"value": 0.1377, "figures": 4, "prints": null}},
+                "in": {"au": {"value": 0.00064, "figures": 3, "prints": null}, "km": {"value": 95800.0, "figures": 3, "prints": null}, "pc": {"value": 3.105e-09, "figures": 4, "prints": null}, "r_earth": {"value": 15.02, "figures": 4, "prints": null}, "r_sun": {"value": 0.1377, "figures": 4, "prints": null}},
                 "figures": 4,
                 "source": "Jelinek, Nemecek and Safrankova (2012), J. Geophys. Res. 117:A05208, doi:10.1029/2011JA017252 -- eq. 14, p. 5: R_BS = 15.02 p^(-1/6.55), so 15.02 R_E is the bow shock standoff at p = 1 nPa.",
                 "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_R0_RADII"
@@ -757,10 +795,10 @@
             "standoff": {
               "value": 13.5,
               "unit": "r_earth",
-            "in": {"au": {"value": 0.00058, "figures": 2, "prints": null}, "km": {"value": 86000.0, "figures": 2, "prints": null}, "r_earth": {"value": 13.5, "figures": 3, "prints": null}, "r_sun": {"value": 0.124, "figures": 3, "prints": null}},
+            "in": {"au": {"value": 0.00058, "figures": 2, "prints": null}, "km": {"value": 86000.0, "figures": 2, "prints": null}, "pc": {"value": 2.79e-09, "figures": 3, "prints": null}, "r_earth": {"value": 13.5, "figures": 3, "prints": null}, "r_sun": {"value": 0.124, "figures": 3, "prints": null}},
             "figures": 3
             },
-            "scatter": {"value": 0.69, "unit": "r_earth", "in": {"au": {"value": 2.9e-05, "figures": 2, "prints": null}, "km": {"value": 4400.0, "figures": 2, "prints": null}, "r_earth": {"value": 0.69, "figures": 2, "prints": null}, "r_sun": {"value": 0.0063, "figures": 2, "prints": null}}, "figures": 2, "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_SCATTER_RADII"},
+            "scatter": {"value": 0.69, "unit": "r_earth", "in": {"au": {"value": 2.9e-05, "figures": 2, "prints": null}, "km": {"value": 4400.0, "figures": 2, "prints": null}, "pc": {"value": 1.43e-10, "figures": 3, "prints": null}, "r_earth": {"value": 0.69, "figures": 2, "prints": null}, "r_sun": {"value": 0.0063, "figures": 2, "prints": null}}, "figures": 2, "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_SCATTER_RADII"},
             "info_url": "https://en.wikipedia.org/wiki/Bow_shocks_in_astrophysics",
             "color": "rgb(255, 200, 150)",
             "opacity": 0.25,
@@ -776,7 +814,7 @@
             "flare_end": {
               "value": 120.0,
               "unit": "r_earth",
-              "in": {"au": {"value": 0.005, "figures": 1, "prints": null}, "km": {"value": 800000.0, "figures": 1, "prints": null}, "r_earth": {"value": 120.0, "figures": 2, "prints": null}, "r_sun": {"value": 1.1, "figures": 2, "prints": null}},
+              "in": {"au": {"value": 0.005, "figures": 1, "prints": null}, "km": {"value": 800000.0, "figures": 1, "prints": null}, "pc": {"value": 2e-08, "figures": 1, "prints": null}, "r_earth": {"value": 120.0, "figures": 2, "prints": null}, "r_sun": {"value": 1.1, "figures": 2, "prints": null}},
               "figures": 2,
               "uncertainty": "10",
               "source": "Slavin, Smith, Sibeck, Baker, Zwickl and Akasofu (1985), 'An ISEE 3 study of average and substorm conditions in the distant magnetotail', J. Geophys. Res. 90(A11):10875, doi:10.1029/JA090iA11p10875 -- abstract: flaring ceases on average at |X| = 120 +/- 10 R_E.",
@@ -785,7 +823,7 @@
             "diameter": {
               "value": 60.0,
               "unit": "r_earth",
-              "in": {"au": {"value": 0.003, "figures": 1, "prints": null}, "km": {"value": 400000.0, "figures": 1, "prints": null}, "r_earth": {"value": 60.0, "figures": 2, "prints": null}, "r_sun": {"value": 0.6, "figures": 1, "prints": null}},
+              "in": {"au": {"value": 0.003, "figures": 1, "prints": null}, "km": {"value": 400000.0, "figures": 1, "prints": null}, "pc": {"value": 1.2e-08, "figures": 2, "prints": null}, "r_earth": {"value": 60.0, "figures": 2, "prints": null}, "r_sun": {"value": 0.6, "figures": 1, "prints": null}},
               "figures": 2,
               "uncertainty": "5",
               "source": "Slavin et al. (1985), doi:10.1029/JA090iA11p10875 -- abstract: from 756 magnetopause crossings, a low-latitude magnetotail diameter of 60 +/- 5 R_E at |X| = 130 - 225 R_E.",
@@ -795,7 +833,7 @@
             "drawn_radius": {
               "value": 30.0,
               "unit": "r_earth",
-              "in": {"au": {"value": 0.0012790562934128715, "figures": "exact", "prints": null}, "km": {"value": 191344.098, "figures": "exact", "prints": null}, "r_earth": {"value": 30.0, "figures": "exact", "prints": null}, "r_sun": {"value": 0.27503823199655025, "figures": "exact", "prints": null}},
+              "in": {"au": {"value": 0.0012790562934128715, "figures": "exact", "prints": null}, "km": {"value": 191344.098, "figures": "exact", "prints": null}, "pc": {"value": 6.20103989955814e-09, "figures": "exact", "prints": null}, "r_earth": {"value": 30.0, "figures": "exact", "prints": null}, "r_sun": {"value": 0.27503823199655025, "figures": "exact", "prints": null}},
               "figures": "exact",
               "_declared": "Half the measured diameter, the radius of the round tube the tail is drawn as beyond flare_end. A rule, not a measurement; its reasons are on the row in constants_new.py.",
               "orrery_constant": "constants_new.py::EARTH_MAGNETOTAIL_DRAWN_RADIUS_RADII"
@@ -803,7 +841,7 @@
             "drawn_end": {
               "value": 220.0,
               "unit": "r_earth",
-              "in": {"au": {"value": 0.009379746151694391, "figures": "exact", "prints": null}, "km": {"value": 1403190.052, "figures": "exact", "prints": null}, "r_earth": {"value": 220.0, "figures": "exact", "prints": null}, "r_sun": {"value": 2.0169470346413685, "figures": "exact", "prints": null}},
+              "in": {"au": {"value": 0.009379746151694391, "figures": "exact", "prints": null}, "km": {"value": 1403190.052, "figures": "exact", "prints": null}, "pc": {"value": 4.547429259675969e-08, "figures": "exact", "prints": null}, "r_earth": {"value": 220.0, "figures": "exact", "prints": null}, "r_sun": {"value": 2.0169470346413685, "figures": "exact", "prints": null}},
               "figures": "exact",
               "_declared": "Where the drawing stops: equal to observed_extent, how far ISEE-3 went. A drawing limit, not an edge of anything physical.",
               "orrery_constant": "constants_new.py::EARTH_MAGNETOTAIL_DRAWN_END_RADII"
@@ -811,7 +849,7 @@
             "observed_extent": {
               "value": 220.0,
               "unit": "r_earth",
-              "in": {"au": {"value": 0.009, "figures": 1, "prints": null}, "km": {"value": 1400000.0, "figures": 2, "prints": null}, "r_earth": {"value": 220.0, "figures": 2, "prints": null}, "r_sun": {"value": 2.0, "figures": 2, "prints": null}},
+              "in": {"au": {"value": 0.009, "figures": 1, "prints": null}, "km": {"value": 1400000.0, "figures": 2, "prints": null}, "pc": {"value": 4.5e-08, "figures": 2, "prints": null}, "r_earth": {"value": 220.0, "figures": 2, "prints": null}, "r_sun": {"value": 2.0, "figures": 2, "prints": null}},
               "figures": 2,
               "source": "Slavin, Tsurutani, Smith, Jones and Sibeck (1983), 'Average configuration of the distant (less than 220-earth-radii) magnetotail - Initial ISEE-3 magnetic field results', Geophys. Res. Lett. 10(10):973, doi:10.1029/GL010i010p00973 -- the abstract states that the magnetotail retains much of its near-Earth structure out to X = -220 Earth radii. Abstract open at ntrs.nasa.gov/citations/19830066648. The same abstract's figures for where flaring ends and for the tail's diameter are superseded by the same mission's 1985 averages, served here as flare_end and diameter.",
               "orrery_constant": "constants_new.py::EARTH_MAGNETOTAIL_OBSERVED_RADII",
@@ -826,7 +864,7 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
-            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
+            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "pc": {"value": 2.0670133e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -847,7 +885,7 @@
           "inner_belt_distance": {
             "value": 1.5,
             "unit": "r_earth",
-            "in": {"au": {"value": 6e-05, "figures": 1, "prints": null}, "km": {"value": 9600.0, "figures": 2, "prints": null}, "r_earth": {"value": 1.5, "figures": 2, "prints": null}, "r_sun": {"value": 0.014, "figures": 2, "prints": null}},
+            "in": {"au": {"value": 6e-05, "figures": 1, "prints": null}, "km": {"value": 9600.0, "figures": 2, "prints": null}, "pc": {"value": 3.1e-10, "figures": 2, "prints": null}, "r_earth": {"value": 1.5, "figures": 2, "prints": null}, "r_sun": {"value": 0.014, "figures": 2, "prints": null}},
             "figures": 2,
             "source": "Baker et al. (2018), Space Sci. Rev. 214:17, doi:10.1007/s11214-017-0452-7 -- sec. 2, inner-zone proton fluxes peak near geocentric r ~ 1.5 R_E",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_RADII",
@@ -856,7 +894,7 @@
           "inner_belt_inner_edge": {
             "value": 1.1,
             "unit": "r_earth",
-            "in": {"au": {"value": 5e-05, "figures": 1, "prints": null}, "km": {"value": 7000.0, "figures": 1, "prints": null}, "r_earth": {"value": 1.1, "figures": 2, "prints": null}, "r_sun": {"value": 0.01, "figures": 2, "prints": null}},
+            "in": {"au": {"value": 5e-05, "figures": 1, "prints": null}, "km": {"value": 7000.0, "figures": 1, "prints": null}, "pc": {"value": 2.3e-10, "figures": 2, "prints": null}, "r_earth": {"value": 1.1, "figures": 2, "prints": null}, "r_sun": {"value": 0.01, "figures": 2, "prints": null}},
             "figures": 2,
             "source": "Meredith, Horne, Kersten, Fraser and Grew (2014), J. Geophys. Res. Space Physics 119:5328, doi:10.1002/2014JA020064 -- introduction, first paragraph: the inner belt extends from about 1.1 to 2 Earth radii in the geomagnetic equatorial plane. Open full text at nora.nerc.ac.uk. Meredith states this as background and passes it on from Baker et al. (2007), which is the layer below rather than the source.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_BELT_INNER_EDGE",
@@ -865,7 +903,7 @@
           "inner_belt_outer_edge": {
             "value": 2.0,
             "unit": "r_earth",
-            "in": {"au": {"value": 9e-05, "figures": 1, "prints": null}, "km": {"value": 10000.0, "figures": 1, "prints": null}, "r_earth": {"value": 2.0, "figures": 1, "prints": null}, "r_sun": {"value": 0.02, "figures": 1, "prints": null}},
+            "in": {"au": {"value": 9e-05, "figures": 1, "prints": null}, "km": {"value": 10000.0, "figures": 1, "prints": null}, "pc": {"value": 4e-10, "figures": 1, "prints": null}, "r_earth": {"value": 2.0, "figures": 1, "prints": null}, "r_sun": {"value": 0.02, "figures": 1, "prints": null}},
             "figures": 1,
             "source": "Meredith et al. (2014), doi:10.1002/2014JA020064 -- introduction, first paragraph, the outer end of the same stated span.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_INNER_BELT_OUTER_EDGE",
@@ -885,7 +923,7 @@
           "outer_belt_inner_edge": {
             "value": 3.0,
             "unit": "r_earth",
-            "in": {"au": {"value": 0.0001, "figures": 1, "prints": null}, "km": {"value": 20000.0, "figures": 1, "prints": null}, "r_earth": {"value": 3.0, "figures": 1, "prints": null}, "r_sun": {"value": 0.03, "figures": 1, "prints": null}},
+            "in": {"au": {"value": 0.0001, "figures": 1, "prints": null}, "km": {"value": 20000.0, "figures": 1, "prints": null}, "pc": {"value": 6e-10, "figures": 1, "prints": null}, "r_earth": {"value": 3.0, "figures": 1, "prints": null}, "r_sun": {"value": 0.03, "figures": 1, "prints": null}},
             "figures": 1,
             "source": "Meredith et al. (2014), doi:10.1002/2014JA020064, and Li, Tu, Selesnick and Huang (2024), J. Geophys. Res. Space Physics 129:e2023JA032171, doi:10.1029/2023JA032171 -- both state the outer belt extending from 3 Earth radii, in their introductions. Open full text at nora.nerc.ac.uk and par.nsf.gov.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BELT_INNER_EDGE",
@@ -894,7 +932,7 @@
           "outer_belt_outer_edge": {
             "value": 7.0,
             "unit": "r_earth",
-            "in": {"au": {"value": 0.0003, "figures": 1, "prints": null}, "km": {"value": 40000.0, "figures": 1, "prints": null}, "r_earth": {"value": 7.0, "figures": 1, "prints": null}, "r_sun": {"value": 0.06, "figures": 1, "prints": null}},
+            "in": {"au": {"value": 0.0003, "figures": 1, "prints": null}, "km": {"value": 40000.0, "figures": 1, "prints": null}, "pc": {"value": 1.4e-09, "figures": 2, "prints": null}, "r_earth": {"value": 7.0, "figures": 1, "prints": null}, "r_sun": {"value": 0.06, "figures": 1, "prints": null}},
             "figures": 1,
             "source": "Meredith et al. (2014), doi:10.1002/2014JA020064, and Li, Tu et al. (2024), doi:10.1029/2023JA032171 -- both state the outer belt extending to 7 Earth radii, in their introductions.",
             "orrery_constant": "constants_new.py::EARTH_VAN_ALLEN_OUTER_BELT_OUTER_EDGE",
@@ -929,7 +967,7 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
-            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
+            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "pc": {"value": 2.0670133e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -944,13 +982,13 @@
             "radius": {
               "value": 235.0,
               "unit": "r_earth",
-            "in": {"au": {"value": 0.01, "figures": 3, "prints": null}, "km": {"value": 1500000.0, "figures": 3, "prints": null}, "r_earth": {"value": 235.0, "figures": 3, "prints": null}, "r_sun": {"value": 2.15, "figures": 3, "prints": null}},
+            "in": {"au": {"value": 0.01, "figures": 3, "prints": null}, "km": {"value": 1500000.0, "figures": 3, "prints": null}, "pc": {"value": 4.9e-08, "figures": 2, "prints": null}, "r_earth": {"value": 235.0, "figures": 3, "prints": null}, "r_sun": {"value": 2.15, "figures": 3, "prints": null}},
             "figures": 3
             },
             "radius_km": {
               "value": 1500000.0,
               "unit": "km",
-              "in": {"au": {"value": 0.01, "figures": 3, "prints": null}, "km": {"value": 1500000.0, "figures": 3, "prints": null}, "r_earth": {"value": 235.0, "figures": 3, "prints": null}, "r_sun": {"value": 2.15, "figures": 3, "prints": null}},
+              "in": {"au": {"value": 0.01, "figures": 3, "prints": null}, "km": {"value": 1500000.0, "figures": 3, "prints": null}, "pc": {"value": 4.9e-08, "figures": 2, "prints": null}, "r_earth": {"value": 235.0, "figures": 3, "prints": null}, "r_sun": {"value": 2.15, "figures": 3, "prints": null}},
               "figures": 3,
               "orrery_constant": "constants_new.py::EARTH_HILL_SPHERE_KM"
             },
@@ -966,7 +1004,7 @@
           "planet_radius": {
             "value": 6378.1366,
             "unit": "km",
-            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
+            "in": {"au": {"value": 4.263521e-05, "figures": 8, "prints": null}, "km": {"value": 6378.1366, "figures": 8, "prints": null}, "pc": {"value": 2.0670133e-10, "figures": 8, "prints": null}, "r_earth": {"value": 1.0, "figures": "exact", "prints": 1}, "r_sun": {"value": 0.0091679411, "figures": 8, "prints": null}},
             "uncertainty": "0.0001",
             "figures": 8,
             "source": "IERS Conventions (2010), Petit & Luzum (eds.), IERS Technical Note No. 36, Table 1.1",
@@ -1010,7 +1048,7 @@
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 100.0, "unit": "km",
-        "in": {"au": {"value": 6.684587122268446e-07, "figures": "exact", "prints": null}, "km": {"value": 100.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.015678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.00014374011786689664, "figures": "exact", "prints": null}}, "figures": "exact",
+        "in": {"au": {"value": 6.684587122268446e-07, "figures": "exact", "prints": null}, "km": {"value": 100.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443703e-12, "figures": "exact", "prints": null}, "r_earth": {"value": 0.015678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.00014374011786689664, "figures": "exact", "prints": null}}, "figures": "exact",
         "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
         "orrery_constant": "constants_new.py::DE430_JUPITER_SATURN_POSITION_PLACE_KM"
       },
@@ -1053,7 +1091,7 @@
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 100.0, "unit": "km",
-        "in": {"au": {"value": 6.684587122268446e-07, "figures": "exact", "prints": null}, "km": {"value": 100.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.015678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.00014374011786689664, "figures": "exact", "prints": null}}, "figures": "exact",
+        "in": {"au": {"value": 6.684587122268446e-07, "figures": "exact", "prints": null}, "km": {"value": 100.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443703e-12, "figures": "exact", "prints": null}, "r_earth": {"value": 0.015678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.00014374011786689664, "figures": "exact", "prints": null}}, "figures": "exact",
         "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
         "orrery_constant": "constants_new.py::DE430_JUPITER_SATURN_POSITION_PLACE_KM"
       },
@@ -1089,7 +1127,7 @@
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 1.0, "unit": "km",
-        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
+        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443706e-14, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
         "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
         "orrery_constant": "constants_new.py::DE430_TERRESTRIAL_POSITION_PLACE_KM"
       },
@@ -1105,7 +1143,7 @@
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 1.0, "unit": "km",
-        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
+        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443706e-14, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
         "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
         "orrery_constant": "constants_new.py::DE430_TERRESTRIAL_POSITION_PLACE_KM"
       },
@@ -1121,7 +1159,7 @@
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 1.0, "unit": "km",
-        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
+        "in": {"au": {"value": 6.6845871222684464e-09, "figures": "exact", "prints": null}, "km": {"value": 1.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443706e-14, "figures": "exact", "prints": null}, "r_earth": {"value": 0.00015678560412142945, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-06, "figures": "exact", "prints": null}}, "figures": "exact",
         "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
         "orrery_constant": "constants_new.py::DE430_TERRESTRIAL_POSITION_PLACE_KM"
       },
@@ -1137,7 +1175,7 @@
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 10000.0, "unit": "km",
-        "in": {"au": {"value": 6.684587122268446e-05, "figures": "exact", "prints": null}, "km": {"value": 10000.0, "figures": "exact", "prints": null}, "r_earth": {"value": 1.5678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.014374011786689666, "figures": "exact", "prints": null}}, "figures": "exact",
+        "in": {"au": {"value": 6.684587122268446e-05, "figures": "exact", "prints": null}, "km": {"value": 10000.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443706e-10, "figures": "exact", "prints": null}, "r_earth": {"value": 1.5678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.014374011786689666, "figures": "exact", "prints": null}}, "figures": "exact",
         "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
         "orrery_constant": "constants_new.py::DE430_URANUS_NEPTUNE_PLUTO_POSITION_PLACE_KM"
       },
@@ -1153,7 +1191,7 @@
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 10000.0, "unit": "km",
-        "in": {"au": {"value": 6.684587122268446e-05, "figures": "exact", "prints": null}, "km": {"value": 10000.0, "figures": "exact", "prints": null}, "r_earth": {"value": 1.5678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.014374011786689666, "figures": "exact", "prints": null}}, "figures": "exact",
+        "in": {"au": {"value": 6.684587122268446e-05, "figures": "exact", "prints": null}, "km": {"value": 10000.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443706e-10, "figures": "exact", "prints": null}, "r_earth": {"value": 1.5678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.014374011786689666, "figures": "exact", "prints": null}}, "figures": "exact",
         "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
         "orrery_constant": "constants_new.py::DE430_URANUS_NEPTUNE_PLUTO_POSITION_PLACE_KM"
       },
@@ -1188,7 +1226,7 @@
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 10000.0, "unit": "km",
-        "in": {"au": {"value": 6.684587122268446e-05, "figures": "exact", "prints": null}, "km": {"value": 10000.0, "figures": "exact", "prints": null}, "r_earth": {"value": 1.5678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.014374011786689666, "figures": "exact", "prints": null}}, "figures": "exact",
+        "in": {"au": {"value": 6.684587122268446e-05, "figures": "exact", "prints": null}, "km": {"value": 10000.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443706e-10, "figures": "exact", "prints": null}, "r_earth": {"value": 1.5678560412142946, "figures": "exact", "prints": null}, "r_sun": {"value": 0.014374011786689666, "figures": "exact", "prints": null}}, "figures": "exact",
         "source": "Folkner, Williams, Boggs, Park & Kuchynka (2014), The Planetary and Lunar Ephemerides DE430 and DE431, IPN Progress Report 42-196 -- abstract",
         "orrery_constant": "constants_new.py::DE430_URANUS_NEPTUNE_PLUTO_POSITION_PLACE_KM"
       },
