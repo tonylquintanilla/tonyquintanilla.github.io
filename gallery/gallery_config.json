@@ -114,13 +114,6 @@
           "short": "Missions",
           "sentence": "",
           "rooms": []
-        },
-        {
-          "key": "solar_system",
-          "label": "solar_system",
-          "short": "",
-          "sentence": "",
-          "rooms": []
         }
       ]
     },

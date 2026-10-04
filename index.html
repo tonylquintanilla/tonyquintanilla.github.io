@@ -111,7 +111,19 @@
        - The guest book's names and message text are white, names bold,
          text regular, with a soft dark shadow so they stay readable
          where they cross the bright doves in the background (Tony,
-         Mode 5, 2026-09-28). Dates and the note line are unchanged. -->
+         Mode 5, 2026-09-28). Dates and the note line are unchanged.
+     Updated: October 4, 2026 with Anthropic's Claude Opus 5.5
+       - The Solar System room's card is the lobby's way in (L-363,
+         Tony's rulings of 2026-10-03 and 2026-10-04; sketch C of his
+         design canvas). A card served "wide": true is drawn full
+         width at the top of Featured, above the two-column grid, with
+         its picture, a line naming its room and its kicker, the title,
+         its sentence and the Interactive tag. The same card comes
+         first under "Exhibits here" on its door's page. wideCardHtml()
+         draws it in both places.
+       - The lobby's doors no longer say how many rooms are under
+         construction (Tony, all three doors). A door's own page still
+         gives its counts as before. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -956,6 +968,50 @@
             margin-top: 4px;
         }
         .lobby-card .viz-card-featured { margin-top: 6px; animation: none; }
+        /* The wide card (L-363, 2026-10-04): sketch C of Tony's canvas.
+           Full width above the grid, the room's picture first. */
+        .lobby-card.lobby-wide {
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px 12px 14px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(201, 168, 76, 0.5);
+            border-radius: 12px;
+            background: rgba(12, 16, 28, 0.92);
+        }
+        .lobby-card.lobby-wide:hover { border-color: var(--accent); }
+        .lobby-wide-picture {
+            display: block;
+            width: 100%;
+            aspect-ratio: 2 / 1;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #060a12;
+        }
+        .lobby-wide-kicker {
+            font-size: 0.66rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .lobby-wide-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-weight: 600;
+            font-size: 1.55rem;
+            line-height: 1.15;
+            color: #f1efe9;
+        }
+        .lobby-wide-desc {
+            font-size: 0.86rem;
+            line-height: 1.45;
+            color: #c9c7c2;
+        }
+        .lobby-card.lobby-wide .viz-card-featured {
+            align-self: flex-start;
+            margin-top: 2px;
+            animation: none;
+        }
         .lobby-row {
             display: flex;
             align-items: center;
@@ -2806,14 +2862,43 @@
             return n + ' ' + word + (n === 1 ? '' : 's');
         }
 
+        // The wide card (L-363, Tony's rulings of 2026-10-03/04). A card
+        // served "wide": true is drawn full width, above the grid, in the
+        // lobby's Featured and first on its door's page. The words and the
+        // picture are the card's own, from gallery_metadata.json: picture
+        // and picture_alt, kicker (the words after the room's name on the
+        // small line), title, description. A picture that fails to load
+        // is hidden rather than drawn as a broken box. extraClass carries
+        // the door page's room-card class, which its click handler finds.
+        function wideCardHtml(item, roomLabel, extraClass) {
+            var h = '<div class="lobby-card lobby-wide' + (extraClass ? ' ' + extraClass : '') +
+                    '" data-viz-id="' + escapeHtml(item.id) + '">';
+            if (item.picture) {
+                h += '<img class="lobby-wide-picture" src="' + escapeHtml(item.picture) +
+                     '" alt="' + escapeHtml(item.picture_alt || '') +
+                     '" loading="lazy" onerror="this.style.display=\'none\'">';
+            }
+            var kick = [];
+            if (roomLabel) kick.push(roomLabel);
+            if (item.kicker) kick.push(item.kicker);
+            if (kick.length) {
+                h += '<div class="lobby-wide-kicker">' + escapeHtml(kick.join(' \u00b7 ')) + '</div>';
+            }
+            h += '<div class="lobby-wide-title">' + escapeHtml(item.title || 'Untitled') + '</div>';
+            if (item.description && item.description !== item.title) {
+                h += '<div class="lobby-wide-desc">' + escapeHtml(item.description) + '</div>';
+            }
+            if (item.live) h += '<div class="viz-card-featured">Interactive</div>';
+            h += '</div>';
+            return h;
+        }
+
         function renderLobby() {
             var vizs = (metadata && metadata.visualizations) || [];
             var shown = [];
-            var roomCards = {};
             for (var i = 0; i < vizs.length; i++) {
                 if (!inCurrentMode(vizs[i])) continue;
                 shown.push(vizs[i]);
-                roomCards[vizs[i].room || 'other'] = true;
             }
 
             var cfgSentence = (window.__galleryConfig && window.__galleryConfig.sentence) || '';
@@ -2834,10 +2919,10 @@
                         if (shown[j].live) live++;
                     }
                 }
-                var empty = countEmptyRooms(door, roomCards);
+                // No "rooms under construction" on a lobby door (Tony,
+                // 2026-10-04, all three doors). The door's own page keeps it.
                 var meta = [plural(count, 'exhibit')];
                 if (live) meta.push(plural(live, 'interactive scene'));
-                if (empty) meta.push(plural(empty, 'room') + ' under construction');
                 html += '<div class="lobby-door" data-door="' + escapeHtml(door.key) + '">';
                 html += '<div class="lobby-door-bar" style="background: ' + color + ';"></div>';
                 html += '<div class="lobby-door-body">';
@@ -2862,7 +2947,16 @@
             featured = treeSort(featured);
             if (featured.length) {
                 html += '<div class="lobby-section"><div class="lobby-heading">Featured</div>';
-                html += '<div class="lobby-featured">';
+                // Wide cards first, full width, in tree order (L-363).
+                var narrow = [];
+                for (var w = 0; w < featured.length; w++) {
+                    var wItem = featured[w];
+                    if (!wItem.wide) { narrow.push(wItem); continue; }
+                    var wDoor = (wItem.room || 'other').split('/')[0];
+                    html += wideCardHtml(wItem, ROOM_LABELS[wItem.room] || ROOM_LABELS[wDoor] || '', '');
+                }
+                featured = narrow;
+                if (featured.length) html += '<div class="lobby-featured">';
                 for (var k = 0; k < featured.length; k++) {
                     var item = featured[k];
                     var doorKey = (item.room || 'other').split('/')[0];
@@ -2876,7 +2970,8 @@
                     if (item.live) html += '<div class="viz-card-featured">Interactive</div>';
                     html += '</div></div>';
                 }
-                html += '</div></div>';
+                if (featured.length) html += '</div>';
+                html += '</div>';
             }
 
             // Guest book (L-281): fillGuestbook() draws the entries into
@@ -3138,6 +3233,17 @@
 
             if (here.length) {
                 html += '<div class="room-section"><div class="lobby-heading">Exhibits here</div>';
+                // A wide card first, full width (L-363, Tony 2026-10-03:
+                // "Yes, exactly"); the rest in the grid as before.
+                var hereNarrow = [];
+                for (var hw = 0; hw < here.length; hw++) {
+                    if (here[hw].wide) {
+                        html += wideCardHtml(here[hw], ROOM_LABELS[here[hw].room] || '', 'room-card');
+                    } else {
+                        hereNarrow.push(here[hw]);
+                    }
+                }
+                here = hereNarrow;
                 html += '<div class="room-grid">';
                 for (var c = 0; c < here.length; c++) {
                     var v = here[c];

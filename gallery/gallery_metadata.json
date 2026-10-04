@@ -3,13 +3,17 @@
   "visualizations": [
     {
       "id": "solar_system",
-      "title": "START HERE",
-      "description": "Live data from JPL Horizons. Work in progress.",
+      "title": "The Solar System, live",
+      "description": "Turn it, zoom in, and step into the rooms of the Sun and Earth. Live data from JPL Horizons.",
       "room": "solar_system",
       "shape": "9:16",
       "files": {},
       "live": "interactive.html?exhibit=solar-system",
       "featured": true,
+      "wide": true,
+      "kicker": "Start here",
+      "picture": "gallery/pictures/solar_system_room.jpg",
+      "picture_alt": "The Solar System room as it opened at noon UTC on October 4, 2026: the Sun with Mercury, Venus, Earth and Mars on their orbits.",
       "sources": [
         "JPL Horizons"
       ],
