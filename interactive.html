@@ -235,6 +235,15 @@
         plus 20%, not on their whole orbits (Tony, 2026-10-02). The logic
         is in gallery/solar_system_drawer.js; the Sun and Earth rooms'
         drawer is unchanged)
+     Updated: October 4, 2026 with Anthropic's Claude Opus 5.5
+       (L-363, the drawer's small fixes, Tony's rulings of 2026-10-02
+        and 2026-10-03. With the phone sideways, an opened row keeps
+        its "Enter the ... room" button, or "No room or cards yet", on
+        the name's line between the name and GO, so it stays one line
+        tall. The info panel's two paragraphs are bullet lists. Home
+        is described as it works: it backs out to hold every body
+        ticked; the handle names the last body ticked. Home's code is
+        unchanged)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -642,6 +651,22 @@
             text-decoration: none; font-weight: 500;
         }
         .sun-row-open a.enter:hover { background: rgba(201,168,76,0.12); }
+        /* L-363, Tony's ruling of 2026-10-03 (option 3): with the phone
+           sideways the drawer shows about a row and a half, so an opened
+           row puts its button, or "No room or cards yet", on the name's
+           line, between the name and GO, and stays one line tall. Shown
+           and hidden by ssRender, by ssPhoneSideways(). */
+        .sun-row .open-inline {
+            flex-shrink: 0; margin-left: 10px;
+            color: var(--text-dim); font-size: 12px; white-space: nowrap;
+        }
+        .sun-row .open-inline a.enter {
+            display: inline-block; min-height: 32px; line-height: 32px;
+            padding: 0 12px; border: 1px solid var(--accent);
+            border-radius: 6px; color: var(--accent);
+            text-decoration: none; font-weight: 500; font-size: 13px;
+        }
+        .sun-row .open-inline[hidden] { display: none; }
         .sun-see-more {
             display: block; min-height: 44px; margin: 0 16px 0 65px;
             padding: 0; background: none; border: none; cursor: pointer;
@@ -833,6 +858,16 @@
             line-height: 1.6;
             margin-bottom: 12px;
         }
+        /* L-363 (Tony, 2026-10-02): the Solar System room's paragraphs as
+           bullet lists, in the same type as a paragraph. */
+        .info-panel ul {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 0 0 12px 0;
+            padding-left: 18px;
+        }
+        .info-panel li { margin-bottom: 6px; }
         .info-panel .info-note {
             font-size: 11px;
             color: var(--text-dim);
@@ -2090,21 +2125,31 @@ function solarSystemSoftWrap(text, width) {
 const SOLAR_SYSTEM_INFO_HTML = [
     "<div class=\"info-focus\" id=\"sun-info-focus\"></div>",
     "<h3>The Solar System</h3>",
-    "<p>The Sun, the eight planets and Pluto, each drawn as its symbol on",
+    // Tony, 2026-10-02: the two paragraphs approved, as bullet lists.
+    // The Home line follows his ruling of 2026-10-03.
+    "<ul>",
+    "<li>The Sun, the eight planets and Pluto, each drawn as its symbol on",
     " its orbit, where it is now: at the minute you opened this room, as",
-    " the line under the title says. Open the list below. Tick a body to",
-    " draw it, and the view widens to hold every body drawn. Tap a body's",
-    " name to open its row; a body with a room of its own has a button",
-    " to enter it. Tap a body in the picture to find its row. GO takes the",
-    " view to a body, and Home goes back to the last one you ticked. The",
-    " body named on the list's handle has its description and source at",
-    " the top of this panel.</p>",
-    "<p>This room is being built up. Apophis, the first asteroid here,",
-    " waits under See more; the other asteroids, the comets and the",
-    " spacecraft join later, each in its place in the list. Each body's own",
-    " shells &mdash; its atmosphere, rings and magnetic surroundings",
-    " &mdash; live in that body's own room; so far the Sun and Earth have",
-    " one.</p>",
+    " the line under the title says.</li>",
+    "<li>Open the list below. Tick a body to draw it, and the view widens",
+    " to hold every body drawn.</li>",
+    "<li>Tap a body's name to open its row; a body with a room of its own",
+    " has a button to enter it.</li>",
+    "<li>Tap a body in the picture to find its row.</li>",
+    "<li>GO takes the view to a body, and Home backs out to hold every",
+    " body you ticked.</li>",
+    "<li>The body named on the list's handle has its description and",
+    " source at the top of this panel.</li>",
+    "</ul>",
+    "<ul>",
+    "<li>This room is being built up.</li>",
+    "<li>Apophis, the first asteroid here, waits under See more; the other",
+    " asteroids, the comets and the spacecraft join later, each in its",
+    " place in the list.</li>",
+    "<li>Each body's own shells &mdash; its atmosphere, rings and magnetic",
+    " surroundings &mdash; live in that body's own room; so far the Sun",
+    " and Earth have one.</li>",
+    "</ul>",
     "<p>The computation runs in your browser via <strong>Pyodide</strong>,",
     " using the same Python the desktop orrery uses. No server.</p>",
     "<div class=\"info-note\">Part of Paloma's Orrery &mdash; named for the",
@@ -3970,27 +4015,44 @@ function ssWireRow(row, grp, k, list) {
         const at = function (sel) {
             return !!(t && typeof t.closest === "function" && t.closest(sel));
         };
+        if (at("a.enter")) { return; }   // the sideways button: let it go
         if (at(".go")) { ssGo(k); return; }
         if (at(".pick") && SSD.tickable(grp.key)) { ssTick(k, !grp.shown); return; }
         ssSelect(k, true);
     };
     list.appendChild(row);
-    // The opened row: hidden until this row is opened.
+    // The opened row: hidden until this row is opened. Upright and on the
+    // desktop it is a line under the row; with the phone sideways the
+    // same words sit on the row's own line, before GO (Tony, 2026-10-03).
     const panel = document.createElement("div");
     panel.className = "sun-row-open";
     panel.setAttribute("data-open-for", grp.key);
     panel.hidden = true;
+    const inline = document.createElement("span");
+    inline.className = "open-inline";
+    inline.setAttribute("data-open-for", grp.key);
+    inline.hidden = true;
     const room = SSD.roomFor(served, Object.keys(EXHIBITS));
-    if (room) {
-        const a = document.createElement("a");
-        a.className = "enter";
-        a.href = "interactive.html?exhibit=" + encodeURIComponent(room);
-        a.textContent = SSD.WORDS.enter(grp.name);
-        panel.appendChild(a);
-    } else {
-        panel.textContent = SSD.WORDS.noRoom;
-    }
+    [panel, inline].forEach(function (holder) {
+        if (room) {
+            const a = document.createElement("a");
+            a.className = "enter";
+            a.href = "interactive.html?exhibit=" + encodeURIComponent(room);
+            a.textContent = SSD.WORDS.enter(grp.name);
+            holder.appendChild(a);
+        } else {
+            holder.textContent = SSD.WORDS.noRoom;
+        }
+    });
+    const go = row.querySelector(".go");
+    if (go) { row.insertBefore(inline, go); } else { row.appendChild(inline); }
     list.appendChild(panel);
+}
+
+// A phone held sideways: wider than tall, and short. The drawer is at most
+// 40% of the picture's height, so here it shows about a row and a half.
+function ssPhoneSideways() {
+    return window.innerWidth > window.innerHeight && window.innerHeight <= 500;
 }
 
 function ssAddSeeMore(list) {
@@ -4025,10 +4087,16 @@ function ssRender() {
         rows[r].setAttribute("aria-expanded",
             (vis && ssDrawer.open === grp.key) ? "true" : "false");
     }
+    const sideways = ssPhoneSideways();
     const panels = list.querySelectorAll(".sun-row-open");
     for (let p = 0; p < panels.length; p++) {
         const key = panels[p].getAttribute("data-open-for");
-        panels[p].hidden = !(seen[key] && ssDrawer.open === key);
+        panels[p].hidden = sideways || !(seen[key] && ssDrawer.open === key);
+    }
+    const inlines = list.querySelectorAll(".sun-row .open-inline");
+    for (let q = 0; q < inlines.length; q++) {
+        const key = inlines[q].getAttribute("data-open-for");
+        inlines[q].hidden = !sideways || !(seen[key] && ssDrawer.open === key);
     }
     const drawn = ssDrawnRows();
     const b = document.getElementById("sun-see-more");
@@ -4111,11 +4179,14 @@ function ssToggleAll() {
     return sunApplyVisibility(false);
 }
 
-// Home (design 4.3): the opening camera angle, the drawer closed, the
-// frame holding everything drawn, and the last body ticked that is still
-// ticked named. If nothing is ticked, what the room opened on is put back
-// and the opening frame with it -- the one time Home changes what is
-// drawn. (The design wrote "ticks Earth again", when the room opened on
+// Home, as Tony settled it on 2026-10-03 (option 2): the opening camera
+// angle, the drawer closed, the frame holding every body ticked by the
+// room's rule (where each is now, plus 20%). The order bodies were ticked
+// in does not move the view; it only decides which body the handle names
+// -- the last one ticked that is still ticked. No second tap: "GO goes
+// in, Home backs out." If nothing is ticked, what the room opened on is
+// put back and the opening frame with it -- the one time Home changes
+// what is drawn. (The design wrote "ticks Earth again", when the room opened on
 // Earth alone; what the room opens on is now served and can change.)
 function ssHome(gd) {
     const SSD = window.SolarSystemDrawer;
@@ -4541,6 +4612,8 @@ function onSunResize() {
             }));
         }
         navPlaceCross();
+        // An opened drawer row moves to its sideways or upright place.
+        if (ssDrawer) { renderSunDrawer(); }
         // The title and its line: at the top, or below the cross if the
         // turned screen puts them under a button.
         sunFitTitle();

@@ -5,7 +5,8 @@
 Written under orrery ledger handle L-272. Cut from `2ed12564` at
 https://github.com/tonylquintanilla/tonyquintanilla.github.io (branch
 main). The anchor names the state this file was written against, not a
-promise the repository still sits there.
+promise the repository still sits there. Updated October 4, 2026 with
+Anthropic's Claude Opus 5.5 (orrery L-409): the license line, below.
 
 **What this file is.** The front door for the gallery repository. It
 describes only what is in *this* repository; the project itself is
@@ -206,7 +207,12 @@ and grepping only one repository finds three.
 **Site:** [palomasorrery.com](https://palomasorrery.com/)
 **Application repository:** [github.com/tonylquintanilla/palomas_orrery](https://github.com/tonylquintanilla/palomas_orrery)
 
-Licensed MIT, the same as the application repository.
+**License.** The code is under the MIT License (`LICENSE`); the words,
+pictures, artwork and visualizations are under CC BY 4.0
+(`LICENSE-CONTENT.md`). Data from other providers stays under its
+providers' terms (`NOTICE.md`). Tony's ruling, October 4, 2026 (orrery
+ledger L-409); before then this line said "Licensed MIT, the same as the
+application repository", and no license file was here.
 
 **Currency.** This file carries no counts or sizes by design. What can go
 stale here is the description of the architecture, and when that changes

@@ -123,7 +123,11 @@
          draws it in both places.
        - The lobby's doors no longer say how many rooms are under
          construction (Tony, all three doors). A door's own page still
-         gives its counts as before. -->
+         gives its counts as before.
+     Updated: October 4, 2026 with Anthropic's Claude Opus 5.5 (L-409)
+       - The About card ends with a copyright line -- the code under the
+         MIT License, the words, pictures and visualizations under CC BY
+         4.0, each linked -- and Tony's email address, at his request. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -842,6 +846,10 @@
             font-size: 12px;
             color: #475569;
         }
+        /* L-409: the copyright and email lines sit close under the credit. */
+        .about-credit + .about-credit { margin-top: 6px; }
+        .about-credit a { color: #94a3b8; text-decoration: underline; }
+        .about-credit a:hover { color: var(--accent); }
 
 
         /* ================================================================
@@ -2236,6 +2244,8 @@
                     </a>
                 </div>
                 <p class="about-credit">Created by Tony Quintanilla with Claude (Anthropic). Logo created with Gemini (Google).</p>
+                <p class="about-credit">&copy; 2024&ndash;2026 Tony Quintanilla. Code under the <a href="https://github.com/tonylquintanilla/tonyquintanilla.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>; words, pictures and visualizations under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">Creative Commons CC BY 4.0</a>.</p>
+                <p class="about-credit"><a href="mailto:tonyquintanilla@gmail.com">tonyquintanilla@gmail.com</a></p>
             </div>
         </div>
     </div>

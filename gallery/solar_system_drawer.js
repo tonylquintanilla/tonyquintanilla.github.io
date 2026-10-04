@@ -26,18 +26,23 @@
 //              cards yet" where it has none. Whether a body has a room
 //              is read from the page's own table of rooms, so a room
 //              added there lights its row up with nothing else to edit.
-//   HOME       Goes back to the last body ticked that is still ticked,
-//              falling back through the order they were ticked. If
-//              nothing is ticked, Home puts back what the room opened on
-//              -- the one time Home changes what is drawn. The order is
-//              kept only while the tab is open: "No stored information
-//              between sessions locally" (Tony, 2026-09-30).
+//   HOME       Tony's ruling of 2026-10-03 (option 2): Home frames every
+//              body ticked, at the opening angle -- the page does that.
+//              What this file decides is the NAME on the drawer's handle
+//              after Home: the last body ticked that is still ticked. The
+//              order bodies were ticked in decides only that name, never
+//              the view. If nothing is ticked, Home puts back what the
+//              room opened on -- the one time Home changes what is drawn.
+//              The order is kept only while the tab is open: "No stored
+//              information between sessions locally" (Tony, 2026-09-30).
 //
 // Rows are named by KEY: the trace group the scene draws them in. That is
 // the body's slug, except the Sun's, which the assembler draws as the
 // scene's centre marker under the group "center".
 //
-// Written October 2, 2026 with Anthropic's Claude Opus 5.5.
+// Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
+// October 4, 2026 with Anthropic's Claude Opus 5.5: HOME described as
+// Tony settled it (L-363); the code is unchanged.
 
 (function (global) {
   "use strict";
@@ -102,8 +107,9 @@
     return (order || []).filter(function (k) { return k !== key; });
   }
 
-  // Where Home goes: the last body in the order that is still ticked, or
-  // null, meaning "put back what the room opened on".
+  // The body the handle names after Home: the last in the order that is
+  // still ticked, or null, meaning "put back what the room opened on".
+  // Home's frame holds every body ticked whatever this returns.
   function homeTarget(order, shownByKey) {
     for (let i = (order || []).length - 1; i >= 0; i--) {
       if (shownByKey[order[i]]) { return order[i]; }

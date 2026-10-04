@@ -8,8 +8,10 @@
 //   1. Worked cases on a small list of rows: the Sun can never be
 //      ticked; a See more row shows only once See more is pressed or
 //      while it is ticked; the button's words, and no button when there
-//      is nothing behind it; Home's choice falling back through the
-//      order, and null when nothing is ticked; the order the room starts
+//      is nothing behind it; the body the handle names after Home, the
+//      last ticked that is still ticked, and null when nothing is
+//      ticked (Home's frame, which holds every body ticked, is the
+//      page's and is walked headlessly, not here); the order the room starts
 //      with ends on the highlighted body; All / none never touches the
 //      Sun; "Enter the ... room" only where a room exists.
 //   2. The real data/objects_config.json, the file the browser fetches:
@@ -179,5 +181,5 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("=== PASS: the Sun is never ticked, See more hides only what is not " +
-            "ticked, Home falls back through the order, All / none leaves the Sun, " +
+            "ticked, the handle names the last body ticked, All / none leaves the Sun, " +
             "rooms are offered only where they exist, and the page asks this file ===");

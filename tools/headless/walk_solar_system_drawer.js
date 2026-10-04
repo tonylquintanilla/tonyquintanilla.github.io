@@ -1,7 +1,9 @@
 // walk_solar_system_drawer.js -- the Solar System room's drawer, step by
 // step, in the stand-in scene (L-363 step 3b): arrival, the Sun's fixed
 // row, ticking and its frame, name taps, See more, a tap in the picture,
-// Home and its fallback, All / none, GO. Each frame is checked against
+// Home (its frame holds every body ticked; the handle names the last one
+// ticked), All / none, GO, the info panel's lists, and an opened row with
+// the phone sideways (2026-10-04). Each frame is checked against
 // the body's distance worked out here, not by the page's own helpers,
 // times Tony's 20% (2026-10-02).
 //
@@ -138,9 +140,32 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   await click(row("pluto_barycenter").querySelector(".go"));
   ok(near(range(), radius("pluto_barycenter")), "GO Pluto frame " + range() + " vs " + radius("pluto_barycenter"));
   ok(range() < 45, "Pluto framed on its whole orbit: " + range());
-  // 13. The panel words
+  // 13. The panel words, as two bullet lists (Tony, 2026-10-02), and
+  // Home's line as he settled it (2026-10-03)
   const info = d.getElementById("info-panel").textContent;
   ok(info.indexOf("hold every body drawn") >= 0 && info.indexOf("Tap a body's name to open its row") >= 0 && info.indexOf("waits under See more") >= 0, "info words");
+  ok(info.indexOf("Home backs out to hold every body you ticked") >= 0 && info.indexOf("goes back to the last one") < 0, "Home's line");
+  ok(d.querySelectorAll("#info-panel ul").length === 2 && d.querySelectorAll("#info-panel ul li").length === 9, "two lists, nine bullets");
+  // 14. Sideways (Tony, 2026-10-03, option 3): an opened row's button sits
+  // on the name's line before GO; upright it is the line under the row
+  E("setSunDrawer(true)");
+  await E("ssSelect(ssIndex('earth'), true)"); await h.done();
+  const inl = (key) => row(key).querySelector(".open-inline") ||
+    { hidden: true, textContent: "", nextElementSibling: null };
+  ok(!panel("earth").hidden && inl("earth").hidden, "upright: the button not under the row");
+  Object.defineProperty(w, "innerWidth", { value: 844, configurable: true });
+  Object.defineProperty(w, "innerHeight", { value: 390, configurable: true });
+  E("renderSunDrawer()");
+  ok(panel("earth").hidden && !inl("earth").hidden, "sideways: the button not on the name's line");
+  ok(inl("earth").nextElementSibling === row("earth").querySelector(".go"), "sideways: the button not before GO");
+  ok(inl("earth").textContent === "Enter the Earth room", "sideways words " + inl("earth").textContent);
+  ok(inl("mercury").hidden, "sideways: a closed row shows its button");
+  await E("ssSelect(ssIndex('mercury'), true)"); await h.done();
+  ok(inl("earth").hidden && !inl("mercury").hidden && inl("mercury").textContent === "No room or cards yet", "sideways: Mercury's opened row");
+  Object.defineProperty(w, "innerWidth", { value: 1024, configurable: true });
+  Object.defineProperty(w, "innerHeight", { value: 768, configurable: true });
+  E("renderSunDrawer()");
+  ok(!panel("mercury").hidden && inl("mercury").hidden, "upright again: the row did not go back under");
   ok(h.errors.length === 0, "errors during the walk: " + h.errors.join("; "));
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);
