@@ -10,17 +10,18 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 48  
-**Total Lines of Code (non-blank):** 23,282  
-**Total Public Functions/Classes:** 344
+**Total Python Files:** 49  
+**Total Lines of Code (non-blank):** 23,425  
+**Total Public Functions/Classes:** 346
 
 ## Classification Coverage
 
-**Undetermined role (10).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (11).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
 - `patch_L363_13_gallery_card_daily_updates_20261004.py`
 - `patch_L363_14_gallery_drawer_fixes_20261004.py`
+- `patch_L371_5_dates_gallery_20261004.py`
 - `patch_L409_1_gallery_licenses_and_about_card_20261004.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -29,11 +30,12 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (8).** No valid `Domain:` tag.
+**Undetermined domain (9).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
 - `patch_L363_13_gallery_card_daily_updates_20261004.py`
 - `patch_L363_14_gallery_drawer_fixes_20261004.py`
+- `patch_L371_5_dates_gallery_20261004.py`
 - `patch_L409_1_gallery_licenses_and_about_card_20261004.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -137,6 +139,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (651 lines) |
 | `patch_L363_13_gallery_card_daily_updates_20261004.py` | - GALLERY repo. One sentence on the lobby's wide Solar System card (L-363). Tony, 2026-10-04: "maybe we should say daily updates from JPL horizons instead of live data." The website's data comes from the daily run, not a continuous feed from JPL. (61 lines) |
 | `patch_L363_14_gallery_drawer_fixes_20261004.py` | - GALLERY repo. The Solar System room's drawer: three small fixes (L-363), from Tony's rulings of 2026-10-02 and 2026-10-03. (631 lines) |
+| `patch_L371_5_dates_gallery_20261004.py` | - GALLERY repo. The gallery's small close for the session of 2026-10-04: this session's dates. (143 lines) |
 | `patch_L409_1_gallery_licenses_and_about_card_20261004.py` | - GALLERY repo. The website's licenses, and the lobby's About card (L-409), from Tony's rulings of 2026-10-04: code under the MIT License, content under CC BY 4.0, a copyright line and his email address on the card. (265 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (573 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |

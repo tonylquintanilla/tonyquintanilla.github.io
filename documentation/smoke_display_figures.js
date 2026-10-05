@@ -106,7 +106,7 @@
 // hover replaced, the other 43 byte for byte. The L-345 one is left in
 // place, unreferenced.
 //
-// L-371 (2026-10-03): the Sun's distance cards. Its far shells say their
+// L-371 (2026-10-04): the Sun's distance cards. Its far shells say their
 // radius in AU at the served count, the Oort shapes' "From ... to ..."
 // lines and the streamer band print by served counts, and five shells
 // carry Tony's approved notes. The fixture is re-recorded as

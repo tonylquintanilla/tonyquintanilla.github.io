@@ -97,7 +97,7 @@
  *   It had been drawn about the ecliptic at a typed 50,000 AU, densest
  *   at the poles, while its words said the galaxy's plane. Its hover is
  *   in Tony's approved words of 2026-10-02.)
- * Module updated: October 3, 2026 with Anthropic's Claude Opus 5.5
+ * Module updated: October 4, 2026 with Anthropic's Claude Opus 5.5
  *   (L-371, the Sun's distance cards: a far shell measured in AU says
  *   its radius in AU at the served count, and its kilometres from the
  *   served "in"; the Oort shapes' "From ... to ..." lines and the
@@ -107,7 +107,7 @@
  *   number; and a shell may serve drawn_radius, where it is drawn when
  *   that differs from the radius it reports: the Roche limit, known to
  *   one figure and drawn at its formula's full answer, Tony's option B
- *   of 2026-10-03.)
+ *   of 2026-10-04.)
  */
 
 (function (global) {
@@ -555,7 +555,7 @@
     return fmtKm(k.value, kc) + " (" + au + " AU)";
   }
 
-  /* L-371 (2026-10-03). A served number as text at its own count, with
+  /* L-371 (2026-10-04). A served number as text at its own count, with
      a thousands separator: 2,000 at one figure, 94.01 at four, 0.65 at
      two. null where the node serves no count, so a caller says nothing
      rather than choosing a width. */
@@ -2240,7 +2240,7 @@
       // L-371: drawn_radius, where served, is where the shell is drawn
       // when that differs from the radius it reports -- the Roche limit,
       // known to one figure, drawn at its formula's full answer (Tony's
-      // option B, 2026-10-03). The hover reports `radius`.
+      // option B, 2026-10-04). The hover reports `radius`.
       var drawAu = radiusAu;
       if (cfg.drawn_radius !== undefined) {
         drawAu = measuredRadiusAu(cfg.drawn_radius,
