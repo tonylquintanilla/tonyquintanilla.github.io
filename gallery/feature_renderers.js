@@ -1357,12 +1357,12 @@
       // in Tony's approved words, "Confirmed as recommended",
       // 2026-10-05; Baker et al. (2018), the row's source, is for
       // inner-zone proton fluxes.
-      var unbandedLead = function (k) {
-        var at = "Drawn at " + fmtServed(distances[k], counts[k], 1) +
+      var unbandedLead = function (i) {
+        var at = "Drawn at " + fmtServed(distances[i], counts[i], 1) +
                  " " + bodyName + " radii";
-        if (!sources[k]) return at;
-        var what = (typeof peaksOf[k] === "string" && peaksOf[k])
-          ? "the measured flux of " + peaksOf[k]
+        if (!sources[i]) return at;
+        var what = (typeof peaksOf[i] === "string" && peaksOf[i])
+          ? "the measured flux of " + peaksOf[i]
           : "the measured particle flux";
         return wrapHover(at + " from " + bodyName + "'s centre, at the" +
                          " magnetic equator: near where " + what +
