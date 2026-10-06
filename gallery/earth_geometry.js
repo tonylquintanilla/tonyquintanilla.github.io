@@ -65,6 +65,12 @@
  * group's definition and its statement that Earth's rotation is direct,
  * with the pole's source beside it, since the report gives no Earth
  * rotation angle of its own).
+ * Updated October 6, 2026 with Anthropic's Claude Opus 5.5 (L-379: the
+ * axis hover measured on the live scene was 21 lines against a limit of
+ * 17. Three were empty, from a doubled break before the tail; the tilt
+ * sentence is broken into three lines rather than four; and the empty
+ * line before the curved arrows is gone. No word changed. Tony's
+ * approval, 2026-10-06.)
  */
 (function (global) {
   "use strict";
@@ -283,10 +289,9 @@
       if (pole.ofDate && tl && tl.unit === "deg" && isNum(tl.value) &&
           typeof tl.figures === "number") {
         tiltLines = "Tilt: " + global.GalleryFeatures._fmtServed(tl.value, tl.figures) +
-          " deg on " + pole.ofDate + "," + SB +
-          "measured against the orbit of the Earth-Moon barycenter," + SB +
-          "the gravitational center of the Earth-Moon system," + SB +
-          "around the Sun that day (JPL Horizons).<br>" +
+          " deg on " + pole.ofDate + ", measured against the orbit of the" + SB +
+          "Earth-Moon barycenter, the gravitational center of the Earth-Moon" + SB +
+          "system, around the Sun that day (JPL Horizons).<br>" +
           "The axis slowly circles over thousands of years and nods" + SB +
           "slightly, so the pole and the tilt belong to that date.<br>";
       } else if (pole.ofDate) {
@@ -312,13 +317,13 @@
           global.GalleryFeatures._fmtServed(period.value, period.figures) +
           " hours" + SB + "measured against the stars. The turning is not" +
           " animated, because" + SB + "nothing on the crust marks a longitude" +
-          " to watch it by.<br><br>"
+          " to watch it by."
         : "The turning is not animated, and no" + SB +
-          "rotation period is served.<br><br>");
+          "rotation period is served.");
       var hAxis = "<b>" + gAxis + "</b><br><br>" +
         "North pole up the gold line; the ring is the equator on the crust.<br>" +
         tiltLines +
-        "Axis drawn to " + kmAndAu(K, axisHalf) + " -- a drawing length.<br><br>" +
+        "Axis drawn to " + kmAndAu(K, axisHalf) + " -- a drawing length.<br>" +
         "The curved arrows at both ends show the sense of the turning:" + SB +
         "prograde, west to east, counter-clockwise seen from above the" + SB +
         "north pole. " + periodLines +

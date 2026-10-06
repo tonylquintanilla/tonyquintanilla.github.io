@@ -165,31 +165,28 @@ function overlayProse(features) {
 if (EG) {
     const p = fixture("payload_earth_scene.json");
     overlayProse(p.features);
-    // L-322 Stage D, gallery patch 3: the fixture predates the magnetotail's
-    // rows and the rotation period, so its magnetosphere, and the period,
-    // come from the served cache -- the file the browser fetches -- or the
-    // two longest new hovers would never be measured.
-    const served = (JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data",
-        "solar-system", "coverage_index.json"), "utf8")).objects.earth || {}).features || {};
-    if (!served.earth_magnetosphere || !served.earth_magnetosphere.magnetotail ||
-        !(served.orientation || {}).rotation_period) {
-        console.log("  FAIL  the served cache has no magnetotail or no rotation " +
-                    "period for earth; the Earth room was not fully measured");
-        failures++;
-    }
+    // L-379 (2026-10-06): the recording is remade by
+    // tools/record_earth_scene.py, so it carries the magnetotail, the
+    // rotation period and the pole of date itself, as the page's driver
+    // hands them over. Until then the first two were laid over it from
+    // the cache and the pole of date was never measured at all, which
+    // is how the axis hover's length on the live page went unseen.
+    const rec = {};
     for (const f of p.features) {
-        if (f.object !== "earth") { continue; }
-        if (f.feature === "earth_magnetosphere" && served.earth_magnetosphere) {
-            f.params = JSON.parse(JSON.stringify(served.earth_magnetosphere));
-        }
-        if (f.feature === "orientation" && served.orientation) {
-            f.params.rotation_period = served.orientation.rotation_period;
-        }
+        if (f.object === "earth") { rec[f.feature] = f.params; }
+    }
+    if (!rec.earth_magnetosphere || !rec.earth_magnetosphere.magnetotail ||
+        !(rec.orientation || {}).rotation_period || !p.poleOfDate) {
+        console.log("  FAIL  the recorded scene has no magnetotail, rotation " +
+                    "period or pole of date for earth; the Earth room was not " +
+                    "fully measured. Re-record it with tools/record_earth_scene.py");
+        failures++;
     }
     const out = EG.composeScene(p, {
         GF: GF,
         halfRangeAu: 6.155e-5,
-        epochIso: "2026-09-15"
+        epochIso: new Date((p.epochJd - 2440587.5) * 86400000)
+            .toISOString().slice(0, 10)
     });
     const fromAssembler = new Set(
         (p.figure && p.figure.data ? p.figure.data : [])

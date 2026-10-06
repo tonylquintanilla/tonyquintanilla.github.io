@@ -44,8 +44,9 @@ So the editable surface is exactly:
                                       of a feature group that carries a
                                       display `name`
     a belt's parallel words           names, descriptions, abouts,
-                                      notes, info_urls -- by index, for
-                                      a group served as parallel lists
+                                      notes, info_urls, flux_peak_of --
+                                      by index, for a group served as
+                                      parallel lists
     the arrival block                 drawn, moon
     a room in the "rooms" section     its arrival block's drawn and
                                       highlight
@@ -85,6 +86,9 @@ Written September 2026 with Anthropic's Claude Opus 5.
 Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: the
 rooms section's drawn and highlight are editable, and room_ids() lists
 every room in either place).
+Updated October 6, 2026 with Anthropic's Claude Opus 5.5 (L-349: a
+belt's flux_peak_of, what its measured flux peak is a peak of, is one
+of its words).
 """
 
 import json
@@ -123,7 +127,8 @@ WORD_FIELDS = ("name", "description", "about", "note", "source", "info_url")
 # Earth's two radiation belts -- keeps its words in these, one entry per
 # belt, in step with `names`. `colors` and `info_borders` are drawing
 # choices and are not here.
-BELT_WORD_LISTS = ("names", "descriptions", "abouts", "notes", "info_urls")
+BELT_WORD_LISTS = ("names", "descriptions", "abouts", "notes", "info_urls",
+                   "flux_peak_of")
 
 # A word that must not be emptied: the shell list is keyed off it, and
 # the renderers fall back to the raw key without it.

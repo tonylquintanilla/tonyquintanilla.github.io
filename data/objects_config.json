@@ -546,7 +546,7 @@
             "marker_size": 3.0,
             "source": "Baliukin, Bertaux, Quemerais, Izmodenov & Schmidt (2019), J. Geophys. Res. Space Physics 124:861, doi:10.1029/2018JA026136 -- the hydrogen geocorona is detected to at least 100 Earth radii",
             "orrery_constant": "constants_new.py::EARTH_GEOCORONA_RADII",
-            "note": "The exosphere has no boundary: it thins into space. This shell is the sourced DETECTION FLOOR, not an edge, and it encloses the Moon's orbit at about 60 Earth radii. The orrery folds the exosphere into its upper-atmosphere hover; growing it a shell of its own is L-292."
+            "note": "The exosphere has no boundary: it thins into space. This shell is the sourced DETECTION FLOOR, not an edge, and it encloses the Moon's orbit at about 60 Earth radii."
           },
           "planet_radius": {
             "value": 6378.1366,
@@ -958,6 +958,10 @@
           "abouts": [
             "The inner Van Allen belt is a region of energetic protons trapped by Earth's magnetic field. It follows the magnetic equator, which is tilted from the geographic one and turns with Earth once a day; the ring drawn here lies in the daily average of that plane.",
             "The outer Van Allen belt is mostly energetic electrons, trapped farther out than the inner belt, and it swells and shrinks as the solar wind changes. Like the inner belt it follows the magnetic equator; the ring drawn is the daily average of that tilted plane."
+          ],
+          "flux_peak_of": [
+            "trapped protons",
+            ""
           ],
           "info_urls": [
             "https://science.nasa.gov/biological-physical/stories/van-allen-belts/",

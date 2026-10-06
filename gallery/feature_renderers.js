@@ -108,6 +108,15 @@
  *   that differs from the radius it reports: the Roche limit, known to
  *   one figure and drawn at its formula's full answer, Tony's option B
  *   of 2026-10-04.)
+ * Module updated: October 6, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-349: a belt drawn at a single distance says that distance is
+ *   measured only when its row is served with a source, and says
+ *   which particles the measured flux is of only when the belt's
+ *   served flux_peak_of names them. Earth's inner belt reads in
+ *   Tony's approved words of 2026-10-05; Jupiter's three belts, whose
+ *   distances have no source, make no claim. L-379: the belts' tilt
+ *   sentence is one line shorter, in Tony's approved words of
+ *   2026-10-06.)
  */
 
 (function (global) {
@@ -1214,6 +1223,11 @@
     // L-331: the belts keep their prose as parallel lists like their names.
     var descs = Array.isArray(params.descriptions) ? params.descriptions : [];
     var abouts = Array.isArray(params.abouts) ? params.abouts : [];
+    // L-349 (2026-10-06): what a measured flux peak is a peak OF, as a
+    // parallel list beside the belt's other words. A fact about one
+    // belt is served with that belt's words, never typed here.
+    var peaksOf = Array.isArray(params.flux_peak_of) ? params.flux_peak_of
+                                                    : [];
     var opacity = (typeof declared.opacity === "number") ? declared.opacity : 0.3;
 
     // L-322 Stage D, gallery patch 3: the typed 0.5 fallback is gone. A
@@ -1335,6 +1349,25 @@
       // a rule is not printed as if it were measured. The band's two ends
       // print at their served counts. "L" is said in words (distance out at
       // the magnetic equator) rather than named.
+      // L-349 (2026-10-06). The line said "where the measured particle
+      // flux peaks" for every belt with no band, Jupiter's included,
+      // whose distances are typed with no source (L-181). Now it says
+      // "measured" only for a row served with a source, and names the
+      // particles only when flux_peak_of does. Earth's inner belt reads
+      // in Tony's approved words, "Confirmed as recommended",
+      // 2026-10-05; Baker et al. (2018), the row's source, is for
+      // inner-zone proton fluxes.
+      var unbandedLead = function (k) {
+        var at = "Drawn at " + fmtServed(distances[k], counts[k], 1) +
+                 " " + bodyName + " radii";
+        if (!sources[k]) return at;
+        var what = (typeof peaksOf[k] === "string" && peaksOf[k])
+          ? "the measured flux of " + peaksOf[k]
+          : "the measured particle flux";
+        return wrapHover(at + " from " + bodyName + "'s centre, at the" +
+                         " magnetic equator: near where " + what +
+                         " is greatest.");
+      };
       var drawnLines = band
         ? wrapHover("Drawn at " + fmtServed(distances[i], counts[i], 1) +
             " " + bodyName + " radii: halfway across the band, " +
@@ -1343,8 +1376,7 @@
             " radii out at the magnetic equator, where the belt is most" +
             " intense. The halfway point is our choice for the picture, not" +
             " a measured peak.") + "<br>"
-        : "Drawn at " + fmtServed(distances[i], counts[i], 1) + " " +
-          bodyName + " radii, where the measured particle flux peaks" +
+        : unbandedLead(i) +
           (units[i] === "l_shell"
             ? SOFT_BR + "(given as L = " + fmtServed(distances[i], counts[i], 1) +
               ": where that field line crosses the magnetic equator)<br>"
@@ -1365,16 +1397,20 @@
           "which is tilted from it and turns with " + bodyName +
           SOFT_BR + "once a day."
         : wrapHover("The ring lies in " + bodyName + "'s equatorial plane," +
-            " the daily average of the magnetic equator, which is tilted " +
+            // L-379 (2026-10-06): one line shorter, in Tony's approved
+            // words, so the hover fits the 17-line limit measured on the
+            // live scene. "Once a day" went; "daily average" says it.
+            " the daily average of the magnetic equator, which turns with " +
+            bodyName + " and in 2020 was tilted " +
             fmtServed(tilt, servedFigures(params.magnetic_tilt), 1) +
-            " degrees from it and turns with " + bodyName + " once a day." +
-            " That tilt is for 2020 (IGRF-13 model)" +
+            " degrees from it" +
             (tiltRate === null
-              ? "."
-              : " and " + (tiltRate < 0 ? "shrinks" : "grows") + " by " +
+              ? ""
+              : ", " + (tiltRate < 0 ? "shrinking" : "growing") + " " +
                 fmtServed(Math.abs(tiltRate),
                           servedFigures(params.magnetic_tilt_rate), 4) +
-                " degrees a year."));
+                " degrees a year") +
+            " (IGRF-13 model).");
       // L-322 Stage D, gallery patch 3: where the rings run across the
       // belt, the hover says what they are, as the orrery's does since D9.
       // The drawn-width line is only for a band served as a thickness.

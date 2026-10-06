@@ -114,6 +114,13 @@
 // mirror wrote the Sun's new rows; every Sun hover that changed is listed
 // in the session's approval file. The L-406 one is left in place,
 // unreferenced.
+//
+// L-349 (2026-10-06): a belt drawn at one distance says it is measured
+// only when its row has a source. Earth's inner belt is graded below
+// in Tony's approved words of 2026-10-05; Jupiter's three belts lose
+// the claim, so their hovers change and the fixture is re-recorded as
+// fixture_hovers_L349_on_ed48d078.json, the L-371 one with those three replaced and
+// the rest byte for byte. The L-371 one is left in place, unreferenced.
 
 "use strict";
 const fs = require("fs");
@@ -141,9 +148,9 @@ const SOFT_BR = "<br soft>";
 // separately, and its period line is graded against the served row. The
 // fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "d4b408e6";
+const FIXTURE_AT = "ed48d078";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L371_on_d4b408e6.json");
+                          "fixture_hovers_L349_on_ed48d078.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }
@@ -443,15 +450,20 @@ const ACCEPTANCE_LINES = {
             "Jelinek et al. (2012), at dynamic pressure 2 nPa"],
     absent: ["13.51", "86,180", "2.0 nPa", "86,200", "0.000576"] },
   "Earth: Inner Radiation Belt": {
-    lines: ["Drawn at 1.5 Earth radii, where the measured particle flux peaks",
+    // L-349: Tony's approved words, "Confirmed as recommended",
+    // 2026-10-05.
+    lines: ["Drawn at 1.5 Earth radii from Earth's centre, at the " +
+            "magnetic equator: near where the measured flux of trapped " +
+            "protons is greatest.",
             "= 9,600 km (0.00006 AU)",       // L-345
             "Measured extent: 1.1 to 2 Earth radii",
-            "which is tilted 9.4105 degrees from it and turns with Earth " +
-            "once a day.",
-            "That tilt is for 2020 (IGRF-13 model) and shrinks by 0.0493 " +
-            "degrees a year."],
+            // L-379: Tony's approved words, 2026-10-06.
+            "which turns with Earth and in 2020 was tilted 9.4105 " +
+            "degrees from it, shrinking 0.0493 degrees a year " +
+            "(IGRF-13 model)."],
     absent: ["9,567", "2.0 Earth radii", "9.6 degrees", "2020-2025",
-             "a width chosen for the picture", "0.000064"] },
+             "a width chosen for the picture", "0.000064",
+             "particle flux peaks", "That tilt is for 2020"] },
   "Earth: Outer Radiation Belt": {
     lines: ["Drawn at 4.5 Earth radii: halfway across the band, 4 to 5 " +
             "Earth radii out at the magnetic equator, where the belt is " +
@@ -459,12 +471,13 @@ const ACCEPTANCE_LINES = {
             "The halfway point is our choice for the picture, not a " +
             "measured peak.",
             "Measured extent: 3 to 7 Earth radii",
-            "which is tilted 9.4105 degrees from it and turns with Earth " +
-            "once a day.",
-            "That tilt is for 2020 (IGRF-13 model) and shrinks by 0.0493 " +
-            "degrees a year."],
+            // L-379: Tony's approved words, 2026-10-06.
+            "which turns with Earth and in 2020 was tilted 9.4105 " +
+            "degrees from it, shrinking 0.0493 degrees a year " +
+            "(IGRF-13 model)."],
     absent: ["28,70", "L = 4.5", "3.0 to 7.0", "flux peaks", "9.6 degrees",
-             "2020-2025", "a width chosen for the picture"] }
+             "2020-2025", "a width chosen for the picture",
+             "That tilt is for 2020"] }
 };
 
 // ------------------------------------------------------------- building

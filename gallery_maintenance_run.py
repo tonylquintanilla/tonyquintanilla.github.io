@@ -106,6 +106,9 @@ Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5
 tools/test_guestbook_updater.py; since September 26 the "Guest book"
 checker runs documentation/smoke_guestbook.js, and the --live pass
 fetches gallery/guestbook.js and data/guestbook.json).
+Module updated: October 6, 2026 with Anthropic's Claude Opus 5.5
+(L-300: the "Collapsed features" checker runs
+sweep_collapsed_features.py).
 """
 
 import hashlib
@@ -231,6 +234,16 @@ OFFLINE_CHECKERS = [
     # When it fails: run the cache builder, then commit both together.
     ("Cache in step", "python",
      ["tools/check_cache_in_step.py"], ".", None, False),
+
+    # L-300 (2026-10-06, Tony's ruling of 2026-09-07): every served
+    # feature group is either a shell stored as itself or a known
+    # group collapsed into parallel lists (belts, rings). The sweep
+    # names each collapsed one and exits 0; it exits 2 on a group it
+    # cannot classify, which is the case that should stop a push.
+    # The verdict line is its count line: N stored as themselves,
+    # N collapsed, N unclassified. Gates.
+    ("Collapsed features", "python",
+     ["sweep_collapsed_features.py"], ".", " unclassified.", False),
 
     ("Feature renderers", "node",
      ["documentation/smoke_features.js", "gallery/feature_renderers.js"],

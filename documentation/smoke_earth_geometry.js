@@ -1,8 +1,9 @@
 // smoke_earth_geometry.js -- the Earth room's composed scene, headless.
 //
 // Runs EarthGeometry.composeScene on a fixture that is the REAL output of
-// the page's Python driver against the served cache of 2026-09-09, after the L-168 fix
-// (documentation/payload_earth_scene.json), and checks the geometry the
+// the page's Python driver against the served cache, recorded by
+// tools/record_earth_scene.py (documentation/payload_earth_scene.json;
+// L-379, first recorded with it on the cache of 2026-10-05), and checks the geometry the
 // phone will show: axis tilt, equator and GEO in one plane, terminator
 // perpendicular to the Sun line, subsolar point on it, Moon arc on the
 // Moon's orbit, the arrival policy, and the named absence.
@@ -32,6 +33,11 @@
 // against the served row. normal() now picks three points that span the
 // trace, because a trace of several rings put its first, third and
 // two-thirds points on one radial line and read as a false tilt.)
+// Updated October 6, 2026 with Anthropic's Claude Opus 5.5 (L-379: the
+// recording is remade by tools/record_earth_scene.py and carries the pole
+// of date, the magnetotail and the rotation period itself, so they are no
+// longer laid over it from the cache; the fallback case removes the pole
+// of date to test its absence; the scene's date is the recording's.)
 
 const fs = require("fs");
 const path = require("path");
@@ -78,44 +84,37 @@ const deg = r => r * 180 / Math.PI;
 const angleDeg = (a, b) => deg(Math.acos(Math.min(1, Math.abs(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))));
 
 const payload = JSON.parse(fs.readFileSync(path.join(__dirname, "payload_earth_scene.json"), "utf8"));
-// L-322 Stage D, patch D7: the recorded payload predates the pole of date.
-// The page's driver now hands over the served block untouched, so this
-// check does the same, from the file the browser fetches.
+// L-379 (2026-10-06): the recording is the page's driver's own output, so
+// it carries the served pole of date; nothing is laid over it. The frame
+// rows still come from the served cache, below, as the page reads them.
 const COV = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "solar-system",
                                                  "coverage_index.json"), "utf8"));
-const POD = (COV.objects.earth || {}).pole_of_date || null;
+const POD = payload.poleOfDate || null;
 if (!POD || !POD.tilt) {
-  console.log("FAIL the served cache carries no pole_of_date with a tilt for earth");
+  console.log("FAIL the recorded scene carries no pole of date with a tilt; " +
+              "re-record it with tools/record_earth_scene.py");
   process.exit(1);
 }
+// The case with no pole of date: the same scene with it taken away.
 const fallbackPayload = JSON.parse(JSON.stringify(payload));
-payload.poleOfDate = POD;
-// L-322 Stage D, gallery patch 3: the recorded payload predates the
-// magnetotail's rows and the rotation period's pointer. Both are taken
-// from the served cache, the file the browser fetches, as the pole of
-// date is above; everything else stays the recording's.
-const SERVED_EARTH = (COV.objects.earth || {}).features || {};
-const SERVED_TAIL = (SERVED_EARTH.earth_magnetosphere || {}).magnetotail;
-const SERVED_PERIOD = (SERVED_EARTH.orientation || {}).rotation_period;
+delete fallbackPayload.poleOfDate;
+// The scene's date, for the hovers that print it: the recording's own.
+const EPOCH_DAY = new Date((payload.epochJd - 2440587.5) * 86400000)
+  .toISOString().slice(0, 10);
+// L-379 (2026-10-06): the magnetotail and the rotation period are in the
+// recording too. Until it was remade they were laid over it from the
+// cache, one piece at a time.
+const RECORDED_EARTH = {};
+payload.features.forEach(f => { if (f.object === "earth") RECORDED_EARTH[f.feature] = f.params; });
+const SERVED_TAIL = (RECORDED_EARTH.earth_magnetosphere || {}).magnetotail;
+const SERVED_PERIOD = (RECORDED_EARTH.orientation || {}).rotation_period;
 if (!SERVED_TAIL || !SERVED_PERIOD) {
-  console.log("FAIL the served cache carries no magnetotail or no rotation_period for earth");
+  console.log("FAIL the recorded scene carries no magnetotail or no rotation_period " +
+              "for earth; re-record it with tools/record_earth_scene.py");
   process.exit(1);
 }
-payload.features = payload.features.map(f => {
-  if (f.object !== "earth") return f;
-  if (f.feature === "earth_magnetosphere") {
-    return { object: f.object, feature: f.feature,
-             params: JSON.parse(JSON.stringify(SERVED_EARTH.earth_magnetosphere)) };
-  }
-  if (f.feature === "orientation") {
-    const params = JSON.parse(JSON.stringify(f.params));
-    params.rotation_period = SERVED_PERIOD;
-    return { object: f.object, feature: f.feature, params: params };
-  }
-  return f;
-});
 const HALF = 6.155e-5;                      // Earth's arrival floor, as the page uses it
-const out = EG.composeScene(payload, { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" });
+const out = EG.composeScene(payload, { GF: GF, halfRangeAu: HALF, epochIso: EPOCH_DAY });
 const T = out.traces;
 const K = GF._KM_PER_AU;
 
@@ -187,7 +186,7 @@ check("the axis hover no longer derives a tilt from the frame angle",
 
 // The fallback: no pole of date served. The frame's axis is drawn, no
 // tilt is printed, and exactly one warning says so.
-const fb = EG.composeScene(fallbackPayload, { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" });
+const fb = EG.composeScene(fallbackPayload, { GF: GF, halfRangeAu: HALF, epochIso: EPOCH_DAY });
 const fbAxis = fb.traces.find(t => t.legendgroup === "Earth: Rotation Axis and Equator" &&
                                    t.mode === "lines" && t.x.length === 2);
 const fbDir = (() => { const v = [fbAxis.x[1]-fbAxis.x[0], fbAxis.y[1]-fbAxis.y[0], fbAxis.z[1]-fbAxis.z[0]]; const m = Math.hypot(...v); return v.map(c => c/m); })();
@@ -202,7 +201,7 @@ check("no pole of date: the hover prints no tilt and says why", /Tilt: not shown
 // No frame angle served: no pole can be placed, so no axis, and a warning.
 const saved = COV.frame_constants;
 GF.setFrameConstants({ rows: { KM_PER_AU: saved.rows.KM_PER_AU } });
-const na = EG.composeScene(JSON.parse(JSON.stringify(payload)), { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" });
+const na = EG.composeScene(JSON.parse(JSON.stringify(payload)), { GF: GF, halfRangeAu: HALF, epochIso: EPOCH_DAY });
 GF.setFrameConstants(saved);
 check("no frame angle: no axis is drawn",
       !na.traces.some(t => t.legendgroup === "Earth: Rotation Axis and Equator"));
@@ -275,7 +274,7 @@ check("...and the sense of rotation is credited to the report's own definition, 
 // With no period row served, the hover says so and prints no number.
 const noPeriod = JSON.parse(JSON.stringify(payload));
 noPeriod.features.forEach(f => { if (f.feature === "orientation") delete f.params.rotation_period; });
-const npOut = EG.composeScene(noPeriod, { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" });
+const npOut = EG.composeScene(noPeriod, { GF: GF, halfRangeAu: HALF, epochIso: EPOCH_DAY });
 const npHover = npOut.traces.filter(t => t.legendgroup === "Earth: Rotation Axis and Equator")
   .map(t => Array.isArray(t.text) ? t.text[0] : t.text).find(h => typeof h === "string" && /Tilt/.test(h)) || "";
 check("no period row: the hover says none is served and prints no period",
@@ -288,7 +287,7 @@ const moonMarker = moonG.find(t => t.name === "Moon");
 check("Moon: ellipse faint by rgba (no trace opacity), arc white and wide, dates in the hover",
       !!arc && !!ellipse && !!moonMarker && ellipse.line.width === 1.5 && arc.line.width === 6 &&
       ellipse.opacity === undefined && /^rgba\(/.test(ellipse.line.color) && arc.line.color === "rgb(255, 255, 255)" &&
-      /The arc runs from 2026-09-0\d \d\d:00 to 2026-09-\d\d \d\d:00 \(UTC\)/.test(
+      /The arc runs from \d{4}-\d\d-\d\d \d\d:00 to \d{4}-\d\d-\d\d \d\d:00 \(UTC\)/.test(
         moonG.find(t => /trusted arc of the orbit/.test((t.text || [""])[0])).text[0]) &&
       moonG.some(t => t.showlegend === false && /trusted arc of the orbit/.test((t.text || [""])[0])));
 check("arc is the served trust window: " + payload.moonArc.windowDays.toFixed(2) + " days either side",
@@ -337,7 +336,7 @@ const payloadLive = JSON.parse(JSON.stringify(payload));
 payloadLive.features.forEach(f => {
   if (f.object === "earth" && liveEarth.features[f.feature]) f.params = liveEarth.features[f.feature];
 });
-const liveMarkers = EG.composeScene(payloadLive, { GF: GF, halfRangeAu: HALF, epochIso: "2026-09-08" })
+const liveMarkers = EG.composeScene(payloadLive, { GF: GF, halfRangeAu: HALF, epochIso: EPOCH_DAY })
   .traces.filter(t => t.showlegend === false && t.marker && t.marker.symbol === "cross");
 const whiteEarth = liveMarkers.filter(t => t.marker.line && t.marker.line.color === "white")
   .map(t => t.legendgroup).sort();
@@ -532,16 +531,20 @@ const beltRows = {
   // L-322 C2-b (September 22, 2026, Anthropic's Claude Opus 5.5): the
   // sentence changed. The tilt prints at its served count
   // and the epoch and model follow in their own sentence, "That tilt is
-  // for 2020 (IGRF-13 model)". This suite renders the recorded payload of
-  // 2026-09-08, whose tilt is the old 9.6 with no count and no rate, so
-  // the pin reads the SHAPE of the words and the served number, not the
-  // live value; smoke_display_figures.js pins the live strings.
+  // for 2020 (IGRF-13 model)". Until 2026-10-06 this suite rendered a
+  // recording of 2026-09-08 whose tilt was the old 9.6 with no count, so
+  // the pin read the SHAPE of the words; the recording is current now
+  // (L-379), and smoke_display_figures.js still pins the live strings.
   const plainText = mk.text[0].split(/<br soft>/).join(" ");
   const servedTilt = earthParams.van_allen_belts.magnetic_tilt.value;
+  // L-379: the recording now carries the tilt at its served count, so
+  // the printed number is read back and held to the served value.
+  // smoke_display_figures.js still pins the exact string.
+  const tiltSaid = /which turns with Earth and in 2020 was tilted ([0-9.]+) degrees from it/
+    .exec(plainText);
   check(label + ": the hover quotes the served magnetic tilt with its model and epoch",
-        plainText.indexOf("which is tilted " + servedTilt.toFixed(1) +
-                          " degrees from it and turns with Earth once a day.") >= 0 &&
-        plainText.indexOf("That tilt is for 2020 (IGRF-13 model)") >= 0,
+        !!tiltSaid && Math.abs(parseFloat(tiltSaid[1]) - servedTilt) < 0.05 &&
+        /\(IGRF-13 model\)\./.test(plainText),
         plainText.slice(plainText.indexOf("The ring lies")));
   check(label + ": the hover does NOT claim the ring is drawn at the magnetic equator",
         !/rings? (is|are) drawn/.test(mk.text[0]) &&

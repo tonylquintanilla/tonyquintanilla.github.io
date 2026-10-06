@@ -10,15 +10,17 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 45  
-**Total Lines of Code (non-blank):** 22,325  
-**Total Public Functions/Classes:** 341
+**Total Python Files:** 47  
+**Total Lines of Code (non-blank):** 25,811  
+**Total Public Functions/Classes:** 345
 
 ## Classification Coverage
 
-**Undetermined role (7).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (9).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
+- `patch_L413_6_earth_website_20261006.py`
+- `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -26,9 +28,11 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (5).** No valid `Domain:` tag.
+**Undetermined domain (7).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
+- `patch_L413_6_earth_website_20261006.py`
+- `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
 - `tools/test_exhibit_store_editor.py`
@@ -105,7 +109,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,211 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,116 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,128 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (525 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
@@ -129,7 +133,9 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (651 lines) |
-| `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (573 lines) |
+| `patch_L413_6_earth_website_20261006.py` | - GALLERY repo. Earth's website patch: the inner belt's words, Jupiter's belts, the geocorona note, the saved Earth scene re-recorded, three hovers fitted to the phone, and the collapsed-features sweep in the maintenance run. (3,364 lines) |
+| `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
+| `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (578 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (363 lines) |
 | `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (602 lines) |
