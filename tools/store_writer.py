@@ -89,6 +89,9 @@ every room in either place).
 Updated October 6, 2026 with Anthropic's Claude Opus 5.5 (L-349: a
 belt's flux_peak_of, what its measured flux peak is a peak of, is one
 of its words).
+Updated October 6, 2026 with Anthropic's Claude Opus 5.5 (L-421: a
+shell's `hover` and a belt's hovers_band, hovers_rings and hovers_plane
+are words, so the facts a hover states are served, not typed).
 """
 
 import json
@@ -121,14 +124,21 @@ NAMED_REFUSALS = ("value", "unit", "figures", "orrery_constant",
 
 # The words this editor offers, in the order the form shows them. A
 # shell that lacks one gets it added on save; see plan().
-WORD_FIELDS = ("name", "description", "about", "note", "source", "info_url")
+# `hover` (L-421, 2026-10-06): the facts a hover states, served rather
+# than typed in a renderer. Plain text; a new line starts a new line of
+# the hover, and {name} is a served number the renderer fills in.
+WORD_FIELDS = ("name", "description", "about", "note", "source", "info_url",
+               "hover")
 
 # A feature served as PARALLEL LISTS rather than as a member each --
 # Earth's two radiation belts -- keeps its words in these, one entry per
 # belt, in step with `names`. `colors` and `info_borders` are drawing
 # choices and are not here.
+# hovers_band, hovers_rings and hovers_plane (L-421) are the belt
+# hovers' served sentences, one entry per belt, as `hover` is a shell's.
 BELT_WORD_LISTS = ("names", "descriptions", "abouts", "notes", "info_urls",
-                   "flux_peak_of")
+                   "flux_peak_of", "hovers_band", "hovers_rings",
+                   "hovers_plane")
 
 # A word that must not be emptied: the shell list is keyed off it, and
 # the renderers fall back to the raw key without it.

@@ -655,11 +655,12 @@
               "orrery_constant": "constants_new.py::EARTH_GEOSTATIONARY_RADIUS_KM"
             },
             "info_url": "https://en.wikipedia.org/wiki/Geostationary_orbit",
+            "hover": "A ring in the equatorial plane, not a sphere: satellites here keep pace with Earth's turning and hang over one longitude.",
             "color": "rgb(220, 220, 255)",
             "opacity": 0.6,
             "n_points": 120,
             "marker_size": 2.0,
-            "source": "Derived: (GM_E / omega^2)^(1/3) from IERS Conventions (2010) TN36 Table 1.1 -- GM_E = 3.986004418e14 m^3 s^-2, nominal mean angular velocity 7.292115e-5 rad s^-1",
+            "source": "Derived: (GM_E / omega^2)^(1/3) from IERS Conventions (2010) TN36 Table 1.1 -- GM_E = 3.986004418e14 m^3 s^-2, nominal mean angular velocity 7.292115e-5 rad s^-1. The hover's sentence on keeping pace: NASA Earth Observatory, Riebeek (2009, page updated 2025-11-14), Catalog of Earth Satellite Orbits, section High Earth Orbit, https://science.nasa.gov/earth/earth-observatory/catalog-of-earth-satellite-orbits/ -- at 42,164 km from Earth's centre the orbit matches Earth's rotation, so a satellite seems to stay over a single longitude; circular and over the equator, it is geostationary, always over the same place (read 2026-10-06).",
             "orrery_constant": "constants_new.py::EARTH_GEOSTATIONARY_RADIUS_KM",
             "note": "A ring in the equatorial plane, not a sphere, tilted with Earth's equator by the served pole. 42,164 km from Earth's centre, 35,786 km up."
           },
@@ -740,6 +741,7 @@
             },
             "scatter": {"value": 1.23, "unit": "r_earth", "in": {"au": {"value": 5.2e-05, "figures": 2, "prints": null}, "km": {"value": 7800.0, "figures": 2, "prints": null}, "pc": {"value": 2.54e-10, "figures": 3, "prints": null}, "r_earth": {"value": 1.23, "figures": 3, "prints": null}, "r_sun": {"value": 0.0113, "figures": 3, "prints": null}}, "figures": 3, "orrery_constant": "constants_new.py::EARTH_MAGNETOPAUSE_SHUE_SCATTER_RADII"},
             "info_url": "https://en.wikipedia.org/wiki/Magnetopause",
+            "hover": "Shue et al. (1998), for the solar wind assumed here:\nBz {bz} nT, dynamic pressure {pressure} nPa\nDrawn to {cut_angle} deg from the nose, as far as the paper plots its model. Beyond that angle the boundary is drawn as the magnetotail.\nNot tilted: the model is symmetric about the Sun line.",
             "color": "rgb(180, 180, 255)",
             "opacity": 0.25,
             "source": "Shue et al. (1998), J. Geophys. Res. 103:17691, doi:10.1029/98JA01103 -- eq. 10 evaluated at the declared conditions (Bz = 0 nT, Dp = 2 nPa). Corroboration: Lugaz et al. (2016), doi:10.1038/ncomms13001 -- typical subsolar magnetopause 9-11 R_E, which contains this.",
@@ -800,6 +802,7 @@
             },
             "scatter": {"value": 0.69, "unit": "r_earth", "in": {"au": {"value": 2.9e-05, "figures": 2, "prints": null}, "km": {"value": 4400.0, "figures": 2, "prints": null}, "pc": {"value": 1.43e-10, "figures": 3, "prints": null}, "r_earth": {"value": 0.69, "figures": 2, "prints": null}, "r_sun": {"value": 0.0063, "figures": 2, "prints": null}}, "figures": 2, "orrery_constant": "constants_new.py::EARTH_BOW_SHOCK_JELINEK_SCATTER_RADII"},
             "info_url": "https://en.wikipedia.org/wiki/Bow_shocks_in_astrophysics",
+            "hover": "Jelinek et al. (2012), at dynamic pressure {pressure} nPa\nDrawn to {cut_angle} deg from the nose, which is how far round the crossings the fit was made from actually reached.\nThat is where the drawing stops, not where the shock ends.\nNot tilted: the fit is symmetric about the Sun line.",
             "color": "rgb(255, 200, 150)",
             "opacity": 0.25,
             "source": "Jelinek, Nemecek and Safrankova (2012), J. Geophys. Res. 117:A05208, doi:10.1029/2011JA017252 -- eq. 14, R_BS = 15.02 p^(-1/6.55), evaluated at the declared pressure of 2 nPa. The paper states no uncertainty on its fitted numbers; how far real crossings fall from the fit (fig. 7) is given in the hover. Corroboration: Lugaz et al. (2016), Nat. Commun. 7:13001, doi:10.1038/ncomms13001 -- 11-14 R_E subsolar under normal solar wind, which contains this.",
@@ -856,6 +859,7 @@
               "note": "Read as OBSERVED TO AT LEAST, not as an edge. 220 R_E is ISEE-3's reach on its first two tail passes, so the figure is bounded by the orbit rather than by where the tail ends. Two further signatures are more distant and less like a tail: Ness, Scearce and Cantarano (1967), doi:10.1029/JZ072i015p03769, report Pioneer 7 in the expected tail region at 900 to 1,050 R_E over a week in 1966, intermittently and with no coherent tail, the title saying 'probable'; and Intriligator et al. (1979), Geophys. Res. Lett. 6:585, report tail-ASSOCIATED phenomena near 3,100 R_E, read by later work as signatures disconnected from Earth."
             },
             "info_url": "https://en.wikipedia.org/wiki/Magnetosphere",
+            "hover": "The straight widening up to that point is our choice; the measurements give only its two ends.\nThe drawing stops at {observed_extent} Earth radii, which is how far the spacecraft went, not where the tail ends.\nDrawn round, its average shape; at any moment it is often flattened.",
             "color": "rgb(180, 180, 255)",
             "opacity": 0.25,
             "source": "Slavin et al. (1985), J. Geophys. Res. 90(A11):10875, doi:10.1029/JA090iA11p10875 -- ISEE-3: flaring ceases on average at 120 +/- 10 R_E behind Earth, and the tail is 60 +/- 5 R_E across beyond there. Slavin et al. (1983), Geophys. Res. Lett. 10(10):973, doi:10.1029/GL010i010p00973 -- observed to 220 R_E. The tail's shape: Sibeck and Lin (2014), J. Geophys. Res. Space Physics 119, doi:10.1002/2013JA019471 -- the distant tail is often flattened along the part of the solar wind's magnetic field that lies across the Sun-Earth line; Maezawa, Hori, Mukai, Saito, Yamamoto, Kokubun and Nishida (1997), Adv. Space Res. 20(4-5):949, doi:10.1016/S0273-1177(97)00503-6 -- GEOTAIL found the distant tail about the same size in both directions under average conditions.",
@@ -876,7 +880,7 @@
             "value": 9.4105,
             "unit": "deg",
             "figures": 5,
-            "source": "Alken et al. (2021), International Geomagnetic Reference Field: the thirteenth generation, Earth Planets Space 73:49, doi:10.1186/s40623-020-01288-x -- the angle between the geomagnetic dipole axis and Earth's rotation axis at epoch 2020.0. The paper prints no tilt of its own: constants_new.py computes it from the paper's three degree-1 Gauss coefficients, the relation the paper gives for the geomagnetic poles, and serves it at five figures. It is decreasing by about 0.049 degrees a year (magnetic_tilt_rate, from the same coefficients' published rates), so any quotation of it carries its epoch. This sentence said 'rounded to a tenth of a degree' and 'about 0.05 deg per decade' until 2026-09-26; the decade figure was ten times too small (L-322 Stage D, gallery patch 3).",
+            "source": "Alken et al. (2021), International Geomagnetic Reference Field: the thirteenth generation, Earth Planets Space 73:49, doi:10.1186/s40623-020-01288-x -- the angle between the geomagnetic dipole axis and Earth's rotation axis at epoch 2020.0. The paper prints no tilt of its own: constants_new.py computes it from the paper's three degree-1 Gauss coefficients, the relation the paper gives for the geomagnetic poles, and serves it at five figures. It is decreasing by about 0.049 degrees a year (magnetic_tilt_rate, from the same coefficients' published rates), so any quotation of it carries its epoch. The belts' hover says the magnetic equator turns with Earth: the paper's Table 4 places the 2020.0 north geomagnetic pole at a point on Earth, 80.65 N, -72.68 E (constants_new.py, read 2026-09-21), so the dipole turns with the ground beneath it. This sentence said 'rounded to a tenth of a degree' and 'about 0.05 deg per decade' until 2026-09-26; the decade figure was ten times too small (L-322 Stage D, gallery patch 3).",
             "orrery_constant": "constants_new.py::EARTH_DIPOLE_TILT_DEG",
             "note": "Served so the hover can quote it. The rings are NOT tilted by it. They are drawn in the equatorial plane, which is the daily average of the magnetic one, because a tilted plane needs a direction as well as an angle and that direction turns once a day while this scene is frozen (L-231, Tony's ruling 2026-09-15)."
           },
@@ -962,6 +966,18 @@
           "flux_peak_of": [
             "trapped protons",
             ""
+          ],
+          "hovers_band": [
+            "",
+            "Drawn at {drawn} Earth radii: halfway across the band, {low} to {high} Earth radii out at the magnetic equator, where the belt is most intense. The halfway point is our choice for the picture, not a measured peak."
+          ],
+          "hovers_rings": [
+            "The belt is one continuous region; its evenly spaced rings only mark its extent, and the brighter ring marks where it is most intense.",
+            "The belt is one continuous region; its evenly spaced rings only mark its extent, and the brighter ring marks where it is most intense."
+          ],
+          "hovers_plane": [
+            "The ring lies in Earth's equatorial plane, the daily average of the magnetic equator, which turns with Earth and in 2020 was tilted {tilt} degrees from it{rate} (IGRF-13 model).",
+            "The ring lies in Earth's equatorial plane, the daily average of the magnetic equator, which turns with Earth and in 2020 was tilted {tilt} degrees from it{rate} (IGRF-13 model)."
           ],
           "info_urls": [
             "https://science.nasa.gov/biological-physical/stories/van-allen-belts/",

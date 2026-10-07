@@ -56,6 +56,9 @@ Written September 2026 with Anthropic's Claude Opus 5.
 Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: the
 room list holds every room; the Solar System room's opening view and
 highlighted row can be set).
+Updated October 6, 2026 with Anthropic's Claude Opus 5.5 (L-421: a
+shell's `hover` words are shown and saved; the belts' hover lists are
+named in the locked note).
 """
 
 import json
@@ -81,12 +84,15 @@ PHONE_WRAP = 34
 
 # What the form shows, in order. A belt has no note and no source served,
 # so those two rows are shown locked with a line saying why.
-FORM_FIELDS = ("name", "description", "about", "note", "source", "info_url")
+# `hover` (L-421): the facts a hover states, served rather than typed in a
+# renderer; a new line starts a new hover line, {name} is a served number.
+FORM_FIELDS = ("name", "description", "about", "note", "source", "info_url",
+               "hover")
 # Wrapped boxes rather than one-line entries. `source` is here because a
 # citation is a sentence: they run to 489 characters in the real config
 # at gallery d9d7a48f, and a 54-character entry showed about a tenth of
 # the longest one (L-340).
-LONG_FIELDS = ("description", "about", "note", "source")
+LONG_FIELDS = ("description", "about", "note", "source", "hover")
 
 BELT_FIELD_LISTS = {"name": "names", "description": "descriptions",
                     "about": "abouts", "info_url": "info_urls"}
@@ -101,7 +107,9 @@ ROOM_WORDS_NOTE = ("This room's drawer rows are bodies, not shells, so "
 BELT_LOCKED_NOTE = ("A belt's words are served as parallel lists, which "
                     "hold no note and no source. Its caveat and its "
                     "citation sit on its measured distance row, with the "
-                    "numbers.")
+                    "numbers. Its hover sentences (hovers_band, "
+                    "hovers_rings, hovers_plane) are not shown here; "
+                    "store_writer.py writes them like any other belt word.")
 
 
 # ----------------------------------------------------------------------

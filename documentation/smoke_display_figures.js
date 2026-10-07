@@ -121,6 +121,16 @@
 // the claim, so their hovers change and the fixture is re-recorded as
 // fixture_hovers_L349_on_ed48d078.json, the L-371 one with those three replaced and
 // the rest byte for byte. The L-371 one is left in place, unreferenced.
+//
+// L-421 (2026-10-06): the facts these hovers state are served with each
+// feature's words rather than typed in the renderers. No word changed.
+// Re-recorded as fixture_hovers_L421_on_8487b0f8.json with six hovers
+// different from the L-349 one: the magnetopause and the bow shock (the
+// same words; their served lines now wrap by the rule every served
+// sentence wraps by, so two line breaks moved), and the Sun direction
+// and three Moon hovers (the saved Earth scene re-recorded on the cache
+// of 2026-10-06, so the Sun's distance and the Moon's place moved). The
+// L-349 one is left in place, unreferenced.
 
 "use strict";
 const fs = require("fs");
@@ -148,9 +158,9 @@ const SOFT_BR = "<br soft>";
 // separately, and its period line is graded against the served row. The
 // fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "ed48d078";
+const FIXTURE_AT = "8487b0f8";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L349_on_ed48d078.json");
+                          "fixture_hovers_L421_on_8487b0f8.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

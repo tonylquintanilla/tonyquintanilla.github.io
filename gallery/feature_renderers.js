@@ -117,6 +117,11 @@
  *   distances have no source, make no claim. L-379: the belts' tilt
  *   sentence is one line shorter, in Tony's approved words of
  *   2026-10-06.)
+ * Module updated: October 6, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-421: the facts the geostationary ring, magnetopause, bow shock,
+ *   magnetotail and Earth's belts state in their hovers are served with
+ *   their words -- a shell's `hover`, a belt's hovers_band, hovers_rings
+ *   and hovers_plane -- and printed by servedHover(). No word changed.)
  */
 
 (function (global) {
@@ -617,6 +622,44 @@
       return null;
     }
     return out;
+  }
+
+  /* L-421 (2026-10-06): what a hover says about nature, about a paper, or
+     naming a source is SERVED with its feature's words and printed here as
+     given, never typed in this file (interactive-exhibit 1.13). `text` is
+     the served words: plain text, where a new line starts a new line of
+     the hover and {name} is filled from `vals`, each value already printed
+     from a served row by the caller. Each line wraps like any hover prose.
+     Words that name a value not given, or no words at all, are warned
+     about and NOTHING is printed: no hole, and nothing typed in its place. */
+  function servedHover(text, vals, where, warn) {
+    if (typeof text !== "string" || !text) {
+      warn(where + ": no served hover words -- that part of the hover is" +
+           " not printed");
+      return "";
+    }
+    var missing = [];
+    var out = text.replace(/\{(\w+)\}/g, function (m, k) {
+      if (typeof vals[k] === "string") { return vals[k]; }
+      missing.push(k);
+      return m;
+    });
+    if (missing.length) {
+      warn(where + ": its hover words name {" + missing.join("}, {") +
+           "}, which is not given -- that part of the hover is not printed");
+      return "";
+    }
+    return out.split("\n").map(function (line) {
+      return wrapHover(line);
+    }).join("<br>");
+  }
+
+  /* A belt's served sentence from one of its parallel lists. A body whose
+     belts serve no such list (Jupiter's) prints nothing there and is not
+     warned about: those words are Earth's. */
+  function beltWords(params, listName, i) {
+    var held = params[listName];
+    return Array.isArray(held) ? held[i] : null;
   }
 
   /* ---- A figure count through arithmetic (provenance-discipline 2.15,
@@ -1368,14 +1411,15 @@
                          " magnetic equator: near where " + what +
                          " is greatest.");
       };
+      // L-421: the band sentence is the belt's served hovers_band.
+      var bandWords = band ? beltWords(params, "hovers_band", i) : null;
       var drawnLines = band
-        ? wrapHover("Drawn at " + fmtServed(distances[i], counts[i], 1) +
-            " " + bodyName + " radii: halfway across the band, " +
-            fmtServed(band[0], band[2], 1) + " to " +
-            fmtServed(band[1], band[3], 1) + " " + bodyName +
-            " radii out at the magnetic equator, where the belt is most" +
-            " intense. The halfway point is our choice for the picture, not" +
-            " a measured peak.") + "<br>"
+        ? (bandWords === null ? "" :
+           servedHover(bandWords, {
+             drawn: fmtServed(distances[i], counts[i], 1),
+             low: fmtServed(band[0], band[2], 1),
+             high: fmtServed(band[1], band[3], 1)
+           }, slug + "/" + featureKey + "/hovers_band/" + i, warn) + "<br>")
         : unbandedLead(i) +
           (units[i] === "l_shell"
             ? SOFT_BR + "(given as L = " + fmtServed(distances[i], counts[i], 1) +
@@ -1396,28 +1440,28 @@
           " average of the" + SOFT_BR + "magnetic equator, " +
           "which is tilted from it and turns with " + bodyName +
           SOFT_BR + "once a day."
-        : wrapHover("The ring lies in " + bodyName + "'s equatorial plane," +
-            // L-379 (2026-10-06): one line shorter, in Tony's approved
-            // words, so the hover fits the 17-line limit measured on the
-            // live scene. "Once a day" went; "daily average" says it.
-            " the daily average of the magnetic equator, which turns with " +
-            bodyName + " and in 2020 was tilted " +
-            fmtServed(tilt, servedFigures(params.magnetic_tilt), 1) +
-            " degrees from it" +
-            (tiltRate === null
-              ? ""
-              : ", " + (tiltRate < 0 ? "shrinking" : "growing") + " " +
-                fmtServed(Math.abs(tiltRate),
-                          servedFigures(params.magnetic_tilt_rate), 4) +
-                " degrees a year") +
-            " (IGRF-13 model).");
+        // L-379 (2026-10-06): Tony's approved words. L-421: they are the
+        // belt's served hovers_plane, with the year and the model, whose
+        // source is the tilt row's; only the two numbers are filled here.
+        : (beltWords(params, "hovers_plane", i) === null ? "" :
+           servedHover(beltWords(params, "hovers_plane", i), {
+             tilt: fmtServed(tilt, servedFigures(params.magnetic_tilt), 1),
+             rate: (tiltRate === null
+               ? ""
+               : ", " + (tiltRate < 0 ? "shrinking" : "growing") + " " +
+                 fmtServed(Math.abs(tiltRate),
+                           servedFigures(params.magnetic_tilt_rate), 4) +
+                 " degrees a year")
+           }, slug + "/" + featureKey + "/hovers_plane/" + i, warn));
       // L-322 Stage D, gallery patch 3: where the rings run across the
       // belt, the hover says what they are, as the orrery's does since D9.
       // The drawn-width line is only for a band served as a thickness.
-      var ringsLine = (peakRing >= 0)
-        ? wrapHover("The belt is one continuous region; its evenly spaced" +
-            " rings only mark its extent, and the brighter ring marks where" +
-            " it is most intense.") + "<br>"
+      // L-421: the belt's served hovers_rings.
+      var ringsWords = beltWords(params, "hovers_rings", i);
+      var ringsLine = (peakRing >= 0 && ringsWords !== null)
+        ? servedHover(ringsWords, {},
+                      slug + "/" + featureKey + "/hovers_rings/" + i,
+                      warn) + "<br>"
         : "";
       var widthLine = (thickness !== null && !ringRadii)
         ? "Drawn " + thickness.toFixed(1) + " radii wide, a width chosen for" +
@@ -2165,9 +2209,8 @@
     hover += "= " + (km ? (km.radiusText ||
                            kmAndAu(km.radiusKm, km.radiusFigures))
                         : kmAndAu(radiusAu * KM_PER_AU)) + "<br>" +
-             "A ring in the equatorial plane, not a sphere: satellites here" +
-             SOFT_BR +
-             "keep pace with Earth's turning and hang over one longitude.";
+             // L-421: the ring's served hover words.
+             servedHover(cfg.hover, {}, where, warn);
     hover = withTail(hover);
     // Info marker on the ring itself, at the ascending node (index 0):
     // the equatorial plane is clear of the shells' polar markers.
@@ -2601,15 +2644,13 @@
                       figProduct([[r0, servedFigureField(mp.standoff)],
                                   [radiusKm, radiusFigures]]),
                       where + "/magnetopause", "boundary", warn) +
-        "Shue et al. (1998), for the solar wind assumed here:<br>" +
-        "Bz " + fmtServed(bz, servedFigures(mpS.bz), 1) +
-        " nT, dynamic pressure " + fmtServed(dp, servedFigures(mpS.pressure), 1) +
-        " nPa<br>" +
-        "Drawn to " + fmtServed(mpCut, servedFigures(mpS.cut_angle), 0) +
-        " deg from the nose, as far as the" +
-        " paper" + SOFT_BR + "plots its model. Beyond that angle the boundary" +
-        " is drawn" + SOFT_BR + "as the magnetotail.<br>" +
-        "Not tilted: the model is symmetric about the Sun line.";
+        // L-421: the paper, its conditions and its limits are the
+        // magnetopause's served hover words; the numbers are its rows.
+        servedHover(mp.hover, {
+          bz: fmtServed(bz, servedFigures(mpS.bz), 1),
+          pressure: fmtServed(dp, servedFigures(mpS.pressure), 1),
+          cut_angle: fmtServed(mpCut, servedFigures(mpS.cut_angle), 0)
+        }, where + "/magnetopause", warn);
       mpHover = withTail(mpHover);
 
       var mpMk = magMarkerPoint(function (th) {
@@ -2744,14 +2785,11 @@
                        figProduct([[tailWidth, widthFig],
                                    [radiusKm, radiusFigures]]))) +
               ".") + "<br>" +
-            wrapHover("The straight widening up to that point is our choice;" +
-              " the measurements give only its two ends.") + "<br>" +
-            wrapHover("The drawing stops at " +
-              fmtServed(tailReach, servedFigures(tl.observed_extent), 0) +
-              " Earth radii, which is how far the spacecraft went, not where" +
-              " the tail ends.") + "<br>" +
-            wrapHover("Drawn round, its average shape; at any moment it is" +
-              " often flattened.");
+            // L-421: the tail's served hover words.
+            servedHover(tl.hover, {
+              observed_extent: fmtServed(tailReach,
+                                         servedFigures(tl.observed_extent), 0)
+            }, where + "/magnetotail", warn);
           tlHover = withTail(tlHover);
           var tlMk = sunPlace(frame, center, tailAt(flareEnd)[0],
                               tailAt(flareEnd)[1],
@@ -2817,19 +2855,13 @@
                           : S.toFixed(2)) + " Earth radii<br>" +
         standoffLines(bs, S * radiusKm, null, where + "/bow_shock", "shock",
                       warn) +
-        "Jelinek et al. (2012), at dynamic pressure " +
-        fmtServed(bsP, servedFigures(bsS.pressure), 1) +
-        " nPa<br>" +
-        "Drawn to " + fmtServed(bsCut, servedFigures(bsS.cut_angle), 0) +
-        " deg from the nose, which is how " +
-        "far round" + SOFT_BR +
-        "the crossings the fit was made from actually reached." +
-        "<br>That is where the drawing stops, not where the shock ends.<br>" +
-        // The three-line comparison with the magnetopause used to sit here.
-        // It is a remark rather than a figure and the hover has a
-        // phone-sized budget, so it moved to the served note, which the
-        // i-panel shows in full.
-        "Not tilted: the fit is symmetric about the Sun line.";
+        // L-421: the bow shock's served hover words. (The three-line
+        // comparison with the magnetopause that once sat here is in the
+        // served note, which the i-panel shows in full.)
+        servedHover(bs.hover, {
+          pressure: fmtServed(bsP, servedFigures(bsS.pressure), 1),
+          cut_angle: fmtServed(bsCut, servedFigures(bsS.cut_angle), 0)
+        }, where + "/bow_shock", warn);
       bsHover = withTail(bsHover);
 
       var bsMk = magMarkerPoint(function (th) {
