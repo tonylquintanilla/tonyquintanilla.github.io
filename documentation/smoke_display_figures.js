@@ -131,6 +131,16 @@
 // and three Moon hovers (the saved Earth scene re-recorded on the cache
 // of 2026-10-06, so the Sun's distance and the Moon's place moved). The
 // L-349 one is left in place, unreferenced.
+//
+// L-421, second patch (2026-10-06): the Earth room's guides (the axis, the
+// Sun line, the terminator, the Moon's arc) and the Sun's clumpy cloud and
+// galactic tide print served words. No word changed. Re-recorded as
+// fixture_hovers_L421_2_on_b43cc515.json with eight hovers different from
+// the first L-421 one: the axis, the terminator, the clumps and the tide
+// (the same words; served lines wrap by the served rule, so breaks moved),
+// and the Sun direction and three Moon hovers (the scene re-recorded on
+// the cache of 2026-10-06's second build). The first one is left in
+// place, unreferenced.
 
 "use strict";
 const fs = require("fs");
@@ -158,9 +168,9 @@ const SOFT_BR = "<br soft>";
 // separately, and its period line is graded against the served row. The
 // fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "8487b0f8";
+const FIXTURE_AT = "b43cc515";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L421_on_8487b0f8.json");
+                          "fixture_hovers_L421_2_on_b43cc515.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

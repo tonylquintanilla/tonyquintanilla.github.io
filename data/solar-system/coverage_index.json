@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-10-07T13:39:37.447003+00:00",
+  "generated": "2026-10-07T14:31:12.427897+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2461233.100385412,
-    "end_jd": 2461409.0379814166
+    "start_jd": 2461233.13620695,
+    "end_jd": 2461409.0738029545
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -802,6 +802,7 @@
             "description": "The outer Oort cloud: a rough sphere of icy bodies at the very edge of the Sun's reach, drawn here as clumps.",
             "about": "The outer Oort cloud is a roughly spherical shell of icy bodies, cometary nuclei of water ice, ammonia and methane, reaching out to about two light-years from the Sun. Objects here are only loosely held, so passing stars and the galaxy's tide can nudge them inward as long-period comets, the ones that take more than two centuries to circle the Sun. Simulations suggest the cloud is lumpy rather than smooth, which is what the clumps show; where any real lump lies is not known.",
             "info_url": "https://science.nasa.gov/solar-system/oort-cloud/",
+            "hover": "Drawn in clumps to show the cloud is not smooth; where the clumps really are is not known.",
             "color": "rgb(200, 200, 255)",
             "inner_radius": {
               "value": 20000,
@@ -893,6 +894,7 @@
             "description": "How the Milky Way's gravity sends comets in from the outer Oort cloud: drawn thickest halfway between the galaxy's plane and its poles.",
             "about": "The Sun sits inside the Milky Way, and the galaxy's gravity pulls differently on the near and far sides of the Oort cloud. Over millions of years this tide reshapes the orbits of comets in the outer cloud until some fall toward the Sun. It acts most strongly on comets halfway between the galaxy's plane and its poles, and least on those along the plane or toward a pole. The cloud has never been imaged.",
             "info_url": "https://en.wikipedia.org/wiki/Galactic_tide",
+            "hover": "Drawn tilted to the galaxy's plane; how thick it is at each latitude follows how strongly the tide pulls there.\nWhere the comets really are is not known.",
             "color": "rgb(140, 200, 200)",
             "inner_radius": {
               "value": 20000,
@@ -1359,7 +1361,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:35.793934+00:00"
+          "retrieved": "2026-10-07T14:31:10.685824+00:00"
         }
       },
       "positions": null,
@@ -3205,7 +3207,30 @@
             "orrery_constant": "constants_new.py::EARTH_SIDEREAL_ROTATION_PERIOD_H"
           },
           "source": "The pole the room draws is Earth's north pole on the scene's date from JPL Horizons (observer quantity 32, target 399), served by the cache builder as pole_of_date. The pole here is the FALLBACK, drawn only when no pole of date is served: the z-axis of the ICRF, which IERS Conventions (2010), IERS Technical Note 36, sec. 2.1.1, holds within about 0.02 arcseconds of Earth's mean pole at J2000.0, and which the Horizons manual's reference frames section describes as aligned with FK5/J2000 to that level. The IAU working group report (Archinal et al. 2018) was cited here until 2026-09-26; it gives no pole for Earth and sends users to the IERS.",
-          "note": "Same shape as the Sun's orientation block; read by poleBasis(). The equator plane and the GEO ring both hang off this. rotation_period is quoted in the axis hover (L-322 Stage D, gallery patch 3)."
+          "note": "Same shape as the Sun's orientation block; read by poleBasis(). The equator plane and the GEO ring both hang off this. rotation_period is quoted in the axis hover (L-322 Stage D, gallery patch 3).",
+          "words": {
+            "_comment": "L-421 (2026-10-06): the sentences the Earth room's drawn guides state about nature -- the axis, the Sun line, the terminator, the Moon's arc -- served here with their sources, because the guides are drawn from this block and the scene's moment rather than from a shell of their own. gallery/earth_geometry.js prints each hover as given; {name} is a value it fills in from the scene.",
+            "sense": {
+              "hover": "The curved arrows at both ends show the sense of the turning: prograde, west to east, counter-clockwise seen from above the north pole.",
+              "source": "Sense of rotation: Archinal et al. (2019), Correction to: Report of the IAU Working Group on Cartographic Coordinates and Rotational Elements: 2015, Cel. Mech. Dyn. Astron. 131:61, doi:10.1007/s10569-019-9925-1 -- Fig. 1 caption: a body whose prime-meridian angle W increases with time rotates prograde. Earth's turning: U.S. Naval Observatory, Astronomical Applications Department, Glossary (consistent with The Astronomical Almanac 2023), https://aa.usno.navy.mil/faq/asa_glossary -- 'diurnal motion': the apparent daily motion of the sky from east to west is caused by Earth's rotation, so Earth turns west to east; 'direct motion': counterclockwise as seen from the north pole of the ecliptic, west to east -- the sense Earth's turning shares, so it is prograde. The two entries' wording is the Explanatory Supplement to the Astronomical Almanac's (Seidelmann 1992), checked against it 2026-10-06. The 2018 report (Cel. Mech. Dyn. Astron. 130:22) was cited here until 2026-10-06; its sections 2 and 7 were not re-read that day, so the citation moved to what was."
+            },
+            "tilt": {
+              "hover": "The axis slowly circles over thousands of years and nods slightly, so the pole and the tilt belong to that date.",
+              "source": "U.S. Naval Observatory, Astronomical Applications Department, Glossary (consistent with The Astronomical Almanac 2023), https://aa.usno.navy.mil/faq/asa_glossary -- 'precession': the smoothly changing orientation of Earth's equator, driven by the Sun and Moon pulling on the equatorial bulge; 'nutation': oscillations of the rotation pole; 'true equator and equinox' of a date, which both affect. Williams (1994), Contributions to the Earth's obliquity rate, precession, and nutation, Astron. J. 108:711, doi:10.1086/117108 -- sec. 1 and 5: precession of about 50 arcseconds a year, one full circle in roughly 26,000 years. Both read 2026-10-06."
+            },
+            "subsolar": {
+              "hover": "The dot where the line leaves the crust is the subsolar point, where the Sun is overhead.",
+              "source": "U.S. Naval Observatory, Astronomical Applications Department, Glossary (consistent with The Astronomical Almanac 2023), https://aa.usno.navy.mil/faq/asa_glossary -- 'sub-solar point': the point on a body's surface directly beneath the Sun, on the line from the body's centre to the Sun's; for a round body the Sun is at the zenith there. Read 2026-10-06."
+            },
+            "terminator": {
+              "hover": "The white circle is where the Sun is on the horizon: the sunlit half of Earth faces the Sun line, the night half faces away. The yellow line through the circle's centre is the Sun direction; its dot on the crust is the subsolar point, where the Sun is overhead.\n\nFROZEN at {epoch}. The real terminator sweeps around Earth once a day; this scene does not turn. Geometry only -- no lighting is modelled, and the refraction and solar-disc corrections that define sunrise on the ground are not applied.",
+              "source": "The terminator, 'the boundary between the illuminated and dark areas of a body', and the subsolar point: U.S. Naval Observatory, Astronomical Applications Department, Glossary (consistent with The Astronomical Almanac 2023), https://aa.usno.navy.mil/faq/asa_glossary. Sunrise and its corrections: U.S. Naval Observatory, Rise, Set, and Twilight Definitions, https://aa.usno.navy.mil/faq/RST_defs -- Earth's rotation once a day causes rising and setting; sunrise is when the Sun's upper edge meets the horizon, its centre 50 arcminutes below it, 16 for the Sun's apparent radius and 34 for refraction. Both read 2026-10-06."
+            },
+            "moon_arc": {
+              "hover": "The faint full ellipse is the same orbit swept once around; outside the arc, the Moon's real path drifts from it as the Sun and Earth's shape perturb the two-body orbit.",
+              "source": "Williams (1994), Astron. J. 108:711, doi:10.1086/117108 -- sec. 1: strong solar torques drive the precession of the lunar orbit's plane, and Earth's oblateness adds a small torque; sec. 2: the lunar orbit is strongly perturbed by the Sun. U.S. Naval Observatory, Astronomical Applications Department, Glossary (consistent with The Astronomical Almanac 2023), https://aa.usno.navy.mil/faq/asa_glossary -- 'osculating elements': the two-body orbit a body would follow if perturbations ceased. Both read 2026-10-06."
+            }
+          }
         }
       },
       "orbit_type": "elliptical",
@@ -3270,14 +3295,14 @@
           "observer": "@sun",
           "quantity": "32",
           "epoch_jd_ut": 2461320.5,
-          "retrieved": "2026-10-07T13:39:37.446766+00:00"
+          "retrieved": "2026-10-07T14:31:12.427667+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
           "epoch_jd": 2461320.5,
-          "retrieved": "2026-10-07T13:39:37.446766+00:00"
+          "retrieved": "2026-10-07T14:31:12.427667+00:00"
         }
       }
     },
@@ -3304,7 +3329,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:35.892268+00:00"
+          "retrieved": "2026-10-07T14:31:10.774869+00:00"
         }
       },
       "positions": null,
@@ -3421,7 +3446,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:35.991674+00:00"
+          "retrieved": "2026-10-07T14:31:10.867259+00:00"
         }
       },
       "positions": null,
@@ -3530,7 +3555,7 @@
           "query_target": "199",
           "center": "@sun",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:36.084780+00:00"
+          "retrieved": "2026-10-07T14:31:10.960770+00:00"
         }
       },
       "positions": null,
@@ -3593,7 +3618,7 @@
           "query_target": "299",
           "center": "@sun",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:36.195503+00:00"
+          "retrieved": "2026-10-07T14:31:11.052757+00:00"
         }
       },
       "positions": null,
@@ -3656,7 +3681,7 @@
           "query_target": "499",
           "center": "@sun",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:36.289147+00:00"
+          "retrieved": "2026-10-07T14:31:11.140861+00:00"
         }
       },
       "positions": null,
@@ -3719,7 +3744,7 @@
           "query_target": "799",
           "center": "@sun",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:36.394896+00:00"
+          "retrieved": "2026-10-07T14:31:11.241971+00:00"
         }
       },
       "positions": null,
@@ -3782,7 +3807,7 @@
           "query_target": "899",
           "center": "@sun",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:36.496366+00:00"
+          "retrieved": "2026-10-07T14:31:11.330818+00:00"
         }
       },
       "positions": null,
@@ -3845,7 +3870,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:36.598262+00:00"
+          "retrieved": "2026-10-07T14:31:11.421420+00:00"
         }
       },
       "positions": null,
@@ -3908,7 +3933,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:36.695638+00:00"
+          "retrieved": "2026-10-07T14:31:11.508150+00:00"
         }
       },
       "positions": null,
@@ -3971,7 +3996,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:36.793684+00:00"
+          "retrieved": "2026-10-07T14:31:11.596920+00:00"
         }
       },
       "positions": null,
@@ -4034,7 +4059,7 @@
           "query_target": "9",
           "center": "@sun",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:36.897771+00:00"
+          "retrieved": "2026-10-07T14:31:11.698036+00:00"
         }
       },
       "positions": null,
@@ -4097,7 +4122,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:36.992704+00:00"
+          "retrieved": "2026-10-07T14:31:11.791256+00:00"
         }
       },
       "positions": null,
@@ -4160,7 +4185,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:37.102344+00:00"
+          "retrieved": "2026-10-07T14:31:11.902039+00:00"
         }
       },
       "positions": null,
@@ -4223,7 +4248,7 @@
           "query_target": "2004 MN4",
           "center": "@sun",
           "epoch": 2461320.5,
-          "retrieved": "2026-10-07T13:39:37.196043+00:00"
+          "retrieved": "2026-10-07T14:31:12.010045+00:00"
         }
       },
       "positions": null,
@@ -4320,7 +4345,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460240.026674769,
-          "retrieved": "2026-10-07T13:39:37.320159+00:00"
+          "retrieved": "2026-10-07T14:31:12.195926+00:00"
         }
       },
       "positions": null,
@@ -4388,7 +4413,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-10-07T13:39:37.386712+00:00"
+          "retrieved": "2026-10-07T14:31:12.334426+00:00"
         }
       },
       "positions": null,

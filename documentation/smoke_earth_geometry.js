@@ -231,8 +231,11 @@ const tm = [termMarker.x[0], termMarker.y[0], termMarker.z[0]];
 check("terminator hover marker lies ON the circle (perpendicular to the Sun line, at the crust)",
       Math.abs(tm[0]*sunDir[0] + tm[1]*sunDir[1] + tm[2]*sunDir[2]) < 1e-12 &&
       Math.abs(Math.hypot(...tm) / rCrust - 1.003) < 1e-6);
+// L-421: the terminator's words are served and wrap by the served rule, so
+// a soft break may fall inside a phrase; read it with the breaks as spaces.
+const termPlain = termMarker.text[0].split("<br soft>").join(" ");
 check("terminator hover says it is FROZEN and that there is no lighting model",
-      /FROZEN/.test(termMarker.text[0]) && /no lighting is modelled/.test(termMarker.text[0]));
+      /FROZEN/.test(termPlain) && /no lighting is modelled/.test(termPlain));
 // Spin arcs: two 60-point arcs, one at each pole tip, each with a cone.
 const arcs = axisG.filter(t => t.mode === "lines" && t.x.length === 60);
 const cones = axisG.filter(t => t.type === "cone");
@@ -253,7 +256,7 @@ check("spin arcs run prograde: the arc's motion is omega x r about the north pol
 // words -- it has to, it is the thing the curved arrows mean -- so this leg
 // now checks the statement in the hover and the citation where it went.
 check("axis hover states the sense of rotation in words",
-      /prograde, west to east/.test(axisG.find(t => t.mode === "markers").text[0]));
+      /prograde, west to east/.test(axisG.find(t => t.mode === "markers").text[0].split("<br soft>").join(" ")));
 check("...and its citation is in the panel entry, not lost",
       /Archinal/.test((axisG.find(t => t.mode === "markers").meta || {}).source || ""));
 // L-322 Stage D, gallery patch 3: the period is the served row at its
@@ -268,8 +271,14 @@ check("axis hover says the turning is not animated, and why",
       !/none is served/.test(axisHoverText));
 check("...and the period's source reaches the panel",
       /Period: /.test((axisG.find(t => t.mode === "markers").meta || {}).source || ""));
-check("...and the sense of rotation is credited to the report's own definition, not an Earth angle it does not give",
-      /sec\. 2, p\. 6/.test((axisG.find(t => t.mode === "markers").meta || {}).source || "") &&
+// L-421 (2026-10-06): the citation is SERVED on Earth's orientation words
+// and names what was read that day: the 2019 correction's Fig. 1 for the
+// definition, the Almanac glossary for Earth's own turning. The 2018
+// report's sections 2 and 7 were not re-read, so it is no longer cited.
+check("...and the sense of rotation is credited to the correction's definition and the glossary, not an Earth angle neither gives",
+      /131:61/.test((axisG.find(t => t.mode === "markers").meta || {}).source || "") &&
+      /diurnal motion/.test((axisG.find(t => t.mode === "markers").meta || {}).source || "") &&
+      !/sec\. 2, p\. 6/.test((axisG.find(t => t.mode === "markers").meta || {}).source || "") &&
       !/Earth's prime-meridian angle W increases/.test((axisG.find(t => t.mode === "markers").meta || {}).source || ""));
 // With no period row served, the hover says so and prints no number.
 const noPeriod = JSON.parse(JSON.stringify(payload));

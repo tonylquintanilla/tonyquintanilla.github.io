@@ -71,6 +71,13 @@
  * sentence is broken into three lines rather than four; and the empty
  * line before the curved arrows is gone. No word changed. Tony's
  * approval, 2026-10-06.)
+ * Updated October 6, 2026 with Anthropic's Claude Opus 5.5 (L-421: what
+ * the axis, Sun line, terminator and Moon arc hovers say about nature is
+ * served on Earth's orientation block as `words`, each with its source,
+ * and printed as given; the pole of date's provenance prints from the
+ * cache builder's served record. The sense of rotation now cites the
+ * 2019 correction and the Almanac glossary. No word a visitor reads
+ * changed.)
  */
 (function (global) {
   "use strict";
@@ -90,6 +97,9 @@
   function jdToDate(jd) {
     var d = new Date((jd - 2440587.5) * 86400000);
     return d.toISOString().slice(0, 13).replace("T", " ") + ":00";
+  }
+  function isDict(v) {
+    return v !== null && typeof v === "object" && !Array.isArray(v);
   }
 
   function norm(v) {
@@ -199,12 +209,30 @@
    *   moonArc         { x:[], y:[], z:[], windowDays (HALF-width, the served
    *                     trust.window_days), color, legendgroup, tolerance_deg }
    *                     or null
+   *   words           the served orientation block's `words` (L-421): each
+   *                     guide's hover sentences and their source
    */
   function build(opts) {
     var warnings = [];
     var warn = warnInto(warnings);
     var traces = [];
     var name = opts.bodyName || "Earth";
+    // L-421 (2026-10-06): what a guide's hover says about nature is served
+    // on Earth's orientation block as `words`, with its source, and
+    // printed here as given (interactive-exhibit 1.13). A missing entry is
+    // warned about and prints nothing; nothing typed stands in for it.
+    var words = isDict(opts.words) ? opts.words : {};
+    function guideWords(key, vals) {
+      var w = words[key];
+      return global.GalleryFeatures._servedHover(
+        isDict(w) ? w.hover : null, vals || {},
+        name + "/orientation/words/" + key, warn);
+    }
+    function guideSource(key) {
+      var w = words[key];
+      return (isDict(w) && typeof w.source === "string" && w.source)
+        ? w.source : "not served";
+    }
     var c = opts.center || [0, 0, 0];
     var K = opts.kmPerAu;
     var rCrust = opts.crustRadiusAu;
@@ -292,8 +320,7 @@
           " deg on " + pole.ofDate + ", measured against the orbit of the" + SB +
           "Earth-Moon barycenter, the gravitational center of the Earth-Moon" + SB +
           "system, around the Sun that day (JPL Horizons).<br>" +
-          "The axis slowly circles over thousands of years and nods" + SB +
-          "slightly, so the pole and the tilt belong to that date.<br>";
+          guideWords("tilt") + "<br>";
       } else if (pole.ofDate) {
         tiltLines = "Tilt: not served for " + pole.ofDate + ".<br>";
       } else {
@@ -324,12 +351,14 @@
         "North pole up the gold line; the ring is the equator on the crust.<br>" +
         tiltLines +
         "Axis drawn to " + kmAndAu(K, axisHalf) + " -- a drawing length.<br>" +
-        "The curved arrows at both ends show the sense of the turning:" + SB +
-        "prograde, west to east, counter-clockwise seen from above the" + SB +
-        "north pole. " + periodLines +
+        // The period sentence follows on the served sentence's last line,
+        // as it did when both were typed, so the hover keeps its 17 lines.
+        guideWords("sense") + " " + periodLines +
         tail();
       traces.push(infoMarker(tip, AXIS_COLOR, hAxis, gAxis, { meta: {
-        source: "Sense of rotation: Archinal et al. (2018), Report of the IAU Working Group on Cartographic Coordinates and Rotational Elements: 2015, Cel. Mech. Dyn. Astron. 130:22 -- sec. 2, p. 6: a body whose prime-meridian angle W increases with time has direct (prograde) rotation; sec. 7, p. 27: the rotations of the Earth, Sun and Moon are direct. The report gives no rotation angle for Earth and sends users to the IERS. Pole: " + (pole.source || "pole source not served") +
+        source: guideSource("sense") +
+          " Precession and nutation: " + guideSource("tilt") +
+          " Pole: " + (pole.source || "pole source not served") +
           (period ? " Period: " + (period.source || "source not served") : ""),
         detail: pole.orrery_constant ? "Store: " + pole.orrery_constant : null
       } }));
@@ -367,8 +396,7 @@
       var tipS = [c[0] + sunDir[0] * len, c[1] + sunDir[1] * len, c[2] + sunDir[2] * len];
       var hSun = "<b>" + gSun + "</b><br><br>" +
         "Toward the Sun at " + (opts.epochIso || "the scene epoch") + ", from Earth's centre.<br>" +
-        "The dot where the line leaves the crust is the subsolar point, where" + SB +
-        "the Sun is overhead.<br>" +
+        guideWords("subsolar") + "<br>" +
         (isNum(opts.sun.distAu)
           ? "Earth-Sun distance: " + kmAndAu(K, opts.sun.distAu) + "<br>" : "") +
         "Line drawn to the edge of the arrival frame; the Sun is far beyond it." +
@@ -376,7 +404,8 @@
       traces.push(infoMarker(tipS, SUN_COLOR, hSun, gSun, { meta: {
         source: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons" +
           (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +
-          ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py)."
+          ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py)." +
+          " The subsolar point: " + guideSource("subsolar")
       } }));
 
       // --- 3. Terminator -------------------------------------------------
@@ -407,19 +436,15 @@
       var markI = (topI + stepPts) % (CIRCLE_POINTS - 1);
       var onCircle = [term.x[markI], term.y[markI], term.z[markI]];
       var hTerm = "<b>" + gTerm + "</b><br><br>" +
-        "The white circle is where the Sun is on the horizon: the sunlit half" + SB +
-        "of Earth faces the Sun line, the night half faces away. The yellow" + SB +
-        "line through the circle's centre is the Sun direction; its dot on" + SB +
-        "the crust is the subsolar point, where the Sun is overhead.<br><br>" +
-        "FROZEN at " + (opts.epochIso || "the scene epoch") + ". The real terminator" + SB +
-        "sweeps around Earth once a day; this scene does not turn. Geometry" + SB +
-        "only -- no lighting is modelled, and the refraction and solar-disc" + SB +
-        "corrections that define sunrise on the ground are not applied.<br><br>" +
+        guideWords("terminator",
+                   { epoch: opts.epochIso || "the scene epoch" }) +
+        "<br><br>" +
         tail();
       traces.push(infoMarker(onCircle, TERMINATOR_COLOR, hTerm, gTerm, { meta: {
         source: "The Sun direction above, and the crust radius " +
           (opts.planetRadius && opts.planetRadius.source
-            ? "(" + opts.planetRadius.source + ")" : "as served") + "."
+            ? "(" + opts.planetRadius.source + ")" : "as served") + "." +
+          " " + guideSource("terminator")
       } }));
     }
 
@@ -443,12 +468,10 @@
           ? "The arc runs from " + jdToDate(arc.startJd) + " to " + jdToDate(arc.endJd) + " (UTC).<br>" : "") +
         "There is no longer span to choose: this scene is one epoch, and the" + SB +
         "arc is the stretch of orbit the served elements are trusted for.<br>" +
-        "The faint full ellipse is the same orbit swept once around; outside" + SB +
-        "the arc, the Moon's real path drifts from it as the Sun and Earth's" + SB +
-        "shape perturb the two-body orbit.<br><br>" +
+        guideWords("moon_arc") + "<br><br>" +
         tail();
       traces.push(infoMarker(pm, arc.color || "rgb(200, 200, 200)", hArc, gMoon, { meta: {
-        source: "JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder)."
+        source: "JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder). The drift outside the arc: " + guideSource("moon_arc")
       } }));
     } else if (arc) {
       warn("moon/trusted arc: fewer than two points supplied -- arc not drawn");
@@ -490,6 +513,25 @@
    * renderer for, so the drawer can SAY they are not yet drawn instead
    * of omitting them silently (the magnetosphere until L-305).
    */
+  /* L-421: the pole of date's provenance, from the served record. A field
+     the record lacks prints as "not served". */
+  function poleOfDateSource(pod) {
+    function f(block, key) {
+      return (isDict(block) && block[key] !== undefined && block[key] !== null)
+        ? String(block[key]) : "not served";
+    }
+    var ps = pod.pole_source, os = pod.orbit_source;
+    return "JPL Horizons, served by the gallery cache builder for " +
+      (pod.date || "the scene's date") + ": the pole is observer quantity " +
+      f(ps, "quantity") + " for target " + f(ps, "query_target") +
+      ", seen from " + f(ps, "observer") + ", retrieved " +
+      f(ps, "retrieved") + ". The tilt is " +
+      ((pod.tilt && typeof pod.tilt.derived === "string")
+        ? pod.tilt.derived : "not described") +
+      "; that orbit is target " + f(os, "query_target") + " about " +
+      f(os, "center") + ", in the " + f(os, "refplane") + " plane.";
+  }
+
   function composeScene(payload, ctx) {
     var GF = ctx.GF;
     var warnings = [];
@@ -552,10 +594,11 @@
       pole = {
         ra: pod.ra, dec: pod.dec, ofDate: pod.date || null,
         tilt: pod.tilt || null,
-        source: "JPL Horizons: Earth's north pole on " + pod.date +
-          " (observer quantity 32, target 399), and the tilt against the" +
-          " Earth-Moon barycenter's orbit that day (target 3), served by" +
-          " the gallery cache builder",
+        // L-421 (2026-10-06): the query is printed from the record the
+        // cache builder serves with the pole, not typed here. The two said
+        // the same (quantity 32, target 399; target 3) when the typed copy
+        // was deleted.
+        source: poleOfDateSource(pod),
         orrery_constant: null
       };
     } else if (orient.pole) {
@@ -622,6 +665,7 @@
       poleBasis: GF._poleBasis, pole: pole, planetRadius: planetRadius,
       // L-322 Stage D, gallery patch 3: the served sidereal period.
       rotationPeriod: orient.rotation_period || null,
+      words: orient.words || null,
       crustRadiusAu: crustAu, halfRangeAu: half, epochIso: ctx.epochIso,
       sun: payload.sun || null, moonArc: moonArc
     });

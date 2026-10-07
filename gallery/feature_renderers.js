@@ -121,7 +121,10 @@
  *   (L-421: the facts the geostationary ring, magnetopause, bow shock,
  *   magnetotail and Earth's belts state in their hovers are served with
  *   their words -- a shell's `hover`, a belt's hovers_band, hovers_rings
- *   and hovers_plane -- and printed by servedHover(). No word changed.)
+ *   and hovers_plane -- and printed by servedHover(). No word changed.
+ *   Second patch, same day: the Sun's clumpy outer cloud and galactic
+ *   tide print their served `hover`; servedHover() is exported for
+ *   earth_geometry.js.)
  */
 
 (function (global) {
@@ -1701,15 +1704,10 @@
   var HILLS_CAVEAT =
     "Drawn flattened toward the ecliptic, as the inner cloud is" + SOFT_BR +
     "thought to be; the thickness is chosen for the picture.";
-  var CLUMPS_CAVEAT =
-    "Drawn in clumps to show the cloud is not smooth; where the" + SOFT_BR +
-    "clumps really are is not known.";
-  // L-406, Tony's approved words of 2026-10-02. The distances above it
-  // are the served inner and outer edges, printed as the clumps' are.
-  var TIDE_CAVEAT =
-    "Drawn tilted to the galaxy's plane; how thick it is at each" + SOFT_BR +
-    "latitude follows how strongly the tide pulls there.<br>" +
-    "Where the comets really are is not known.";
+  // L-421 (2026-10-06): the clumpy outer cloud's caveat and the galactic
+  // tide's (L-406, Tony's approved words of 2026-10-02) say what is not
+  // known about nature, so they are served as each shape's `hover` and
+  // printed by servedHover(), beside the served note that says the same.
 
   /*
    * L-331 (2026-09-16). A shell set's `source` sits at the top of its
@@ -1977,7 +1975,8 @@
       marker = [hi * 1.02, 0, 0];
       hover += "From " + (fmtAuServed(cfg.inner_radius) || fmtAu(lo)) +
         " to " + (fmtAuServed(cfg.outer_radius) || fmtAu(hi)) + "<br>" +
-        (shape === "torus" ? HILLS_CAVEAT : CLUMPS_CAVEAT);
+        (shape === "torus" ? HILLS_CAVEAT
+                           : servedHover(cfg.hover, {}, where, warn));
     } else {
       // L-406: the tide is drawn between its served edges, about the
       // galactic pole it serves. With no pole, or no frame angle to turn
@@ -2005,7 +2004,7 @@
       marker = [thi * 1.02, 0, 0];
       hover += "From " + (fmtAuServed(cfg.inner_radius) || fmtAu(tlo)) +
         " to " + (fmtAuServed(cfg.outer_radius) || fmtAu(thi)) + "<br>" +
-        TIDE_CAVEAT;
+        servedHover(cfg.hover, {}, where, warn);
     }
     // L-331 (2026-09-16): the citations that sat in these hovers reach the
     // i panel through withGatheredSource() at the dispatcher, and the
@@ -3053,6 +3052,9 @@
     // every declared count through the code the page actually uses
     // rather than a second copy of the same arithmetic.
     _fmtServed: fmtServed,
+    // L-421: so earth_geometry.js prints the guides' served words by the
+    // same rule as every other hover.
+    _servedHover: servedHover,
     // L-322 Stage D, gallery patch 4: so the hover suite can check that an
     // exact row prints by its served count.
     _servedFigures: servedFigures,
