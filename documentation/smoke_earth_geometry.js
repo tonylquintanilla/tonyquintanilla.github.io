@@ -308,6 +308,20 @@ let dMin = Infinity;
 for (let i = 0; i < arc.x.length; i++) dMin = Math.min(dMin, Math.hypot(arc.x[i]-moonMarker.x[0], arc.y[i]-moonMarker.y[0], arc.z[i]-moonMarker.z[0]));
 const step = Math.hypot(arc.x[1]-arc.x[0], arc.y[1]-arc.y[0], arc.z[1]-arc.z[0]);
 check("the Moon's marker lies on its trusted arc (within one sample step)", dMin <= step, (dMin / step).toFixed(3) + " steps");
+// L-421 (Tony, 2026-10-06, from the phone: the Sun Direction's panel said
+// "No link on file"). Each drawn guide's info marker carries the link
+// served on Earth's orientation words, and the one the panel would show.
+const guideLinks = [
+  ["Rotation Axis", axisG.find(t => t.mode === "markers"), "Earth%27s_rotation"],
+  // The Sun group holds two markers: the subsolar dot (hover skipped) and
+  // the info marker; the info marker is the one carrying meta.
+  ["Sun Direction", sunG.find(t => t.mode === "markers" && t.meta), "Subsolar_point"],
+  ["Terminator", termMarker, "Terminator_(solar)"],
+  ["Moon's arc", moonG.find(t => /trusted arc of the orbit/.test((t.text || [""])[0])), "Orbit_of_the_Moon"]];
+guideLinks.forEach(function (g) {
+  const url = ((g[1] || {}).meta || {}).info_url || "";
+  check(g[0] + ": its info marker carries its served link", url.indexOf("https://en.wikipedia.org/wiki/" + g[2]) === 0, url || "none");
+});
 // L-168: the arc must be a short piece of ONE orbit. With mean motion
 // derived from solar GM it swept 23 orbits (8,406 deg) and drew as a
 // lattice; with the served Horizons n it sweeps ~13.2 deg/day x 6.8 days.

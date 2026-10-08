@@ -77,7 +77,8 @@
  * and printed as given; the pole of date's provenance prints from the
  * cache builder's served record. The sense of rotation now cites the
  * 2019 correction and the Almanac glossary. No word a visitor reads
- * changed.)
+ * changed. Later the same day, from Tony's phone: each guide's info
+ * marker carries its served link, which the panel now shows.)
  */
 (function (global) {
   "use strict";
@@ -228,6 +229,14 @@
         isDict(w) ? w.hover : null, vals || {},
         name + "/orientation/words/" + key, warn);
     }
+    // A guide's link, its entry's served info_url (L-421): the panel shows
+    // it as the shells' links are shown. None served prints no link, and
+    // the panel says so.
+    function guideLink(key) {
+      var w = words[key];
+      return (isDict(w) && typeof w.info_url === "string" && w.info_url)
+        ? w.info_url : null;
+    }
     function guideSource(key) {
       var w = words[key];
       return (isDict(w) && typeof w.source === "string" && w.source)
@@ -356,6 +365,7 @@
         guideWords("sense") + " " + periodLines +
         tail();
       traces.push(infoMarker(tip, AXIS_COLOR, hAxis, gAxis, { meta: {
+        info_url: guideLink("sense"),
         source: guideSource("sense") +
           " Precession and nutation: " + guideSource("tilt") +
           " Pole: " + (pole.source || "pole source not served") +
@@ -402,6 +412,7 @@
         "Line drawn to the edge of the arrival frame; the Sun is far beyond it." +
         tail();
       traces.push(infoMarker(tipS, SUN_COLOR, hSun, gSun, { meta: {
+        info_url: guideLink("subsolar"),
         source: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons" +
           (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +
           ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py)." +
@@ -441,6 +452,7 @@
         "<br><br>" +
         tail();
       traces.push(infoMarker(onCircle, TERMINATOR_COLOR, hTerm, gTerm, { meta: {
+        info_url: guideLink("terminator"),
         source: "The Sun direction above, and the crust radius " +
           (opts.planetRadius && opts.planetRadius.source
             ? "(" + opts.planetRadius.source + ")" : "as served") + "." +
@@ -471,6 +483,7 @@
         guideWords("moon_arc") + "<br><br>" +
         tail();
       traces.push(infoMarker(pm, arc.color || "rgb(200, 200, 200)", hArc, gMoon, { meta: {
+        info_url: guideLink("moon_arc"),
         source: "JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder). The drift outside the arc: " + guideSource("moon_arc")
       } }));
     } else if (arc) {

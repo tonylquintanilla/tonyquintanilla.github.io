@@ -4252,6 +4252,19 @@ function buildSunDrawer(traces) {
             sunGroups.push(byName[g]);
         }
         byName[g].indices.push(i);
+        // L-421 (2026-10-06): a link or a source only an info marker
+        // carries -- the Earth room's drawn guides keep theirs on the
+        // marker, not the legend trace -- still reaches the panel. This
+        // fills what is still empty and never overwrites; the legend
+        // trace below still wins where it carries its own.
+        if (!byName[g].link) { byName[g].link = sunLinkOf(t); }
+        if (t.meta) {
+            ["about", "source", "detail", "note"].forEach(function (f) {
+                if (!byName[g][f] && typeof t.meta[f] === "string") {
+                    byName[g][f] = t.meta[f];
+                }
+            });
+        }
         if (t.showlegend === true) {
             byName[g].name = t.name || g;
             byName[g].color = sunSwatchColor(t);
