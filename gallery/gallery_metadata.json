@@ -4,7 +4,7 @@
     {
       "id": "solar_system",
       "title": "The Solar System, live",
-      "description": "Turn it, zoom in, and step into the rooms of the Sun and Earth. Daily updates from JPL Horizons.",
+      "description": "Today's planets in 3D. Turn it with your finger, tap a planet, step into the Sun and Earth.",
       "room": "solar_system",
       "shape": "9:16",
       "files": {},
