@@ -3,7 +3,8 @@
 // row, ticking and its frame, name taps, See more, a tap in the picture,
 // Home (its frame holds every body ticked; the handle names the last one
 // ticked), All / none, GO, the info panel's lists, and an opened row with
-// the phone sideways (2026-10-04). Each frame is checked against
+// the phone sideways (2026-10-04). Since L-429 (2026-10-10) a body with a
+// room shows its button on its row always; a body with none still opens. Each frame is checked against
 // the body's distance worked out here, not by the page's own helpers,
 // times Tony's 20% (2026-10-02).
 //
@@ -56,17 +57,24 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(count() === "1 of 10", "arrival count " + count());
   ok(row("center").classList.contains("fixed"), "Sun row not fixed");
   ok(row("apophis").hidden && !seeMore().hidden && seeMore().textContent === "See more", "Apophis not behind See more");
-  ok(panel("center").textContent === "Enter the Sun room" && panel("earth").textContent === "Enter the Earth room", "enter words");
-  ok(panel("center").querySelector("a").getAttribute("href") === "interactive.html?exhibit=sun", "Sun room link");
-  ok(panel("earth").querySelector("a").getAttribute("href") === "interactive.html?exhibit=earth", "Earth room link");
+  const inl = (key) => row(key).querySelector(".open-inline") ||
+    { hidden: true, textContent: "", nextElementSibling: null };
+  const expanded = (key) => row(key).getAttribute("aria-expanded") === "true";
+  // L-429: a room's button is on its row from the start, no tap needed.
+  ok(!inl("center").hidden && !inl("earth").hidden, "a room's button is not on its row on arrival");
+  ok(inl("center").textContent === "Enter the Sun room" && inl("earth").textContent === "Enter the Earth room", "enter words");
+  ok(inl("earth").nextElementSibling === row("earth").querySelector(".go"), "Earth's button not before GO");
+  ok(inl("center").querySelector("a").getAttribute("href") === "interactive.html?exhibit=sun", "Sun room link");
+  ok(inl("earth").querySelector("a").getAttribute("href") === "interactive.html?exhibit=earth", "Earth room link");
+  ok(inl("mars").hidden, "Mars shows a button on its row");
   ok(panel("mars").textContent === "No room or cards yet" && !panel("mars").querySelector("a"), "Mars no room");
   ok(d.querySelectorAll(".sun-row-open:not([hidden])").length === 0, "a row is open on arrival");
   // 2. Sun cannot be ticked
   await pick("center");
   ok(shown("center") === true, "Sun's box unticked it");
-  ok(focus() === "center" && !panel("center").hidden, "Sun's left end did not name and open its row");
+  ok(focus() === "center" && expanded("center") && panel("center").hidden && !inl("center").hidden, "Sun's left end did not name and open its row");
   await name("center");
-  ok(panel("center").hidden, "second tap on the Sun did not close its row");
+  ok(!expanded("center") && !inl("center").hidden, "second tap on the Sun did not close its row");
   // 3. Tick Mercury: drawn, named, opened, frame holds everything drawn (Earth's orbit)
   let calls = E("__calls.length");
   await pick("mercury");
@@ -83,7 +91,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   // 5. Name tap on a drawn body: names and opens, camera untouched
   calls = E("__calls.length"); const r0 = range();
   await name("earth");
-  ok(focus() === "earth" && !panel("earth").hidden && panel("neptune").hidden, "name tap did not name+open Earth");
+  ok(focus() === "earth" && expanded("earth") && panel("earth").hidden && panel("neptune").hidden, "name tap did not name+open Earth");
   ok(E("__calls.length") === calls && range() === r0, "name tap moved the view");
   // 6. See more / See fewer
   await click(seeMore());
@@ -143,16 +151,14 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   // 13. The panel words, as two bullet lists (Tony, 2026-10-02), and
   // Home's line as he settled it (2026-10-03)
   const info = d.getElementById("info-panel").textContent;
-  ok(info.indexOf("hold every body drawn") >= 0 && info.indexOf("Tap a body's name to open its row") >= 0 && info.indexOf("waits under See more") >= 0, "info words");
+  ok(info.indexOf("hold every body drawn") >= 0 && info.indexOf("A body with a room of its own has a button on its row") >= 0 && info.indexOf("waits under See more") >= 0, "info words");
   ok(info.indexOf("Home backs out to hold every body you ticked") >= 0 && info.indexOf("goes back to the last one") < 0, "Home's line");
   ok(d.querySelectorAll("#info-panel ul").length === 2 && d.querySelectorAll("#info-panel ul li").length === 9, "two lists, nine bullets");
   // 14. Sideways (Tony, 2026-10-03, option 3): an opened row's button sits
   // on the name's line before GO; upright it is the line under the row
   E("setSunDrawer(true)");
   await E("ssSelect(ssIndex('earth'), true)"); await h.done();
-  const inl = (key) => row(key).querySelector(".open-inline") ||
-    { hidden: true, textContent: "", nextElementSibling: null };
-  ok(!panel("earth").hidden && inl("earth").hidden, "upright: the button not under the row");
+  ok(panel("earth").hidden && !inl("earth").hidden, "upright: Earth's button not on its row");
   Object.defineProperty(w, "innerWidth", { value: 844, configurable: true });
   Object.defineProperty(w, "innerHeight", { value: 390, configurable: true });
   E("renderSunDrawer()");
@@ -161,7 +167,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(inl("earth").textContent === "Enter the Earth room", "sideways words " + inl("earth").textContent);
   ok(inl("mercury").hidden, "sideways: a closed row shows its button");
   await E("ssSelect(ssIndex('mercury'), true)"); await h.done();
-  ok(inl("earth").hidden && !inl("mercury").hidden && inl("mercury").textContent === "No room or cards yet", "sideways: Mercury's opened row");
+  ok(!inl("earth").hidden && !inl("mercury").hidden && inl("mercury").textContent === "No room or cards yet", "sideways: Mercury's opened row");
   Object.defineProperty(w, "innerWidth", { value: 1024, configurable: true });
   Object.defineProperty(w, "innerHeight", { value: 768, configurable: true });
   E("renderSunDrawer()");

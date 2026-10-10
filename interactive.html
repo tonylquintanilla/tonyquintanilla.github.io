@@ -244,6 +244,14 @@
         is described as it works: it backs out to hold every body
         ticked; the handle names the last body ticked. Home's code is
         unchanged)
+     Updated: October 10, 2026 with Anthropic's Claude Opus 5.5
+       (L-429, Tony, 2026-10-10: "so the visitor does not need to tap
+        the row to see the button then tap again to enter the room".
+        In the Solar System room's list a body with a room of its own
+        shows its "Enter the ... room" button on its own row, beside
+        GO, on every screen, all the time. A body with no room still
+        opens to "No room or cards yet": under the row when upright,
+        on the name's line when sideways. The info panel says so)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -634,9 +642,11 @@
             display: none;
         }
         /* The Sun is the scene's fixed centre: no box to tick, no GO. Its
-           box keeps its space so the names stay in one column. */
+           box keeps its space so the names stay in one column, and its GO
+           keeps its space too, so its room button lines up with Earth's
+           (L-429, 2026-10-10). Hidden things take no taps. */
         .sun-row.fixed .box { visibility: hidden; }
-        .sun-row.fixed .go { display: none; }
+        .sun-row.fixed .go { visibility: hidden; pointer-events: none; }
         /* An opened row, under its row, lined up with the names (65 px is
            the row's left end: 16 + 18 + 10 + 9 + 12). */
         .sun-row-open {
@@ -655,7 +665,9 @@
            sideways the drawer shows about a row and a half, so an opened
            row puts its button, or "No room or cards yet", on the name's
            line, between the name and GO, and stays one line tall. Shown
-           and hidden by ssRender, by ssPhoneSideways(). */
+           and hidden by ssRender, by ssPhoneSideways(). Since L-429
+           (2026-10-10) a body WITH a room shows its button here always,
+           on every screen, so one tap enters the room. */
         .sun-row .open-inline {
             flex-shrink: 0; margin-left: 10px;
             color: var(--text-dim); font-size: 12px; white-space: nowrap;
@@ -2136,8 +2148,8 @@ const SOLAR_SYSTEM_INFO_HTML = [
     " the line under the title says.</li>",
     "<li>Open the list below. Tick a body to draw it, and the view widens",
     " to hold every body drawn.</li>",
-    "<li>Tap a body's name to open its row; a body with a room of its own",
-    " has a button to enter it.</li>",
+    "<li>Tap a body's name to select it. A body with a room of its own",
+    " has a button on its row to enter it.</li>",
     "<li>Tap a body in the picture to find its row.</li>",
     "<li>GO takes the view to a body, and Home backs out to hold every",
     " body you ticked.</li>",
@@ -3963,8 +3975,9 @@ function sunSwatchColor(trace) {
 // made in gallery/solar_system_drawer.js, which a check requires as a
 // file; this part only touches the page and Plotly.
 //   - The Sun's row cannot be ticked: it is the scene's fixed centre.
-//   - A row opens: "Enter the ... room" where the body has a room in
-//     EXHIBITS, "No room or cards yet" where it has none.
+//   - "Enter the ... room" sits on the row of every body with a room in
+//     EXHIBITS, always (L-429, 2026-10-10); a row with none opens to
+//     "No room or cards yet".
 //   - See more / See fewer for the rows the room marks see_more.
 //   - Home remembers the order bodies were ticked, for this tab only.
 // Selecting and ticking are different acts. Ticking draws a body, frames
@@ -4027,6 +4040,8 @@ function ssWireRow(row, grp, k, list) {
     // The opened row: hidden until this row is opened. Upright and on the
     // desktop it is a line under the row; with the phone sideways the
     // same words sit on the row's own line, before GO (Tony, 2026-10-03).
+    // A body with a room keeps its button on the row's line always, on
+    // every screen (L-429, 2026-10-10).
     const panel = document.createElement("div");
     panel.className = "sun-row-open";
     panel.setAttribute("data-open-for", grp.key);
@@ -4036,6 +4051,9 @@ function ssWireRow(row, grp, k, list) {
     inline.setAttribute("data-open-for", grp.key);
     inline.hidden = true;
     const room = SSD.roomFor(served, Object.keys(EXHIBITS));
+    // L-429: ssRender reads this to keep a room's button on its row.
+    panel.setAttribute("data-room", room ? "yes" : "no");
+    inline.setAttribute("data-room", room ? "yes" : "no");
     [panel, inline].forEach(function (holder) {
         if (room) {
             const a = document.createElement("a");
@@ -4091,15 +4109,22 @@ function ssRender() {
             (vis && ssDrawer.open === grp.key) ? "true" : "false");
     }
     const sideways = ssPhoneSideways();
+    // A body with a room shows its button on its row, always (L-429);
+    // the line under the row is then never needed. A body with none
+    // opens as before: under the row upright, on its line sideways.
     const panels = list.querySelectorAll(".sun-row-open");
     for (let p = 0; p < panels.length; p++) {
         const key = panels[p].getAttribute("data-open-for");
-        panels[p].hidden = sideways || !(seen[key] && ssDrawer.open === key);
+        const hasRoom = panels[p].getAttribute("data-room") === "yes";
+        panels[p].hidden = hasRoom || sideways ||
+            !(seen[key] && ssDrawer.open === key);
     }
     const inlines = list.querySelectorAll(".sun-row .open-inline");
     for (let q = 0; q < inlines.length; q++) {
         const key = inlines[q].getAttribute("data-open-for");
-        inlines[q].hidden = !sideways || !(seen[key] && ssDrawer.open === key);
+        const hasRoom = inlines[q].getAttribute("data-room") === "yes";
+        inlines[q].hidden = hasRoom ? false :
+            (!sideways || !(seen[key] && ssDrawer.open === key));
     }
     const drawn = ssDrawnRows();
     const b = document.getElementById("sun-see-more");

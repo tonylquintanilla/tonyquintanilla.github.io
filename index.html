@@ -138,7 +138,13 @@
          startCardHtml() draws it. The card is not drawn again under
          Featured; its door's page still shows it first, as before.
        - "Doors" is renamed "Or explore by subject": a first-time
-         visitor has no way to know what a door is. -->
+         visitor has no way to know what a door is.
+     Updated: October 10, 2026 with Anthropic's Claude Opus 5.5 (L-428)
+       - Tony's look on the phone, 2026-10-09: the start card is as
+         see-through as the other lobby cards, so the doves show; and
+         the lobby's grey type is brighter ("grey is too dim"):
+         headings blue, the grey lines near white, with the guest
+         book's soft shadow. A door's own page keeps its colours. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1038,7 +1044,9 @@
            768px up it sits inside the column as a framed card. */
         .lobby-start {
             margin: 0 -18px 26px;
-            background: rgba(5, 7, 13, 0.92);
+            /* The other lobby cards' see-through blue, so the doves
+               show (Tony, 2026-10-09). The picture itself stays solid. */
+            background: rgba(9, 20, 38, 0.78);
             border-top: 1px solid rgba(201, 168, 76, 0.45);
             border-bottom: 1px solid rgba(201, 168, 76, 0.45);
             cursor: pointer;
@@ -1142,6 +1150,30 @@
         .lobby-footer a { color: inherit; display: flex; }
         .lobby-footer .footer-about-btn { margin: 0; }
         .lobby .welcome-version { margin: 18px 0 0; text-align: center; }
+        /* Brighter type over the dove wall (L-428, Tony's look of
+           2026-10-09: "grey is too dim"). The lobby only; a door's page
+           keeps its colours. Headings blue, so they stay apart from the
+           white names; the grey lines near white; each with the guest
+           book's soft dark shadow, for where it crosses a dove. */
+        .lobby .lobby-heading { color: #9db0ff; }
+        .lobby .welcome-text,
+        .lobby .lobby-door-sentence,
+        .lobby .lobby-door-meta,
+        .lobby .lobby-card-room,
+        .lobby .welcome-version,
+        .lobby .gb-note,
+        .lobby .gb-date,
+        .lobby .lobby-door-chevron,
+        .lobby .lobby-footer { color: #d6d4d0; }
+        .lobby .lobby-heading,
+        .lobby .welcome-text,
+        .lobby .lobby-door-sentence,
+        .lobby .lobby-door-meta,
+        .lobby .welcome-version,
+        .lobby .gb-note,
+        .lobby .gb-date {
+            text-shadow: 0 0 4px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
         @media (min-width: 768px) {
             .lobby-featured { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
