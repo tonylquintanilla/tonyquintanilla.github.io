@@ -23,6 +23,9 @@ Checks:
   T5  first golden L-080 fingerprint produced and round-trips.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+Module updated: October 10, 2026 with Anthropic's Claude Opus 5.5 (L-237:
+T2's scene date is Earth's stored "today" from the served cache, not the
+fixed 2026-07-13 the served window moved past on 2026-10-09).
 
 Role: devtool
 Domain: dev_tools
@@ -60,6 +63,16 @@ def _find_repo_root():
         "walking up from %s" % here)
 
 
+def _iso_from_jd(jd):
+    # L-237, 2026-10-10: the scene's date is Earth's stored "today" in the
+    # served cache, so it is inside the served window on every build. The
+    # fixed 2026-07-13 fell out of the window with the build of
+    # 2026-10-09, and T2 to T5 stopped printing.
+    import datetime
+    t = datetime.datetime(2000, 1, 1, 12) + datetime.timedelta(days=jd - 2451545.0)
+    return t.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def _load():
     root = _find_repo_root()
     with open(os.path.join(root, "data", "solar-system",
@@ -91,7 +104,7 @@ def main():
     # T2 -- assemble Earth alone.
     scene = {"spec_version": "1.0", "domain": "solar_system",
              "content_type": "static", "objects": ["earth"], "center": "sun",
-             "epoch": "2026-07-13T00:00:00Z"}
+             "epoch": _iso_from_jd(aot["t"])}
     result = assemble_scene(scene, catalog, cache)
     have = set(result.trace_roles)
     need = {"orbit", "orbit_info", "object_marker", "label"}

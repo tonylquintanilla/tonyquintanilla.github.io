@@ -4,7 +4,9 @@
 // Home (its frame holds every body ticked; the handle names the last one
 // ticked), All / none, GO, the info panel's lists, and an opened row with
 // the phone sideways (2026-10-04). Since L-429 (2026-10-10) a body with a
-// room shows its button on its row always; a body with none still opens. Each frame is checked against
+// room shows its button on its row always; a body with none still opens.
+// Since 2026-10-10 Go To sits in the middle of the row and the room's
+// button after it. Each frame is checked against
 // the body's distance worked out here, not by the page's own helpers,
 // times Tony's 20% (2026-10-02).
 //
@@ -63,7 +65,8 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   // L-429: a room's button is on its row from the start, no tap needed.
   ok(!inl("center").hidden && !inl("earth").hidden, "a room's button is not on its row on arrival");
   ok(inl("center").textContent === "Enter the Sun room" && inl("earth").textContent === "Enter the Earth room", "enter words");
-  ok(inl("earth").nextElementSibling === row("earth").querySelector(".go"), "Earth's button not before GO");
+  ok(inl("earth").previousElementSibling === row("earth").querySelector(".go"), "Earth's button not after Go To");
+  ok(row("earth").querySelector(".go").textContent === "go to", "the button's word is not go to");
   ok(inl("center").querySelector("a").getAttribute("href") === "interactive.html?exhibit=sun", "Sun room link");
   ok(inl("earth").querySelector("a").getAttribute("href") === "interactive.html?exhibit=earth", "Earth room link");
   ok(inl("mars").hidden, "Mars shows a button on its row");
@@ -163,7 +166,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   Object.defineProperty(w, "innerHeight", { value: 390, configurable: true });
   E("renderSunDrawer()");
   ok(panel("earth").hidden && !inl("earth").hidden, "sideways: the button not on the name's line");
-  ok(inl("earth").nextElementSibling === row("earth").querySelector(".go"), "sideways: the button not before GO");
+  ok(inl("earth").previousElementSibling === row("earth").querySelector(".go"), "sideways: the button not after Go To");
   ok(inl("earth").textContent === "Enter the Earth room", "sideways words " + inl("earth").textContent);
   ok(inl("mercury").hidden, "sideways: a closed row shows its button");
   await E("ssSelect(ssIndex('mercury'), true)"); await h.done();

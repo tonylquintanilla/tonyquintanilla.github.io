@@ -11,19 +11,20 @@ WHAT IT DOES
        or remove one. First, because it needs your answers, and
        because what you approve is saved at once -- a later step that
        fails cannot lose it.
-    2. CACHE BUILDER (tools/gallery_cache_builder.py), no flags. Before
-       it starts, the Daily Run asks you to pause OneDrive and note the
-       time (L-216); press Enter when it is paused, or type s to skip
-       the build today. The builder fetches from Horizons, swaps in the
-       new cache, and prints its own [SWAP] line and next steps.
+    2. CACHE BUILDER (tools/gallery_cache_builder.py), no flags. It
+       starts straight after the guest book: no OneDrive pause since
+       2026-10-10 (L-216, Tony: "the retry is sufficient"). To skip a
+       build, run the guest book updater alone from the dashboard. The
+       builder fetches from Horizons, swaps in the new cache, and
+       prints its own [SWAP] line and next steps.
     3. GALLERY MAINTENANCE RUN, offline (gallery_maintenance_run.py). The
        checks the builder's own next steps ask for before a commit. It
        runs even when the build was skipped, because the guest book may
        have changed.
 
     Then one summary: what each step did, and what is left for you --
-    look at GitHub Desktop's change list, commit and push, run the
-    maintenance run's live pass, and resume OneDrive.
+    look at GitHub Desktop's change list, commit and push, and run the
+    maintenance run's live pass.
 
     A step that reports a problem does not stop the next one; the
     summary says which step it was. Nothing here commits or pushes.
@@ -49,6 +50,9 @@ Role: devtool
 Domain: dev_tools
 
 Module created: September 27, 2026 with Anthropic's Claude Opus 5.5 (L-281).
+Module updated: October 10, 2026 with Anthropic's Claude Opus 5.5 (L-216:
+the OneDrive pause and its resume line are gone, by Tony's ruling of
+2026-10-10, "the retry is sufficient").
 """
 
 import datetime
@@ -148,26 +152,13 @@ def main():
     # 1. The guest book.
     results.append(("Guest book updater", run_step(1, *STEPS[0])))
 
-    # 2. The cache build, after the OneDrive pause.
+    # 2. The cache build. No OneDrive pause since 2026-10-10 (L-216):
+    # Tony, "the retry is sufficient" -- the builder retries a refused
+    # rename and the swap log records any retry.
+    results.append(("Cache builder", run_step(2, *STEPS[1])))
     print("")
-    print(LINE)
-    print("  Before the cache build: PAUSE ONEDRIVE and note the time.")
-    print("  (OneDrive icon in the taskbar > Pause syncing > 2 hours.)")
-    print(LINE)
-    answer = input("Press Enter when OneDrive is paused, or type s to skip the build today > ")
-    paused_at = datetime.datetime.now()
-    paused = answer.strip().lower() != "s"
-    if not paused:
-        results.append(("Cache builder", "skipped today"))
-        print("Cache build skipped.")
-    else:
-        print("OneDrive paused at %s; the pause lasts until about %s."
-              % (paused_at.strftime("%H:%M"),
-                 (paused_at + datetime.timedelta(hours=2)).strftime("%H:%M")))
-        results.append(("Cache builder", run_step(2, *STEPS[1])))
-        print("")
-        print("The builder's next steps start with the maintenance run.")
-        print("The Daily Run runs it now.")
+    print("The builder's next steps start with the maintenance run.")
+    print("The Daily Run runs it now.")
 
     # 3. The offline checks.
     results.append(("Maintenance run, offline", run_step(3, *STEPS[2])))
@@ -187,8 +178,6 @@ def main():
     print("  NEXT:")
     print("    1. GitHub Desktop: look at the change list, then commit and push.")
     print("    2. Then the dashboard's Gallery Maintenance Run -- live, AFTER a push.")
-    if paused:
-        print("    3. Resume OneDrive.")
     print(LINE)
     return 1 if problems else 0
 

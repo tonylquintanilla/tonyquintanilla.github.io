@@ -56,6 +56,9 @@ Written September 2026 with Anthropic's Claude Opus 5.
 Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: the
 room list holds every room; the Solar System room's opening view and
 highlighted row can be set).
+Updated October 10, 2026 with Anthropic's Claude Opus 5.5 (L-216: the
+save message no longer says to pause OneDrive; Tony, 2026-10-10, "the
+retry is sufficient").
 Updated October 6, 2026 with Anthropic's Claude Opus 5.5 (L-421: a
 shell's `hover` words are shown and saved; the belts' hover lists are
 named in the locked note).
@@ -329,11 +332,10 @@ def save_message(word_count, arrival_count):
     lines = ["Saved %s to data/objects_config.json." % " and ".join(parts)]
     lines.append("")
     lines.append("A visitor does not see this yet. To deploy it:")
-    lines.append("  1. Pause OneDrive syncing.")
-    lines.append("  2. Run the cache builder by hand, watching the change "
+    lines.append("  1. Run the cache builder by hand, watching the change "
                  "list in GitHub Desktop.")
-    lines.append("  3. Run the checks.")
-    lines.append("  4. Commit the config and the cache TOGETHER, and push.")
+    lines.append("  2. Run the checks.")
+    lines.append("  3. Commit the config and the cache TOGETHER, and push.")
     if arrival_count and not word_count:
         lines.append("")
         lines.append("A change to the opening view alone needs only the "

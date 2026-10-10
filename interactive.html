@@ -252,6 +252,13 @@
         GO, on every screen, all the time. A body with no room still
         opens to "No room or cards yet": under the row when upright,
         on the name's line when sideways. The info panel says so)
+     Updated: October 10, 2026 with Anthropic's Claude Opus 5.5
+       (L-429, Tony's rulings of 2026-10-10: "For uniformity rename the
+        Go buttons in all rooms to Go To and center." In every room's
+        list GO reads GO TO and sits in the middle of the row; in the
+        Solar System room the room button follows it on the right, so a
+        row reads name, Go To, room. The row is a three-column grid;
+        the left end still ticks and the name keeps the left half)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -571,10 +578,20 @@
             cursor: pointer; text-transform: uppercase;
         }
         .sun-drawer-list { overflow-y: auto; padding: 4px 0 10px; }
+        /* L-429, Tony, 2026-10-10: Go To in the middle of every row.
+           Three equal-sided columns: the left end and the name share
+           the first, Go To is the second, the room button (Solar System
+           room) the third. The name starts after the left end's 65 px,
+           and the left end sits above it, so it still takes the tap. */
         .sun-row {
-            display: flex; align-items: center; gap: 0; width: 100%;
+            display: grid; align-items: center; width: 100%;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            column-gap: 10px;
             min-height: 44px;
-            background: none; border: none; padding: 0 16px 0 0; cursor: pointer;
+            /* Even sides, so Go To sits on the row's true centre; the left
+               end reaches back over the left padding (margin below), so
+               its tap area still starts at the edge. */
+            background: none; border: none; padding: 0 16px; cursor: pointer;
             text-align: left; color: var(--text-dim);
             font: 400 13px 'DM Sans', system-ui, sans-serif;
         }
@@ -589,6 +606,8 @@
             display: flex; align-items: center; gap: 10px;
             align-self: stretch; flex-shrink: 0;
             padding: 0 12px 0 16px;
+            grid-column: 1; grid-row: 1; justify-self: start;
+            position: relative; z-index: 1; margin-left: -16px;
         }
         .sun-row:hover { background: var(--bg-surface); }
         /* L-291 step 3: a served group the page cannot draw yet is a row
@@ -614,13 +633,24 @@
         .sun-row .rname {
             flex: 1; overflow: hidden; text-overflow: ellipsis;
             white-space: nowrap;
+            grid-column: 1; grid-row: 1; min-width: 0; padding-left: 49px;
+        }
+        /* A layer not drawn yet has no Go To; its words keep the row. */
+        .sun-row.absent .rname { grid-column: 1 / -1; }
+        /* The left half is narrow, so a long name continues on the next
+           lines instead of being cut (Tony, 2026-10-10: every name shown
+           in full). On the desktop the names fit on one line anyway. */
+        .sun-row .rname {
+            white-space: normal; overflow-wrap: anywhere;
+            line-height: 1.25; padding-top: 6px; padding-bottom: 6px;
         }
         /* L-267 Stage B. Red, and always visible rather than on hover
            only: the cross markers are outlined in red and GO does the
            same job they do -- move the camera -- so the colour is the
            link between them, not a third accent for its own sake. */
         .sun-row .go {
-            margin-left: 10px;
+            grid-column: 2; grid-row: 1; justify-self: center;
+            white-space: nowrap;
             color: #f0594a; font-size: 12px; font-weight: 600;
             letter-spacing: 0.6px; text-transform: uppercase;
             flex-shrink: 0; opacity: 0.75; transition: opacity 0.15s;
@@ -664,12 +694,12 @@
         /* L-363, Tony's ruling of 2026-10-03 (option 3): with the phone
            sideways the drawer shows about a row and a half, so an opened
            row puts its button, or "No room or cards yet", on the name's
-           line, between the name and GO, and stays one line tall. Shown
+           line, after Go To since L-429, and stays one line tall. Shown
            and hidden by ssRender, by ssPhoneSideways(). Since L-429
            (2026-10-10) a body WITH a room shows its button here always,
            on every screen, so one tap enters the room. */
         .sun-row .open-inline {
-            flex-shrink: 0; margin-left: 10px;
+            grid-column: 3; grid-row: 1; justify-self: end; min-width: 0;
             color: var(--text-dim); font-size: 12px; white-space: nowrap;
         }
         .sun-row .open-inline a.enter {
@@ -2151,7 +2181,7 @@ const SOLAR_SYSTEM_INFO_HTML = [
     "<li>Tap a body's name to select it. A body with a room of its own",
     " has a button on its row to enter it.</li>",
     "<li>Tap a body in the picture to find its row.</li>",
-    "<li>GO takes the view to a body, and Home backs out to hold every",
+    "<li>Go To takes the view to a body, and Home backs out to hold every",
     " body you ticked.</li>",
     "<li>The body named on the list's handle has its description and",
     " source at the top of this panel.</li>",
@@ -4065,8 +4095,8 @@ function ssWireRow(row, grp, k, list) {
             holder.textContent = SSD.WORDS.noRoom;
         }
     });
-    const go = row.querySelector(".go");
-    if (go) { row.insertBefore(inline, go); } else { row.appendChild(inline); }
+    // After Go To since L-429 (2026-10-10): name, Go To, then the room.
+    row.appendChild(inline);
     list.appendChild(panel);
 }
 
@@ -4320,7 +4350,7 @@ function buildSunDrawer(traces) {
             '<span class="pick"><span class="box"></span>' +
             '<span class="swatch"></span></span>' +
             '<span class="rname"></span>' +
-            '<span class="go">go</span>';
+            '<span class="go">go to</span>';
         row.querySelector(".swatch").style.background = grp.color;
         row.querySelector(".rname").textContent = grp.name;
         // Each row names its group, so renderSunDrawer finds it however

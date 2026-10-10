@@ -10,17 +10,16 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 48  
-**Total Lines of Code (non-blank):** 23,102  
-**Total Public Functions/Classes:** 348
+**Total Python Files:** 47  
+**Total Lines of Code (non-blank):** 22,815  
+**Total Public Functions/Classes:** 345
 
 ## Classification Coverage
 
-**Undetermined role (10).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (9).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L428_1_lobby_option_e.py`
-- `patch_L428_3_L429_1_lobby_contrast_drawer_button.py`
+- `patch_L429_3_goto_centre_L237_date_L216_no_pause.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -29,11 +28,10 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (8).** No valid `Domain:` tag.
+**Undetermined domain (7).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L428_1_lobby_option_e.py`
-- `patch_L428_3_L429_1_lobby_contrast_drawer_button.py`
+- `patch_L429_3_goto_centre_L237_date_L216_no_pause.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -105,7 +103,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `add_docstrings.py` | Two related tools for module-level docstrings. (1,210 lines) |
 | `check_cache_in_step.py` | - the served cache holds the same objects and the same shells as data/objects_config.json. (284 lines) |
 | `check_constants_links.py` | - two checks over the gallery's links into the orrery's store, sharing the mirror's own reading so one cause prints one explanation. (255 lines) |
-| `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (169 lines) |
+| `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (158 lines) |
 | `debug_encke_tp.py` | - run the EXACT same live Horizons query gallery_cache_builder.py's fetch_solution_tp() makes for Encke, and print the complete raw response text. (61 lines) |
 | `fingerprint.py` | L-080 semantic fingerprint. (98 lines) |
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
@@ -123,7 +121,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `pull_objects_export.py` | - copy the orrery's objects export into the gallery, and record the SHA it came from. (93 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
-| `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (120 lines) |
+| `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (131 lines) |
 | `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (1,082 lines) |
 | `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (281 lines) |
 | `test_mirror_objects.py` | - tools/mirror_objects.py does what it says, on fixtures where each refusal and each kind of write must happen, and then on the real config. (125 lines) |
@@ -134,13 +132,12 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (659 lines) |
-| `patch_L428_1_lobby_option_e.py` | - the lobby's way in (option E). (319 lines) |
-| `patch_L428_3_L429_1_lobby_contrast_drawer_button.py` | Built on gallery 2aab10fdead213ade0cc9c8bdbfe1a6bc03c30b5 at https://github.com/tonylquintanilla/tonyquintanilla.github.io ("L428_1 lobby option E"). Written October 10, 2026 with Anthropic's Claude Opus 5.5, from Tony's run record of 2026-10-09 (documentation/WHERE_WE_ARE_10-9-26_2307_run_record... (318 lines) |
+| `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (661 lines) |
+| `patch_L429_3_goto_centre_L237_date_L216_no_pause.py` | Built on gallery cb9038ccb7aa9747194b330e49c8a52d70598ce8 at https://github.com/tonylquintanilla/tonyquintanilla.github.io ("L428"). Written October 10, 2026 with Anthropic's Claude Opus 5.5, from Tony's run record documentation/WHERE_WE_ARE_10-9-26_2307_run_record.md (in the orrery) and his answ... (346 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (588 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
-| `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (363 lines) |
+| `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (365 lines) |
 | `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (602 lines) |
 | `test_pole_of_date.py` | Offline checks of Earth's pole and tilt of date as the gallery cache builder computes them. (228 lines) |
 | `test_store_writer.py` | - the in-place writer does what it says, and refuses what it must. L-334 piece 5, the writer's half. (594 lines) |

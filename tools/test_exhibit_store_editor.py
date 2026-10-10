@@ -54,6 +54,8 @@ WHAT IT CHECKS, and what would make each fail.
   On Windows, without xvfb, it opens and closes a real window.
 
 Written September 2026 with Anthropic's Claude Opus 5.
+Updated October 10, 2026 with Anthropic's Claude Opus 5.5 (L-216: the save
+message must not say to pause OneDrive).
 Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: check
 10, and the window walk covers a room with no shells).
 """
@@ -264,8 +266,8 @@ def logic_checks():
     check("no change says so", "Nothing had changed"
           in E.save_message(0, 0))
     words_only = E.save_message(2, 0)
-    check("a word save names the cache builder",
-          "cache builder" in words_only and "OneDrive" in words_only)
+    check("a word save names the cache builder, and no OneDrive pause",
+          "cache builder" in words_only and "OneDrive" not in words_only)
     check("a word save does not claim a visitor sees it",
           "does not see this yet" in words_only)
     ticks_only = E.save_message(0, 1)
