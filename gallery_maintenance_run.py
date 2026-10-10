@@ -109,6 +109,10 @@ fetches gallery/guestbook.js and data/guestbook.json).
 Module updated: October 6, 2026 with Anthropic's Claude Opus 5.5
 (L-300: the "Collapsed features" checker runs
 sweep_collapsed_features.py).
+Module updated: October 10, 2026 with Anthropic's Claude Opus 5.5
+(L-395: the "Horizons check suite" checker runs
+tools/test_horizons_check.py, and "Horizons confirmations" runs
+tools/check_horizons_confirmations.py; both gate).
 """
 
 import hashlib
@@ -222,6 +226,21 @@ OFFLINE_CHECKERS = [
 
     ("Config mirror check", "python",
      ["tools/check_constants_links.py", "--mirror"], ".", None, False),
+
+    # L-395 (2026-10-10): the Horizons check. The suite runs the live
+    # check on JPL's recorded answers with no network: every served
+    # entry agrees, and every planted wrong entry -- wrong id, wrong
+    # index, a name off by one character, a stale pin, JPL unreachable
+    # -- is caught by name. The second row reads the record the Daily
+    # Run's live check writes, and fails on an entry never confirmed,
+    # overdue (30 days), or changed since it was confirmed, so a live
+    # check that stopped running shows here. Both gate.
+    ("Horizons check suite", "python",
+     ["test_horizons_check.py"], "tools", "HORIZONS CHECK SUITE:", False),
+
+    ("Horizons confirmations", "python",
+     ["tools/check_horizons_confirmations.py"], ".",
+     "HORIZONS CONFIRMATIONS:", False),
 
     ("Pointer join", "python",
      ["tools/check_constants_links.py", "--join"], ".", None, False),
@@ -352,7 +371,8 @@ OFFLINE_CHECKERS = [
     ("Guest book updater", "python",
      ["tools/test_guestbook_updater.py"], ".", None, False),
 
-    # L-281 (2026-09-27): the Daily Run calls three scripts by path. This
+    # L-281 (2026-09-27): the Daily Run calls its scripts by path (four
+    # since L-395 added the Horizons check, 2026-10-10). This
     # fails, naming the path, if any of them is missing -- so a rename
     # that would break the Daily Run fails here the same day, not the
     # next morning. Runs nothing. Gates.
