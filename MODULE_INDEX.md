@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** October 09, 2026 by `module_atlas.py`  
+**Generated:** October 10, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,16 +10,17 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 47  
-**Total Lines of Code (non-blank):** 22,784  
-**Total Public Functions/Classes:** 346
+**Total Python Files:** 48  
+**Total Lines of Code (non-blank):** 23,102  
+**Total Public Functions/Classes:** 348
 
 ## Classification Coverage
 
-**Undetermined role (9).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (10).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
 - `patch_L428_1_lobby_option_e.py`
+- `patch_L428_3_L429_1_lobby_contrast_drawer_button.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -28,10 +29,11 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (7).** No valid `Domain:` tag.
+**Undetermined domain (8).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
 - `patch_L428_1_lobby_option_e.py`
+- `patch_L428_3_L429_1_lobby_contrast_drawer_button.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -134,6 +136,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (659 lines) |
 | `patch_L428_1_lobby_option_e.py` | - the lobby's way in (option E). (319 lines) |
+| `patch_L428_3_L429_1_lobby_contrast_drawer_button.py` | Built on gallery 2aab10fdead213ade0cc9c8bdbfe1a6bc03c30b5 at https://github.com/tonylquintanilla/tonyquintanilla.github.io ("L428_1 lobby option E"). Written October 10, 2026 with Anthropic's Claude Opus 5.5, from Tony's run record of 2026-10-09 (documentation/WHERE_WE_ARE_10-9-26_2307_run_record... (318 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (588 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
