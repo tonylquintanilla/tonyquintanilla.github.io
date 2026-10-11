@@ -113,6 +113,12 @@ Module updated: October 10, 2026 with Anthropic's Claude Opus 5.5
 (L-395: the "Horizons check suite" checker runs
 tools/test_horizons_check.py, and "Horizons confirmations" runs
 tools/check_horizons_confirmations.py; both gate).
+Module updated: October 11, 2026 with Anthropic's Claude Opus 5.5
+(L-421, Tony's option A: the "Drawings pull" generator runs
+tools/pull_drawings.py, which brings each stored drawing the config
+names from the orrery at a recorded SHA; the "Drawings" checker runs
+tools/check_drawings.py and gates; the --live pass fetches the served
+Hills cloud, data/solar-system/drawings/hills_cloud.json).
 """
 
 import hashlib
@@ -168,6 +174,13 @@ GENERATORS = [
 
     ("Objects mirror", ["tools/mirror_objects.py", "--write"], ".",
      ["data/objects_config.json"]),
+
+    # L-421 (2026-10-11, Tony's option A): dots the orrery places and the
+    # website draws as given -- the Hills cloud first. The pull brings
+    # each drawing the config names at a recorded SHA; the cache builder
+    # serves it; "Drawings" below checks the two copies and the tilt.
+    ("Drawings pull", ["tools/pull_drawings.py"], ".",
+     ["data/drawings/hills_cloud.json", "data/drawings/pulled_at.sha"]),
 ]
 
 # ---- offline checkers ------------------------------------------------
@@ -253,6 +266,13 @@ OFFLINE_CHECKERS = [
     # When it fails: run the cache builder, then commit both together.
     ("Cache in step", "python",
      ["tools/check_cache_in_step.py"], ".", None, False),
+
+    # L-421 (2026-10-11): each stored drawing the config names is pulled,
+    # served byte for byte, and tilted as it records -- the plane through
+    # the served dots fitted again here. Red right after a pull that moved
+    # the dots, like Cache in step: run the cache builder.
+    ("Drawings", "python",
+     ["tools/check_drawings.py"], ".", "DRAWINGS:", False),
 
     # L-300 (2026-10-06, Tony's ruling of 2026-09-07): every served
     # feature group is either a shell stored as itself or a known
@@ -426,6 +446,9 @@ SERVED_FILES = [
     # script with a tag and fetches the entries file.
     "gallery/guestbook.js",
     "data/guestbook.json",
+    # L-421 (2026-10-11): the Hills cloud's dots, which the Sun room
+    # fetches from the served cache before it draws.
+    "data/solar-system/drawings/hills_cloud.json",
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing

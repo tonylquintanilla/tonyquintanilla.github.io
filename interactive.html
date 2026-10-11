@@ -259,6 +259,12 @@
         Solar System room the room button follows it on the right, so a
         row reads name, Go To, room. The row is a three-column grid;
         the left end still ticks and the name keeps the left half)
+     Updated: October 11, 2026 with Anthropic's Claude Opus 5.5
+       (L-421, Tony's option A: before a room is drawn, each stored
+        drawing its served features name -- the Hills cloud's dots,
+        placed by the orrery -- is fetched from
+        data/solar-system/drawings/ and handed to the renderers; one
+        that cannot be read is reported and only that shape is missing)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -3110,6 +3116,24 @@ async function initSunExhibit() {
         bar.style.width = "90%";
         const payload = JSON.parse(await pyodide.runPythonAsync(EX.driver));
 
+        // L-421 (2026-10-11, Tony's option A): a stored drawing a served
+        // feature names -- the Hills cloud's dots, placed by the orrery --
+        // is fetched from the served cache and handed to the renderers
+        // before the room is drawn. One that cannot be fetched is reported
+        // and that shape is not drawn; the rest of the room is.
+        const drawingNotes = [];
+        const drawings = {};
+        for (const name of GalleryFeatures.drawingNames(payload.features || [])) {
+            try {
+                drawings[name] = JSON.parse(await fetchTextOrThrow(
+                    "data/solar-system/drawings/" + name + ".json"));
+            } catch (err) {
+                drawingNotes.push("the stored drawing " + name +
+                                  " could not be read (" + err.message + ")");
+            }
+        }
+        GalleryFeatures.setDrawings(drawings);
+
         // Per room: how the payload becomes traces (the EXHIBITS table).
         const built = EX.compose(payload);
         // A room may put a line under its title (the Solar System room's
@@ -3117,7 +3141,7 @@ async function initSunExhibit() {
         sunSceneSubtitle = built.subtitle || null;
         sunAbsent = built.absent || [];
 
-        const notes = frameNotes.concat(payload.warnings || [],
+        const notes = frameNotes.concat(payload.warnings || [], drawingNotes,
                                         built.warnings || []);
         for (let i = 0; i < notes.length; i++) {
             console.warn(EXHIBIT + " exhibit: " + notes[i]);

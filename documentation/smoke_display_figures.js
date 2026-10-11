@@ -141,6 +141,16 @@
 // and the Sun direction and three Moon hovers (the scene re-recorded on
 // the cache of 2026-10-06's second build). The first one is left in
 // place, unreferenced.
+//
+// L-421, the website half (2026-10-11, Tony's option A): the Hills cloud
+// draws the orrery's dots and prints its served words, the clumps and the
+// tide print the band, the inner Oort sphere's note names it, and L-408's
+// galactic plane is new, with its three direction markers. Re-recorded as
+// fixture_hovers_L421_3_on_fd17abf1.json, on a cache built from the new
+// config, with exactly those hovers different from the L421_2 one (the
+// Hills cloud's key changes with its name). The stored drawings are read
+// from the served cache, as the page reads them. The L421_2 one is left
+// in place, unreferenced.
 
 "use strict";
 const fs = require("fs");
@@ -160,6 +170,22 @@ if (FRAME_NOTES.length) {
   console.log("FAIL frame constants not served: " + FRAME_NOTES.join("; "));
   process.exit(1);
 }
+// L-421 (2026-10-11, Tony's option A): the stored drawings the served
+// cache holds -- the Hills cloud's dots, placed by the orrery -- handed to
+// the renderers as the page hands them over. A drawing missing here makes
+// its shape a warning, which this check then reports.
+(function () {
+  const dir = require("path").join(__dirname, "..", "data", "solar-system", "drawings");
+  const map = {};
+  if (require("fs").existsSync(dir)) {
+    require("fs").readdirSync(dir).filter(function (n) { return /\.json$/.test(n); })
+      .forEach(function (n) {
+        map[n.slice(0, -5)] = JSON.parse(require("fs").readFileSync(
+          require("path").join(dir, n), "utf8"));
+      });
+  }
+  global.GalleryFeatures.setDrawings(map);
+})();
 
 const KM_PER_AU = 149597870.7;
 const SOFT_BR = "<br soft>";
@@ -168,9 +194,9 @@ const SOFT_BR = "<br soft>";
 // separately, and its period line is graded against the served row. The
 // fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "b43cc515";
+const FIXTURE_AT = "fd17abf1";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L421_2_on_b43cc515.json");
+                          "fixture_hovers_L421_3_on_fd17abf1.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

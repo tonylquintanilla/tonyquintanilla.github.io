@@ -32,6 +32,14 @@ Module updated: September 30, 2026 with Anthropic's Claude Opus 5.5 (L-363,
 Half 2 step 2: mocks for Mercury, Venus, Mars, Uranus, Neptune and the
 Pluto-Charon barycentre; the served-window check reads its heliocentric
 participants from the config instead of a hand-typed list).
+
+Module updated: October 11, 2026 with Anthropic's Claude Opus 5.5 (L-421,
+Tony's option A: every build here is given a small stand-in for each
+stored drawing the config names, made in the test's own tree by a
+wrapper around run_build installed with the mocks, so the suite does not
+depend on a pull; and three checks of serve_drawings():
+a named drawing is copied into the served cache byte for byte and listed
+in the run manifest, and a missing one ABORTs the build by name).
 """
 import json
 import math
@@ -163,13 +171,39 @@ def fake_orbit_plane(jd):
     return FAKE_ORBIT_PLANE
 
 
+REAL_RUN_BUILD = b.run_build
+
+
+def run_build_with_stand_ins(config, out_dir, *args, **kwargs):
+    """L-421: every build here gets the stand-in drawings first, in the
+    data folder beside its served directory, unless they are there."""
+    stand_in_drawings(config, Path(out_dir).parent)
+    return REAL_RUN_BUILD(config, out_dir, *args, **kwargs)
+
+
 def install_mocks():
+    b.run_build = run_build_with_stand_ins
     b.fetch_pole_radec = fake_pole_radec
     b.fetch_orbit_plane = fake_orbit_plane
     b.fetch_elements = fake_elements
     b.fetch_vectors_range = fake_vectors
     b.fetch_solution_tp = fake_solution_tp
     b._NOW_OVERRIDE = FIXED_NOW
+
+
+def stand_in_drawings(cfg, data_dir):
+    """L-421: a small stand-in for each stored drawing the config names,
+    in data_dir/drawings/, so a build here never depends on a pull. The
+    real dots are the orrery's; what is tested is how they are served."""
+    names = sorted(b._drawing_names(cfg.get('objects', [])))
+    (data_dir / 'drawings').mkdir(parents=True, exist_ok=True)
+    for name in names:
+        if (data_dir / 'drawings' / (name + '.json')).exists():
+            continue
+        (data_dir / 'drawings' / (name + '.json')).write_text(json.dumps(
+            {"schema": 1, "drawing": name, "unit": "au", "dots": 3,
+             "x": [1, 2, 3], "y": [4, 5, 6], "z": [7, 8, 9]}) + "\n")
+    return names
 
 
 def main():
@@ -193,9 +227,21 @@ def main():
     with tempfile.TemporaryDirectory() as td:
         out = Path(td) / 'data' / 'solar-system'
         out.mkdir(parents=True)
+        drawing_names = sorted(b._drawing_names(cfg['objects']))
 
         # --- first build ---
         rm = b.run_build(cfg, out, mode='first-build', do_commit=False)
+        # L-421: each stored drawing the config names is in the served
+        # cache, byte for byte, and the run manifest lists it.
+        check(bool(drawing_names) and all(
+            (out / 'drawings' / (n + '.json')).read_bytes() ==
+            (out.parent / 'drawings' / (n + '.json')).read_bytes()
+            for n in drawing_names),
+            "L-421: every named drawing served byte for byte (%s)"
+            % ", ".join(drawing_names))
+        check(rm.get('drawings') == {n: 3 for n in drawing_names},
+              "L-421: the run manifest lists the drawings served (%r)"
+              % rm.get('drawings'))
         check(rm['structural_validation'] == 'pass',
               "first-build structural validation passes (%s)" % rm['structural_validation'])
         check(not rm['guard_warnings'], "clean fakes -> no guard warnings")
@@ -817,9 +863,17 @@ def main():
             data_sib = Path(td_sib) / 'data'
             for name in ('solar-system', 'solar-system (1)',
                          '123-solar-system', 'solar-system.prev',
-                         'solar-system.quarantine_20260901T120000Z'):
+                         'solar-system.quarantine_20260901T120000Z',
+                         'drawings', 'drawings (1)'):
                 (data_sib / name).mkdir(parents=True)
             found = ccs.classify(data_sib)
+            # L-421: data/drawings/ is known by its exact name; a conflict
+            # copy of it is still a stray.
+            check(found['known'] == ['drawings'] and
+                  'drawings (1)' in found['foreign'],
+                  "L-421: data/drawings/ is a known folder, its conflict copy "
+                  "a stray (%r, %r)" % (found['known'], found['foreign']))
+            found['foreign'].remove('drawings (1)')
             check(found['foreign'] == ['123-solar-system', 'solar-system (1)'],
                   "L-216: the sibling report NAMES the folders the builder did "
                   "not make (%r)" % (found['foreign'],))
@@ -1191,6 +1245,19 @@ def main():
               "L-274: a same-day quarantine is KEPT as an autopsy (A-11)")
         check(out274.exists(),
               "L-274: the live served directory is never a sweep target")
+
+    # L-421: a drawing a served feature names, missing from data/drawings/,
+    # stops the build by name -- the cache would otherwise serve a feature
+    # naming a drawing it does not hold.
+    with tempfile.TemporaryDirectory() as td421:
+        out421 = Path(td421) / 'data' / 'solar-system'
+        out421.mkdir(parents=True)
+        rm421 = REAL_RUN_BUILD(cfg, out421, mode='first-build', do_commit=False)
+        verdict = str(rm421.get('structural_validation'))
+        check(verdict.startswith('fail') and 'drawing' in verdict and
+              all(n in verdict for n in sorted(b._drawing_names(cfg['objects']))),
+              "L-421: a missing named drawing ABORTs the build by name (%s)"
+              % verdict[:90])
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))

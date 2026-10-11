@@ -50,6 +50,11 @@ Module created: September 1, 2026 with Anthropic's Claude Opus 5.
 Module updated: September 20, 2026 with Anthropic's Claude Opus 5 (L-216:
 every other directory in data/ is named; the classification is a
 function so the offline suite can check it).
+Module updated: October 11, 2026 with Anthropic's Claude Opus 5.5 (L-421:
+data/drawings/, where tools/pull_drawings.py keeps the stored drawings
+pulled from the orrery, is a known folder: named on its own line, never
+counted among the strays. KNOWN_FOLDERS holds it by exact name, so a
+conflict copy of it, "drawings (1)", is still a stray).
 """
 
 import re
@@ -58,6 +63,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 KEEP_DAYS = 3
+
+# Folders in data/ that belong there and are not the builder's: by exact
+# name, with what puts them there. Anything else is named as a stray.
+KNOWN_FOLDERS = {
+    'drawings': 'the stored drawings tools/pull_drawings.py pulls from '
+                'the orrery (L-421)',
+}
 RUNID_RE = re.compile(r'(\d{8}T\d{6})Z?$')
 
 
@@ -81,13 +93,15 @@ def classify(data):
     A function rather than inline code so the offline suite can check it,
     because a report nothing exercises is a report that cannot fail."""
     live = prev = None
-    builder, foreign = [], []
+    builder, foreign, known = [], [], []
     for d in sorted(p for p in data.iterdir() if p.is_dir()):
         name = d.name
         if name == 'solar-system':
             live = d
         elif name == 'solar-system.prev':
             prev = d
+        elif name in KNOWN_FOLDERS:
+            known.append(name)
         elif (name.startswith('solar-system.quarantine_')
                 or name.startswith('.staging_solar-system_')
                 or name.startswith('solar-system.prev')):
@@ -95,7 +109,7 @@ def classify(data):
         else:
             foreign.append(name)
     return {'live': live, 'prev': prev, 'builder': builder,
-            'foreign': foreign}
+            'foreign': foreign, 'known': known}
 
 
 def main():
@@ -126,6 +140,8 @@ def main():
         else:
             fresh.append((a, name))
 
+    for name in found['known']:
+        print("known       : data/%s/ -- %s" % (name, KNOWN_FOLDERS[name]))
     print("siblings    : %s" % (len(siblings) if siblings else 'none'))
     if stale:
         print("")

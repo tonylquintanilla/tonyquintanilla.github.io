@@ -125,6 +125,18 @@
  *   Second patch, same day: the Sun's clumpy outer cloud and galactic
  *   tide print their served `hover`; servedHover() is exported for
  *   earth_geometry.js.)
+ * Module updated: October 11, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-421, the website half of the inner Oort cloud, Tony's option A:
+ *   the Hills cloud draws the orrery's own dots, a stored drawing the
+ *   page fetches from the served cache and hands over with
+ *   setDrawings(); this file places none, and the torus and its typed
+ *   caveat are gone. Its distance line prints three served rows, its
+ *   hover, about and note are served words with {tilt}, {near} and
+ *   {far} filled from served rows. The clumps and the tide begin thin
+ *   at the band's near end and are full by its far end, the orrery's
+ *   rule. L-408: the galactic plane -- a ring, the pole line, both
+ *   poles and the direction of the galaxy's centre, from served rows,
+ *   with served words on each marker.)
  */
 
 (function (global) {
@@ -147,6 +159,41 @@
   // row rather than choosing a width for it (provenance-discipline 2.20,
   // Rule 7). The smoke checks fail on any warning.
   var exactUncounted = [];
+
+  /* L-421 (2026-10-11, Tony's option A): stored drawings, by name -- dots
+     the orrery placed and the website draws as given. The page fetches
+     each one a served feature names (drawingNames) from the served cache
+     and hands them over with setDrawings() before drawing. */
+  var DRAWINGS = {};
+
+  function setDrawings(map) {
+    DRAWINGS = (map && typeof map === "object") ? map : {};
+  }
+
+  /* Every drawing name the served features name under drawing.dots,
+     sorted, so the page knows what to fetch. Only lower-case letters,
+     digits and underscores: the name becomes part of a URL. */
+  function drawingNames(featureRequests) {
+    var found = {};
+    function walk(node) {
+      if (Array.isArray(node)) {
+        for (var i = 0; i < node.length; i++) walk(node[i]);
+      } else if (node && typeof node === "object") {
+        var d = node.drawing;
+        if (d && typeof d === "object" && typeof d.dots === "string" &&
+            /^[a-z0-9_]+$/.test(d.dots)) {
+          found[d.dots] = true;
+        }
+        for (var k in node) {
+          if (Object.prototype.hasOwnProperty.call(node, k)) walk(node[k]);
+        }
+      }
+    }
+    for (var i = 0; i < (featureRequests || []).length; i++) {
+      walk(featureRequests[i].params);
+    }
+    return Object.keys(found).sort();
+  }
   var OBLIQUITY_RAD = null;
 
   function setFrameConstants(frame) {
@@ -1701,9 +1748,9 @@
    */
   var STREAMER_CAVEAT =
     "Its warp and width are drawn to show the shape, not measured.";
-  var HILLS_CAVEAT =
-    "Drawn flattened toward the ecliptic, as the inner cloud is" + SOFT_BR +
-    "thought to be; the thickness is chosen for the picture.";
+  // L-421 (2026-10-11): HILLS_CAVEAT, the Hills cloud's typed caveat,
+  // is gone. The cloud is drawn from the orrery's own dots, and what the
+  // drawing shows and what the paper says are the cloud's served words.
   // L-421 (2026-10-06): the clumpy outer cloud's caveat and the galactic
   // tide's (L-406, Tony's approved words of 2026-10-02) say what is not
   // known about nature, so they are served as each shape's `hover` and
@@ -1875,33 +1922,31 @@
     };
   }
 
-  /* A torus: the Hills cloud, flattened toward the ecliptic. */
-  function torusPoints(innerAu, outerAu, d) {
-    var major = (innerAu + outerAu) / 2;
-    var minor = (outerAu - innerAu) / 2 * d.thickness_ratio;
-    var rand = seededRandom(d.seed);
-    var n = d.n_points;
-    var xs = [], ys = [], zs = [];
-    for (var i = 0; i < n; i++) {
-      var u = 2 * Math.PI * i / n;
-      for (var j = 0; j < n; j++) {
-        var v = 2 * Math.PI * j / n;
-        var wobble = 1 + d.noise_factor * gaussian(rand);
-        var ring = major + minor * Math.cos(u);
-        xs.push(ring * Math.cos(v) * wobble);
-        ys.push(ring * Math.sin(v) * wobble);
-        zs.push(minor * Math.sin(u) * wobble * d.z_flatten);
-      }
-    }
-    return {x: xs, y: ys, z: zs};
+  /*
+   * L-421 (2026-10-11): the band where the inner cloud gives way to the
+   * round outer cloud. The chance of keeping a point at distance r is
+   * nothing at the band's near end, rising evenly to all of them at its
+   * far end, and all of them beyond: the orrery's _outer_cloud_keep()
+   * (solar_visualization_shells.py), the same rule on the same served
+   * rows. With no far end served, every point is kept, as before.
+   */
+  function bandKeep(r, near, far) {
+    if (typeof far !== "number" || !(far > near)) return 1;
+    return Math.min(1, Math.max(0, (r - near) / (far - near)));
   }
 
-  /* Density clumps scattered through a spherical shell. */
-  function clumpFieldPoints(innerAu, outerAu, d) {
+  /* Density clumps scattered through a spherical shell. L-421: thin at
+     the band's near end (innerAu) and full by fullAu, as the orrery
+     draws them: a clump's centre is drawn again until it is kept, and
+     each of its points is kept with the band's chance. */
+  function clumpFieldPoints(innerAu, outerAu, d, fullAu) {
     var rand = seededRandom(d.seed);
     var xs = [], ys = [], zs = [];
     for (var c = 0; c < d.n_clumps; c++) {
       var cr = innerAu + (outerAu - innerAu) * rand();
+      while (rand() >= bandKeep(cr, innerAu, fullAu)) {
+        cr = innerAu + (outerAu - innerAu) * rand();
+      }
       var th = 2 * Math.PI * rand();
       var ph = Math.PI * (rand() - 0.5);
       var cx = cr * Math.cos(ph) * Math.cos(th);
@@ -1916,9 +1961,15 @@
         var r = size * betaSample(rand, d.beta_a, d.beta_b);
         var t2 = 2 * Math.PI * rand();
         var p2 = Math.PI * (rand() - 0.5);
-        xs.push(cx + r * Math.cos(p2) * Math.cos(t2));
-        ys.push(cy + r * Math.cos(p2) * Math.sin(t2));
-        zs.push(cz + r * Math.sin(p2));
+        var px = cx + r * Math.cos(p2) * Math.cos(t2);
+        var py = cy + r * Math.cos(p2) * Math.sin(t2);
+        var pz = cz + r * Math.sin(p2);
+        var pr = Math.sqrt(px * px + py * py + pz * pz);
+        if (pr < innerAu || pr > outerAu ||
+            rand() >= bandKeep(pr, innerAu, fullAu)) {
+          continue;
+        }
+        xs.push(px); ys.push(py); zs.push(pz);
       }
     }
     return {x: xs, y: ys, z: zs};
@@ -1938,11 +1989,16 @@
    * the two draw different random points, as every seeded shape here
    * does.
    */
-  function tideFieldPoints(innerAu, outerAu, d, basis) {
+  function tideFieldPoints(innerAu, outerAu, d, basis, fullAu) {
     var rand = seededRandom(d.seed);
     var xs = [], ys = [], zs = [];
     for (var i = 0; i < d.n_points; i++) {
+      // L-421: thin at the band's near end and full by fullAu, as the
+      // orrery draws it; the same number of points, spread differently.
       var r = innerAu + (outerAu - innerAu) * rand();
+      while (rand() >= bandKeep(r, innerAu, fullAu)) {
+        r = innerAu + (outerAu - innerAu) * rand();
+      }
       var lon = 2 * Math.PI * rand();
       var u, tries = 0;
       do {
@@ -1958,6 +2014,62 @@
     return {x: xs, y: ys, z: zs};
   }
 
+  /*
+   * L-421 (2026-10-11, Tony's option A): a stored drawing's dots, as the
+   * orrery placed them, in AU in the drawing frame (the ecliptic of J2000,
+   * centred on the body). Nothing here places a dot. null, with a
+   * warning, when the drawing was not served or is not dots in AU.
+   */
+  function servedDots(d, where, warn) {
+    var name = d.dots, got = DRAWINGS[name];
+    if (typeof name !== "string" || !isDict(got)) {
+      warn(where + ": the stored drawing " + JSON.stringify(name) +
+           " was not served -- its dots are not drawn");
+      return null;
+    }
+    var n = got.dots;
+    if (got.unit !== "au" || typeof n !== "number" ||
+        !Array.isArray(got.x) || !Array.isArray(got.y) ||
+        !Array.isArray(got.z) || got.x.length !== n ||
+        got.y.length !== n || got.z.length !== n) {
+      warn(where + ": the stored drawing " + JSON.stringify(name) +
+           " is not " + n + " dots in AU -- not drawn");
+      return null;
+    }
+    return { x: got.x, y: got.y, z: got.z };
+  }
+
+  /*
+   * L-421 (2026-10-11): a served `about` or `note` may name served
+   * numbers in braces, filled here from `vals` (each already printed from
+   * a served row) on a shallow copy of the config, which stampLink()
+   * then carries to the i panel. A brace that cannot be filled is warned
+   * about and that paragraph is not shown, rather than shown with a hole.
+   */
+  function withFilledWords(cfg, vals, where, warn) {
+    var copy = {};
+    for (var k in cfg) {
+      if (Object.prototype.hasOwnProperty.call(cfg, k)) copy[k] = cfg[k];
+    }
+    ["about", "note"].forEach(function (field) {
+      if (typeof copy[field] !== "string") return;
+      var missing = [];
+      var out = copy[field].replace(/\{(\w+)\}/g, function (m, key) {
+        if (typeof vals[key] === "string") { return vals[key]; }
+        missing.push(key);
+        return m;
+      });
+      if (missing.length) {
+        warn(where + ": its " + field + " names {" + missing.join("}, {") +
+             "}, which is not served -- that paragraph is not shown");
+        delete copy[field];
+      } else {
+        copy[field] = out;
+      }
+    });
+    return copy;
+  }
+
   function renderOortShape(shape, bodyName, cfg, where, center, warn) {
     var d = cfg.drawing;
     if (!isDict(d)) {
@@ -1966,17 +2078,37 @@
     }
     var pts, marker, label = bodyName + ": " + (cfg.name || shape);
     var hover = label + "<br><br>" + descLine(cfg);
-    if (shape === "torus" || shape === "clump_field") {
+    if (shape === "served_dots") {
+      // L-421 (2026-10-11): the Hills cloud, as the orrery draws it --
+      // dots along orbits following Nesvorny et al. (2025), Fig. 3, full
+      // to the band's near end and thinning out across it. The distance
+      // line is built from three served rows; the words after it are the
+      // cloud's served hover, its {tilt} printed from the served row.
+      var dots = servedDots(d, where, warn);
       var lo = measuredAu(cfg.inner_radius, where + "/inner_radius", warn);
+      var mid = measuredAu(cfg.thins_from, where + "/thins_from", warn);
       var hi = measuredAu(cfg.outer_radius, where + "/outer_radius", warn);
-      if (lo === null || hi === null) return [];
-      pts = (shape === "torus") ? torusPoints(lo, hi, d)
-                                : clumpFieldPoints(lo, hi, d);
+      if (dots === null || lo === null || mid === null || hi === null) {
+        return [];
+      }
+      pts = dots;
       marker = [hi * 1.02, 0, 0];
       hover += "From " + (fmtAuServed(cfg.inner_radius) || fmtAu(lo)) +
-        " to " + (fmtAuServed(cfg.outer_radius) || fmtAu(hi)) + "<br>" +
-        (shape === "torus" ? HILLS_CAVEAT
-                           : servedHover(cfg.hover, {}, where, warn));
+        SOFT_BR + "to " + (fmtAuServed(cfg.thins_from) || fmtAu(mid)) + "," +
+        SOFT_BR + "thinning out by " +
+        (fmtAuServed(cfg.outer_radius) || fmtAu(hi)) + ".<br>" +
+        servedHover(cfg.hover, {tilt: servedText(cfg.tilt)}, where, warn);
+    } else if (shape === "clump_field") {
+      var clo = measuredAu(cfg.inner_radius, where + "/inner_radius", warn);
+      var chi = measuredAu(cfg.outer_radius, where + "/outer_radius", warn);
+      if (clo === null || chi === null) return [];
+      // L-421: thin from the band's near end, full by full_from.
+      var cfull = (cfg.full_from === undefined) ? null :
+        measuredAu(cfg.full_from, where + "/full_from", warn);
+      pts = clumpFieldPoints(clo, chi, d, cfull);
+      marker = [chi * 1.02, 0, 0];
+      hover += bandLine(cfg, clo, cfull, chi) +
+        servedHover(cfg.hover, {}, where, warn);
     } else {
       // L-406: the tide is drawn between its served edges, about the
       // galactic pole it serves. With no pole, or no frame angle to turn
@@ -1985,6 +2117,8 @@
       var tlo = measuredAu(cfg.inner_radius, where + "/inner_radius", warn);
       var thi = measuredAu(cfg.outer_radius, where + "/outer_radius", warn);
       if (tlo === null || thi === null) return [];
+      var tfull = (cfg.full_from === undefined) ? null :
+        measuredAu(cfg.full_from, where + "/full_from", warn);
       var gp = cfg.galactic_pole;
       if (!isDict(gp)) {
         warn(where + ": no galactic_pole served -- the tide is not drawn, " +
@@ -2000,10 +2134,9 @@
              "cannot be placed -- the tide is not drawn");
         return [];
       }
-      pts = tideFieldPoints(tlo, thi, d, gbasis);
+      pts = tideFieldPoints(tlo, thi, d, gbasis, tfull);
       marker = [thi * 1.02, 0, 0];
-      hover += "From " + (fmtAuServed(cfg.inner_radius) || fmtAu(tlo)) +
-        " to " + (fmtAuServed(cfg.outer_radius) || fmtAu(thi)) + "<br>" +
+      hover += bandLine(cfg, tlo, tfull, thi) +
         servedHover(cfg.hover, {}, where, warn);
     }
     // L-331 (2026-09-16): the citations that sat in these hovers reach the
@@ -2020,6 +2153,115 @@
                  center[2] + marker[2], color, hover, label,
                  cfg.info_border)
     ];
+  }
+
+  /* The clumps' and the tide's distance line. L-421: where a far end of
+     the band is served, "From <near>, filling in by <far>, to <outer>",
+     the orrery's words; otherwise "From <inner> to <outer>" as before. */
+  function bandLine(cfg, lo, full, hi) {
+    var a = fmtAuServed(cfg.inner_radius) || fmtAu(lo);
+    var z = fmtAuServed(cfg.outer_radius) || fmtAu(hi);
+    if (typeof full !== "number") {
+      return "From " + a + " to " + z + "<br>";
+    }
+    return "From " + a + "," + SOFT_BR + "filling in by " +
+      (fmtAuServed(cfg.full_from) || fmtAu(full)) + "," + SOFT_BR +
+      "to " + z + "<br>";
+  }
+
+  /*
+   * L-408 (2026-10-11): the galactic plane in the Sun room. A faint ring
+   * in the galaxy's plane at the served radius (the tide's outer edge), a
+   * line along the galactic pole through the body, the two poles marked,
+   * and the direction of the galaxy's centre as a marker on the same
+   * ring. Every direction is read from served rows: the pole the tide is
+   * drawn about, and Sgr A*'s position. The words on the three markers
+   * are served. The angle between the galaxy's plane and the ecliptic,
+   * which the i panel prints as {angle}, is worked out here from the
+   * served pole and printed to the nearest degree (Tony's approved
+   * words, L-408, 2026-10-03).
+   */
+  function renderGalacticPlane(bodyName, cfg, where, center, warn) {
+    var d = cfg.drawing;
+    var R = measuredAu(cfg.ring_radius, where + "/ring_radius", warn);
+    var gp = cfg.galactic_pole, gc = cfg.galactic_centre;
+    if (R === null || !isDict(d) || !isDict(gp) || !isDict(gc)) {
+      warn(where + ": needs a ring_radius, a drawing block, a galactic_pole and " +
+           "a galactic_centre -- not drawn");
+      return null;
+    }
+    var gra = measured(gp.ra, "deg", where + "/galactic_pole/ra", warn);
+    var gdec = measured(gp.dec, "deg", where + "/galactic_pole/dec", warn);
+    var cra = measured(gc.ra, "deg", where + "/galactic_centre/ra", warn);
+    var cdec = measured(gc.dec, "deg", where + "/galactic_centre/dec", warn);
+    if (gra === null || gdec === null || cra === null || cdec === null) {
+      return null;
+    }
+    var basis = poleBasis(gra, gdec), toward = poleBasis(cra, cdec);
+    if (!basis || !toward) {
+      warn(where + ": the frame angle is not served, so the galactic plane " +
+           "cannot be placed -- not drawn");
+      return null;
+    }
+    var label = bodyName + ": " + (cfg.name || "Galactic Plane");
+    var color = cfg.color || "rgb(175, 135, 235)";
+    var n = d.n_points, xs = [], ys = [], zs = [];
+    for (var i = 0; i <= n; i++) {
+      var t = 2 * Math.PI * i / n;
+      var p = applyBasis(basis, R * Math.cos(t), R * Math.sin(t), 0);
+      xs.push(center[0] + p[0]); ys.push(center[1] + p[1]);
+      zs.push(center[2] + p[2]);
+    }
+    var lineColor = color.replace("rgb(", "rgba(").replace(")", ", " +
+                                                           d.opacity + ")");
+    var zb = basis.zb, u = toward.zb;
+    function at(v, s) {
+      return [center[0] + s * v[0], center[1] + s * v[1],
+              center[2] + s * v[2]];
+    }
+    function directionMarker(pos, words, symbol, what) {
+      var text = servedHover(words, {}, where + "/" + what, warn);
+      if (!text) return null;
+      return {
+        type: "scatter3d", mode: "markers",
+        x: [pos[0]], y: [pos[1]], z: [pos[2]],
+        marker: { size: d.marker_size, color: color, symbol: symbol },
+        name: "", legendgroup: label, showlegend: false,
+        text: [withTail(text)], hovertemplate: "%{text}<extra></extra>",
+        hoverlabel: { font: { size: 11 } }
+      };
+    }
+    var m = applyBasis(basis, R * 1.02, 0, 0);
+    var traces = [
+      {
+        type: "scatter3d", mode: "lines", x: xs, y: ys, z: zs,
+        line: { color: lineColor, width: d.line_width },
+        name: label, legendgroup: label, showlegend: true, hoverinfo: "skip"
+      },
+      infoMarker(center[0] + m[0], center[1] + m[1], center[2] + m[2],
+                 color, withTail(label + "<br><br>" +
+                                 descLine(cfg).replace(/(<br>)+$/, "")),
+                 label,
+                 cfg.info_border),
+      {
+        type: "scatter3d", mode: "lines",
+        x: [at(zb, -R)[0], at(zb, R)[0]], y: [at(zb, -R)[1], at(zb, R)[1]],
+        z: [at(zb, -R)[2], at(zb, R)[2]],
+        line: { color: lineColor, width: d.line_width },
+        name: "", legendgroup: label, showlegend: false, hoverinfo: "skip"
+      }
+    ];
+    var marks = [
+      directionMarker(at(zb, R), cfg.north_pole_hover, "diamond", "north_pole_hover"),
+      directionMarker(at(zb, -R), cfg.south_pole_hover, "diamond-open", "south_pole_hover"),
+      directionMarker(at(u, R), cfg.centre_hover, "square", "centre_hover")
+    ];
+    for (var j = 0; j < marks.length; j++) {
+      if (marks[j]) traces.push(marks[j]);
+    }
+    var angle = Math.acos(Math.max(-1, Math.min(1, Math.abs(zb[2])))) *
+      180 / Math.PI;
+    return { traces: traces, angle: String(Math.round(angle)) };
   }
 
   /*
@@ -2267,7 +2509,26 @@
             starRadiusKm, halfRangeAu, warn, starRadiusFigures);
           traces = traces.concat(stampShell(ringTraces, key));
           if (ringTraces.length) drawn += 1;
-        } else if (cfg.shape === "torus" ||
+        } else if (cfg.shape === "galactic_plane") {
+          // L-408 (2026-10-11): off by default, like every Oort shape here
+          // larger than the scene.
+          var gpDrawn = renderGalacticPlane(bodyName, cfg, where + "/" + key,
+                                            center, warn);
+          if (gpDrawn) {
+            if (typeof halfRangeAu === "number" && halfRangeAu > 0) {
+              for (var gi = 0; gi < gpDrawn.traces.length; gi++) {
+                gpDrawn.traces[gi].visible = "legendonly";
+              }
+            }
+            traces = traces.concat(stampShell(stampLink(gpDrawn.traces,
+              withGatheredSource(withFilledWords(cfg, {angle: gpDrawn.angle},
+                                                 where + "/" + key, warn),
+                [["ring_radius", "Ring"], ["galactic_pole", "Galactic pole"],
+                 ["galactic_centre", "Galactic centre"],
+                 ["about_source", "The Hills cloud and the tide"]])), key));
+            drawn += 1;
+          }
+        } else if (cfg.shape === "served_dots" ||
                    cfg.shape === "clump_field" ||
                    cfg.shape === "tide_field") {
           // These three are measured in AU. The torus and the clumps
@@ -2288,9 +2549,20 @@
               oortTraces[oi].visible = "legendonly";
             }
           }
+          // L-421 (2026-10-11): the Hills cloud's about and note name the
+          // paper's tilt and the band's two ends, filled from served rows.
+          var oortWords = (cfg.shape === "served_dots")
+            ? withFilledWords(cfg, {tilt: servedText(cfg.tilt),
+                                    near: servedText(cfg.thins_from),
+                                    far: servedText(cfg.outer_radius)},
+                              where + "/" + key, warn)
+            : cfg;
           traces = traces.concat(stampShell(stampLink(oortTraces,
-            withGatheredSource(cfg, [["inner_radius", "Inner edge"],
+            withGatheredSource(oortWords, [["inner_radius", "Inner edge"],
+                                     ["thins_from", "The disk thins out from"],
+                                     ["full_from", "Full by"],
                                      ["outer_radius", "Outer edge"],
+                                     ["tilt", "Tilt"],
                                      ["galactic_pole", "Galactic pole"],
                                      ["density", "Shape"]])), key));
           drawn += 1;
@@ -3044,6 +3316,11 @@
     // L-322 Stage D: the page calls this once, with coverage_index.json's
     // frame_constants, before drawing; it returns the warnings to show.
     setFrameConstants: setFrameConstants,
+    // L-421 (2026-10-11): the stored drawings the served features name;
+    // the page fetches them from the served cache and hands them over
+    // before drawing.
+    drawingNames: drawingNames,
+    setDrawings: setDrawings,
     // L-320: the marker offset off the pole, shared with earth_geometry.js.
     infoMarkerOffsetDeg: INFO_MARKER_OFFSET_DEG,
     // Exported for the smoke test; not part of the drawing interface.

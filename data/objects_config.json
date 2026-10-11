@@ -181,11 +181,19 @@
         },
         "oort_cloud": {
           "hills_cloud_torus": {
-            "name": "Hills Cloud (torus)", "shape": "torus",
-            "description": "The inner part of the Oort cloud: a thick, flattened ring of icy bodies far beyond the planets, the reservoir that feeds the comets.",
-            "about": "The Oort cloud is a vast, unseen swarm of icy bodies surrounding the solar system, thought to be the source of the long-period comets. Its inner part, the Hills cloud, is more tightly bound to the Sun than the outer cloud and, in dynamical models, is flattened into a disk-like or doughnut shape by the pull of the galaxy. Nobody has seen it directly; its existence is inferred from the orbits of comets and from distant objects such as Sedna, which may belong to it.",
+            "name": "Hills Cloud (tilted disk)", "shape": "served_dots",
+            "description": "The inner part of the Oort cloud: icy bodies far beyond the planets, gathered in a slightly warped disk.",
+            "about": "The Oort cloud is a vast swarm of icy bodies surrounding the solar system, the source of the long-period comets. Its inner part, the Hills cloud, is more tightly bound to the Sun. It was long pictured as a fairly flat disk lying along the ecliptic. A 2025 computer model finds instead a slightly warped disk tilted about {tilt} degrees to the ecliptic, nearly at right angles to the plane of the Milky Way. Seen from far away it would look like a spiral with two twisted arms. The Milky Way's tide shapes it over billions of years. No one has seen it directly; its shape shows only indirectly, in the orbits of some long-period comets.",
             "info_url": "https://en.wikipedia.org/wiki/Hills_cloud",
+            "hover": "A 2025 computer model (Nesvorny and others) finds the disk tilted about {tilt} degrees to the ecliptic, the plane of Earth's orbit, with two spiral arms. The dots follow orbits like the model's; how stretched the orbits are is chosen for the picture.",
             "color": "rgb(180, 160, 255)",
+            "tilt": { "value": 30.0, "unit": "deg", "figures": 1,
+                "source": "Nesvorny, Dones, Vokrouhlicky, Levison, Beauge, Faherty, Emmart and Parker (2025), \"A Spiral Structure in the Inner Oort Cloud\", arXiv:2502.11252v1 (https://arxiv.org/pdf/2502.11252v1), sec. 1, p. 3 -- the inner Oort cloud is a slightly warped disk inclined about 30 degrees to the ecliptic, nearly polar in the Galactic reference system",
+                "orrery_constant": "constants_new.py::HILLS_CLOUD_TILT_DEG" },
+            "thins_from": { "value": 10000, "unit": "au",
+                "in": {"au": {"value": 10000.0, "figures": 1, "prints": null}, "km": {"value": 1000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.05, "figures": 1, "prints": null}, "r_earth": {"value": 200000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 2000000.0, "figures": 1, "prints": null}}, "figures": 1,
+                "source": "Nesvorny, Dones, Vokrouhlicky, Levison, Beauge, Faherty, Emmart and Parker (2025), \"A Spiral Structure in the Inner Oort Cloud\", arXiv:2502.11252v1 (https://arxiv.org/pdf/2502.11252v1), sec. 1, p. 2 -- the inner Oort cloud forms at 1,000 < r < 10,000 au; the outer cloud at r > 10,000 au is roughly spherical",
+                "orrery_constant": "constants_new.py::INNER_OORT_DISK_OUTER_AU" },
             "inner_radius": { "value": 2000, "unit": "au",
               "in": {"au": {"value": 2000.0, "figures": "exact", "prints": 1}, "km": {"value": 299195741400.0, "figures": "exact", "prints": 1}, "pc": {"value": 0.009696273622190736, "figures": "exact", "prints": 1}, "r_earth": {"value": 46909585.06595798, "figures": "exact", "prints": 1}, "r_sun": {"value": 430064.3113410953, "figures": "exact", "prints": 1}},
               "prints": 1,
@@ -198,25 +206,27 @@
               "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
               "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU" },
             "drawing": {
-              "_declared": "Drawing choices, not measurements. Copied from solar_visualization_shells.py::create_sun_hills_cloud_torus defaults.",
-              "thickness_ratio": 0.3, "n_points": 60, "noise_factor": 0.1,
-              "z_flatten": 0.5, "seed": 20260825,
+              "_declared": "Drawing choices, not measurements: how the dots look. Where they are is not here. The orrery places them (hills_cloud_sampler.py, from its rows) and they are served as the stored drawing named by dots, data/solar-system/drawings/hills_cloud.json, drawn as given (L-421, Tony's option A, 2026-10-11).",
+              "dots": "hills_cloud",
               "opacity": 0.28, "marker_size": 1.6
             },
-            "note": "Disk-like rather than spherical: the inner Oort cloud is flattened toward the ecliptic, unlike the outer cloud. The thickness is a drawing choice."
+            "note": "Drawn as dots along orbits picked where the model's orbits lie (its Fig. 3), so the tilt and the two arms come out of the orbits. How stretched the orbits are is chosen for the picture: the model shows it only as a plot. The dots thin out between {near} and {far} AU."
           },
           "outer_oort_clumpy": {
             "name": "Outer Oort Cloud (clumps)", "shape": "clump_field",
             "description": "The outer Oort cloud: a rough sphere of icy bodies at the very edge of the Sun's reach, drawn here as clumps.",
             "about": "The outer Oort cloud is a roughly spherical shell of icy bodies, cometary nuclei of water ice, ammonia and methane, reaching out to about two light-years from the Sun. Objects here are only loosely held, so passing stars and the galaxy's tide can nudge them inward as long-period comets, the ones that take more than two centuries to circle the Sun. Simulations suggest the cloud is lumpy rather than smooth, which is what the clumps show; where any real lump lies is not known.",
             "info_url": "https://science.nasa.gov/solar-system/oort-cloud/",
-            "hover": "Drawn in clumps to show the cloud is not smooth; where the clumps really are is not known.",
+            "hover": "It begins where the inner cloud's disk thins out.\nDrawn in clumps to show the cloud is not smooth; where the clumps really are is not known.",
             "color": "rgb(200, 200, 255)",
-            "inner_radius": { "value": 20000, "unit": "au",
-              "in": {"au": {"value": 20000.0, "figures": 1, "prints": null}, "km": {"value": 3000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.1, "figures": 1, "prints": null}, "r_earth": {"value": 500000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 4000000.0, "figures": 1, "prints": null}},
-              "figures": 1,
-              "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
-              "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU" },
+            "inner_radius": { "value": 10000, "unit": "au",
+                "in": {"au": {"value": 10000.0, "figures": 1, "prints": null}, "km": {"value": 1000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.05, "figures": 1, "prints": null}, "r_earth": {"value": 200000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 2000000.0, "figures": 1, "prints": null}}, "figures": 1,
+                "source": "Nesvorny, Dones, Vokrouhlicky, Levison, Beauge, Faherty, Emmart and Parker (2025), \"A Spiral Structure in the Inner Oort Cloud\", arXiv:2502.11252v1 (https://arxiv.org/pdf/2502.11252v1), sec. 1, p. 2 -- the outer Oort cloud at r > 10,000 au is roughly spherical; it begins here, thin, where the inner cloud's disk thins out",
+                "orrery_constant": "constants_new.py::INNER_OORT_DISK_OUTER_AU" },
+            "full_from": { "value": 20000, "unit": "au",
+                "in": {"au": {"value": 20000.0, "figures": 1, "prints": null}, "km": {"value": 3000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.1, "figures": 1, "prints": null}, "r_earth": {"value": 500000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 4000000.0, "figures": 1, "prints": null}}, "figures": 1,
+                "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less; the far end of the band, by which the outer cloud is full",
+                "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU" },
             "outer_radius": { "value": 100000, "unit": "au",
               "in": {"au": {"value": 100000.0, "figures": "exact", "prints": 1}, "km": {"value": 14959787069999.998, "figures": "exact", "prints": 1}, "pc": {"value": 0.48481368110953676, "figures": "exact", "prints": 1}, "r_earth": {"value": 2345479253.297899, "figures": "exact", "prints": 1}, "r_sun": {"value": 21503215.567054763, "figures": "exact", "prints": 1}},
               "prints": 1,
@@ -239,11 +249,14 @@
             "info_url": "https://en.wikipedia.org/wiki/Galactic_tide",
             "hover": "Drawn tilted to the galaxy's plane; how thick it is at each latitude follows how strongly the tide pulls there.\nWhere the comets really are is not known.",
             "color": "rgb(140, 200, 200)",
-            "inner_radius": { "value": 20000, "unit": "au",
-              "in": {"au": {"value": 20000.0, "figures": 1, "prints": null}, "km": {"value": 3000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.1, "figures": 1, "prints": null}, "r_earth": {"value": 500000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 4000000.0, "figures": 1, "prints": null}},
-              "figures": 1,
-              "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
-              "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU" },
+            "inner_radius": { "value": 10000, "unit": "au",
+                "in": {"au": {"value": 10000.0, "figures": 1, "prints": null}, "km": {"value": 1000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.05, "figures": 1, "prints": null}, "r_earth": {"value": 200000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 2000000.0, "figures": 1, "prints": null}}, "figures": 1,
+                "source": "Nesvorny, Dones, Vokrouhlicky, Levison, Beauge, Faherty, Emmart and Parker (2025), \"A Spiral Structure in the Inner Oort Cloud\", arXiv:2502.11252v1 (https://arxiv.org/pdf/2502.11252v1), sec. 1, p. 2 -- the outer Oort cloud at r > 10,000 au is roughly spherical; it begins here, thin, where the inner cloud's disk thins out",
+                "orrery_constant": "constants_new.py::INNER_OORT_DISK_OUTER_AU" },
+            "full_from": { "value": 20000, "unit": "au",
+                "in": {"au": {"value": 20000.0, "figures": 1, "prints": null}, "km": {"value": 3000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.1, "figures": 1, "prints": null}, "r_earth": {"value": 500000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 4000000.0, "figures": 1, "prints": null}}, "figures": 1,
+                "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less; the far end of the band, by which the outer cloud is full",
+                "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU" },
             "outer_radius": { "value": 100000, "unit": "au",
               "in": {"au": {"value": 100000.0, "figures": "exact", "prints": 1}, "km": {"value": 14959787069999.998, "figures": "exact", "prints": 1}, "pc": {"value": 0.48481368110953676, "figures": "exact", "prints": 1}, "r_earth": {"value": 2345479253.297899, "figures": "exact", "prints": 1}, "r_sun": {"value": 21503215.567054763, "figures": "exact", "prints": 1}},
               "prints": 1,
@@ -268,6 +281,44 @@
             },
             "note": "The thinning at the plane and the poles follows the tide's strength, and comets arriving for the first time show it. Where the comets in the cloud really are is not known."
           },
+          "galactic_plane": {
+            "name": "Galactic Plane", "shape": "galactic_plane",
+            "description": "The plane of the Milky Way's disk, drawn as a ring around the Sun, with a line along the galaxy's north-south axis, its two poles marked, and the direction of the galaxy's centre.",
+            "about": "The Milky Way is a flat disk of stars, gas and dust, and the Sun lies inside it. Seen from Earth, that disk is the pale band of the Milky Way across the night sky. The ring shows the disk's plane, and the line through the Sun points to the galaxy's north pole, in the constellation Coma Berenices. The planets' orbits are tipped steeply against it: the two planes meet at {angle} degrees. That is why the galactic tide is drawn tipped against the planets. The Hills cloud stands nearly at right angles to the galaxy's plane, turned there by the same tide over billions of years.",
+            "note": "The ring is drawn at the outer edge of the Oort cloud, where the tide is drawn, to show the plane's direction. The galaxy's disk reaches far beyond it. The poles and the galaxy's centre are marked as directions on the same ring, not at their real distances.",
+            "north_pole_hover": "North Galactic Pole (NGP)\nPerpendicular to the disk of our galaxy",
+            "south_pole_hover": "South Galactic Pole (SGP)\nPerpendicular to the disk of our galaxy",
+            "centre_hover": "Sagittarius A*\nThe direction of the centre of our galaxy, seen from the Sun",
+            "info_url": "https://en.wikipedia.org/wiki/Galactic_coordinate_system",
+            "color": "rgb(175, 135, 235)",
+            "ring_radius": { "value": 100000, "unit": "au",
+                "in": {"au": {"value": 100000.0, "figures": "exact", "prints": 1}, "km": {"value": 14959787069999.998, "figures": "exact", "prints": 1}, "pc": {"value": 0.48481368110953676, "figures": "exact", "prints": 1}, "r_earth": {"value": 2345479253.297899, "figures": "exact", "prints": 1}, "r_sun": {"value": 21503215.567054763, "figures": "exact", "prints": 1}},
+                "prints": 1, "figures": "exact",
+                "source": "NASA Science, \"Oort Cloud Facts\" (science.nasa.gov/solar-system/oort-cloud/facts) -- the outer edge is thought to lie between 10,000 and 100,000 AU; drawn at the far end",
+                "orrery_constant": "constants_new.py::OUTER_OORT_CLOUD_AU" },
+            "galactic_pole": {
+              "ra": { "value": 192.85948125, "unit": "deg", "figures": "exact",
+                "orrery_constant": "constants_new.py::GALACTIC_NORTH_POLE_RA_J2000_DEG" },
+              "dec": { "value": 27.128251111111112, "unit": "deg", "figures": "exact",
+                "orrery_constant": "constants_new.py::GALACTIC_NORTH_POLE_DEC_J2000_DEG" },
+              "source": "Murray (1989), the standard adopted for Hipparcos, as printed in Liu, Zhu and Hu, arXiv:1110.6268, eq. (2) -- the north galactic pole of J2000"
+            },
+            "galactic_centre": {
+              "ra": { "value": 266.416833, "unit": "deg", "figures": 9,
+                "orrery_constant": "constants_new.py::SGR_A_STAR_RA_ICRS_DEG" },
+              "dec": { "value": -29.0078161, "unit": "deg", "figures": 9,
+                "orrery_constant": "constants_new.py::SGR_A_STAR_DEC_ICRS_DEG" },
+              "source": "Liu, Zhu and Hu, \"Constructing a Galactic coordinate system based on near-infrared and radio catalogs\", arXiv:1110.6268, sec. 3.2, eq. (8) -- the position of Sgr A*, referred to the ICRS, from Reid and Brunthaler's Very Long Baseline Array measurements"
+            },
+            "about_source": {
+              "_declared": "No number: the source of the panel's last sentence, about the Hills cloud and the tide.",
+              "source": "Nesvorny, Dones, Vokrouhlicky, Levison, Beauge, Faherty, Emmart and Parker (2025), \"A Spiral Structure in the Inner Oort Cloud\", arXiv:2502.11252v1 (https://arxiv.org/pdf/2502.11252v1), sec. 1, p. 3; sec. 2, p. 3; sec. 5, p. 11 -- the inner Oort cloud is nearly polar in the Galactic frame, a consequence of the Galactic tide, persisting over billions of years"
+            },
+            "drawing": {
+              "_declared": "Drawing choices, not measurements: how many points draw the ring, and how the ring, the pole line and the three markers look. Where they are comes from ring_radius, galactic_pole and galactic_centre.",
+              "n_points": 180, "opacity": 0.4, "line_width": 1.5, "marker_size": 4
+            }
+          },
           "inner_oort_limit": {
             "name": "Inner Limit of Oort Cloud", "radius": { "value": 2000, "unit": "au", "in": {"au": {"value": 2000.0, "figures": "exact", "prints": 1}, "km": {"value": 299195741400.0, "figures": "exact", "prints": 1}, "pc": {"value": 0.009696273622190736, "figures": "exact", "prints": 1}, "r_earth": {"value": 46909585.06595798, "figures": "exact", "prints": 1}, "r_sun": {"value": 430064.3113410953, "figures": "exact", "prints": 1}}, "prints": 1, "figures": "exact" },
             "description": "The inner edge of the Oort cloud, where the swarm of icy bodies is thought to begin.",
@@ -289,7 +340,18 @@
             "info_url": "https://en.wikipedia.org/wiki/Hills_cloud",
             "color": "rgb(255, 255, 255)", "opacity": 0.35, "n_points": 20, "marker_size": 3.0,
             "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
-            "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
+            "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU",
+            "range": {
+              "low": { "value": 10000, "unit": "au",
+                  "in": {"au": {"value": 10000.0, "figures": 1, "prints": null}, "km": {"value": 1000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.05, "figures": 1, "prints": null}, "r_earth": {"value": 200000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 2000000.0, "figures": 1, "prints": null}}, "figures": 1,
+                  "source": "Nesvorny, Dones, Vokrouhlicky, Levison, Beauge, Faherty, Emmart and Parker (2025), \"A Spiral Structure in the Inner Oort Cloud\", arXiv:2502.11252v1 (https://arxiv.org/pdf/2502.11252v1), sec. 1, p. 2",
+                  "orrery_constant": "constants_new.py::INNER_OORT_DISK_OUTER_AU" },
+              "high": { "value": 20000, "unit": "au",
+                  "in": {"au": {"value": 20000.0, "figures": 1, "prints": null}, "km": {"value": 3000000000000.0, "figures": 1, "prints": null}, "pc": {"value": 0.1, "figures": 1, "prints": null}, "r_earth": {"value": 500000000.0, "figures": 1, "prints": null}, "r_sun": {"value": 4000000.0, "figures": 1, "prints": null}}, "figures": 1,
+                  "source": "Portegies Zwart, Torres, Cai and Brown (2021), A&A 652:A144, sec. 2.2 -- the inner edge of the Oort cloud, about 20,000 AU or less",
+                  "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU" }
+            },
+            "radius_note": "The inner cloud gives way to the round outer cloud between {low} and {high} AU; this sphere is drawn at {drawn} AU, the far end."
           },
           "outer_oort": {
             "name": "Outer Oort Cloud", "radius": { "value": 100000, "unit": "au", "in": {"au": {"value": 100000.0, "figures": "exact", "prints": 1}, "km": {"value": 14959787069999.998, "figures": "exact", "prints": 1}, "pc": {"value": 0.48481368110953676, "figures": "exact", "prints": 1}, "r_earth": {"value": 2345479253.297899, "figures": "exact", "prints": 1}, "r_sun": {"value": 21503215.567054763, "figures": "exact", "prints": 1}}, "prints": 1, "figures": "exact" },
@@ -1354,7 +1416,7 @@
     "_comment": "Settings for a room that is not one body, keyed by the room's ?exhibit= key. A body's own room keeps its arrival block on its entry in objects above. The page reads this section directly, as it reads an arrival block, so a change here reaches a visitor on the push alone. The cache builder, the assembler and the checks read only objects and ignore this section. Tony's ruling, 2026-09-30 (L-363, L-392).",
     "solar-system": {
       "arrival": {
-        "_declared": "Drawing choices for the view a visitor arrives at, not measurements, so there is no orrery_constant link. drawn lists the bodies ticked when the room opens, by slug; the Sun is the fixed centre and is always drawn. highlight is the body whose drawer row is highlighted, and whose name the closed drawer's handle shows. The opening view fits 1.1 times the largest distance among what is drawn. Tony's rulings, 2026-09-29 (the front-door design, section 3).",
+        "_declared": "Drawing choices for the view a visitor arrives at, not measurements, so there is no orrery_constant link. drawn lists the bodies ticked when the room opens, by slug; the Sun is the fixed centre and is always drawn. highlight is the body whose drawer row is highlighted, and whose name the closed drawer's handle shows. The opening view fits 1.2 times the largest distance among what is drawn. Tony's rulings, 2026-09-29 (the front-door design, section 3).",
         "drawn": ["mercury", "venus", "earth", "mars"],
         "highlight": "earth"
       },

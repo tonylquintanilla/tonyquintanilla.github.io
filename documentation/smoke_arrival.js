@@ -54,6 +54,22 @@ if (FRAME_NOTES.length) {
   console.log("FAIL frame constants not served: " + FRAME_NOTES.join("; "));
   process.exit(1);
 }
+// L-421 (2026-10-11, Tony's option A): the stored drawings the served
+// cache holds -- the Hills cloud's dots, placed by the orrery -- handed to
+// the renderers as the page hands them over. A drawing missing here makes
+// its shape a warning, which this check then reports.
+(function () {
+  const dir = require("path").join(__dirname, "..", "data", "solar-system", "drawings");
+  const map = {};
+  if (require("fs").existsSync(dir)) {
+    require("fs").readdirSync(dir).filter(function (n) { return /\.json$/.test(n); })
+      .forEach(function (n) {
+        map[n.slice(0, -5)] = JSON.parse(require("fs").readFileSync(
+          require("path").join(dir, n), "utf8"));
+      });
+  }
+  global.GalleryFeatures.setDrawings(map);
+})();
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

@@ -12,6 +12,22 @@ if (FRAME_NOTES.length) {
   console.log("FAIL frame constants not served: " + FRAME_NOTES.join("; "));
   process.exit(1);
 }
+// L-421 (2026-10-11, Tony's option A): the stored drawings the served
+// cache holds -- the Hills cloud's dots, placed by the orrery -- handed to
+// the renderers as the page hands them over. A drawing missing here makes
+// its shape a warning, which this check then reports.
+(function () {
+  const dir = require("path").join(__dirname, "..", "data", "solar-system", "drawings");
+  const map = {};
+  if (require("fs").existsSync(dir)) {
+    require("fs").readdirSync(dir).filter(function (n) { return /\.json$/.test(n); })
+      .forEach(function (n) {
+        map[n.slice(0, -5)] = JSON.parse(require("fs").readFileSync(
+          require("path").join(dir, n), "utf8"));
+      });
+  }
+  GF.setDrawings(map);
+})();
 const AU = 149597870.7, RSUN_KM = 695700.0;
 let fail = 0;
 function check(n, ok, d) { console.log((ok?"  OK   ":"  FAIL ")+n+(d?"  ["+d+"]":"")); if(!ok) fail++; }
@@ -26,11 +42,15 @@ const bodies = {sun:{name:"Sun", position:[0,0,0]}};
 const r = GF.buildFeatureTraces(features, bodies, {sceneHalfRangeAu: 1.1});
 check("no unread inputs", r.warnings.length === 0, r.warnings.join(" | "));
 const geo = r.traces.filter(t => t.showlegend === true);
-const info = r.traces.filter(t => t.showlegend === false);
-check("18 geometry traces (14 spheres + band + 3 Oort shapes)",
-      geo.length === 18, "got " + geo.length);
-check("18 info markers, one per geometry trace",
-      info.length === 18, "got " + info.length);
+// L-408 (2026-10-11): the galactic plane's pole line and its three
+// direction markers are drawn under its legend row too, with no legend
+// entry; an INFO marker is the cross, one per geometry trace.
+const info = r.traces.filter(t => t.showlegend === false &&
+                                  t.marker && t.marker.symbol === "cross");
+check("19 geometry traces (14 spheres + band + 3 Oort shapes + the galactic plane)",
+      geo.length === 19, "got " + geo.length);
+check("19 info markers, one per geometry trace",
+      info.length === 19, "got " + info.length);
 
 function radiusOf(t){ return Math.max(...t.x.map(Math.abs), ...t.z.map(Math.abs)); }
 const byName = {}; geo.forEach(t => byName[t.name] = t);
@@ -68,7 +88,7 @@ check("chromosphere is ABOVE the photosphere",
 const hidden = geo.filter(t => t.visible === "legendonly").map(t=>t.name).sort();
 const shown  = geo.filter(t => t.visible !== "legendonly").map(t=>t.name).sort();
 check("everything beyond 1.1 AU starts hidden",
-      hidden.length === 9 && shown.length === 9, hidden.length+" hidden / "+shown.length+" shown");
+      hidden.length === 10 && shown.length === 9, hidden.length+" hidden / "+shown.length+" shown");
 console.log("       hidden: " + hidden.join(", "));
 
 // marker separation: photosphere vs chromosphere markers must not coincide
@@ -155,14 +175,13 @@ const noPole = features.filter(f => f.feature !== "orientation");
 const r6 = GF.buildFeatureTraces(noPole, bodies, {sceneHalfRangeAu:1.1});
 check("no pole -> band refused and reported, spheres still drawn",
       r6.warnings.some(w => w.indexOf("L-229") !== -1) &&
-      r6.traces.filter(t => t.showlegend === true).length === 17,
+      r6.traces.filter(t => t.showlegend === true).length === 18,
       r6.warnings.filter(w => w.indexOf("L-229") !== -1)[0] || "no L-229 warning");
 
 // --- the three Oort shapes -------------------------------------------
-// Measured off the drawn points. The torus SURFACE sits at the mid-radius,
-// not at the cloud bounds: 2,000 and 20,000 AU bound the cloud, and a torus
-// built from them draws a ring at 11,000. Checking the bounds here would
-// pass for the wrong reason.
+// L-421 (2026-10-11, Tony's option A): the Hills cloud is the orrery's own
+// dots, served as a stored drawing. Checked here against the served file
+// itself, and its plane's tilt fitted by this check's own arithmetic.
 function radAt(t, i) { return Math.hypot(t.x[i], t.y[i], t.z[i]); }
 function span(t) {
   let lo = Infinity, hi = 0;
@@ -173,12 +192,70 @@ const torus = geo.find(t => t.name.indexOf("Hills Cloud") !== -1);
 const clumps = geo.find(t => t.name.indexOf("clumps") !== -1);
 const tide = geo.find(t => t.name.indexOf("Galactic Tide") !== -1);
 check("all three Oort shapes drawn", !!torus && !!clumps && !!tide);
+const hillsCfg = sun.features.oort_cloud.hills_cloud_torus;
+const servedPath = require("path").join(__dirname, "..", "data", "solar-system",
+  "drawings", hillsCfg.drawing.dots + ".json");
+const servedDots = fs.existsSync(servedPath)
+  ? JSON.parse(fs.readFileSync(servedPath, "utf8"))
+  : { dots: -1, x: [], y: [], z: [], plane_tilt_deg: null };
+check("the Hills cloud's stored drawing is in the served cache",
+      servedDots.dots > 0, servedDots.dots > 0 ? "" :
+      "data/solar-system/drawings/" + hillsCfg.drawing.dots + ".json is missing -- run the cache builder");
+check("the Hills cloud draws the served dots, every one, as given",
+      !!torus && torus.x.length === servedDots.dots &&
+      torus.x.every((v, i) => v === servedDots.x[i]) &&
+      torus.y.every((v, i) => v === servedDots.y[i]) &&
+      torus.z.every((v, i) => v === servedDots.z[i]),
+      (torus ? torus.x.length : 0) + " drawn, " + servedDots.dots + " served");
 const [tl, th] = span(torus);
-check("torus ring sits at the mid-radius, not at the cloud bounds",
-      tl > 4000 && th < 18000 && (tl + th) / 2 > 9000 && (tl + th) / 2 < 13000,
+check("the Hills cloud thins out by its served outer edge",
+      th <= hillsCfg.outer_radius.value + 1 && tl < hillsCfg.inner_radius.value,
       Math.round(tl) + " - " + Math.round(th) + " AU");
+// The plane through the dots, by power iteration on the inverse of the
+// moment matrix: this check's own arithmetic, not the renderer's or the
+// orrery's.
+function planeTilt(t) {
+  const m = [[0,0,0],[0,0,0],[0,0,0]], n = t.x.length;
+  for (let i = 0; i < n; i++) {
+    const p = [t.x[i], t.y[i], t.z[i]];
+    for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) m[a][b] += p[a] * p[b] / n;
+  }
+  const [[a,b,c],[d,e,f],[g,h,k]] = m;
+  const det = a*(e*k-f*h) - b*(d*k-f*g) + c*(d*h-e*g);
+  const inv = [[(e*k-f*h)/det,(c*h-b*k)/det,(b*f-c*e)/det],
+               [(f*g-d*k)/det,(a*k-c*g)/det,(c*d-a*f)/det],
+               [(d*h-e*g)/det,(b*g-a*h)/det,(a*e-b*d)/det]];
+  let v = [1, 1, 1];
+  for (let it = 0; it < 500; it++) {
+    const w = inv.map(row => row[0]*v[0] + row[1]*v[1] + row[2]*v[2]);
+    const sz = Math.hypot(w[0], w[1], w[2]);
+    v = w.map(x => x / sz);
+  }
+  return Math.acos(Math.min(1, Math.abs(v[2]))) * 180 / Math.PI;
+}
+const hTilt = planeTilt(torus);
+check("the drawn disk is tilted within 10 degrees of the served tilt row",
+      Math.abs(hTilt - hillsCfg.tilt.value) <= 10 &&
+      Math.abs(Math.round(hTilt * 10) / 10 - servedDots.plane_tilt_deg) < 0.051,
+      hTilt.toFixed(1) + " deg drawn; the file says " + servedDots.plane_tilt_deg +
+      ", the row " + hillsCfg.tilt.value);
+const hillsHover = info.map(t => String(t.text || "")).find(h => h.indexOf("Hills Cloud") !== -1) || "";
+check("the Hills cloud hover prints its three edges and the tilt from rows",
+      hillsHover.indexOf("From 2,000 AU") !== -1 &&
+      hillsHover.indexOf("to 10,000 AU") !== -1 &&
+      hillsHover.indexOf("thinning out by 20,000 AU") !== -1 &&
+      hillsHover.indexOf("about 30 degrees") !== -1 &&
+      hillsHover.indexOf("{") === -1,
+      hillsHover.replace(/<br[^>]*>/g, " / ").slice(0, 160));
+const hillsMeta = (info.find(t => (t.legendgroup || "").indexOf("Hills Cloud") !== -1) || {}).meta || {};
+check("the Hills cloud's panel words are filled from rows",
+      /about 30 degrees/.test(hillsMeta.about || "") &&
+      /between 10,000 and 20,000 AU/.test(hillsMeta.note || "") &&
+      !/\{/.test((hillsMeta.about || "") + (hillsMeta.note || "")),
+      (hillsMeta.note || "no note").slice(-60));
 const [cl, ch] = span(clumps);
-check("clumps stay inside the outer bound", ch <= 100000 && cl >= 20000,
+check("clumps stay between the band's near end and the outer bound",
+      ch <= 100000 && cl >= 10000,
       Math.round(cl) + " - " + Math.round(ch) + " AU");
 // L-406 (2026-10-02). The tide is drawn between its served edges, about
 // the galactic pole it serves. Until then this check measured latitude
@@ -188,10 +265,21 @@ check("clumps stay inside the outer bound", ch <= 100000 && cl >= 20000,
 // drawing's frame by this check's own arithmetic, not by poleBasis().
 const tideCfg = sun.features.oort_cloud.galactic_tide;
 const [dl, dh] = span(tide);
-check("tide drawn between its served edges, 20,000 to 100,000 AU",
-      tideCfg.inner_radius?.value === 20000 && tideCfg.outer_radius?.value === 100000 &&
-      dl >= 20000 && dh <= 100000 && dl < 22000 && dh > 98000,
+check("tide drawn between its served edges, 10,000 to 100,000 AU",
+      tideCfg.inner_radius?.value === 10000 && tideCfg.outer_radius?.value === 100000 &&
+      tideCfg.full_from?.value === 20000 &&
+      dl >= 10000 && dh <= 100000 && dl < 14000 && dh > 98000,
       Math.round(dl) + " - " + Math.round(dh) + " AU");
+// L-421: thin at the band's near end, full by its far end. Spread evenly
+// in distance, the band 10,000 to 20,000 AU would hold 10/90 of the
+// points; fading in evenly across it, 5/85.
+let inBand = 0;
+for (let i = 0; i < tide.x.length; i++) { if (radAt(tide, i) < 20000) inBand++; }
+const bandShare = inBand / tide.x.length;
+check("the tide fades in across the band, as the orrery draws it",
+      bandShare > 0.035 && bandShare < 0.085,
+      (100 * bandShare).toFixed(1) + "% of points inside 20,000 AU; " +
+      "5.9% for an even fade, 11.1% for none");
 const OB = JSON.parse(fs.readFileSync(require("path").join(__dirname, "..", "data",
   "solar-system", "coverage_index.json"), "utf8")).frame_constants.rows
   .EARTH_OBLIQUITY_J2000_DEG.value * Math.PI / 180;
@@ -241,7 +329,8 @@ check("the measure tells the planes apart: not thinned at the ecliptic",
 const tideHover = info.map(t => String(t.hovertext || t.text || ""))
   .find(h => h.indexOf("Galactic Tide") !== -1) || "";
 check("tide hover gives its edges and says what is not known",
-      tideHover.indexOf("From 20,000 AU") !== -1 &&
+      tideHover.indexOf("From 10,000 AU") !== -1 &&
+      tideHover.indexOf("filling in by 20,000 AU") !== -1 &&
       tideHover.indexOf("to 100,000 AU") !== -1 &&
       tideHover.indexOf("Where the comets really are is not known") !== -1,
       tideHover.replace(/<br>/g, " / ").slice(0, 160));
@@ -250,6 +339,51 @@ const clumps2 = again.traces.filter(t => t.showlegend === true)
   .find(t => t.name.indexOf("clumps") !== -1);
 check("seeded: two runs give identical geometry",
       JSON.stringify(clumps.x) === JSON.stringify(clumps2.x));
+
+// --- L-408 (2026-10-11): the galactic plane --------------------------
+// The ring, the pole line and the markers, measured off what is drawn
+// against the served rows turned into the drawing frame by this check's
+// own arithmetic (poleInDrawing above), not by poleBasis().
+const gpCfg = sun.features.oort_cloud.galactic_plane;
+const ring = geo.find(t => t.name === "Sun: Galactic Plane");
+const gpAll = r.traces.filter(t => t.legendgroup === "Sun: Galactic Plane");
+const RR = gpCfg.ring_radius.value;
+const NGP = poleInDrawing(gpCfg.galactic_pole.ra.value, gpCfg.galactic_pole.dec.value);
+const GC = poleInDrawing(gpCfg.galactic_centre.ra.value, gpCfg.galactic_centre.dec.value);
+let worst = 0, off = 0;
+for (let i = 0; ring && i < ring.x.length; i++) {
+  worst = Math.max(worst, Math.abs(radAt(ring, i) - RR) / RR);
+  off = Math.max(off, Math.abs(ring.x[i]*NGP[0] + ring.y[i]*NGP[1] + ring.z[i]*NGP[2]) / RR);
+}
+check("the ring is drawn at its served radius, in the galaxy's plane",
+      !!ring && worst < 1e-9 && off < 1e-9,
+      "radius off by " + worst.toExponential(1) + ", out of plane by " + off.toExponential(1));
+function markerWith(words) {
+  return gpAll.find(t => Array.isArray(t.text) && String(t.text[0]).indexOf(words) === 0);
+}
+const ngpM = markerWith("North Galactic Pole"), sgpM = markerWith("South Galactic Pole"),
+      gcM = markerWith("Sagittarius A*");
+function along(m, v, s) {
+  return !!m && Math.hypot(m.x[0] - s*RR*v[0], m.y[0] - s*RR*v[1], m.z[0] - s*RR*v[2]) / RR < 1e-9;
+}
+check("both poles marked at the ring's radius along the served pole",
+      along(ngpM, NGP, 1) && along(sgpM, NGP, -1));
+const gcLat = gcM ? Math.asin((gcM.x[0]*NGP[0] + gcM.y[0]*NGP[1] + gcM.z[0]*NGP[2]) / RR) * 180 / Math.PI : 99;
+check("the galaxy's centre marked along Sgr A*'s served direction, on the ring",
+      along(gcM, GC, 1) && Math.abs(gcLat) < 0.1,
+      "galactic latitude of the marker " + gcLat.toFixed(3) + " deg");
+const lineT = gpAll.find(t => t.mode === "lines" && t.showlegend === false);
+check("the pole line runs through the Sun from pole to pole",
+      !!lineT && along({x: [lineT.x[1]], y: [lineT.y[1]], z: [lineT.z[1]]}, NGP, 1) &&
+      along({x: [lineT.x[0]], y: [lineT.y[0]], z: [lineT.z[0]]}, NGP, -1));
+const gpMeta = (info.find(t => t.legendgroup === "Sun: Galactic Plane") || {}).meta || {};
+const angleNow = Math.round(Math.acos(Math.abs(NGP[2])) * 180 / Math.PI);
+check("the panel prints the angle between the planes, worked out from the served pole",
+      (gpMeta.about || "").indexOf("meet at " + angleNow + " degrees") !== -1 && angleNow === 60,
+      "the pole gives " + angleNow);
+check("the galactic plane starts hidden, its markers too",
+      gpAll.length === 6 && gpAll.every(t => t.visible === "legendonly"),
+      gpAll.length + " traces");
 
 console.log(fail ? "FAILURES: " + fail : "ALL CHECKS PASSED");
 process.exit(fail ? 1 : 0);

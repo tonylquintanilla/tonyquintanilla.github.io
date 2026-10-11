@@ -72,6 +72,11 @@ Module updated: September 24, 2026 with Anthropic's Claude Opus 5.5
 (L-322 Stage D, gallery patch G1: Earth's pole and tilt of date fetched,
 derived and served as pole_of_date, checked before the swap as #P; the
 frame rows served as frame_constants from data/constants_export.json).
+Module updated: October 11, 2026 with Anthropic's Claude Opus 5.5
+(L-421, Tony's option A: serve_drawings() copies each stored drawing a
+served feature names -- today the Hills cloud's dots, placed by the
+orrery -- from data/drawings/ into the served cache's drawings/, and
+ABORTs if one is missing; the run manifest lists them under "drawings").
 
 Role: cache
 Domain: cache_builder
@@ -1320,6 +1325,61 @@ def derive_served(staging, results, defaults, warn=None, frame=None):
     return index
 
 
+def _drawing_names(node, found=None):
+    """Every name a served feature's drawing block names under "dots"."""
+    found = set() if found is None else found
+    if isinstance(node, dict):
+        d = node.get('drawing')
+        if isinstance(d, dict) and isinstance(d.get('dots'), str):
+            found.add(d['dots'])
+        for v in node.values():
+            _drawing_names(v, found)
+    elif isinstance(node, list):
+        for v in node:
+            _drawing_names(v, found)
+    return found
+
+
+def serve_drawings(staging, index, drawings_dir):
+    """L-421 (2026-10-11, Tony's option A): copy each stored drawing the
+    served features name into staging/drawings/<name>.json, byte for byte
+    (line endings made LF), from the copy tools/pull_drawings.py keeps in
+    data/drawings/. The browser fetches the served copy, so a drawing
+    reaches a visitor with the cache it was built with. ABORT if a named
+    drawing is missing or is not dots in AU: the cache would otherwise
+    serve a feature that names a drawing it does not hold. Returns
+    {name: dots} for the run manifest."""
+    names = sorted(_drawing_names(index.get('objects', {})))
+    served = {}
+    if not names:
+        return served
+    out = staging / 'drawings'
+    out.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        if not re.match(r'^[a-z0-9_]+$', name):
+            raise ValidationAbort("drawing name %r is not lower-case letters, "
+                                  "digits and underscores" % name)
+        src = Path(drawings_dir) / (name + '.json')
+        if not src.exists():
+            raise ValidationAbort(
+                "drawing %r is named by a served feature but %s is missing "
+                "-- run the gallery maintenance run first (it pulls the "
+                "drawing from the orrery), then this builder" % (name, src))
+        raw = src.read_bytes().replace(b'\r\n', b'\n')
+        try:
+            content = json.loads(raw.decode('utf-8'))
+        except ValueError as e:
+            raise ValidationAbort("drawing %r is not JSON (%s)" % (name, e))
+        n = content.get('dots') if isinstance(content, dict) else None
+        if (content.get('unit') != 'au' or not isinstance(n, int) or n <= 0
+                or any(len(content.get(a) or []) != n for a in 'xyz')):
+            raise ValidationAbort("drawing %r is not %s dots in AU with x, y "
+                                  "and z of that length" % (name, n))
+        (out / (name + '.json')).write_bytes(raw)
+        served[name] = n
+    return served
+
+
 # ===========================================================================
 # VALIDATION -- structural invariants + shrink gate ABORT; guard/B3 WARN
 # ===========================================================================
@@ -2121,6 +2181,10 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                     print("[ABORT] %s" % run_manifest['structural_validation'], flush=True)
                     return run_manifest
     try:
+        # L-421 (2026-10-11): the stored drawings the features name, into
+        # the served cache beside coverage_index.json.
+        run_manifest['drawings'] = serve_drawings(
+            staging, index, out_dir.parent / 'drawings')
         assert_structural(index, staging)
         shrink_gate(staging, out_dir if (out_dir / 'raw').exists() else None, warn)
         run_manifest['structural_validation'] = 'pass'
