@@ -40,6 +40,13 @@ wrapper around run_build installed with the mocks, so the suite does not
 depend on a pull; and three checks of serve_drawings():
 a named drawing is copied into the served cache byte for byte and listed
 in the run manifest, and a missing one ABORTs the build by name).
+
+Module updated: October 11, 2026 with Anthropic's Claude Opus 5.5 (L-421,
+the close: the stand-in drawings are written as bytes, so they are LF on
+every machine. Written as text they were CRLF on Windows, which the
+builder serves as LF, and "every named drawing served byte for byte"
+failed on Tony's machine alone. A fourth check holds the builder's rule:
+a drawing pulled with Windows line endings is served with LF).
 """
 import json
 import math
@@ -200,9 +207,12 @@ def stand_in_drawings(cfg, data_dir):
     for name in names:
         if (data_dir / 'drawings' / (name + '.json')).exists():
             continue
-        (data_dir / 'drawings' / (name + '.json')).write_text(json.dumps(
+        # Bytes, not text: write_text() on Windows turns each newline into
+        # CRLF, which the builder rightly serves as LF -- and the byte
+        # comparison below then failed on Tony's machine only (2026-10-11).
+        (data_dir / 'drawings' / (name + '.json')).write_bytes((json.dumps(
             {"schema": 1, "drawing": name, "unit": "au", "dots": 3,
-             "x": [1, 2, 3], "y": [4, 5, 6], "z": [7, 8, 9]}) + "\n")
+             "x": [1, 2, 3], "y": [4, 5, 6], "z": [7, 8, 9]}) + "\n").encode('ascii'))
     return names
 
 
@@ -1245,6 +1255,25 @@ def main():
               "L-274: a same-day quarantine is KEPT as an autopsy (A-11)")
         check(out274.exists(),
               "L-274: the live served directory is never a sweep target")
+
+    # L-421: a drawing pulled with Windows line endings is served with LF,
+    # the builder's own rule, so the served copy reads the same on every
+    # machine and the gallery's Drawings check compares like with like.
+    with tempfile.TemporaryDirectory() as tdcr:
+        outcr = Path(tdcr) / 'data' / 'solar-system'
+        outcr.mkdir(parents=True)
+        crlf_names = stand_in_drawings(cfg, outcr.parent)
+        for n in crlf_names:
+            p = outcr.parent / 'drawings' / (n + '.json')
+            p.write_bytes(p.read_bytes().replace(b', ', b',\r\n'))
+        b.run_build(cfg, outcr, mode='first-build', do_commit=False)
+        check(bool(crlf_names) and all(
+            b'\r\n' not in (outcr / 'drawings' / (n + '.json')).read_bytes() and
+            (outcr / 'drawings' / (n + '.json')).read_bytes() ==
+            (outcr.parent / 'drawings' / (n + '.json')).read_bytes()
+            .replace(b'\r\n', b'\n') for n in crlf_names),
+            "L-421: a drawing pulled with Windows line endings is served with "
+            "LF, otherwise byte for byte (%s)" % ", ".join(crlf_names))
 
     # L-421: a drawing a served feature names, missing from data/drawings/,
     # stops the build by name -- the cache would otherwise serve a feature
