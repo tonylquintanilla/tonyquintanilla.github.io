@@ -83,6 +83,11 @@ const pagePath = process.argv[4];
 global.window = global;
 eval(code);
 if (geomPath) { eval(fs.readFileSync(geomPath, "utf8")); }
+// L-431 build 3: the page loads gallery/solar_system_figures.js, and the
+// Earth room's Sun Direction hover prints Earth's period through it, so
+// its lines are counted as the page shows them.
+eval(fs.readFileSync(require("path").join(__dirname, "..", "gallery",
+                                          "solar_system_figures.js"), "utf8"));
 const GF = global.GalleryFeatures;
 const EG = global.EarthGeometry;
 // L-322 Stage D, patch D7: the renderers take KM_PER_AU and the frame's
@@ -181,6 +186,13 @@ function overlayProse(features) {
 if (EG) {
     const p = fixture("payload_earth_scene.json");
     overlayProse(p.features);
+    // L-431 build 3: Earth's orbital period, from the config, as the
+    // page's driver hands it over, so the Sun Direction hover is counted
+    // with its period line.
+    p.earthPeriod = (JSON.parse(fs.readFileSync(require("path").join(__dirname,
+        "..", "data", "objects_config.json"), "utf8")).objects || [])
+        .filter(o => o && o.slug === "earth")
+        .map(o => o.period === undefined ? null : o.period)[0] || null;
     // L-379 (2026-10-06): the recording is remade by
     // tools/record_earth_scene.py, so it carries the magnetotail, the
     // rotation period and the pole of date itself, as the page's driver

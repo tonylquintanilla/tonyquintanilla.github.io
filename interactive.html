@@ -1937,10 +1937,18 @@ try:
 except Exception as _e:
     _notes.append("earth: pole of date not read (%s)" % _e)
 
+# L-431 build 3: Earth's orbital period, the orrery's, copied into the
+# config by tools/mirror_objects.py; printed in the Sun Direction's hover.
+_earth_period = None
+for _o in (_cfg.get("objects") or []):
+    if isinstance(_o, dict) and _o.get("slug") == "earth":
+        _earth_period = _o.get("period")
+
 json.dumps({
     "figure": result.figure,
     "features": result.report["features"],
     "warnings": list(result.report["warnings"]) + _notes,
+    "earthPeriod": _earth_period,
     "sun": _sun,
     "moonArc": _arc,
     "epochJd": _jd,
@@ -2059,6 +2067,15 @@ result = assemble_scene(
 # of the two errors earns.
 _objs = {_o.get("slug"): _o for _o in (_cfg.get("objects") or [])
          if isinstance(_o, dict)}
+def _drawn_wanted(_o):
+    _p = _o.get("period")
+    if not (isinstance(_p, dict) and _p.get("kind") == "fetched"):
+        return False
+    _c = str(_p.get("center") or "").lower()
+    return (bool(_c) and _c not in ("@sun", "@10", "sun", "10")
+            and _o.get("canonical_frame") == "heliocentric"
+            and _o.get("category") not in ("spacecraft", "comet"))
+
 _served = {}
 for _slug in _bodies:
     _rec = _cache.record(_slug)
@@ -2076,6 +2093,15 @@ for _slug in _bodies:
         # object list. The panel shows both; the hover does not.
         "description": (_objs.get(_slug) or {}).get("description"),
         "info_url": (_objs.get(_slug) or {}).get("info_url"),
+        # L-431 build 3: the orbital period, the orrery's, copied into the
+        # config by tools/mirror_objects.py. The page prints it at its
+        # served figure count (gallery/solar_system_figures.js).
+        "period": (_objs.get(_slug) or {}).get("period"),
+        # Whether the builder serves this body a drawn_orbit: the same
+        # rule as the builder's needs_drawn_orbit and Cache in step's
+        # drawn_centre_wanted. A comet or a spacecraft is drawn around the
+        # Sun whatever its period's centre, so it never asks for one.
+        "drawn_wanted": _drawn_wanted(_objs.get(_slug) or {}),
     }
 
 json.dumps({
@@ -2345,7 +2371,22 @@ const EXHIBITS = {
                         continue;
                     }
                     if (t.mode === "markers" && t.name === b.name + " osculating orbit info") {
-                        t.text = [label + "'s orbit"];
+                        // L-431 build 3: say what the ellipse is drawn
+                        // around when that is not the Sun -- the period's
+                        // centre, served as drawn_orbit by the builder.
+                        const drawnAt = (t.meta || {}).drawn_center;
+                        if (drawnAt && drawnAt !== "sun" && b.period && b.period.center_label) {
+                            t.text = [label + "'s orbit, drawn around" + GalleryFeatures.SOFT_BR +
+                                      b.period.center_label];
+                        } else {
+                            t.text = [label + "'s orbit"];
+                        }
+                        if (b.drawn_wanted && drawnAt === "sun") {
+                            warnings.push(label + ": its period is around " +
+                                          b.period.center_label + ", but the served " +
+                                          "cache draws its orbit around the Sun -- " +
+                                          "run the cache builder");
+                        }
                         continue;
                     }
                     if (t.name !== b.name) { continue; }
@@ -2369,6 +2410,13 @@ const EXHIBITS = {
                     }
                     if (dist.accuracyWhy) {
                         warnings.push(label + ": " + dist.accuracyWhy);
+                    }
+                    // L-431 build 3: the orbital period, every body.
+                    const per = SolarSystemFigures.periodLine(b.period);
+                    if (per.line) {
+                        lines.push(solarSystemSoftWrap(per.line, 60));
+                    } else if (per.warning) {
+                        warnings.push(label + ": " + per.warning);
                     }
                     t.text = [lines.join("<br>")];
                     const extra = { label_target: true };

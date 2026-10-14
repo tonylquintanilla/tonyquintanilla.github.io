@@ -18,6 +18,9 @@ Domain: gallery
 
 Module created: October 1, 2026 with Anthropic's Claude Opus 5.5
 (L-395, the first build).
+Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
+build 3: the period's copy, its refusals, and a planted mirror that drops
+the centre, each forced on a fixture.)
 """
 
 import json
@@ -47,7 +50,7 @@ def check(condition, message):
 
 
 def export_of(**objects):
-    return {"schema": 1, "objects": objects}
+    return {"schema": 2, "objects": objects}
 
 
 def obj(name, hid, id_type=None, description=None, info_url=None):
@@ -106,6 +109,52 @@ def cases():
     check(any(f.startswith("mars.info_url:") for f in failures),
           "a null over a held link was not refused")
 
+    # L-431, build 3: the period.
+    fetched = {"kind": "fetched", "typed": False, "center": "@sun",
+               "center_label": "the Sun", "open_orbit": False,
+               "fetched": "2026-10-13", "words": None,
+               "years": {"value": 1.881, "figures": 4, "text": "1.881"},
+               "days": {"value": 687.0, "figures": 4, "text": "687.0"},
+               "record": {"days": 686.98, "error_days": 0.05,
+                          "elements": {"a": 1.52}}}
+    ex5 = json.loads(json.dumps(ex))
+    ex5["objects"]["mars"]["period"] = fetched
+    ex5["objects"]["sun"]["period"] = None
+    edits, changes, failures, linked = mo.plan(cfg4, ex5)
+    out5 = mo.apply(cfg4, edits)
+    by5 = {o["slug"]: o for o in json.loads(out5)["objects"]}
+    check(not failures and by5["mars"].get("period", {}).get("center")
+          == "@sun", "a fetched period was not copied with its centre")
+    check("record" not in by5["mars"].get("period", {}),
+          "the orrery's record was copied into the config")
+    check("period" not in by5["sun"], "a null period was written for the Sun")
+    check(any(c.startswith("mars.period: added") for c in changes),
+          "the period was not reported by name")
+    # A planted mirror that drops the centre: the next plan sees it.
+    real_copy = mo.period_copy
+    mo.period_copy = lambda p: ({k: v for k, v in real_copy(p).items()
+                                 if k != "center"} if isinstance(p, dict)
+                                else p)
+    try:
+        dropped = mo.apply(cfg4, mo.plan(cfg4, ex5)[0])
+    finally:
+        mo.period_copy = real_copy
+    again = mo.plan(dropped, ex5)[1]
+    check(any(c.startswith("mars.period:") for c in again),
+          "a mirror that drops the centre was not caught on the next check")
+    # A fetched period with no centre is refused, not copied.
+    ex6 = json.loads(json.dumps(ex5))
+    ex6["objects"]["mars"]["period"]["center"] = None
+    failures = mo.plan(cfg4, ex6)[2]
+    check(any(f.startswith("mars.period:") for f in failures),
+          "a fetched period with no centre was not refused")
+    # An export older than schema 2 is refused.
+    ex7 = json.loads(json.dumps(ex5))
+    ex7["schema"] = 1
+    failures = mo.plan(cfg4, ex7)[2]
+    check(any("schema 1" in f for f in failures),
+          "an export older than schema 2 was not refused")
+
 
 def real():
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -139,7 +188,10 @@ def main():
         return 1
     print("Fixtures: insert on a multi-line entry, an id change reported, a "
           "blank id_type kept, a room row without a key refused, a key "
-          "without an object refused, a null over held words refused.")
+          "without an object refused, a null over held words refused; a "
+          "period copied with its centre and without the orrery's record, "
+          "a mirror that drops the centre caught, a fetched period with no "
+          "centre refused, an export older than schema 2 refused (L-431).")
     print("MIRROR OBJECTS SUITE: pass")
     return 0
 

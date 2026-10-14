@@ -75,6 +75,10 @@ Module updated: September 30, 2026 with Anthropic's Claude Opus 5.5
 (L-397: every object is compared, not only those serving shells -- its
 presence in both cache files and its identity fields -- and that
 comparison is shown able to fail on each run).
+Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
+build 3: an object whose config period is taken around the barycentre
+needs a served drawn_orbit around it, and a served drawn_orbit needs such
+a period; shown able to fail on a probe each run.)
 """
 
 import copy
@@ -204,7 +208,39 @@ def compare_objects(config, caches):
                                      % (obj.get("slug"), mine,
                                         short(obj.get(mine)),
                                         short(record.get(theirs)))))
+            # L-431 build 3: the orbit is drawn around the period's centre.
+            # A config period taken around the barycentre needs a served
+            # drawn_orbit around it, and a served drawn_orbit needs a
+            # period that asks for one; otherwise the room draws around
+            # the wrong centre until the builder runs.
+            want = drawn_centre_wanted(obj)
+            held = (record.get("drawn_orbit") or {}).get("period_center")
+            if want != held and record.get("osculating") is not None:
+                failures.append((shown, "%s/period: the config's period is "
+                                 "around %s, the cache draws its orbit "
+                                 "around %s" % (obj.get("slug"),
+                                                want or "the Sun",
+                                                held or "the Sun")))
     return failures
+
+
+SUN_CENTRES = ("@sun", "@10", "sun", "10")
+
+
+def drawn_centre_wanted(obj):
+    """The centre a served drawn_orbit should be around for this config
+    entry, or None when the orbit is drawn around the Sun (L-431)."""
+    period = obj.get("period")
+    if not (isinstance(period, dict) and period.get("kind") == "fetched"):
+        return None
+    centre = period.get("center")
+    if not centre or str(centre).lower() in SUN_CENTRES:
+        return None
+    if obj.get("canonical_frame") != "heliocentric":
+        return None
+    if obj.get("category") in ("spacecraft", "comet"):
+        return None
+    return centre
 
 
 def self_test(config, caches):
@@ -229,6 +265,18 @@ def self_test(config, caches):
     if not any(message.startswith("%s/name:" % first.get("slug"))
                for _where, message in compare_objects(probe, caches)):
         missing.append("a name changed in the config was not reported")
+    # L-431 build 3: a period moved to the barycentre and not built.
+    probe = copy.deepcopy(config)
+    helio = [obj for obj in probe["objects"] if isinstance(obj, dict)
+             and obj.get("canonical_frame") == "heliocentric"
+             and obj.get("category") not in ("spacecraft", "comet")
+             and obj.get("serve_positions") is not False]
+    if helio:
+        helio[0]["period"] = {"kind": "fetched", "center": "@0"}
+        if not any(message.startswith("%s/period:" % helio[0].get("slug"))
+                   for _where, message in compare_objects(probe, caches)):
+            missing.append("a period moved to the barycentre and not built "
+                           "was not reported")
     return missing
 
 

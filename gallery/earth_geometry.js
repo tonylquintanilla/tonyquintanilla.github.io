@@ -79,6 +79,12 @@
  * 2019 correction and the Almanac glossary. No word a visitor reads
  * changed. Later the same day, from Tony's phone: each guide's info
  * marker carries its served link, which the panel now shows.)
+ * Updated October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431, build
+ * 3: the Sun Direction's hover states Earth's orbital period, the
+ * orrery's, served on Earth's entry as "period" and printed by
+ * SolarSystemFigures.periodLine at its served figure count, after the
+ * Earth-Sun distance. With no period served the line is left out and the
+ * room says so.)
  */
 (function (global) {
   "use strict";
@@ -169,6 +175,23 @@
   // box is unchanged either way, and the phone's label merely wraps as it
   // did before.
   var SB = (global.GalleryFeatures && global.GalleryFeatures.SOFT_BR) || "<br>";
+
+  // A sentence wrapped with soft breaks at the renderers' hover width, so
+  // the phone's label can rejoin it (L-318 round 4).
+  function wrapSB(text, width) {
+    var words = String(text).split(" ");
+    var lines = [], cur = "";
+    for (var i = 0; i < words.length; i++) {
+      if (cur && (cur + " " + words[i]).length > width) {
+        lines.push(cur);
+        cur = words[i];
+      } else {
+        cur = cur ? cur + " " + words[i] : words[i];
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines.join(SB);
+  }
 
   function tail() {
     var GFx = global.GalleryFeatures;
@@ -404,11 +427,24 @@
         name: gSun, legendgroup: gSun, hoverinfo: "skip", showlegend: false
       });
       var tipS = [c[0] + sunDir[0] * len, c[1] + sunDir[1] * len, c[2] + sunDir[2] * len];
+      // L-431 build 3: Earth's orbital period, as the orrery serves it.
+      var orbitLines = "";
+      var SSF = global.SolarSystemFigures;
+      if (opts.earthPeriod !== undefined && opts.earthPeriod !== null) {
+        var per = SSF ? SSF.periodLine(opts.earthPeriod)
+                      : { line: null, warning: "gallery/solar_system_figures.js " +
+                                               "is not loaded, so no period is stated" };
+        if (per.line) { orbitLines = wrapSB(per.line, 70) + "<br>"; }
+        else if (per.warning) { warn(name + "/period: " + per.warning); }
+      } else {
+        warn(name + "/period: no orbital period served for Earth -- none stated");
+      }
       var hSun = "<b>" + gSun + "</b><br><br>" +
         "Toward the Sun at " + (opts.epochIso || "the scene epoch") + ", from Earth's centre.<br>" +
         guideWords("subsolar") + "<br>" +
         (isNum(opts.sun.distAu)
           ? "Earth-Sun distance: " + kmAndAu(K, opts.sun.distAu) + "<br>" : "") +
+        orbitLines +
         "Line drawn to the edge of the arrival frame; the Sun is far beyond it." +
         tail();
       traces.push(infoMarker(tipS, SUN_COLOR, hSun, gSun, { meta: {
@@ -680,7 +716,8 @@
       rotationPeriod: orient.rotation_period || null,
       words: orient.words || null,
       crustRadiusAu: crustAu, halfRangeAu: half, epochIso: ctx.epochIso,
-      sun: payload.sun || null, moonArc: moonArc
+      sun: payload.sun || null, moonArc: moonArc,
+      earthPeriod: payload.earthPeriod
     });
     warnings = warnings.concat(geom.warnings || []);
     for (var g = 0; g < geom.traces.length; g++) {

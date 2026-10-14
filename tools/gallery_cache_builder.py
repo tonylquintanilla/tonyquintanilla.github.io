@@ -77,6 +77,17 @@ Module updated: October 11, 2026 with Anthropic's Claude Opus 5.5
 served feature names -- today the Hills cloud's dots, placed by the
 orrery -- from data/drawings/ into the served cache's drawings/, and
 ABORTs if one is missing; the run manifest lists them under "drawings").
+Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
+build 3: the builder reads each object's period from the config, which
+tools/mirror_objects.py copies from the orrery's export. Where the
+period is taken around the solar system's barycentre, the builder also
+fetches the body's elements around the barycentre at the same date as its
+Sun-centred ones and serves them as "drawn_orbit", so the room draws the
+ellipse around the period's centre, moved to where the barycentre sits:
+the orrery's method (horizons-orbital-mechanics, The Drawn Orbit Follows
+the Period's Centre), from one fetch date. The Sun-centred "osculating"
+block, its positions and its trust are unchanged. Checked before the
+swap as #D.)
 
 Role: cache
 Domain: cache_builder
@@ -152,6 +163,75 @@ CENTER_SLUG_MAP = {
     '@3': 'earth_moon_barycenter', '3': 'earth_moon_barycenter',
     'Earth-Moon Barycenter': 'earth_moon_barycenter',
 }
+
+
+# L-431 build 3: the centres a period can be taken around (the orrery's
+# two-centre test, orbital_period.py) and the slug a drawn orbit is served
+# around. CENTER_SLUG_MAP above maps '@0' to 'sun', which is right for a
+# stored centre and wrong for a drawn one, so the drawn centre has its own.
+SUN_CENTRES = ('@sun', '@10', 'sun', '10')
+DRAWN_CENTRE_SLUGS = {'@0': 'ssb', '0': 'ssb', '@ssb': 'ssb'}
+
+
+def period_centre(obj):
+    """The Horizons centre the config's period is taken around, for a
+    period fetched from JPL; None for a typed period, none, or the Sun."""
+    period = obj.get('period')
+    if isinstance(period, dict) and period.get('kind') == 'fetched':
+        return period.get('center')
+    return None
+
+
+def needs_drawn_orbit(obj):
+    """True for a body around the Sun whose period is taken around another
+    centre (the barycentre): its ellipse is drawn around that centre. A
+    comet is drawn from its elements at perihelion, around the Sun, and a
+    spacecraft from its positions, so neither is. The same rule as
+    tools/check_cache_in_step.py's drawn_centre_wanted."""
+    centre = period_centre(obj)
+    return (bool(centre) and str(centre).lower() not in SUN_CENTRES
+            and obj.get('canonical_frame') == 'heliocentric'
+            and obj.get('category') not in ('spacecraft', 'comet'))
+
+
+def build_drawn_orbit_block(centre, els, osc_block, obj):
+    """The served "drawn_orbit": the body's elements around its period's
+    centre, at the same date as its Sun-centred "osculating" block, so the
+    two can be paired (the room finds where that centre sits, seen from
+    the Sun, from the body's position in each). Field names as
+    build_osculating_block's. Raises ValidationAbort if the dates differ:
+    a set from another date is never paired."""
+    if els.get('epoch_jd') is None or osc_block.get('epoch_jd') is None or \
+            abs(float(els['epoch_jd']) - float(osc_block['epoch_jd'])) > 1e-6:
+        raise ValidationAbort("#D %s: the elements around %s are not at the "
+                              "Sun-centred elements' date" % (obj['slug'],
+                                                              centre))
+    e = els.get('e')
+    ma = els.get('MA')
+    if ma is not None:
+        m0 = float(ma) % 360.0
+    else:
+        m0 = _true_to_mean_anomaly_deg(float(els['TA']), float(e))
+    return {
+        'center': DRAWN_CENTRE_SLUGS.get(str(centre),
+                                         str(centre).lstrip('@')),
+        'period_center': centre,
+        'paired_with': 'osculating',
+        'epoch_jd': float(els['epoch_jd']),
+        'a_au': float(els['a']),
+        'e': float(e) if e is not None else None,
+        'i_deg': float(els['i']),
+        'node_deg': float(els['Omega']),
+        'peri_deg': float(els['omega']),
+        'M0_deg': m0,
+        'n_deg_per_day': float(els['n']) if els.get('n') is not None else None,
+        'source': {
+            'query_target': obj['horizons_id'],
+            'center': centre,
+            'epoch': els.get('epoch_jd'),
+            'retrieved': datetime.now(timezone.utc).isoformat(),
+        },
+    }
 
 
 # ===========================================================================
@@ -804,6 +884,18 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
                                  obj['canonical_center'], _dt_to_jd(today))
         append_elements_history(root, slug, run_manifest['run_id'], els)
         result['_els'] = els
+        # L-431 build 3: a period taken around the barycentre draws its
+        # ellipse around the barycentre. Fetched at the SAME date as the
+        # Sun-centred set, so the two pair.
+        if needs_drawn_orbit(obj):
+            centre = period_centre(obj)
+            result['_els_drawn'] = (centre, fetch_elements(
+                obj['horizons_id'], obj['id_type'], centre, els['epoch_jd']))
+        elif is_comet and period_centre(obj) and \
+                str(period_centre(obj)).lower() not in SUN_CENTRES:
+            warn("%s: its period is around %s, but a comet is drawn from its "
+                 "elements at perihelion, around the Sun" % (slug,
+                                                              period_centre(obj)))
         e = els.get('e')
         result['orbit_type'] = 'hyperbolic' if (e is not None and e >= 1.0) else 'elliptical'
 
@@ -1257,6 +1349,8 @@ def derive_served(staging, results, defaults, warn=None, frame=None):
         }
         if r['comet']:
             block['comet'] = r['comet']
+        if r.get('drawn_orbit') is not None:         # L-431 build 3
+            block['drawn_orbit'] = r['drawn_orbit']
         if obj.get('pole_of_date') is not None:     # L-322 Stage D
             block['pole_of_date'] = r.get('pole_of_date')
         objects[slug] = block
@@ -1419,6 +1513,21 @@ def assert_structural(index, staging):
                 raise ValidationAbort("#3 %s: non-spacecraft missing osculating" % slug)
             if o['osculating']['center'] != o['stored_center']:
                 raise ValidationAbort("#C %s: osculating.center != stored_center" % slug)
+            # #D (L-431 build 3): a drawn orbit is around another centre
+            # than the stored one, at the Sun-centred elements' own date,
+            # with a served mean motion, or the room could not pair it.
+            d = o.get('drawn_orbit')
+            if d is not None:
+                if d.get('center') == o['stored_center']:
+                    raise ValidationAbort("#D %s: drawn_orbit is around the "
+                                          "stored centre" % slug)
+                if abs(float(d['epoch_jd']) - float(
+                        o['osculating']['epoch_jd'])) > 1e-6:
+                    raise ValidationAbort("#D %s: drawn_orbit is not at the "
+                                          "osculating date" % slug)
+                if not isinstance(d.get('n_deg_per_day'), (int, float)):
+                    raise ValidationAbort("#D %s: drawn_orbit has no mean "
+                                          "motion" % slug)
         if o['positions'] is not None:
             if not (staging / o['positions']['file']).exists():
                 raise ValidationAbort("#8 %s: positions file missing %s" % (slug, o['positions']['file']))
@@ -2113,6 +2222,12 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
             if not (obj['category'] == 'spacecraft'):
                 r['osc_block'] = build_osculating_block(r['_els'], obj['center_slug'], obj, warn)
                 r['trust'] = measure_trust(obj, r['osc_block'], warn)
+                if r.get('_els_drawn'):
+                    centre, drawn_els = r['_els_drawn']
+                    r['drawn_orbit'] = build_drawn_orbit_block(
+                        centre, drawn_els, r['osc_block'], obj)
+                    run_manifest['objects'][obj['slug']] += (
+                        '; drawn around %s' % centre)
             else:
                 r['trust'] = {'schema_version': TRUST_SCHEMA_VERSION,
                              'method': 'fetched_positions', 'window': None}

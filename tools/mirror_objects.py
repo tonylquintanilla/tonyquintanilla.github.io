@@ -31,6 +31,22 @@ WHAT IT WRITES, PER LINKED OBJECT
                   "Horizons: ..." sentence (the room prints the id on its
                   own source line). Inserted after id_type if absent
     info_url      the orrery entry's NASA link. Inserted likewise
+    period        the body's orbital period as the orrery serves it
+                  (L-431, build 3): its kind (fetched from JPL, typed,
+                  or none), the centre it is taken around and that
+                  centre's words, the years and days each with its value,
+                  figure count and printed text, the date JPL was asked,
+                  and the words a typed or missing period carries. The
+                  export's "record" -- the full days, the errors, the
+                  elements -- is the orrery's and is not copied: the
+                  website prints the period and draws around its centre,
+                  and needs nothing else. The room reads this from the
+                  config, so a period reaches a visitor on the push; the
+                  ORBIT drawn around its centre follows only when the
+                  cache builder runs, since the builder fetches the
+                  elements around that centre. The Sun's period is null in
+                  the export and nothing is written for it. Inserted
+                  likewise, as one line
 
     Every change is printed, field by field, with the old and the new
     value, so a fix is reported and not only made (Tony's ruling,
@@ -44,6 +60,11 @@ WHAT IT REFUSES (named, and the run exits 1)
     - a key in the export with no object of that slug in the config
     - a field the export serves as null while the config holds one: the
       tool does not delete a person's words, so a person decides
+    - an export older than schema 2, which carries no periods: the
+      website's rooms print a period from this copy, so the orrery's
+      export must be pulled again after the orrery has pushed (L-431)
+    - a fetched period with no centre: it cannot be printed or drawn
+      honestly, so it is refused rather than copied
 
 RUN COMMAND
 
@@ -67,6 +88,10 @@ Domain: gallery
 
 Module created: October 1, 2026 with Anthropic's Claude Opus 5.5
 (L-395, the first build: the Solar System room's eleven bodies).
+Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
+build 3: each linked object's period is copied, without the orrery's
+record; an export older than schema 2, and a fetched period with no
+centre, are refused.)
 """
 
 import json
@@ -79,7 +104,23 @@ CONFIG = os.path.join("data", "objects_config.json")
 EXPORT = os.path.join("data", "objects_export.json")
 ROOM = "solar-system"
 REPLACED = ("name", "horizons_id", "id_type")
-INSERTED = ("description", "info_url")
+INSERTED = ("description", "info_url", "period")
+MIN_SCHEMA = 2
+
+
+def period_copy(period):
+    """What the config holds of an exported period: everything but the
+    orrery's "record". None stays None (the Sun)."""
+    if not isinstance(period, dict):
+        return period
+    return {k: v for k, v in period.items() if k != "record"}
+
+
+def wanted(want, field):
+    """The value the config should hold for one inserted field."""
+    if field == "period":
+        return period_copy(want.get("period"))
+    return want.get(field)
 
 
 class Edit(object):
@@ -109,6 +150,13 @@ def plan(config_text, export):
         if slug:
             by_slug[slug] = node
 
+    if not isinstance(export.get("schema"), int) or export["schema"] < MIN_SCHEMA:
+        failures.append("the pulled export is schema %r; this mirror needs "
+                        "%d or later, which carries each object's period. "
+                        "Run tools/pull_objects_export.py after the orrery "
+                        "has pushed its export" % (export.get("schema"),
+                                                   MIN_SCHEMA))
+        return edits, changes, failures, linked
     rooms = root.value.get("rooms") or {}
     rows = ((rooms.get(ROOM) or {}).get("drawer") or {}).get("rows") or []
     for row in rows:
@@ -142,8 +190,14 @@ def plan(config_text, export):
                                render(child.value), render(new)))
                 edits.append(Edit(child.start, child.end, render(new)))
         inserts = []
+        period = want.get("period")
+        if (isinstance(period, dict) and period.get("kind") == "fetched"
+                and not period.get("center")):
+            failures.append("%s.period: fetched from JPL with no centre; "
+                            "refused rather than copied" % slug)
+            continue
         for field in INSERTED:
-            new = want.get(field)
+            new = wanted(want, field)
             if field in members:
                 child, _ = members[field]
                 if new is None:

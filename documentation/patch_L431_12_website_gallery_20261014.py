@@ -3,10 +3,10 @@ JPL), build 3, the website's half, with L-395's move: every room's hover
 prints the orrery's period; an orbit around the barycentre is drawn
 there; the Horizons check leaves the Daily Run for the orrery.
 
-Built on gallery 4b2b660ad779a971b496536f6203f93b04aa7a8d at
-https://github.com/tonylquintanilla/tonyquintanilla.github.io ("daily run
-10-14-26"), after its partner patch_L431_11_website_orrery_20261014.py,
-built on orrery fe000597d5282a93461d31065997254d5bf981ff at
+Built on gallery 77988635526d1dd68f8c082cae39f4b7ad3f56b8 at
+https://github.com/tonylquintanilla/tonyquintanilla.github.io ("Update
+patch_L431_12"), after its partner patch_L431_11_website_orrery_20261014.py,
+built on orrery 5cd63ccea16e5242014f8aeb12cfb4beeb36ea31 at
 https://github.com/tonylquintanilla/palomas_orrery. After it, in the
 orrery: patch_L431_13_dashboard_buttons_20261014.py.
 Tony's local folders: orrery
@@ -67,7 +67,7 @@ WHAT IT CHANGES
 SAFETY
     Each file is checked only at the lines this patch edits; every anchor
     must match exactly once. A file it creates must not exist yet. A file
-    it removes must hold exactly what it held at 4b2b660a, or nothing is
+    it removes must hold exactly what it held at 77988635, or nothing is
     written: data/horizons_confirmations.json in particular, so a newer
     confirmation on your machine is never thrown away. Files are removed
     one at a time by name; no folder is removed. If any check fails,
@@ -75,6 +75,9 @@ SAFETY
     after turning them into LF and written back LF, and the patch says so.
     Undo after a run is Discard Changes in GitHub Desktop, which also
     brings back the removed files, and delete the created file.
+
+Role: patch
+Domain: dev_tools
 """
 import hashlib
 import json
@@ -2327,7 +2330,7 @@ def apply():
             print('ERROR: %s is not here to remove. NOTHING was written.' % f)
             return None
         if _lf_md5(path) != want:
-            print('ERROR: %s is not what it was at 4b2b660a, so it is not removed: it may' % f)
+            print('ERROR: %s is not what it was at 77988635, so it is not removed: it may' % f)
             print('hold something newer. Commit or discard it in GitHub Desktop, then run')
             print('this again. NOTHING was written.')
             return None

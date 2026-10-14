@@ -44,6 +44,8 @@ global.window = global;
 require(path.join(root, "gallery", "feature_renderers.js"));
 require(path.join(root, "gallery", "earth_geometry.js"));
 require(path.join(root, "gallery", "arrival.js"));
+// L-431 build 3: loaded as the page loads it (Earth's period).
+require(path.join(root, "gallery", "solar_system_figures.js"));
 // L-322 Stage D, patch D7: the renderers take KM_PER_AU and the frame's
 // angle from the SERVED cache, exactly as the page does. A missing row
 // fails this check rather than letting it test nothing.
@@ -136,6 +138,11 @@ function earthPayload() {
   // The recorded payload carries its own copy of the served features.
   // Use today's config instead, so a renamed shell is seen here.
   payload.features = featureRequests("earth");
+  // L-431 build 3: Earth's orbital period, from the config, as the page's
+  // driver hands it over.
+  payload.earthPeriod = ((JSON.parse(fs.readFileSync(path.join(root, "data",
+    "objects_config.json"), "utf8")).objects || []).filter(function (o) {
+      return o && o.slug === "earth"; })[0] || {}).period || null;
   return payload;
 }
 function sunTraces() {

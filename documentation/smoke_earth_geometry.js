@@ -38,6 +38,11 @@
 // of date, the magnetotail and the rotation period itself, so they are no
 // longer laid over it from the cache; the fallback case removes the pole
 // of date to test its absence; the scene's date is the recording's.)
+// Updated October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431, build
+// 3: gallery/solar_system_figures.js is loaded as the page loads it; the
+// Sun Direction's hover states Earth's orbital period, served in the
+// config as the page's driver hands it over, and with none served the
+// room says so.)
 
 const fs = require("fs");
 const path = require("path");
@@ -45,6 +50,10 @@ const path = require("path");
 const g = {};
 new Function("window", fs.readFileSync(process.argv[2], "utf8") + "\n//# sourceURL=feature_renderers.js")(g);
 new Function("window", fs.readFileSync(process.argv[3], "utf8") + "\n//# sourceURL=earth_geometry.js")(g);
+// L-431 build 3: the page loads gallery/solar_system_figures.js, and the
+// Sun Direction's hover states Earth's orbital period through it.
+new Function("window", fs.readFileSync(path.join(__dirname, "..", "gallery",
+  "solar_system_figures.js"), "utf8") + "\n//# sourceURL=solar_system_figures.js")(g);
 const GF = g.GalleryFeatures, EG = g.EarthGeometry;
 // L-322 Stage D, patch D7: the renderers take KM_PER_AU and the frame's
 // angle from the SERVED cache, exactly as the page does. A missing row
@@ -84,6 +93,11 @@ const deg = r => r * 180 / Math.PI;
 const angleDeg = (a, b) => deg(Math.acos(Math.min(1, Math.abs(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))));
 
 const payload = JSON.parse(fs.readFileSync(path.join(__dirname, "payload_earth_scene.json"), "utf8"));
+// L-431 build 3: the page's driver hands over Earth's orbital period from
+// the config; so does this check, from the file the browser fetches.
+payload.earthPeriod = (JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data",
+  "objects_config.json"), "utf8")).objects || []).filter(o => o && o.slug === "earth")
+  .map(o => o.period === undefined ? null : o.period)[0] || null;
 // L-379 (2026-10-06): the recording is the page's driver's own output, so
 // it carries the served pole of date; nothing is laid over it. The frame
 // rows still come from the served cache, below, as the page reads them.
@@ -219,8 +233,23 @@ const subDot = sunG.find(t => t.mode === "markers" && t.hoverinfo === "skip");
 check("subsolar dot sits on the Sun line just above the crust, in the Sun group",
       !!subDot && angleDeg([subDot.x[0], subDot.y[0], subDot.z[0]].map(c => c / Math.hypot(subDot.x[0], subDot.y[0], subDot.z[0])), sunDir) < 0.01 &&
       Math.abs(Math.hypot(subDot.x[0], subDot.y[0], subDot.z[0]) / rCrust - 1.003) < 1e-6);
+// L-431 build 3: the Sun Direction's hover states Earth's orbital period,
+// the recording's served one, printed by periodLine.
+(function () {
+  const want = g.SolarSystemFigures.periodLine(payload.earthPeriod).line;
+  const hover = (sunG.find(t => t.mode === "markers" && t.meta) || {}).text;
+  const flat = String((hover || [""])[0]).split(GF.SOFT_BR).join(" ");
+  check("Sun hover states Earth's orbital period as served",
+        !!want && flat.indexOf(want) >= 0, want);
+  const none = JSON.parse(JSON.stringify(payload));
+  delete none.earthPeriod;
+  const noOut = EG.composeScene(none, { GF: GF, halfRangeAu: HALF, epochIso: EPOCH_DAY });
+  check("no period served: none is stated, and a warning says so",
+        noOut.warnings.some(w => /no orbital period served for Earth/.test(w)),
+        noOut.warnings.join(" | "));
+})();
 check("Sun hover gives the Earth-Sun distance in km AND AU",
-      /Earth-Sun distance: [\d,]+ km \(1\.0\d AU\)/.test(sunG.find(t => t.mode === "markers" && t.text).text[0]));
+      /Earth-Sun distance: [\d,]+ km \([01]\.\d+ AU\)/.test(sunG.find(t => t.mode === "markers" && t.text).text[0]));
 
 const termG = groups["Earth: Terminator (day-night line)"];
 const term = termG.find(t => t.mode === "lines");

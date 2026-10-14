@@ -42,6 +42,23 @@
 //
 // Written October 1, 2026 with Anthropic's Claude Opus 5.5, from the
 // functions L-363 step 3a built inside interactive.html on 2026-09-30.
+//
+// THE ORBITAL PERIOD (L-431, build 3, October 14, 2026). Every body's
+// hover prints its orbital period -- Tony, 2026-10-11: "periods are
+// basic data, for all bodies and should be part of the hover text" -- in
+// the sentence the build's brief gives: "Orbital period: N years (M
+// days), around <centre>, from JPL Horizons, fetched <date>." The period
+// is the orrery's, by the orrery's fallback order and digits rule,
+// served on the body's entry in data/objects_config.json as "period",
+// which tools/mirror_objects.py copies from the orrery's export. Years
+// and days are each served with their value and figure count; this file
+// prints the value AT THAT COUNT and never recounts it
+// (interactive-exhibit, A figure count is READ from the served entry),
+// with thousands separators from 10,000 up where the period is JPL's, as
+// the orrery's hover prints it; a typed value prints as typed. The served "text" is the orrery's own print, and
+// documentation/smoke_solar_system_figures.js holds this print to it. A
+// typed period says so in the orrery's words, "Typed value, not fetched
+// from JPL."; none says it has not been fetched yet; the Sun has none.
 
 (function (global) {
   "use strict";
@@ -136,7 +153,92 @@
     };
   }
 
+  // A served value printed at its served figure count: rounded once to
+  // that many significant figures, plain digits, and, when asked, the
+  // separators the orrery's digits rule prints from 10,000 up.
+  function servedFigures(part, separators) {
+    if (!part || typeof part.value !== "number" || !isFinite(part.value) ||
+        typeof part.figures !== "number" || !(part.figures >= 1)) {
+      return null;
+    }
+    var n = Math.max(1, Math.min(21, Math.round(part.figures)));
+    var rounded = Number(part.value.toPrecision(n));
+    var decimals = rounded === 0 ? n - 1
+        : n - 1 - Math.floor(Math.log10(Math.abs(rounded)));
+    if (decimals < 0) { decimals = 0; }
+    if (decimals > 20) { decimals = 20; }
+    var text = rounded.toFixed(decimals);
+    if (separators && Math.abs(rounded) >= 10000) {
+      var bits = text.split(".");
+      bits[0] = bits[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      text = bits.join(".");
+    }
+    return text;
+  }
+
+  // The period line(s) for a body's hover, from its served "period".
+  // Returns { line, warning }: line is null for the Sun (no period) and
+  // for a period that cannot be printed honestly, which is then named in
+  // warning rather than shown.
+  function periodLine(period) {
+    if (period === undefined || period === null) {
+      return { line: null, warning: null };
+    }
+    var kind = period.kind;
+    if (kind === "none") {
+      var w = (typeof period.words === "string" && period.words)
+          ? period.words : "Not yet fetched from JPL.";
+      return { line: "Orbital period: " + w.charAt(0).toLowerCase() +
+                     w.slice(1), warning: null };
+    }
+    var shown;
+    if (period.open_orbit) {
+      shown = "none (open orbit)";
+    } else {
+      // Separators for JPL's period only, as the orrery prints it; a
+      // typed value prints as typed (orbital_period._typed_strings).
+      var years = servedFigures(period.years, kind === "fetched");
+      var days = servedFigures(period.days, kind === "fetched");
+      if (years === null || days === null) {
+        return { line: null,
+                 warning: "its period is served without a value and figure " +
+                          "count for both years and days, so it is not shown" };
+      }
+      shown = years + " years (" + days + " days)";
+    }
+    if (kind === "typed") {
+      return { line: "Orbital period: " + shown + ". " +
+                     ((typeof period.words === "string" && period.words)
+                      ? period.words : "Typed value, not fetched from JPL."),
+               warning: null };
+    }
+    if (kind !== "fetched") {
+      return { line: null, warning: "its period is served as " +
+                                    JSON.stringify(kind) + ", which this " +
+                                    "page does not know" };
+    }
+    if (!period.center || !period.center_label) {
+      return { line: null,
+               warning: "its period is served from JPL with no centre, so " +
+                        "it is not shown" };
+    }
+    return { line: "Orbital period: " + shown + ", around " +
+                   period.center_label + ", from JPL Horizons, fetched " +
+                   period.fetched + ".",
+             warning: null };
+  }
+
+  // Is this period's centre the Sun? (The orrery's two-centre test picks
+  // the Sun or the solar system's barycentre, "@0".)
+  function periodAroundSun(period) {
+    var c = period && period.center;
+    return !c || ["@sun", "@10", "sun", "10"].indexOf(String(c).toLowerCase()) >= 0;
+  }
+
   global.SolarSystemFigures = {
+    servedFigures: servedFigures,
+    periodLine: periodLine,
+    periodAroundSun: periodAroundSun,
     FINEST_KM: FINEST_KM,
     NO_SOURCE_ACCURACY: NO_SOURCE_ACCURACY,
     reportPlace: reportPlace,

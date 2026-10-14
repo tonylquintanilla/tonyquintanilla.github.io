@@ -160,6 +160,10 @@ const root = path.dirname(__dirname);
 global.window = global;
 require(path.join(root, "gallery", "feature_renderers.js"));
 require(path.join(root, "gallery", "earth_geometry.js"));
+// L-431 build 3: loaded as the page loads it; the Earth room's Sun
+// Direction hover prints Earth's period through it.
+require(path.join(root, "gallery", "solar_system_figures.js"));
+const SolarSystemFigures = global.SolarSystemFigures;
 // L-322 Stage D, patch D7: the renderers take KM_PER_AU and the frame's
 // angle from the SERVED cache, exactly as the page does. A missing row
 // fails this check rather than letting it test nothing.
@@ -651,6 +655,9 @@ function sceneHovers(shellGroups) {
   // L-322 Stage D, patch D7: the page's driver hands over the served pole
   // of date; so does this check, from the file the browser fetches.
   payload.poleOfDate = (cov.objects.earth || {}).pole_of_date || null;
+  // L-431 build 3: and Earth's orbital period, from the config the page
+  // reads it from.
+  payload.earthPeriod = earthPeriodServed();
   const scene = EarthGeometry.composeScene(payload, {
     GF: GalleryFeatures, halfRangeAu: 6.155e-5, epochIso: "2026-09-09" });
   // A shell's own hover is examined already, by the room's build above.
@@ -665,7 +672,53 @@ function sceneHovers(shellGroups) {
   const hovers = collect(frame);
   gradeAxisPeriod(hovers, (cacheFeatures("earth").orientation || {}).rotation_period);
   gradeAxisTilt(hovers, payload.poleOfDate);
+  gradeSunPeriod(hovers, payload.earthPeriod);
   return hovers;
+}
+
+/* L-431 build 3: the Sun Direction's hover states Earth's orbital period,
+   the orrery's, served on Earth's config entry as "period". GRADED here:
+   the line must be the served values at their served counts, each as the
+   orrery printed it (the served "text"), in the words periodLine gives.
+   Then the line is taken out, so the rest of the hover is still held
+   byte for byte against the fixture -- and the day Earth's period comes
+   from JPL instead of the typed table, nothing here fails for it. */
+const SUN_GROUP = "Earth: Sun Direction";
+function earthPeriodServed() {
+  const e = (cfg.objects || []).filter(function (o) {
+    return o && o.slug === "earth"; })[0] || {};
+  return e.period === undefined ? null : e.period;
+}
+function gradeSunPeriod(frame, period) {
+  const h = frame[SUN_GROUP];
+  if (typeof h !== "string") { fail("the Sun Direction hover was never built"); return; }
+  if (!period) {
+    fail("the config serves no period for earth, so the Sun Direction " +
+         "hover's orbital period could not be graded (run " +
+         "tools/mirror_objects.py)");
+    return;
+  }
+  const want = SolarSystemFigures.periodLine(period).line;
+  const parts = h.split("<br>");
+  const at = parts.findIndex(function (p) {
+    return p.split(SOFT_BR).join(" ") === want; });
+  if (!want || at < 0) {
+    fail("the Sun Direction hover does not print Earth's served period: " +
+         "expected \"" + want + "\"");
+    return;
+  }
+  ["years", "days"].forEach(function (unit) {
+    const part = period[unit];
+    if (part && want.indexOf(part.text + " " + unit) < 0) {
+      fail("the Sun Direction hover's period does not print its " + unit +
+           " as the orrery printed them, " + part.text);
+    }
+  });
+  hoversExamined += 1;
+  numbersExamined += numbersIn(want).length;
+  examinedNames.push(SUN_GROUP + " (the orbital period, " + period.kind + ")");
+  parts.splice(at, 1);
+  frame[SUN_GROUP] = parts.join("<br>");
 }
 
 // -------------------------------------------------- number accounting

@@ -134,7 +134,6 @@ ROLE_MAP = {
     'gallery_maintenance_run':             'devtool',
     'gallery_studio':                      'devtool',
     'guestbook_updater':                   'devtool',
-    'horizons_check':                      'devtool',
     'inspect_staging':                     'devtool',
     'json_converter':                      'devtool',
     'mirror_constants':                    'devtool',
@@ -146,9 +145,9 @@ ROLE_MAP = {
     'serve_gallery':                       'devtool',
     'sweep_report':                        'devtool',
     'test_artifact1_earth':                'devtool',
+    'test_drawn_orbit':                    'devtool',
     'test_gallery_cache_builder_offline':  'devtool',
     'test_guestbook_updater':              'devtool',
-    'test_horizons_check':                 'devtool',
     'test_mirror_objects':                 'devtool',
 }
 # ROLE-MAP:END

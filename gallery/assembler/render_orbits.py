@@ -30,6 +30,18 @@ mechanism. Not exercised by artifact 1 (Earth has no mean block served yet);
 first exercised at artifact 4 (Halley).
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
+build 3: drawn_orbit_offset() and build_orbit_traces' offset. A body whose
+orbital period is taken around the solar system's barycentre has its
+ellipse drawn around the barycentre, from the served "drawn_orbit" block,
+moved so its focus sits where the barycentre is seen from the Sun: the
+body's position from its Sun-centred elements minus its position from
+its barycentric ones, both at their one shared date. The two ellipses then
+meet at the body. This is the orrery's method
+(horizons-orbital-mechanics, The Drawn Orbit Follows the Period's
+Centre). It is not the retired composition of positions: the two vectors
+are each a few hundred AU at most and differ by about 0.005 AU, which
+double precision holds to about 1e-13 AU, and nothing is sampled.)
 
 Role: rendering
 Domain: assembler
@@ -120,6 +132,24 @@ def propagate_marker(osc: Dict[str, Any], t_jd: float) -> Tuple[float, float, fl
     return _elements_to_xyz_au(a, e, i, node, peri, nu)
 
 
+def drawn_orbit_offset(osc_sun: Dict[str, Any],
+                       osc_drawn: Dict[str, Any]) -> Tuple[float, float, float]:
+    """(dx, dy, dz) in AU: where the drawn orbit's centre sits seen from the
+    Sun, from the body's two element sets at their one shared date.
+
+    Raises ValueError when the two sets are not at the same date: a set
+    from another date is never paired (horizons-orbital-mechanics 1.4)."""
+    t_sun = float(osc_sun["epoch_jd"])
+    t_drawn = float(osc_drawn["epoch_jd"])
+    if abs(t_sun - t_drawn) > 1e-6:
+        raise ValueError("the drawn orbit's elements are at JD %.6f and the "
+                         "Sun-centred ones at JD %.6f; not paired"
+                         % (t_drawn, t_sun))
+    hx, hy, hz = propagate_marker(osc_sun, t_sun)
+    bx, by, bz = propagate_marker(osc_drawn, t_drawn)
+    return (hx - bx, hy - by, hz - bz)
+
+
 def sweep_conic(osc: Dict[str, Any], n_points: int = 360):
     """Geometric orbit-shape polyline: sweep true anomaly 0..2pi. Returns
     (xs, ys, zs) in AU. No time dependence -- this is the static ellipse."""
@@ -151,11 +181,23 @@ def _au_km_hover(name: str, x: float, y: float, z: float, kind: str) -> str:
 
 def build_orbit_traces(name: str, osc: Dict[str, Any], color: str,
                        n_points: int, legendgroup: str,
-                       is_mean: bool = False) -> List[Dict[str, Any]]:
+                       is_mean: bool = False,
+                       offset: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+                       ) -> List[Dict[str, Any]]:
     """Build the conic polyline plus its single info marker (project's
     single-info-marker pattern: geometry hoverinfo='skip', one cross marker
-    carrying the full hover text, in the same legendgroup)."""
+    carrying the full hover text, in the same legendgroup).
+
+    offset (L-431 build 3) moves the drawn ellipse, in AU, so that an orbit
+    around another centre has its focus where that centre sits; both
+    traces then carry meta.drawn_center, the centre's served slug, so the
+    page can say what the ellipse is drawn around."""
     xs, ys, zs = sweep_conic(osc, n_points)
+    dx, dy, dz = offset
+    if dx or dy or dz:
+        xs = [x + dx for x in xs]
+        ys = [y + dy for y in ys]
+        zs = [z + dz for z in zs]
     kind = "mean orbit" if is_mean else "osculating orbit"
     # scatter3d line has no 'dash' attribute (2D-only); distinguish the mean
     # conic by width instead, which 3D supports. (Refine under Mode 5 at
@@ -185,4 +227,8 @@ def build_orbit_traces(name: str, osc: Dict[str, Any], color: str,
         "text": [_au_km_hover(name, xs[idx], ys[idx], zs[idx], kind)],
         "hovertemplate": "%{text}<extra></extra>",
     }
+    centre = osc.get("center")
+    if centre is not None:
+        polyline["meta"] = {"drawn_center": centre}
+        info["meta"] = {"drawn_center": centre}
     return [polyline, info]

@@ -23,14 +23,25 @@
 //   4. interactive.html loads this file, calls it, passes each body's
 //      served position_accuracy to it, and no longer carries its own
 //      copy of the distance functions.
+//   5. (L-431, build 3) The orbital period: five worked cases (a period
+//      from JPL with separators, a typed one, none, one served with no
+//      centre, the Sun's null), and every drawer body's served period
+//      printed exactly as the orrery printed it -- each number the
+//      export's own text, at the export's figure count -- with the page
+//      calling periodLine and its driver passing "period".
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and makes the
 //   checks fail on purpose three ways -- a Report test one place too
 //   fine, a rule that ignores JPL's accuracy, and the sentence printed
 //   for a body that has a row -- so a green run has shown it can go red.
+//   Since L-431 build 3 it also breaks the period two ways first: a
+//   period printed to more figures than the export's count, and a
+//   period served with no centre shown anyway.
 //
 // Written October 1, 2026 with Anthropic's Claude Opus 5.5.
+// Updated October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431, build
+// 3: the orbital period, part 5).
 
 "use strict";
 const fs = require("fs");
@@ -121,6 +132,47 @@ function worked(lib) {
   return out;
 }
 
+// The period's worked cases (L-431). Each expected line is the orrery's
+// own print of the same served numbers.
+function periodWorked(lib) {
+  const out = [];
+  const want = function (name, got, line) {
+    if (got.line !== line) {
+      out.push(name + ": expected " + JSON.stringify(line) + ", got " +
+               JSON.stringify(got.line));
+    }
+  };
+  // Sedna around the barycentre, 2026-10-13: format_by_error gives
+  // "11,390" years (4 figures) and "4,160,000" days (3 figures).
+  want("a period from JPL", lib.periodLine({
+    kind: "fetched", center: "@0",
+    center_label: "the solar system's center of mass", fetched: "2026-10-13",
+    years: { value: 11390, figures: 4, text: "11,390" },
+    days: { value: 4160000, figures: 3, text: "4,160,000" } }),
+    "Orbital period: 11,390 years (4,160,000 days), around the solar " +
+    "system's center of mass, from JPL Horizons, fetched 2026-10-13.");
+  // Saturn typed: as typed, no separators, the orrery's words.
+  want("a typed period", lib.periodLine({
+    kind: "typed", typed: true, words: "Typed value, not fetched from JPL.",
+    years: { value: 29.45714, figures: 7, text: "29.45714" },
+    days: { value: 10759.22, figures: 7, text: "10759.22" } }),
+    "Orbital period: 29.45714 years (10759.22 days). Typed value, not " +
+    "fetched from JPL.");
+  want("no period", lib.periodLine({ kind: "none",
+                                     words: "Not yet fetched from JPL." }),
+       "Orbital period: not yet fetched from JPL.");
+  const centreless = lib.periodLine({ kind: "fetched", center: null,
+    fetched: "2026-10-13", years: { value: 1, figures: 1 },
+    days: { value: 365, figures: 3 } });
+  if (centreless.line !== null || !centreless.warning) {
+    out.push("a period from JPL with no centre was shown");
+  }
+  if (lib.periodLine(null).line !== null) {
+    out.push("the Sun's null period printed a line");
+  }
+  return out;
+}
+
 // ---- self-test: the checks must be able to fail -------------------
 // Three copies of the REAL file, each with one deliberate fault, loaded
 // in a sandbox. Each must fail the worked cases.
@@ -152,6 +204,18 @@ const selfFailures = [];
     selfFailures.push(fault[0] + " passed the worked cases");
   }
 });
+[
+  ["a period printed to more figures than the export's count",
+   "var n = Math.max(1, Math.min(21, Math.round(part.figures)));",
+   "var n = Math.max(1, Math.min(21, Math.round(part.figures) + 2));"],
+  ["a period served with no centre shown anyway",
+   "if (!period.center || !period.center_label) {",
+   "if (false) {"]
+].forEach(function (fault) {
+  if (periodWorked(loadWith(fault[1], fault[2])).length === 0) {
+    selfFailures.push(fault[0] + " passed the period's worked cases");
+  }
+});
 if (selfFailures.length) {
   console.log("SELF-TEST FAILED -- the checks below cannot fail:");
   selfFailures.forEach(function (f) { console.log("  " + f); });
@@ -159,10 +223,12 @@ if (selfFailures.length) {
 }
 console.log("Self-test: the worked cases fail on a Report test one place " +
             "too fine, on a rule ignoring JPL's accuracy, and on the " +
-            "sentence printed for a body with a row.");
+            "sentence printed for a body with a row; the period's on a " +
+            "print to more figures than the export's count and on a " +
+            "period with no centre shown.");
 
 // ---- 1. worked cases ----------------------------------------------
-const failures = worked(SSF);
+const failures = worked(SSF).concat(periodWorked(SSF));
 
 // ---- 2. the real config -------------------------------------------
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "data",
@@ -247,6 +313,44 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
   }
 });
 
+// ---- 5. the periods (L-431) -----------------------------------------
+const periods = [];
+rows.forEach(function (slug) {
+  if (slug === "sun") { return; }
+  const o = objs[slug] || {};
+  if (o.period === undefined) {
+    failures.push(slug + ": serves no period (run tools/mirror_objects.py)");
+    return;
+  }
+  const r = SSF.periodLine(o.period);
+  if (!r.line) { failures.push(slug + ": no period line -- " + r.warning); return; }
+  const p = o.period;
+  if (p.years && p.days) {
+    ["years", "days"].forEach(function (unit) {
+      const shown = r.line.indexOf(p[unit].text + " " + unit) >= 0;
+      if (!shown) {
+        failures.push(slug + ": its " + unit + " do not print as the orrery " +
+                      "printed them, " + JSON.stringify(p[unit].text) +
+                      " at " + p[unit].figures + " figures: " + r.line);
+      }
+      const digits = String(p[unit].text).replace(/[^0-9]/g, "")
+                                          .replace(/^0+/, "");
+      if (p.kind === "fetched" && digits.length < p[unit].figures) {
+        failures.push(slug + ": the export's " + unit + " text shows fewer " +
+                      "figures than its count");
+      }
+    });
+  }
+  periods.push([slug, p.kind, r.line]);
+});
+[
+  ["SolarSystemFigures.periodLine(", "the page does not call periodLine"],
+  ['"period": (_objs.get(_slug) or {}).get("period")',
+   "the page's driver does not pass each body's period"]
+].forEach(function (pair) {
+  if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
+});
+
 // ---- report -----------------------------------------------------------
 console.log("");
 console.log("Distances at each body's served minute (data/solar-system/" +
@@ -254,6 +358,13 @@ console.log("Distances at each body's served minute (data/solar-system/" +
 table.forEach(function (t) {
   console.log("  " + (t[0] + "                  ").slice(0, 18) + t[1] +
               "  -- set by " + t[2] + (t[3] ? "  " + t[3] : ""));
+});
+console.log("");
+console.log("Orbital periods as each body's hover prints them (data/" +
+            "objects_config.json), " + periods.length + " bodies:");
+periods.forEach(function (t) {
+  console.log("  " + (t[0] + "                  ").slice(0, 18) +
+              (t[1] + "        ").slice(0, 8) + t[2]);
 });
 console.log("");
 if (failures.length) {
@@ -264,4 +375,6 @@ if (failures.length) {
 console.log("=== PASS: 6 worked cases, " + rows.length + " drawer rows " +
             "matched to their accuracy rows, " + table.length +
             " served distances; Uranus, Neptune and Pluto print to " +
-            "JPL's ten-thousands place ===");
+            "JPL's ten-thousands place; 5 period cases and " +
+            periods.length + " served periods printed as the orrery " +
+            "printed them ===");

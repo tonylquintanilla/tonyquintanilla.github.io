@@ -119,6 +119,11 @@ tools/pull_drawings.py, which brings each stored drawing the config
 names from the orrery at a recorded SHA; the "Drawings" checker runs
 tools/check_drawings.py and gates; the --live pass fetches the served
 Hills cloud, data/solar-system/drawings/hills_cloud.json).
+Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5
+(L-431 build 3, with L-395's move: the "Horizons check suite" row goes
+with the check into the orrery; "Horizons confirmations" stays and reads
+the dates from the pulled export; "Drawn orbit" runs
+tools/test_drawn_orbit.py and gates).
 """
 
 import hashlib
@@ -240,17 +245,14 @@ OFFLINE_CHECKERS = [
     ("Config mirror check", "python",
      ["tools/check_constants_links.py", "--mirror"], ".", None, False),
 
-    # L-395 (2026-10-10): the Horizons check. The suite runs the live
-    # check on JPL's recorded answers with no network: every served
-    # entry agrees, and every planted wrong entry -- wrong id, wrong
-    # index, a name off by one character, a stale pin, JPL unreachable
-    # -- is caught by name. The second row reads the record the Daily
-    # Run's live check writes, and fails on an entry never confirmed,
-    # overdue (30 days), or changed since it was confirmed, so a live
-    # check that stopped running shows here. Both gate.
-    ("Horizons check suite", "python",
-     ["test_horizons_check.py"], "tools", "HORIZONS CHECK SUITE:", False),
-
+    # L-395 (2026-10-10), moved by L-431 build 3 (2026-10-14): JPL is
+    # asked by the ORRERY now, in its maintenance run, and the export
+    # carries each object's confirmation dates. This reads them from the
+    # pulled export and fails on an entry never confirmed, overdue (the
+    # export's cadence_days), or changed since -- and on a fetched period
+    # the same way -- so the website shows it when the orrery's run has
+    # not been run. It first fails on a fabricated export 31 days old.
+    # The check's own suite left with the check. Gates.
     ("Horizons confirmations", "python",
      ["tools/check_horizons_confirmations.py"], ".",
      "HORIZONS CONFIRMATIONS:", False),
@@ -266,6 +268,15 @@ OFFLINE_CHECKERS = [
     # When it fails: run the cache builder, then commit both together.
     ("Cache in step", "python",
      ["tools/check_cache_in_step.py"], ".", None, False),
+
+    # L-431 build 3 (2026-10-14): a body whose orbital period is taken
+    # around the solar system's barycentre is drawn around it, moved to
+    # where the barycentre sits seen from the Sun -- on Sedna's real pair
+    # of element sets -- and the planted faults (the orbit drawn around
+    # the Sun, drawn unmoved, a set from another date paired) are each
+    # caught. Gates.
+    ("Drawn orbit", "python",
+     ["tools/test_drawn_orbit.py"], ".", "DRAWN ORBIT:", False),
 
     # L-421 (2026-10-11): each stored drawing the config names is pulled,
     # served byte for byte, and tilted as it records -- the plane through
@@ -391,8 +402,9 @@ OFFLINE_CHECKERS = [
     ("Guest book updater", "python",
      ["tools/test_guestbook_updater.py"], ".", None, False),
 
-    # L-281 (2026-09-27): the Daily Run calls its scripts by path (four
-    # since L-395 added the Horizons check, 2026-10-10). This
+    # L-281 (2026-09-27): the Daily Run calls its scripts by path (three
+    # again since L-431 build 3 moved the Horizons check into the orrery,
+    # 2026-10-14). This
     # fails, naming the path, if any of them is missing -- so a rename
     # that would break the Daily Run fails here the same day, not the
     # next morning. Runs nothing. Gates.

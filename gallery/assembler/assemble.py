@@ -16,6 +16,10 @@ ring trace. (This was a real merge error in synthesis v1, caught and
 reversed -- manifest v2 Section 0. Internalized, not just complied with.)
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
+build 3: an object whose served record carries a drawn_orbit has its
+ellipse drawn from it, moved by render_orbits.drawn_orbit_offset; one that
+cannot be placed is drawn around the Sun and named in the warnings.)
 
 Role: pipeline
 Domain: assembler
@@ -41,6 +45,7 @@ def assemble_scene(scene_dict: Dict[str, Any], catalog: Catalog,
 
     traces_with_roles: List[Tuple[str, Dict[str, Any]]] = []
     roles: List[str] = []
+    extra_warnings: List[str] = []
 
     n_points = scene_spec.orbital_points
 
@@ -51,9 +56,27 @@ def assemble_scene(scene_dict: Dict[str, Any], catalog: Catalog,
         # Spacecraft (positions arc) is artifact 5; artifact 1 objects are
         # analytic (osculating). Guard rather than assume.
         if obj.osculating:
-            # Orbit shape polyline + single info marker.
+            # Orbit shape polyline + single info marker. L-431 build 3: a
+            # body whose period is taken around the barycentre has a served
+            # drawn_orbit, and its ellipse is drawn from it, moved to where
+            # the barycentre sits; the marker below stays the Sun-centred
+            # propagation, as in the orrery. Read from the served record,
+            # not the resolved object, so the frozen context (the L-080
+            # fingerprint) does not move.
+            shape, offset = obj.osculating, (0.0, 0.0, 0.0)
+            drawn = (cache.record(obj.slug) or {}).get("drawn_orbit")
+            if drawn:
+                try:
+                    offset = render_orbits.drawn_orbit_offset(
+                        obj.osculating, drawn)
+                    shape = drawn
+                except (ValueError, KeyError, TypeError) as exc:
+                    extra_warnings.append(
+                        "%s: its orbit around %s could not be placed (%s); "
+                        "drawn around the Sun" % (obj.slug,
+                                                  drawn.get("center"), exc))
             for i, trace in enumerate(render_orbits.build_orbit_traces(
-                    obj.name, obj.osculating, color, n_points, lg)):
+                    obj.name, shape, color, n_points, lg, offset=offset)):
                 role = ROLE_ORBIT if i == 0 else ROLE_ORBIT_INFO
                 traces_with_roles.append((role, trace))
                 roles.append(role)
@@ -94,7 +117,7 @@ def assemble_scene(scene_dict: Dict[str, Any], catalog: Catalog,
             for fr in ctx.feature_requests
         ],
         "scene_features": list(cache.scene_features()),
-        "warnings": list(ctx.warnings),
+        "warnings": list(ctx.warnings) + extra_warnings,
         "cache_snapshot_id": ctx.cache_snapshot_id,
     }
 

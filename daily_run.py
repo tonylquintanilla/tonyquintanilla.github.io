@@ -11,24 +11,23 @@ WHAT IT DOES
        or remove one. First, because it needs your answers, and
        because what you approve is saved at once -- a later step that
        fails cannot lose it.
-    2. HORIZONS CHECK (tools/horizons_check.py). Asks JPL Horizons
-       whether each object the website takes from the orrery's list is
-       still the object the list says -- the same id, the same index,
-       JPL's exact name -- for the entries that are due (each every 30
-       days, and at once after its entry changes), and records each
-       confirmation in data/horizons_confirmations.json (L-395). It
-       never edits anything else. If JPL cannot be reached it says so,
-       and the build still runs.
-    3. CACHE BUILDER (tools/gallery_cache_builder.py), no flags. It
-       starts straight after the Horizons check: no OneDrive pause since
+    2. CACHE BUILDER (tools/gallery_cache_builder.py), no flags. It
+       starts straight after the guest book: no OneDrive pause since
        2026-10-10 (L-216, Tony: "the retry is sufficient"). To skip a
        build, run the guest book updater alone from the dashboard. The
        builder fetches from Horizons, swaps in the new cache, and
        prints its own [SWAP] line and next steps.
-    4. GALLERY MAINTENANCE RUN, offline (gallery_maintenance_run.py). The
+    3. GALLERY MAINTENANCE RUN, offline (gallery_maintenance_run.py). The
        checks the builder's own next steps ask for before a commit. It
        runs even when the build was skipped, because the guest book may
        have changed.
+
+    The Horizons check was step 2 from 2026-10-10 to 2026-10-14. It moved
+    into the orrery's maintenance run beside the objects export (L-395,
+    Tony, 2026-10-12: "the orrery stores and serves the data not the other
+    way around"); the maintenance run's "Horizons confirmations" row still
+    reads the dates JPL confirmed each object, from the pulled export, and
+    goes red on the day one turns 30 days old.
 
     Then one summary: what each step did, and what is left for you --
     look at GitHub Desktop's change list, commit and push, and run the
@@ -48,7 +47,7 @@ HOW TO RUN IT
     From VS Code: open this file and press Run. Answer questions in the
     panel that opens.
 
-    python daily_run.py --check   lists the four steps and fails if a
+    python daily_run.py --check   lists the three steps and fails if a
                                   script is missing. The gallery
                                   maintenance run runs this, so a rename
                                   that would break the Daily Run is
@@ -64,6 +63,9 @@ the OneDrive pause and its resume line are gone, by Tony's ruling of
 Module updated: October 10, 2026 with Anthropic's Claude Opus 5.5 (L-395:
 the Horizons check is step 2, after the guest book and before the cache
 builder, Tony's placement of 2026-10-07).
+Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431
+build 3, with L-395's move: the Horizons check leaves the Daily Run for
+the orrery's maintenance run, by Tony's ruling of 2026-10-12; three steps.)
 """
 
 import datetime
@@ -76,7 +78,6 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 
 STEPS = [
     ("Guest book updater", os.path.join("tools", "guestbook_updater.py"), []),
-    ("Horizons check", os.path.join("tools", "horizons_check.py"), []),
     ("Cache builder", os.path.join("tools", "gallery_cache_builder.py"), []),
     ("Gallery maintenance run, offline", "gallery_maintenance_run.py", []),
 ]
@@ -164,20 +165,17 @@ def main():
     # 1. The guest book.
     results.append(("Guest book updater", run_step(1, *STEPS[0])))
 
-    # 2. The Horizons check (L-395): JPL confirms the served objects'
-    # identities. A failure here does not stop the build.
-    results.append(("Horizons check", run_step(2, *STEPS[1])))
-
-    # 3. The cache build. No OneDrive pause since 2026-10-10 (L-216):
+    # 2. The cache build. No OneDrive pause since 2026-10-10 (L-216):
     # Tony, "the retry is sufficient" -- the builder retries a refused
-    # rename and the swap log records any retry.
-    results.append(("Cache builder", run_step(3, *STEPS[2])))
+    # rename and the swap log records any retry. (The Horizons check was
+    # step 2 until 2026-10-14, L-431 build 3; it runs in the orrery now.)
+    results.append(("Cache builder", run_step(2, *STEPS[1])))
     print("")
     print("The builder's next steps start with the maintenance run.")
     print("The Daily Run runs it now.")
 
-    # 4. The offline checks.
-    results.append(("Maintenance run, offline", run_step(4, *STEPS[3])))
+    # 3. The offline checks.
+    results.append(("Maintenance run, offline", run_step(3, *STEPS[2])))
 
     # Summary.
     print("")
