@@ -3,11 +3,12 @@ JPL), build 3, the website's half, with L-395's move: every room's hover
 prints the orrery's period; an orbit around the barycentre is drawn
 there; the Horizons check leaves the Daily Run for the orrery.
 
-Built on gallery 924977a353b6c3e7d50e360e840fe176685f97c9 at
+Built on gallery 4b2b660ad779a971b496536f6203f93b04aa7a8d at
 https://github.com/tonylquintanilla/tonyquintanilla.github.io ("daily run
-10-13-26"), after its partner patch_L431_11_website_orrery_20261014.py,
-built on orrery db63721d258004b855c1259371d8adf15bf7647c at
-https://github.com/tonylquintanilla/palomas_orrery.
+10-14-26"), after its partner patch_L431_11_website_orrery_20261014.py,
+built on orrery fe000597d5282a93461d31065997254d5bf981ff at
+https://github.com/tonylquintanilla/palomas_orrery. After it, in the
+orrery: patch_L431_13_dashboard_buttons_20261014.py.
 Tony's local folders: orrery
 C:\\Users\\tonyq\\OneDrive\\Desktop\\python_work\\palomas_orrery_for_github\\;
 gallery C:\\Users\\tonyq\\OneDrive\\Desktop\\python_work\\tonyquintanilla.github.io\\.
@@ -66,7 +67,7 @@ WHAT IT CHANGES
 SAFETY
     Each file is checked only at the lines this patch edits; every anchor
     must match exactly once. A file it creates must not exist yet. A file
-    it removes must hold exactly what it held at 924977a3, or nothing is
+    it removes must hold exactly what it held at 4b2b660a, or nothing is
     written: data/horizons_confirmations.json in particular, so a newer
     confirmation on your machine is never thrown away. Files are removed
     one at a time by name; no folder is removed. If any check fails,
@@ -2326,7 +2327,7 @@ def apply():
             print('ERROR: %s is not here to remove. NOTHING was written.' % f)
             return None
         if _lf_md5(path) != want:
-            print('ERROR: %s is not what it was at 924977a3, so it is not removed: it may' % f)
+            print('ERROR: %s is not what it was at 4b2b660a, so it is not removed: it may' % f)
             print('hold something newer. Commit or discard it in GitHub Desktop, then run')
             print('this again. NOTHING was written.')
             return None
@@ -2384,10 +2385,12 @@ def main():
     print('  1. Run gallery_maintenance_run.py (offline). Its Objects mirror writes')
     print('     each object\'s period into data/objects_config.json. Expect every')
     print('     gating checker to pass, Drawn orbit among them.')
-    print('  2. Run the Daily Run: the guest book, then the cache builder, then the')
-    print('     maintenance run again.')
-    print('  3. Move this script into documentation/. Commit the config and the cache')
-    print('     together, and push. Then: python gallery_maintenance_run.py --live')
+    print('  2. In the ORRERY folder: run patch_L431_13_dashboard_buttons_20261014.py,')
+    print('     then orrery_maintenance_run.py (Dashboard parity must pass), and push')
+    print('     the orrery.')
+    print('  3. Back here: run the Daily Run (guest book, cache builder, maintenance')
+    print('     run). Move this script into documentation/. Commit the config and the')
+    print('     cache together, and push. Then: python gallery_maintenance_run.py --live')
     print('  4. The look, on the phone and the desktop: the handoff says where.')
     return 0
 
