@@ -14,8 +14,23 @@ RUN COMMAND
 --mirror, THE CONFIG MIRROR CHECK
 
     Every served link in data/objects_config.json holds exactly what
-    data/constants_export.json says: value, unit and figure count. It
-    prints how many links it compared, so a pass says what it examined.
+    data/constants_export.json says: value, unit and figure count, and
+    since schema 7 the citation beside it (L-421 part 3, Tony's option A
+    of 2026-10-16: the orrery owns the citation). It prints how many
+    links and how many citations it compared, so a pass says what it
+    examined.
+
+    THE CITATION. A served link's entry must hold the row's citation,
+    word for word, in its "source". It FAILS, naming the link, when the
+    entry's citation differs from the row's, when the entry has none and
+    the row has one, and when the entry holds one the row does not
+    (a citation only the website keeps). It NAMES, without failing, the
+    links whose row is a declared choice with no citation on either
+    side, and the links whose row the export does not serve -- a
+    fallback or a link outside the store -- whose citations it could
+    not compare. An export older than schema 7 carries no citations, and
+    the check FAILS on it by name rather than passing on the numbers
+    alone.
 
     It FAILS when a served link differs, and it names WHY using the
     mirror's own verdicts. A link the mirror refused is reported as that
@@ -74,6 +89,10 @@ Module updated: September 22, 2026 with Anthropic's Claude Opus 5.5
 Module updated: September 22, 2026 with Anthropic's Claude Opus 5.5
 (the join's last line carries the read check's counts, because the
 maintenance run shows only a check's last line).
+Module updated: October 16, 2026 with Anthropic's Claude Opus 5.5
+(L-421 part 3: the mirror check compares each served link's citation
+with its row's, word for word, names the links it could not compare,
+and fails on an export older than schema 7.)
 """
 
 import json
@@ -114,16 +133,47 @@ def mirror_check(root):
     if problem:
         print("FAIL: %s" % problem)
         return 1
+    problem = mirror.schema_problem(export)
+    if problem:
+        print("FAIL: %s." % problem)
+        return 1
     links, refused = mirror.plan(text, export)
     served = [link for link in links if link.verdict == "SERVED"]
     stale = [link for link in served if link.changes]
+    compared = [link for link in served
+                if link.cite in ("written", "same", "config only")]
+    no_cite = [link for link in served if link.cite == "none"]
+    unchecked = [link for link in links if link.verdict != "SERVED"]
 
     print("Compared %d served link(s) against the export of orrery %s."
           % (len(served), (sha or "(no SHA recorded)")[:8]))
+    print("Citations compared word for word: %d. Declared rows with no "
+          "citation on either side: %d. Not compared, the row not served: "
+          "%d." % (len(compared), len(no_cite), len(unchecked)))
+    for heading, group in (("Declared, no citation on either side",
+                            no_cite),
+                           ("Not compared -- the export does not serve "
+                            "the row", unchecked)):
+        if group:
+            print("  %s (%d):" % (heading, len(group)))
+            for link in sorted(group, key=lambda l: (l.name, l.path)):
+                print("    %-34s %s" % (link.name, link.path))
 
     failures = []
+    for link in served:
+        if link.cite == "config only":
+            failures.append((link.name, "CITATION: %s (%s)"
+                             % (link.cite_detail, link.path)))
     for link in stale:
         for change in link.changes:
+            if change.field == "source":
+                failures.append((link.name, "CITATION: %s in the config, "
+                                 "and the orrery's row cites %s -- a hand "
+                                 "edit, or a pull without a mirror run (%s)"
+                                 % ("absent" if change.insert_after
+                                    else "%s" % _clip(change.old),
+                                    _clip(change.new), link.path)))
+                continue
             failures.append((link.name, "%s is %s in the config and %s in "
                              "the export -- a hand edit, or a pull without "
                              "a mirror run"
@@ -148,10 +198,18 @@ def mirror_check(root):
               "hold what the export says."
               % (len(failures), len(set(name for name, _m in failures))))
         return 1
-    print("Every served link holds the export's value, unit and figure "
-          "count; %d link(s) compared, store %s."
-          % (len(served), export["store_sha256"][:12]))
+    print("Every served link holds the export's value, unit, figure "
+          "count and citation; %d link(s) compared, %d citation(s) word "
+          "for word, %d declared with none, %d not served; store %s."
+          % (len(served), len(compared), len(no_cite), len(unchecked),
+             export["store_sha256"][:12]))
     return 0
+
+
+def _clip(text, width=70):
+    """A citation shortened for a failure line, quoted."""
+    text = str(text)
+    return '"%s"' % (text if len(text) <= width else text[:width - 3] + "...")
 
 
 def read_walk(links, export, closed):

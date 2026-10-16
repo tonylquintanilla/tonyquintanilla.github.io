@@ -24,6 +24,9 @@ WHAT IT CHECKS, and what would make each fail.
      which would mean the belts had silently left one list or the other.
   3. A belt row offers four words, not six, and says why. Fails if the
      form offers a box that could never be saved.
+     (11. A shell carrying an orrery_constant offers no source box, a
+     source_note box, and shows the orrery's citation locked -- L-421
+     part 3. Fails if the form offers the citation as a box.)
   4. Every path the form would write is one the writer allows. Fails if
      the form could offer something the writer refuses -- a box that
      looks editable and is not.
@@ -58,6 +61,9 @@ Updated October 10, 2026 with Anthropic's Claude Opus 5.5 (L-216: the save
 message must not say to pause OneDrive).
 Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: check
 10, and the window walk covers a room with no shells).
+Updated October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 3:
+check 11; belt rows are found by their kind, since a linked shell now
+carries a locked line too.)
 """
 
 import json
@@ -139,7 +145,7 @@ def logic_checks():
         check("earth's word list is longer than its tick list",
               len(rows) == len(choices) + 1,
               "%d rows, %d ticks" % (len(rows), len(choices)))
-        belts = [r for r in rows if r["locked"]]
+        belts = [r for r in rows if r["kind"] == "belt"]
         check("earth has two belt rows", len(belts) == 2,
               "%d found" % len(belts))
         for row in belts:
@@ -152,6 +158,34 @@ def logic_checks():
                   "note" in row["locked"] and "source" in row["locked"])
             check("a belt's numbers are labelled as the pair's",
                   "BOTH" in row["numbers_label"])
+
+    # 11. A linked shell's citation is the orrery's (L-421 part 3): no
+    #     source box, a source_note box, and the citation shown locked.
+    linked_rows = 0
+    for slug in slugs:
+        if SW.is_section_room(cfg, slug):
+            continue
+        index = SW.object_index(cfg, slug)
+        for row in E.word_rows(cfg, slug):
+            if row["kind"] != "shell":
+                continue
+            group_key = row["fields"]["name"].split("/")
+            member = cfg["objects"][index]["features"][group_key[-3]][
+                group_key[-2]]
+            if "orrery_constant" not in member:
+                continue
+            linked_rows += 1
+            check("11: %s %s offers no source box" % (slug, row["key"]),
+                  "source" not in row["fields"])
+            check("11: %s %s offers a source_note box" % (slug, row["key"]),
+                  "source_note" in row["fields"])
+            check("11: %s %s shows its citation locked, saying where words "
+                  "go" % (slug, row["key"]),
+                  "from the orrery" in row["locked"]
+                  and "source_note" in row["locked"])
+    check("11: the real config has linked shells to show", linked_rows > 0)
+    print("    linked shells whose citation is shown locked: %d"
+          % linked_rows)
 
     # 5. Nothing typed, nothing saved.
     rows = E.word_rows(cfg, slugs[0])

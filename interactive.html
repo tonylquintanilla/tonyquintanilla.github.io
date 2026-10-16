@@ -265,6 +265,10 @@
         placed by the orrery -- is fetched from
         data/solar-system/drawings/ and handed to the renderers; one
         that cannot be read is reported and only that shape is missing)
+     Updated: October 16, 2026 with Anthropic's Claude Opus 5.5
+       (L-421 part 3, Tony's option A: the i panel prints a served
+        source_note, the website's own words about a citation, right
+        after the Source line, whose citation is now the orrery's)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -4371,6 +4375,7 @@ function buildSunDrawer(traces) {
                 link: sunLinkOf(t),
                 about: (t.meta && typeof t.meta.about === "string") ? t.meta.about : null,
                 source: (t.meta && typeof t.meta.source === "string") ? t.meta.source : null,
+                source_note: (t.meta && typeof t.meta.source_note === "string") ? t.meta.source_note : null,
                 detail: (t.meta && typeof t.meta.detail === "string") ? t.meta.detail : null,
                 note: (t.meta && typeof t.meta.note === "string") ? t.meta.note : null,
                 indices: [],
@@ -4386,7 +4391,7 @@ function buildSunDrawer(traces) {
         // trace below still wins where it carries its own.
         if (!byName[g].link) { byName[g].link = sunLinkOf(t); }
         if (t.meta) {
-            ["about", "source", "detail", "note"].forEach(function (f) {
+            ["about", "source", "source_note", "detail", "note"].forEach(function (f) {
                 if (!byName[g][f] && typeof t.meta[f] === "string") {
                     byName[g][f] = t.meta[f];
                 }
@@ -4398,6 +4403,7 @@ function buildSunDrawer(traces) {
             byName[g].link = sunLinkOf(t) || byName[g].link;
             if (t.meta && typeof t.meta.about === "string") { byName[g].about = t.meta.about; }
             if (t.meta && typeof t.meta.source === "string") { byName[g].source = t.meta.source; }
+            if (t.meta && typeof t.meta.source_note === "string") { byName[g].source_note = t.meta.source_note; }
             if (t.meta && typeof t.meta.detail === "string") { byName[g].detail = t.meta.detail; }
             if (t.meta && typeof t.meta.note === "string") { byName[g].note = t.meta.note; }
         }
@@ -4635,6 +4641,16 @@ function renderSunInfo(grp) {
         src.className = "info-focus-empty";
         src.textContent = "Source: " + grp.source;
         box.appendChild(src);
+    }
+    // L-421 part 3 (2026-10-16, Tony's option A): the citation above is
+    // the orrery's, word for word; the website's own words about it --
+    // what the number is for, a caveat -- are the served source_note, and
+    // print right after it, so the panel reads as it did before.
+    if (grp.source_note) {
+        const snt = document.createElement("div");
+        snt.className = "info-focus-empty";
+        snt.textContent = grp.source_note;
+        box.appendChild(snt);
     }
     // L-231 follow-up (2026-09-15): longer reference prose -- a model's own
     // equations, say -- rides in meta.detail and is shown HERE rather than

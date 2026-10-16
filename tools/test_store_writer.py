@@ -39,14 +39,26 @@ editor manifest's section 6.
      from the list -- the bug of 2026-10-01, when the editor offered
      only the Sun and Earth -- or if a row's slug, the Sun or an unknown
      row gets through.
+ 10. A LINKED shell's citation is the orrery's (L-421 part 3, Tony's
+     option A of 2026-10-16). On a shell carrying an orrery_constant,
+     `source` is not in the allow list and a write to it refuses, saying
+     to change it in constants_new.py and to put the website's own words
+     in source_note; `source_note` is offered and is added like any
+     word. A shell with no link keeps `source` as an ordinary word.
+     Fails if the linked shell's source can be written, or if the
+     refusal does not say where the words go.
 
   THE REAL CONFIG is then read, if it is there, and checks 1, 2 and 5
-  run against it as well. If it is missing, that is REPORTED and the
+  run against it as well; every linked shell's `source` is tried and
+  must refuse with check 10's sentence. If it is missing, that is REPORTED and the
   run fails rather than passing quietly on the fixtures alone.
 
 Written September 2026 with Anthropic's Claude Opus 5.
 Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: check
 9, and the real config's rooms-section rooms).
+Updated October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 3:
+check 10, a linked shell's citation is the orrery's; source_note is a
+word; the real-config sweep expects each linked shell's source refused.)
 """
 
 import difflib
@@ -445,6 +457,27 @@ def fixture_checks():
           back["rooms"]["testroom"]["arrival"]["drawn"] == ["farbody"]
           and back["objects"][0]["arrival"]["drawn"] == ["mantle"])
 
+    # 10. A linked shell's citation is the orrery's (L-421 part 3).
+    linked_cfg = json.loads(FIXTURE)
+    linked_cfg["objects"][0]["features"]["interior"]["crust"][
+        "orrery_constant"] = "constants_new.py::TEST_CRUST_LINK"
+    linked = json.dumps(linked_cfg, indent=2)
+    linked_allowed = W.editable_paths(linked_cfg)
+    check("10: a linked shell's source is not in the allow list",
+          CRUST + "/source" not in linked_allowed)
+    check("10: a linked shell's source_note is in the allow list",
+          CRUST + "/source_note" in linked_allowed)
+    check("10: an unlinked shell's source is still a word",
+          CRUST + "/source" in allowed)
+    refuses("10: writing a linked shell's source refuses, naming where "
+            "the words go",
+            lambda: W.edit(linked, [(CRUST + "/source", "My wording")]),
+            expect_in="go in source_note")
+    out = W.edit(linked, [(CRUST + "/source_note", "What the number is for.")])
+    check("10: a linked shell's source_note is added and reads back",
+          json.loads(out)["objects"][0]["features"]["interior"]["crust"]
+          .get("source_note") == "What the number is for.")
+
     # Nothing above touched the fixture text itself.
     check("the fixture text is unchanged by all of that", text == FIXTURE)
 
@@ -539,11 +572,21 @@ def real_config_checks():
             continue
         # EVERY shell and EVERY word field, replaced or added. A sample
         # of one would pass while a shell shaped differently failed.
-        replaced = added = 0
+        replaced = added = mirror_owned = 0
         for _key, group, where, _label in shells:
             member = cfg["objects"][W.object_index(cfg, slug)]["features"][group]
             held = member[where.rsplit("/", 1)[1]]
             for field in W.WORD_FIELDS:
+                if ("orrery_constant" in held
+                        and field in W.LINKED_ONLY_MIRROR):
+                    # Check 10 on the real file: the orrery's citation.
+                    refuses("real config: %s %s/%s refuses"
+                            % (slug, where.rsplit("/", 1)[1], field),
+                            lambda w=where, f=field: W.edit(
+                                text, [(w + "/" + f, "My wording")]),
+                            expect_in="go in source_note")
+                    mirror_owned += 1
+                    continue
                 missing = field not in held
                 try:
                     out = W.edit(text, [(where + "/" + field,
@@ -570,8 +613,9 @@ def real_config_checks():
                     added += 1
                 else:
                     replaced += 1
-        print("    %s: %d word(s) replaced and %d added, across %d shell(s)"
-              % (slug, replaced, added, len(shells)))
+        print("    %s: %d word(s) replaced and %d added, across %d shell(s); "
+              "%d linked shell citation(s) refused, the orrery's"
+              % (slug, replaced, added, len(shells), mirror_owned))
     real_allowed = W.editable_paths(cfg)
     print("    the allow list holds %d path(s) across %d room(s) (%s); "
           "every other path in the file is refused"

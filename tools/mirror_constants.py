@@ -36,9 +36,11 @@ WHAT IT WRITES, PER LINK
                count an exact row states, as "prints" (schema 5 and
                later; a row with none gets no field), and the row's
                value in every unit of its dimension, as "in" (schema 6
-               and later; a row with none gets no field). Nothing else
-               on the entry is touched -- not the source, not the
-               description, not the presentation.
+               and later; a row with none gets no field). And the row's
+               citation, as the entry's "source" (schema 7; see THE
+               CITATION below). Nothing else on the entry is touched --
+               not the description, not the presentation, not the
+               website's own note on the citation, "source_note".
     FALLBACK   the export names the row in not_exported (no unit line
                yet, or a retired token). The hand-typed value stays, and
                the link is named with the export's reason. Store drift
@@ -100,6 +102,32 @@ IT CONVERTS NOTHING, AND TELLS TWO KINDS OF CHANGE APART
     blocked transmission does not hold back sixteen good ones, and the
     run exits non-zero so the maintenance run shows it.
 
+THE CITATION IS THE ORRERY'S (schema 7, L-421 part 3)
+
+    Tony's ruling of 2026-10-16, option A: the orrery owns the citation
+    beside a served number, as it owns the number. The export carries
+    each row's citation -- its "# Source:" line, or, for a derived row
+    with none, its inputs' -- and this tool writes it into the "source"
+    of the entry that carries the link (the entry with the
+    "orrery_constant"), the way it writes the value. A link whose entry
+    holds no "source" gets one, placed after its "orrery_constant".
+
+    The website's own words ABOUT a citation -- what the number is for,
+    a caveat, a corroborating paper -- are the entry's "source_note", a
+    word field the website keeps (store_writer.py and the editor write
+    it for a shell; a patch writes it elsewhere). The i panel prints the
+    citation and then the note. This tool never touches "source_note".
+
+    A row the export serves with NO citation (a declared choice, which
+    has none) leaves the entry as it is. If the entry holds a "source"
+    there, the website holds a citation the orrery does not, and that is
+    named, not written over: the words belong on the row, in the orrery,
+    or in "source_note". The Config mirror check fails on it.
+
+    An export older than schema 7 carries no citations at all. The tool
+    refuses it by name and writes nothing, rather than writing numbers
+    beside citations it cannot check.
+
 A LINK TO THE ROW THAT DEFINES ITS OWN UNIT IS EXACTLY ONE
 
     Earth's crust is 1.0 R_earth and points at
@@ -141,6 +169,11 @@ unit of its dimension, computed in the orrery from full digits -- is
 written beside the value, and a slot measured in another unit from its
 row is written from that row's "in" entry for the slot's unit, as
 served. Nothing is converted here.)
+Module updated: October 16, 2026 with Anthropic's Claude Opus 5.5
+(L-421 part 3: the export's citation, schema 7, is written into the
+linked entry's "source", Tony's option A of 2026-10-16; the website's
+own note keeps its own field, "source_note"; an export older than
+schema 7 is refused by name.)
 """
 
 import json
@@ -163,6 +196,33 @@ STORE_FILE = "constants_new.py"
 # (interactive-exhibit 1.5).
 FIELDS = ("value", "unit", "figures", "uncertainty", "prints", "in")
 REFUSALS = ("UNIT CONFLICT", "TOKEN CHANGE", "NO SLOT")
+# L-421 part 3: the first export to carry each row's citation. An older
+# one is refused by name in run(); plan() itself reads a row with no
+# "source" key as carrying no citation to compare, so a fixture from an
+# older schema still exercises the number paths.
+MIN_SCHEMA = 7
+# What a link's citation came to, beside its number's verdict.
+#   "written"      the entry now holds the orrery's citation (it differed
+#                  or was absent)
+#   "same"         the entry already held it
+#   "none"         the row has no citation and the entry holds none
+#   "config only"  the row has none and the entry holds one: named,
+#                  never written over
+#   "not served"   the export does not serve the row (FALLBACK, ABSENT),
+#                  or carries no citations, so there is nothing to
+#                  compare
+CITE_STATES = ("written", "same", "none", "config only", "not served")
+
+
+def schema_problem(export):
+    """Why this export cannot be mirrored, or None."""
+    schema = export.get("schema")
+    if not isinstance(schema, int) or schema < MIN_SCHEMA:
+        return ("data/constants_export.json is schema %r; this gallery "
+                "needs %d or later, which carries each row's citation. "
+                "Run the maintenance run's pull, or push the orrery's "
+                "export_constants.py first" % (schema, MIN_SCHEMA))
+    return None
 
 
 # ------------------------------------------------------------------
@@ -365,19 +425,27 @@ def store_name(entry):
 # ------------------------------------------------------------------
 
 class Change(object):
-    __slots__ = ("field", "old", "new", "start", "end", "insert_after")
+    __slots__ = ("field", "old", "new", "start", "end", "insert_after",
+                 "own_line")
 
-    def __init__(self, field, old, new, start, end, insert_after=False):
+    def __init__(self, field, old, new, start, end, insert_after=False,
+                 own_line=False):
         self.field = field
         self.old = old
         self.new = new
         self.start = start
         self.end = end
         self.insert_after = insert_after
+        # An insertion after an anchor that may be its object's LAST
+        # member takes its indent from the anchor's own line (see
+        # anchor_separator); the number fields insert beside value or
+        # unit, which always have a sibling below, and keep the old rule.
+        self.own_line = own_line
 
 
 class Link(object):
-    __slots__ = ("path", "name", "verdict", "detail", "changes")
+    __slots__ = ("path", "name", "verdict", "detail", "changes", "cite",
+                 "cite_detail")
 
     def __init__(self, path, name, verdict, detail):
         self.path = path
@@ -385,6 +453,8 @@ class Link(object):
         self.verdict = verdict
         self.detail = detail
         self.changes = []
+        self.cite = "not served"
+        self.cite_detail = ""
 
 
 def render(value):
@@ -452,6 +522,46 @@ def same_number(held, exported, figures):
     return False
 
 
+def citation_change(entry, row, link):
+    """Set link.cite, and return the Change that writes the citation, or
+    None (L-421 part 3, schema 7).
+
+    The citation sits on the ENTRY that carries the link, which is where
+    the config already kept every one it held, not on the value slot.
+    A row with no "source" key is from an export older than schema 7:
+    there is nothing to compare, so nothing is touched.
+    """
+    if "source" not in row:
+        link.cite = "not served"
+        link.cite_detail = "the export carries no citations (before schema 7)"
+        return None
+    cited = row.get("source")
+    held = entry.value.get("source")
+    if cited is None:
+        if held is None:
+            link.cite = "none"
+            link.cite_detail = "the row has no citation; neither has the entry"
+        else:
+            link.cite = "config only"
+            link.cite_detail = ("the entry cites words the orrery's row "
+                                "does not carry. Put the citation on the "
+                                "row in constants_new.py, or move the words "
+                                "to this entry's source_note")
+        return None
+    if held == cited:
+        link.cite = "same"
+        return None
+    link.cite = "written"
+    link.cite_detail = ("added" if held is None
+                        else "replaced the website's wording")
+    if "source" in entry.members:
+        node, _key_start = entry.members["source"]
+        return Change("source", held, cited, node.start, node.end)
+    node, _key_start = entry.members["orrery_constant"]
+    return Change("source", None, cited, node.end, node.end,
+                  insert_after=True, own_line=True)
+
+
 def plan(text, export, accept=()):
     """(links, failures). Refused links are named; the rest still write."""
     root = parse_with_spans(text)
@@ -462,6 +572,9 @@ def plan(text, export, accept=()):
 
     for path, entry in collect_links(root):
         file_part, name = store_name(entry)
+        # The entry carrying the link. `entry` is reused below for the
+        # export's "in" entries, so the citation reads this name.
+        link_entry = entry
         if file_part != STORE_FILE or name not in rows:
             if file_part != STORE_FILE or name not in skipped:
                 link = Link(path, name, "ABSENT",
@@ -565,6 +678,9 @@ def plan(text, export, accept=()):
                 node, _key_start = anchor
                 link.changes.append(Change(field, None, new, node.end,
                                            node.end, insert_after=True))
+        cite = citation_change(link_entry, row, link)
+        if cite is not None:
+            link.changes.append(cite)
         links.append(link)
 
     return links, failures
@@ -587,6 +703,30 @@ def member_separator(text, slot_start):
     return ",\n" + indent
 
 
+def anchor_separator(text, anchor_end):
+    """What goes between an anchor member and one added after it, with
+    the indent taken from the ANCHOR's own line.
+
+    member_separator() reads the indent off the line after the anchor,
+    which is one level too shallow when the anchor is its object's last
+    member -- the next line is then the closing brace. An entry's
+    "orrery_constant" often is its last member, so the citation's
+    insertion uses this. store_writer.py adds words the same way, through
+    this function, so the two tools cannot come to disagree.
+    """
+    line_end = text.find("\n", anchor_end)
+    close = text.find("}", anchor_end)
+    if line_end == -1 or (close != -1 and close < line_end):
+        return ", "
+    line_start = text.rfind("\n", 0, anchor_end) + 1
+    indent = ""
+    probe = line_start
+    while probe < len(text) and text[probe] in " \t":
+        indent += text[probe]
+        probe += 1
+    return ",\n" + indent
+
+
 def apply_changes(text, links):
     """The config with every change made, bottom-up so offsets hold."""
     edits = []
@@ -598,7 +738,9 @@ def apply_changes(text, links):
     edits.sort(key=lambda pair: pair[0].start, reverse=True)
     for change, link in edits:
         if change.insert_after:
-            separator = member_separator(text, change.start)
+            separator = (anchor_separator(text, change.start)
+                         if change.own_line
+                         else member_separator(text, change.start))
             piece = '%s"%s": %s' % (separator, change.field,
                                     render(change.new))
             text = text[:change.start] + piece + text[change.start:]
@@ -646,12 +788,30 @@ def report(links, failures, writing):
     print("SERVED, %d with something to write:" % len(changed))
     for link in changed:
         for change in link.changes:
+            if change.field == "source":
+                print("  %-34s %-8s %s" % (link.name, "source",
+                                           link.cite_detail))
+                continue
             print("  %-34s %-8s %s -> %s"
                   % (link.name, change.field,
                      "(absent)" if change.insert_after else render(change.old),
                      render(change.new)))
     if not changed:
-        print("  every served link already holds the export's numbers")
+        print("  every served link already holds the export's numbers and "
+              "citations")
+    print("")
+
+    by_cite = {}
+    for link in links:
+        by_cite.setdefault(link.cite, []).append(link)
+    print("CITATIONS (schema 7): %s."
+          % ", ".join("%d %s" % (len(by_cite.get(state, [])), state)
+                      for state in CITE_STATES))
+    for state in ("config only", "none"):
+        if by_cite.get(state):
+            print("  %s (%d):" % (state, len(by_cite[state])))
+            for link in sorted(by_cite[state], key=lambda l: l.name):
+                print("    %-34s %s" % (link.name, link.path))
     print("")
 
     print("FALLBACK, %d link(s) the export cannot serve yet:" % len(fallback))
@@ -684,7 +844,7 @@ def report(links, failures, writing):
               % (total, len(changed), len(fallback), len(absent)))
     else:
         print("Unchanged: all %d served link(s) already hold the export's "
-              "numbers; %d fallback, %d outside the store."
+              "numbers and citations; %d fallback, %d outside the store."
               % (len(served), len(fallback), len(absent)))
 
 
@@ -700,6 +860,10 @@ def run(root, write, accept=()):
         text = handle.read()
     with open(export_path, "r", encoding="utf-8") as handle:
         export = json.load(handle)
+    problem = schema_problem(export)
+    if problem:
+        print("FAIL: %s. Nothing written." % problem)
+        return 1
 
     try:
         links, failures = plan(text, export, accept)

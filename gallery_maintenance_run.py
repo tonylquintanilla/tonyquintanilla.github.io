@@ -149,6 +149,11 @@ Module updated: October 15, 2026 with Anthropic's Claude Opus 5.5
 alone, for the Daily Run's step before the builder; a mirror whose pull
 failed is not run; a failed generator fails the run and is named; the
 "Pull failures" checker runs tools/test_pull_failures.py and gates).
+Module updated: October 16, 2026 with Anthropic's Claude Opus 5.5
+(L-421 parts 2 and 3: the "Typed facts" checker runs
+documentation/smoke_typed_facts.js and gates; the Config mirror check,
+the same row as before, now also compares each served number's
+citation with its orrery row's).
 """
 
 import hashlib
@@ -379,6 +384,20 @@ OFFLINE_CHECKERS = [
      ["documentation/smoke_hover_budget.js", "gallery/feature_renderers.js",
       "gallery/earth_geometry.js", "interactive.html"],
      ".", "===", False),
+
+    # L-421 part 2 (2026-10-16): no fact about nature is typed in the
+    # rooms' code. It builds the Sun and Earth rooms three ways -- as
+    # served, with every served word replaced by a marker, and with
+    # every served number scaled -- and fails, naming the room, the
+    # feature and the sentence, on any sentence still printed without
+    # the marker that is not the pointer line, a served number's own
+    # label line, or on its short named ALLOWED list. It reads what a
+    # served word is from tools/store_writer.py and fails on a served
+    # string it cannot classify. It reads each room's description in
+    # interactive.html sentence by sentence. Sentences held for Tony's
+    # ruling (L-451) are printed every run and do not fail. Gates.
+    ("Typed facts", "node",
+     ["documentation/smoke_typed_facts.js"], ".", "TYPED FACTS:", False),
 
     # L-334 (2026-09-17, piece 1; stage B 2026-09-18): what each room
     # opens on. It requires gallery/arrival.js, applies it to both

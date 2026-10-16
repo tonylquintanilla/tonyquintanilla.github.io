@@ -10,15 +10,16 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 53  
-**Total Lines of Code (non-blank):** 24,859  
-**Total Public Functions/Classes:** 401
+**Total Python Files:** 54  
+**Total Lines of Code (non-blank):** 26,196  
+**Total Public Functions/Classes:** 409
 
 ## Classification Coverage
 
-**Undetermined role (10).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (11).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
+- `patch_L421_10_citations_typed_facts_20261016.py`
 - `patch_L445_2_gallery_period_words_20261015.py`
 - `patch_L446_2_daily_run_gallery_20261015.py`
 - `tools/record_earth_scene.py`
@@ -29,9 +30,10 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (8).** No valid `Domain:` tag.
+**Undetermined domain (9).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
+- `patch_L421_10_citations_typed_facts_20261016.py`
 - `patch_L445_2_gallery_period_words_20261015.py`
 - `patch_L446_2_daily_run_gallery_20261015.py`
 - `tools/record_earth_scene.py`
@@ -104,7 +106,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 |--------|-------------|
 | `add_docstrings.py` | Two related tools for module-level docstrings. (1,210 lines) |
 | `check_cache_in_step.py` | - the served cache holds the same objects and the same shells as data/objects_config.json. (328 lines) |
-| `check_constants_links.py` | - two checks over the gallery's links into the orrery's store, sharing the mirror's own reading so one cause prints one explanation. (255 lines) |
+| `check_constants_links.py` | - two checks over the gallery's links into the orrery's store, sharing the mirror's own reading so one cause prints one explanation. (310 lines) |
 | `check_drawings.py` | - every stored drawing the served config names is pulled, served, and the drawing it claims to be. (205 lines) |
 | `check_horizons_confirmations.py` | - every object the website takes from the orrery's list has been confirmed against JPL Horizons, recently, and has not changed since; and each period it prints from JPL too (L-395, L-431). (244 lines) |
 | `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (253 lines) |
@@ -113,15 +115,15 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,211 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,282 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,300 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (525 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (860 lines) |
-| `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (658 lines) |
+| `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (808 lines) |
 | `mirror_objects.py` | - write each served object's identity, description and NASA link into data/objects_config.json from the orrery's objects export, and name every difference it finds. (247 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (837 lines) |
-| `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (138 lines) |
+| `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (146 lines) |
 | `pull_drawings.py` | - copy the orrery's stored drawings into the gallery, and record the SHA they came from. (174 lines) |
 | `pull_objects_export.py` | - copy the orrery's objects export into the gallery, and record the SHA it came from. (105 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
@@ -139,16 +141,17 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (661 lines) |
+| `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (686 lines) |
+| `patch_L421_10_citations_typed_facts_20261016.py` | - L-421 parts 2 and 3, the website half: each served number's citation is the orrery's, copied beside it by the mirror and checked word for word; and the Typed facts check, a gating row in the gallery run. (825 lines) |
 | `patch_L445_2_gallery_period_words_20261015.py` | - L-445 (Earth's period), the website's half: the period sentence says whose period it is when the orrery serves one asked of another body. Earth's is the Earth-Moon barycentre's: "Orbital period: 1.00000 years (365.25 days), for the Earth-Moon cente... (159 lines) |
 | `patch_L446_2_daily_run_gallery_20261015.py` | - the website's Daily Run pulls from the orrery BEFORE it builds the cache, and stops when a pull cannot reach the orrery (L-446, with L-380 and L-388; Tony's option A of 2026-10-15). (309 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
-| `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (588 lines) |
+| `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (635 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
-| `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (365 lines) |
-| `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (602 lines) |
+| `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (398 lines) |
+| `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (735 lines) |
 | `test_pole_of_date.py` | Offline checks of Earth's pole and tilt of date as the gallery cache builder computes them. (228 lines) |
-| `test_store_writer.py` | - the in-place writer does what it says, and refuses what it must. L-334 piece 5, the writer's half. (594 lines) |
+| `test_store_writer.py` | - the in-place writer does what it says, and refuses what it must. L-334 piece 5, the writer's half. (637 lines) |
 
 ---
 

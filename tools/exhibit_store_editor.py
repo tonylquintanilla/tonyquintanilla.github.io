@@ -6,15 +6,18 @@ RUN IT:  open this file in VS Code and click Run.
 A window opens. Nothing is written until you press Save.
 
 WHAT IT EDITS. data/objects_config.json, and only the parts of it
-tools/store_writer.py allows: a served shell's six words (name,
-description, about, note, source, info_url), a radiation belt's parallel
-words, and the arrival block's `drawn` and `moon`. For a room kept in
+tools/store_writer.py allows: a served shell's words (name,
+description, about, note, source, source_note, info_url, hover), a
+radiation belt's parallel words, and the arrival block's `drawn` and `moon`. For a room kept in
 the config's "rooms" section -- the Solar System room -- it edits which
 bodies the room opens on and which row it highlights, and nothing else
 yet (L-404; the rows' own words are not in this build). Numbers, their units,
 their figure counts and their `orrery_constant` links are shown in grey
 and cannot be typed into. A number changes in the orrery's
 constants_new.py and arrives here through the export and the mirror.
+So does the CITATION of a shell that carries an orrery_constant (L-421
+part 3, Tony's option A of 2026-10-16): it is shown in grey with the
+numbers, and the website's own words about it go in the source_note box.
 
 WHAT THE WINDOW LOOKS LIKE. One panel, Tony's ruling of 2026-09-18,
 because this only ever runs on a desktop and the width is there. Left:
@@ -62,6 +65,9 @@ retry is sufficient").
 Updated October 6, 2026 with Anthropic's Claude Opus 5.5 (L-421: a
 shell's `hover` words are shown and saved; the belts' hover lists are
 named in the locked note).
+Updated October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 3:
+a source_note box; a linked shell's citation is shown locked, as the
+orrery's, rather than as a box).
 """
 
 import json
@@ -89,16 +95,25 @@ PHONE_WRAP = 34
 # so those two rows are shown locked with a line saying why.
 # `hover` (L-421): the facts a hover states, served rather than typed in a
 # renderer; a new line starts a new hover line, {name} is a served number.
-FORM_FIELDS = ("name", "description", "about", "note", "source", "info_url",
-               "hover")
+# `source_note` (L-421 part 3): the website's own words about a citation,
+# printed after it in the i panel.
+FORM_FIELDS = ("name", "description", "about", "note", "source",
+               "source_note", "info_url", "hover")
 # Wrapped boxes rather than one-line entries. `source` is here because a
 # citation is a sentence: they run to 489 characters in the real config
 # at gallery d9d7a48f, and a 54-character entry showed about a tenth of
 # the longest one (L-340).
-LONG_FIELDS = ("description", "about", "note", "source", "hover")
+LONG_FIELDS = ("description", "about", "note", "source", "source_note",
+               "hover")
 
 BELT_FIELD_LISTS = {"name": "names", "description": "descriptions",
                     "about": "abouts", "info_url": "info_urls"}
+
+# What the form says, in grey, for a shell whose citation is the orrery's.
+LINKED_CITATION_NOTE = ("Citation, from the orrery (%s): %s\n\nIt is "
+                        "written here by the mirror, beside the number, and "
+                        "changes in constants_new.py. Your own words about "
+                        "it go in source_note.")
 
 # What the form says for a room whose drawer rows are bodies, not shells.
 ROOM_WORDS_NOTE = ("This room's drawer rows are bodies, not shells, so "
@@ -152,11 +167,14 @@ def word_rows(config_value, slug):
     """One row per thing whose words can be edited, in the form's order.
 
     A row is a dict:
+        kind     "shell" or "belt"
         label    what the list shows
         key      the shell key, or the belt's group key
         fields   {form field: path} -- only the ones that exist or can
                  be added
-        locked   a sentence about fields this row does not serve, or ""
+        locked   a sentence about fields this row does not serve, or "";
+                 for a shell carrying an orrery_constant, its citation,
+                 which is the orrery's and is not a box (L-421 part 3)
         numbers  [(label, value, unit, figures, link)], shown grey
         numbers_label
                  the heading over them. A belt's numbers are served for
@@ -181,10 +199,18 @@ def word_rows(config_value, slug):
                     and isinstance(member.get("name"), str)):
                 continue
             base = "/objects/%d/features/%s/%s" % (index, group, key)
-            rows.append({"label": member["name"], "key": key,
-                         "fields": dict((f, base + "/" + f)
-                                        for f in FORM_FIELDS),
-                         "locked": "",
+            linked = "orrery_constant" in member
+            fields = dict((f, base + "/" + f) for f in FORM_FIELDS
+                          if not (linked and f in SW.LINKED_ONLY_MIRROR))
+            locked = ""
+            if linked:
+                locked = LINKED_CITATION_NOTE % (
+                    member["orrery_constant"],
+                    member.get("source") or "(none served yet)")
+            rows.append({"kind": "shell", "label": member["name"],
+                         "key": key,
+                         "fields": fields,
+                         "locked": locked,
                          "numbers": numbers_under(member),
                          "numbers_label": "Numbers, from the orrery"})
         names = params.get("names")
@@ -196,7 +222,7 @@ def word_rows(config_value, slug):
                     if isinstance(held, list) and position < len(held):
                         fields[field] = ("/objects/%d/features/%s/%s/%d"
                                          % (index, group, listname, position))
-                belts.append({"label": name, "key": group,
+                belts.append({"kind": "belt", "label": name, "key": group,
                               "fields": fields,
                               "locked": BELT_LOCKED_NOTE,
                               "numbers": numbers_under(params),

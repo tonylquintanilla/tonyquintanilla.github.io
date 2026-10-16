@@ -54,6 +54,17 @@ WHAT IT COVERS, one case each
         "in" entry for that unit, with no uncertainty carried across; a
         second run changes nothing; a slot in another unit whose row
         serves no "in" is still refused as a UNIT CONFLICT (L-345)
+    21. the citation (schema 7, L-421 part 3, Tony's option A): a row's
+        "source" is written into the linked ENTRY's "source" -- replaced
+        where the entry words it differently, added after the entry's
+        "orrery_constant" where it has none, on its own line at that
+        line's indent even when "orrery_constant" is the entry's last
+        member; the entry's "source_note" is never touched; a row with
+        no citation leaves an entry with none as it is ("none") and NAMES
+        an entry that holds one ("config only") without writing over it;
+        an export row with no "source" key touches nothing; a second run
+        changes nothing; and an export older than schema 7 is refused by
+        run(), by name, with nothing written
 
 RUN COMMAND
 
@@ -74,11 +85,15 @@ Module updated: September 27, 2026 with Anthropic's Claude Opus 5.5
 (L-322 Stage D, gallery patch 4: case 19, the print count).
 Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5
 (L-345: case 20, the served "in" and a slot served in another unit).
+Module updated: October 16, 2026 with Anthropic's Claude Opus 5.5
+(L-421 part 3: case 21, the citation written as served).
 """
 
 import json
 import os
+import shutil
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -619,6 +634,130 @@ def in_cases():
           "20: a second run changes nothing")
 
 
+# ------------------------------------------------------------------
+# 21: the citation (schema 7, L-421 part 3).
+# ------------------------------------------------------------------
+
+CITE_CONFIG = '''{
+  "features": {
+    "reworded": {
+      "name": "Core",
+      "radius": {"value": 0.2, "unit": "r_sun"},
+      "source": "Someone (2001) -- what the number is for",
+      "source_note": "the website's own words, kept",
+      "orrery_constant": "constants_new.py::CORE_RADII"
+    },
+    "uncited": {
+      "radius": {"value": 3.0, "unit": "r_earth"},
+      "orrery_constant": "constants_new.py::BELT_RADII"
+    },
+    "one_line": { "value": 2, "unit": "r_sun", "orrery_constant": "constants_new.py::LOW_RADII" },
+    "declared": {
+      "value": 2.0, "unit": "npa",
+      "orrery_constant": "constants_new.py::PRESSURE_NPA"
+    },
+    "hand_cited": {
+      "value": 45.0, "unit": "deg",
+      "source": "a citation only the website keeps",
+      "orrery_constant": "constants_new.py::CUT_DEG"
+    },
+    "old_export": {
+      "value": 9.0, "unit": "km",
+      "source": "left alone",
+      "orrery_constant": "constants_new.py::OLD_KM"
+    }
+  }
+}
+'''
+
+
+def cite_row(value, unit, source):
+    out = row(value, unit)
+    out["source"] = source
+    out["source_from"] = [] if source is None else ["X"]
+    out["source_inherited"] = False
+    return out
+
+
+def cite_cases():
+    tokens = {"r_sun": {"dimension": "km", "defining_constant": None,
+                        "meaning": "solar radii"},
+              "r_earth": {"dimension": "km", "defining_constant": None,
+                          "meaning": "Earth radii"},
+              "npa": {"dimension": "nPa", "defining_constant": None,
+                      "meaning": "nanopascals"},
+              "deg": {"dimension": "deg", "defining_constant": None,
+                      "meaning": "degrees"},
+              "km": {"dimension": "km", "defining_constant": None,
+                     "meaning": "kilometres"}}
+    export = export_with({
+        "CORE_RADII": cite_row(0.2, "r_sun", "Someone, A. (2001), J. 1:2"),
+        "BELT_RADII": cite_row(3.0, "r_earth", "Belt, B. (2020)"),
+        "LOW_RADII": cite_row(2, "r_sun", "Low, C. (1999)"),
+        "PRESSURE_NPA": cite_row(2.0, "npa", None),
+        "CUT_DEG": cite_row(45.0, "deg", None),
+        "OLD_KM": row(9.0, "km"),
+    }, tokens=tokens)
+    export["schema"] = 7
+    links, failures, by_name = plan_of(CITE_CONFIG, export)
+    check(not failures, "21: no citation case is a refusal, got %r"
+          % [(f.name, f.verdict) for f in failures])
+    states = dict((l.name, l.cite) for l in links)
+    check(states == {"CORE_RADII": "written", "BELT_RADII": "written",
+                     "LOW_RADII": "written", "PRESSURE_NPA": "none",
+                     "CUT_DEG": "config only", "OLD_KM": "not served"},
+          "21: each link's citation state, got %r" % states)
+    text = mirror.apply_changes(CITE_CONFIG, links)
+    out = json.loads(text)["features"]
+    check(out["reworded"]["source"] == "Someone, A. (2001), J. 1:2",
+          "21: a reworded citation is replaced by the orrery's")
+    check(out["reworded"]["source_note"] == "the website's own words, kept",
+          "21: source_note is never touched")
+    check(out["uncited"]["source"] == "Belt, B. (2020)",
+          "21: a missing citation is added")
+    check('      "orrery_constant": "constants_new.py::BELT_RADII",\n'
+          '      "source": "Belt, B. (2020)"\n    }' in text,
+          "21: added after orrery_constant, on its own line at that line's "
+          "indent, though orrery_constant is the entry's last member")
+    check('"orrery_constant": "constants_new.py::LOW_RADII", "source": '
+          '"Low, C. (1999)" }' in text,
+          "21: an entry written on one line keeps one line")
+    check("source" not in out["declared"],
+          "21: a row with no citation adds none")
+    check(out["hand_cited"]["source"] == "a citation only the website keeps",
+          "21: a citation only the website keeps is named, not written over")
+    check(out["old_export"]["source"] == "left alone",
+          "21: an export row with no source key touches nothing")
+    second, _f, _b = plan_of(text, export)
+    check(not any(l.changes for l in second),
+          "21: a second run changes nothing")
+    check(mirror.schema_problem({"schema": 6}) is not None and
+          mirror.schema_problem({"schema": 7}) is None,
+          "21: schema 6 is a problem and schema 7 is not")
+
+    # run() refuses an old export by name and writes nothing.
+    work = tempfile.mkdtemp(prefix="mirror_cite_")
+    try:
+        os.makedirs(os.path.join(work, "data"))
+        with open(os.path.join(work, mirror.CONFIG), "w",
+                  encoding="utf-8", newline="") as handle:
+            handle.write(CITE_CONFIG)
+        old = dict(export)
+        old["schema"] = 6
+        with open(os.path.join(work, mirror.EXPORT), "w",
+                  encoding="utf-8", newline="") as handle:
+            json.dump(old, handle)
+        code = mirror.run(work, write=True)
+        with open(os.path.join(work, mirror.CONFIG), "r",
+                  encoding="utf-8") as handle:
+            after = handle.read()
+        check(code == 1 and after == CITE_CONFIG,
+              "21: an export at schema 6 is refused and nothing is written "
+              "(exit %r)" % code)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
 def real_config_earth_pole(root):
     """18: the real config links Earth's pole to the store, not the dict."""
     path = os.path.join(root, mirror.CONFIG)
@@ -661,6 +800,7 @@ def main():
     uncertainty_cases()
     prints_cases()
     in_cases()
+    cite_cases()
     real_config_earth_pole(root)
     report_mode_writes_nothing(root)
 
@@ -677,7 +817,8 @@ def main():
           "formatting kept, idempotent, report writes nothing, "
           "uncertainty written as served, Earth's pole served, print "
           "count written as served, \"in\" written as served and a slot "
-          "served in another unit from it."
+          "served in another unit from it, and the citation written as "
+          "served, a website-only citation named, an old export refused."
           % CHECKS[0])
     return 0
 

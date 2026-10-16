@@ -137,6 +137,15 @@
  *   rule. L-408: the galactic plane -- a ring, the pole line, both
  *   poles and the direction of the galaxy's centre, from served rows,
  *   with served words on each marker.)
+ * Module updated: October 16, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-421 part 3, Tony's option A: the citation beside a served number
+ *   is the orrery's, written by the mirror; the website's own words
+ *   about it are the served `source_note`. Every place that carries a
+ *   source to the i panel now carries the note too -- stampLink as
+ *   meta.source_note, the magnetopause, magnetotail and bow shock, the
+ *   belts, and the Sun's gathered measured fields, which join each
+ *   citation and its note with " -- " as their one Source line always
+ *   read. No hover changed: a hover carries no citation.)
  */
 
 (function (global) {
@@ -1254,6 +1263,7 @@
 
     var distances, names, colors;
     var sources = [];
+    var sourceNotes = [];
     var notes = [];
     var units = [];
     var figures = [];
@@ -1289,6 +1299,8 @@
           return null;
         }
         sources.push(node.source || null);
+        // L-421 part 3: the website's note on that citation.
+        sourceNotes.push(node.source_note || null);
         notes.push(node.note || null);
         units.push(node.unit || "r_earth");
         figures.push(servedFigureField(node));
@@ -1554,6 +1566,7 @@
         linkCfg.info_url = params.info_urls[i];
       }
       if (sources[i]) linkCfg.source = sources[i];
+      if (sourceNotes[i]) linkCfg.source_note = sourceNotes[i];
       // L-231 follow-up (2026-09-15): the belt's served note left the hover
       // with its citation. It says these are flux PEAKS rather than edges,
       // which is the whole point of the row, so it travels to the panel.
@@ -1773,7 +1786,11 @@
     for (var i = 0; i < fields.length; i++) {
       var f = cfg[fields[i][0]];
       if (isDict(f) && typeof f.source === "string" && f.source) {
-        parts.push(fields[i][1] + ": " + f.source);
+        // L-421 part 3: the orrery's citation, then the website's note on
+        // it, in the one plain-text Source line these always shared.
+        parts.push(fields[i][1] + ": " + f.source +
+                   (typeof f.source_note === "string" && f.source_note
+                     ? " -- " + f.source_note : ""));
       }
     }
     if (!parts.length) return cfg;
@@ -2318,6 +2335,13 @@
     if (typeof cfg.source === "string" && cfg.source) {
       meta = meta || {};
       meta.source = cfg.source;
+    }
+    // L-421 part 3 (2026-10-16): the website's own words about that
+    // citation. The citation is the orrery's, written by the mirror; the
+    // note is the website's, and the panel prints it after the citation.
+    if (typeof cfg.source_note === "string" && cfg.source_note) {
+      meta = meta || {};
+      meta.source_note = cfg.source_note;
     }
     // L-231 follow-up (2026-09-15): longer reference prose -- the model's
     // own equations, say -- rides here for the i-panel and stays OUT of the
@@ -2935,7 +2959,8 @@
       stampShell([mpBuilt.trace, mpMarker], "magnetopause");
       traces.push(mpMarker);
       stampLink([mpBuilt.trace, mpMarker],
-                { info_url: mp.info_url, source: mp.source, about: mp.about,
+                { info_url: mp.info_url, source: mp.source,
+                  source_note: mp.source_note, about: mp.about,
                   detail: mpS._model, note: mp.note });
     }
 
@@ -3072,6 +3097,7 @@
           traces.push(tlMarker);
           stampLink([tlTrace, tlMarker],
                     { info_url: tl.info_url, source: tl.source,
+                      source_note: tl.source_note,
                       about: tl.about, note: tl.note });
         }
       }
@@ -3147,7 +3173,8 @@
       stampShell([bsBuilt.trace, bsMarker], "bow_shock");
       traces.push(bsMarker);
       stampLink([bsBuilt.trace, bsMarker],
-                { info_url: bs.info_url, source: bs.source, about: bs.about,
+                { info_url: bs.info_url, source: bs.source,
+                  source_note: bs.source_note, about: bs.about,
                   detail: bsS._model, note: bs.note });
 
       if (bsStand !== null && Math.abs(bsStand - S) > 0.02) {

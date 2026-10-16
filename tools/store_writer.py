@@ -39,10 +39,13 @@ wrong. An allow list only has to know what is right. (L-334; the
 weakness came from the manifest asking for a refusal list.)
 
 So the editable surface is exactly:
-    a served shell's six words        name, description, about, note,
-                                      source, info_url -- on any member
-                                      of a feature group that carries a
-                                      display `name`
+    a served shell's words            name, description, about, note,
+                                      source, source_note, info_url,
+                                      hover -- on any member of a feature
+                                      group that carries a display `name`;
+                                      but NOT `source` on a shell that
+                                      carries an `orrery_constant`, whose
+                                      citation is the orrery's (below)
     a belt's parallel words           names, descriptions, abouts,
                                       notes, info_urls, flux_peak_of --
                                       by index, for a group served as
@@ -53,6 +56,15 @@ So the editable surface is exactly:
 Numbers, their units, their figure counts, their `orrery_constant`
 links, `_declared`, `_comment`, slugs, colours, opacities, point counts
 and everything else are outside it, and a refusal says so.
+
+A LINKED SHELL'S CITATION IS THE ORRERY'S (L-421 part 3, Tony's option A
+of 2026-10-16). Where a shell carries an `orrery_constant`, its `source`
+is the citation of that row, written by tools/mirror_constants.py from
+the orrery's export, like its number, and the Config mirror check fails
+on a hand edit. So this writer refuses it, and says where the words go
+instead: the citation changes in constants_new.py; the website's own
+words about it are the shell's `source_note`, which this writer writes.
+A shell with no link keeps its `source` as an ordinary word.
 
 IT ALSO REFUSES: a path that does not exist; a change that would alter a
 value's TYPE; a list that is not all strings; an ADDED word that is
@@ -92,6 +104,11 @@ of its words).
 Updated October 6, 2026 with Anthropic's Claude Opus 5.5 (L-421: a
 shell's `hover` and a belt's hovers_band, hovers_rings and hovers_plane
 are words, so the facts a hover states are served, not typed).
+Updated October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 3:
+`source_note` is a word, the website's note on a citation; a linked
+shell's `source` is the orrery's and is refused here. Part 2:
+SERVED_WORDS_PATCHED and SERVED_SETTINGS, so this file is the one home of
+the served-string vocabulary the Typed facts check reads).
 """
 
 import json
@@ -102,7 +119,8 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
-from mirror_constants import parse_with_spans, render   # noqa: E402
+from mirror_constants import (anchor_separator,   # noqa: E402
+                              parse_with_spans, render)
 
 CONFIG = os.path.join("data", "objects_config.json")
 
@@ -127,8 +145,15 @@ NAMED_REFUSALS = ("value", "unit", "figures", "orrery_constant",
 # `hover` (L-421, 2026-10-06): the facts a hover states, served rather
 # than typed in a renderer. Plain text; a new line starts a new line of
 # the hover, and {name} is a served number the renderer fills in.
-WORD_FIELDS = ("name", "description", "about", "note", "source", "info_url",
-               "hover")
+# `source_note` (L-421 part 3, 2026-10-16): the website's own words about
+# a citation, printed after it in the i panel. On a shell carrying an
+# `orrery_constant`, `source` itself is the orrery's (LINKED_ONLY_MIRROR)
+# and is not offered.
+WORD_FIELDS = ("name", "description", "about", "note", "source",
+               "source_note", "info_url", "hover")
+
+# The words on a linked shell that the mirror writes, not this writer.
+LINKED_ONLY_MIRROR = ("source",)
 
 # A feature served as PARALLEL LISTS rather than as a member each --
 # Earth's two radiation belts -- keeps its words in these, one entry per
@@ -139,6 +164,30 @@ WORD_FIELDS = ("name", "description", "about", "note", "source", "info_url",
 BELT_WORD_LISTS = ("names", "descriptions", "abouts", "notes", "info_urls",
                    "flux_peak_of", "hovers_band", "hovers_rings",
                    "hovers_plane")
+
+# SERVED WORDS THIS WRITER DOES NOT EDIT, and the served strings that are
+# not words at all (L-421 part 2, 2026-10-16). With WORD_FIELDS and
+# BELT_WORD_LISTS above they are the one home of the served-string
+# vocabulary: documentation/smoke_typed_facts.js (the Typed facts row)
+# reads all four tuples from this file, masks every word, and fails,
+# naming it, on any served string key that is in none of them -- so a
+# new kind of served word cannot pass the check unmasked.
+#   SERVED_WORDS_PATCHED  words a visitor reads that a patch writes, not
+#                         this writer: a number's own sentence, the
+#                         streamer belt's cusp sentence, a model's formula
+#                         for the i panel, the galactic plane's marker
+#                         hovers. Earth's orientation.words entries are
+#                         words too, by their place rather than their key.
+#   SERVED_SETTINGS       strings that are drawing choices or bookkeeping,
+#                         never printed as words: colours, shapes, a stored
+#                         drawing's name, units, figure counts, links into
+#                         the store, a frame's label, the file's own notes.
+SERVED_WORDS_PATCHED = ("radius_note", "cusp_note", "_model", "centre_hover",
+                        "north_pole_hover", "south_pole_hover")
+SERVED_SETTINGS = ("color", "colors", "info_border", "info_borders", "shape",
+                   "dots", "unit", "figures", "uncertainty",
+                   "orrery_constant", "frame", "_comment", "_declared",
+                   "_frame")
 
 # A word that must not be emptied: the shell list is keyed off it, and
 # the renderers fall back to the raw key without it.
@@ -269,7 +318,10 @@ def editable_paths(config_value):
                 continue
             for key, member in params.items():
                 if isinstance(member, dict) and isinstance(member.get("name"), str):
+                    linked = "orrery_constant" in member
                     for word in WORD_FIELDS:
+                        if linked and word in LINKED_ONLY_MIRROR:
+                            continue
                         out["%s/features/%s/%s/%s" % (base, group, key, word)] = \
                             "string"
             names = params.get("names")
@@ -424,6 +476,12 @@ def _not_editable(path, field):
         return ("%s is not editable here: a number and its provenance "
                 "arrive from the orrery through the export and the "
                 "mirror. Change it in constants_new.py." % path)
+    if field in LINKED_ONLY_MIRROR:
+        return ("%s is not editable here: this shell carries an "
+                "orrery_constant, so its citation is the orrery's, written "
+                "by the mirror beside the number (L-421, Tony's option A). "
+                "Change it in constants_new.py; the website's own words "
+                "about it go in source_note." % path)
     if field in ("_declared", "_comment"):
         return ("%s is not editable here: it is the file's own record of "
                 "why a block exists, and this editor does not offer it."
@@ -466,23 +524,15 @@ def _separator(text, anchor_end):
     mirror_constants.member_separator reads the indent off the line
     AFTER the anchor, which is right while the anchor has a sibling
     below it and one level too shallow when the anchor is the object's
-    LAST member -- then the next line is the closing brace. The mirror
-    never meets that case, because it inserts beside `value` or `unit`,
-    which always have a sibling. This editor does meet it, so the indent
-    comes off the ANCHOR's own line instead. Members written on one line
-    keep that shape, which is what member_separator's first test is for.
+    LAST member -- then the next line is the closing brace. This editor
+    meets that case, so the indent comes off the ANCHOR's own line
+    instead. Members written on one line keep that shape, which is what
+    member_separator's first test is for. Since L-421 part 3 the mirror
+    meets it too, when it adds a citation after "orrery_constant", so
+    the rule lives once, in mirror_constants.anchor_separator, and both
+    tools use it.
     """
-    line_end = text.find("\n", anchor_end)
-    close = text.find("}", anchor_end)
-    if line_end == -1 or (close != -1 and close < line_end):
-        return ", "
-    line_start = text.rfind("\n", 0, anchor_end) + 1
-    indent = ""
-    probe = line_start
-    while probe < len(text) and text[probe] in " \t":
-        indent += text[probe]
-        probe += 1
-    return ",\n" + indent
+    return anchor_separator(text, anchor_end)
 
 
 def edit(text, changes):

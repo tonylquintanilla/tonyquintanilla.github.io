@@ -37,6 +37,13 @@ WHEN THE NETWORK IS DOWN
     config from the old export: measured in a sandbox that could not
     reach GitHub, 36 fields written backwards (L-388).
 
+THE SCHEMA IT NEEDS
+
+    Schema 7 or later (L-421 part 3, 2026-10-16): the export that carries
+    each row's citation, which the mirror writes beside the number. An
+    older export FAILS by name and nothing is written, so the mirror
+    never runs on numbers whose citations it cannot check. Raised from 2.
+
 Role: devtool
 Domain: gallery
 
@@ -45,6 +52,9 @@ Module created: September 17, 2026 with Anthropic's Claude Opus 5
 Module updated: October 15, 2026 with Anthropic's Claude Opus 5.5
 (L-446, with L-388: a pull that cannot fetch fails by name and exits 1,
 where it printed N-A and exited 0.)
+Module updated: October 16, 2026 with Anthropic's Claude Opus 5.5
+(L-421 part 3: SCHEMA_WANTED 2 -> 7, the export that carries each row's
+citation.)
 """
 
 import json
@@ -58,7 +68,7 @@ ORRERY_BRANCH = "main"
 EXPORT = os.path.join("data", "constants_export.json")
 SHA_FILE = os.path.join("data", "constants_export.sha")
 TIMEOUT_SECONDS = 20
-SCHEMA_WANTED = 2
+SCHEMA_WANTED = 7
 
 
 def fetch(url):
