@@ -32,10 +32,30 @@ after a push.
 
     python gallery_maintenance_run.py           before you commit
     python gallery_maintenance_run.py --live    after you push
+    python gallery_maintenance_run.py --pull    the Daily Run's step 2
 
 The default pass is offline and deterministic. The --live pass adds the
 two checks that can only mean something once GitHub Pages has deployed,
 and it does NOT re-run the offline ones.
+
+THE PULLS COME FIRST (L-446)
+============================
+--pull runs only the five pull-and-mirror generators (PULL_ROWS below)
+and exits 1 if any failed. The Daily Run runs it BEFORE the cache
+builder, so one Daily Run carries what the orrery exported, already
+checked against JPL in the orrery, straight into the build (Tony,
+2026-10-15: "Yes"). Before, the pulls ran only here, AFTER the build, so
+each build read the previous run's pull (L-380). The list has one home,
+GENERATORS; --pull reads it rather than keeping a copy. The offline pass
+keeps the same rows, and on the Daily Run's second pass they print "no
+change", which is the proof the first pass did the work.
+
+A PULL THAT CANNOT FETCH FAILS (L-388). It prints FAIL by name and exits
+1. A mirror whose pull failed is NOT run (FED_BY below): its row is red
+and names the pull, never "no change", because a mirror run after a
+failed pull writes the config from the old export. And a generator that
+fails makes the whole run fail and is named in the summary: a FAIL row
+under a green "N of N passed" is the shape L-388 was.
 
 THREE STATES, NOT TWO
 =====================
@@ -124,6 +144,11 @@ Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5
 with the check into the orrery; "Horizons confirmations" stays and reads
 the dates from the pulled export; "Drawn orbit" runs
 tools/test_drawn_orbit.py and gates).
+Module updated: October 15, 2026 with Anthropic's Claude Opus 5.5
+(L-446, with L-380 and L-388: --pull runs the five pull-and-mirror rows
+alone, for the Daily Run's step before the builder; a mirror whose pull
+failed is not run; a failed generator fails the run and is named; the
+"Pull failures" checker runs tools/test_pull_failures.py and gates).
 """
 
 import hashlib
@@ -188,6 +213,16 @@ GENERATORS = [
      ["data/drawings/hills_cloud.json", "data/drawings/pulled_at.sha"]),
 ]
 
+# L-446: the rows --pull runs, before the cache builder, in GENERATORS'
+# order. Named here, read from GENERATORS, so the list has one home.
+PULL_ROWS = ["Constants export pull", "Config mirror",
+             "Objects export pull", "Objects mirror", "Drawings pull"]
+
+# L-388: a mirror reads what its pull wrote, so it does not run after
+# that pull failed. mirror -> the pull that feeds it.
+FED_BY = {"Config mirror": "Constants export pull",
+          "Objects mirror": "Objects export pull"}
+
 # ---- offline checkers ------------------------------------------------
 # (label, runner, argv-tail, cwd, verdict hint, report_only)
 #
@@ -244,6 +279,15 @@ OFFLINE_CHECKERS = [
 
     ("Config mirror check", "python",
      ["tools/check_constants_links.py", "--mirror"], ".", None, False),
+
+    # L-446, with L-388 (2026-10-15): each pull run with its network
+    # replaced by one that fails, three ways, in a throwaway copy: it
+    # must exit 1, print FAIL naming the address, and write nothing; and
+    # the mirror after a failed pull must not run. Three faults planted
+    # first. A down network is rare on Tony's machine, so this is what
+    # exercises those branches every day.
+    ("Pull failures", "python",
+     ["tools/test_pull_failures.py"], ".", "PULL FAILURES:", False),
 
     # L-395 (2026-10-10), moved by L-431 build 3 (2026-10-14): JPL is
     # asked by the ORRERY now, in its maintenance run, and the export
@@ -1148,9 +1192,28 @@ LIVE_CHECKERS = [
 # MAIN
 # ============================================================
 
-def run_generators(root, results):
+def run_generators(root, results, only=None):
+    """Run GENERATORS in order, or only the labels in `only`, in
+    GENERATORS' order. A mirror whose pull failed is not run (FED_BY)."""
     print("GENERATORS -- rewritten every time; a no-op when nothing moved")
+    states = {}
     for label, argv_tail, cwd, outputs in GENERATORS:
+        if only is not None and label not in only:
+            continue
+        feeder = FED_BY.get(label)
+        if feeder and states.get(feeder, "PASS") != "PASS":
+            note = ("not run: %s failed, and this would write from the "
+                    "old export" % feeder)
+            output = ("%s was not run because %s failed. It reads what "
+                      "that pull writes, so after a failed pull it would "
+                      "write data/objects_config.json from the export "
+                      "already on disk (L-388). Nothing was written."
+                      % (label, feeder))
+            states[label] = "FAIL"
+            print_row("FAIL", label, 0.0, note)
+            results.append(("FAIL", label, 0.0, note, output, False,
+                            False))
+            continue
         before = dict((name, snapshot(os.path.join(root, name)))
                       for name in outputs)
         state, seconds, output = run_tool(root, "python", argv_tail, cwd)
@@ -1162,10 +1225,39 @@ def run_generators(root, results):
                 else "no change to " + ", ".join(outputs)
         else:
             note = last_meaningful_line(output)
+        states[label] = state
         print_row(state, label, seconds, note)
         results.append((state, label, seconds, note, output, False,
                         False))
     print("")
+
+
+def failed_generators(results):
+    """The labels of generator rows that did not pass, in run order."""
+    return [row[1] for row in results if not row[6] and row[0] != "PASS"]
+
+
+def summarize_pulls(results):
+    """--pull's summary. Its last line starts "=== PULLS:" and names
+    every row that failed; daily_run.py quotes it."""
+    failed = failed_generators(results)
+    print("=" * 70)
+    for row in results:
+        if row[0] != "FAIL" or not row[4]:
+            continue
+        print("")
+        print("-" * 70)
+        print("%s -- %s" % (row[1], row[3]))
+        print("-" * 70)
+        print(row[4].rstrip())
+    print("")
+    if failed:
+        print("=== PULLS: %d of %d FAILED -- %s"
+              % (len(failed), len(results), ", ".join(failed)))
+        return 1
+    print("=== PULLS: all %d passed -- %s"
+          % (len(results), ", ".join(row[1] for row in results)))
+    return 0
 
 
 def run_checkers(root, checkers, results):
@@ -1264,6 +1356,13 @@ def summarize(results, root=None):
     gating_ran = [row for row in gating if row[0] != "N-A"]
 
     print("=" * 70)
+    # L-388: a generator that failed fails the run, by name. Generators
+    # are not counted with the checkers, so without this line a failed
+    # pull printed a FAIL row above a green "N of N passed".
+    generators_failed = failed_generators(results)
+    if generators_failed:
+        print("  %d generator(s) FAILED: %s"
+              % (len(generators_failed), ", ".join(generators_failed)))
     if failed:
         print("  %d of %d gating checkers FAILED"
               % (len(failed), len(gating_ran)))
@@ -1310,16 +1409,18 @@ def summarize(results, root=None):
         print("-" * 70)
         print(row[4].rstrip())
 
-    return 1 if failed else 0
+    return 1 if (failed or generators_failed) else 0
 
 
 def main():
-    live = "--live" in sys.argv[1:]
-    unknown = [arg for arg in sys.argv[1:] if arg != "--live"]
-    if unknown:
+    args = sys.argv[1:]
+    live = "--live" in args
+    pull = "--pull" in args
+    unknown = [arg for arg in args if arg not in ("--live", "--pull")]
+    if unknown or (live and pull):
         print("gallery_maintenance_run.py takes one optional flag, "
-              "--live.")
-        print("Not understood: %s" % ", ".join(unknown))
+              "--live or --pull.")
+        print("Not understood: %s" % " ".join(args))
         return 2
 
     root, where = find_repo_root()
@@ -1331,12 +1432,23 @@ def main():
 
     print("=" * 70)
     print("  gallery maintenance run -- %s"
-          % ("LIVE (after a push)" if live else "OFFLINE (before a commit)"))
+          % ("LIVE (after a push)" if live else
+             "PULLS (before the cache builder)" if pull else
+             "OFFLINE (before a commit)"))
     print("  root: %s   (found %s)" % (root, where))
     print("=" * 70)
     print("")
 
     results = []
+    if pull:
+        missing = [label for label in PULL_ROWS
+                   if label not in [row[0] for row in GENERATORS]]
+        if missing:
+            print("=== PULLS: REFUSED -- PULL_ROWS names %s, which "
+                  "GENERATORS does not carry" % ", ".join(missing))
+            return 2
+        run_generators(root, results, only=PULL_ROWS)
+        return summarize_pulls(results)
     if live:
         run_live(root, results)
     else:

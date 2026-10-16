@@ -59,6 +59,15 @@
 // documentation/smoke_solar_system_figures.js holds this print to it. A
 // typed period says so in the orrery's words, "Typed value, not fetched
 // from JPL."; none says it has not been fetched yet; the Sun has none.
+//
+// WHOSE PERIOD (L-445, October 15, 2026). Earth's period is JPL's for the
+// Earth-Moon barycentre, not Earth's centre (Tony's ruling of
+// 2026-10-15: "Confirmed as recommended, the barycenter."). The orrery
+// serves "target_label" on a period asked of another body than the one
+// shown, and null otherwise, and this file prints it before the centre,
+// as the orrery's hover does: "..., for the Earth-Moon center of mass,
+// around the Sun, from JPL Horizons, fetched <date>." A period served
+// with no target_label prints as before.
 
 (function (global) {
   "use strict";
@@ -222,7 +231,11 @@
                warning: "its period is served from JPL with no centre, so " +
                         "it is not shown" };
     }
-    return { line: "Orbital period: " + shown + ", around " +
+    // L-445: whose period it is, when it is another body's.
+    var whose = (typeof period.target_label === "string" &&
+                 period.target_label) ? "for " + period.target_label + ", "
+                                      : "";
+    return { line: "Orbital period: " + shown + ", " + whose + "around " +
                    period.center_label + ", from JPL Horizons, fetched " +
                    period.fetched + ".",
              warning: null };

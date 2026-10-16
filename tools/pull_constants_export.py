@@ -25,16 +25,26 @@ RUN COMMAND
 
 WHEN THE NETWORK IS DOWN
 
-    It reports N-A, leaves the previous export and SHA exactly as they
-    are, and exits 0. A run with no network then works against the last
-    pull and says so, rather than failing or, worse, half-writing. The
-    live Export freshness check is what fails when the copy is stale.
+    It FAILS, by name: one line starting "FAIL:" that says what it could
+    not fetch, from which address, and why. It writes nothing, leaves the
+    previous export and SHA exactly as they are, and exits 1 (L-388).
+    The maintenance run then does not run the Config mirror after it,
+    and the Daily Run stops before the cache builder (L-446, Tony's
+    option A of 2026-10-15), so nothing is built on yesterday's export.
+
+    Until 2026-10-15 it printed N-A and exited 0 here. The maintenance
+    run read that as PASS "no change", and the mirror then wrote the
+    config from the old export: measured in a sandbox that could not
+    reach GitHub, 36 fields written backwards (L-388).
 
 Role: devtool
 Domain: gallery
 
 Module created: September 17, 2026 with Anthropic's Claude Opus 5
 (L-322, the gallery half: piece 3 of the build manifest).
+Module updated: October 15, 2026 with Anthropic's Claude Opus 5.5
+(L-446, with L-388: a pull that cannot fetch fails by name and exits 1,
+where it printed N-A and exited 0.)
 """
 
 import json
@@ -70,28 +80,34 @@ def main():
     export_path = os.path.join(root, EXPORT)
     sha_path = os.path.join(root, SHA_FILE)
 
-    status, body, error = fetch("https://api.github.com/repos/%s/commits/%s"
-                                % (ORRERY_REPO, ORRERY_BRANCH))
+    head_url = ("https://api.github.com/repos/%s/commits/%s"
+                % (ORRERY_REPO, ORRERY_BRANCH))
+    status, body, error = fetch(head_url)
     if status != 200:
-        print("N-A: could not read the orrery HEAD SHA (%s). The previous "
-              "pull is left as it is." % (error or "HTTP %s" % status))
-        return 0
+        # L-388: a pull that could not fetch fails, by name. It used to
+        # print N-A and exit 0, so the maintenance run showed PASS "no
+        # change" and the mirror after it wrote from the old export.
+        print("FAIL: could not read the orrery's HEAD SHA from %s (%s). "
+              "Nothing written; the previous pull is left as it is."
+              % (head_url, error or "HTTP %s" % status))
+        return 1
     try:
         sha = json.loads(body.decode("utf-8"))["sha"]
     except (ValueError, KeyError) as exc:
-        print("N-A: unreadable answer from the commits API (%s). The "
-              "previous pull is left as it is." % exc)
-        return 0
+        print("FAIL: could not read the orrery's HEAD SHA from %s: the "
+              "answer was unreadable (%s). Nothing written; the previous "
+              "pull is left as it is." % (head_url, exc))
+        return 1
 
-    status, body, error = fetch(
-        "https://raw.githubusercontent.com/%s/%s/%s"
-        % (ORRERY_REPO, sha, EXPORT.replace(os.sep, "/")))
+    file_url = ("https://raw.githubusercontent.com/%s/%s/%s"
+                % (ORRERY_REPO, sha, EXPORT.replace(os.sep, "/")))
+    status, body, error = fetch(file_url)
     if status != 200:
-        print("N-A: could not fetch %s at %s (%s). The previous pull is "
-              "left as it is."
-              % (EXPORT.replace(os.sep, "/"), sha[:8],
+        print("FAIL: could not fetch %s at the orrery's %s from %s (%s). "
+              "Nothing written; the previous pull is left as it is."
+              % (EXPORT.replace(os.sep, "/"), sha[:8], file_url,
                  error or "HTTP %s" % status))
-        return 0
+        return 1
 
     try:
         export = json.loads(body.decode("utf-8"))

@@ -149,6 +149,7 @@ ROLE_MAP = {
     'test_gallery_cache_builder_offline':  'devtool',
     'test_guestbook_updater':              'devtool',
     'test_mirror_objects':                 'devtool',
+    'test_pull_failures':                  'devtool',
 }
 # ROLE-MAP:END
 

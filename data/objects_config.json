@@ -396,7 +396,7 @@
       "name": "Earth",
       "horizons_id": "399",
       "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 1.0, "figures": 3, "text": "1.00"}, "days": {"value": 366.0, "figures": 3, "text": "366"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "3", "target_label": "the Earth-Moon center of mass", "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 1.0, "figures": 6, "text": "1.00000"}, "days": {"value": 365.25, "figures": 5, "text": "365.25"}},
       "description": "Our home planet.",
       "info_url": "https://science.nasa.gov/earth/",
       "category": "planet",
@@ -1152,7 +1152,7 @@
     },
     {
       "slug": "jupiter", "name": "Jupiter", "horizons_id": "599", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "open_orbit": false, "fetched": "2026-10-12", "words": null, "years": {"value": 11.86, "figures": 4, "text": "11.86"}, "days": {"value": 4330.0, "figures": 3, "text": "4330"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "599", "target_label": null, "open_orbit": false, "fetched": "2026-10-12", "words": null, "years": {"value": 11.86, "figures": 4, "text": "11.86"}, "days": {"value": 4330.0, "figures": 3, "text": "4330"}},
       "description": "NASA: \"Jupiter is the largest and oldest planet in our solar system.\"",
       "info_url": "https://science.nasa.gov/jupiter/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1196,7 +1196,7 @@
     },
     {
       "slug": "saturn", "name": "Saturn", "horizons_id": "699", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 29.427, "figures": 5, "text": "29.427"}, "days": {"value": 10748.0, "figures": 5, "text": "10,748"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "699", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 29.427, "figures": 5, "text": "29.427"}, "days": {"value": 10748.0, "figures": 5, "text": "10,748"}},
       "description": "NASA: \"Saturn is the sixth planet from the Sun and the second largest planet in our solar system.\"",
       "info_url": "https://science.nasa.gov/saturn/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1232,7 +1232,7 @@
     },
     {
       "slug": "mercury", "name": "Mercury", "horizons_id": "199", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "open_orbit": false, "fetched": "2026-10-13", "words": null, "years": {"value": 0.240846, "figures": 6, "text": "0.240846"}, "days": {"value": 87.969, "figures": 5, "text": "87.969"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "199", "target_label": null, "open_orbit": false, "fetched": "2026-10-13", "words": null, "years": {"value": 0.240846, "figures": 6, "text": "0.240846"}, "days": {"value": 87.969, "figures": 5, "text": "87.969"}},
       "description": "NASA: \"Mercury is the smallest planet in our solar system and the nearest to the Sun.\"",
       "info_url": "https://science.nasa.gov/mercury/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1250,7 +1250,7 @@
     },
     {
       "slug": "venus", "name": "Venus", "horizons_id": "299", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 0.6152, "figures": 4, "text": "0.6152"}, "days": {"value": 224.71, "figures": 5, "text": "224.71"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "299", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 0.6152, "figures": 4, "text": "0.6152"}, "days": {"value": 224.71, "figures": 5, "text": "224.71"}},
       "description": "NASA: \"Venus is the second planet from the Sun, and the sixth largest planet. It's the hottest planet in our solar system.\"",
       "info_url": "https://science.nasa.gov/venus/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1267,7 +1267,7 @@
     },
     {
       "slug": "mars", "name": "Mars", "horizons_id": "499", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 1.8808, "figures": 5, "text": "1.8808"}, "days": {"value": 687.0, "figures": 4, "text": "687.0"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "499", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 1.8808, "figures": 5, "text": "1.8808"}, "days": {"value": 687.0, "figures": 4, "text": "687.0"}},
       "description": "NASA: \"Mars is one of the easiest planets to spot in the night sky -- it looks like a bright red point of light.\"",
       "info_url": "https://science.nasa.gov/mars/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1284,7 +1284,7 @@
     },
     {
       "slug": "uranus", "name": "Uranus", "horizons_id": "799", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 83.997, "figures": 5, "text": "83.997"}, "days": {"value": 30680.0, "figures": 5, "text": "30,680"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "799", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 83.997, "figures": 5, "text": "83.997"}, "days": {"value": 30680.0, "figures": 5, "text": "30,680"}},
       "description": "NASA: \"Uranus is the seventh planet from the Sun, and the third largest planet in our solar system -- about four times wider than Earth.\"",
       "info_url": "https://science.nasa.gov/uranus/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1301,7 +1301,7 @@
     },
     {
       "slug": "neptune", "name": "Neptune", "horizons_id": "899", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 164.78, "figures": 5, "text": "164.78"}, "days": {"value": 60180.0, "figures": 4, "text": "60,180"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "899", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 164.78, "figures": 5, "text": "164.78"}, "days": {"value": 60180.0, "figures": 4, "text": "60,180"}},
       "description": "NASA: \"Dark, cold and whipped by supersonic winds, giant Neptune is the eighth and most distant major planet orbiting our Sun.\"",
       "info_url": "https://science.nasa.gov/neptune/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1366,7 +1366,7 @@
     },
     {
       "slug": "apophis", "name": "Apophis", "horizons_id": "2004 MN4", "id_type": "smallbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 0.88581, "figures": 5, "text": "0.88581"}, "days": {"value": 323.54, "figures": 5, "text": "323.54"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2004 MN4", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 0.88581, "figures": 5, "text": "0.88581"}, "days": {"value": 323.54, "figures": 5, "text": "323.54"}},
       "description": "A near-Earth asteroid that will make a close approach in 2029. Future OSIRIS-APEX target.",
       "info_url": "https://cneos.jpl.nasa.gov/apophis/",
       "category": "asteroid", "availability": "analytic", "parent": "sun",
@@ -1388,7 +1388,7 @@
     },
     {
       "slug": "encke", "name": "Encke", "horizons_id": "90000091", "id_type": "smallbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "open_orbit": false, "fetched": "2026-10-13", "words": null, "years": {"value": 3.303, "figures": 4, "text": "3.303"}, "days": {"value": 1206.3, "figures": 5, "text": "1206.3"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000091", "target_label": null, "open_orbit": false, "fetched": "2026-10-13", "words": null, "years": {"value": 3.303, "figures": 4, "text": "3.303"}, "days": {"value": 1206.3, "figures": 5, "text": "1206.3"}},
       "description": "A short-period comet whose dust trail is the source of the Taurid meteor showers.",
       "info_url": "https://science.nasa.gov/solar-system/comets/2p-encke/",
       "category": "comet", "availability": "analytic", "parent": "sun",
@@ -1403,7 +1403,7 @@
       "name": "Halley",
       "horizons_id": "90000030",
       "id_type": "smallbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 75.4613, "figures": 6, "text": "75.4613"}, "days": {"value": 27562.22, "figures": 7, "text": "27,562.22"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "90000030", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 75.4613, "figures": 6, "text": "75.4613"}, "days": {"value": 27562.22, "figures": 7, "text": "27,562.22"}},
       "description": "The most famous periodic comet. Its orbit runs backward compared with the planets, and its dust gives two meteor showers each year, the Eta Aquarids and the Orionids.",
       "info_url": "https://science.nasa.gov/solar-system/comets/1p-halley/",
       "category": "comet",

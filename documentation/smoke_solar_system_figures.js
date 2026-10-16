@@ -23,9 +23,11 @@
 //   4. interactive.html loads this file, calls it, passes each body's
 //      served position_accuracy to it, and no longer carries its own
 //      copy of the distance functions.
-//   5. (L-431, build 3) The orbital period: five worked cases (a period
-//      from JPL with separators, a typed one, none, one served with no
-//      centre, the Sun's null), and every drawer body's served period
+//   5. (L-431, build 3) The orbital period: six worked cases (a period
+//      from JPL with separators, one asked of another body (L-445:
+//      Earth's, the Earth-Moon barycentre's, says so), a typed one, none,
+//      one served with no centre, the Sun's null), and every drawer
+//      body's served period
 //      printed exactly as the orrery printed it -- each number the
 //      export's own text, at the export's figure count -- with the page
 //      calling periodLine and its driver passing "period".
@@ -37,11 +39,15 @@
 //   for a body that has a row -- so a green run has shown it can go red.
 //   Since L-431 build 3 it also breaks the period two ways first: a
 //   period printed to more figures than the export's count, and a
-//   period served with no centre shown anyway.
+//   period served with no centre shown anyway. Since L-445, a third: a
+//   period asked of another body printed as the body's own.
 //
 // Written October 1, 2026 with Anthropic's Claude Opus 5.5.
 // Updated October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431, build
 // 3: the orbital period, part 5).
+// Updated October 15, 2026 with Anthropic's Claude Opus 5.5 (L-445: Earth's
+// period, asked of the Earth-Moon barycentre, says whose it is; a sixth
+// worked case and a planted fault.)
 
 "use strict";
 const fs = require("fs");
@@ -158,6 +164,18 @@ function periodWorked(lib) {
     days: { value: 10759.22, figures: 7, text: "10759.22" } }),
     "Orbital period: 29.45714 years (10759.22 days). Typed value, not " +
     "fetched from JPL.");
+  // L-445: Earth's period is the Earth-Moon barycentre's, and says so;
+  // the orrery's hover prints the same words before the centre. Fixture
+  // figures, in the form the orrery prints JPL's PR for target 3.
+  want("a period asked of another body", lib.periodLine({
+    kind: "fetched", center: "@sun", center_label: "the Sun",
+    target: "3", target_label: "the Earth-Moon center of mass",
+    fetched: "2026-10-15",
+    years: { value: 1, figures: 6, text: "1.00000" },
+    days: { value: 365.25, figures: 5, text: "365.25" } }),
+    "Orbital period: 1.00000 years (365.25 days), for the Earth-Moon " +
+    "center of mass, around the Sun, from JPL Horizons, fetched " +
+    "2026-10-15.");
   want("no period", lib.periodLine({ kind: "none",
                                      words: "Not yet fetched from JPL." }),
        "Orbital period: not yet fetched from JPL.");
@@ -210,7 +228,10 @@ const selfFailures = [];
    "var n = Math.max(1, Math.min(21, Math.round(part.figures) + 2));"],
   ["a period served with no centre shown anyway",
    "if (!period.center || !period.center_label) {",
-   "if (false) {"]
+   "if (false) {"],
+  ["a period asked of another body printed as the body's own",
+   "period.target_label) ? \"for \" + period.target_label + \", \"",
+   "false) ? \"for \" + period.target_label + \", \""]
 ].forEach(function (fault) {
   if (periodWorked(loadWith(fault[1], fault[2])).length === 0) {
     selfFailures.push(fault[0] + " passed the period's worked cases");
@@ -224,8 +245,9 @@ if (selfFailures.length) {
 console.log("Self-test: the worked cases fail on a Report test one place " +
             "too fine, on a rule ignoring JPL's accuracy, and on the " +
             "sentence printed for a body with a row; the period's on a " +
-            "print to more figures than the export's count and on a " +
-            "period with no centre shown.");
+            "print to more figures than the export's count, on a " +
+            "period with no centre shown, and on a period asked of " +
+            "another body printed as the body's own.");
 
 // ---- 1. worked cases ----------------------------------------------
 const failures = worked(SSF).concat(periodWorked(SSF));
@@ -375,6 +397,6 @@ if (failures.length) {
 console.log("=== PASS: 6 worked cases, " + rows.length + " drawer rows " +
             "matched to their accuracy rows, " + table.length +
             " served distances; Uranus, Neptune and Pluto print to " +
-            "JPL's ten-thousands place; 5 period cases and " +
+            "JPL's ten-thousands place; 6 period cases and " +
             periods.length + " served periods printed as the orrery " +
             "printed them ===");
