@@ -144,7 +144,17 @@
          see-through as the other lobby cards, so the doves show; and
          the lobby's grey type is brighter ("grey is too dim"):
          headings blue, the grey lines near white, with the guest
-         book's soft shadow. A door's own page keeps its colours. -->
+         book's soft shadow. A door's own page keeps its colours.
+     Updated: October 15, 2026 with Anthropic's Claude Opus 5.5 (L-447)
+       - The front page says what the site is (Tony's brother, shown the
+         site: he could not tell what it was about). Under the title,
+         the sentence served from gallery_config.json ("sentence") now
+         says what the site is and where its data comes from, and a
+         second line under it ("name_note") says what an orrery is and
+         who Paloma is, and so why the doves. Tony's words, version A.
+       - "interactive scene(s)" reads "live in 3D" on the doors and the
+         subject pages. The fallback sentence, the no-script text and the
+         link-preview descriptions carry the same sentence. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -153,7 +163,7 @@
 
     <!-- Open Graph / Social Sharing -->
     <meta property="og:title" content="Paloma's Orrery">
-    <meta property="og:description" content="Interactive astronomical visualizations - explore the solar system, stellar neighborhoods, and beyond.">
+    <meta property="og:description" content="Explore the solar system, the Earth and the nearby stars in 3D, built from real science data such as NASA JPL's Horizons.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://tonyquintanilla.github.io/">
     <!-- <meta property="og:image" content="https://tonyquintanilla.github.io/preview.png"> -->
@@ -161,7 +171,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Paloma's Orrery">
-    <meta name="twitter:description" content="Interactive astronomical visualizations">
+    <meta name="twitter:description" content="Explore the solar system, the Earth and the nearby stars in 3D, built from real science data such as NASA JPL's Horizons.">
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-X7HYWBWNG8"></script>
@@ -921,6 +931,21 @@
         }
         .lobby .welcome-title { text-align: center; margin-bottom: 6px; }
         .lobby .welcome-text { text-align: center; margin: 0 auto 26px; }
+        /* L-447: the line on the orrery and on Paloma, under the
+           sentence; the two share a wider measure on the desktop. */
+        .lobby .welcome-text,
+        .lobby .welcome-note { max-width: 520px; }
+        .lobby .welcome-text + .welcome-note { margin-top: -18px; }
+        .lobby .welcome-note {
+            text-align: center;
+            margin: 0 auto 26px;
+            font-size: 0.85rem;
+            font-style: italic;
+            line-height: 1.5;
+        }
+        @media (max-width: 600px) {
+            .lobby .welcome-note { font-size: 0.8rem; padding: 0 20px; }
+        }
         .lobby-heading {
             font-size: 0.68rem;
             letter-spacing: 0.14em;
@@ -1157,6 +1182,7 @@
            book's soft dark shadow, for where it crosses a dove. */
         .lobby .lobby-heading { color: #9db0ff; }
         .lobby .welcome-text,
+        .lobby .welcome-note,
         .lobby .lobby-door-sentence,
         .lobby .lobby-door-meta,
         .lobby .lobby-card-room,
@@ -1167,6 +1193,7 @@
         .lobby .lobby-footer { color: #d6d4d0; }
         .lobby .lobby-heading,
         .lobby .welcome-text,
+        .lobby .welcome-note,
         .lobby .lobby-door-sentence,
         .lobby .lobby-door-meta,
         .lobby .welcome-version,
@@ -2225,8 +2252,7 @@
                 <!-- Filled by renderLobby() (L-282); this is the no-script fallback -->
                 <div class="welcome-title">Paloma's Orrery</div>
                 <div class="welcome-text">
-                    Explore interactive visualizations of the solar system,
-                    stellar neighborhoods, exoplanets, and more.
+                    Explore the solar system, the Earth and the nearby stars in 3D, built from real science data such as NASA JPL's Horizons.
                 </div>
                 <div class="welcome-version" id="welcomeVersion"></div>
             </div>
@@ -2897,8 +2923,8 @@
         // The first screen. One writer for the home view; goHome() and the
         // initial load both call this. Doors open the existing menu at that
         // door until L-286 gives each door its own rooms page.
-        var LOBBY_DEFAULT_SENTENCE = 'Explore interactive visualizations of the solar system, ' +
-            'stellar neighborhoods, exoplanets, and more.';
+        var LOBBY_DEFAULT_SENTENCE = 'Explore the solar system, the Earth and the nearby ' +
+            'stars in 3D, built from real science data such as NASA JPL\'s Horizons.';
         var LOBBY_FOOTER_ICONS =
             '<a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener" title="Instagram @palomas_orrery">' +
             '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg></a>' +
@@ -3054,6 +3080,10 @@
             var html = '<div class="lobby">';
             html += '<div class="welcome-title">Paloma\'s Orrery</div>';
             html += '<div class="welcome-text">' + escapeHtml(cfgSentence || LOBBY_DEFAULT_SENTENCE) + '</div>';
+            // L-447: what an orrery is and who Paloma is, served beside
+            // the sentence; nothing is printed when the config has none.
+            var cfgNote = (window.__galleryConfig && window.__galleryConfig.name_note) || '';
+            if (cfgNote) html += '<div class="welcome-note">' + escapeHtml(cfgNote) + '</div>';
 
             // The way in (L-428): the start card, once, first.
             var startItem = null;
@@ -3081,7 +3111,7 @@
                 // No "rooms under construction" on a lobby door (Tony,
                 // 2026-10-04, all three doors). The door's own page keeps it.
                 var meta = [plural(count, 'exhibit')];
-                if (live) meta.push(plural(live, 'interactive scene'));
+                if (live) meta.push(live + ' live in 3D');
                 html += '<div class="lobby-door" data-door="' + escapeHtml(door.key) + '">';
                 html += '<div class="lobby-door-bar" style="background: ' + color + ';"></div>';
                 html += '<div class="lobby-door-body">';
@@ -3385,7 +3415,7 @@
             var empty = countEmptyRooms({ key: path, rooms: kids }, roomCards);
 
             var meta = [plural(here.length, 'exhibit') + (kids.length ? ' here' : '')];
-            if (live) meta.push(plural(live, 'interactive scene'));
+            if (live) meta.push(live + ' live in 3D');
             if (deeper) {
                 meta.push(deeper + ' more in ' + (kidsWithCards === 1 ?
                           (ROOM_LABELS[lastKidWithCards] || '') : kidsWithCards + ' rooms'));
@@ -3438,7 +3468,7 @@
                 for (var r = 0; r < kidRows.length; r++) {
                     var row = kidRows[r];
                     var rMeta = row.count ? [plural(row.count, 'exhibit')] : ['under construction'];
-                    if (row.live) rMeta.push(plural(row.live, 'interactive scene'));
+                    if (row.live) rMeta.push(row.live + ' live in 3D');
                     html += '<div class="lobby-door' + (row.count ? '' : ' empty') +
                             '" data-room="' + escapeHtml(row.path) + '">';
                     html += '<div class="lobby-door-bar" style="background: ' + color + ';"></div>';

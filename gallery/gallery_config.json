@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "sentence": "The solar system, the Earth and the stars, to explore.",
+  "sentence": "Explore the solar system, the Earth and the nearby stars in 3D, built from real science data such as NASA JPL's Horizons.",
+  "name_note": "An orrery is a model of the solar system. I built this one for my daughter Paloma, whose name is Spanish for dove.",
   "doors": [
     {
       "key": "solar_system",
