@@ -146,6 +146,11 @@
  *   belts, and the Sun's gathered measured fields, which join each
  *   citation and its note with " -- " as their one Source line always
  *   read. No hover changed: a hover carries no citation.)
+ * Module updated: October 16, 2026 with Anthropic's Claude Opus 5.5
+ *   (Tony's phone look: a shell whose radius is served in km -- the
+ *   inner core, outer core, lower mantle and upper mantle -- printed
+ *   its radius as a bare "= 5,710 km (...)" with no line above it. It
+ *   now reads "Radius: 5,710 km (0.0000382 AU)". Numbers unchanged.)
  */
 
 (function (global) {
@@ -2676,7 +2681,11 @@
       }
       var kmOnly = (cfg.radius.unit === "au" && servedText(cfg.radius) !== null)
         ? inText(cfg.radius, "km") : null;
-      hover += "= " + (kmOnly !== null ? kmOnly + " km"
+      // A radius served in km has no line above to name it, so its own
+      // line does: "Radius: 5,710 km (0.0000382 AU)" rather than a bare
+      // "= 5,710 km", on Earth's four inner shells (Tony, 2026-10-16:
+      // "yes, good catch").
+      hover += (cfg.radius.unit === "km" ? "Radius: " : "= ") + (kmOnly !== null ? kmOnly + " km"
                        : km ? (km.radiusText ||
                                kmAndAu(km.radiusKm, km.radiusFigures))
                             : kmAndAu(radiusAu * KM_PER_AU));

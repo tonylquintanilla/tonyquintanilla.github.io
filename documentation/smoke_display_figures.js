@@ -759,18 +759,27 @@ function checkEarthShell(group, key, shell, planetNode, hover, label) {
   const verified = [];
   const pin = ACCEPTANCE[label] || {};
 
-  // The radius line, written "= <km> (<au> AU)".
-  const radiusLine = "= " + (want.radiusText ||
+  // The radius line, written "= <km> (<au> AU)" under an Earth-radii
+  // line, or "Radius: <km> (<au> AU)" for a radius served in km, which
+  // has no line above it to name it (Tony, 2026-10-16). A line that
+  // begins "= " with nothing above it is the fault this guards against.
+  const lead = (shell.radius.unit === "km") ? "Radius: " : "= ";
+  const radiusLine = lead + (want.radiusText ||
                              kmAndAu(want.radiusKm, want.radiusFig));
   if (hover.indexOf(radiusLine) < 0) {
     fail(label + ": the radius line reads\n        " +
-         (lineStartingWith(hover, "= ") || "(no line starting \"= \")") +
+         (lineStartingWith(hover, lead) || "(no line starting \"" + lead +
+                                           "\")") +
          "\n      and these rules give\n        " + radiusLine);
   } else {
     verified.push(radiusLine);
     numbersExamined += numbersIn(radiusLine).length;
   }
-  if (pin.radius && radiusLine.indexOf("= " + pin.radius + " (") !== 0) {
+  if (shell.radius.unit === "km" && lineStartingWith(hover, "= ")) {
+    fail(label + ": its radius is served in km, so nothing above names " +
+         "it, and yet a line begins with a bare \"= \"");
+  }
+  if (pin.radius && radiusLine.indexOf(lead + pin.radius + " (") !== 0) {
     fail(label + ": the radius line computes to \"" + radiusLine +
          "\" but the manifest's acceptance table says \"" + pin.radius + "\"");
   }
