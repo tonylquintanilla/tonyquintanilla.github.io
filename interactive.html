@@ -269,6 +269,10 @@
        (L-421 part 3, Tony's option A: the i panel prints a served
         source_note, the website's own words about a citation, right
         after the Source line, whose citation is now the orrery's)
+     Updated: October 16, 2026 with Anthropic's Claude Opus 5.5
+       (Tony's Mode 5 on the phone: an unticked drawer row's name, and
+        an opened row's words, are pale blue (--text-row) instead of
+        the dim grey; a ticked row stays white)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -326,6 +330,10 @@
             --text-primary: #e8e6e3;
             --text-secondary: #9a9a9a;
             --text-dim: #5a5a6a;
+            /* Tony, 2026-10-16: an unticked drawer row read too dark on
+               the phone. A pale blue, bright enough to read and apart
+               from the ticked rows' white. */
+            --text-row: #a3b8de;
             --border: #2a2a3a;
             --interactive: #6d8cff;
             --success: #4ade80;
@@ -602,7 +610,7 @@
                end reaches back over the left padding (margin below), so
                its tap area still starts at the edge. */
             background: none; border: none; padding: 0 16px; cursor: pointer;
-            text-align: left; color: var(--text-dim);
+            text-align: left; color: var(--text-row);
             font: 400 13px 'DM Sans', system-ui, sans-serif;
         }
         /* L-318 round 3, Tony's Mode 5 of 2026-09-15: the box alone was an
@@ -692,7 +700,7 @@
         .sun-row-open {
             padding: 2px 16px 12px 65px;
             font: 400 13px 'DM Sans', system-ui, sans-serif;
-            color: var(--text-dim);
+            color: var(--text-row);
         }
         .sun-row-open a.enter {
             display: inline-block; min-height: 36px; line-height: 36px;
