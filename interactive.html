@@ -270,9 +270,13 @@
         source_note, the website's own words about a citation, right
         after the Source line, whose citation is now the orrery's)
      Updated: October 16, 2026 with Anthropic's Claude Opus 5.5
-       (Tony's Mode 5 on the phone: an unticked drawer row's name, and
-        an opened row's words, are pale blue (--text-row) instead of
-        the dim grey; a ticked row stays white)
+       (Tony's Mode 5 on the phone: "Change all remaining grey type to
+        blue." The two grey colours, --text-secondary and --text-dim,
+        are now two blues, so every word drawn in either turns blue;
+        the grey written straight into the scene -- the date line, the
+        grid numbers, the palomasorrery.com credit, the Explorer's
+        legend -- is the brighter blue. White stays white. An unticked
+        drawer row now reads in the brighter blue)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -328,12 +332,12 @@
             --accent-dim: #8a7535;
             --accent-glow: rgba(201, 168, 76, 0.15);
             --text-primary: #e8e6e3;
-            --text-secondary: #9a9a9a;
-            --text-dim: #5a5a6a;
-            /* Tony, 2026-10-16: an unticked drawer row read too dark on
-               the phone. A pale blue, bright enough to read and apart
-               from the ticked rows' white. */
-            --text-row: #a3b8de;
+            /* Tony, 2026-10-16, from the phone: the grey type read too
+               dark, and he asked for blue, apart from the white. The two
+               greys (#9a9a9a and #5a5a6a) became two blues, the brighter
+               for ordinary words and the dimmer for small headings. */
+            --text-secondary: #a3b8de;
+            --text-dim: #8296c2;
             --border: #2a2a3a;
             --interactive: #6d8cff;
             --success: #4ade80;
@@ -610,7 +614,7 @@
                end reaches back over the left padding (margin below), so
                its tap area still starts at the edge. */
             background: none; border: none; padding: 0 16px; cursor: pointer;
-            text-align: left; color: var(--text-row);
+            text-align: left; color: var(--text-secondary);
             font: 400 13px 'DM Sans', system-ui, sans-serif;
         }
         /* L-318 round 3, Tony's Mode 5 of 2026-09-15: the box alone was an
@@ -700,7 +704,7 @@
         .sun-row-open {
             padding: 2px 16px 12px 65px;
             font: 400 13px 'DM Sans', system-ui, sans-serif;
-            color: var(--text-row);
+            color: var(--text-secondary);
         }
         .sun-row-open a.enter {
             display: inline-block; min-height: 36px; line-height: 36px;
@@ -1718,7 +1722,7 @@ function buildLayout(range, dateDisplay) {
             x: 0.5, xanchor: 'center', y: 0.97,
         },
         legend: {
-            font: { size: 11, color: '#9a9a9a' },
+            font: { size: 11, color: '#a3b8de' },
             bgcolor: 'rgba(17,24,39,0.85)',
             bordercolor: '#2a2a3a',
             borderwidth: 1,
@@ -2931,10 +2935,10 @@ function sunSiteCredit() {
         name: SITE_CREDIT_NAME, showarrow: false,
         // The colour is set on the text itself: without it the screen drew
         // the link in the browser's link blue while the picture drew it
-        // grey, and the two must match.
+        // blue (--text-secondary since 2026-10-16), and the two must match.
         text: "<a href=\"https://palomasorrery.com/\" target=\"_blank\">" +
-              "<span style=\"color:#9a9a9a\">palomasorrery.com</span></a>",
-        font: { family: "DM Sans, system-ui", size: 11, color: "#9a9a9a" },
+              "<span style=\"color:#a3b8de\">palomasorrery.com</span></a>",
+        font: { family: "DM Sans, system-ui", size: 11, color: "#a3b8de" },
         xref: "paper", yref: "paper", xanchor: "right", yanchor: "top",
         x: 1, y: 0
     };
@@ -3056,7 +3060,7 @@ function buildSunLayout(halfRangeAu) {
             x: 0.5, xanchor: "center",
         }, SUN_TITLE_TOP, sunSceneSubtitle ? { subtitle: {
             text: sunSceneSubtitle,
-            font: { family: "DM Sans, system-ui", size: 12, color: "#b8b4ae" },
+            font: { family: "DM Sans, system-ui", size: 12, color: "#a3b8de" },
         } } : {}),
         // NO LEGEND. L-267 Stage A: the eighteen entries moved into
         // the drawer, because as an overlay they covered 58 percent of
@@ -3102,14 +3106,15 @@ function sunPhonePortrait() {
 }
 // The grid numbers along the box edges (Tony's rulings of 2026-09-26).
 // At 9 px in #5a5a6a they were too small and faint to read. They draw at
-// 12 px in the page's secondary grey (--text-secondary) on every screen:
+// 12 px in the page's secondary colour (--text-secondary, a pale blue
+// since 2026-10-16, #9a9a9a grey before) on every screen:
 // first everywhere but a portrait phone, then, from Tony's own phone,
 // the portrait phone too, where they show along the left and bottom
 // edges beside the triad and the grid chip. One function still serves
 // the Explorer and the rooms, and a room still re-reads it when the
 // window turns, so a later change needs one edit here.
 function axisTickFont() {
-    return { size: 12, color: "#9a9a9a" };
+    return { size: 12, color: "#a3b8de" };
 }
 function navPlaceCross() {
     if (!navCluster || typeof navCluster.crossApart !== "function") { return; }
