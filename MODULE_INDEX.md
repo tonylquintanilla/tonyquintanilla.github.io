@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** October 16, 2026 by `module_atlas.py`  
+**Generated:** October 17, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,18 +10,15 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 54  
-**Total Lines of Code (non-blank):** 26,196  
-**Total Public Functions/Classes:** 409
+**Total Python Files:** 51  
+**Total Lines of Code (non-blank):** 24,903  
+**Total Public Functions/Classes:** 398
 
 ## Classification Coverage
 
-**Undetermined role (11).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (8).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L421_10_citations_typed_facts_20261016.py`
-- `patch_L445_2_gallery_period_words_20261015.py`
-- `patch_L446_2_daily_run_gallery_20261015.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -30,12 +27,9 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (9).** No valid `Domain:` tag.
+**Undetermined domain (6).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L421_10_citations_typed_facts_20261016.py`
-- `patch_L445_2_gallery_period_words_20261015.py`
-- `patch_L446_2_daily_run_gallery_20261015.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -142,9 +136,6 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (686 lines) |
-| `patch_L421_10_citations_typed_facts_20261016.py` | - L-421 parts 2 and 3, the website half: each served number's citation is the orrery's, copied beside it by the mirror and checked word for word; and the Typed facts check, a gating row in the gallery run. (825 lines) |
-| `patch_L445_2_gallery_period_words_20261015.py` | - L-445 (Earth's period), the website's half: the period sentence says whose period it is when the orrery serves one asked of another body. Earth's is the Earth-Moon barycentre's: "Orbital period: 1.00000 years (365.25 days), for the Earth-Moon cente... (159 lines) |
-| `patch_L446_2_daily_run_gallery_20261015.py` | - the website's Daily Run pulls from the orrery BEFORE it builds the cache, and stops when a pull cannot reach the orrery (L-446, with L-380 and L-388; Tony's option A of 2026-10-15). (309 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (635 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
