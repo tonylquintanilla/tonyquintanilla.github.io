@@ -151,6 +151,20 @@
  *   inner core, outer core, lower mantle and upper mantle -- printed
  *   its radius as a bare "= 5,710 km (...)" with no line above it. It
  *   now reads "Radius: 5,710 km (0.0000382 AU)". Numbers unchanged.)
+ * Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-330, Tony's rulings of 2026-10-17: Earth's two radiation belts
+ *   are the orrery's stored drawing, data/drawings/van_allen_belts.json,
+ *   dots scattered at random along dipole field lines and thickest at
+ *   each belt's measured peak, drawn as given: this file places none.
+ *   The dots are in Earth radii, scaled here by the served planet radius
+ *   and turned to the served pole; each dot's weight shades it, as in
+ *   the orrery. Jupiter's belts are drawn as before. The belts' words
+ *   are hovers_shape (was hovers_rings), "Thickest at" for "Drawn at",
+ *   and their `details` carry the field lines' citation to the i panel.
+ *   L-451: a served number's own sentence is its `hover_line`, printed
+ *   by servedSentence(), for the bow shock's and magnetopause's scatter
+ *   and the magnetotail's two sizes; earth_geometry.js prints the
+ *   rotation period's and the tilt's the same way.)
  */
 
 (function (global) {
@@ -303,6 +317,13 @@
   var BELT_PEAK_OPACITY = 1.0;
   var BELT_PEAK_SIZE_FACTOR = 2.0;
   var BELT_MAX_RINGS = 25;
+  // MODE-5 KNOBS (L-330, 2026-10-17): a stored belt drawing's dots, shaded
+  // by each dot's weight w (0 to 1, the declared fade the orrery placed
+  // them by): opacity and size rise from the first number at w = 0 to the
+  // second at w = 1. The orrery's values (earth_visualization_shells.py),
+  // as in the render Tony approved. Rendering settings, not measurements.
+  var BELT_DOT_ALPHA = [0.35, 1.0];
+  var BELT_DOT_SIZE = [1.5, 3.0];
 
   // --- Small helpers ------------------------------------------------------
 
@@ -697,10 +718,24 @@
      Words that name a value not given, or no words at all, are warned
      about and NOTHING is printed: no hole, and nothing typed in its place. */
   function servedHover(text, vals, where, warn) {
+    var out = servedSentence(text, vals, where, warn);
+    if (out === null) { return ""; }
+    return out.split("\n").map(function (line) {
+      return wrapHover(line);
+    }).join("<br>");
+  }
+
+  /* L-451 (2026-10-17): the served words with their {name}s filled and
+     NOTHING else done to them -- not wrapped -- so a served sentence can
+     take the place of a typed one inside a line the caller still wraps,
+     and the hover keeps the lines it had. null, with a warning, where
+     servedHover() would print nothing. A number's own sentence is served
+     as that number's `hover_line`, beside its source. */
+  function servedSentence(text, vals, where, warn) {
     if (typeof text !== "string" || !text) {
       warn(where + ": no served hover words -- that part of the hover is" +
            " not printed");
-      return "";
+      return null;
     }
     var missing = [];
     var out = text.replace(/\{(\w+)\}/g, function (m, k) {
@@ -711,11 +746,9 @@
     if (missing.length) {
       warn(where + ": its hover words name {" + missing.join("}, {") +
            "}, which is not given -- that part of the hover is not printed");
-      return "";
+      return null;
     }
-    return out.split("\n").map(function (line) {
-      return wrapHover(line);
-    }).join("<br>");
+    return out;
   }
 
   /* A belt's served sentence from one of its parallel lists. A body whose
@@ -1238,6 +1271,50 @@
     return { x: xs, y: ys, z: zs };
   }
 
+  /* L-330 (2026-10-17): one belt's stored dots as a trace -- the dots
+     whose `belt` is i, in Earth radii, scaled to AU by radiusAu and turned
+     by the pole basis. Each dot is shaded by its weight w, opacity and
+     size rising across BELT_DOT_ALPHA and BELT_DOT_SIZE, as the orrery
+     shades them. null, with a warning, if the belt has no dots or its
+     colour is not rgb(). */
+  function storedBeltTrace(stored, i, radiusAu, center, basis, label, color,
+                           where, warn) {
+    var m = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(color);
+    if (!m) {
+      warn(where + ": belt " + i + "'s colour " + JSON.stringify(color) +
+           " is not rgb(r, g, b), so its dots cannot be shaded -- not drawn");
+      return null;
+    }
+    var pts = { x: [], y: [], z: [] }, colors = [], sizes = [];
+    for (var k = 0; k < stored.x.length; k++) {
+      if (stored.belt[k] !== i) continue;
+      var w = Math.max(0, Math.min(1, stored.w[k]));
+      pts.x.push(stored.x[k] * radiusAu);
+      pts.y.push(stored.y[k] * radiusAu);
+      pts.z.push(stored.z[k] * radiusAu);
+      colors.push("rgba(" + m[1] + ", " + m[2] + ", " + m[3] + ", " +
+                  (BELT_DOT_ALPHA[0] + (BELT_DOT_ALPHA[1] - BELT_DOT_ALPHA[0]) *
+                   w).toFixed(3) + ")");
+      sizes.push(BELT_DOT_SIZE[0] + (BELT_DOT_SIZE[1] - BELT_DOT_SIZE[0]) * w);
+    }
+    if (!pts.x.length) {
+      warn(where + ": the stored drawing has no dots for belt " + i +
+           " -- not drawn");
+      return null;
+    }
+    return geometryTrace(pts, center, basis, label, colors, 1, sizes);
+  }
+
+  /* The served peak on the equator, BELT_MARKER_DEG round from +x, turned
+     by the pole basis and offset to the body: where a belt's info marker
+     sits when its dots are drawn (L-330). */
+  function peakPoint(peakAu, center, basis) {
+    var a = BELT_MARKER_DEG * Math.PI / 180;
+    var p = applyBasis(basis, peakAu * Math.cos(a), peakAu * Math.sin(a), 0);
+    return { x: [p[0] + center[0]], y: [p[1] + center[1]],
+             z: [p[2] + center[2]] };
+  }
+
   function renderBelts(slug, bodyName, featureKey, params, center, basis,
                        warn, halfRangeAu) {
     // L-231, Tony's ruling of 2026-09-15: belts ARE pole-oriented, drawn in
@@ -1350,6 +1427,29 @@
     var nRings = params.n_rings || 5;
     var nPoints = params.n_points || 80;
 
+    // L-330 (Tony's rulings, 2026-10-17): where the belts name a stored
+    // drawing, they are the orrery's dots, scattered at random along
+    // dipole field lines and thickest at each belt's measured peak, drawn
+    // as given. They are in Earth radii in Earth's body frame, so they are
+    // scaled by the served planet radius -- Earth's, the unit they are
+    // in -- and turned by the pole basis like the rings were. A drawing
+    // named and not served draws nothing, with a warning: falling back to
+    // rings would show a shape the orrery no longer draws.
+    var stored = null;
+    if (isDict(params.drawing)) {
+      stored = servedDots(params.drawing, slug + "/" + featureKey +
+                          "/drawing", warn, "r_earth");
+      if (stored === null) { return traces; }
+      if (!Array.isArray(stored.w) || !Array.isArray(stored.belt) ||
+          !Array.isArray(stored.belts) ||
+          stored.belts.length !== distances.length) {
+        warn(slug + "/" + featureKey + ": the stored drawing does not say, " +
+             "for each of its dots, its weight and which of " +
+             distances.length + " belts it is in -- nothing drawn");
+        return traces;
+      }
+    }
+
     for (var i = 0; i < distances.length; i++) {
       var name = names[i] || ("Radiation Belt " + (i + 1));
       var color = colors[i] || "rgb(200, 200, 200)";
@@ -1361,7 +1461,13 @@
       var span = beltSpan(params, i);
       // L-322 Stage D, gallery patch 3: which rings, and which is the peak.
       var ringRadii = null, peakRing = -1, pts;
-      if (span) {
+      var built = null;
+      if (stored) {
+        // L-330: this belt's dots, each shaded by its weight.
+        built = storedBeltTrace(stored, i, radiusAu, center, basis, label,
+                                color, slug + "/" + featureKey, warn);
+        if (built === null) { continue; }
+      } else if (span) {
         var even = evenBeltRings(span[0], distances[i], span[1]);
         if (even.error) {
           warn(slug + "/" + featureKey + ": belt " + i + ": " + even.error +
@@ -1375,7 +1481,9 @@
              "edges and no belt_thickness -- drawn as one ring at its distance");
         ringRadii = [distances[i]];
       }
-      if (ringRadii) {
+      if (stored) {
+        // drawn above
+      } else if (ringRadii) {
         var edgeAu = [];
         for (var ri = 0; ri < ringRadii.length; ri++) {
           if (ri !== peakRing) edgeAu.push(ringRadii[ri] * radiusAu);
@@ -1385,8 +1493,10 @@
         pts = beltPoints(distances[i] * radiusAu, thickness * radiusAu,
                          nRings, nPoints);
       }
-      var built = geometryTrace(pts, center, basis, label, color, opacity,
-                                BELT_MARKER_SIZE);
+      if (!built) {
+        built = geometryTrace(pts, center, basis, label, color, opacity,
+                              BELT_MARKER_SIZE);
+      }
       // The peak ring, brighter and larger, as its own trace in the same
       // legend group, so the drawer still shows one row per belt.
       var peakBuilt = null;
@@ -1402,7 +1512,10 @@
       // drawer, as a shell does. Earth's inner belt at 1.5 R_earth sits
       // just outside the exhibit's 6.155e-5 AU floor and was drawn lit,
       // setting the frame the design had ruled it should not.
-      var beltOuter = ringRadii ? ringRadii[ringRadii.length - 1]
+      // L-330: the stored dots reach no further than the served outer
+      // edge, along the equator, which is where their field lines reach.
+      var beltOuter = (stored && span) ? span[1]
+                    : ringRadii ? ringRadii[ringRadii.length - 1]
                                 : distances[i] + thickness / 2;
       var beltBeyond = (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
                         beltOuter * radiusAu > halfRangeAu);
@@ -1468,7 +1581,9 @@
       // 2026-10-05; Baker et al. (2018), the row's source, is for
       // inner-zone proton fluxes.
       var unbandedLead = function (i) {
-        var at = "Drawn at " + fmtServed(distances[i], counts[i], 1) +
+        // L-330: the dots are thickest at the peak, not drawn on it.
+        var at = (stored ? "Thickest at " : "Drawn at ") +
+                 fmtServed(distances[i], counts[i], 1) +
                  " " + bodyName + " radii";
         if (!sources[i]) return at;
         var what = (typeof peaksOf[i] === "string" && peaksOf[i])
@@ -1510,39 +1625,51 @@
         // L-379 (2026-10-06): Tony's approved words. L-421: they are the
         // belt's served hovers_plane, with the year and the model, whose
         // source is the tilt row's; only the two numbers are filled here.
-        : (beltWords(params, "hovers_plane", i) === null ? "" :
-           servedHover(beltWords(params, "hovers_plane", i), {
-             tilt: fmtServed(tilt, servedFigures(params.magnetic_tilt), 1),
-             rate: (tiltRate === null
-               ? ""
-               : ", " + (tiltRate < 0 ? "shrinking" : "growing") + " " +
-                 fmtServed(Math.abs(tiltRate),
-                           servedFigures(params.magnetic_tilt_rate), 4) +
-                 " degrees a year")
-           }, slug + "/" + featureKey + "/hovers_plane/" + i, warn));
+        // L-330: printed in the i panel (planeSentence), not the hover.
+        : "";
+      var planeSentence = (tilt === null ||
+                           beltWords(params, "hovers_plane", i) === null) ? "" :
+        (servedSentence(beltWords(params, "hovers_plane", i), {
+           tilt: fmtServed(tilt, servedFigures(params.magnetic_tilt), 1),
+           rate: (tiltRate === null
+             ? ""
+             : ", " + (tiltRate < 0 ? "shrinking" : "growing") + " " +
+               fmtServed(Math.abs(tiltRate),
+                         servedFigures(params.magnetic_tilt_rate), 4) +
+               " degrees a year")
+         }, slug + "/" + featureKey + "/hovers_plane/" + i, warn) || "");
       // L-322 Stage D, gallery patch 3: where the rings run across the
       // belt, the hover says what they are, as the orrery's does since D9.
       // The drawn-width line is only for a band served as a thickness.
-      // L-421: the belt's served hovers_rings.
-      var ringsWords = beltWords(params, "hovers_rings", i);
-      var ringsLine = (peakRing >= 0 && ringsWords !== null)
-        ? servedHover(ringsWords, {},
-                      slug + "/" + featureKey + "/hovers_rings/" + i,
+      // L-421: the belt's served hovers_rings. L-330 (2026-10-17): the
+      // belt's served hovers_shape, which says what the dots are, printed
+      // where the stored dots are drawn; the rings' words are gone.
+      var shapeWords = beltWords(params, "hovers_shape", i);
+      var ringsLine = (stored && shapeWords !== null)
+        ? servedHover(shapeWords, {},
+                      slug + "/" + featureKey + "/hovers_shape/" + i,
                       warn) + "<br>"
         : "";
       var widthLine = (thickness !== null && !ringRadii)
         ? "Drawn " + thickness.toFixed(1) + " radii wide, a width chosen for" +
           " the picture.<br>"
         : "";
+      // L-330 (Tony's ruling of 2026-10-17, the 17-line ceiling): the
+      // served plane sentence, with its tilt, is printed in the i panel,
+      // before the field lines' citation, not in the hover. A belt with no
+      // tilt served (Jupiter's) keeps its plane sentence in the hover.
+      var planeInPanel = (tilt !== null);
+      var planeText = planeInPanel ? planeSentence : "";
       var hover = label + "<br><br>" + descLine({description: descs[i]}) +
         ringsLine +
         drawnLines +
         (span
           ? "Measured extent: " + fmtServed(span[0], span[2], 1) + " to " +
-            fmtServed(span[1], span[3], 1) + " " + bodyName + " radii<br>"
+            fmtServed(span[1], span[3], 1) + " " + bodyName + " radii" +
+            (planeInPanel ? "" : "<br>")
           : "") +
         widthLine +
-        ringLines;
+        (planeInPanel ? "" : ringLines);
       // L-231 follow-up (2026-09-15): the citation and the served note
       // both moved to the i panel. Earth's belts are flux PEAKS rather than
       // edges, which is what that note says, and the panel is where it is
@@ -1556,7 +1683,12 @@
       var markerIdx = Math.round(nPoints * (BELT_MARKER_DEG / 360)) % nPoints;
       // L-322 Stage D, gallery patch 3: on the peak ring where there is one,
       // as the orrery's marker sits on its peak ring since D9.
-      var onRing = peakBuilt || built;
+      // L-330: with the stored dots, at the served peak on the equator,
+      // BELT_MARKER_DEG round from the +x axis, as on the ring before.
+      var onRing = stored
+        ? peakPoint(distances[i] * radiusAu, center, basis)
+        : (peakBuilt || built);
+      if (stored) { markerIdx = 0; }
       var beltMarker = infoMarker(onRing.x[markerIdx], onRing.y[markerIdx],
                                   onRing.z[markerIdx],
                                   color, hover, label,
@@ -1577,6 +1709,16 @@
       // which is the whole point of the row, so it travels to the panel.
       if (notes[i]) linkCfg.note = notes[i];
       if (typeof abouts[i] === "string" && abouts[i]) linkCfg.about = abouts[i];
+      // L-330: what the panel prints after the citation for this belt --
+      // for Earth's, the field lines' source, which has no row in the
+      // orrery's store.
+      var detailParts = [];
+      if (planeText) detailParts.push(planeText);
+      if (Array.isArray(params.details) && typeof params.details[i] === "string" &&
+          params.details[i]) {
+        detailParts.push(params.details[i]);
+      }
+      if (detailParts.length) linkCfg.detail = detailParts.join(" ");
       traces.push(beltMarker);
       var beltTraces = peakBuilt ? [built.trace, peakBuilt.trace, beltMarker]
                                  : [built.trace, beltMarker];
@@ -2038,27 +2180,41 @@
 
   /*
    * L-421 (2026-10-11, Tony's option A): a stored drawing's dots, as the
-   * orrery placed them, in AU in the drawing frame (the ecliptic of J2000,
-   * centred on the body). Nothing here places a dot. null, with a
-   * warning, when the drawing was not served or is not dots in AU.
+   * orrery placed them, in the drawing's own frame, centred on the body.
+   * Nothing here places a dot. null, with a warning, when the drawing was
+   * not served or is not dots in the unit the caller draws in: "au" (the
+   * Hills cloud, the ecliptic of J2000) unless `unit` says otherwise --
+   * L-330 (2026-10-17): Earth's belts are in "r_earth", Earth's body
+   * frame. Lists the file carries beside x, y and z -- the belts' w, each
+   * dot's weight, and belt, which belt it is in -- come back too, and
+   * must have one entry per dot.
    */
-  function servedDots(d, where, warn) {
+  function servedDots(d, where, warn, unit) {
+    var want = unit || "au";
     var name = d.dots, got = DRAWINGS[name];
     if (typeof name !== "string" || !isDict(got)) {
       warn(where + ": the stored drawing " + JSON.stringify(name) +
            " was not served -- its dots are not drawn");
       return null;
     }
-    var n = got.dots;
-    if (got.unit !== "au" || typeof n !== "number" ||
-        !Array.isArray(got.x) || !Array.isArray(got.y) ||
-        !Array.isArray(got.z) || got.x.length !== n ||
-        got.y.length !== n || got.z.length !== n) {
+    var n = got.dots, k, extra = ["w", "belt"];
+    var bad = (got.unit !== want || typeof n !== "number" ||
+               !Array.isArray(got.x) || !Array.isArray(got.y) ||
+               !Array.isArray(got.z) || got.x.length !== n ||
+               got.y.length !== n || got.z.length !== n);
+    for (k = 0; !bad && k < extra.length; k++) {
+      if (got[extra[k]] !== undefined &&
+          !(Array.isArray(got[extra[k]]) && got[extra[k]].length === n)) {
+        bad = true;
+      }
+    }
+    if (bad) {
       warn(where + ": the stored drawing " + JSON.stringify(name) +
-           " is not " + n + " dots in AU -- not drawn");
+           " is not " + n + " dots in " + want + " -- not drawn");
       return null;
     }
-    return { x: got.x, y: got.y, z: got.z };
+    return { x: got.x, y: got.y, z: got.z, w: got.w, belt: got.belt,
+             belts: got.belts };
   }
 
   /*
@@ -2941,6 +3097,11 @@
       // `detail` carries the equations -- and "A DRAWING LIMIT" became a
       // sentence (Tony: no compressed language in the hover). With the
       // description on top this hover had reached 18 lines; it is 16.
+      var mpVals = {
+        bz: fmtServed(bz, servedFigures(mpS.bz), 1),
+        pressure: fmtServed(dp, servedFigures(mpS.pressure), 1),
+        cut_angle: fmtServed(mpCut, servedFigures(mpS.cut_angle), 0)
+      };
       var mpHover = mpLabel + "<br><br>" + descLine(mp) +
         "Sunward standoff: " + fmtServed(r0, servedFigures(mp.standoff), 2) +
         " Earth radii<br>" +
@@ -2950,11 +3111,7 @@
                       where + "/magnetopause", "boundary", warn) +
         // L-421: the paper, its conditions and its limits are the
         // magnetopause's served hover words; the numbers are its rows.
-        servedHover(mp.hover, {
-          bz: fmtServed(bz, servedFigures(mpS.bz), 1),
-          pressure: fmtServed(dp, servedFigures(mpS.pressure), 1),
-          cut_angle: fmtServed(mpCut, servedFigures(mpS.cut_angle), 0)
-        }, where + "/magnetopause", warn);
+        servedHover(mp.hover, mpVals, where + "/magnetopause", warn);
       mpHover = withTail(mpHover);
 
       var mpMk = magMarkerPoint(function (th) {
@@ -2970,7 +3127,9 @@
       stampLink([mpBuilt.trace, mpMarker],
                 { info_url: mp.info_url, source: mp.source,
                   source_note: mp.source_note, about: mp.about,
-                  detail: mpS._model, note: mp.note });
+                  detail: panelDetail(mp, mpVals, mpS._model,
+                                      where + "/magnetopause", warn),
+                  note: mp.note });
     }
 
     // --- Magnetotail, Slavin et al. (1985) ---------------------------------
@@ -3068,15 +3227,21 @@
           var widthUnc = (isDict(tl.diameter) &&
                           typeof tl.diameter.uncertainty === "string")
             ? tl.diameter.uncertainty : null;
+          // L-451 (Tony's ruling, 2026-10-17): the sentence is the
+          // flare_end row's served hover_line; the two sizes and their
+          // uncertainties are filled here, and with any of them not
+          // served the sentence is not printed, with a warning.
+          var tlVals = {
+            flare: fmtServed(flareEnd, servedFigures(tl.flare_end), 0),
+            width: fmtServed(tailWidth, servedFigures(tl.diameter), 0)
+          };
+          if (flareUnc) { tlVals.flare_unc = flareUnc; }
+          if (widthUnc) { tlVals.width_unc = widthUnc; }
+          var tlSaid = servedSentence(
+            isDict(tl.flare_end) ? tl.flare_end.hover_line : null, tlVals,
+            where + "/magnetotail/flare_end/hover_line", warn);
           var tlHover = tlLabel + "<br><br>" + descLine(tl) +
-            wrapHover("Spacecraft found the tail stops widening about " +
-              fmtServed(flareEnd, servedFigures(tl.flare_end), 0) +
-              " Earth radii behind Earth" +
-              (flareUnc ? ", plus or minus " + flareUnc : "") +
-              ", and is about " +
-              fmtServed(tailWidth, servedFigures(tl.diameter), 0) +
-              " Earth radii wide beyond there" +
-              (widthUnc ? ", plus or minus " + widthUnc : "") + ".") + "<br>" +
+            (tlSaid === null ? "" : wrapHover(tlSaid) + "<br>") +
             // L-345: the kilometres and AU are the two rows' served "in",
             // each counted from its own row and its stated uncertainty.
             wrapHover("That is about " +
@@ -3155,6 +3320,10 @@
       // the SHAPE has to be drawn in the browser from Jelinek's served
       // coefficients, and the warning below still compares it with the
       // served standoff.
+      var bsVals = {
+        pressure: fmtServed(bsP, servedFigures(bsS.pressure), 1),
+        cut_angle: fmtServed(bsCut, servedFigures(bsS.cut_angle), 0)
+      };
       var bsHover = bsLabel + "<br><br>" + descLine(bs) +
         "Sunward standoff: " +
         (bsStand !== null ? fmtServed(bsStand, servedFigures(bs.standoff), 2)
@@ -3164,10 +3333,7 @@
         // L-421: the bow shock's served hover words. (The three-line
         // comparison with the magnetopause that once sat here is in the
         // served note, which the i-panel shows in full.)
-        servedHover(bs.hover, {
-          pressure: fmtServed(bsP, servedFigures(bsS.pressure), 1),
-          cut_angle: fmtServed(bsCut, servedFigures(bsS.cut_angle), 0)
-        }, where + "/bow_shock", warn);
+        servedHover(bs.hover, bsVals, where + "/bow_shock", warn);
       bsHover = withTail(bsHover);
 
       var bsMk = magMarkerPoint(function (th) {
@@ -3184,7 +3350,9 @@
       stampLink([bsBuilt.trace, bsMarker],
                 { info_url: bs.info_url, source: bs.source,
                   source_note: bs.source_note, about: bs.about,
-                  detail: bsS._model, note: bs.note });
+                  detail: panelDetail(bs, bsVals, bsS._model,
+                                      where + "/bow_shock", warn),
+                  note: bs.note });
 
       if (bsStand !== null && Math.abs(bsStand - S) > 0.02) {
         warn(where + "/bow_shock: the served standoff is " +
@@ -3214,6 +3382,21 @@
    * The word "about" is never printed on that path, so no other hover can
    * move.
    */
+  /* L-330 / L-314 (Tony's ruling of 2026-10-17, the 17-line ceiling): a
+     shell's served panel_words -- sentences that left its hover for the i
+     panel -- filled from the same served numbers as its hover, then its
+     model's formula. Neither served, nothing. */
+  function panelDetail(cfg, vals, model, where, warn) {
+    var parts = [];
+    if (typeof cfg.panel_words === "string" && cfg.panel_words) {
+      var said = servedSentence(cfg.panel_words, vals,
+                                where + "/panel_words", warn);
+      if (said) parts.push(said);
+    }
+    if (typeof model === "string" && model) parts.push(model);
+    return parts.join(" ");
+  }
+
   function standoffLines(entry, kmFallback, figFallback, where, noun, warn) {
     var kmNode = entry.standoff_km, auNode = entry.standoff_au;
     var scNode = entry.scatter;
@@ -3226,9 +3409,16 @@
                                        warn) : null;
     var sc = isDict(scNode) ? measured(scNode, "r_earth", where + "/scatter",
                                        warn) : null;
-    var scatter = (sc === null) ? "" :
-      "Spacecraft that cross the real " + noun + " typically find it within " +
-      fmtServed(sc, servedFigures(scNode), 2) + " Earth radii of this model.";
+    // L-451 (Tony's ruling, 2026-10-17): the sentence is the scatter row's
+    // served hover_line, beside its source; only the number is filled
+    // here. `noun` no longer reaches a visitor; it names the caller.
+    var scatter = "";
+    if (sc !== null) {
+      var said = servedSentence(scNode.hover_line,
+                                {value: fmtServed(sc, servedFigures(scNode), 2)},
+                                where + "/scatter/hover_line", warn);
+      scatter = (said === null) ? "" : said;
+    }
     if (servedPair) {
       return wrapHover("That is about " + servedPair + "." +
                        (scatter ? " " + scatter : "")) + "<br>";
@@ -3368,6 +3558,10 @@
     // L-421: so earth_geometry.js prints the guides' served words by the
     // same rule as every other hover.
     _servedHover: servedHover,
+    // L-451: and a served number's own sentence, filled but not wrapped.
+    _servedSentence: servedSentence,
+    // and the wrap every hover's prose goes through, for earth_geometry.js.
+    _wrapHover: wrapHover,
     // L-322 Stage D, gallery patch 4: so the hover suite can check that an
     // exact row prints by its served count.
     _servedFigures: servedFigures,

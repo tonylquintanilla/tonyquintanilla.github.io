@@ -59,6 +59,10 @@ Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: check
 Updated October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 3:
 check 10, a linked shell's citation is the orrery's; source_note is a
 word; the real-config sweep expects each linked shell's source refused.)
+Updated October 17, 2026 with Anthropic's Claude Opus 5.5 (L-452: a served
+number's source_note is on the allow list, is added after its link, and a
+source_note is removed, comma and all, giving back the file byte for byte;
+removing any other word, or a note not served, is refused.)
 """
 
 import difflib
@@ -256,9 +260,37 @@ def fixture_checks():
     #    slug and a shell's colour, either of which breaks a room.
     cfg0 = json.loads(text)
     allowed = W.editable_paths(cfg0)
+    # L-452: plus the source_note of each served number carrying an
+    # orrery_constant that is not a shell -- the crust's radius and the
+    # two planet radii here.
     check("the allow list holds the shell words and nothing else",
-          len(allowed) == 2 * len(W.WORD_FIELDS) + 2 * 2 + 2 + 2,
+          len(allowed) == 2 * len(W.WORD_FIELDS) + 2 * 2 + 2 + 2 + 3,
           "%d path(s): %s" % (len(allowed), sorted(allowed)[:3]))
+    check("L-452: a served number's source_note is on the allow list",
+          CRUST + "/radius/source_note" in allowed and
+          "/objects/0/features/belts/planet_radius/source_note" in allowed)
+
+    # L-452: a number's note is added after its link, changed in place,
+    # and removed, comma and all, leaving the file as it was.
+    out = W.edit(text, [(CRUST + "/radius/source_note", "drawn as chosen")])
+    back = json.loads(out)["objects"][0]["features"]["interior"]["crust"]
+    check("L-452: a number's source_note is added, one line",
+          back["radius"]["source_note"] == "drawn as chosen" and
+          delta(text, out) == (1, 2), "%d removed, %d added" % delta(text, out))
+    gone = W.edit(out, [(CRUST + "/radius/source_note", None)])
+    check("L-452: removing it gives back the file byte for byte",
+          gone == text)
+    out2 = W.edit(text, [(CRUST + "/source", "Someone 2020, p. 3")])
+    out2 = W.edit(out2, [(CRUST + "/source_note", "A note.")])
+    check("L-452: a shell's source_note removed, comma and all",
+          W.edit(out2, [(CRUST + "/source_note", None)]) ==
+          W.edit(text, [(CRUST + "/source", "Someone 2020, p. 3")]))
+    refuses("L-452: removing a word that is not a source_note",
+            lambda: W.edit(text, [(CRUST + "/note", None)]),
+            expect_in="cannot be removed")
+    refuses("L-452: removing a source_note that is not served",
+            lambda: W.edit(text, [(CRUST + "/source_note", None)]),
+            expect_in="nothing to remove")
 
     #    The six that get their OWN sentence, because "not editable" is
     #    less use than "change it in constants_new.py". The message must

@@ -68,6 +68,9 @@ named in the locked note).
 Updated October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 3:
 a source_note box; a linked shell's citation is shown locked, as the
 orrery's, rather than as a box).
+Updated October 17, 2026 with Anthropic's Claude Opus 5.5 (L-330: the
+locked note names the belts' hovers_shape, which was hovers_rings, and
+their details.)
 """
 
 import json
@@ -126,7 +129,8 @@ BELT_LOCKED_NOTE = ("A belt's words are served as parallel lists, which "
                     "hold no note and no source. Its caveat and its "
                     "citation sit on its measured distance row, with the "
                     "numbers. Its hover sentences (hovers_band, "
-                    "hovers_rings, hovers_plane) are not shown here; "
+                    "hovers_shape, hovers_plane) and details are not "
+                    "shown here; "
                     "store_writer.py writes them like any other belt word.")
 
 

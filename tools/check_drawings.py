@@ -12,8 +12,9 @@ WHAT THIS IS
     This checks that chain, for every drawing data/objects_config.json
     names under a feature's drawing.dots:
 
-    pulled      data/drawings/<name>.json exists, is dots in AU, and its
-                x, y and z each hold "dots" numbers
+    pulled      data/drawings/<name>.json exists, is dots in one of
+                pull_drawings.UNITS, and its x, y and z (and any w and
+                belt) each hold "dots" numbers
     served      the served copy exists and is the pulled one byte for
                 byte (line endings aside). A red line here right after a
                 pull that changed the dots is CORRECT: the cache has not
@@ -26,13 +27,19 @@ WHAT THIS IS
                 picture. For the Hills cloud it must also lie within 10
                 degrees of the served tilt row, the paper's "about 30",
                 the orrery sampler's own tolerance
+    the belts   (L-330) Earth's radiation belts record no tilt: their
+                plane must lie within 1 degree of the body frame's
+                equator, and every dot must lie on a dipole field line
+                (L = r / cos^2 latitude) between its own belt's served
+                edges in the config, to the file's rounding
     the SHA     data/drawings/pulled_at.sha names the orrery commit the
                 drawings were pulled at
 
     A check that passes is only worth something if it can fail, so three
-    faults are planted first, in memory, and each must be caught: a dot
-    moved, the served copy differing from the pulled one, and the frame
-    turned (x and z swapped) so the plane's tilt moves.
+    faults are planted first, in memory, for EVERY drawing, and each must
+    be caught: a dot moved, the served copy differing from the pulled one,
+    and the frame turned (x and z swapped) so the plane's tilt moves. The
+    belts get a fourth: one dot moved off its field lines in both copies.
 
     The last line starts "DRAWINGS:", which the maintenance run quotes,
     and names each drawing with its dots, its fitted tilt and its sha256.
@@ -49,6 +56,10 @@ Domain: gallery
 
 Module created: October 11, 2026 with Anthropic's Claude Opus 5.5
 (L-421, the website half of the inner Oort cloud).
+Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5
+(L-330: Earth's radiation belts, the second stored drawing, are checked by
+their mechanism -- plane and field lines against the served edges -- and
+the planted faults run for every drawing, not only the first.)
 """
 
 import hashlib
@@ -68,6 +79,11 @@ PULLED = os.path.join(ROOT, "data", "drawings")
 SERVED = os.path.join(ROOT, "data", "solar-system", "drawings")
 SHA_FILE = os.path.join(PULLED, "pulled_at.sha")
 TILT_TOLERANCE_DEG = 10.0
+# L-330: the belts' dots are in Earth's body frame, so their plane is its
+# equator, to this much; and each lies on its field line to this many
+# Earth radii in L, allowing the file's rounding to 0.01 Earth radii.
+BELT_PLANE_DEG = 1.0
+BELT_L_SLACK = 0.05
 
 
 def plane_tilt_deg(x, y, z):
@@ -114,7 +130,55 @@ def tilt_row(config):
         return None
 
 
-def check_one(name, pulled_text, served_text, paper_tilt):
+def belt_edges(config):
+    """[(inner, outer)] in Earth radii for Earth's two belts, from the
+    served config's edge rows, or None."""
+    try:
+        earth = [o for o in config["objects"] if o.get("slug") == "earth"][0]
+        vab = earth["features"]["van_allen_belts"]
+        return [(float(vab[p + "inner_edge"]["value"]),
+                 float(vab[p + "outer_edge"]["value"]))
+                for p in ("inner_belt_", "outer_belt_")]
+    except (IndexError, KeyError, TypeError, ValueError):
+        return None
+
+
+def belt_problems(name, content, edges):
+    """Failures for a belts drawing: each dot on a field line between its
+    belt's served edges, and the dots' plane on the body's equator."""
+    out = []
+    if edges is None:
+        return ["%s: no served belt edges to judge the dots by" % name]
+    belts = content.get("belt")
+    if not isinstance(belts, list) or len(content.get("belts") or []) != len(edges):
+        return ["%s: the file does not say which of %d belts each dot is in"
+                % (name, len(edges))]
+    off = []
+    for x, y, z, b in zip(content["x"], content["y"], content["z"], belts):
+        rho2 = x * x + y * y
+        r = math.sqrt(rho2 + z * z)
+        if not (0 <= b < len(edges)) or rho2 <= 0 or r <= 0:
+            off.append((b, None))
+            continue
+        shell = r * r * r / rho2          # r / cos^2(latitude)
+        lo, hi = edges[b]
+        if shell < lo - BELT_L_SLACK or shell > hi + BELT_L_SLACK:
+            off.append((b, shell))
+    if off:
+        b, shell = off[0]
+        out.append("%s: %d dot(s) lie off the field lines between their "
+                   "belt's served edges, e.g. a dot of belt %s at L = %s"
+                   % (name, len(off), b,
+                      "?" if shell is None else "%.2f" % shell))
+    tilt = plane_tilt_deg(content["x"], content["y"], content["z"])
+    if tilt > BELT_PLANE_DEG:
+        out.append("%s: the plane through the dots is tilted %.1f deg from "
+                   "the body frame's equator, not within %.0f deg"
+                   % (name, tilt, BELT_PLANE_DEG))
+    return out
+
+
+def check_one(name, pulled_text, served_text, paper_tilt, edges=None):
     """Failures for one drawing, as sentences, and what was examined."""
     failures = []
     if pulled_text is None:
@@ -136,7 +200,10 @@ def check_one(name, pulled_text, served_text, paper_tilt):
                         "cache builder, then this again" % name)
     tilt = plane_tilt_deg(content["x"], content["y"], content["z"])
     recorded = content.get("plane_tilt_deg")
-    if not isinstance(recorded, (int, float)) or abs(round(tilt, 1) - recorded) > 0.05:
+    if "belts" in content:
+        # L-330: the belts record no tilt; their mechanism is checked.
+        failures.extend(belt_problems(name, content, edges))
+    elif not isinstance(recorded, (int, float)) or abs(round(tilt, 1) - recorded) > 0.05:
         failures.append("%s: the plane through the dots is tilted %.1f deg; the "
                         "file records %s" % (name, tilt, recorded))
     if name == "hills_cloud":
@@ -165,6 +232,13 @@ def planted(name, pulled_text, paper_tilt):
     text = json.dumps(turned)
     out.append(("the frame turned (x and z swapped)", text, text,
                 "plane through the dots is tilted"))
+    if "belts" in turned:
+        offline = json.loads(pulled_text)
+        offline["x"][0] *= 3.0
+        offline["y"][0] *= 3.0
+        text = json.dumps(offline)
+        out.append(("a belt dot moved off its field lines", text, text,
+                    "lie off the field lines"))
     return out
 
 
@@ -189,26 +263,35 @@ def main():
                        read(s) if os.path.exists(s) else None)
 
     caught = total = 0
-    first = names[0]
-    if texts[first][0] is not None:
+    edges = belt_edges(config)
+    for planted_name in names:
+        if texts[planted_name][0] is None:
+            continue
         for label, pulled_text, served_text, expect in planted(
-                first, texts[first][0], paper):
+                planted_name, texts[planted_name][0], paper):
             total += 1
-            fails, _ = check_one(first, pulled_text, served_text, paper)
+            fails, _ = check_one(planted_name, pulled_text, served_text,
+                                 paper, edges)
             hit = any(expect in line for line in fails)
             caught += hit
-            print("  planted: %-38s %s" % (label, "caught" if hit else "MISSED"))
+            print("  planted in %-15s %-38s %s" % (planted_name + ":", label,
+                                                  "caught" if hit else "MISSED"))
             if not hit:
-                problems.append("planted fault not caught: " + label)
+                problems.append("planted fault not caught in %s: %s"
+                                % (planted_name, label))
+    if total:
         print("")
 
     for name in names:
-        fails, info = check_one(name, texts[name][0], texts[name][1], paper)
+        fails, info = check_one(name, texts[name][0], texts[name][1], paper,
+                                edges)
         problems.extend(fails)
         if info:
-            print("  %-14s %d dots, plane tilted %.1f deg (served tilt row %s), "
+            print("  %-15s %d dots, plane tilted %.1f deg (%s), "
                   "served copy %s, sha256 %s"
-                  % (name, info["dots"], info["tilt"], paper,
+                  % (name, info["dots"], info["tilt"],
+                     "served tilt row %s" % paper if name == "hills_cloud"
+                     else "the body frame's equator",
                      "MISSING" if texts[name][1] is None else
                      "matches" if texts[name][1] == texts[name][0] else "DIFFERS",
                      info["sha256"][:12]))

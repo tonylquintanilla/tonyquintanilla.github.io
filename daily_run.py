@@ -51,8 +51,22 @@ WHAT IT DOES
     look at GitHub Desktop's change list, commit and push, and run the
     maintenance run's live pass.
 
-    Apart from the pulls, a step that reports a problem does not stop
-    the next one: the guest book's problems still do not stop the build.
+    IF A RUN RECORD IS LOST, THE DAILY RUN STOPS (L-449; Tony,
+    2026-10-17: stop and name). Between steps 3 and 4 it compares the
+    records in the new cache, data/solar-system/raw/runs, with those in
+    the cache the build replaced, data/solar-system.prev/raw/runs. On
+    success it says what it compared ("carried 85 of 85, plus
+    tonight's"). A record in the old and not the new stops the Daily Run
+    before the maintenance run, naming each lost record and where its
+    copy is; you copy them back, then run the maintenance run. The
+    copies stay in .prev only until the next build. Records were lost
+    on 2026-10-15 and 10-16, cause unknown; the builder's two [RUNS]
+    lines are what the next loss is read from. If a folder is missing
+    the check says it could not compare, and the run goes on.
+
+    Apart from the pulls and the records, a step that reports a problem
+    does not stop the next one: the guest book's problems still do not
+    stop the build.
     The summary says which step it was. Nothing here commits or pushes.
 
     It opens by saying when the last cache build was, from
@@ -88,6 +102,12 @@ the orrery's maintenance run, by Tony's ruling of 2026-10-12; three steps.)
 Module updated: October 15, 2026 with Anthropic's Claude Opus 5.5 (L-446,
 with L-380 and L-388: four steps; the pulls run before the builder, and a
 failed pull stops the Daily Run there, Tony's option A of 2026-10-15.)
+Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5 (L-449:
+after the builder, the run records check compares the new cache's records
+with the replaced cache's and stops before the maintenance run on a loss,
+naming each lost record and where its copy is; Tony, 2026-10-17: stop and
+name. It is not a step of its own and has no button: it runs no script,
+and it means something only straight after a build.)
 """
 
 import datetime
@@ -113,6 +133,12 @@ PULLS_STEP = 1          # index in STEPS; a failure here stops the run
 PULLS_LINE = "=== PULLS:"
 
 SWAP_LOG = os.path.join("data", "cache_swap_log.jsonl")
+
+# L-449: the run records, compared after the builder. The new cache's,
+# and the replaced cache's, which the swap keeps in .prev until the next
+# build clears it.
+LIVE_RUNS = os.path.join("data", "solar-system", "raw", "runs")
+PREV_RUNS = os.path.join("data", "solar-system.prev", "raw", "runs")
 LINE = "=" * 70
 
 
@@ -198,6 +224,84 @@ def run_pulls(n, label, script, args):
     return "reported a problem (exit %d)" % code, named
 
 
+def _run_record_names(folder):
+    """The run records (*.json) in a folder, sorted, or None if the
+    folder is not there."""
+    if not os.path.isdir(folder):
+        return None
+    return sorted(name for name in os.listdir(folder)
+                  if name.endswith(".json"))
+
+
+def compare_run_records(new_dir, old_dir):
+    """L-449: compare the new cache's run records (new_dir) with the
+    replaced cache's (old_dir, in data/solar-system.prev).
+
+    Returns a dict. "status" is "ok", "lost" or "cannot". "lost" names
+    each record in the old folder and not the new; "added" each in the
+    new and not the old (tonight's). A missing folder, or an old folder
+    holding no records, is "cannot", with the reason: the check says it
+    could not look, and never passes on nothing."""
+    old = _run_record_names(old_dir)
+    new = _run_record_names(new_dir)
+    result = {"status": "cannot", "lost": [], "added": [],
+              "old_count": len(old) if old is not None else None,
+              "new_count": len(new) if new is not None else None,
+              "old_dir": old_dir, "new_dir": new_dir, "reason": None}
+    if old is None:
+        result["reason"] = ("the replaced cache's records folder is not "
+                            "there: %s" % old_dir)
+    elif not old:
+        result["reason"] = ("the replaced cache's records folder holds no "
+                            "records: %s" % old_dir)
+    elif new is None:
+        result["reason"] = ("the new cache's records folder is not there: "
+                            "%s" % new_dir)
+    else:
+        result["lost"] = sorted(set(old) - set(new))
+        result["added"] = sorted(set(new) - set(old))
+        result["status"] = "lost" if result["lost"] else "ok"
+    return result
+
+
+def report_run_records(r):
+    """The lines the Daily Run prints for the records check: what it
+    compared, and on a loss each lost record with its copy's path."""
+    if r["status"] == "cannot":
+        return ["Run records: could not compare -- %s." % r["reason"]]
+    carried = r["old_count"] - len(r["lost"])
+    if r["added"]:
+        new_part = "plus tonight's: %s" % ", ".join(r["added"])
+    else:
+        new_part = "and no new record"
+    head = ("Run records: carried %d of %d, %s."
+            % (carried, r["old_count"], new_part))
+    lines = [head,
+             "  compared %s" % r["new_dir"],
+             "  with     %s" % r["old_dir"]]
+    if r["status"] == "lost":
+        lines.append("  LOST %d record%s, in the replaced cache and not the "
+                     "new one:" % (len(r["lost"]),
+                                   "" if len(r["lost"]) == 1 else "s"))
+        for name in r["lost"]:
+            lines.append("    %s" % os.path.join(r["old_dir"], name))
+    return lines
+
+
+def records_result(r):
+    """(the summary's words, whether the Daily Run stops) for a
+    comparison. Only a loss stops it. "Could not compare" is reported as
+    a problem but does not stop: it is what a failed or rolled-back
+    build leaves, and the builder's own report says why."""
+    if r["status"] == "lost":
+        return ("LOST %d of %d: stopped" % (len(r["lost"]), r["old_count"]),
+                True)
+    if r["status"] == "cannot":
+        return ("could not compare (scroll up)", False)
+    return ("ok: carried %d of %d, plus %d new"
+            % (r["old_count"], r["old_count"], len(r["added"])), False)
+
+
 def main():
     print(LINE)
     print("  DAILY RUN -- %s" % datetime.datetime.now().strftime("%A %B %d, %Y  %H:%M"))
@@ -232,6 +336,7 @@ def main():
     results.append(("Pulls from the orrery", pulled))
     stopped = pulled != "ok"
 
+    records = None
     if stopped:
         results.append(("Cache builder", "not run: the pulls failed"))
         results.append(("Maintenance run, offline",
@@ -241,12 +346,28 @@ def main():
         # Tony, "the retry is sufficient" -- the builder retries a refused
         # rename and the swap log records any retry.
         results.append(("Cache builder", run_step(3, *STEPS[2])))
-        print("")
-        print("The builder's next steps start with the maintenance run.")
-        print("The Daily Run runs it now.")
 
-        # 4. The offline checks. Their pull rows print "no change".
-        results.append(("Maintenance run, offline", run_step(4, *STEPS[3])))
+        # The run records (L-449), between the builder and the checks:
+        # a record the replaced cache held and the new one does not STOPS
+        # the Daily Run here, by name (Tony, 2026-10-17: stop and name).
+        records = compare_run_records(os.path.join(ROOT, LIVE_RUNS),
+                                      os.path.join(ROOT, PREV_RUNS))
+        print("")
+        for line in report_run_records(records):
+            print(line)
+        said, records_stop = records_result(records)
+        results.append(("Run records", said))
+        if records_stop:
+            results.append(("Maintenance run, offline",
+                            "not run: run records lost"))
+        else:
+            print("")
+            print("The builder's next steps start with the maintenance run.")
+            print("The Daily Run runs it now.")
+
+            # 4. The offline checks. Their pull rows print "no change".
+            results.append(("Maintenance run, offline",
+                            run_step(4, *STEPS[3])))
 
     # Summary.
     print("")
@@ -256,7 +377,8 @@ def main():
     for label, result in results:
         print("  %-28s %s" % (label, result))
     problems = [label for label, result in results
-                if result not in ("ok", "skipped today")
+                if result != "skipped today"
+                and not result.startswith("ok")
                 and not result.startswith("not run:")]
     print("")
     if stopped:
@@ -271,6 +393,28 @@ def main():
         print("  NEXT:")
         print("    1. Run the Daily Run again once the orrery can be reached.")
         print("    2. Do not commit a cache from this run: none was built.")
+        print(LINE)
+        return 1
+    if records is not None and records["status"] == "lost":
+        lost = records["lost"]
+        print("  STOPPED after the cache builder, before the maintenance run")
+        print("  (L-449). The new cache is missing %d run record%s that the"
+              % (len(lost), "" if len(lost) == 1 else "s"))
+        print("  replaced cache held. %s:"
+              % ("Its copy is here" if len(lost) == 1 else
+                 "Their copies are here"))
+        for name in lost:
+            print("    %s" % os.path.join(records["old_dir"], name))
+        print("  They stay there only until the next cache build clears that")
+        print("  folder.")
+        print("  NEXT:")
+        print("    1. Do not commit yet.")
+        print("    2. In File Explorer, copy the files above into")
+        print("       %s" % records["new_dir"])
+        print("    3. Run the dashboard's Gallery Maintenance Run, then look at")
+        print("       GitHub Desktop's change list, commit and push.")
+        print("    4. Note in L-449 what the cache builder's two [RUNS] lines")
+        print("       said (scroll up to step 3): that is the cause's evidence.")
         print(LINE)
         return 1
     if problems:

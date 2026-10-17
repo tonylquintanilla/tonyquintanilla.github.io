@@ -43,6 +43,13 @@
 // Sun Direction's hover states Earth's orbital period, served in the
 // config as the page's driver hands it over, and with none served the
 // room says so.)
+// Updated October 17, 2026 with Anthropic's Claude Opus 5.5 (L-330: the
+// stored drawings are loaded from the served cache, as the page loads
+// them; the belts are checked as the orrery's dots -- every dot on a
+// dipole field line between its belt's served edges and above the
+// ground, symmetric about the equator, shaded by its weight, the
+// brightest near the served peak, the marker at the peak on the equator,
+// the hover saying what the dots are -- where the rings were).
 
 const fs = require("fs");
 const path = require("path");
@@ -65,6 +72,19 @@ if (FRAME_NOTES.length) {
   console.log("FAIL frame constants not served: " + FRAME_NOTES.join("; "));
   process.exit(1);
 }
+// L-330: the stored drawings, from the served cache, handed to the
+// renderers as the page hands them over. A drawing missing here makes the
+// belts a warning, which the "no warnings" leg below then fails on.
+const DRAWINGS = {};
+(function () {
+  const dir = path.join(__dirname, "..", "data", "solar-system", "drawings");
+  if (fs.existsSync(dir)) {
+    fs.readdirSync(dir).filter(n => /\.json$/.test(n)).forEach(n => {
+      DRAWINGS[n.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(dir, n), "utf8"));
+    });
+  }
+  GF.setDrawings(DRAWINGS);
+})();
 
 let failures = 0;
 function check(name, ok, detail) {
@@ -451,8 +471,11 @@ const magParams = earthParams.earth_magnetosphere;
           /Beyond that angle the boundary is drawn(<br[^>]*>| )as the magnetotail\./.test(mk.text[0]) &&
           !/without limit/.test(mk.text[0]));
   } else {
-    check(label + ": the hover says the cut is where the drawing stops, not an edge",
-          /where the drawing stops, not where(<br[^>]*>| )the/.test(mk.text[0]));
+    // L-330 (Tony, 2026-10-17, the 17-line ceiling): that sentence is in
+    // the i panel now, with the paper and its pressure.
+    check(label + ": the i panel says the cut is where the drawing stops, not an edge",
+          /where the drawing stops, not where the shock ends/.test((mk.meta || {}).detail || "") &&
+          /Drawn to \d+ deg from the nose/.test(mk.text[0]));
   }
 });
 
@@ -520,88 +543,98 @@ const magParams = earthParams.earth_magnetosphere;
         /Slavin et al\. \(1985\)/.test((mk.meta || {}).source || "") && /Maezawa/.test((mk.meta || {}).source || ""));
 })();
 
-// --- L-231: the belts sit in the equatorial plane and are flat ----------
+// --- L-330: the belts are the orrery's dots along dipole field lines -------
+// L-231 had them flat rings in the equatorial plane; since 2026-10-17
+// (Tony's rulings) they are the stored drawing, drawn as given. Every
+// number held here is read from the served rows or the served drawing.
 const beltP = earthParams.van_allen_belts;
 const beltRows = {
   "Earth: Inner Radiation Belt": [beltP.inner_belt_inner_edge.value, beltP.inner_belt_distance.value,
-                                  beltP.inner_belt_outer_edge.value, 10, 4],
+                                  beltP.inner_belt_outer_edge.value, 0],
   "Earth: Outer Radiation Belt": [beltP.outer_belt_inner_edge.value, beltP.outer_belt_distance.value,
-                                  beltP.outer_belt_outer_edge.value, 9, 3]
+                                  beltP.outer_belt_outer_edge.value, 1]
 };
+const beltDrawing = DRAWINGS[(beltP.drawing || {}).dots];
+check("the belts name a stored drawing, and it is served",
+      !!beltDrawing && beltDrawing.unit === "r_earth", (beltP.drawing || {}).dots);
+const nEq = normal(equator);
 ["Earth: Inner Radiation Belt", "Earth: Outer Radiation Belt"].forEach(label => {
-  const belt = groups[label].find(t => t.hoverinfo === "skip");
-  const n = normal(belt);
-  check(label + ": shares a plane with the equator and the GEO ring",
-        angleDeg(n, normal(equator)) < 0.05 && angleDeg(n, normal(geo)) < 0.05,
-        angleDeg(n, normal(equator)).toFixed(4) + " deg from the equator");
-  // L-231: the saddle warp lifted the ring a fifth of its radius twice per
-  // circuit. Flat in its own plane is the whole point of removing it.
-  const off = Math.max(...belt.x.map((_, i) =>
-    Math.abs(n[0]*belt.x[i] + n[1]*belt.y[i] + n[2]*belt.z[i])));
-  const rad = Math.max(...belt.x.map((_, i) => Math.hypot(belt.x[i], belt.y[i], belt.z[i])));
-  check(label + ": flat in that plane -- no saddle warp", off / rad < 1e-9,
-        (off / rad).toExponential(2) + " of its radius out of plane");
-  const mk = groups[label].find(t => t.marker && t.marker.symbol === "cross");
-  // L-331 (2026-09-16): the same two pins, on the plain wording that
-  // replaced "drawing choice" and "Sourced span". The description itself
-  // is measured by smoke_hover_budget.js, which overlays the store; this
-  // suite renders a fixture that predates the field.
-  // L-322 Stage D, gallery patch 3: the rings run from the served inner
-  // edge to the served outer edge, evenly spaced, one on the served peak;
-  // the orrery's answers for these rows are ten with the peak fifth and
-  // nine with the peak fourth. Read off the traces.
   const RE = R_E_KM / K;
-  const [lo, pk, hi, wantN, wantPeak] = beltRows[label];
-  const skips = groups[label].filter(t => t.hoverinfo === "skip");
-  const radii = {};
-  skips.forEach(t => t.x.forEach((_, i) => { radii[(Math.hypot(t.x[i], t.y[i], t.z[i]) / RE).toFixed(6)] = true; }));
-  const rr = Object.keys(radii).map(Number).sort((a, b) => a - b);
-  const steps = rr.slice(1).map((r, i) => r - rr[i]);
-  check(label + ": " + wantN + " rings, evenly spaced from the served inner edge to the served outer edge",
-        rr.length === wantN && Math.abs(rr[0] - lo) < 1e-6 && Math.abs(rr[rr.length - 1] - hi) < 1e-6 &&
-        Math.max(...steps) - Math.min(...steps) < 1e-6, rr.map(r => r.toFixed(3)).join(" "));
-  const peakT = skips.find(t => t.showlegend === false);
-  const edgeT = skips.find(t => t.showlegend === true);
-  const peakR = peakT ? Math.hypot(peakT.x[0], peakT.y[0], peakT.z[0]) / RE : null;
-  check(label + ": the ring at the served peak (ring " + (wantPeak + 1) + " from the inside) is its own trace, brighter and larger",
-        !!peakT && Math.abs(peakR - pk) < 1e-6 && Math.abs(rr[wantPeak] - pk) < 1e-6 &&
-        peakT.marker.opacity > edgeT.marker.opacity && peakT.marker.size > edgeT.marker.size,
-        peakT ? "peak " + peakR.toFixed(3) + ", opacity " + peakT.marker.opacity + " vs " + edgeT.marker.opacity : "none");
-  check(label + ": the info marker sits on the peak ring",
-        Math.abs(Math.hypot(mk.x[0], mk.y[0], mk.z[0]) / RE - pk) < 1e-6);
+  const [lo, pk, hi, index] = beltRows[label];
+  const belt = (groups[label] || []).find(t => t.hoverinfo === "skip");
+  const mk = (groups[label] || []).find(t => t.marker && t.marker.symbol === "cross");
+  if (!belt || !mk || !beltDrawing) {
+    check(label + ": drawn, with its info marker", false);
+    return;
+  }
+  const want = beltDrawing.belt.filter(b => b === index).length;
+  check(label + ": every one of its " + want + " stored dots is drawn, in one trace",
+        belt.x.length === want && want > 0, belt.x.length + " drawn");
+  // Each dot's latitude from the equator's plane and its field line's L.
+  const shells = [], lats = [], radii = [];
+  for (let i = 0; i < belt.x.length; i++) {
+    const p = [belt.x[i], belt.y[i], belt.z[i]];
+    const r = Math.hypot(...p);
+    const sinLat = (p[0] * nEq[0] + p[1] * nEq[1] + p[2] * nEq[2]) / r;
+    const cos2 = 1 - sinLat * sinLat;
+    radii.push(r / RE); lats.push(Math.asin(sinLat)); shells.push(r / RE / cos2);
+  }
+  const off = shells.filter(L => L < lo - 0.05 || L > hi + 0.05);
+  check(label + ": every dot lies on a dipole field line between the served edges, " + lo + " to " + hi,
+        off.length === 0, off.length + " off; L from " + Math.min(...shells).toFixed(2) +
+        " to " + Math.max(...shells).toFixed(2));
+  check(label + ": no dot is below the ground",
+        Math.min(...radii) >= 1 - 0.02, "nearest " + Math.min(...radii).toFixed(3) + " R_E");
+  // Turned to the pole: as many dots north of the equator as south, and
+  // the mean latitude near zero. A frame turned wrong would tip the belt.
+  const north = lats.filter(a => a > 0).length;
+  const meanLat = lats.reduce((a, b) => a + b, 0) / lats.length * 180 / Math.PI;
+  check(label + ": symmetric about the equator the GEO ring lies in",
+        Math.abs(meanLat) < 1 && Math.abs(north / lats.length - 0.5) < 0.05 &&
+        angleDeg(nEq, normal(geo)) < 0.05,
+        "mean latitude " + meanLat.toFixed(2) + " deg, " + north + " of " + lats.length + " north");
+  // Shaded by weight: each dot's own colour and size, from the drawing.
+  const alphas = belt.marker.color.map(c => parseFloat(/,\s*([0-9.]+)\)$/.exec(c)[1]));
+  const brightest = alphas.indexOf(Math.max(...alphas));
+  check(label + ": each dot is shaded by its weight, the brightest near the served peak",
+        Array.isArray(belt.marker.size) && belt.marker.size.length === belt.x.length &&
+        Math.max(...belt.marker.size) > Math.min(...belt.marker.size) &&
+        Math.abs(shells[brightest] - pk) < 0.15 * (hi - lo),
+        "brightest at L = " + shells[brightest].toFixed(2) + ", peak " + pk);
+  const mr = Math.hypot(mk.x[0], mk.y[0], mk.z[0]);
+  check(label + ": the info marker sits at the served peak, on the equator",
+        Math.abs(mr / RE - pk) < 1e-6 &&
+        Math.abs((mk.x[0] * nEq[0] + mk.y[0] * nEq[1] + mk.z[0] * nEq[2]) / mr) < 1e-9,
+        (mr / RE).toFixed(4) + " R_E");
   const beltText = mk.text[0].split("<br soft>").join(" ");
-  check(label + ": the hover says the rings only mark the extent, and which ring is brighter",
-        beltText.indexOf("The belt is one continuous region; its evenly spaced rings only mark its " +
-                         "extent, and the brighter ring marks where it is most intense.") >= 0 &&
-        !/a width chosen for the picture/.test(beltText));
-  check(label + ": _evenBeltRings gives the orrery's answer for these rows",
-        (() => { const e = GF._evenBeltRings(lo, pk, hi); return e.radii.length === wantN && e.peak === wantPeak; })());
+  check(label + ": the hover says what the dots are, and nothing about rings",
+        beltText.indexOf("Its dots follow Earth's magnetic field lines") >= 0 &&
+        !/rings?\b/.test(beltText.replace(/Radiation Belt/g, "")),
+        beltText.slice(beltText.indexOf("The belt is"), beltText.indexOf("The belt is") + 80));
   check(label + ": the hover gives the measured extent from the served edges",
         /Measured extent: \d/.test(mk.text[0]), mk.text[0].indexOf("Measured extent") >= 0);
   // L-231: the tilt is quoted only because the store carries it and it is
-  // served. The epoch rides with it because the tilt drifts.
-  // L-322 C2-b (September 22, 2026, Anthropic's Claude Opus 5.5): the
-  // sentence changed. The tilt prints at its served count
-  // and the epoch and model follow in their own sentence, "That tilt is
-  // for 2020 (IGRF-13 model)". Until 2026-10-06 this suite rendered a
-  // recording of 2026-09-08 whose tilt was the old 9.6 with no count, so
-  // the pin read the SHAPE of the words; the recording is current now
-  // (L-379), and smoke_display_figures.js still pins the live strings.
-  const plainText = mk.text[0].split(/<br soft>/).join(" ");
+  // served. The epoch rides with it because the tilt drifts. L-379: the
+  // printed number is read back and held to the served value;
+  // smoke_display_figures.js pins the exact string. L-330 (Tony,
+  // 2026-10-17): the sentence is in the i panel now, for the hover's
+  // 17-line ceiling, so it is read from the marker's panel detail.
+  const plainText = ((mk.meta || {}).detail || "");
+  check(label + ": the plane sentence left the hover for the i panel",
+        mk.text[0].indexOf("The field lines are drawn around") < 0 &&
+        plainText.indexOf("The field lines are drawn around") === 0);
   const servedTilt = earthParams.van_allen_belts.magnetic_tilt.value;
-  // L-379: the recording now carries the tilt at its served count, so
-  // the printed number is read back and held to the served value.
-  // smoke_display_figures.js still pins the exact string.
   const tiltSaid = /which turns with Earth and in 2020 was tilted ([0-9.]+) degrees from it/
     .exec(plainText);
   check(label + ": the hover quotes the served magnetic tilt with its model and epoch",
         !!tiltSaid && Math.abs(parseFloat(tiltSaid[1]) - servedTilt) < 0.05 &&
         /\(IGRF-13 model\)\./.test(plainText),
-        plainText.slice(plainText.indexOf("The ring lies")));
-  check(label + ": the hover does NOT claim the ring is drawn at the magnetic equator",
-        !/rings? (is|are) drawn/.test(mk.text[0]) &&
-        /equatorial plane/.test(mk.text[0]) &&
-        /daily average/.test(mk.text[0]));
+        plainText.slice(plainText.indexOf("The field lines")));
+  check(label + ": the hover does NOT claim the belt follows the magnetic equator",
+        !/drawn at the magnetic equator|follows? the magnetic equator/.test(plainText) &&
+        /spin axis/.test(plainText) && /daily average/.test(plainText));
+  check(label + ": the i panel carries the field lines' citation",
+        /Koskinen/.test((mk.meta || {}).detail || ""), (mk.meta || {}).detail);
 });
 
 check("every geometry trace skips hover (lines, dots and cones alike)",

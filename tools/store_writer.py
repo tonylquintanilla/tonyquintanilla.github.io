@@ -46,8 +46,14 @@ So the editable surface is exactly:
                                       but NOT `source` on a shell that
                                       carries an `orrery_constant`, whose
                                       citation is the orrery's (below)
+    a served number's source_note     on any served number that carries
+                                      an `orrery_constant`, inside any
+                                      feature group, orientation included
+                                      (L-452, 2026-10-17): the website's
+                                      own words about that row's citation
     a belt's parallel words           names, descriptions, abouts,
-                                      notes, info_urls, flux_peak_of --
+                                      notes, info_urls, flux_peak_of,
+                                      the hovers_ lists and details --
                                       by index, for a group served as
                                       parallel lists
     the arrival block                 drawn, moon
@@ -66,11 +72,19 @@ instead: the citation changes in constants_new.py; the website's own
 words about it are the shell's `source_note`, which this writer writes.
 A shell with no link keeps its `source` as an ordinary word.
 
+A SOURCE NOTE MAY BE REMOVED (L-452, Tony's rulings of 2026-10-17). A
+`source_note` holds only a drawing choice beside a citation; wording
+that bears on the citation lives in the orrery's store. Giving None for
+an existing `source_note` path removes the member, comma and all, and
+nothing else; giving None anywhere else is refused. It is the only
+member this writer removes.
+
 IT ALSO REFUSES: a path that does not exist; a change that would alter a
 value's TYPE; a list that is not all strings; an ADDED word that is
 empty, because a field that says nothing is noise (an existing word MAY
-be emptied -- the page reads an empty string as no word at all, and this
-writer has no way to remove a member); an empty `name`, because the
+be emptied -- the page reads an empty string as no word at all, and
+apart from a source_note, above, this writer removes no member); an
+empty `name`, because the
 shell list is keyed off it; a `drawn` entry that names no shell in that
 room, which would leave the Arrival check red; and any result that does
 not parse or that would put a non-ASCII byte in the file.
@@ -109,6 +123,14 @@ Updated October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 3:
 shell's `source` is the orrery's and is refused here. Part 2:
 SERVED_WORDS_PATCHED and SERVED_SETTINGS, so this file is the one home of
 the served-string vocabulary the Typed facts check reads).
+Updated October 17, 2026 with Anthropic's Claude Opus 5.5 (L-452, L-330,
+L-451: a `source_note` beside ANY served number that carries an
+`orrery_constant` is a word this writer edits, and a `source_note` may be
+REMOVED, by giving None; the belts' hovers_rings is hovers_shape, for
+dots rather than rings, and their `details` carry the field lines'
+citation to the i panel; `hover_line`, a number's own sentence, is a
+served word a patch writes; `panel_words`, sentences moved from a
+hover to its i panel for the 17-line ceiling, is a shell's word).
 """
 
 import json
@@ -149,8 +171,11 @@ NAMED_REFUSALS = ("value", "unit", "figures", "orrery_constant",
 # a citation, printed after it in the i panel. On a shell carrying an
 # `orrery_constant`, `source` itself is the orrery's (LINKED_ONLY_MIRROR)
 # and is not offered.
+# `panel_words` (L-330, Tony's ruling of 2026-10-17, the hovers' 17-line
+# ceiling): sentences that left a shell's hover for its i panel, printed
+# there before its model's formula, {name} filled as in its hover.
 WORD_FIELDS = ("name", "description", "about", "note", "source",
-               "source_note", "info_url", "hover")
+               "source_note", "info_url", "hover", "panel_words")
 
 # The words on a linked shell that the mirror writes, not this writer.
 LINKED_ONLY_MIRROR = ("source",)
@@ -159,11 +184,18 @@ LINKED_ONLY_MIRROR = ("source",)
 # Earth's two radiation belts -- keeps its words in these, one entry per
 # belt, in step with `names`. `colors` and `info_borders` are drawing
 # choices and are not here.
-# hovers_band, hovers_rings and hovers_plane (L-421) are the belt
+# hovers_band, hovers_shape and hovers_plane (L-421) are the belt
 # hovers' served sentences, one entry per belt, as `hover` is a shell's.
+# hovers_shape was hovers_rings until 2026-10-17 (L-330): the belts are
+# dots along the field lines now, not rings. `details` (L-330) is what
+# the i panel prints after the citation for each belt: the field lines'
+# source, which has no row in the orrery's store.
 BELT_WORD_LISTS = ("names", "descriptions", "abouts", "notes", "info_urls",
-                   "flux_peak_of", "hovers_band", "hovers_rings",
-                   "hovers_plane")
+                   "flux_peak_of", "hovers_band", "hovers_shape",
+                   "hovers_plane", "details")
+
+# The one member this writer may REMOVE, by giving None (L-452).
+REMOVABLE_WORDS = ("source_note",)
 
 # SERVED WORDS THIS WRITER DOES NOT EDIT, and the served strings that are
 # not words at all (L-421 part 2, 2026-10-16). With WORD_FIELDS and
@@ -178,12 +210,16 @@ BELT_WORD_LISTS = ("names", "descriptions", "abouts", "notes", "info_urls",
 #                         for the i panel, the galactic plane's marker
 #                         hovers. Earth's orientation.words entries are
 #                         words too, by their place rather than their key.
+#                         hover_line (L-451, 2026-10-17) is a served
+#                         number's own sentence in a hover, served on the
+#                         number beside its source: {value} is that
+#                         number, filled in by the renderer.
 #   SERVED_SETTINGS       strings that are drawing choices or bookkeeping,
 #                         never printed as words: colours, shapes, a stored
 #                         drawing's name, units, figure counts, links into
 #                         the store, a frame's label, the file's own notes.
 SERVED_WORDS_PATCHED = ("radius_note", "cusp_note", "_model", "centre_hover",
-                        "north_pole_hover", "south_pole_hover")
+                        "north_pole_hover", "south_pole_hover", "hover_line")
 SERVED_SETTINGS = ("color", "colors", "info_border", "info_borders", "shape",
                    "dots", "unit", "figures", "uncertainty",
                    "orrery_constant", "frame", "_comment", "_declared",
@@ -314,7 +350,13 @@ def editable_paths(config_value):
             out[base + "/arrival/moon"] = "flag"
         features = entry.get("features") or {}
         for group, params in features.items():
-            if group == "orientation" or not isinstance(params, dict):
+            if group == "orientation" and isinstance(params, dict):
+                # L-452: no shells here, but its linked numbers' notes.
+                for number_path in _linked_numbers(
+                        params, "%s/features/%s" % (base, group)):
+                    out[number_path + "/source_note"] = "string"
+                continue
+            if not isinstance(params, dict):
                 continue
             for key, member in params.items():
                 if isinstance(member, dict) and isinstance(member.get("name"), str):
@@ -324,6 +366,11 @@ def editable_paths(config_value):
                             continue
                         out["%s/features/%s/%s/%s" % (base, group, key, word)] = \
                             "string"
+            # L-452: the website's note beside any served number that
+            # carries an orrery_constant, wherever it sits in the group.
+            for number_path in _linked_numbers(
+                    params, "%s/features/%s" % (base, group)):
+                out[number_path + "/source_note"] = "string"
             names = params.get("names")
             if isinstance(names, list) and names:
                 for listname in BELT_WORD_LISTS:
@@ -340,6 +387,25 @@ def editable_paths(config_value):
             out[base + "/drawn"] = "string_list"
         if isinstance(arrival.get("highlight"), str):
             out[base + "/highlight"] = "string"
+    return out
+
+
+def _linked_numbers(node, path):
+    """Paths of every served number under node carrying an
+    `orrery_constant` -- a dict with a numeric `value` -- that is not a
+    shell (a shell's words, source_note included, are reached by name).
+    Orientation is included: its rotation period is such a number."""
+    out = []
+    if not isinstance(node, dict):
+        return out
+    for key, child in node.items():
+        if not isinstance(child, dict):
+            continue
+        here = "%s/%s" % (path, key)
+        if ("orrery_constant" in child and not isinstance(child.get("name"), str)
+                and isinstance(child.get("value"), (int, float))):
+            out.append(here)
+        out.extend(_linked_numbers(child, here))
     return out
 
 
@@ -406,6 +472,9 @@ def plan(text, changes):
             raise WriteRefused("%s was given twice in one save" % path)
         seen[path] = True
         kind = allowed[path]
+        if new is None:
+            planned.append(_plan_remove(node, steps, field, path))
+            continue
         _OPERATIONS[kind][1](new, path)
 
         if kind == "string":
@@ -495,6 +564,33 @@ def _not_editable(path, field):
             % (path, ", ".join(WORD_FIELDS)))
 
 
+def _plan_remove(node, steps, field, path):
+    """The edit that REMOVES a source_note (L-452): the member and the
+    comma that joins it to its neighbour, so the object reads as if it
+    had never been there. Only a REMOVABLE_WORDS field that is present."""
+    if field not in REMOVABLE_WORDS:
+        raise WriteRefused(
+            "%s cannot be removed: this writer removes only a %s; give a "
+            "string to change it or an empty one to blank it"
+            % (path, " or ".join(REMOVABLE_WORDS)))
+    parent = _walk_node(node, steps[:-1], path)
+    if not isinstance(parent.value, dict) or field not in parent.members:
+        raise WriteRefused("%s is not served, so there is nothing to remove"
+                           % path)
+    order = sorted(parent.members.items(), key=lambda kv: kv[1][1])
+    at = [k for k, _v in order].index(field)
+    child, key_start = order[at][1]
+    if at > 0:
+        start, end = order[at - 1][1][0].end, child.end
+    elif len(order) > 1:
+        start, end = key_start, order[1][1][1]
+    else:
+        raise WriteRefused(
+            "%s is the only member of its object; removing it would leave "
+            "an empty object, which this writer does not make" % path)
+    return (start, end, "", path, None)
+
+
 def _plan_insert(text, parent, steps, field, new, path):
     """The edit that ADDS a word field to a shell that lacks it.
 
@@ -502,11 +598,21 @@ def _plan_insert(text, parent, steps, field, new, path):
     something to sit beside and work out the separator.
     """
     _check_string(new, path)
+    anchor = None
+    if (field == "source_note" and "orrery_constant" in parent.members
+            and not isinstance(parent.value.get("name"), str)):
+        # L-452: a served number's note goes after its citation, or after
+        # its link to the store where no citation is served yet.
+        for candidate in ("orrery_constant", "source"):
+            if candidate in parent.members:
+                anchor = parent.members[candidate][0]
+        piece = '%s"%s": %s' % (_separator(text, anchor.end), field,
+                                render(new))
+        return (anchor.end, anchor.end, piece, path, new)
     if not isinstance(parent.value.get("name"), str):
         raise WriteRefused(
             "%s is not a shell -- only a served shell, which carries a "
             "name, gets a word added" % ("/" + "/".join(steps[:-1])))
-    anchor = None
     for candidate in WORD_FIELDS:
         if candidate in parent.members:
             anchor = parent.members[candidate][0]
@@ -543,8 +649,14 @@ def edit(text, changes):
     """
     planned = plan(text, changes)
     out = text
-    for start, end, piece, _path, _new in sorted(
-            planned, key=lambda row: row[0], reverse=True):
+    rows = sorted(planned, key=lambda row: row[0], reverse=True)
+    for later, earlier in zip(rows, rows[1:]):
+        # Two edits that overlap would each be measured on a text the
+        # other has changed; refuse rather than guess.
+        if earlier[1] > later[0]:
+            raise WriteRefused("%s and %s overlap in the file; save them "
+                               "one at a time" % (earlier[3], later[3]))
+    for start, end, piece, _path, _new in rows:
         out = out[:start] + piece + out[end:]
 
     # The finished text has to parse, has to hold what was asked for,
@@ -555,6 +667,12 @@ def edit(text, changes):
     except ValueError as err:
         raise WriteRefused("the result would not parse as JSON: %s" % err)
     for _s, _e, _piece, path, new in planned:
+        if new is None:
+            steps = split_path(path)
+            if steps[-1] in _walk(reread, steps[:-1]):
+                raise WriteRefused("%s is still there after its removal"
+                                   % path)
+            continue
         got = _walk(reread, split_path(path))
         if got != new:
             raise WriteRefused(

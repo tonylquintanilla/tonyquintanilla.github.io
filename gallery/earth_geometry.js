@@ -85,6 +85,11 @@
  * SolarSystemFigures.periodLine at its served figure count, after the
  * Earth-Sun distance. With no period served the line is left out and the
  * room says so.)
+ * Updated October 17, 2026 with Anthropic's Claude Opus 5.5 (L-451, Tony's
+ * ruling: the axis hover's two sentences about nature that were typed
+ * here are served, words unchanged -- the tilt's as orientation.words
+ * entry tilt_of_date, the rotation period's as that row's hover_line --
+ * and only their numbers and date are filled here.)
  */
 (function (global) {
   "use strict";
@@ -255,6 +260,18 @@
     // A guide's link, its entry's served info_url (L-421): the panel shows
     // it as the shells' links are shown. None served prints no link, and
     // the panel says so.
+    // L-451: text carried on from the last line of already-wrapped words,
+    // wrapped as hover prose, so a sentence that was typed after them
+    // keeps the lines it had.
+    function onLastLine(wrapped, text) {
+      var cut = Math.max(wrapped.lastIndexOf(SB) >= 0
+                           ? wrapped.lastIndexOf(SB) + SB.length : 0,
+                         wrapped.lastIndexOf("<br>") >= 0
+                           ? wrapped.lastIndexOf("<br>") + 4 : 0);
+      var last = wrapped.slice(cut);
+      return wrapped.slice(0, cut) +
+        global.GalleryFeatures._wrapHover(last ? last + " " + text : text);
+    }
     function guideLink(key) {
       var w = words[key];
       return (isDict(w) && typeof w.info_url === "string" && w.info_url)
@@ -348,10 +365,16 @@
       var tl = pole.tilt;
       if (pole.ofDate && tl && tl.unit === "deg" && isNum(tl.value) &&
           typeof tl.figures === "number") {
-        tiltLines = "Tilt: " + global.GalleryFeatures._fmtServed(tl.value, tl.figures) +
-          " deg on " + pole.ofDate + ", measured against the orbit of the" + SB +
-          "Earth-Moon barycenter, the gravitational center of the Earth-Moon" + SB +
-          "system, around the Sun that day (JPL Horizons).<br>" +
+        // L-451 (2026-10-17): the sentence is served, as the words entry
+        // tilt_of_date; the tilt and its date are filled here.
+        var tw = words.tilt_of_date;
+        var tiltSaid = global.GalleryFeatures._servedSentence(
+          isDict(tw) ? tw.hover : null,
+          { tilt: global.GalleryFeatures._fmtServed(tl.value, tl.figures),
+            date: pole.ofDate },
+          name + "/orientation/words/tilt_of_date", warn);
+        tiltLines = (tiltSaid === null ? "" :
+                     global.GalleryFeatures._wrapHover(tiltSaid) + "<br>") +
           guideWords("tilt") + "<br>";
       } else if (pole.ofDate) {
         tiltLines = "Tilt: not served for " + pole.ofDate + ".<br>";
@@ -371,21 +394,25 @@
         warn(name + "/orientation/rotation_period: not served in hours with " +
              "a figure count -- no period stated");
       }
+      // L-451 (2026-10-17): the period's sentence is the row's served
+      // hover_line; the period is filled here. The sentence about the
+      // picture after it is the page's own.
+      var periodSaid = period ? global.GalleryFeatures._servedSentence(
+        period.hover_line,
+        { value: global.GalleryFeatures._fmtServed(period.value, period.figures) },
+        name + "/orientation/rotation_period/hover_line", warn) : null;
       var periodLines = (period
-        ? "Earth turns once every " +
-          global.GalleryFeatures._fmtServed(period.value, period.figures) +
-          " hours" + SB + "measured against the stars. The turning is not" +
-          " animated, because" + SB + "nothing on the crust marks a longitude" +
-          " to watch it by."
-        : "The turning is not animated, and no" + SB +
-          "rotation period is served.");
+        ? (periodSaid === null ? "" : periodSaid + " ") +
+          "The turning is not animated, because nothing on the crust marks" +
+          " a longitude to watch it by."
+        : "The turning is not animated, and no rotation period is served.");
       var hAxis = "<b>" + gAxis + "</b><br><br>" +
         "North pole up the gold line; the ring is the equator on the crust.<br>" +
         tiltLines +
         "Axis drawn to " + kmAndAu(K, axisHalf) + " -- a drawing length.<br>" +
         // The period sentence follows on the served sentence's last line,
         // as it did when both were typed, so the hover keeps its 17 lines.
-        guideWords("sense") + " " + periodLines +
+        onLastLine(guideWords("sense"), periodLines) +
         tail();
       traces.push(infoMarker(tip, AXIS_COLOR, hAxis, gAxis, { meta: {
         info_url: guideLink("sense"),

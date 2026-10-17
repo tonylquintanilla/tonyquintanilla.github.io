@@ -47,7 +47,21 @@ every machine. Written as text they were CRLF on Windows, which the
 builder serves as LF, and "every named drawing served byte for byte"
 failed on Tony's machine alone. A fourth check holds the builder's rule:
 a drawing pulled with Windows line endings is served with LF).
+
+Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5 (L-449:
+four checks of the run records. The nightly re-run's [RUNS] lines say what
+the copy carried; the Daily Run's compare_run_records, run on that build's
+new and replaced folders, finds nothing lost and does not stop; a record
+planted in the replaced folder alone stops it, named with its copy's path;
+and a missing folder says it could not compare, never ok).
+Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5 (L-330:
+a drawing in Earth radii with each dot's weight and belt is served byte
+for byte; one whose weights are not one per dot aborts by name; and a
+missing drawing's abort names every missing drawing, the belts' with the
+Hills cloud's).
 """
+import contextlib
+import io
 import json
 import math
 import os
@@ -58,6 +72,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import gallery_cache_builder as b
+
+# L-449: the Daily Run's records comparison, tested on this suite's
+# builds. daily_run.py lives at the repository root, one folder up.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import daily_run as dr  # noqa: E402
 
 FIXED_NOW = datetime(2026, 7, 9, tzinfo=timezone.utc)
 
@@ -898,11 +917,49 @@ def main():
         earth_before = json.load(open(out / 'raw' / 'vectors' / 'earth.json'))['points']
         old_date = sorted(earth_before)[0]
         old_pt = earth_before[old_date]
-        rm2 = b.run_build(cfg, out, mode='nightly', do_commit=False)
+        _said_449 = io.StringIO()
+        with contextlib.redirect_stdout(_said_449):
+            rm2 = b.run_build(cfg, out, mode='nightly', do_commit=False)
+        sys.stdout.write(_said_449.getvalue())
         check(rm2['structural_validation'] == 'pass', "nightly structural validation passes")
         earth_after = json.load(open(out / 'raw' / 'vectors' / 'earth.json'))['points']
         check(len(earth_after) >= len(earth_before), "nightly did not shrink earth")
         check(earth_after.get(old_date) == old_pt, "frozen past point unchanged byte-for-byte")
+
+        # L-449 (2026-10-17): the run records. The builder says what its
+        # copy carried, and the Daily Run's comparison, run here on this
+        # real build's two folders, passes on nothing lost and stops on
+        # a planted loss, naming the record and its copy's path.
+        prev449 = out.parent / (out.name + '.prev')
+        old_runs = prev449 / 'raw' / 'runs'
+        new_runs = out / 'raw' / 'runs'
+        n_old = len(list(old_runs.glob('*.json')))
+        runs_said = [l for l in _said_449.getvalue().splitlines()
+                     if l.startswith('[RUNS]')]
+        check(n_old > 0 and len(runs_said) == 2 and
+              all(('%d run record' % n_old) in l for l in runs_said),
+              "L-449: the builder printed what its copy carried (%s)"
+              % " | ".join(runs_said))
+        r449 = dr.compare_run_records(str(new_runs), str(old_runs))
+        check(r449['status'] == 'ok' and not r449['lost'] and
+              r449['old_count'] == n_old and not dr.records_result(r449)[1],
+              "L-449: a good build loses no record and does not stop (%s)"
+              % dr.report_run_records(r449)[0])
+        planted = old_runs / '20260101T000000Z.json'
+        planted.write_bytes(b'{}\n')
+        r449 = dr.compare_run_records(str(new_runs), str(old_runs))
+        said449 = "\n".join(dr.report_run_records(r449))
+        check(r449['status'] == 'lost' and
+              r449['lost'] == ['20260101T000000Z.json'] and
+              str(planted) in said449 and dr.records_result(r449)[1],
+              "L-449: a planted loss STOPS the Daily Run, naming the record "
+              "and its copy (%s)" % r449['lost'])
+        planted.unlink()
+        r449 = dr.compare_run_records(str(new_runs),
+                                      str(prev449 / 'raw' / 'no_such'))
+        check(r449['status'] == 'cannot' and 'no_such' in r449['reason'] and
+              not dr.records_result(r449)[0].startswith('ok'),
+              "L-449: a missing folder says it could not compare, never ok")
 
     # --- Guard v2 MONITOR unit checks (warn + keep, never reject) ---
     charon_a, charon_e = ELEMS['901']
@@ -1287,6 +1344,39 @@ def main():
               all(n in verdict for n in sorted(b._drawing_names(cfg['objects']))),
               "L-421: a missing named drawing ABORTs the build by name (%s)"
               % verdict[:90])
+
+    # L-330: Earth's belts are a drawing in Earth radii, each dot with its
+    # weight and belt. Served byte for byte; weights that are not one per
+    # dot stop the build by name.
+    belt_doc = {"schema": 1, "drawing": "probe_belts", "unit": "r_earth",
+                "belts": ["inner", "outer"], "dots": 3,
+                "x": [1.5, 0, 4], "y": [0, 1.5, 0], "z": [0, 0, 0.5],
+                "w": [1, 0.5, 0.2], "belt": [0, 0, 1]}
+    with tempfile.TemporaryDirectory() as td330:
+        root330 = Path(td330)
+        (root330 / 'drawings').mkdir()
+        (root330 / 'drawings' / 'probe_belts.json').write_bytes(
+            (json.dumps(belt_doc) + "\n").encode('ascii'))
+        idx330 = {'objects': {'earth': {'features': {'van_allen_belts': {
+            'drawing': {'dots': 'probe_belts'}}}}}}
+        stage330 = root330 / 'stage'
+        served330 = b.serve_drawings(stage330, idx330, root330 / 'drawings')
+        check(served330 == {'probe_belts': 3} and
+              (stage330 / 'drawings' / 'probe_belts.json').read_bytes() ==
+              (root330 / 'drawings' / 'probe_belts.json').read_bytes(),
+              "L-330: a drawing in Earth radii with weights and belts is "
+              "served byte for byte (%s)" % served330)
+        belt_doc["w"] = [1, 0.5]
+        (root330 / 'drawings' / 'probe_belts.json').write_bytes(
+            (json.dumps(belt_doc) + "\n").encode('ascii'))
+        try:
+            b.serve_drawings(stage330, idx330, root330 / 'drawings')
+            why330 = "served"
+        except b.ValidationAbort as e:
+            why330 = str(e)
+        check("probe_belts" in why330 and "belt" in why330,
+              "L-330: a drawing whose weights are not one per dot ABORTs by "
+              "name (%s)" % why330[:90])
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))

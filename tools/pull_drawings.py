@@ -33,9 +33,11 @@ RUN COMMAND
 
 WHAT IT REFUSES
 
-    A file that is not JSON, not schema 1, not in AU, or whose x, y and
-    z do not each hold "dots" numbers: nothing is written for any
-    drawing, and it exits 1.
+    A file that is not JSON, not schema 1, not in one of UNITS (AU, or
+    Earth radii for Earth's belts), whose x, y and z do not each hold
+    "dots" numbers, or which carries a w (each dot's weight) or a belt
+    (which belt each dot is in) without one number per dot: nothing is
+    written for any drawing, and it exits 1.
 
 WHEN THE NETWORK IS DOWN
 
@@ -54,6 +56,11 @@ Module created: October 11, 2026 with Anthropic's Claude Opus 5.5
 Module updated: October 15, 2026 with Anthropic's Claude Opus 5.5
 (L-446, with L-388: a pull that cannot fetch fails by name and exits 1,
 where it printed N-A and exited 0.)
+Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5
+(L-330: Earth's radiation belts are the second stored drawing, in Earth
+radii, each dot with its weight and its belt; UNITS and EXTRA_LISTS are
+the one home of what a drawing may carry, and check_drawings.py and the
+cache builder read them.)
 """
 
 import json
@@ -68,6 +75,14 @@ DRAWINGS_DIR = os.path.join("data", "drawings")
 SHA_FILE = os.path.join(DRAWINGS_DIR, "pulled_at.sha")
 SCHEMA_WANTED = 1
 NAME_RE = re.compile(r"^[a-z0-9_]+$")
+# The units a stored drawing may be in: AU (the Hills cloud, in the
+# ecliptic of J2000) or Earth radii (Earth's belts, in Earth's body
+# frame, L-330). The renderer draws each in the unit its caller expects.
+UNITS = ("au", "r_earth")
+# Lists a drawing may carry beside x, y and z, each one number per dot:
+# w, the dot's weight from the drawing's declared fade, and belt, which
+# belt the dot is in (L-330).
+EXTRA_LISTS = ("w", "belt")
 
 
 def named_drawings(config):
@@ -96,16 +111,20 @@ def problem(content):
         return "not a JSON object"
     if content.get("schema", 0) < SCHEMA_WANTED:
         return "not schema %d" % SCHEMA_WANTED
-    if content.get("unit") != "au":
-        return "its unit is %r, not \"au\"" % content.get("unit")
+    if content.get("unit") not in UNITS:
+        return "its unit is %r, not one of %s" % (
+            content.get("unit"), ", ".join('"%s"' % u for u in UNITS))
     n = content.get("dots")
     if not isinstance(n, int) or n <= 0:
         return "no dot count"
-    for axis in ("x", "y", "z"):
+    for axis in ("x", "y", "z") + EXTRA_LISTS:
+        if axis in EXTRA_LISTS and axis not in content:
+            continue
         values = content.get(axis)
         if not isinstance(values, list) or len(values) != n:
             return "%s does not hold %d values" % (axis, n)
-        if not all(isinstance(v, (int, float)) for v in values):
+        if not all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                   for v in values):
             return "%s holds something that is not a number" % axis
     return None
 

@@ -151,6 +151,16 @@
 // Hills cloud's key changes with its name). The stored drawings are read
 // from the served cache, as the page reads them. The L421_2 one is left
 // in place, unreferenced.
+//
+// L-330 with L-314, L-451 and L-452 (Tony's rulings of 2026-10-17): the
+// belts are the orrery's dots, "Thickest at" their peaks, their plane
+// sentence in the i panel; the magnetopause and bow shock carry the
+// aberration sentence, and their paper-and-conditions lines are in the
+// i panel, for the 17-line ceiling; the low-orbit inner edge is at ESA's
+// 180 km. Re-recorded as fixture_hovers_L330_on_f49b3e69.json on the
+// scene re-recorded for those changes, so the axis, Sun direction and
+// Moon hovers move with the scene's date as well. The L421_3 one is left
+// in place, unreferenced.
 
 "use strict";
 const fs = require("fs");
@@ -198,9 +208,9 @@ const SOFT_BR = "<br soft>";
 // separately, and its period line is graded against the served row. The
 // fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "fd17abf1";
+const FIXTURE_AT = "f49b3e69";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L421_3_on_fd17abf1.json");
+                          "fixture_hovers_L330_on_f49b3e69.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }
@@ -433,8 +443,10 @@ const ACCEPTANCE = {
       { radius: "6,980 km", altitude: "600 km" },
   "Earth: Exosphere / Geocorona (hydrogen halo, detected extent)":
       { radius: "600,000 km", altitude: "600,000 km" },
-  "Earth: Low Earth Orbit, inner edge (200 km)":
-      { radius: "6,578.1366 km", altitude: "200 km" },
+  // L-330 (Tony, 2026-10-17): the inner edge at ESA's 180 km, a
+  // measured row now (EARTH_LEO_LOWER_ALTITUDE_KM), not a declared 200.
+  "Earth: Low Earth Orbit, inner edge (180 km)":
+      { radius: "6,560 km", altitude: "180 km" },
   "Earth: Low Earth Orbit, outer edge (2,000 km)":
       { radius: "8,378.1366 km", altitude: "2,000 km" },
   "Earth: Geostationary Belt (GEO)":
@@ -472,11 +484,16 @@ const ACCEPTANCE_LINES = {
             "Spacecraft that cross the real boundary typically find it " +
             "within 1.23 Earth radii of this model.",
             "Beyond that angle the boundary is drawn as the magnetotail.",
-            // gallery patch 4: the two declared conditions print by
-            // their rows' print counts (Tony, 2026-09-27).
-            "Bz 0 nT, dynamic pressure 2 nPa"],
+            // L-314 (Tony's approved words, 2026-10-17).
+            "It is drawn along the line from the Sun to Earth; the real " +
+            "boundary's nose is turned a few degrees toward the direction " +
+            "Earth moves in its orbit, by an amount that depends on the " +
+            "solar wind's speed."],
+    // gallery patch 4's two declared conditions, "Bz 0 nT, dynamic
+    // pressure 2 nPa", are in the i panel since 2026-10-17 (L-330, the
+    // 17-line ceiling), so the hover must not carry them.
     absent: ["10.25", "65,376", "0.000437", "without limit",
-             "0.0 nT", "2.0 nPa"] },
+             "0.0 nT", "2.0 nPa", "dynamic pressure"] },
   // L-322 Stage D, gallery patch 3: the magnetotail, Tony's approved words
   // of 2026-09-26, with the numbers the store serves at orrery 43ba290b.
   "Earth: Magnetotail": {
@@ -496,38 +513,40 @@ const ACCEPTANCE_LINES = {
             "That is about 86,000 km (0.00058 AU).",
             "Spacecraft that cross the real shock typically find it " +
             "within 0.69 Earth radii of this model.",
-            // gallery patch 4, as the magnetopause.
-            "Jelinek et al. (2012), at dynamic pressure 2 nPa"],
-    absent: ["13.51", "86,180", "2.0 nPa", "86,200", "0.000576"] },
+            // L-314 (Tony's approved words, 2026-10-17).
+            "It is drawn along the line from the Sun to Earth; the real " +
+            "shock's nose is turned a few degrees toward the direction " +
+            "Earth moves in its orbit, by an amount that depends on the " +
+            "solar wind's speed."],
+    // gallery patch 4's "Jelinek et al. (2012), at dynamic pressure 2 nPa"
+    // is in the i panel since 2026-10-17 (L-330, the 17-line ceiling).
+    absent: ["13.51", "86,180", "2.0 nPa", "86,200", "0.000576",
+             "dynamic pressure"] },
   "Earth: Inner Radiation Belt": {
     // L-349: Tony's approved words, "Confirmed as recommended",
     // 2026-10-05.
-    lines: ["Drawn at 1.5 Earth radii from Earth's centre, at the " +
+    // L-330 (Tony, 2026-10-17): "Thickest at" for the dots; the plane
+    // sentence, with the tilt, is in the i panel for the 17-line ceiling.
+    lines: ["Thickest at 1.5 Earth radii from Earth's centre, at the " +
             "magnetic equator: near where the measured flux of trapped " +
             "protons is greatest.",
             "= 9,600 km (0.00006 AU)",       // L-345
-            "Measured extent: 1.1 to 2 Earth radii",
-            // L-379: Tony's approved words, 2026-10-06.
-            "which turns with Earth and in 2020 was tilted 9.4105 " +
-            "degrees from it, shrinking 0.0493 degrees a year " +
-            "(IGRF-13 model)."],
+            "Measured extent: 1.1 to 2 Earth radii"],
     absent: ["9,567", "2.0 Earth radii", "9.6 degrees", "2020-2025",
              "a width chosen for the picture", "0.000064",
-             "particle flux peaks", "That tilt is for 2020"] },
+             "particle flux peaks", "That tilt is for 2020",
+             "evenly spaced rings", "The field lines are drawn around"] },
   "Earth: Outer Radiation Belt": {
-    lines: ["Drawn at 4.5 Earth radii: halfway across the band, 4 to 5 " +
+    lines: ["Thickest at 4.5 Earth radii: halfway across the band, 4 to 5 " +
             "Earth radii out at the magnetic equator, where the belt is " +
             "most intense.",
             "The halfway point is our choice for the picture, not a " +
             "measured peak.",
-            "Measured extent: 3 to 7 Earth radii",
-            // L-379: Tony's approved words, 2026-10-06.
-            "which turns with Earth and in 2020 was tilted 9.4105 " +
-            "degrees from it, shrinking 0.0493 degrees a year " +
-            "(IGRF-13 model)."],
+            "Measured extent: 3 to 7 Earth radii"],
     absent: ["28,70", "L = 4.5", "3.0 to 7.0", "flux peaks", "9.6 degrees",
              "2020-2025", "a width chosen for the picture",
-             "That tilt is for 2020"] }
+             "That tilt is for 2020", "evenly spaced rings",
+             "The field lines are drawn around"] }
 };
 
 // ------------------------------------------------------------- building

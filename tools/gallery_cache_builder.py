@@ -88,6 +88,17 @@ the orrery's method (horizons-orbital-mechanics, The Drawn Orbit Follows
 the Period's Centre), from one fetch date. The Sun-centred "osculating"
 block, its positions and its trust are unchanged. Checked before the
 swap as #D.)
+Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5 (L-449:
+at the copy-forward the builder prints two [RUNS] lines, how many run
+records raw/runs held before the copy and how many the staging copy holds
+after it, with both paths. It removes no record: every record is kept
+until the cause of the losses of 2026-10-15 and 10-16 is found, by Tony's
+ruling of 2026-10-16. The Daily Run compares the new cache's records with
+the replaced cache's and stops on a loss.)
+Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5 (L-330:
+serve_drawings() serves Earth's radiation belts too, the second stored
+drawing, in Earth radii with each dot's weight and belt; what a drawing
+may be in and carry is read from tools/pull_drawings.py.)
 
 Role: cache
 Domain: cache_builder
@@ -127,6 +138,10 @@ if str(_TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(_TOOLS_DIR))
 from pole_of_date import (ORBIT_QUERY, POLE_QUERY, TILT_FIGURES,
                           pole_block_problems, tilt_of_date_deg)
+# L-330: what a stored drawing may be in and carry, from the pull's one
+# home of it, so the pull and the builder cannot come to disagree.
+from pull_drawings import EXTRA_LISTS as DRAWING_LISTS  # noqa: E402
+from pull_drawings import UNITS as DRAWING_UNITS  # noqa: E402
 
 # astroquery/astropy are imported lazily so the module stays importable (and the
 # offline smoke test can run) on a machine without them; the fetch functions
@@ -1440,7 +1455,8 @@ def serve_drawings(staging, index, drawings_dir):
     (line endings made LF), from the copy tools/pull_drawings.py keeps in
     data/drawings/. The browser fetches the served copy, so a drawing
     reaches a visitor with the cache it was built with. ABORT if a named
-    drawing is missing or is not dots in AU: the cache would otherwise
+    drawing is missing or is not dots in AU or Earth radii (L-330): the
+    cache would otherwise
     serve a feature that names a drawing it does not hold. Returns
     {name: dots} for the run manifest."""
     names = sorted(_drawing_names(index.get('objects', {})))
@@ -1449,26 +1465,41 @@ def serve_drawings(staging, index, drawings_dir):
         return served
     out = staging / 'drawings'
     out.mkdir(parents=True, exist_ok=True)
+    # L-330: every missing drawing is named in the one abort, not only the
+    # first -- with two drawings, a fresh folder lacks both.
+    missing = []
     for name in names:
         if not re.match(r'^[a-z0-9_]+$', name):
             raise ValidationAbort("drawing name %r is not lower-case letters, "
                                   "digits and underscores" % name)
         src = Path(drawings_dir) / (name + '.json')
         if not src.exists():
-            raise ValidationAbort(
-                "drawing %r is named by a served feature but %s is missing "
-                "-- run the gallery maintenance run first (it pulls the "
-                "drawing from the orrery), then this builder" % (name, src))
+            missing.append("%r (%s)" % (name, src))
+    if missing:
+        raise ValidationAbort(
+            "drawing %s %s named by a served feature but missing -- run the "
+            "gallery maintenance run first (it pulls the drawings from the "
+            "orrery), then this builder"
+            % (", ".join(missing), "is" if len(missing) == 1 else "are"))
+    for name in names:
+        src = Path(drawings_dir) / (name + '.json')
         raw = src.read_bytes().replace(b'\r\n', b'\n')
         try:
             content = json.loads(raw.decode('utf-8'))
         except ValueError as e:
             raise ValidationAbort("drawing %r is not JSON (%s)" % (name, e))
         n = content.get('dots') if isinstance(content, dict) else None
-        if (content.get('unit') != 'au' or not isinstance(n, int) or n <= 0
-                or any(len(content.get(a) or []) != n for a in 'xyz')):
-            raise ValidationAbort("drawing %r is not %s dots in AU with x, y "
-                                  "and z of that length" % (name, n))
+        # L-330 (2026-10-17): AU, or Earth radii for Earth's belts, with
+        # each dot's weight and belt where carried -- the units and lists
+        # tools/pull_drawings.py names (UNITS, EXTRA_LISTS).
+        if (content.get('unit') not in DRAWING_UNITS
+                or not isinstance(n, int) or n <= 0
+                or any(len(content.get(a) or []) != n for a in 'xyz')
+                or any(a in content and len(content.get(a) or []) != n
+                       for a in DRAWING_LISTS)):
+            raise ValidationAbort("drawing %r is not %s dots in AU or Earth "
+                                  "radii with x, y and z (and any w and "
+                                  "belt) of that length" % (name, n))
         (out / (name + '.json')).write_bytes(raw)
         served[name] = n
     return served
@@ -2195,6 +2226,9 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     live_raw = out_dir / 'raw'
     if live_raw.exists():
         shutil.copytree(live_raw, staging / 'raw')
+    # L-449: say how many run records the copy carried, and from where
+    # to where. The builder removes none.
+    _print_runs_carried(live_raw / 'runs', staging / 'raw' / 'runs')
 
     objects = config['objects']
     if only_slug:
@@ -2395,6 +2429,38 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
 def _replace_file(src, dst):
     dst.parent.mkdir(parents=True, exist_ok=True)
     os.replace(src, dst)
+
+
+def _count_run_records(folder):
+    """How many run records (*.json) a folder holds, or None if the
+    folder is not there (L-449)."""
+    folder = Path(folder)
+    if not folder.is_dir():
+        return None
+    return sum(1 for _ in folder.glob('*.json'))
+
+
+def _print_runs_carried(live_runs, staged_runs):
+    """L-449 (2026-10-17): say what the copy-forward carried. Run
+    records went missing after a build on 2026-10-15 and 2026-10-16,
+    cause unknown; these lines are what the next loss is read from.
+    The builder deletes no record (Tony, 2026-10-16: keep every record
+    until the cause is found). Returns (before, after)."""
+    before = _count_run_records(live_runs)
+    after = _count_run_records(staged_runs)
+
+    def said(n):
+        if n is None:
+            return 'no folder'
+        return '%d run record%s' % (n, '' if n == 1 else 's')
+    print("[RUNS] before the copy: %s in %s" % (said(before), live_runs),
+          flush=True)
+    print("[RUNS] after the copy:  %s in %s" % (said(after), staged_runs),
+          flush=True)
+    if before and (after or 0) < before:
+        print("[RUNS] the copy holds %d fewer; the Daily Run's records "
+              "check names them" % (before - (after or 0)), flush=True)
+    return before, after
 
 
 def _write_run_manifest(staging, rm):

@@ -49,7 +49,9 @@
 //     not units -- or it is reported (below);
 //   - a sentence on ALLOWED, each with its reason: about the picture, or
 //     the page's own account of its data, which interactive-exhibit lets
-//     the page carry with its source in the page.
+//     the page carry with its source in the page. A number's own line
+//     whose typed words say more than a label may be on it too, by its
+//     shape (digits as #).
 //
 // Anything else FAILS, named by room, feature and where it was printed.
 //
@@ -75,6 +77,11 @@
 // Exit code 0 on pass, 1 on failure, as its siblings.
 //
 // Written October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 2).
+// Updated October 17, 2026 with Anthropic's Claude Opus 5.5 (L-451, Tony's
+// rulings: OPEN is empty and the run says so; the Sun room's two sentences
+// about what is drawn by choice are on DESCRIPTIONS. A number's own line
+// may be on ALLOWED, by its shape: the Earth room's orbital period line,
+// first met when the scene was re-recorded, is the first).
 
 "use strict";
 
@@ -126,6 +133,13 @@ const ALLOWED = [
    "the page's own account of its data, with its source (interactive-exhibit: claims about itself)"],
   ["JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder).",
    "the page's own account of its data, with its source"],
+  // A number's own line may be ALLOWED too, by its shape (L-451, 2026-10-17).
+  // This one entered the Earth room with L-431 build 3 and was first met
+  // when the scene was re-recorded for L-330: the period, its body and its
+  // centre are the orrery's served labels (L-445), the rest is where the
+  // page's number came from.
+  ["Orbital period: # years (# days), for the Earth-Moon center of mass, around the Sun, from JPL Horizons, fetched ###.",
+   "the page's own account of its data: the served period, for the served body and centre, with its source and fetch date"],
   ["Pole: JPL Horizons, served by the gallery cache builder for ###: the pole is observer quantity # for target #, seen from @sun, retrieved ###T#:#:#+#:#.",
    "the pole of date's query, printed from the cache builder's served record (L-421 E4)"],
   ["The tilt is the angle between Earth's pole of date and the pole of the Earth-Moon barycenter's orbit of date, both turned into the ecliptic of J# by the frame angle; that orbit is target # about @sun, in the ecliptic plane.",
@@ -163,6 +177,8 @@ const DESCRIPTIONS = [
   ["Each number is shown to as many digits as its source actually supports, and no more.", "the page's precision rule"],
   ["That is a claim about precision, not accuracy - how finely a thing was measured, not how close it is to the truth.", "the page's precision rule"],
   ["A value can be precise and still be wrong, which is why the source is named beside it.", "the page's precision rule"],
+  ["Some of what you see is drawn to show a shape rather than measured - the streamer belt's warp, the clumping of the Oort cloud, the thinning at the galactic plane.", "the picture: what is drawn rather than measured (L-451, Tony 2026-10-17)"],
+  ["Where that is so, the text beside it says so.", "the page: where a visitor reads what was drawn by choice (L-451, reworded by Tony 2026-10-17)"],
   // The Earth room.
   ["Earth", "a heading"],
   ["Earth's shells, from the inner core out to the Hill sphere, drawn from measured radii held in the orrery's own constant store.", "the page's account of its data"],
@@ -181,20 +197,13 @@ const DESCRIPTIONS = [
 // Found on this check's first run, 2026-10-16, and held for Tony's ruling
 // (L-451). Printed in full every run; they do not fail. One that is not
 // here, of either kind, fails.
-const OPEN = [
-  // A number's own sentence whose typed words say more than a label: the
-  // number is served and cited, the words around it are typed.
-  ["number", "Tilt: # deg on ###, measured against the orbit of the Earth-Moon barycenter, the gravitational center of the Earth-Moon system, around the Sun that day (JPL Horizons)."],
-  ["number", "Earth turns once every # hours measured against the stars."],
-  ["number", "Spacecraft found the tail stops widening about # Earth radii behind Earth, plus or minus #, and is about # Earth radii wide beyond there, plus or minus #."],
-  ["number", "Spacecraft that cross the real boundary typically find it within # Earth radii of this model."],
-  ["number", "Spacecraft that cross the real shock typically find it within # Earth radii of this model."],
-  // A room description's sentence that states a fact with no source in
-  // the page.
-  ["description", "Some of what you see is drawn to show a shape rather than measured - the streamer belt's warp, the clumping of the Oort cloud, the thinning at the galactic plane."],
-  ["description", "Nobody has measured those, and where that is so, the text says so."],
-  ["description", "The radiation belts sit in Earth's equatorial plane, the daily average of the tilted magnetic equator they follow."]
-];
+// L-451 closed on Tony's rulings of 2026-10-17, so this is empty: the
+// five number sentences are served as their rows' hover_line (or, the
+// tilt's, as orientation.words.tilt_of_date); the two description
+// sentences about what is drawn by choice are on DESCRIPTIONS, the second
+// reworded; the sentence on the belts' plane is cut. A sentence of either
+// kind found again fails rather than being held here.
+const OPEN = [];
 
 // ---------------------------------------------------------------------
 let failures = 0;
@@ -421,6 +430,7 @@ for (const room of Object.keys(ROOMS)) {
           continue;
         }
         if (openSet.has("number|" + shape)) { openSet.set("number|" + shape, true); continue; }
+        if (allowed.has(shape)) { found.allowedSeen.add(shape); continue; }
         found.typed.push([room, group, where, shape,
           "a number's sentence whose typed words (" + typedWords.length +
           ") say more than a label"]);
@@ -469,7 +479,9 @@ for (const [s, why] of ALLOWED) {
 }
 console.log("    (-- marks a line this run did not meet; take it off ALLOWED once its code is gone.)");
 console.log("  DESCRIPTIONS read sentence by sentence: " + DESCRIPTIONS.length + " known.");
-console.log("  OPEN, held for Tony's ruling (L-421 part 2's L-451), not failing (" + OPEN.length + "):");
+console.log(OPEN.length
+  ? "  OPEN, held for Tony's ruling (L-421 part 2's L-451), not failing (" + OPEN.length + "):"
+  : "  OPEN is empty: every sentence held for L-451 has its ruling (Tony, 2026-10-17).");
 for (const [kind, s] of OPEN) {
   console.log("    " + (openSet.get(kind + "|" + s) ? "   " : "-- ") + "[" + kind + "] " + s);
 }
