@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-10-18T05:13:19.298029+00:00",
+  "generated": "2026-10-18T18:13:32.517515+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2461243.7487442587,
-    "end_jd": 2461419.6864246754
+    "start_jd": 2461244.2905639294,
+    "end_jd": 2461420.228244346
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -485,7 +485,7 @@
               },
               "figures": 1,
               "orrery_constant": "constants_new.py::CHROMOSPHERE_PHYSICAL_KM",
-              "source": "Yohkoh Public Outreach Project, Montana State University Solar Physics, \"A 'Dancing' Layer of the Sun\" -- above the photosphere is a layer of gas, approximately 2000 km thick, known as the chromosphere. https://solar.physics.montana.edu/YPOP/Spotlight/SunInfo/Chromosph.html Hathaway, D. H., \"NASA/Marshall Solar Physics\", the chromosphere page -- the temperature rises from 6000 degrees C to about 20,000 degrees C; at these temperatures hydrogen gives off a reddish light (H-alpha), which gives the chromosphere its name. https://solarscience.msfc.nasa.gov/chromos.shtml"
+              "source": "Yohkoh Public Outreach Project, Montana State University Solar Physics, \"A 'Dancing' Layer of the Sun\" -- above the photosphere is a layer of gas, approximately 2000 km thick, known as the chromosphere. https://solar.physics.montana.edu/YPOP/Spotlight/SunInfo/Chromosph.html; Hathaway, D. H., \"NASA/Marshall Solar Physics\", the chromosphere page -- the temperature rises from 6000 degrees C to about 20,000 degrees C; at these temperatures hydrogen gives off a reddish light (H-alpha), which gives the chromosphere its name. https://solarscience.msfc.nasa.gov/chromos.shtml"
             },
             "about": "The chromosphere sits between the photosphere and the corona and takes its name from the Greek word for color, because the hydrogen in it glows red. It is far less dense than the surface, and its temperature rises with height, from about 6,000 kelvin at the bottom to about 20,000 at the top. It is never still: jets of gas called spicules rise and fall like geysers, and cooler prominences hang in it, held up by magnetic fields.",
             "info_url": "https://en.wikipedia.org/wiki/Chromosphere",
@@ -493,7 +493,7 @@
             "opacity": 0.5,
             "n_points": 25,
             "marker_size": 3.0,
-            "source": "IAU 2015 Resolution B3 -- nominal solar radius; Yohkoh Public Outreach Project, Montana State University Solar Physics, \"A 'Dancing' Layer of the Sun\" -- above the photosphere is a layer of gas, approximately 2000 km thick, known as the chromosphere. https://solar.physics.montana.edu/YPOP/Spotlight/SunInfo/Chromosph.html Hathaway, D. H., \"NASA/Marshall Solar Physics\", the chromosphere page -- the temperature rises from 6000 degrees C to about 20,000 degrees C; at these temperatures hydrogen gives off a reddish light (H-alpha), which gives the chromosphere its name. https://solarscience.msfc.nasa.gov/chromos.shtml",
+            "source": "IAU 2015 Resolution B3 -- nominal solar radius; Yohkoh Public Outreach Project, Montana State University Solar Physics, \"A 'Dancing' Layer of the Sun\" -- above the photosphere is a layer of gas, approximately 2000 km thick, known as the chromosphere. https://solar.physics.montana.edu/YPOP/Spotlight/SunInfo/Chromosph.html; Hathaway, D. H., \"NASA/Marshall Solar Physics\", the chromosphere page -- the temperature rises from 6000 degrees C to about 20,000 degrees C; at these temperatures hydrogen gives off a reddish light (H-alpha), which gives the chromosphere its name. https://solarscience.msfc.nasa.gov/chromos.shtml",
             "orrery_constant": "constants_new.py::CHROMOSPHERE_TOP_KM",
             "note": "Drawn at its true depth, not thickened to be seen: at any scale that also shows the corona it sits on the photosphere."
           },
@@ -853,40 +853,40 @@
               "figures": 4
             },
             "description": "The place far beyond the planets where the solar wind slows suddenly from supersonic speed as it meets the gas between the stars.",
-            "about": "The solar wind streams outward at supersonic speed until the pressure of the interstellar gas brings it up short. At the termination shock it slows abruptly, and its energy of motion becomes heat. Voyager 1 crossed it at {radius} AU and Voyager 2 at {voyager_2} AU. Voyager 2 measured the wind slowing from about {upstream} to about {downstream} kilometers a second as it crossed; beyond lies the turbulent region called the heliosheath.",
+            "about": "The solar wind streams outward at supersonic speed until the pressure of the interstellar gas brings it up short. At the termination shock it slows abruptly, and its energy of motion becomes heat. Voyager 1 crossed it at {radius} AU and Voyager 2 at about {voyager_2} AU. Voyager 2 measured the wind slowing from about {upstream} to about {downstream} kilometers a second as it crossed; beyond lies the turbulent region called the heliosheath.",
             "voyager_2": {
-              "value": 84,
+              "value": 83.6,
               "unit": "au",
               "in": {
                 "au": {
-                  "value": 84.0,
-                  "figures": 2,
+                  "value": 83.6,
+                  "figures": 3,
                   "prints": null
                 },
                 "km": {
-                  "value": 12600000000.0,
-                  "figures": 3,
+                  "value": 12510000000.0,
+                  "figures": 4,
                   "prints": null
                 },
                 "pc": {
-                  "value": 0.00041,
-                  "figures": 2,
+                  "value": 0.000405,
+                  "figures": 3,
                   "prints": null
                 },
                 "r_earth": {
-                  "value": 1970000.0,
-                  "figures": 3,
+                  "value": 1961000.0,
+                  "figures": 4,
                   "prints": null
                 },
                 "r_sun": {
-                  "value": 18100.0,
-                  "figures": 3,
+                  "value": 17980.0,
+                  "figures": 4,
                   "prints": null
                 }
               },
-              "figures": 2,
+              "figures": 3,
               "orrery_constant": "constants_new.py::VOYAGER2_TERMINATION_SHOCK_AU",
-              "source": "NASA Scientific Visualization Studio, \"Voyager 2 Proves Solar System is Squashed\" (23 January 2008) -- Voyager 1 encountered the termination shock at 94 AU and Voyager 2 encountered it at only 84 AU. https://svs.gsfc.nasa.gov/20132"
+              "source": "Li, H., Wang, C. and Richardson, J. D. (2008), \"Properties of the termination shock observed by Voyager 2\", GRL 35:L19107 -- abstract: in August 2007, Voyager 2 reached the termination shock and entered the heliosheath at a distance of about 83.6 AU. https://www.spaceweather.ac.cn/~hli/papers/Li%20et%20al%202008%20GRL%20Properties%20of%20the%20termination%20shock%20observed%20by%20Voyager%202.pdf"
             },
             "upstream": {
               "value": 320.0,
@@ -1931,7 +1931,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:14.082546+00:00"
+          "retrieved": "2026-10-18T18:13:30.640012+00:00"
         }
       },
       "positions": null,
@@ -4023,14 +4023,14 @@
           "observer": "@sun",
           "quantity": "32",
           "epoch_jd_ut": 2461331.5,
-          "retrieved": "2026-10-18T05:13:19.297465+00:00"
+          "retrieved": "2026-10-18T18:13:32.517323+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
           "epoch_jd": 2461331.5,
-          "retrieved": "2026-10-18T05:13:19.297465+00:00"
+          "retrieved": "2026-10-18T18:13:32.517323+00:00"
         }
       }
     },
@@ -4057,7 +4057,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:14.294265+00:00"
+          "retrieved": "2026-10-18T18:13:30.798512+00:00"
         }
       },
       "positions": null,
@@ -4174,7 +4174,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:14.754505+00:00"
+          "retrieved": "2026-10-18T18:13:30.964097+00:00"
         }
       },
       "positions": null,
@@ -4275,7 +4275,7 @@
           "query_target": "699",
           "center": "@0",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:14.815598+00:00"
+          "retrieved": "2026-10-18T18:13:30.992846+00:00"
         }
       }
     },
@@ -4302,7 +4302,7 @@
           "query_target": "199",
           "center": "@sun",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:14.989201+00:00"
+          "retrieved": "2026-10-18T18:13:31.079724+00:00"
         }
       },
       "positions": null,
@@ -4365,7 +4365,7 @@
           "query_target": "299",
           "center": "@sun",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:15.220276+00:00"
+          "retrieved": "2026-10-18T18:13:31.189331+00:00"
         }
       },
       "positions": null,
@@ -4428,7 +4428,7 @@
           "query_target": "499",
           "center": "@sun",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:15.483853+00:00"
+          "retrieved": "2026-10-18T18:13:31.292094+00:00"
         }
       },
       "positions": null,
@@ -4491,7 +4491,7 @@
           "query_target": "799",
           "center": "@sun",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:15.879764+00:00"
+          "retrieved": "2026-10-18T18:13:31.418634+00:00"
         }
       },
       "positions": null,
@@ -4546,7 +4546,7 @@
           "query_target": "799",
           "center": "@0",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:15.958939+00:00"
+          "retrieved": "2026-10-18T18:13:31.441388+00:00"
         }
       }
     },
@@ -4573,7 +4573,7 @@
           "query_target": "899",
           "center": "@sun",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:16.365776+00:00"
+          "retrieved": "2026-10-18T18:13:31.527619+00:00"
         }
       },
       "positions": null,
@@ -4628,7 +4628,7 @@
           "query_target": "899",
           "center": "@0",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:16.430993+00:00"
+          "retrieved": "2026-10-18T18:13:31.550619+00:00"
         }
       }
     },
@@ -4655,7 +4655,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:16.588037+00:00"
+          "retrieved": "2026-10-18T18:13:31.622779+00:00"
         }
       },
       "positions": null,
@@ -4718,7 +4718,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:16.823921+00:00"
+          "retrieved": "2026-10-18T18:13:31.708685+00:00"
         }
       },
       "positions": null,
@@ -4781,7 +4781,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:17.107789+00:00"
+          "retrieved": "2026-10-18T18:13:31.802752+00:00"
         }
       },
       "positions": null,
@@ -4844,7 +4844,7 @@
           "query_target": "9",
           "center": "@sun",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:17.382563+00:00"
+          "retrieved": "2026-10-18T18:13:31.891198+00:00"
         }
       },
       "positions": null,
@@ -4907,7 +4907,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:17.680198+00:00"
+          "retrieved": "2026-10-18T18:13:31.981288+00:00"
         }
       },
       "positions": null,
@@ -4970,7 +4970,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:17.990845+00:00"
+          "retrieved": "2026-10-18T18:13:32.075729+00:00"
         }
       },
       "positions": null,
@@ -5033,7 +5033,7 @@
           "query_target": "2004 MN4",
           "center": "@sun",
           "epoch": 2461331.5,
-          "retrieved": "2026-10-18T05:13:18.227132+00:00"
+          "retrieved": "2026-10-18T18:13:32.177852+00:00"
         }
       },
       "positions": null,
@@ -5130,7 +5130,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460240.028455204,
-          "retrieved": "2026-10-18T05:13:18.689559+00:00"
+          "retrieved": "2026-10-18T18:13:32.327361+00:00"
         }
       },
       "positions": null,
@@ -5198,7 +5198,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-10-18T05:13:19.061808+00:00"
+          "retrieved": "2026-10-18T18:13:32.437659+00:00"
         }
       },
       "positions": null,
@@ -5246,7 +5246,7 @@
   },
   "frame_constants": {
     "export": "data/constants_export.json",
-    "orrery_sha": "f58f69f5fafbf51882fc33ac353b51c345a7f3f8",
+    "orrery_sha": "f75dc366ea84adbade3582aa87a1de6e79948be8",
     "rows": {
       "KM_PER_AU": {
         "value": 149597870.7,

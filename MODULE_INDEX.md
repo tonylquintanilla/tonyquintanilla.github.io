@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 52  
-**Total Lines of Code (non-blank):** 25,696  
+**Total Lines of Code (non-blank):** 25,668  
 **Total Public Functions/Classes:** 409
 
 ## Classification Coverage
@@ -19,7 +19,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 **Undetermined role (9).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L411_1_sun_words_20261017.py`
+- `patch_L411_3_voyager2_words_20261018.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -31,7 +31,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 **Undetermined domain (7).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L411_1_sun_words_20261017.py`
+- `patch_L411_3_voyager2_words_20261018.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -138,7 +138,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (690 lines) |
-| `patch_L411_1_sun_words_20261017.py` | - the website's half of the Sun's numbers (L-411 and L-386): the Sun's shells point at their new rows, their words are Tony's approved revision 2, a renderer helper prints a shell's linked numbers inside its words with their citations, and the display-figures f... (156 lines) |
+| `patch_L411_3_voyager2_words_20261018.py` | - the website's half of the Voyager 2 follow-up (L-411): the termination shock's words say "about" before Voyager 2's crossing, as Li et al. (2008) do. The number itself, 83.6, and its citation come from the orrery's export by the Daily Run's pull, as for ... (128 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (747 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
