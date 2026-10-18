@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** October 17, 2026 by `module_atlas.py`  
+**Generated:** October 18, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 52  
-**Total Lines of Code (non-blank):** 25,733  
+**Total Lines of Code (non-blank):** 25,696  
 **Total Public Functions/Classes:** 409
 
 ## Classification Coverage
@@ -19,7 +19,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 **Undetermined role (9).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L410_2_earth_fade_website_20261017.py`
+- `patch_L411_1_sun_words_20261017.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -31,7 +31,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 **Undetermined domain (7).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L410_2_earth_fade_website_20261017.py`
+- `patch_L411_1_sun_words_20261017.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -118,7 +118,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (860 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (808 lines) |
 | `mirror_objects.py` | - write each served object's identity, description and NASA link into data/objects_config.json from the orrery's objects export, and name every difference it finds. (247 lines) |
-| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (838 lines) |
+| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (837 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (146 lines) |
 | `pull_drawings.py` | - copy the orrery's stored drawings into the gallery, and record the SHA they came from. (193 lines) |
 | `pull_objects_export.py` | - copy the orrery's objects export into the gallery, and record the SHA it came from. (105 lines) |
@@ -138,7 +138,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (690 lines) |
-| `patch_L410_2_earth_fade_website_20261017.py` | - Earth's hydrogen fade, the website: the Earth room draws the exosphere as the orrery's stored dots, thinning out from 3 to 100 Earth radii, where it drew a sharp shell at 100; its hover and i panel in the approved words; the drawings check judges the... (192 lines) |
+| `patch_L411_1_sun_words_20261017.py` | - the website's half of the Sun's numbers (L-411 and L-386): the Sun's shells point at their new rows, their words are Tony's approved revision 2, a renderer helper prints a shell's linked numbers inside its words with their citations, and the display-figures f... (156 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (747 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |

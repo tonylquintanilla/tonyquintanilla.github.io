@@ -161,6 +161,14 @@
 // scene re-recorded for those changes, so the axis, Sun direction and
 // Moon hovers move with the scene's date as well. The L421_3 one is left
 // in place, unreferenced.
+//
+// L-411 and L-386 (Tony's approved wording, 2026-10-17): the Sun's core
+// is drawn from CORE_RADII and the radiative zone from
+// RADIATIVE_ZONE_RADII, each now with a declared count, so their radius
+// lines change; nothing else does. Re-recorded as
+// fixture_hovers_L411_on_da442bf2.json, with exactly those two hovers
+// different from the L330 one, which is left in place, unreferenced.
+// Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5.
 
 "use strict";
 const fs = require("fs");
@@ -208,9 +216,9 @@ const SOFT_BR = "<br soft>";
 // separately, and its period line is graded against the served row. The
 // fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "f49b3e69";
+const FIXTURE_AT = "da442bf2";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L330_on_f49b3e69.json");
+                          "fixture_hovers_L411_on_da442bf2.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

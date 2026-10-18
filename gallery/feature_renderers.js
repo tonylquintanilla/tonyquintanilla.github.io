@@ -2218,6 +2218,64 @@
   }
 
   /*
+   * L-411 (2026-10-17): a plain shell's words -- its description, about and
+   * note -- may name served numbers in braces: {radius}, the shell's own,
+   * and any other number linked on the entry (a member carrying an
+   * orrery_constant) by its key. Each prints at its served count, so the
+   * words retype no number a row holds. Each number the words name brings
+   * its citation to the Source line after the shell's own, so a claim the
+   * words make keeps a citation the visitor can see; a linked number the
+   * words do not name leaves the Source line as it was. A brace that cannot be filled is
+   * warned about and that field is not shown, rather than shown with a hole.
+   */
+  function withShellWords(cfg, where, warn) {
+    var vals = { radius: servedText(cfg.radius) };
+    var linked = [];
+    for (var k in cfg) {
+      if (!Object.prototype.hasOwnProperty.call(cfg, k)) continue;
+      if (k === "radius" || k === "drawn_radius") continue;
+      var n = cfg[k];
+      if (isDict(n) && typeof n.orrery_constant === "string" &&
+          typeof n.value === "number") {
+        vals[k] = servedText(n);
+        linked.push({ __key: k, source: n.source });
+      }
+    }
+    // Only a number the words actually name brings its citation along.
+    var named = {};
+    ["description", "about", "note"].forEach(function (field) {
+      if (typeof cfg[field] !== "string") return;
+      cfg[field].replace(/\{(\w+)\}/g, function (m, k) { named[k] = true; return m; });
+    });
+    linked = linked.filter(function (n) { return named[n.__key]; });
+    var copy = withFilledWords(cfg, vals, where, warn);
+    if (typeof copy.description === "string" &&
+        /\{\w+\}/.test(copy.description)) {
+      var d = servedSentence(copy.description, vals,
+                             where + "/description", warn);
+      if (d === null) { delete copy.description; } else { copy.description = d; }
+    }
+    var parts = [];
+    for (var i = 0; i < linked.length; i++) {
+      var s = linked[i].source;
+      // A citation already on the Source line is not printed twice: the
+      // two ends of one range, or a row the shell's own citation inherits.
+      if (typeof s === "string" && s && parts.indexOf(s) < 0 &&
+          !(typeof copy.source === "string" && copy.source.indexOf(s) >= 0)) {
+        parts.push(s);
+      }
+    }
+    if (!parts.length) return copy;
+    var own = (typeof copy.source === "string" && copy.source)
+      ? copy.source + (typeof copy.source_note === "string" &&
+                       copy.source_note ? " -- " + copy.source_note : "")
+      : null;
+    copy.source = (own ? [own] : []).concat(parts).join("; ");
+    delete copy.source_note;
+    return copy;
+  }
+
+  /*
    * L-421 (2026-10-11): a served `about` or `note` may name served
    * numbers in braces, filled here from `vals` (each already printed from
    * a served row) on a shallow copy of the config, which stampLink()
@@ -2877,6 +2935,7 @@
       var radiusAu = measuredRadiusAu(cfg.radius, where + "/" + key,
                                       starRadiusKm, warn);
       if (radiusAu === null || !(radiusAu > 0)) continue;
+      cfg = withShellWords(cfg, where + "/" + key, warn);
 
       var label = bodyName + ": " + (cfg.name || key);
       var color = cfg.color || "rgb(200, 200, 200)";

@@ -6,50 +6,177 @@
         "core": {
           "name": "Core",
           "radius": {
-            "value": 0.2,
-            "unit": "r_sun"
+            "value": 0.25,
+            "unit": "r_sun",
+            "in": {
+              "au": {
+                "value": 0.0012,
+                "figures": 2,
+                "prints": null
+              },
+              "km": {
+                "value": 170000.0,
+                "figures": 2,
+                "prints": null
+              },
+              "pc": {
+                "value": 5.6e-09,
+                "figures": 2,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 27.0,
+                "figures": 2,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.25,
+                "figures": 2,
+                "prints": null
+              }
+            },
+            "figures": 2
           },
           "description": "The Sun's center, where hydrogen fuses into helium and the Sun's light and heat are made.",
-          "about": "The core reaches out to about a quarter of the Sun's radius and holds about a third of its mass. It is the hottest place in the solar system, near 15 million kelvin, and about 150 times denser than water under the weight of the layers above. Hydrogen nuclei fuse into helium there in the proton-proton chain, turning a little mass into a great deal of energy, which then works its way outward through the radiative zone and the convection zone to the surface.",
+          "about": "The core reaches out to the radius drawn here; beyond it the nuclear burning almost stops. It is about 15 million kelvin at the very center, where the gas is about 150 times as dense as water under the weight of the layers above. Hydrogen nuclei fuse into helium there in the proton-proton chain, turning a little mass into a great deal of energy, which then works its way outward through the radiative zone and the convection zone to the surface.",
           "info_url": "https://en.wikipedia.org/wiki/Solar_core",
           "color": "rgb(70, 130, 180)",
           "opacity": 1.0,
           "n_points": 25,
           "marker_size": 10,
-          "source": "Bahcall, Pinsonneault & Basu (2001), ApJ 555:990 (radial profiles); drawn at the low end of the conventional 0.2-0.25 R_sun core range",
-          "orrery_constant": "constants_new.py::CORE_AU"
+          "source": "Hathaway, D. H., \"NASA/Marshall Solar Physics\", the solar interior page -- energy is generated in the core, the innermost 25%; the nuclear burning is almost completely shut off beyond its outer edge, about 25% of the distance to the surface. The temperature at the very center is about 15,000,000 degrees C and the density about 150 g/cm3. https://solarscience.msfc.nasa.gov/interior.shtml",
+          "orrery_constant": "constants_new.py::CORE_RADII"
         },
         "radiative": {
           "name": "Radiative Zone",
           "radius": {
-            "value": 0.713,
-            "unit": "r_sun"
+            "value": 0.71,
+            "unit": "r_sun",
+            "in": {
+              "au": {
+                "value": 0.00332,
+                "figures": 3,
+                "prints": null
+              },
+              "km": {
+                "value": 500000.0,
+                "figures": 2,
+                "prints": null
+              },
+              "pc": {
+                "value": 1.61e-08,
+                "figures": 3,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 78.0,
+                "figures": 2,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.71,
+                "figures": 2,
+                "prints": null
+              }
+            },
+            "uncertainty": "0.003",
+            "figures": 2
           },
           "description": "The deep layer around the core where energy crawls outward as light, absorbed and re-emitted countless times.",
-          "about": "The radiative zone lies between the core and the convection zone, from about a fifth to about seven tenths of the Sun's radius. It is dense and opaque: a photon made in the core travels only a short distance before it is absorbed and sent on again, so its energy can take millions of years to cross this layer. Temperatures fall from about 7 million kelvin near the core to about 2 million at the top of the zone.",
+          "about": "The radiative zone lies between the core and the convection zone. It is dense and opaque: a photon made in the core travels only a short distance before it is absorbed and sent on again, so it takes about a million years to cross this layer. Temperatures fall from about 7 million kelvin near the core to about 2 million at the top of the zone.",
           "info_url": "https://en.wikipedia.org/wiki/Radiative_zone",
           "color": "rgb(30, 144, 255)",
           "opacity": 1.0,
           "n_points": 25,
           "marker_size": 7,
-          "source": "Christensen-Dalsgaard, Gough & Thompson (1991), ApJ 378:413, \"The depth of the solar convection zone\" -- convection-zone depth measured at 0.287 +/- 0.003 solar radii, so the base of the zone sits at 1 - 0.287 = 0.713 R_sun",
-          "orrery_constant": "constants_new.py::RADIATIVE_ZONE_AU"
+          "source": "Delahaye, F. and Pinsonneault, M. H., \"The Solar Heavy Element Abundances: I. Constraints from Stellar Interiors\", arXiv:astro-ph/0511779 -- sec. 2.2: the base of the convection zone, in solar radii, is 0.7133 +/- 0.0005 (Basu and Antia 2004), effectively identical to the 1991 estimate of 0.713 +/- 0.003. Hathaway, D. H., \"NASA/Marshall Solar Physics\", the solar interior page -- the radiative zone extends from the outer edge of the core to the interface layer; the temperature falls from 7,000,000 degrees C to about 2,000,000 degrees C over the same distance, and an individual photon takes about a million years to reach the interface layer. https://solarscience.msfc.nasa.gov/interior.shtml",
+          "orrery_constant": "constants_new.py::RADIATIVE_ZONE_RADII"
         },
         "photosphere": {
           "name": "Photosphere",
           "radius": {
             "value": 1.0,
-            "unit": "r_sun"
+            "unit": "r_sun",
+            "in": {
+              "au": {
+                "value": 0.004650467260962158,
+                "figures": "exact",
+                "prints": 4
+              },
+              "km": {
+                "value": 695700.0,
+                "figures": "exact",
+                "prints": 4
+              },
+              "pc": {
+                "value": 2.2546101516664486e-08,
+                "figures": "exact",
+                "prints": 4
+              },
+              "r_earth": {
+                "value": 109.07574478727847,
+                "figures": "exact",
+                "prints": 5
+              },
+              "r_sun": {
+                "value": 1.0,
+                "figures": "exact",
+                "prints": 1
+              }
+            },
+            "prints": 1,
+            "figures": "exact"
+          },
+          "thickness": {
+            "value": 100,
+            "unit": "km",
+            "in": {
+              "au": {
+                "value": 7e-07,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 100.0,
+                "figures": 1,
+                "prints": null
+              },
+              "pc": {
+                "value": 3e-12,
+                "figures": 1,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 0.02,
+                "figures": 1,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.0001,
+                "figures": 1,
+                "prints": null
+              }
+            },
+            "figures": 1,
+            "orrery_constant": "constants_new.py::PHOTOSPHERE_THICKNESS_KM",
+            "source": "Hathaway, D. H., \"NASA/Marshall Solar Physics\", the photosphere page -- the photosphere is not a solid surface but a layer about 100 km thick. https://solarscience.msfc.nasa.gov/surface.shtml"
+          },
+          "temperature": {
+            "value": 5700,
+            "unit": "k",
+            "figures": 2,
+            "orrery_constant": "constants_new.py::PHOTOSPHERE_TEMPERATURE_K",
+            "source": "Hathaway, D. H., \"NASA/Marshall Solar Physics\", the solar interior page -- at the visible surface the temperature has dropped to 5,700 K. https://solarscience.msfc.nasa.gov/interior.shtml"
           },
           "description": "The Sun's visible surface: the thin, glowing layer that the light we see comes from.",
-          "about": "Below the photosphere, in the convection zone, hot gas rises, cools and sinks, carrying energy the last stretch to the surface. At the photosphere, a layer only about 500 km thick, that energy leaves as light, at about 5,500 kelvin. To the eye it is a smooth disk; up close it shows granulation, the tops of the convection cells, and sunspots, cooler patches held by strong magnetic fields that can be larger than Earth.",
+          "about": "Below the photosphere, in the convection zone, hot gas rises, cools and sinks, carrying energy the last stretch to the surface. At the photosphere, a layer only about {thickness} km thick, that energy leaves as light, at about {temperature} kelvin. To the eye it is a smooth disk; up close it shows granulation, the tops of the convection cells, and sunspots, cooler patches held by strong magnetic fields that can be larger than Earth.",
           "info_url": "https://en.wikipedia.org/wiki/Photosphere",
           "color": "rgb(255, 244, 214)",
           "opacity": 1.0,
           "n_points": 25,
           "marker_size": 7.0,
           "source": "IAU 2015 Resolution B3 -- nominal solar radius",
-          "orrery_constant": "constants_new.py::SOLAR_RADIUS_AU"
+          "orrery_constant": "constants_new.py::SUN_RADIUS_KM"
         },
         "sun_radius": {
           "value": 695700.0,
@@ -294,16 +421,50 @@
             },
             "figures": 4
           },
-          "description": "A thin, reddish layer of the Sun's atmosphere just above the visible surface, about 2,000 km deep.",
-          "about": "The chromosphere sits between the photosphere and the corona and takes its name from the Greek word for color, because the hydrogen in it glows red. It is far less dense than the surface, and its temperature rises with height, from a few thousand kelvin at the bottom to about 20,000 at the top. It is never still: jets of gas called spicules rise and fall like geysers, and cooler prominences hang in it, held up by magnetic fields.",
+          "description": "A thin, reddish layer of the Sun's atmosphere just above the visible surface, about {depth} km deep.",
+          "depth": {
+            "value": 2000.0,
+            "unit": "km",
+            "in": {
+              "au": {
+                "value": 1e-05,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 2000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "pc": {
+                "value": 6e-11,
+                "figures": 1,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 0.3,
+                "figures": 1,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.003,
+                "figures": 1,
+                "prints": null
+              }
+            },
+            "figures": 1,
+            "orrery_constant": "constants_new.py::CHROMOSPHERE_PHYSICAL_KM",
+            "source": "Yohkoh Public Outreach Project, Montana State University Solar Physics, \"A 'Dancing' Layer of the Sun\" -- above the photosphere is a layer of gas, approximately 2000 km thick, known as the chromosphere. https://solar.physics.montana.edu/YPOP/Spotlight/SunInfo/Chromosph.html Hathaway, D. H., \"NASA/Marshall Solar Physics\", the chromosphere page -- the temperature rises from 6000 degrees C to about 20,000 degrees C; at these temperatures hydrogen gives off a reddish light (H-alpha), which gives the chromosphere its name. https://solarscience.msfc.nasa.gov/chromos.shtml"
+          },
+          "about": "The chromosphere sits between the photosphere and the corona and takes its name from the Greek word for color, because the hydrogen in it glows red. It is far less dense than the surface, and its temperature rises with height, from about 6,000 kelvin at the bottom to about 20,000 at the top. It is never still: jets of gas called spicules rise and fall like geysers, and cooler prominences hang in it, held up by magnetic fields.",
           "info_url": "https://en.wikipedia.org/wiki/Chromosphere",
           "color": "rgb(30, 144, 255)",
           "opacity": 0.5,
           "n_points": 25,
           "marker_size": 3.0,
-          "source": "IAU 2015 Resolution B3 -- nominal solar radius; Carroll & Ostlie, An Introduction to Modern Astrophysics, Ch. 11 -- chromosphere extends ~2000 km above the photosphere.",
+          "source": "IAU 2015 Resolution B3 -- nominal solar radius; Yohkoh Public Outreach Project, Montana State University Solar Physics, \"A 'Dancing' Layer of the Sun\" -- above the photosphere is a layer of gas, approximately 2000 km thick, known as the chromosphere. https://solar.physics.montana.edu/YPOP/Spotlight/SunInfo/Chromosph.html Hathaway, D. H., \"NASA/Marshall Solar Physics\", the chromosphere page -- the temperature rises from 6000 degrees C to about 20,000 degrees C; at these temperatures hydrogen gives off a reddish light (H-alpha), which gives the chromosphere its name. https://solarscience.msfc.nasa.gov/chromos.shtml",
           "orrery_constant": "constants_new.py::CHROMOSPHERE_TOP_KM",
-          "note": "Derived: 1 + 2000 km / 695700 km. The sourced claim is the 2000 km thickness, not the ratio. Drawn at true physical scale since 2026-08-16."
+          "note": "Drawn at its true depth, not thickened to be seen: at any scale that also shows the corona it sits on the photosphere."
         },
         "inner_corona": {
           "name": "Inner Corona",
@@ -467,7 +628,75 @@
             "figures": 3
           },
           "description": "The true outer edge of the Sun's atmosphere, where the outflowing gas becomes the solar wind and can no longer signal back to the Sun.",
-          "about": "Inside the Alfven surface the gas is tied to the Sun by its magnetic field, and a disturbance there can travel back to the surface. Outside it the gas moves faster than magnetic waves can carry a signal inward, so it is on its own, and is called the solar wind. NASA's Parker Solar Probe crossed this boundary in April 2021, the first spacecraft to fly inside the corona. The surface is not a smooth sphere: it is lower over the poles and higher over the streamer belt.",
+          "about": "Inside the Alfven surface the gas is tied to the Sun by its magnetic field, and a disturbance there can travel back to the surface. Outside it the gas moves faster than magnetic waves can carry a signal inward, so it is on its own, and is called the solar wind. NASA's Parker Solar Probe crossed this boundary in April 2021, the first spacecraft to fly inside the corona. Most of the time it lies between about {usual_low} and {usual_high} solar radii from the Sun's center, and it is not a smooth sphere: computer models of the corona often put it farthest out above the large polar coronal holes and closest in at the tops of the helmet streamers.",
+          "usual_low": {
+            "value": 10,
+            "unit": "r_sun",
+            "in": {
+              "au": {
+                "value": 0.05,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 7000000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "pc": {
+                "value": 2e-07,
+                "figures": 1,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 10.0,
+                "figures": 1,
+                "prints": null
+              }
+            },
+            "figures": 1,
+            "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RANGE_LOW_RADII",
+            "source": "Cranmer, Chhiber, Gilly, Cairns, Colaninno, McComas, Raouafi, Usmanov, Gibson and DeForest (2023), \"The Sun's Alfven Surface: Recent Insights and Prospects for the Polarimeter to Unify the Corona and Heliosphere (PUNCH)\", abstract -- the Alfven surface spends most of its time at heliocentric distances between about 10 and 20 solar radii; sec. 3.1 -- in global models the surface's local maxima sit near the centers of large polar coronal holes and its minima at the tops of helmet streamers. https://arxiv.org/abs/2310.05887"
+          },
+          "usual_high": {
+            "value": 20,
+            "unit": "r_sun",
+            "in": {
+              "au": {
+                "value": 0.09,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 10000000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "pc": {
+                "value": 5e-07,
+                "figures": 1,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 2000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 20.0,
+                "figures": 1,
+                "prints": null
+              }
+            },
+            "figures": 1,
+            "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RANGE_HIGH_RADII",
+            "source": "Cranmer, Chhiber, Gilly, Cairns, Colaninno, McComas, Raouafi, Usmanov, Gibson and DeForest (2023), \"The Sun's Alfven Surface: Recent Insights and Prospects for the Polarimeter to Unify the Corona and Heliosphere (PUNCH)\", abstract -- the Alfven surface spends most of its time at heliocentric distances between about 10 and 20 solar radii; sec. 3.1 -- in global models the surface's local maxima sit near the centers of large polar coronal holes and its minima at the tops of helmet streamers. https://arxiv.org/abs/2310.05887"
+          },
           "info_url": "https://svs.gsfc.nasa.gov/14036",
           "color": "rgb(0, 200, 200)",
           "opacity": 0.35,
@@ -593,7 +822,57 @@
             "figures": 4
           },
           "description": "The place far beyond the planets where the solar wind slows suddenly from supersonic speed as it meets the gas between the stars.",
-          "about": "The solar wind streams outward at supersonic speed until the pressure of the interstellar gas brings it up short. At the termination shock it slows abruptly, and its energy of motion becomes heat. Voyager 1 crossed it at 94.01 AU and Voyager 2 at 84 AU; beyond it the wind moves at a few hundred kilometers a second through the turbulent region called the heliosheath.",
+          "about": "The solar wind streams outward at supersonic speed until the pressure of the interstellar gas brings it up short. At the termination shock it slows abruptly, and its energy of motion becomes heat. Voyager 1 crossed it at {radius} AU and Voyager 2 at {voyager_2} AU. Voyager 2 measured the wind slowing from about {upstream} to about {downstream} kilometers a second as it crossed; beyond lies the turbulent region called the heliosheath.",
+          "voyager_2": {
+            "value": 84,
+            "unit": "au",
+            "in": {
+              "au": {
+                "value": 84.0,
+                "figures": 2,
+                "prints": null
+              },
+              "km": {
+                "value": 12600000000.0,
+                "figures": 3,
+                "prints": null
+              },
+              "pc": {
+                "value": 0.00041,
+                "figures": 2,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 1970000.0,
+                "figures": 3,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 18100.0,
+                "figures": 3,
+                "prints": null
+              }
+            },
+            "figures": 2,
+            "orrery_constant": "constants_new.py::VOYAGER2_TERMINATION_SHOCK_AU",
+            "source": "NASA Scientific Visualization Studio, \"Voyager 2 Proves Solar System is Squashed\" (23 January 2008) -- Voyager 1 encountered the termination shock at 94 AU and Voyager 2 encountered it at only 84 AU. https://svs.gsfc.nasa.gov/20132"
+          },
+          "upstream": {
+            "value": 320.0,
+            "unit": "km_s",
+            "uncertainty": "2.84",
+            "figures": 2,
+            "orrery_constant": "constants_new.py::VOYAGER2_TS_UPSTREAM_SPEED_KM_S",
+            "source": "Li, H., Wang, C. and Richardson, J. D. (2008), \"Properties of the termination shock observed by Voyager 2\", GRL 35:L19107 -- Table 1, shock 1: the solar wind's radial speed averaged 321.01 +/- 2.84 km/s upstream and 184.67 +/- 23.38 km/s downstream. https://www.spaceweather.ac.cn/~hli/papers/Li%20et%20al%202008%20GRL%20Properties%20of%20the%20termination%20shock%20observed%20by%20Voyager%202.pdf"
+          },
+          "downstream": {
+            "value": 200.0,
+            "unit": "km_s",
+            "uncertainty": "23.38",
+            "figures": 1,
+            "orrery_constant": "constants_new.py::VOYAGER2_TS_DOWNSTREAM_SPEED_KM_S",
+            "source": "Li, H., Wang, C. and Richardson, J. D. (2008), \"Properties of the termination shock observed by Voyager 2\", GRL 35:L19107 -- Table 1, shock 1: the solar wind's radial speed averaged 321.01 +/- 2.84 km/s upstream and 184.67 +/- 23.38 km/s downstream. https://www.spaceweather.ac.cn/~hli/papers/Li%20et%20al%202008%20GRL%20Properties%20of%20the%20termination%20shock%20observed%20by%20Voyager%202.pdf"
+          },
           "info_url": "https://en.wikipedia.org/wiki/Heliosphere",
           "color": "rgb(240, 244, 255)",
           "opacity": 0.4,
