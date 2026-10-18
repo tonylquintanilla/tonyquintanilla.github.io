@@ -441,8 +441,11 @@ const ACCEPTANCE = {
       { radius: "6,428 km", altitude: "50 km" },
   "Earth: Upper Atmosphere (to the thermopause)":
       { radius: "6,980 km", altitude: "600 km" },
-  "Earth: Exosphere / Geocorona (hydrogen halo, detected extent)":
-      { radius: "600,000 km", altitude: "600,000 km" },
+  // L-410 (2026-10-17): a fade now, drawn from 3 Earth radii to the
+  // 100 Earth radii detection floor; each edge prints its own sentence.
+  "Earth: Exosphere / Geocorona (hydrogen halo)":
+      { start: "3 Earth radii, about 20,000 km (0.0001 AU)",
+        stop: "100 Earth radii, about 600,000 km (0.004 AU)" },
   // L-330 (Tony, 2026-10-17): the inner edge at ESA's 180 km, a
   // measured row now (EARTH_LEO_LOWER_ALTITUDE_KM), not a declared 200.
   "Earth: Low Earth Orbit, inner edge (180 km)":
@@ -851,6 +854,53 @@ function checkEarthShell(group, key, shell, planetNode, hover, label) {
   examinedNames.push(label);
 }
 
+/* L-410: a stored fade (Earth's exosphere) prints no radius line. Each of
+   its two edges prints its own served sentence: the number at its served
+   count, its km and AU from the served "in". Worked here by this check's
+   own arithmetic, and pinned in ACCEPTANCE as start and stop. */
+function checkEarthFade(group, key, shell, hover, label) {
+  const flat = hover.split(SOFT_BR).join(" ");
+  const verified = [];
+  const pin = ACCEPTANCE[label] || {};
+  [["inner_radius", "start"], ["radius", "stop"]].forEach(function (pair) {
+    const node = shell[pair[0]];
+    if (!node || typeof node.hover_line !== "string") {
+      fail(label + ": its " + pair[0] + " serves no hover_line");
+      return;
+    }
+    const c = figures(node), k = served(node, "km"), a = served(node, "au");
+    const auText = a ? servedAuText(a, label) : null;
+    if (c === null || !k || servedCount(k) === null || auText === null) {
+      fail(label + ": its " + pair[0] + " serves no count, km or AU");
+      return;
+    }
+    const value = fmtCount(node.value, c);
+    const km = fmtCount(k.value, servedCount(k));
+    const au = auText.slice(0, -3);
+    const line = node.hover_line.replace("{value}", value)
+      .replace("{km}", km).replace("{au}", au);
+    if (flat.indexOf(line) < 0) {
+      fail(label + ": its " + pair[0] + " line is not in the hover; " +
+           "these rules give\n        " + line);
+    } else {
+      verified.push(line);
+      numbersExamined += numbersIn(line).length;
+    }
+    const short = value + " Earth radii, about " + km + " km (" + au + " AU)";
+    if (pin[pair[1]] && pin[pair[1]] !== short) {
+      fail(label + ": its " + pair[0] + " computes to \"" + short +
+           "\" but the acceptance table says \"" + pin[pair[1]] + "\"");
+    }
+  });
+  const left = unaccounted(flat, verified, [shell.name, shell.description]);
+  if (left.length) {
+    fail(label + ": " + left.length + " number(s) in this hover that " +
+         "nothing examined: " + left.join(", "));
+  }
+  hoversExamined += 1;
+  examinedNames.push(label);
+}
+
 function lineStartingWith(hover, prefix) {
   const lines = hover.split("<br>");
   for (let i = 0; i < lines.length; i++) {
@@ -873,6 +923,17 @@ function checkEarth(features, hovers) {
           key === "sun_radius") return;
       const shell = params[key];
       if (!shell || typeof shell !== "object") return;
+      if (shell.shape === "stored_fade") {
+        const fadeLabel = "Earth: " + (shell.name || key);
+        if (!hovers[fadeLabel]) {
+          fail(fadeLabel + ": expected to examine this hover and the " +
+               "renderers built none");
+          return;
+        }
+        seen[fadeLabel] = true;
+        checkEarthFade(group, key, shell, hovers[fadeLabel], fadeLabel);
+        return;
+      }
       if (!shell.radius || typeof shell.radius.value !== "number") return;
       if (figures(shell.radius) === null) return;   // no count: fixture's job
       const label = "Earth: " + (shell.name || key);

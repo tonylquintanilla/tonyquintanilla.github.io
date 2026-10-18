@@ -2646,6 +2646,108 @@
     return stampLink([built.trace, marker], cfg);
   }
 
+  /* L-410 (2026-10-17, Tony's rulings): Earth's hydrogen exosphere, the
+     geocorona, as the orrery's stored dots, data/drawings/earth_exosphere
+     .json -- from the served inner_radius to the served radius, thinning
+     as the hydrogen does, drawn round. The dots are in Earth radii in
+     Earth's body frame, so they are scaled by the served body radius and
+     turned by the pole basis like the belts; each is shaded by its
+     weight. Nothing is placed here. The words are served: each edge's
+     hover_line, and the about and the note with their numbers filled
+     from served rows. A drawing named and not served draws nothing,
+     with a warning, as for the belts. Returns {traces, words}: the
+     traces, and the words for the i panel. */
+  var FADE_DOT_ALPHA = [0.25, 0.9];   // MODE-5 KNOBS: opacity at weight 0, 1
+  var FADE_DOT_SIZE = [1.5, 3.0];     // MODE-5 KNOBS: size at weight 0, 1
+
+  function renderStoredFade(bodyName, cfg, where, center, basis,
+                            bodyRadiusKm, halfRangeAu, warn) {
+    var none = { traces: [], words: cfg };
+    var label = bodyName + ": " + (cfg.name || "Exosphere");
+    if (!isDict(cfg.drawing)) {
+      warn(where + ": names no stored drawing -- not drawn");
+      return none;
+    }
+    var stored = servedDots(cfg.drawing, where + "/drawing", warn, "r_earth");
+    if (stored === null) { return none; }
+    if (!Array.isArray(stored.w)) {
+      warn(where + ": the stored drawing gives no weight for its dots -- " +
+           "not drawn");
+      return none;
+    }
+    if (!(bodyRadiusKm > 0) || !(KM_PER_AU > 0)) {
+      warn(where + ": no served body radius to scale the dots by -- not drawn");
+      return none;
+    }
+    var outerR = measured(cfg.radius, "r_earth", where + "/radius", warn);
+    if (outerR === null) { return none; }
+    var color = cfg.color || "rgb(200, 200, 255)";
+    var m = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(color);
+    if (!m) {
+      warn(where + ": its colour " + JSON.stringify(color) +
+           " is not rgb(r, g, b), so its dots cannot be shaded -- not drawn");
+      return none;
+    }
+    var unitAu = bodyRadiusKm / KM_PER_AU;
+    var pts = { x: [], y: [], z: [] }, colors = [], sizes = [];
+    for (var k = 0; k < stored.x.length; k++) {
+      var w = Math.max(0, Math.min(1, stored.w[k]));
+      pts.x.push(stored.x[k] * unitAu);
+      pts.y.push(stored.y[k] * unitAu);
+      pts.z.push(stored.z[k] * unitAu);
+      colors.push("rgba(" + m[1] + ", " + m[2] + ", " + m[3] + ", " +
+                  (FADE_DOT_ALPHA[0] + (FADE_DOT_ALPHA[1] - FADE_DOT_ALPHA[0]) *
+                   w).toFixed(3) + ")");
+      sizes.push(FADE_DOT_SIZE[0] + (FADE_DOT_SIZE[1] - FADE_DOT_SIZE[0]) * w);
+    }
+    var built = geometryTrace(pts, center, basis, label, colors, 1, sizes);
+
+    // The hover: the description, then each edge's own served sentence,
+    // its numbers printed from that edge's served row.
+    function edge(node) {
+      return { value: servedText(node), km: inText(node, "km"),
+               au: auServed(inEntry(node, "au")) };
+    }
+    var hover = label + "<br><br>" + descLine(cfg) +
+      servedHover(isDict(cfg.inner_radius) ? cfg.inner_radius.hover_line : null,
+                  edge(cfg.inner_radius), where + "/inner_radius/hover_line",
+                  warn) + "<br>" +
+      servedHover(cfg.radius.hover_line, edge(cfg.radius),
+                  where + "/radius/hover_line", warn);
+    hover = withTail(hover);
+    // One info marker, over the pole at the outer edge, where the sphere
+    // shell's sat until 2026-10-17.
+    var outerAu = outerR * unitAu;
+    var p = applyBasis(basis, 0, 0, outerAu * 1.05);
+    var marker = infoMarker(center[0] + p[0], center[1] + p[1],
+                            center[2] + p[2], color, hover, label,
+                            cfg.info_border);
+    var traces = [built.trace, marker];
+    if (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
+        outerAu > halfRangeAu) {
+      for (var t = 0; t < traces.length; t++) traces[t].visible = "legendonly";
+    }
+    // The i panel: the about and the note, their braces filled from
+    // served rows, and each edge's and number's citation.
+    // The measured profile's end (profile_to) cites the same work as
+    // where the dots start, so it is not gathered twice; the outer edge's
+    // citation is the shell's own, served beside its radius.
+    var words = withGatheredSource(withFilledWords(cfg, {
+      inner: servedText(cfg.inner_radius),
+      profile_to: servedText(cfg.profile_to),
+      density: servedText(cfg.density_at),
+      density_r: servedText(cfg.density_at_radius),
+      outer: servedText(cfg.radius)
+    }, where, warn), [["inner_radius", "Where the dots start"],
+                      ["density_at", "The density"]]);
+    if (typeof cfg.source === "string" && cfg.source) {
+      words.source = (words.source && words.source !== cfg.source
+                      ? words.source + "; " : "") +
+                     "Where the dots stop: " + cfg.source;
+    }
+    return { traces: traces, words: words };
+  }
+
   function renderShellSet(slug, bodyName, featureKey, params, center,
                           basis, halfRangeAu, warn) {
     var traces = [];
@@ -2751,6 +2853,16 @@
                                      ["galactic_pole", "Galactic pole"],
                                      ["density", "Shape"]])), key));
           drawn += 1;
+        } else if (cfg.shape === "stored_fade") {
+          // L-410: the hydrogen exosphere, the orrery's stored dots.
+          var fade = renderStoredFade(bodyName, cfg, where + "/" + key,
+                                      center, basis, starRadiusKm,
+                                      halfRangeAu, warn);
+          if (fade.traces.length) {
+            traces = traces.concat(stampShell(stampLink(fade.traces,
+                                                        fade.words), key));
+            drawn += 1;
+          }
         } else {
           warn(where + "/" + key + ": unknown shape " +
                JSON.stringify(cfg.shape) + " -- not drawn");

@@ -215,7 +215,8 @@ GENERATORS = [
     # each drawing the config names at a recorded SHA; the cache builder
     # serves it; "Drawings" below checks the two copies and the tilt.
     ("Drawings pull", ["tools/pull_drawings.py"], ".",
-     ["data/drawings/hills_cloud.json", "data/drawings/pulled_at.sha"]),
+     ["data/drawings/hills_cloud.json", "data/drawings/van_allen_belts.json",
+      "data/drawings/earth_exosphere.json", "data/drawings/pulled_at.sha"]),
 ]
 
 # L-446: the rows --pull runs, before the cache builder, in GENERATORS'
@@ -524,6 +525,11 @@ SERVED_FILES = [
     # L-421 (2026-10-11): the Hills cloud's dots, which the Sun room
     # fetches from the served cache before it draws.
     "data/solar-system/drawings/hills_cloud.json",
+    # L-410 (2026-10-17): the Earth room fetches its two the same way --
+    # the belts' (L-330, missed from this list by patch 3 and found while
+    # adding the exosphere's) and the exosphere's.
+    "data/solar-system/drawings/van_allen_belts.json",
+    "data/solar-system/drawings/earth_exosphere.json",
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing

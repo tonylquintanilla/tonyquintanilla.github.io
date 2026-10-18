@@ -2050,10 +2050,16 @@
       },
       "earth_exosphere": {
         "geocorona": {
-          "name": "Exosphere / Geocorona (hydrogen halo, detected extent)",
+          "shape": "stored_fade",
+          "drawing": {
+            "_declared": "Not a number: the name of the stored drawing the exosphere is, data/solar-system/drawings/earth_exosphere.json. The orrery places the dots (earth_exosphere_sampler.py, from the rows the pointers below name) and the page draws them as given (L-410, Tony's rulings of 2026-10-17; the stored-drawing rule of L-421).",
+            "dots": "earth_exosphere"
+          },
+          "name": "Exosphere / Geocorona (hydrogen halo)",
           "description": "A faint halo of hydrogen gas that surrounds Earth and thins out far into space, the outermost trace of the atmosphere.",
-          "about": "The exosphere has no top: it simply thins into space. Its hydrogen glows faintly in ultraviolet light, a halo called the geocorona. This shell is drawn where that glow has been detected, not where the atmosphere ends.",
+          "about": "The exosphere has no top: it simply thins into space. Its hydrogen glows faintly in ultraviolet light, a halo called the geocorona. The dots thin out as the hydrogen does. Out to {profile_to} Earth radii they follow a profile measured by spacecraft on the side facing the Sun: about {density} atoms per cubic centimetre at {density_r} Earth radii, a lower limit. Beyond {profile_to} Earth radii the measured rate of thinning is carried on outward, our choice for the picture. The hydrogen continues inward to the upper atmosphere, and it reaches beyond the Moon's orbit.",
           "radius": {
+            "hover_line": "They stop at {value} Earth radii, about {km} km ({au} AU), where instruments lose the glow -- not where the hydrogen ends.",
             "value": 100.0,
             "unit": "r_earth",
             "in": {
@@ -2085,14 +2091,122 @@
             },
             "figures": 1
           },
+          "inner_radius": {
+            "hover_line": "The dots start at {value} Earth radii, about {km} km ({au} AU), where the measurements start.",
+            "value": 3.0,
+            "unit": "r_earth",
+            "in": {
+              "au": {
+                "value": 0.0001,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 20000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "pc": {
+                "value": 6e-10,
+                "figures": 1,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 3.0,
+                "figures": 1,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.03,
+                "figures": 1,
+                "prints": null
+              }
+            },
+            "figures": 1,
+            "orrery_constant": "constants_new.py::EARTH_EXOSPHERE_H_FIT_INNER_RADII",
+            "source": "Zoennchen, J. H., Connor, H. K., Jung, J., Nass, U. and Fahr, H. J. (2022), \"Terrestrial exospheric dayside H-density profile at 3-15 RE from UVIS/HDAC and TWINS Lyman-alpha data combined\", Ann. Geophys. 40:271-279, https://angeo.copernicus.org/articles/40/271/2022/ -- sec. 6, eq. 7: the day-side hydrogen density fitted over the radial range 3-15 RE. Day and night: Zoennchen, J. H., Cucho-Padin, G., Waldrop, L. and Fahr, H. J. (2024), \"Comparison of terrestrial exospheric hydrogen 3D distributions at solar minimum and maximum using TWINS Lyman-alpha observations\", Front. Astron. Space Sci. 11:1409744, doi:10.3389/fspas.2024.1409744 -- abstract: \"All models showed a high concentration of atomic H on the dayside and nightside near the Sun-Earth line\"."
+          },
+          "profile_to": {
+            "value": 15.0,
+            "unit": "r_earth",
+            "in": {
+              "au": {
+                "value": 0.0006,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 96000.0,
+                "figures": 2,
+                "prints": null
+              },
+              "pc": {
+                "value": 3.1e-09,
+                "figures": 2,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 15.0,
+                "figures": 2,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.14,
+                "figures": 2,
+                "prints": null
+              }
+            },
+            "figures": 2,
+            "orrery_constant": "constants_new.py::EARTH_EXOSPHERE_H_FIT_OUTER_RADII",
+            "source": "Zoennchen, J. H., Connor, H. K., Jung, J., Nass, U. and Fahr, H. J. (2022), \"Terrestrial exospheric dayside H-density profile at 3-15 RE from UVIS/HDAC and TWINS Lyman-alpha data combined\", Ann. Geophys. 40:271-279, https://angeo.copernicus.org/articles/40/271/2022/ -- sec. 6, eq. 7: the day-side hydrogen density fitted over the radial range 3-15 RE. Day and night: Zoennchen, J. H., Cucho-Padin, G., Waldrop, L. and Fahr, H. J. (2024), \"Comparison of terrestrial exospheric hydrogen 3D distributions at solar minimum and maximum using TWINS Lyman-alpha observations\", Front. Astron. Space Sci. 11:1409744, doi:10.3389/fspas.2024.1409744 -- abstract: \"All models showed a high concentration of atomic H on the dayside and nightside near the Sun-Earth line\"."
+          },
+          "density_at": {
+            "value": 35.0,
+            "unit": "per_cm3",
+            "figures": 2,
+            "orrery_constant": "constants_new.py::EARTH_EXOSPHERE_H_AT_10_RADII_CM3",
+            "source": "Zoennchen et al. (2022), Ann. Geophys. 40:271-279, https://angeo.copernicus.org/articles/40/271/2022/ -- abstract: the observations \"constrained the neutral H density there at 10 RE to a value of 35 cm-3\"; sec. 6: the \"found value of 35 cm-3 at 10 RE is more likely to be a lower limit.\""
+          },
+          "density_at_radius": {
+            "value": 10.0,
+            "unit": "r_earth",
+            "in": {
+              "au": {
+                "value": 0.0004,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 60000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "pc": {
+                "value": 2.1e-09,
+                "figures": 2,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 10.0,
+                "figures": 2,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.09,
+                "figures": 1,
+                "prints": null
+              }
+            },
+            "figures": 2,
+            "orrery_constant": "constants_new.py::EARTH_EXOSPHERE_H_AT_RADII",
+            "source": "Zoennchen et al. (2022), Ann. Geophys. 40:271-279, https://angeo.copernicus.org/articles/40/271/2022/ -- abstract: the observations \"constrained the neutral H density there at 10 RE to a value of 35 cm-3\"; sec. 6: the \"found value of 35 cm-3 at 10 RE is more likely to be a lower limit.\""
+          },
           "info_url": "https://en.wikipedia.org/wiki/Geocorona",
           "color": "rgb(200, 200, 255)",
-          "opacity": 0.15,
-          "n_points": 20,
-          "marker_size": 3.0,
+          "_declared": "colour is a drawing choice. The exosphere is the stored drawing named under drawing: dots from inner_radius to radius, thinning as the measured profile does (to profile_to, then by its measured fall), drawn round, each shaded by its weight. The orrery places them and the page scales them by planet_radius and turns them to Earth's pole; how the dots look is a rendering setting in gallery/feature_renderers.js. Until 2026-10-17 it was a sphere shell at radius (L-292), with opacity, n_points and marker_size. L-410.",
           "source": "Baliukin, I. I., Bertaux, J.-L., Quemerais, E., Izmodenov, V. V. & Schmidt, W. (2019), \"SWAN/SOHO Lyman-alpha mapping: the hydrogen geocorona extends well beyond the Moon\", J. Geophys. Res. Space Physics 124, 861-885, doi:10.1029/2018JA026136 -- the geocorona is detected to at least 100 Earth radii.",
           "orrery_constant": "constants_new.py::EARTH_GEOCORONA_RADII",
-          "note": "The exosphere has no boundary: it thins into space. This shell is the sourced DETECTION FLOOR, not an edge, and it encloses the Moon's orbit at about 60 Earth radii."
+          "note": "Drawn round: the real hydrogen is denser near the line from the Sun to Earth, on both the day side and the night side. Only the shape of the thinning is drawn; a dot is not a count of atoms."
         },
         "planet_radius": {
           "value": 6378.1366,

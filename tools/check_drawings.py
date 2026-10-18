@@ -32,6 +32,11 @@ WHAT THIS IS
                 equator, and every dot must lie on a dipole field line
                 (L = r / cos^2 latitude) between its own belt's served
                 edges in the config, to the file's rounding
+    the fade    (L-410) Earth's hydrogen exosphere is round and records no
+                tilt: its dots must lie between the served inner_radius
+                and radius of the geocorona, be centred on Earth, and
+                thin out -- per unit volume, fewer in each shell outward
+                ten times the volume of the last
     the SHA     data/drawings/pulled_at.sha names the orrery commit the
                 drawings were pulled at
 
@@ -40,6 +45,10 @@ WHAT THIS IS
     be caught: a dot moved, the served copy differing from the pulled one,
     and the frame turned (x and z swapped) so the plane's tilt moves. The
     belts get a fourth: one dot moved off its field lines in both copies.
+    The exosphere is round, so turning its frame changes nothing; it gets
+    three of its own in place of that one: the dots moved off the body, a
+    dot moved inside the inner edge, and the dots spread evenly in volume
+    so they no longer thin out.
 
     The last line starts "DRAWINGS:", which the maintenance run quotes,
     and names each drawing with its dots, its fitted tilt and its sha256.
@@ -60,6 +69,10 @@ Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5
 (L-330: Earth's radiation belts, the second stored drawing, are checked by
 their mechanism -- plane and field lines against the served edges -- and
 the planted faults run for every drawing, not only the first.)
+Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5
+(L-410: Earth's hydrogen exosphere, the third stored drawing, is checked
+by its mechanism -- between the served edges, centred, thinning out --
+with three faults of its own.)
 """
 
 import hashlib
@@ -84,6 +97,15 @@ TILT_TOLERANCE_DEG = 10.0
 # Earth radii in L, allowing the file's rounding to 0.01 Earth radii.
 BELT_PLANE_DEG = 1.0
 BELT_L_SLACK = 0.05
+# L-410: the exosphere's dots are round and centred on Earth. Their centre
+# may sit off Earth by this share of their mean distance (chance alone
+# puts it near 0.03 at 1,500 dots); each lies between the served edges to
+# this many Earth radii; and in each tenfold-in-volume step outward the
+# dots per unit volume must fall by at least this factor (the profile
+# falls by more than 3 in every such step).
+FADE_CENTRE_SHARE = 0.1
+FADE_R_SLACK = 0.05
+FADE_FALL = 1.5
 
 
 def plane_tilt_deg(x, y, z):
@@ -178,7 +200,61 @@ def belt_problems(name, content, edges):
     return out
 
 
-def check_one(name, pulled_text, served_text, paper_tilt, edges=None):
+def fade_edges(config):
+    """(inner, outer) in Earth radii for Earth's exosphere, from the
+    served config, or None."""
+    try:
+        earth = [o for o in config["objects"] if o.get("slug") == "earth"][0]
+        geo = earth["features"]["earth_exosphere"]["geocorona"]
+        return (float(geo["inner_radius"]["value"]),
+                float(geo["radius"]["value"]))
+    except (IndexError, KeyError, TypeError, ValueError):
+        return None
+
+
+def fade_problems(name, content, edges):
+    """Failures for a round fade (L-410): every dot between the served
+    edges, the dots centred on the body, and thinning outward."""
+    if edges is None:
+        return ["%s: no served inner and outer edge to judge the dots by"
+                % name]
+    out = []
+    inner, outer = edges
+    xs, ys, zs = content["x"], content["y"], content["z"]
+    radii = [math.sqrt(x * x + y * y + z * z) for x, y, z in zip(xs, ys, zs)]
+    off = [r for r in radii
+           if r < inner - FADE_R_SLACK or r > outer + FADE_R_SLACK]
+    if off:
+        out.append("%s: %d dot(s) lie outside the served edges, %g to %g "
+                   "Earth radii, e.g. at %.2f" % (name, len(off), inner,
+                                                  outer, off[0]))
+    n = float(len(radii)) or 1.0
+    mean_r = sum(radii) / n
+    centre = math.sqrt((sum(xs) / n) ** 2 + (sum(ys) / n) ** 2 +
+                       (sum(zs) / n) ** 2)
+    if centre > FADE_CENTRE_SHARE * mean_r:
+        out.append("%s: the dots are not centred on the body: their centre "
+                   "sits %.2f Earth radii off it, against a mean distance of "
+                   "%.2f" % (name, centre, mean_r))
+    # Dots per unit volume in shells each ten times the volume of the
+    # last, outward from the inner edge.
+    dens, lo = [], inner
+    while lo < outer:
+        hi = min(outer, (lo ** 3 + 9 * lo ** 3) ** (1.0 / 3.0))
+        count = sum(1 for r in radii if lo <= r < hi)
+        dens.append((lo, hi, count / (hi ** 3 - lo ** 3)))
+        lo = hi
+    for (a, b, d1), (c, e, d2) in zip(dens, dens[1:]):
+        if d1 > 0 and d2 * FADE_FALL > d1:
+            out.append("%s: the dots do not thin out: per unit volume, %.3g "
+                       "between %.3g and %.3g Earth radii against %.3g between "
+                       "%.3g and %.3g" % (name, d2, c, e, d1, a, b))
+            break
+    return out
+
+
+def check_one(name, pulled_text, served_text, paper_tilt, edges=None,
+              fade=None):
     """Failures for one drawing, as sentences, and what was examined."""
     failures = []
     if pulled_text is None:
@@ -203,6 +279,9 @@ def check_one(name, pulled_text, served_text, paper_tilt, edges=None):
     if "belts" in content:
         # L-330: the belts record no tilt; their mechanism is checked.
         failures.extend(belt_problems(name, content, edges))
+    elif name == "earth_exosphere":
+        # L-410: round, so it has no plane; its mechanism is checked.
+        failures.extend(fade_problems(name, content, fade))
     elif not isinstance(recorded, (int, float)) or abs(round(tilt, 1) - recorded) > 0.05:
         failures.append("%s: the plane through the dots is tilted %.1f deg; the "
                         "file records %s" % (name, tilt, recorded))
@@ -228,6 +307,31 @@ def planted(name, pulled_text, paper_tilt):
     out.append(("the served copy differs", pulled_text, pulled_text + " ",
                 "served copy is not the pulled one"))
     turned = json.loads(pulled_text)
+    if name == "earth_exosphere":
+        # Round: turning the frame changes nothing, so its own three.
+        shifted = json.loads(pulled_text)
+        shifted["x"] = [v + 20.0 for v in shifted["x"]]
+        text = json.dumps(shifted)
+        out.append(("the dots moved off the body", text, text,
+                    "not centred on the body"))
+        inside = json.loads(pulled_text)
+        inside["x"][0], inside["y"][0], inside["z"][0] = 1.0, 0.0, 0.0
+        text = json.dumps(inside)
+        out.append(("a dot moved inside the inner edge", text, text,
+                    "outside the served edges"))
+        even = json.loads(pulled_text)
+        inner, outer = 3.0, 100.0
+        for k in range(len(even["x"])):
+            r = math.sqrt(even["x"][k] ** 2 + even["y"][k] ** 2 +
+                          even["z"][k] ** 2)
+            u = (k + 0.5) / len(even["x"])
+            want = (inner ** 3 + u * (outer ** 3 - inner ** 3)) ** (1.0 / 3.0)
+            for axis in ("x", "y", "z"):
+                even[axis][k] = even[axis][k] * want / r
+        text = json.dumps(even)
+        out.append(("the dots spread evenly, not thinning", text, text,
+                    "do not thin out"))
+        return out
     turned["x"], turned["z"] = turned["z"], turned["x"]
     text = json.dumps(turned)
     out.append(("the frame turned (x and z swapped)", text, text,
@@ -264,6 +368,7 @@ def main():
 
     caught = total = 0
     edges = belt_edges(config)
+    fade = fade_edges(config)
     for planted_name in names:
         if texts[planted_name][0] is None:
             continue
@@ -271,7 +376,7 @@ def main():
                 planted_name, texts[planted_name][0], paper):
             total += 1
             fails, _ = check_one(planted_name, pulled_text, served_text,
-                                 paper, edges)
+                                 paper, edges, fade)
             hit = any(expect in line for line in fails)
             caught += hit
             print("  planted in %-15s %-38s %s" % (planted_name + ":", label,
@@ -284,20 +389,26 @@ def main():
 
     for name in names:
         fails, info = check_one(name, texts[name][0], texts[name][1], paper,
-                                edges)
+                                edges, fade)
         problems.extend(fails)
         if info:
-            print("  %-15s %d dots, plane tilted %.1f deg (%s), "
+            shape = ("round, centred on the body" if name == "earth_exosphere"
+                     else "plane tilted %.1f deg" % info["tilt"])
+            print("  %-15s %d dots, %s (%s), "
                   "served copy %s, sha256 %s"
-                  % (name, info["dots"], info["tilt"],
+                  % (name, info["dots"], shape,
                      "served tilt row %s" % paper if name == "hills_cloud"
+                     else "between the served edges, thinning out"
+                     if name == "earth_exosphere"
                      else "the body frame's equator",
                      "MISSING" if texts[name][1] is None else
                      "matches" if texts[name][1] == texts[name][0] else "DIFFERS",
                      info["sha256"][:12]))
             if not fails:
-                named.append("%s %d dots, tilt %.1f deg, sha256 %s"
-                             % (name, info["dots"], info["tilt"],
+                named.append("%s %d dots, %s, sha256 %s"
+                             % (name, info["dots"],
+                                "round" if name == "earth_exosphere"
+                                else "tilt %.1f deg" % info["tilt"],
                                 info["sha256"][:12]))
     sha = read(SHA_FILE).strip() if os.path.exists(SHA_FILE) else ""
     if len(sha) != 40:
