@@ -2229,11 +2229,20 @@
    * warned about and that field is not shown, rather than shown with a hole.
    */
   function withShellWords(cfg, where, warn) {
+    // Only a number the words actually name is printed, and brings its
+    // citation along. L-455 (2026-10-18): the others are not even read,
+    // so a linked number read only to draw (the magnetotail's drawn end,
+    // an exact row with no print count) raises no warning here.
+    var named = {};
+    ["description", "about", "note"].forEach(function (field) {
+      if (typeof cfg[field] !== "string") return;
+      cfg[field].replace(/\{(\w+)\}/g, function (m, k) { named[k] = true; return m; });
+    });
     var vals = { radius: servedText(cfg.radius) };
     var linked = [];
     for (var k in cfg) {
       if (!Object.prototype.hasOwnProperty.call(cfg, k)) continue;
-      if (k === "radius" || k === "drawn_radius") continue;
+      if (k === "radius" || k === "drawn_radius" || !named[k]) continue;
       var n = cfg[k];
       if (isDict(n) && typeof n.orrery_constant === "string" &&
           typeof n.value === "number") {
@@ -2241,13 +2250,6 @@
         linked.push({ __key: k, source: n.source });
       }
     }
-    // Only a number the words actually name brings its citation along.
-    var named = {};
-    ["description", "about", "note"].forEach(function (field) {
-      if (typeof cfg[field] !== "string") return;
-      cfg[field].replace(/\{(\w+)\}/g, function (m, k) { named[k] = true; return m; });
-    });
-    linked = linked.filter(function (n) { return named[n.__key]; });
     var copy = withFilledWords(cfg, vals, where, warn);
     if (typeof copy.description === "string" &&
         /\{\w+\}/.test(copy.description)) {
@@ -2849,8 +2851,11 @@
                                      ["fade_radius", "Fade"]])), key));
           drawn += 1;
         } else if (cfg.shape === "equatorial_ring") {
+          // L-455 (2026-10-18): a ring's words may name its linked numbers
+          // in braces too, each citation beside them, as a plain shell's do.
           var ringTraces = renderEquatorialRing(
-            slug, bodyName, cfg, where + "/" + key, center, basis,
+            slug, bodyName, withShellWords(cfg, where + "/" + key, warn),
+            where + "/" + key, center, basis,
             starRadiusKm, halfRangeAu, warn, starRadiusFigures);
           traces = traces.concat(stampShell(ringTraces, key));
           if (ringTraces.length) drawn += 1;
@@ -3295,12 +3300,15 @@
       if (mpBeyond) mpMarker.visible = "legendonly";
       stampShell([mpBuilt.trace, mpMarker], "magnetopause");
       traces.push(mpMarker);
+      // L-455 (2026-10-18): the about and the note may name the entry's
+      // linked numbers in braces, each citation beside them.
+      var mpW = withShellWords(mp, where + "/magnetopause", warn);
       stampLink([mpBuilt.trace, mpMarker],
-                { info_url: mp.info_url, source: mp.source,
-                  source_note: mp.source_note, about: mp.about,
+                { info_url: mp.info_url, source: mpW.source,
+                  source_note: mpW.source_note, about: mpW.about,
                   detail: panelDetail(mp, mpVals, mpS._model,
                                       where + "/magnetopause", warn),
-                  note: mp.note });
+                  note: mpW.note });
     }
 
     // --- Magnetotail, Slavin et al. (1985) ---------------------------------
@@ -3440,10 +3448,13 @@
           if (tlBeyond) tlMarker.visible = "legendonly";
           stampShell([tlTrace, tlMarker], "magnetotail");
           traces.push(tlMarker);
+          // L-455 (2026-10-18): the about and the note may name the
+          // tail's linked numbers in braces, as a plain shell's words do.
+          var tlW = withShellWords(tl, where + "/magnetotail", warn);
           stampLink([tlTrace, tlMarker],
-                    { info_url: tl.info_url, source: tl.source,
-                      source_note: tl.source_note,
-                      about: tl.about, note: tl.note });
+                    { info_url: tl.info_url, source: tlW.source,
+                      source_note: tlW.source_note,
+                      about: tlW.about, note: tlW.note });
         }
       }
     }

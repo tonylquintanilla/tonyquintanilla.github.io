@@ -169,6 +169,13 @@
 // fixture_hovers_L411_on_da442bf2.json, with exactly those two hovers
 // different from the L330 one, which is left in place, unreferenced.
 // Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5.
+// L-455 (2026-10-18): the low-orbit shells' names no longer type their
+// heights, so their acceptance entries are keyed by the new names. No
+// hover held in the fixture changes, and it is not re-recorded. A
+// description that names a linked number in braces is graded: the
+// sentence, with each number at its served print count by these rules,
+// must be in the hover (the outer edge's "about 2,000 km up").
+// Module updated: October 18, 2026 with Anthropic's Claude Opus 5.5.
 
 "use strict";
 const fs = require("fs");
@@ -456,9 +463,11 @@ const ACCEPTANCE = {
         stop: "100 Earth radii, about 600,000 km (0.004 AU)" },
   // L-330 (Tony, 2026-10-17): the inner edge at ESA's 180 km, a
   // measured row now (EARTH_LEO_LOWER_ALTITUDE_KM), not a declared 200.
-  "Earth: Low Earth Orbit, inner edge (180 km)":
+  // L-455 (2026-10-18): the two names no longer type their heights; the
+  // hovers print them from the rows, as graded here.
+  "Earth: Low Earth Orbit, inner edge":
       { radius: "6,560 km", altitude: "180 km" },
-  "Earth: Low Earth Orbit, outer edge (2,000 km)":
+  "Earth: Low Earth Orbit, outer edge":
       { radius: "8,378.1366 km", altitude: "2,000 km" },
   "Earth: Geostationary Belt (GEO)":
       { radius: "42,164.17 km", altitude: "35,786.03 km" },
@@ -849,6 +858,29 @@ function checkEarthShell(group, key, shell, planetNode, hover, label) {
     }
   }
 
+  // L-455 (2026-10-18): a description may name the shell's linked
+  // numbers in braces. The sentence these rules give, each number at its
+  // served print count, must be in the hover, and its numbers are examined.
+  if (typeof shell.description === "string" && /\{\w+\}/.test(shell.description)) {
+    let ok = true;
+    const said = shell.description.replace(/\{(\w+)\}/g, function (m, k) {
+      const node = shell[k];
+      const c = printCount(node);
+      if (!node || typeof node.value !== "number" || typeof c !== "number") {
+        ok = false; return m;
+      }
+      return fmtCount(node.value, c);
+    });
+    if (!ok) {
+      fail(label + ": its description names a number these rules cannot print: " +
+           shell.description);
+    } else if (hover.split(SOFT_BR).join(" ").indexOf(said) < 0) {
+      fail(label + ": the description reads otherwise than these rules give:\n        " + said);
+    } else {
+      verified.push(said);
+      numbersExamined += numbersIn(said).length;
+    }
+  }
   const left = unaccounted(hover, verified,
     [shell.name, shell.description, shell.note, shell.about,
      shell.radius_note]);

@@ -154,6 +154,9 @@ Module updated: October 16, 2026 with Anthropic's Claude Opus 5.5
 documentation/smoke_typed_facts.js and gates; the Config mirror check,
 the same row as before, now also compares each served number's
 citation with its orrery row's).
+Module updated: October 18, 2026 with Anthropic's Claude Opus 5.5
+(L-455: the "Typed numbers" checker runs documentation/smoke_typed_numbers.js
+and gates: a number in a served word with no row behind it fails, named).
 """
 
 import hashlib
@@ -399,6 +402,20 @@ OFFLINE_CHECKERS = [
     # ruling (L-451) are printed every run and do not fail. Gates.
     ("Typed facts", "node",
      ["documentation/smoke_typed_facts.js"], ".", "TYPED FACTS:", False),
+
+    # L-455 (2026-10-18, Tony: "mask every served number that has a row
+    # behind it and fail on any digit left standing"): every number a
+    # visitor reads in the served words comes from a row. It builds the
+    # Sun and Earth rooms from the config with every served number scaled
+    # and with every served word masked, and fails, naming the room, the
+    # feature and the sentence with the digit in brackets, on a number in
+    # a served word that did not move with a row -- unless it is part of a
+    # name, a citation's locator, or a date whose source is named where it
+    # is read, each list printed in full. Findings on a ledger row are
+    # HELD and printed every run. Its self-test plants a typed number in
+    # each room and takes a date's source away, and must fail. Gates.
+    ("Typed numbers", "node",
+     ["documentation/smoke_typed_numbers.js"], ".", "TYPED NUMBERS:", False),
 
     # L-334 (2026-09-17, piece 1; stage B 2026-09-18): what each room
     # opens on. It requires gallery/arrival.js, applies it to both
