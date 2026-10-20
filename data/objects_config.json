@@ -417,7 +417,7 @@
       "name": "Earth",
       "horizons_id": "399",
       "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "3", "target_label": "the Earth-Moon center of mass", "open_orbit": false, "fetched": "2026-10-17", "words": null, "years": {"value": 1.0, "figures": 6, "text": "1.00000"}, "days": {"value": 365.25, "figures": 5, "text": "365.25"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "3", "target_label": "the Earth-Moon center of mass", "open_orbit": false, "fetched": "2026-10-19", "words": null, "years": {"value": 1.0, "figures": 6, "text": "1.00000"}, "days": {"value": 365.25, "figures": 5, "text": "365.25"}},
       "description": "Our home planet.",
       "info_url": "https://science.nasa.gov/earth/",
       "category": "planet",
