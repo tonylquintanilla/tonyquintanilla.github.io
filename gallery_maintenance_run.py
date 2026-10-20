@@ -157,6 +157,9 @@ citation with its orrery row's).
 Module updated: October 18, 2026 with Anthropic's Claude Opus 5.5
 (L-455: the "Typed numbers" checker runs documentation/smoke_typed_numbers.js
 and gates: a number in a served word with no row behind it fails, named).
+Module updated: October 20, 2026 with Anthropic's Claude Opus 5.5
+(L-410 with L-131: the live check also fetches the Sun's two new stored
+drawings, the corona's and the zodiacal dust cloud's.)
 """
 
 import hashlib
@@ -547,6 +550,10 @@ SERVED_FILES = [
     # adding the exosphere's) and the exosphere's.
     "data/solar-system/drawings/van_allen_belts.json",
     "data/solar-system/drawings/earth_exosphere.json",
+    # L-410 with L-131 (2026-10-20): the Sun room fetches the corona's and
+    # the zodiacal dust cloud's the same way.
+    "data/solar-system/drawings/sun_corona.json",
+    "data/solar-system/drawings/zodiacal_dust.json",
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing

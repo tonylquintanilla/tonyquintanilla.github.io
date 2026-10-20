@@ -61,6 +61,9 @@ Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5
 radii, each dot with its weight and its belt; UNITS and EXTRA_LISTS are
 the one home of what a drawing may carry, and check_drawings.py and the
 cache builder read them.)
+Module updated: October 20, 2026 with Anthropic's Claude Opus 5.5
+(L-410 with L-131: solar radii join the units, for the Sun's corona; the
+zodiacal dust cloud is in AU, like the Hills cloud.)
 """
 
 import json
@@ -75,10 +78,12 @@ DRAWINGS_DIR = os.path.join("data", "drawings")
 SHA_FILE = os.path.join(DRAWINGS_DIR, "pulled_at.sha")
 SCHEMA_WANTED = 1
 NAME_RE = re.compile(r"^[a-z0-9_]+$")
-# The units a stored drawing may be in: AU (the Hills cloud, in the
-# ecliptic of J2000) or Earth radii (Earth's belts, in Earth's body
-# frame, L-330). The renderer draws each in the unit its caller expects.
-UNITS = ("au", "r_earth")
+# The units a stored drawing may be in: AU (the Hills cloud and the
+# zodiacal dust cloud, in the ecliptic of J2000), Earth radii (Earth's
+# belts and exosphere, in Earth's body frame, L-330) or solar radii (the
+# Sun's corona, L-410). The renderer draws each in the unit its caller
+# expects.
+UNITS = ("au", "r_earth", "r_sun")
 # Lists a drawing may carry beside x, y and z, each one number per dot:
 # w, the dot's weight from the drawing's declared fade, and belt, which
 # belt the dot is in (L-330).

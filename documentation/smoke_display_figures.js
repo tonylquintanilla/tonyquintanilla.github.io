@@ -223,9 +223,19 @@ const SOFT_BR = "<br soft>";
 // separately, and its period line is graded against the served row. The
 // fixture before it, fixture_hovers_L322d7_on_d892ed6e.json, is left in
 // place unreferenced, as that one left its own predecessor.
-const FIXTURE_AT = "da442bf2";
+// L-410 with L-131 (2026-10-20): the Sun's inner and outer corona spheres
+// are one fade, the corona, with the streamer band drawn under its legend
+// row, and the zodiacal dust cloud is new, all in Tony's approved words.
+// Re-recorded as fixture_hovers_L410_on_e8f6dd5e.json, with exactly those
+// hovers different from the L411 one, which is left in place,
+// unreferenced: the two spheres' gone, the corona's, the dust cloud's,
+// and the band's, now keyed under the corona's group. Then, on Tony's
+// marks of 2026-10-20, three more: the corona's and the dust cloud's give
+// kilometres beside the distance, and the Roche limit's note no longer
+// names the inner corona.
+const FIXTURE_AT = "e8f6dd5e";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L411_on_da442bf2.json");
+                          "fixture_hovers_L410_on_e8f6dd5e.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

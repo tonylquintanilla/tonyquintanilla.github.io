@@ -165,6 +165,17 @@
  *   by servedSentence(), for the bow shock's and magnetopause's scatter
  *   and the magnetotail's two sizes; earth_geometry.js prints the
  *   rotation period's and the tilt's the same way.)
+ * Module updated: October 20, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-410 with L-131, the Sun's two fades: the stored_fade shape now
+ *   draws dots served in Earth radii, solar radii or AU, by the unit
+ *   the outer edge is served in, and a drawing served frame "ecliptic"
+ *   is drawn as given, not turned to the body's pole. Its hover may be
+ *   the entry's own served `hover`, its numbers filled from served rows
+ *   ({radius}, {radius_km}, {radius_au}); its info marker sits where
+ *   drawing.info_polar_deg says; its i panel prints each citation after
+ *   a label (FADE_SOURCE_LABELS). A member served `drawn_with` joins
+ *   the named member's legend group and shell key, so the streamer band
+ *   is switched with the corona: joinedGroup().)
  */
 
 (function (global) {
@@ -2720,6 +2731,70 @@
   var FADE_DOT_ALPHA = [0.25, 0.9];   // MODE-5 KNOBS: opacity at weight 0, 1
   var FADE_DOT_SIZE = [1.5, 3.0];     // MODE-5 KNOBS: size at weight 0, 1
 
+  /* L-410 (2026-10-19): the shell key and legend group of the member a
+     member is served drawn_with, or the member's own key where it serves
+     none. Retags the traces in place. */
+  function joinedGroup(traceList, params, bodyName, cfg, where, ownKey,
+                       warn) {
+    var withKey = cfg.drawn_with;
+    if (withKey === undefined) { return ownKey; }
+    var host = isDict(params) ? params[withKey] : null;
+    if (typeof withKey !== "string" || !isDict(host) ||
+        typeof host.name !== "string" || !host.name) {
+      warn(where + ": drawn_with names " + JSON.stringify(withKey) +
+           ", which is not a named member of this group -- drawn on its own");
+      return ownKey;
+    }
+    var group = bodyName + ": " + host.name;
+    for (var i = 0; i < traceList.length; i++) {
+      traceList[i].legendgroup = group;
+      if (traceList[i].showlegend === true) {
+        traceList[i].showlegend = false;
+        traceList[i].name = group;
+      }
+      if (Array.isArray(traceList[i].customdata) &&
+          traceList[i].customdata.length === 1 &&
+          typeof traceList[i].customdata[0] === "string") {
+        traceList[i].customdata = [group];
+      }
+    }
+    return withKey;
+  }
+
+  /* L-410 (2026-10-19): the numbers a stored fade's served words name, by
+     key: every linked number on the entry, as served text, and its AU and
+     km as served -- {radius}, {radius_au}, {radius_km}. */
+  function fadeVals(cfg) {
+    var vals = {};
+    for (var k in cfg) {
+      if (!Object.prototype.hasOwnProperty.call(cfg, k)) continue;
+      var n = cfg[k];
+      if (!isDict(n) || typeof n.value !== "number") continue;
+      var s = servedText(n);
+      if (typeof s === "string") vals[k] = s;
+      var a = auServed(inEntry(n, "au"));
+      if (typeof a === "string") vals[k + "_au"] = a;
+      var km = inText(n, "km");
+      if (typeof km === "string") vals[k + "_km"] = km;
+    }
+    return vals;
+  }
+
+  // L-410 (2026-10-19): the Sun's two fades' Source line, each citation
+  // after its label, in this order; a key the entry does not serve is
+  // skipped. One citation per label, so a work two rows share is not
+  // printed twice.
+  var FADE_SOURCE_LABELS = [
+    ["light", "What the light is"],
+    ["density_model", "How dense the gas is"],
+    ["exponent", "How fast the dust thins"],
+    ["tilt", "The middle plane"],
+    ["free_zone", "Near the Sun"],
+    ["jfc_low", "Where the dust comes from"],
+    ["temperature", "The temperature"],
+    ["radius", "Where the dots stop"]
+  ];
+
   function renderStoredFade(bodyName, cfg, where, center, basis,
                             bodyRadiusKm, halfRangeAu, warn) {
     var none = { traces: [], words: cfg };
@@ -2728,18 +2803,25 @@
       warn(where + ": names no stored drawing -- not drawn");
       return none;
     }
-    var stored = servedDots(cfg.drawing, where + "/drawing", warn, "r_earth");
+    // L-410 (2026-10-19): the dots are in the unit the outer edge is
+    // served in: Earth radii (the exosphere), solar radii (the corona) or
+    // AU (the dust cloud). A drawing served frame "ecliptic" is already
+    // in the orrery's drawing frame and is not turned to the body's pole.
+    var unit = (isDict(cfg.radius) && typeof cfg.radius.unit === "string")
+      ? cfg.radius.unit : "r_earth";
+    var dotBasis = (cfg.drawing.frame === "ecliptic") ? null : basis;
+    var stored = servedDots(cfg.drawing, where + "/drawing", warn, unit);
     if (stored === null) { return none; }
     if (!Array.isArray(stored.w)) {
       warn(where + ": the stored drawing gives no weight for its dots -- " +
            "not drawn");
       return none;
     }
-    if (!(bodyRadiusKm > 0) || !(KM_PER_AU > 0)) {
+    if (unit !== "au" && (!(bodyRadiusKm > 0) || !(KM_PER_AU > 0))) {
       warn(where + ": no served body radius to scale the dots by -- not drawn");
       return none;
     }
-    var outerR = measured(cfg.radius, "r_earth", where + "/radius", warn);
+    var outerR = measured(cfg.radius, unit, where + "/radius", warn);
     if (outerR === null) { return none; }
     var color = cfg.color || "rgb(200, 200, 255)";
     var m = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(color);
@@ -2748,7 +2830,7 @@
            " is not rgb(r, g, b), so its dots cannot be shaded -- not drawn");
       return none;
     }
-    var unitAu = bodyRadiusKm / KM_PER_AU;
+    var unitAu = (unit === "au") ? 1 : bodyRadiusKm / KM_PER_AU;
     var pts = { x: [], y: [], z: [] }, colors = [], sizes = [];
     for (var k = 0; k < stored.x.length; k++) {
       var w = Math.max(0, Math.min(1, stored.w[k]));
@@ -2760,25 +2842,41 @@
                    w).toFixed(3) + ")");
       sizes.push(FADE_DOT_SIZE[0] + (FADE_DOT_SIZE[1] - FADE_DOT_SIZE[0]) * w);
     }
-    var built = geometryTrace(pts, center, basis, label, colors, 1, sizes);
+    var built = geometryTrace(pts, center, dotBasis, label, colors, 1, sizes);
 
-    // The hover: the description, then each edge's own served sentence,
-    // its numbers printed from that edge's served row.
-    function edge(node) {
-      return { value: servedText(node), km: inText(node, "km"),
-               au: auServed(inEntry(node, "au")) };
+    var hover, vals = null;
+    if (typeof cfg.hover === "string") {
+      // L-410 (2026-10-19): the Sun's fades serve their hover whole, in
+      // the approved words, its numbers in braces from the entry's own
+      // linked rows.
+      vals = fadeVals(cfg);
+      hover = label + "<br><br>" +
+        servedHover(cfg.hover, vals, where + "/hover", warn);
+    } else {
+      // The hover: the description, then each edge's own served sentence,
+      // its numbers printed from that edge's served row.
+      var edge = function (node) {
+        return { value: servedText(node), km: inText(node, "km"),
+                 au: auServed(inEntry(node, "au")) };
+      };
+      hover = label + "<br><br>" + descLine(cfg) +
+        servedHover(isDict(cfg.inner_radius) ? cfg.inner_radius.hover_line : null,
+                    edge(cfg.inner_radius), where + "/inner_radius/hover_line",
+                    warn) + "<br>" +
+        servedHover(cfg.radius.hover_line, edge(cfg.radius),
+                    where + "/radius/hover_line", warn);
     }
-    var hover = label + "<br><br>" + descLine(cfg) +
-      servedHover(isDict(cfg.inner_radius) ? cfg.inner_radius.hover_line : null,
-                  edge(cfg.inner_radius), where + "/inner_radius/hover_line",
-                  warn) + "<br>" +
-      servedHover(cfg.radius.hover_line, edge(cfg.radius),
-                  where + "/radius/hover_line", warn);
     hover = withTail(hover);
-    // One info marker, over the pole at the outer edge, where the sphere
-    // shell's sat until 2026-10-17.
+    // One info marker at the outer edge: over the pole, where the
+    // exosphere's sphere shell's sat until 2026-10-17, or stepped off it
+    // by the drawing's served info_polar_deg (L-410: the corona's, so it
+    // does not sit on the Alfven surface's marker; the dust cloud's, in
+    // its middle plane, where the cloud is).
     var outerAu = outerR * unitAu;
-    var p = applyBasis(basis, 0, 0, outerAu * 1.05);
+    var polar = (typeof cfg.drawing.info_polar_deg === "number")
+      ? cfg.drawing.info_polar_deg * Math.PI / 180 : 0;
+    var p = applyBasis(dotBasis, outerAu * 1.05 * Math.sin(polar), 0,
+                       outerAu * 1.05 * Math.cos(polar));
     var marker = infoMarker(center[0] + p[0], center[1] + p[1],
                             center[2] + p[2], color, hover, label,
                             cfg.info_border);
@@ -2786,6 +2884,13 @@
     if (typeof halfRangeAu === "number" && halfRangeAu > 0 &&
         outerAu > halfRangeAu) {
       for (var t = 0; t < traces.length; t++) traces[t].visible = "legendonly";
+    }
+    if (vals !== null) {
+      // L-410: the about and the note, their braces filled from the same
+      // rows; each citation the words rest on, after its label.
+      return { traces: traces,
+               words: withGatheredSource(withFilledWords(cfg, vals, where, warn),
+                                         FADE_SOURCE_LABELS) };
     }
     // The i panel: the about and the note, their braces filled from
     // served rows, and each edge's and number's citation.
@@ -2844,11 +2949,20 @@
       // rather than in a key of its own, and declares its shape.
       if (cfg.shape !== undefined) {
         if (cfg.shape === "streamer_band") {
-          traces = traces.concat(stampShell(stampLink(renderStreamerBand(
+          var bandTraces = stampLink(renderStreamerBand(
             slug, bodyName, cfg, where + "/" + key, center, basis,
             starRadiusKm, warn, starRadiusFigures),
             withGatheredSource(cfg, [["cusp_radius", "Cusp"],
-                                     ["fade_radius", "Fade"]])), key));
+                                     ["fade_radius", "Fade"]]));
+          // L-410 (Tony, 2026-10-19): the corona is ONE feature, its fade
+          // and this band, one name, one tick, one legend row. A member
+          // served drawn_with names the member it is drawn with: its
+          // traces join that member's legend group, show no row of their
+          // own, and carry its shell key, so the drawer and the arrival
+          // treat the two as one.
+          var bandKey = joinedGroup(bandTraces, params, bodyName, cfg,
+                                    where + "/" + key, key, warn);
+          traces = traces.concat(stampShell(bandTraces, bandKey));
           drawn += 1;
         } else if (cfg.shape === "equatorial_ring") {
           // L-455 (2026-10-18): a ring's words may name its linked numbers

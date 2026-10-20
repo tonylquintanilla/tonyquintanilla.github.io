@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-10-20T13:45:40.978563+00:00",
+  "generated": "2026-10-20T19:16:20.582363+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2461246.1045391303,
-    "end_jd": 2461422.042242781
+    "start_jd": 2461246.334164174,
+    "end_jd": 2461422.2718678243
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -249,6 +249,7 @@
           "streamer_belt": {
             "name": "Streamer Belt (helmet and stalk)",
             "shape": "streamer_band",
+            "drawn_with": "corona",
             "description": "The brightest part of the Sun's outer atmosphere, seen at a total eclipse as the pearly white halo, shaped by the Sun's magnetic field.",
             "about": "A streamer is two things stacked. The helmet, a dome of closed magnetic loops, rises only a few solar radii. Above its cusp the field opens and the solar wind draws the gas out into a long thin stalk. The band drawn here is one object with both parts: wide and dense at the base, pinched at the cusp, then thinning until it dissolves into the solar wind. It has no drawn outer edge because there is no edge: what the eye sees at an eclipse is a boundary of brightness, not a surface.",
             "info_url": "https://en.wikipedia.org/wiki/Helmet_streamer",
@@ -497,52 +498,6 @@
             "orrery_constant": "constants_new.py::CHROMOSPHERE_TOP_KM",
             "note": "Drawn at its true depth, not thickened to be seen: at any scale that also shows the corona it sits on the photosphere."
           },
-          "inner_corona": {
-            "name": "Inner Corona",
-            "radius": {
-              "value": 3,
-              "unit": "r_sun",
-              "in": {
-                "au": {
-                  "value": 0.013951401782886473,
-                  "figures": "exact",
-                  "prints": 1
-                },
-                "km": {
-                  "value": 2087100.0,
-                  "figures": "exact",
-                  "prints": 1
-                },
-                "pc": {
-                  "value": 6.763830454999345e-08,
-                  "figures": "exact",
-                  "prints": 1
-                },
-                "r_earth": {
-                  "value": 327.22723436183543,
-                  "figures": "exact",
-                  "prints": 1
-                },
-                "r_sun": {
-                  "value": 3.0,
-                  "figures": "exact",
-                  "prints": 1
-                }
-              },
-              "prints": 1,
-              "figures": "exact"
-            },
-            "description": "The lowest part of the Sun's outer atmosphere: a thin gas at millions of degrees, shaped by the Sun's magnetic field.",
-            "about": "The inner corona is the part of the corona nearest the surface. It is thin, far thinner than the photosphere, and yet at one to three million kelvin it is much hotter, a puzzle known as the coronal heating problem. The magnetic field rules it: closed loops trap glowing gas in bright arcs, open regions called coronal holes let gas escape as the solar wind, and streamers reach outward. Because it is so faint it is seen directly only at a total eclipse or with special instruments.",
-            "info_url": "https://en.wikipedia.org/wiki/Solar_corona",
-            "color": "rgb(0, 0, 255)",
-            "opacity": 0.45,
-            "n_points": 20,
-            "marker_size": 3.0,
-            "source": "Lamy, Gilardy, Llebaria, Quemerais & Ernandez, \"Coronal Photopolarimetry with the LASCO-C3 Coronagraph over 24 Years [1996-2019]\", Solar Physics, arXiv:2009.04820 -- Sec. 1: the inner solar corona, \"defined here as extending to ~3 R_sun from the center of the solar disk\".",
-            "source_note": "The inner corona has no sharp edge; the shell is drawn where the cited work takes it to end.",
-            "orrery_constant": "constants_new.py::INNER_CORONA_RADII"
-          },
           "roche_limit": {
             "name": "Roche Limit (Comets)",
             "radius": {
@@ -612,7 +567,7 @@
               "orrery_constant": "constants_new.py::ROCHE_LIMIT_DRAWN_RADII",
               "source": "Murray & Dermott, \"Solar System Dynamics\" (1999), Sec. 4.6"
             },
-            "radius_note": "Known only roughly, because comets differ in density. It is drawn where the formula's middle answer falls; the true limit could lie inside or outside the inner corona.",
+            "radius_note": "Known only roughly, because comets differ in density. It is drawn where the formula's middle answer falls; the true limit could lie a little nearer the Sun or farther out.",
             "description": "The distance inside which the Sun's tides would pull a loosely held comet apart.",
             "about": "Inside the Roche limit the difference in the Sun's pull across a body outweighs the body's own gravity. The limit drawn here is for a comet held together only by its own gravity, at a typical comet density. It is not a hard wall: the strength of the ice and rock can hold a nucleus together well inside it, and several sungrazing comets have survived far closer than this line before breaking up or escaping.",
             "info_url": "https://en.wikipedia.org/wiki/Roche_limit",
@@ -736,50 +691,231 @@
             "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
             "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
           },
-          "outer_corona": {
-            "name": "Outer Corona",
+          "corona": {
+            "shape": "stored_fade",
+            "drawing": {
+              "_declared": "Not a number: the name of the stored drawing the corona's fade is, data/solar-system/drawings/sun_corona.json. The orrery places the dots (sun_corona_sampler.py, from the rows of Mann et al. (2023)'s density model) and the page draws them as given (L-410, Tony's rulings of 2026-10-19; the stored-drawing rule of L-421). info_polar_deg is where the info marker sits, a drawing choice: 20 degrees off the pole at the Alfven surface, so it does not sit on that shell's own marker.",
+              "dots": "sun_corona",
+              "info_polar_deg": 20
+            },
+            "name": "Corona",
+            "description": "The Sun's outer atmosphere: a very thin gas that thins out with height until it becomes the solar wind.",
+            "hover": "The Sun's outer atmosphere, a very thin gas of electrons and ions. It has no edge. It thins out with height, and at the Alfven surface, about {radius} solar radii ({radius_km} km, {radius_au} AU) from the Sun's center, it becomes the solar wind.\nEach dot's place shows how dense the gas is; its brightness shows how much sunlight reaches it.\nThe streamer belt, drawn with it, is the part of the corona where the Sun's magnetic field closes in loops.",
+            "about": "The corona's glow, seen at a total eclipse, is sunlight scattered by its free electrons, called the K-corona (Boe and others, 2021). How dense the gas is at each height comes from a model of the solar wind from the Sun's surface out past Earth's orbit (Mann and others, 2023). The dots follow it: crowded at the surface, sparse by the Alfven surface. Farther out a second, fainter light takes over, sunlight scattered by dust, the F-corona; that dust is drawn as its own cloud. The corona is very hot, up to about {temperature} kelvin, far hotter than the surface below it (NASA).",
+            "note": "The corona is drawn in two parts. The dots show how dense its gas is at each height, on average, drawn the same in every direction. The streamer belt, drawn as a band, shows the brightest part of the corona, where the Sun's magnetic field closes in loops. The dots stop at the Alfven surface, the outer edge of the Sun's atmosphere, where the gas becomes the solar wind.",
+            "info_url": "https://en.wikipedia.org/wiki/Solar_corona",
+            "color": "rgb(255, 225, 150)",
             "radius": {
-              "value": 50,
+              "value": 19.7,
               "unit": "r_sun",
               "in": {
                 "au": {
-                  "value": 0.2325233630481079,
-                  "figures": "exact",
-                  "prints": 2
+                  "value": 0.092,
+                  "figures": 2,
+                  "prints": null
                 },
                 "km": {
-                  "value": 34785000.0,
-                  "figures": "exact",
-                  "prints": 2
+                  "value": 13700000.0,
+                  "figures": 3,
+                  "prints": null
                 },
                 "pc": {
-                  "value": 1.1273050758332243e-06,
-                  "figures": "exact",
-                  "prints": 3
+                  "value": 4.44e-07,
+                  "figures": 3,
+                  "prints": null
                 },
                 "r_earth": {
-                  "value": 5453.787239363924,
-                  "figures": "exact",
-                  "prints": 2
+                  "value": 2150.0,
+                  "figures": 3,
+                  "prints": null
                 },
                 "r_sun": {
-                  "value": 50.0,
-                  "figures": "exact",
-                  "prints": 2
+                  "value": 19.7,
+                  "figures": 3,
+                  "prints": null
                 }
               },
-              "prints": 2,
-              "figures": "exact"
+              "figures": 3,
+              "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
+              "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
             },
-            "description": "The faint outer reach of the Sun's atmosphere, where sunlight scattered by dust gives a soft glow far beyond the streamers.",
-            "about": "At this distance the corona is extremely thin. Sunlight scattered by dust, the F-corona, outshines the light scattered by electrons that dominates nearer the Sun. By here the gas has long since become the solar wind; the shell marks the extent of the faint glow rather than a physical edge.",
-            "info_url": "https://en.wikipedia.org/wiki/Solar_corona",
-            "color": "rgb(25, 25, 112)",
-            "opacity": 0.5,
-            "n_points": 20,
-            "marker_size": 3.5,
-            "radius_note": "A boundary chosen for the drawing; the faint outer corona has no sharp edge.",
-            "orrery_constant": "constants_new.py::OUTER_CORONA_RADII"
+            "temperature": {
+              "value": 2000000.0,
+              "unit": "k",
+              "figures": 1,
+              "source": "NASA Science, \"Sun: Facts\", https://science.nasa.gov/sun/facts/ -- the corona reaches up to 2 million degrees Celsius, \"much, much hotter than the photosphere\".",
+              "orrery_constant": "constants_new.py::CORONA_TEMPERATURE_MAX_K"
+            },
+            "density_model": {
+              "value": 1180000.0,
+              "unit": "k",
+              "figures": 3,
+              "source": "Mann, Warmuth, Vocks and Rouillard (2023), \"A heliospheric density and magnetic field model\", A&A 679, A64, https://www.aanda.org/articles/aa/full_html/2023/11/aa45050-22/aa45050-22.html -- Sect. 3: the solar wind's density from Parker's equation (eqs. 9 and 10), \"from the bottom of the corona up to a heliocentric distance of 250 solar radii\", \"in the sense of a long-term average global model\"; \"point M is given by Ce = 9.127 x 10^34 s^-1 and T = 1.18 MK.\"",
+              "orrery_constant": "constants_new.py::CORONA_MODEL_TEMPERATURE_K"
+            },
+            "light": {
+              "_declared": "No number: the source of the panel's first sentence, what the corona's glow is.",
+              "source": "Boe, Habbal, Downs and Druckmuller (2021), \"The Color and Brightness of the F-Corona Inferred from the 2019 July 2 Total Solar Eclipse\", ApJ, doi 10.3847/1538-4357/abea79, https://arxiv.org/abs/2103.02113 -- sec. 1: the K-corona is \"Thompson scattering of photospheric light by free electrons throughout the corona\"; the F-corona is \"dust throughout the solar system which scatters and/or diffracts photospheric light\", \"the component of Zodiacal light that has the smallest elongation angles from Sun center\"."
+            }
+          },
+          "zodiacal_dust": {
+            "shape": "stored_fade",
+            "drawing": {
+              "_declared": "Not a number: the name of the stored drawing the zodiacal dust cloud is, data/solar-system/drawings/zodiacal_dust.json. The orrery places the dots (zodiacal_dust_sampler.py, from the rows of Kelsall et al. (1998)'s model and Lamy et al. (2022)'s two edges) and the page draws them as given (L-131, Tony's rulings of 2026-10-19). The dots are in the ecliptic frame already, so the page does not turn them to the Sun's pole. info_polar_deg puts the info marker in the cloud's middle plane, a drawing choice.",
+              "dots": "zodiacal_dust",
+              "frame": "ecliptic",
+              "info_polar_deg": 90
+            },
+            "name": "Zodiacal Dust Cloud (F-corona)",
+            "description": "Dust spread through the inner solar system in a flattened cloud. Near the Sun its scattered sunlight is the F-corona.",
+            "hover": "Dust spread through the inner solar system, flattened toward the plane the planets move in. It thins with distance from the Sun and has no edge; the drawing stops at {radius} AU ({radius_km} km).\nEach dot's place shows how dense the dust is; its brightness shows how much sunlight reaches it.\nNear the Sun this dust is seen as the F-corona.",
+            "about": "This dust scatters sunlight. Near the Sun that light is the F-corona, the part of the zodiacal light closest to the Sun (Boe and others, 2021). The cloud's shape follows the model fitted to the COBE satellite's infrared sky: its density falls with distance from the Sun to the power {exponent}, and it is flattened toward a middle plane tilted {tilt} degrees to Earth's orbit (Kelsall and others, 1998). Close to the Sun the dust thins from about {depletion} solar radii inward and is gone by about {free_zone}, the dust-free zone (Lamy and others, 2022); Parker Solar Probe saw the first signs of it (Howard and others, 2019). There, the cloud's middle plane is also warped (Lamy and others, 2022), which the drawing does not show. Judged by its infrared glow, most of this dust comes from comets whose orbits Jupiter shapes, the Jupiter-family comets: {jfc_low} to {jfc_high} percent. Asteroids give less than {asteroid_max} percent (Nesvorny and others, 2010).",
+            "note": "The cloud has no edge. The dots stop at {radius} AU, where the COBE model stops adding up its light. Only the model's smooth cloud is drawn, not the narrow dust bands it also includes.",
+            "info_url": "https://en.wikipedia.org/wiki/Interplanetary_dust_cloud",
+            "color": "rgb(215, 190, 150)",
+            "radius": {
+              "value": 5.2,
+              "unit": "au",
+              "in": {
+                "au": {
+                  "value": 5.2,
+                  "figures": 2,
+                  "prints": null
+                },
+                "km": {
+                  "value": 780000000.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 2.5e-05,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 122000.0,
+                  "figures": 3,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 1120.0,
+                  "figures": 3,
+                  "prints": null
+                }
+              },
+              "figures": 2,
+              "source": "Kelsall, Weiland, Franz, Reach, Arendt, Dwek, Freudenreich, Hauser, Moseley, Odegard, Silverberg and Wright (1998), \"The COBE Diffuse Infrared Background Experiment Search for the Cosmic Infrared Background: II. Model of the Interplanetary Dust Cloud\", ApJ 508, 44, https://arxiv.org/abs/astro-ph/9806250 -- Sect. 4.2: \"an outer radial cutoff of 5.2 AU from the Sun, which roughly corresponds to the orbit of Jupiter.\"",
+              "orrery_constant": "constants_new.py::ZODIACAL_DUST_OUTER_AU"
+            },
+            "exponent": {
+              "value": 1.34,
+              "unit": "falloff_exponent",
+              "figures": 3,
+              "uncertainty": "0.022",
+              "source": "Kelsall, Weiland, Franz, Reach, Arendt, Dwek, Freudenreich, Hauser, Moseley, Odegard, Silverberg and Wright (1998), \"The COBE Diffuse Infrared Background Experiment Search for the Cosmic Infrared Background: II. Model of the Interplanetary Dust Cloud\", ApJ 508, 44, https://arxiv.org/abs/astro-ph/9806250 -- Sect. 4.2, eqs. 6 and 7: the smooth cloud's density, n0 R^-alpha f(zeta), with f(zeta) = exp(-beta g^gamma); Table 1, \"Density and Geometrical Parameters of the IPD Model\": alpha, the radial power-law exponent, 1.34.",
+              "orrery_constant": "constants_new.py::ZODIACAL_DUST_DENSITY_EXPONENT"
+            },
+            "tilt": {
+              "value": 2.03,
+              "unit": "deg",
+              "figures": 3,
+              "uncertainty": "0.017",
+              "source": "Kelsall, Weiland, Franz, Reach, Arendt, Dwek, Freudenreich, Hauser, Moseley, Odegard, Silverberg and Wright (1998), \"The COBE Diffuse Infrared Background Experiment Search for the Cosmic Infrared Background: II. Model of the Interplanetary Dust Cloud\", ApJ 508, 44, https://arxiv.org/abs/astro-ph/9806250 -- Sect. 4.2, eqs. 6 and 7, the smooth cloud; Table 1, \"Density and Geometrical Parameters of the IPD Model\": i, the inclination of the midplane, 2.03 deg; the model is computed in heliocentric ecliptic coordinates (Sect. 4.2).",
+              "orrery_constant": "constants_new.py::ZODIACAL_DUST_TILT_DEG"
+            },
+            "depletion": {
+              "value": 19.0,
+              "unit": "r_sun",
+              "in": {
+                "au": {
+                  "value": 0.09,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 13000000.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 4.3e-07,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 2100.0,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 19.0,
+                  "figures": 2,
+                  "prints": null
+                }
+              },
+              "figures": 2,
+              "source": "Lamy, Gilardy and Llebaria (2022), \"Observations of the Solar F-corona from Space\", Space Sci. Rev., doi 10.1007/s11214-022-00918-y, https://arxiv.org/abs/2202.11533 -- abstract: \"The outer border of the depletion zone where interplanetary dust particles start to be affected by sublimation appears well constrained at 19Rsun. This zone extends down to 5Rsun, thus defining the boundary of the dust-free zone\".",
+              "orrery_constant": "constants_new.py::DUST_DEPLETION_OUTER_RADII"
+            },
+            "free_zone": {
+              "value": 5.0,
+              "unit": "r_sun",
+              "in": {
+                "au": {
+                  "value": 0.02,
+                  "figures": 1,
+                  "prints": null
+                },
+                "km": {
+                  "value": 3000000.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "pc": {
+                  "value": 1.1e-07,
+                  "figures": 2,
+                  "prints": null
+                },
+                "r_earth": {
+                  "value": 500.0,
+                  "figures": 1,
+                  "prints": null
+                },
+                "r_sun": {
+                  "value": 5.0,
+                  "figures": 1,
+                  "prints": null
+                }
+              },
+              "figures": 1,
+              "source": "Lamy, Gilardy and Llebaria (2022), \"Observations of the Solar F-corona from Space\", Space Sci. Rev., doi 10.1007/s11214-022-00918-y, https://arxiv.org/abs/2202.11533 -- abstract: \"The outer border of the depletion zone where interplanetary dust particles start to be affected by sublimation appears well constrained at 19Rsun. This zone extends down to 5Rsun, thus defining the boundary of the dust-free zone\". Parker Solar Probe's first signs of it: Howard, Vourlidas, Bothmer et al. (2019), \"Near-Sun observations of an F-corona decrease and K-corona fine structure\", Nature 576, 232-236, https://www.nature.com/articles/s41586-019-1807-x -- abstract: the F-corona's intensity falls at short elongations, \"suggestive of the long-sought dust-free zone\".",
+              "orrery_constant": "constants_new.py::DUST_FREE_ZONE_RADII"
+            },
+            "jfc_low": {
+              "value": 85.0,
+              "unit": "percent",
+              "figures": 2,
+              "source": "Nesvorny, Jenniskens, Levison, Bottke and Vokrouhlicky (2010), \"Cometary Origin of the Zodiacal Cloud and Carbonaceous Micrometeorites\", ApJ 713, 816, https://arxiv.org/abs/0909.4322 -- abstract: \"We find that 85-95% of the observed mid-infrared emission is produced by particles from the Jupiter-family comets (JFCs) and <10% by dust from long period comets. Asteroidal dust is found to be present at <10%.\"",
+              "orrery_constant": "constants_new.py::ZODIACAL_DUST_JFC_LOW_PERCENT"
+            },
+            "jfc_high": {
+              "value": 95.0,
+              "unit": "percent",
+              "figures": 2,
+              "source": "Nesvorny, Jenniskens, Levison, Bottke and Vokrouhlicky (2010), \"Cometary Origin of the Zodiacal Cloud and Carbonaceous Micrometeorites\", ApJ 713, 816, https://arxiv.org/abs/0909.4322 -- abstract: \"We find that 85-95% of the observed mid-infrared emission is produced by particles from the Jupiter-family comets (JFCs) and <10% by dust from long period comets. Asteroidal dust is found to be present at <10%.\"",
+              "orrery_constant": "constants_new.py::ZODIACAL_DUST_JFC_HIGH_PERCENT"
+            },
+            "asteroid_max": {
+              "value": 10.0,
+              "unit": "percent",
+              "figures": 1,
+              "source": "Nesvorny, Jenniskens, Levison, Bottke and Vokrouhlicky (2010), \"Cometary Origin of the Zodiacal Cloud and Carbonaceous Micrometeorites\", ApJ 713, 816, https://arxiv.org/abs/0909.4322 -- abstract: \"We find that 85-95% of the observed mid-infrared emission is produced by particles from the Jupiter-family comets (JFCs) and <10% by dust from long period comets. Asteroidal dust is found to be present at <10%.\"",
+              "orrery_constant": "constants_new.py::ZODIACAL_DUST_ASTEROID_MAX_PERCENT"
+            },
+            "light": {
+              "_declared": "No number: the source of the panel's first sentence, what the F-corona is.",
+              "source": "Boe, Habbal, Downs and Druckmuller (2021), \"The Color and Brightness of the F-Corona Inferred from the 2019 July 2 Total Solar Eclipse\", ApJ, doi 10.3847/1538-4357/abea79, https://arxiv.org/abs/2103.02113 -- sec. 1: the F-corona is \"dust throughout the solar system which scatters and/or diffracts photospheric light\", \"the component of Zodiacal light that has the smallest elongation angles from Sun center\"."
+            }
           },
           "sun_radius": {
             "value": 695700.0,
@@ -1931,7 +2067,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:21.301501+00:00"
+          "retrieved": "2026-10-20T19:16:18.018110+00:00"
         }
       },
       "positions": null,
@@ -4519,14 +4655,14 @@
           "observer": "@sun",
           "quantity": "32",
           "epoch_jd_ut": 2461333.5,
-          "retrieved": "2026-10-20T13:45:40.978314+00:00"
+          "retrieved": "2026-10-20T19:16:20.581914+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
           "epoch_jd": 2461333.5,
-          "retrieved": "2026-10-20T13:45:40.978314+00:00"
+          "retrieved": "2026-10-20T19:16:20.581914+00:00"
         }
       }
     },
@@ -4553,7 +4689,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:22.433860+00:00"
+          "retrieved": "2026-10-20T19:16:18.206178+00:00"
         }
       },
       "positions": null,
@@ -4670,7 +4806,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:24.016738+00:00"
+          "retrieved": "2026-10-20T19:16:18.429869+00:00"
         }
       },
       "positions": null,
@@ -4771,7 +4907,7 @@
           "query_target": "699",
           "center": "@0",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:24.370787+00:00"
+          "retrieved": "2026-10-20T19:16:18.476523+00:00"
         }
       }
     },
@@ -4798,7 +4934,7 @@
           "query_target": "199",
           "center": "@sun",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:25.219303+00:00"
+          "retrieved": "2026-10-20T19:16:18.588394+00:00"
         }
       },
       "positions": null,
@@ -4861,7 +4997,7 @@
           "query_target": "299",
           "center": "@sun",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:26.627463+00:00"
+          "retrieved": "2026-10-20T19:16:18.839352+00:00"
         }
       },
       "positions": null,
@@ -4924,7 +5060,7 @@
           "query_target": "499",
           "center": "@sun",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:27.773341+00:00"
+          "retrieved": "2026-10-20T19:16:18.960141+00:00"
         }
       },
       "positions": null,
@@ -4987,7 +5123,7 @@
           "query_target": "799",
           "center": "@sun",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:29.157711+00:00"
+          "retrieved": "2026-10-20T19:16:19.121004+00:00"
         }
       },
       "positions": null,
@@ -5042,7 +5178,7 @@
           "query_target": "799",
           "center": "@0",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:29.462685+00:00"
+          "retrieved": "2026-10-20T19:16:19.151835+00:00"
         }
       }
     },
@@ -5069,7 +5205,7 @@
           "query_target": "899",
           "center": "@sun",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:30.453655+00:00"
+          "retrieved": "2026-10-20T19:16:19.254694+00:00"
         }
       },
       "positions": null,
@@ -5124,7 +5260,7 @@
           "query_target": "899",
           "center": "@0",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:30.770938+00:00"
+          "retrieved": "2026-10-20T19:16:19.283458+00:00"
         }
       }
     },
@@ -5151,7 +5287,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:31.409222+00:00"
+          "retrieved": "2026-10-20T19:16:19.361776+00:00"
         }
       },
       "positions": null,
@@ -5214,7 +5350,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:32.485679+00:00"
+          "retrieved": "2026-10-20T19:16:19.476061+00:00"
         }
       },
       "positions": null,
@@ -5277,7 +5413,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:33.632857+00:00"
+          "retrieved": "2026-10-20T19:16:19.609327+00:00"
         }
       },
       "positions": null,
@@ -5340,7 +5476,7 @@
           "query_target": "9",
           "center": "@sun",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:34.710052+00:00"
+          "retrieved": "2026-10-20T19:16:19.716712+00:00"
         }
       },
       "positions": null,
@@ -5403,7 +5539,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:35.800226+00:00"
+          "retrieved": "2026-10-20T19:16:19.830163+00:00"
         }
       },
       "positions": null,
@@ -5466,7 +5602,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:36.750528+00:00"
+          "retrieved": "2026-10-20T19:16:19.972398+00:00"
         }
       },
       "positions": null,
@@ -5529,7 +5665,7 @@
           "query_target": "2004 MN4",
           "center": "@sun",
           "epoch": 2461333.5,
-          "retrieved": "2026-10-20T13:45:38.056218+00:00"
+          "retrieved": "2026-10-20T19:16:20.106510+00:00"
         }
       },
       "positions": null,
@@ -5626,7 +5762,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2460240.0285326503,
-          "retrieved": "2026-10-20T13:45:39.414394+00:00"
+          "retrieved": "2026-10-20T19:16:20.306905+00:00"
         }
       },
       "positions": null,
@@ -5694,7 +5830,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2446469.9736161465,
-          "retrieved": "2026-10-20T13:45:39.977581+00:00"
+          "retrieved": "2026-10-20T19:16:20.476041+00:00"
         }
       },
       "positions": null,
@@ -5742,7 +5878,7 @@
   },
   "frame_constants": {
     "export": "data/constants_export.json",
-    "orrery_sha": "905c7590b14944febdd03d35439f4ecc55ac804a",
+    "orrery_sha": "fcd191e91e56508223fe04fe61fb8f0a09252eee",
     "rows": {
       "KM_PER_AU": {
         "value": 149597870.7,

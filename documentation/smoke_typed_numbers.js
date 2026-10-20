@@ -82,6 +82,10 @@ const NAMES = [
 // points into a work; it is not a fact about nature.
 const LOCATORS = [
   [/\(\d{4}[a-z]?\)/g, "an author's year in brackets, as (1998)"],
+  // L-410 (2026-10-20): the citation in words Tony approved for the Sun's
+  // fades names the authors and the year together in the brackets.
+  [/\b(?:and others|et al\.?),\s*\d{4}[a-z]?\)/g,
+   "an author's year after the names in brackets, as (Boe and others, 2021)"],
   [/\b(?:eqs?|secs?|Figs?|Table|p|pp)\.?\s*\d+(?:\.\d+)*(?:\s*(?:-|to|and|with eq\.?)\s*\d+(?:\.\d+)*)*/g,
    "an equation, section, figure, table or page number"],
   [/\b\d+(?:\([A-Z]?\d+\))?:\d+(?:-\d+)?\b/g,

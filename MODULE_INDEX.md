@@ -10,9 +10,9 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 51  
-**Total Lines of Code (non-blank):** 25,556  
-**Total Public Functions/Classes:** 405
+**Total Python Files:** 52  
+**Total Lines of Code (non-blank):** 25,820  
+**Total Public Functions/Classes:** 409
 
 ## Classification Coverage
 
@@ -101,7 +101,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `add_docstrings.py` | Two related tools for module-level docstrings. (1,210 lines) |
 | `check_cache_in_step.py` | - the served cache holds the same objects and the same shells as data/objects_config.json. (328 lines) |
 | `check_constants_links.py` | - two checks over the gallery's links into the orrery's store, sharing the mirror's own reading so one cause prints one explanation. (310 lines) |
-| `check_drawings.py` | - every stored drawing the served config names is pulled, served, and the drawing it claims to be. (391 lines) |
+| `check_drawings.py` | - every stored drawing the served config names is pulled, served, and the drawing it claims to be. (462 lines) |
 | `check_horizons_confirmations.py` | - every object the website takes from the orrery's list has been confirmed against JPL Horizons, recently, and has not changed since; and each period it prints from JPL too (L-395, L-431). (244 lines) |
 | `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (385 lines) |
 | `debug_encke_tp.py` | - run the EXACT same live Horizons query gallery_cache_builder.py's fetch_solution_tp() makes for Encke, and print the complete raw response text. (61 lines) |
@@ -109,7 +109,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,211 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,322 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,329 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (525 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
@@ -117,8 +117,9 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (808 lines) |
 | `mirror_objects.py` | - write each served object's identity, description and NASA link into data/objects_config.json from the orrery's objects export, and name every difference it finds. (247 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (837 lines) |
+| `patch_L410_7_sun_fades_website_20261020.py` | - the Sun's two fades, the website: the corona drawn as one fade of dots from the Sun's surface to the Alfven surface, switched with the streamer belt; the zodiacal dust cloud drawn as dots out to 5.2 AU; both from the orrery's stored drawings, in Tony'... (178 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (146 lines) |
-| `pull_drawings.py` | - copy the orrery's stored drawings into the gallery, and record the SHA they came from. (193 lines) |
+| `pull_drawings.py` | - copy the orrery's stored drawings into the gallery, and record the SHA they came from. (198 lines) |
 | `pull_objects_export.py` | - copy the orrery's objects export into the gallery, and record the SHA it came from. (105 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
@@ -137,7 +138,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (690 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
-| `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (747 lines) |
+| `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (750 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (398 lines) |
 | `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (735 lines) |

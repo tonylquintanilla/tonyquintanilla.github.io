@@ -123,6 +123,9 @@ Updated October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 3:
 shell's `source` is the orrery's and is refused here. Part 2:
 SERVED_WORDS_PATCHED and SERVED_SETTINGS, so this file is the one home of
 the served-string vocabulary the Typed facts check reads).
+Updated October 20, 2026 with Anthropic's Claude Opus 5.5 (L-410:
+`drawn_with` is a served setting: the streamer belt names the corona it is
+drawn with, one feature in the drawer).
 Updated October 17, 2026 with Anthropic's Claude Opus 5.5 (L-452, L-330,
 L-451: a `source_note` beside ANY served number that carries an
 `orrery_constant` is a word this writer edits, and a `source_note` may be
@@ -223,7 +226,7 @@ SERVED_WORDS_PATCHED = ("radius_note", "cusp_note", "_model", "centre_hover",
 SERVED_SETTINGS = ("color", "colors", "info_border", "info_borders", "shape",
                    "dots", "unit", "figures", "uncertainty",
                    "orrery_constant", "frame", "_comment", "_declared",
-                   "_frame")
+                   "_frame", "drawn_with")
 
 # A word that must not be emptied: the shell list is keyed off it, and
 # the renderers fall back to the raw key without it.

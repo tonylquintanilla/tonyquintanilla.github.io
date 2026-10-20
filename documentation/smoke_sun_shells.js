@@ -29,6 +29,12 @@ if (FRAME_NOTES.length) {
   GF.setDrawings(map);
 })();
 const AU = 149597870.7, RSUN_KM = 695700.0;
+// The dust cloud's first dot as stored: the page draws it as given, so a
+// turn to the Sun's pole would move it.
+const GF_DUST_Z0 = (function () {
+  const f = require("path").join(__dirname, "..", "data", "solar-system", "drawings", "zodiacal_dust.json");
+  return require("fs").existsSync(f) ? JSON.parse(require("fs").readFileSync(f, "utf8")).z[0] : NaN;
+})();
 let fail = 0;
 function check(n, ok, d) { console.log((ok?"  OK   ":"  FAIL ")+n+(d?"  ["+d+"]":"")); if(!ok) fail++; }
 
@@ -47,9 +53,13 @@ const geo = r.traces.filter(t => t.showlegend === true);
 // entry; an INFO marker is the cross, one per geometry trace.
 const info = r.traces.filter(t => t.showlegend === false &&
                                   t.marker && t.marker.symbol === "cross");
-check("19 geometry traces (14 spheres + band + 3 Oort shapes + the galactic plane)",
-      geo.length === 19, "got " + geo.length);
-check("19 info markers, one per geometry trace",
+// L-410 with L-131 (2026-10-20): the inner and outer corona spheres are
+// one fade of dots, the corona, and the streamer band is drawn with it
+// under its one legend row (Tony, 2026-10-19); the zodiacal dust cloud is
+// new. So 18 legend rows, and 19 info markers: the band keeps its own.
+check("18 geometry traces (12 spheres + the corona + the dust cloud + 3 Oort shapes + the galactic plane)",
+      geo.length === 18, "got " + geo.length);
+check("19 info markers, one per geometry trace and the band's own",
       info.length === 19, "got " + info.length);
 
 function radiusOf(t){ return Math.max(...t.x.map(Math.abs), ...t.z.map(Math.abs)); }
@@ -58,8 +68,24 @@ function near(a,b,tol){ return Math.abs(a-b)/b < tol; }
 check("photosphere drawn at 1.0 R_sun",
       near(radiusOf(byName["Sun: Photosphere"]), RSUN_KM/AU, 1e-6),
       radiusOf(byName["Sun: Photosphere"]).toExponential(4) + " AU");
-check("inner corona drawn at 3 R_sun",
-      near(radiusOf(byName["Sun: Inner Corona"]), 3*RSUN_KM/AU, 1e-6));
+// The corona's dots lie between the surface and the Alfven surface, and
+// the streamer band is in the corona's legend group with no row of its own.
+(function () {
+  const c = byName["Sun: Corona"];
+  const rs = c ? c.x.map((x, k) => Math.hypot(x, c.y[k], c.z[k]) * AU / RSUN_KM) : [];
+  check("corona dots between 1 and 19.7 R_sun",
+        rs.length > 0 && Math.min(...rs) >= 0.995 && Math.max(...rs) <= 19.7 * 1.002,
+        rs.length ? Math.min(...rs).toFixed(3) + " to " + Math.max(...rs).toFixed(2) + " R_sun" : "no corona");
+  const band = r.traces.filter(t => t.legendgroup === "Sun: Corona" && t.showlegend === false &&
+                                    !(t.marker && t.marker.symbol === "cross"));
+  check("the streamer band drawn in the corona's legend group, no row of its own",
+        band.length === 1, "got " + band.length);
+  const d = byName["Sun: Zodiacal Dust Cloud (F-corona)"];
+  const dr = d ? d.x.map((x, k) => Math.hypot(x, d.y[k], d.z[k])) : [];
+  check("dust dots out to 5.2 AU, not turned to the Sun's pole",
+        dr.length > 0 && Math.max(...dr) <= 5.2 * 1.001 && Math.max(...dr) > 5.0 &&
+        Math.abs(d.z[0] - GF_DUST_Z0) < 1e-9, dr.length ? Math.max(...dr).toFixed(3) + " AU" : "no dust");
+})();
 // L-371 (October 4, 2026, Claude Opus 5.5): the termination shock is
 // read as 94.01 AU and the heliopause as 121 AU, each in AU now; the
 // gravitational reach is the Sun's Hill radius, served in AU as
@@ -75,9 +101,6 @@ check("gravitational influence drawn at its served 134,000 AU",
       near(radiusOf(byName["Sun: Gravitational Influence"]), 134000, 1e-9));
 check("Roche limit drawn at 3.45 R_sun, from its drawn_radius",
       near(radiusOf(byName["Sun: Roche Limit (Comets)"]), 3.45*RSUN_KM/AU, 1e-6));
-check("Roche limit drawn outside the inner corona",
-      radiusOf(byName["Sun: Roche Limit (Comets)"]) >
-      radiusOf(byName["Sun: Inner Corona"]) * 1.1);
 check("outer Oort drawn at 100000 AU",
       near(radiusOf(byName["Sun: Outer Oort Cloud"]), 100000, 1e-9));
 check("chromosphere is ABOVE the photosphere",
@@ -88,7 +111,7 @@ check("chromosphere is ABOVE the photosphere",
 const hidden = geo.filter(t => t.visible === "legendonly").map(t=>t.name).sort();
 const shown  = geo.filter(t => t.visible !== "legendonly").map(t=>t.name).sort();
 check("everything beyond 1.1 AU starts hidden",
-      hidden.length === 10 && shown.length === 9, hidden.length+" hidden / "+shown.length+" shown");
+      hidden.length === 11 && shown.length === 7, hidden.length+" hidden / "+shown.length+" shown");
 console.log("       hidden: " + hidden.join(", "));
 
 // marker separation: photosphere vs chromosphere markers must not coincide
@@ -145,7 +168,9 @@ check("missing body position reported",
 // The band is the reason the Sun needed a pole. Measured off the DRAWN
 // points by fitting the plane of the helmet, independent of poleBasis, so
 // this check can disagree with the renderer instead of echoing it (L-229).
-const band = geo.find(t => t.name.indexOf("Streamer") !== -1);
+// L-410: the band is drawn with the corona, under its legend row.
+const band = r.traces.find(t => t.legendgroup === "Sun: Corona" && t.showlegend === false &&
+                                !(t.marker && t.marker.symbol === "cross"));
 check("streamer band drawn", !!band && band.x.length > 1000,
       band ? band.x.length + " points" : "MISSING");
 check("band fades via per-point rgba, not a scalar opacity",
