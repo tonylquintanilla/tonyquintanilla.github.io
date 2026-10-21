@@ -461,6 +461,18 @@ OFFLINE_CHECKERS = [
     ("Solar System figures", "node",
      ["documentation/smoke_solar_system_figures.js"], ".", "===", False),
 
+    # L-463 (2026-10-21): a drawn line that reaches far past the view is
+    # cut to the view's box before a phone draws it. Tony's phone drew the
+    # Galactic Plane's ring and pole line, at 100,000 AU, as a wide pink
+    # band whenever the view was close in. It requires the real
+    # gallery/far_lines.js, works six cases by hand, builds the Sun room
+    # from the served config and names the lines it looks after, checks
+    # every drawn point lies inside three boxes, and fails if the page
+    # stops cutting before the first draw or after a frame change. Its
+    # self-test breaks the real file three ways first. Gates.
+    ("Far lines", "node",
+     ["documentation/smoke_far_lines.js"], ".", "===", False),
+
     # L-363 step 3b (2026-10-02): the Solar System room's drawer. It
     # requires the real gallery/solar_system_drawer.js, works the design's
     # rules on a small list of rows -- the Sun never ticked, See more
@@ -570,6 +582,8 @@ SERVED_FILES = [
     "data/solar-system/drawings/zodiacal_dust.json",
     # L-456 (2026-10-20): the page loads it with a script tag.
     "gallery/source_list.js",
+    # L-463 (2026-10-21): likewise.
+    "gallery/far_lines.js",
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing

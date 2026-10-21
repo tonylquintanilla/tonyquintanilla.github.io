@@ -307,6 +307,7 @@
          (L-334). It left this page in stage B so that a check can
          require it as a file. -->
     <script src="gallery/arrival.js"></script>
+    <script src="gallery/far_lines.js"></script>
     <!-- The figures a body's distance prints with in the Solar System
          room (L-398). Its own file so that a check can require it. -->
     <script src="gallery/solar_system_figures.js"></script>
@@ -1837,10 +1838,20 @@ result = assemble_scene(
     CacheReader(json.loads(COV_JSON)),
 )
 
+# L-464: the Sun's own words and link, from the orrery's object list
+# (tools/mirror_objects.py writes them), for the Sun's own drawer row.
+_sun = {}
+for _o in json.loads(CFG_JSON).get("objects", []):
+    if isinstance(_o, dict) and _o.get("slug") == "sun":
+        _sun = _o
+        break
+
 json.dumps({
     "figure": result.figure,
     "features": result.report["features"],
     "warnings": result.report["warnings"],
+    "sun": {"description": _sun.get("description"),
+            "info_url": _sun.get("info_url")},
 })
 `;
 
@@ -2289,6 +2300,50 @@ const SOLAR_SYSTEM_INFO_HTML = [
 // payload becomes traces. The chrome functions keep their sun* names --
 // renaming them touches a working room for no visible change and would
 // put the Sun back under Mode 5; the parameters are what changed.
+// L-464 (2026-10-21): the Sun's own drawer row in the Sun room. The
+// assembler's centre marker carries no words, so the row's i panel read
+// "No link on file". It gets what the Solar System room already gives
+// the same marker: the Sun's description and link from the orrery's
+// object list, and, as its source, the citation for the Sun's pole,
+// which turns the room's drawings but has no row of its own. All three
+// are served words; none is typed here. Returns warnings, by name, for
+// anything it could not find.
+function sunCentreWords(traces, payload) {
+    const warnings = [];
+    const sun = payload.sun || {};
+    let orientation = null;
+    for (const f of (payload.features || [])) {
+        if (f && f.feature === "orientation" && f.object === "sun") {
+            orientation = f.params || null;
+        }
+    }
+    const words = {};
+    if (typeof sun.description === "string" && sun.description) {
+        words.about = sun.description;
+    } else {
+        warnings.push("the Sun's description was not served");
+    }
+    if (typeof sun.info_url === "string" && sun.info_url) {
+        words.info_url = sun.info_url;
+    } else {
+        warnings.push("the Sun's link was not served");
+    }
+    if (orientation && typeof orientation.source === "string" && orientation.source) {
+        words.source = orientation.source;
+    } else {
+        warnings.push("the Sun's pole was served with no citation");
+    }
+    let found = 0;
+    for (const t of traces) {
+        if (t.legendgroup === "center") {
+            t.meta = Object.assign({}, t.meta || {}, words);
+            found += 1;
+        }
+    }
+    if (!found) { warnings.push("the Sun's centre marker was not drawn"); }
+    return warnings;
+}
+
 const EXHIBITS = {
     sun: {
         title: "The Sun",
@@ -2305,9 +2360,12 @@ const EXHIBITS = {
                 { sun: { name: "Sun", position: [0, 0, 0] } },
                 { sceneHalfRangeAu: SUN_HALF_RANGE_AU }
             );
+            const traces = payload.figure.data.concat(built.traces);
+            const warnings = (built.warnings || []).concat(
+                sunCentreWords(traces, payload));
             return {
-                traces: payload.figure.data.concat(built.traces),
-                warnings: built.warnings || [],
+                traces: traces,
+                warnings: warnings,
                 absent: [],
                 subtitle: SUN_DATE_LINE
             };
@@ -3289,6 +3347,16 @@ async function initSunExhibit() {
         }
         navArrivalR = arrivalR;   // what Home returns to
 
+        // L-463: a line reaching far past the view (the Galactic Plane's
+        // ring and pole line, at 100,000 AU) is cut to the view's box
+        // before it is drawn, and again at every frame change, so the
+        // phone is never handed it whole. Measured above from the lines
+        // as served, so framing still uses their full reach.
+        sunFarServed = GalleryFarLines.servedLines(traces, NAV_HALF_RANGE_MIN_AU);
+        sunFarLastBox = "";
+        sunFarLinesOnto(traces, [-arrivalR, -arrivalR, -arrivalR],
+                        [arrivalR, arrivalR, arrivalR]);
+
         const gd = document.getElementById("plotly-container");
         await Plotly.newPlot(
             gd,
@@ -3357,6 +3425,7 @@ async function initSunExhibit() {
             }
         });
         sunLabelInstall(gd);   // L-318: tap in the scene closes the drawer label
+        sunFarLinesInstall(gd);   // L-463: far lines cut at every frame change
         sunTapInstall(gd);     // L-318 round 6: a phone tap reaches the marker
 
         // The drawer is built from the traces that were actually
@@ -4066,6 +4135,65 @@ function sunLabelInstall(gd) {
         if (sunLabelGroup >= 0) { setTimeout(sunLabelRefresh, 0); }
     });
 }
+// L-463 (2026-10-21). Lines that reach far past the view are cut to
+// the view's box (gallery/far_lines.js says why: a phone drew the
+// Galactic Plane's ring and pole line as a wide pink band). The lines as
+// served are kept here, by trace index; only those are ever restyled.
+let sunFarServed = null;
+let sunFarLastBox = "";
+
+// Write the cut (or whole) points of the kept lines into `traces` for the
+// box lo..hi. Used on the traces before the first draw.
+function sunFarLinesOnto(traces, lo, hi) {
+    if (!sunFarServed || !window.GalleryFarLines) { return; }
+    const p = GalleryFarLines.plan(sunFarServed, lo, hi);
+    for (let j = 0; j < p.indices.length; j++) {
+        const t = traces[p.indices[j]];
+        if (!t) { continue; }
+        t.x = p.x[j]; t.y = p.y[j]; t.z = p.z[j];
+    }
+    sunFarLastBox = lo.concat(hi).join(",");
+}
+
+// The same, on the drawn plot, for its current axis ranges. Never called
+// from inside a Plotly event (the listener below defers it).
+function sunFarLinesApply(gd) {
+    if (!gd || !sunFarServed || !window.GalleryFarLines || !window.Plotly) {
+        return Promise.resolve();
+    }
+    const sc = gd.layout && gd.layout.scene;
+    if (!sc) { return Promise.resolve(); }
+    const lo = [], hi = [];
+    const axes = ["xaxis", "yaxis", "zaxis"];
+    for (let a = 0; a < axes.length; a++) {
+        const r = sc[axes[a]] && sc[axes[a]].range;
+        if (!r || r.length < 2) { return Promise.resolve(); }
+        lo.push(Math.min(r[0], r[1]));
+        hi.push(Math.max(r[0], r[1]));
+    }
+    const key = lo.concat(hi).join(",");
+    if (key === sunFarLastBox) { return Promise.resolve(); }
+    sunFarLastBox = key;
+    const p = GalleryFarLines.plan(sunFarServed, lo, hi);
+    if (!p.indices.length) { return Promise.resolve(); }
+    return Plotly.restyle(gd, { x: p.x, y: p.y, z: p.z }, p.indices);
+}
+
+// After every relayout that moves an axis range, re-cut the far lines.
+// Deferred: never mutate a plot from inside a Plotly event handler (L-278).
+function sunFarLinesInstall(gd) {
+    if (!gd || !sunFarServed || !Object.keys(sunFarServed).length) { return; }
+    gd.on("plotly_relayout", function (upd) {
+        const keys = Object.keys(upd || {});
+        for (let i = 0; i < keys.length; i++) {
+            if (/^scene\.[xyz]axis\.range/.test(keys[i]) || keys[i] === "scene") {
+                setTimeout(function () { sunFarLinesApply(gd); }, 0);
+                return;
+            }
+        }
+    });
+}
+
 let sunHudLastCam = "";
 function sunHudWatch() {
     if (!sunHudBound || !sunPlotDiv) { return; }
