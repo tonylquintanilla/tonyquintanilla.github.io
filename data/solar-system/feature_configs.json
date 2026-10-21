@@ -361,7 +361,7 @@
               }
             },
             "figures": 3,
-            "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
+            "source": "Kasper, J. C. et al. (2021), \"Parker Solar Probe Enters the Magnetically Dominated Solar Corona\", Phys. Rev. Lett. 127:255101, https://link.aps.org/doi/10.1103/PhysRevLett.127.255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
             "source_note": "the band dissolves across the Alfven surface",
             "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
           },
@@ -657,7 +657,7 @@
           "opacity": 0.35,
           "n_points": 20,
           "marker_size": 3.5,
-          "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
+          "source": "Kasper, J. C. et al. (2021), \"Parker Solar Probe Enters the Magnetically Dominated Solar Corona\", Phys. Rev. Lett. 127:255101, https://link.aps.org/doi/10.1103/PhysRevLett.127.255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
           "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
         },
         "corona": {
@@ -705,7 +705,7 @@
               }
             },
             "figures": 3,
-            "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
+            "source": "Kasper, J. C. et al. (2021), \"Parker Solar Probe Enters the Magnetically Dominated Solar Corona\", Phys. Rev. Lett. 127:255101, https://link.aps.org/doi/10.1103/PhysRevLett.127.255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
             "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
           },
           "temperature": {

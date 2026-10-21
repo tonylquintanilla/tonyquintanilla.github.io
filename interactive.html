@@ -318,6 +318,9 @@
          set for the whole site; this page decides what the buttons do
          (see navFrameZoom / navHome below). -->
     <script src="gallery/nav_cluster.js"></script>
+    <!-- The i panel's sources as a list, each web address a link
+         (L-456). Its own file so that a check can require it. -->
+    <script src="gallery/source_list.js"></script>
 
     <!-- Fonts -- match gallery viewer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -979,6 +982,30 @@
             margin-right: 12px;
         }
         .info-focus a:hover { color: var(--text-primary); }
+        /* L-456 (Tony, 2026-10-20, from the phone: "need hyperlinks" and
+           "need some kind of itemization for readability"): the sources,
+           one citation to a line, in the panel's footnote type. A long
+           address breaks anywhere rather than running off the panel. */
+        .info-focus ul.info-sources {
+            font-size: 13px; color: var(--text-secondary); font-style: italic;
+            line-height: 1.5;
+            margin: 2px 0 8px 0;
+            padding-left: 18px;
+        }
+        .info-focus ul.info-sources li {
+            margin-bottom: 8px;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .info-focus ul.info-sources .info-source-label {
+            font-style: normal; font-weight: 600;
+        }
+        .info-focus ul.info-sources a {
+            display: inline;
+            margin-right: 0;
+            overflow-wrap: anywhere;
+            word-break: break-all;
+        }
 
         /* --- Consent gate --- */
         .consent-gate {
@@ -4393,6 +4420,7 @@ function buildSunDrawer(traces) {
                 about: (t.meta && typeof t.meta.about === "string") ? t.meta.about : null,
                 source: (t.meta && typeof t.meta.source === "string") ? t.meta.source : null,
                 source_note: (t.meta && typeof t.meta.source_note === "string") ? t.meta.source_note : null,
+                source_items: (t.meta && Array.isArray(t.meta.source_items)) ? t.meta.source_items : null,
                 detail: (t.meta && typeof t.meta.detail === "string") ? t.meta.detail : null,
                 note: (t.meta && typeof t.meta.note === "string") ? t.meta.note : null,
                 indices: [],
@@ -4413,6 +4441,13 @@ function buildSunDrawer(traces) {
                     byName[g][f] = t.meta[f];
                 }
             });
+            // L-456: the list of citations, by the same rule. A list that
+            // arrives with a trace whose joined source the group already
+            // took is kept only when the group has no list yet.
+            if (!byName[g].source_items && Array.isArray(t.meta.source_items) &&
+                (byName[g].source === t.meta.source || !byName[g].source)) {
+                byName[g].source_items = t.meta.source_items;
+            }
         }
         if (t.showlegend === true) {
             byName[g].name = t.name || g;
@@ -4421,6 +4456,9 @@ function buildSunDrawer(traces) {
             if (t.meta && typeof t.meta.about === "string") { byName[g].about = t.meta.about; }
             if (t.meta && typeof t.meta.source === "string") { byName[g].source = t.meta.source; }
             if (t.meta && typeof t.meta.source_note === "string") { byName[g].source_note = t.meta.source_note; }
+            if (t.meta && typeof t.meta.source === "string") {
+                byName[g].source_items = Array.isArray(t.meta.source_items) ? t.meta.source_items : null;
+            }
             if (t.meta && typeof t.meta.detail === "string") { byName[g].detail = t.meta.detail; }
             if (t.meta && typeof t.meta.note === "string") { byName[g].note = t.meta.note; }
         }
@@ -4595,6 +4633,23 @@ function sunLinkLabel(url) {
 // keeps the figures and ends by pointing here, and the citation, the
 // model's own equations and the served caveats all arrive below.
 // The panel is deliberately a fuller copy now, not a second one.
+// L-456: text with each web address in it made a link that opens in a
+// new tab. The cut is gallery/source_list.js's.
+function sunAppendLinked(parent, text) {
+    GallerySources.pieces(text).forEach(function (p) {
+        if (p.url) {
+            const a = document.createElement("a");
+            a.href = p.url;
+            a.target = "_blank";
+            a.rel = "noopener";
+            a.textContent = p.url;
+            parent.appendChild(a);
+        } else {
+            parent.appendChild(document.createTextNode(p.text));
+        }
+    });
+}
+
 function renderSunInfo(grp) {
     const box = document.getElementById("sun-info-focus");
     if (!box) { return; }
@@ -4653,20 +4708,44 @@ function renderSunInfo(grp) {
     // L-291 step 3: the served source string, read off the trace's meta
     // (stampLink carries it now), so the panel shows the citation the
     // hover shows without restating it in page copy.
-    if (grp.source) {
-        const src = document.createElement("div");
-        src.className = "info-focus-empty";
-        src.textContent = "Source: " + grp.source;
-        box.appendChild(src);
+    // L-456 (2026-10-20, Tony from his phone: "need hyperlinks" and
+    // "need some kind of itemization for readability"): the citations as
+    // a list, one to a line, each after its label where it has one, the
+    // website's note on it after a dash, and every web address a link.
+    // gallery/source_list.js decides what the list holds and where an
+    // address ends; this only builds the elements.
+    // L-421 part 3 (2026-10-16, Tony's option A): each citation is the
+    // orrery's, word for word; the website's own words about it are the
+    // served source_note.
+    const srcs = GallerySources.panelSources(grp);
+    if (srcs.items.length) {
+        const sh = document.createElement("div");
+        sh.className = "info-focus-empty";
+        sh.textContent = srcs.items.length === 1 ? "Source:" : "Sources:";
+        box.appendChild(sh);
+        const ul = document.createElement("ul");
+        ul.className = "info-sources";
+        srcs.items.forEach(function (it) {
+            const li = document.createElement("li");
+            if (it.label) {
+                const lab = document.createElement("span");
+                lab.className = "info-source-label";
+                lab.textContent = it.label + ": ";
+                li.appendChild(lab);
+            }
+            sunAppendLinked(li, it.text);
+            if (it.note) {
+                li.appendChild(document.createTextNode(" -- "));
+                sunAppendLinked(li, it.note);
+            }
+            ul.appendChild(li);
+        });
+        box.appendChild(ul);
     }
-    // L-421 part 3 (2026-10-16, Tony's option A): the citation above is
-    // the orrery's, word for word; the website's own words about it --
-    // what the number is for, a caveat -- are the served source_note, and
-    // print right after it, so the panel reads as it did before.
-    if (grp.source_note) {
+    if (srcs.note) {
         const snt = document.createElement("div");
         snt.className = "info-focus-empty";
-        snt.textContent = grp.source_note;
+        snt.textContent = srcs.note;
         box.appendChild(snt);
     }
     // L-231 follow-up (2026-09-15): longer reference prose -- a model's own

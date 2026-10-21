@@ -160,6 +160,10 @@ and gates: a number in a served word with no row behind it fails, named).
 Module updated: October 20, 2026 with Anthropic's Claude Opus 5.5
 (L-410 with L-131: the live check also fetches the Sun's two new stored
 drawings, the corona's and the zodiacal dust cloud's.)
+Module updated: October 20, 2026 with Anthropic's Claude Opus 5.5
+(L-456: the "Source list" checker runs documentation/smoke_source_list.js
+and gates; the live check also fetches gallery/source_list.js, which the
+page loads with a script tag.)
 """
 
 import hashlib
@@ -468,6 +472,16 @@ OFFLINE_CHECKERS = [
     ("Solar System drawer", "node",
      ["documentation/smoke_solar_system_drawer.js"], ".", "===", False),
 
+    # L-456 (2026-10-20): the i panel lists its sources one to a line,
+    # each web address a link. It requires the real gallery/source_list.js,
+    # works where an address ends and what the list holds, builds the Sun
+    # room and Earth's recorded scene and names, for every feature, how
+    # many citations it lists and how many carry a link, and fails if a
+    # listed citation disagrees with the joined line or an address is lost
+    # from the list. Its self-test breaks the file two ways first. Gates.
+    ("Source list", "node",
+     ["documentation/smoke_source_list.js"], ".", "===", False),
+
     # L-281 (2026-09-26): the lobby's guest book. It renders the real
     # data/guestbook.json with the real gallery/guestbook.js and fails
     # on a missing time, name or text, or a link the page would drop;
@@ -554,6 +568,8 @@ SERVED_FILES = [
     # the zodiacal dust cloud's the same way.
     "data/solar-system/drawings/sun_corona.json",
     "data/solar-system/drawings/zodiacal_dust.json",
+    # L-456 (2026-10-20): the page loads it with a script tag.
+    "gallery/source_list.js",
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing

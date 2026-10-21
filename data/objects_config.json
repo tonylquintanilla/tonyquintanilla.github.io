@@ -84,7 +84,7 @@
             "fade_radius": { "value": 19.7, "unit": "r_sun",
               "in": {"au": {"value": 0.092, "figures": 2, "prints": null}, "km": {"value": 13700000.0, "figures": 3, "prints": null}, "pc": {"value": 4.44e-07, "figures": 3, "prints": null}, "r_earth": {"value": 2150.0, "figures": 3, "prints": null}, "r_sun": {"value": 19.7, "figures": 3, "prints": null}},
               "figures": 3,
-              "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
+              "source": "Kasper, J. C. et al. (2021), \"Parker Solar Probe Enters the Magnetically Dominated Solar Corona\", Phys. Rev. Lett. 127:255101, https://link.aps.org/doi/10.1103/PhysRevLett.127.255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
               "source_note": "the band dissolves across the Alfven surface",
               "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII" },
             "drawing": {
@@ -129,7 +129,7 @@
             "usual_high": { "value": 20, "unit": "r_sun", "in": {"au": {"value": 0.09, "figures": 1, "prints": null}, "km": {"value": 10000000.0, "figures": 1, "prints": null}, "pc": {"value": 5e-07, "figures": 1, "prints": null}, "r_earth": {"value": 2000.0, "figures": 1, "prints": null}, "r_sun": {"value": 20.0, "figures": 1, "prints": null}}, "figures": 1, "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RANGE_HIGH_RADII", "source": "Cranmer, Chhiber, Gilly, Cairns, Colaninno, McComas, Raouafi, Usmanov, Gibson and DeForest (2023), \"The Sun's Alfven Surface: Recent Insights and Prospects for the Polarimeter to Unify the Corona and Heliosphere (PUNCH)\", abstract -- the Alfven surface spends most of its time at heliocentric distances between about 10 and 20 solar radii; sec. 3.1 -- in global models the surface's local maxima sit near the centers of large polar coronal holes and its minima at the tops of helmet streamers. https://arxiv.org/abs/2310.05887" },
             "info_url": "https://svs.gsfc.nasa.gov/14036",
             "color": "rgb(0, 200, 200)", "opacity": 0.35, "n_points": 20, "marker_size": 3.5,
-            "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
+            "source": "Kasper, J. C. et al. (2021), \"Parker Solar Probe Enters the Magnetically Dominated Solar Corona\", Phys. Rev. Lett. 127:255101, https://link.aps.org/doi/10.1103/PhysRevLett.127.255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
             "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
           },
           "corona": {
@@ -151,7 +151,7 @@
               "unit": "r_sun",
               "in": {"au": {"value": 0.092, "figures": 2, "prints": null}, "km": {"value": 13700000.0, "figures": 3, "prints": null}, "pc": {"value": 4.44e-07, "figures": 3, "prints": null}, "r_earth": {"value": 2150.0, "figures": 3, "prints": null}, "r_sun": {"value": 19.7, "figures": 3, "prints": null}},
               "figures": 3,
-              "source": "Kasper et al. (2021), Phys. Rev. Lett. 127:255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
+              "source": "Kasper, J. C. et al. (2021), \"Parker Solar Probe Enters the Magnetically Dominated Solar Corona\", Phys. Rev. Lett. 127:255101, https://link.aps.org/doi/10.1103/PhysRevLett.127.255101 -- Parker Solar Probe's first crossing, 28 April 2021 09:33 UT; the sub-Alfvenic interval spans 19.7 to 18.4 solar radii from the center of the Sun",
               "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
             },
             "temperature": {
@@ -521,7 +521,7 @@
       "name": "Earth",
       "horizons_id": "399",
       "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "3", "target_label": "the Earth-Moon center of mass", "open_orbit": false, "fetched": "2026-10-19", "words": null, "years": {"value": 1.0, "figures": 6, "text": "1.00000"}, "days": {"value": 365.25, "figures": 5, "text": "365.25"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "3", "target_label": "the Earth-Moon center of mass", "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 1.0, "figures": 6, "text": "1.00000"}, "days": {"value": 365.25, "figures": 5, "text": "365.25"}},
       "description": "Our home planet.",
       "info_url": "https://science.nasa.gov/earth/",
       "category": "planet",
@@ -1342,7 +1342,7 @@
     },
     {
       "slug": "jupiter", "name": "Jupiter", "horizons_id": "599", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "599", "target_label": null, "open_orbit": false, "fetched": "2026-10-12", "words": null, "years": {"value": 11.86, "figures": 4, "text": "11.86"}, "days": {"value": 4330.0, "figures": 3, "text": "4330"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "599", "target_label": null, "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 11.864, "figures": 5, "text": "11.864"}, "days": {"value": 4333.2, "figures": 5, "text": "4333.2"}},
       "description": "NASA: \"Jupiter is the largest and oldest planet in our solar system.\"",
       "info_url": "https://science.nasa.gov/jupiter/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1386,7 +1386,7 @@
     },
     {
       "slug": "saturn", "name": "Saturn", "horizons_id": "699", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "699", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 29.427, "figures": 5, "text": "29.427"}, "days": {"value": 10748.0, "figures": 5, "text": "10,748"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "699", "target_label": null, "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 29.44, "figures": 4, "text": "29.44"}, "days": {"value": 10750.0, "figures": 4, "text": "10,750"}},
       "description": "NASA: \"Saturn is the sixth planet from the Sun and the second largest planet in our solar system.\"",
       "info_url": "https://science.nasa.gov/saturn/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1422,7 +1422,7 @@
     },
     {
       "slug": "mercury", "name": "Mercury", "horizons_id": "199", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "199", "target_label": null, "open_orbit": false, "fetched": "2026-10-13", "words": null, "years": {"value": 0.240846, "figures": 6, "text": "0.240846"}, "days": {"value": 87.969, "figures": 5, "text": "87.969"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "199", "target_label": null, "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 0.240846, "figures": 6, "text": "0.240846"}, "days": {"value": 87.969, "figures": 5, "text": "87.969"}},
       "description": "NASA: \"Mercury is the smallest planet in our solar system and the nearest to the Sun.\"",
       "info_url": "https://science.nasa.gov/mercury/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1440,7 +1440,7 @@
     },
     {
       "slug": "venus", "name": "Venus", "horizons_id": "299", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "299", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 0.6152, "figures": 4, "text": "0.6152"}, "days": {"value": 224.71, "figures": 5, "text": "224.71"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "299", "target_label": null, "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 0.6152, "figures": 4, "text": "0.6152"}, "days": {"value": 224.71, "figures": 5, "text": "224.71"}},
       "description": "NASA: \"Venus is the second planet from the Sun, and the sixth largest planet. It's the hottest planet in our solar system.\"",
       "info_url": "https://science.nasa.gov/venus/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1457,7 +1457,7 @@
     },
     {
       "slug": "mars", "name": "Mars", "horizons_id": "499", "id_type": "majorbody",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "499", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 1.8808, "figures": 5, "text": "1.8808"}, "days": {"value": 687.0, "figures": 4, "text": "687.0"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "499", "target_label": null, "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 1.8809, "figures": 5, "text": "1.8809"}, "days": {"value": 687.0, "figures": 4, "text": "687.0"}},
       "description": "NASA: \"Mars is one of the easiest planets to spot in the night sky -- it looks like a bright red point of light.\"",
       "info_url": "https://science.nasa.gov/mars/",
       "category": "planet", "availability": "analytic", "parent": "sun",

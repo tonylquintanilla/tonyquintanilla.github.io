@@ -233,6 +233,11 @@ const SOFT_BR = "<br soft>";
 // marks of 2026-10-20, three more: the corona's and the dust cloud's give
 // kilometres beside the distance, and the Roche limit's note no longer
 // names the inner corona.
+// L-456 (2026-10-20): Earth's inner core, outer core, lower mantle and
+// upper mantle give their radius in Earth radii first (Tony's approved
+// lines of 2026-10-18). Those four are graded, not held to the fixture,
+// so the fixture is unchanged: re-recorded at ca5339fd, it came out byte
+// for byte the same as this one.
 const FIXTURE_AT = "e8f6dd5e";
 const FIXTURE = path.join(root, "documentation",
                           "fixture_hovers_L410_on_e8f6dd5e.json");
@@ -456,10 +461,12 @@ function radiiLine(shell) {
    If a served value legitimately moves, this table is what says so --
    update the row and say in the ledger which number changed and why. */
 const ACCEPTANCE = {
-  "Earth: Inner Core":                    { radius: "1,221.5 km" },
-  "Earth: Outer Core":                    { radius: "3,480.0 km" },
-  "Earth: Lower Mantle":                  { radius: "5,710 km" },
-  "Earth: Upper Mantle":                  { radius: "6,346.6 km" },
+  // L-456 (1), Tony's approved lines of 2026-10-18: the four shells
+  // served in km give their radius in Earth radii first.
+  "Earth: Inner Core":                    { radius: "1,221.5 km", radii: "0.19151" },
+  "Earth: Outer Core":                    { radius: "3,480.0 km", radii: "0.54561" },
+  "Earth: Lower Mantle":                  { radius: "5,710 km", radii: "0.895" },
+  "Earth: Upper Mantle":                  { radius: "6,346.6 km", radii: "0.99506" },
   // L-345: at the mean radius since 2026-09-28 (Tony).
   "Earth: Crust":                         { radius: "6,371.000 km" },
   "Earth: Lower Atmosphere (to the stratopause)":
@@ -812,7 +819,38 @@ function checkEarthShell(group, key, shell, planetNode, hover, label) {
   // line, or "Radius: <km> (<au> AU)" for a radius served in km, which
   // has no line above it to name it (Tony, 2026-10-16). A line that
   // begins "= " with nothing above it is the fault this guards against.
-  const lead = (shell.radius.unit === "km") ? "Radius: " : "= ";
+  // L-456 (1), Tony's approved lines of 2026-10-18: a shell served in km
+  // now gives its radius in Earth radii first, from the row's served
+  // "in", worked out here by this check's own arithmetic; the km line
+  // then begins "= " as it does under any Earth-radii line.
+  let kmRadii = null;
+  if (shell.radius.unit === "km") {
+    const re = served(shell.radius, "r_earth");
+    const rc = re ? servedCount(re) : null;
+    if (!re || typeof rc !== "number") {
+      fail(label + ": its radius is served in km with no Earth radii in its \"in\"");
+    } else {
+      const v = Number(re.value.toPrecision(rc));
+      const shown = v.toFixed(Math.max(0, Math.min(20,
+        rc - 1 - Math.floor(Math.log10(Math.abs(v))))));
+      kmRadii = "Radius: " + shown + (shown === "1" ? " Earth radius" : " Earth radii");
+      if (hover.indexOf(kmRadii) < 0) {
+        fail(label + ": the Earth-radii line reads\n        " +
+             (lineStartingWith(hover, "Radius: ") || "(none)") +
+             "\n      and the served count gives\n        " + kmRadii);
+      } else {
+        verified.push(kmRadii);
+        numbersExamined += numbersIn(kmRadii).length;
+      }
+      if (pin.radii && kmRadii !== "Radius: " + pin.radii + " Earth radii") {
+        fail(label + ": the Earth-radii line computes to \"" + kmRadii +
+             "\" but the acceptance table says \"" + pin.radii + "\"");
+      }
+    }
+  } else if (pin.radii) {
+    fail(label + ": the acceptance table pins Earth radii for a radius not served in km");
+  }
+  const lead = (shell.radius.unit === "km" && kmRadii === null) ? "Radius: " : "= ";
   const radiusLine = lead + (want.radiusText ||
                              kmAndAu(want.radiusKm, want.radiusFig));
   if (hover.indexOf(radiusLine) < 0) {
@@ -824,7 +862,8 @@ function checkEarthShell(group, key, shell, planetNode, hover, label) {
     verified.push(radiusLine);
     numbersExamined += numbersIn(radiusLine).length;
   }
-  if (shell.radius.unit === "km" && lineStartingWith(hover, "= ")) {
+  if (shell.radius.unit === "km" && kmRadii === null &&
+      lineStartingWith(hover, "= ")) {
     fail(label + ": its radius is served in km, so nothing above names " +
          "it, and yet a line begins with a bare \"= \"");
   }

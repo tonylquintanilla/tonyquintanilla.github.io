@@ -176,6 +176,15 @@
  *   a label (FADE_SOURCE_LABELS). A member served `drawn_with` joins
  *   the named member's legend group and shell key, so the streamer band
  *   is switched with the corona: joinedGroup().)
+ * Module updated: October 20, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-456, Tony's notes from his phone: where citations are gathered
+ *   -- withGatheredSource(), withShellWords(), the exosphere's fade --
+ *   they also ride as a list, `source_items`, which stampLink() carries
+ *   to the trace's meta, so the i panel prints them one to a line with
+ *   each web address a link (gallery/source_list.js). The joined
+ *   `source` line is unchanged. And Earth's four inner shells served in
+ *   km give their radius in Earth radii first, from the row's served
+ *   "in", then the km below it: Tony's approved lines of 2026-10-18.)
  */
 
 (function (global) {
@@ -1941,6 +1950,7 @@
    */
   function withGatheredSource(cfg, fields) {
     var parts = [];
+    var items = [];
     for (var i = 0; i < fields.length; i++) {
       var f = cfg[fields[i][0]];
       if (isDict(f) && typeof f.source === "string" && f.source) {
@@ -1949,6 +1959,12 @@
         parts.push(fields[i][1] + ": " + f.source +
                    (typeof f.source_note === "string" && f.source_note
                      ? " -- " + f.source_note : ""));
+        // L-456 (2026-10-20): the same citations as a list, one to a line
+        // in the i panel (gallery/source_list.js). The joined line above
+        // is unchanged, so every check that reads it reads the same.
+        items.push({ label: fields[i][1], text: f.source,
+                     note: (typeof f.source_note === "string" && f.source_note)
+                       ? f.source_note : null });
       }
     }
     if (!parts.length) return cfg;
@@ -1957,6 +1973,7 @@
       if (Object.prototype.hasOwnProperty.call(cfg, k)) copy[k] = cfg[k];
     }
     copy.source = parts.join("; ");
+    copy.source_items = items;
     return copy;
   }
 
@@ -2283,7 +2300,19 @@
       ? copy.source + (typeof copy.source_note === "string" &&
                        copy.source_note ? " -- " + copy.source_note : "")
       : null;
+    // L-456 (2026-10-20): the same citations as a list for the i panel,
+    // the shell's own first with its note, then each number's.
+    var items = [];
+    if (own) {
+      items.push({ label: null, text: copy.source,
+                   note: (typeof copy.source_note === "string" &&
+                          copy.source_note) ? copy.source_note : null });
+    }
+    for (var p = 0; p < parts.length; p++) {
+      items.push({ label: null, text: parts[p], note: null });
+    }
     copy.source = (own ? [own] : []).concat(parts).join("; ");
+    copy.source_items = items;
     delete copy.source_note;
     return copy;
   }
@@ -2574,6 +2603,12 @@
     if (typeof cfg.source_note === "string" && cfg.source_note) {
       meta = meta || {};
       meta.source_note = cfg.source_note;
+    }
+    // L-456 (2026-10-20): where the citations were gathered, the list,
+    // so the panel prints one to a line (gallery/source_list.js).
+    if (Array.isArray(cfg.source_items) && cfg.source_items.length) {
+      meta = meta || {};
+      meta.source_items = cfg.source_items.slice();
     }
     // L-231 follow-up (2026-09-15): longer reference prose -- the model's
     // own equations, say -- rides here for the i-panel and stays OUT of the
@@ -2906,9 +2941,18 @@
     }, where, warn), [["inner_radius", "Where the dots start"],
                       ["density_at", "The density"]]);
     if (typeof cfg.source === "string" && cfg.source) {
+      var gathered = (words.source && words.source !== cfg.source &&
+                      Array.isArray(words.source_items))
+        ? words.source_items : [];
       words.source = (words.source && words.source !== cfg.source
                       ? words.source + "; " : "") +
                      "Where the dots stop: " + cfg.source;
+      // L-456: as a list too, a new array so the gathered one is not
+      // changed under the copy that served it.
+      words.source_items = gathered.concat([
+        { label: "Where the dots stop", text: cfg.source,
+          note: (typeof cfg.source_note === "string" && cfg.source_note)
+            ? cfg.source_note : null }]);
     }
     return { traces: traces, words: words };
   }
@@ -3125,13 +3169,26 @@
             kmAndAu(km.altitudeKm, km.altitudeFigures)) + "<br>";
         }
       }
+      // L-456 (1), Tony's approved lines of 2026-10-18: a shell inside
+      // Earth served in km gives its radius in Earth radii first, from
+      // the row's own served "in", then the km on the line below, as the
+      // crust does. "Yes, Re gives an intuitive sense of proportion."
+      var earthRadiiFirst = null;
+      if (cfg.radius.unit === "km" && slug === "earth") {
+        earthRadiiFirst = inText(cfg.radius, "r_earth");
+        if (earthRadiiFirst !== null) {
+          hover += "Radius: " + earthRadiiFirst +
+            (earthRadiiFirst === "1" ? " Earth radius<br>" : " Earth radii<br>");
+        }
+      }
       var kmOnly = (cfg.radius.unit === "au" && servedText(cfg.radius) !== null)
         ? inText(cfg.radius, "km") : null;
       // A radius served in km has no line above to name it, so its own
       // line does: "Radius: 5,710 km (0.0000382 AU)" rather than a bare
       // "= 5,710 km", on Earth's four inner shells (Tony, 2026-10-16:
       // "yes, good catch").
-      hover += (cfg.radius.unit === "km" ? "Radius: " : "= ") + (kmOnly !== null ? kmOnly + " km"
+      hover += (cfg.radius.unit === "km" && earthRadiiFirst === null
+                ? "Radius: " : "= ") + (kmOnly !== null ? kmOnly + " km"
                        : km ? (km.radiusText ||
                                kmAndAu(km.radiusKm, km.radiusFigures))
                             : kmAndAu(radiusAu * KM_PER_AU));
@@ -3420,6 +3477,7 @@
       stampLink([mpBuilt.trace, mpMarker],
                 { info_url: mp.info_url, source: mpW.source,
                   source_note: mpW.source_note, about: mpW.about,
+                  source_items: mpW.source_items,
                   detail: panelDetail(mp, mpVals, mpS._model,
                                       where + "/magnetopause", warn),
                   note: mpW.note });
@@ -3568,6 +3626,7 @@
           stampLink([tlTrace, tlMarker],
                     { info_url: tl.info_url, source: tlW.source,
                       source_note: tlW.source_note,
+                      source_items: tlW.source_items,
                       about: tlW.about, note: tlW.note });
         }
       }

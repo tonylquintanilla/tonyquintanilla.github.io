@@ -90,6 +90,11 @@
  * here are served, words unchanged -- the tilt's as orientation.words
  * entry tilt_of_date, the rotation period's as that row's hover_line --
  * and only their numbers and date are filled here.)
+ * Updated October 20, 2026 with Anthropic's Claude Opus 5.5 (L-456: the
+ * axis's, the Sun direction's, the terminator's and the Moon arc's
+ * citations also ride as a list, meta.source_items, so the i panel
+ * prints them one to a line with their addresses as links. The joined
+ * meta.source is unchanged.)
  */
 (function (global) {
   "use strict";
@@ -420,6 +425,14 @@
           " Precession and nutation: " + guideSource("tilt") +
           " Pole: " + (pole.source || "pole source not served") +
           (period ? " Period: " + (period.source || "source not served") : ""),
+        // L-456 (2026-10-20): the same citations, one to a line in the
+        // i panel (gallery/source_list.js).
+        source_items: [
+          { label: null, text: guideSource("sense") },
+          { label: "Precession and nutation", text: guideSource("tilt") },
+          { label: "Pole", text: pole.source || "pole source not served" }
+        ].concat(period ? [{ label: "Period",
+                             text: period.source || "source not served" }] : []),
         detail: pole.orrery_constant ? "Store: " + pole.orrery_constant : null
       } }));
     }
@@ -479,7 +492,13 @@
         source: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons" +
           (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +
           ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py)." +
-          " The subsolar point: " + guideSource("subsolar")
+          " The subsolar point: " + guideSource("subsolar"),
+        source_items: [
+          { label: null, text: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons" +
+            (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +
+            ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py)." },
+          { label: "The subsolar point", text: guideSource("subsolar") }
+        ]
       } }));
 
       // --- 3. Terminator -------------------------------------------------
@@ -519,7 +538,13 @@
         source: "The Sun direction above, and the crust radius " +
           (opts.planetRadius && opts.planetRadius.source
             ? "(" + opts.planetRadius.source + ")" : "as served") + "." +
-          " " + guideSource("terminator")
+          " " + guideSource("terminator"),
+        source_items: [
+          { label: null, text: "The Sun direction above, and the crust radius " +
+            (opts.planetRadius && opts.planetRadius.source
+              ? "(" + opts.planetRadius.source + ")" : "as served") + "." },
+          { label: null, text: guideSource("terminator") }
+        ]
       } }));
     }
 
@@ -547,7 +572,11 @@
         tail();
       traces.push(infoMarker(pm, arc.color || "rgb(200, 200, 200)", hArc, gMoon, { meta: {
         info_url: guideLink("moon_arc"),
-        source: "JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder). The drift outside the arc: " + guideSource("moon_arc")
+        source: "JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder). The drift outside the arc: " + guideSource("moon_arc"),
+        source_items: [
+          { label: null, text: "JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder)." },
+          { label: "The drift outside the arc", text: guideSource("moon_arc") }
+        ]
       } }));
     } else if (arc) {
       warn("moon/trusted arc: fewer than two points supplied -- arc not drawn");
