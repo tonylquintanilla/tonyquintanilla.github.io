@@ -164,6 +164,10 @@ Module updated: October 20, 2026 with Anthropic's Claude Opus 5.5
 (L-456: the "Source list" checker runs documentation/smoke_source_list.js
 and gates; the live check also fetches gallery/source_list.js, which the
 page loads with a script tag.)
+Module updated: October 21, 2026 with Anthropic's Claude Opus 5.5
+(L-460: the "Drawer order" checker runs documentation/smoke_drawer_order.js
+and gates; the live check also fetches gallery/drawer_order.js, which the
+page loads with a script tag.)
 """
 
 import hashlib
@@ -494,6 +498,18 @@ OFFLINE_CHECKERS = [
     ("Source list", "node",
      ["documentation/smoke_source_list.js"], ".", "===", False),
 
+    # L-460 (2026-10-21, Tony: "the order goes by the distance of the
+    # nearest part of the feature"): the Sun and Earth rooms' drawers.
+    # It builds both rooms with the real renderers and the stored
+    # drawings, and holds the order gallery/drawer_order.js plans to an
+    # order it works out from the same served rows by its own arithmetic
+    # (each stored drawing's nearest dot read from its file). It fails,
+    # naming the room and the first row out of place. Its self-test moves
+    # one row's edge and breaks the file, and must go red both times.
+    # Gates.
+    ("Drawer order", "node",
+     ["documentation/smoke_drawer_order.js"], ".", "===", False),
+
     # L-281 (2026-09-26): the lobby's guest book. It renders the real
     # data/guestbook.json with the real gallery/guestbook.js and fails
     # on a missing time, name or text, or a link the page would drop;
@@ -584,6 +600,8 @@ SERVED_FILES = [
     "gallery/source_list.js",
     # L-463 (2026-10-21): likewise.
     "gallery/far_lines.js",
+    # L-460 (2026-10-21): likewise.
+    "gallery/drawer_order.js",
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing

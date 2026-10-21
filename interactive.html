@@ -282,6 +282,11 @@
         that is so, the text beside it says so."; the Earth room's
         sentence on the belts' plane is cut, since the belts' served
         hovers_plane says it, and the belts are no longer flat)
+     Updated: October 21, 2026 with Anthropic's Claude Opus 5.5
+       (L-460, Tony's ruling: the Sun and Earth rooms' drawers list each
+        shell at the nearest part of it as drawn, read from its served
+        row by gallery/drawer_order.js when the page opens; rows that are
+        not shells keep their places; the Solar System room is unchanged)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -322,6 +327,9 @@
     <!-- The i panel's sources as a list, each web address a link
          (L-456). Its own file so that a check can require it. -->
     <script src="gallery/source_list.js"></script>
+    <!-- The drawer's order: each shell at the distance where it begins
+         (L-460). Its own file so that a check can require it. -->
+    <script src="gallery/drawer_order.js"></script>
 
     <!-- Fonts -- match gallery viewer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3295,8 +3303,17 @@ async function initSunExhibit() {
         sunSceneSubtitle = built.subtitle || null;
         sunAbsent = built.absent || [];
 
+        // L-460 (Tony, 2026-10-20): the drawer lists each shell at the
+        // distance where it begins, read from its served row, so a new
+        // shell lands in place by itself. Planned here, from the traces
+        // as composed, before anything is cut to the view. Not for a
+        // room whose drawer is bodies (the Solar System room, L-363).
+        const drawerPlan = built.drawer ? null : DrawerOrder.plan(
+            built.traces, payload.features || [], GalleryFeatures._KM_PER_AU);
+
         const notes = frameNotes.concat(payload.warnings || [], drawingNotes,
-                                        built.warnings || []);
+                                        built.warnings || [],
+                                        drawerPlan ? drawerPlan.warnings : []);
         for (let i = 0; i < notes.length; i++) {
             console.warn(EXHIBIT + " exhibit: " + notes[i]);
         }
@@ -3437,7 +3454,7 @@ async function initSunExhibit() {
         // (the Solar System room) gets the body drawer; the Sun and Earth
         // rooms hand none and keep theirs.
         ssDrawer = built.drawer ? ssDrawerState(built.drawer) : null;
-        buildSunDrawer(traces);
+        buildSunDrawer(traces, drawerPlan ? drawerPlan.order : null);
         // L-289: the three axis lines through the origin go in AFTER the
         // drawer, so the drawer has no row for them, and after the
         // arrival extent has been measured, so they cannot widen it.
@@ -4532,7 +4549,7 @@ function ssHome(gd) {
         .then(sunHudUpdate);
 }
 
-function buildSunDrawer(traces) {
+function buildSunDrawer(traces, order) {
     sunGroups = [];
     const byName = {};
     for (let i = 0; i < traces.length; i++) {
@@ -4590,6 +4607,23 @@ function buildSunDrawer(traces) {
             if (t.meta && typeof t.meta.detail === "string") { byName[g].detail = t.meta.detail; }
             if (t.meta && typeof t.meta.note === "string") { byName[g].note = t.meta.note; }
         }
+    }
+
+    // L-460: the rows in the order gallery/drawer_order.js planned, each
+    // shell at the distance where it begins. Groups are matched by key;
+    // one the plan does not name stays after those it does, in its own
+    // order (none should: both read the same traces).
+    if (Array.isArray(order) && order.length) {
+        const rank = {};
+        order.forEach(function (key, i) { rank[key] = i; });
+        sunGroups = sunGroups
+            .map(function (grp, i) { return { grp: grp, i: i }; })
+            .sort(function (a, b) {
+                const ra = rank.hasOwnProperty(a.grp.key) ? rank[a.grp.key] : order.length + a.i;
+                const rb = rank.hasOwnProperty(b.grp.key) ? rank[b.grp.key] : order.length + b.i;
+                return ra - rb;
+            })
+            .map(function (p) { return p.grp; });
     }
 
     // trace index -> group index, so a click anywhere in a group's
