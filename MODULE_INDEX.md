@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 51  
-**Total Lines of Code (non-blank):** 25,687  
+**Total Lines of Code (non-blank):** 25,702  
 **Total Public Functions/Classes:** 405
 
 ## Classification Coverage
@@ -109,14 +109,14 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,211 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,374 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,388 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (525 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (860 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (808 lines) |
 | `mirror_objects.py` | - write each served object's identity, description and NASA link into data/objects_config.json from the orrery's objects export, and name every difference it finds. (247 lines) |
-| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (837 lines) |
+| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (838 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (146 lines) |
 | `pull_drawings.py` | - copy the orrery's stored drawings into the gallery, and record the SHA they came from. (198 lines) |
 | `pull_objects_export.py` | - copy the orrery's objects export into the gallery, and record the SHA it came from. (105 lines) |

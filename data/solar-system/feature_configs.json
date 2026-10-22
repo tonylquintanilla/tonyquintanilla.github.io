@@ -365,9 +365,42 @@
             "source_note": "the band dissolves across the Alfven surface",
             "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RADII"
           },
+          "base_radius": {
+            "value": 1.004,
+            "unit": "r_sun",
+            "in": {
+              "au": {
+                "value": 0.00467,
+                "figures": 3,
+                "prints": null
+              },
+              "km": {
+                "value": 699000.0,
+                "figures": 3,
+                "prints": null
+              },
+              "pc": {
+                "value": 2.26e-08,
+                "figures": 3,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 109.5,
+                "figures": 4,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 1.004,
+                "figures": 4,
+                "prints": null
+              }
+            },
+            "figures": 4,
+            "orrery_constant": "constants_new.py::CORONA_BASE_KM",
+            "source": "IAU 2015 Resolution B3 -- nominal solar radius, https://www.iau.org/common/Uploaded%20files/IAUGA2015-Resolution-B3-recommended-nominal-conversion.pdf; Mann, Warmuth, Vocks and Rouillard (2023), \"A heliospheric density and magnetic field model\", A&A 679, A64, https://www.aanda.org/articles/aa/full_html/2023/11/aa45050-22/aa45050-22.html -- Sect. 2: the base of the corona is defined as the level where the temperature exceeds a million kelvin, about 3 Mm above the photosphere, so the bottom of the corona lies 1.0043 solar radii from the Sun's centre."
+          },
           "drawing": {
-            "_declared": "Every value in this block is a drawing choice, not a measurement. Nobody has sourced the warp amplitude, the lobe count or the widths, and the hover says so to the reader. Copied from planet_visualization_utilities.py::STREAMER_BAND_DEFAULTS.",
-            "base_radius": 1.0,
+            "_declared": "Every value in this block is a drawing choice, not a measurement. Nobody has sourced the warp amplitude, the lobe count or the widths, and the hover says so to the reader. Copied from planet_visualization_utilities.py::STREAMER_BAND_DEFAULTS. Where the band starts is not in this block: it is base_radius above, the corona's base (L-460).",
             "outer_radius": 20.0,
             "base_half_width_deg": 38.0,
             "cusp_half_width_deg": 9.0,
@@ -669,8 +702,8 @@
           },
           "name": "Corona",
           "description": "The Sun's outer atmosphere: a very thin gas that thins out with height until it becomes the solar wind.",
-          "hover": "The Sun's outer atmosphere, a very thin gas of electrons and ions. It has no edge. It thins out with height, and at the Alfven surface, about {radius} solar radii ({radius_km} km, {radius_au} AU) from the Sun's center, it becomes the solar wind.\nEach dot's place shows how dense the gas is; its brightness shows how much sunlight reaches it.\nThe streamer belt, drawn with it, is the part of the corona where the Sun's magnetic field closes in loops.",
-          "about": "The corona's glow, seen at a total eclipse, is sunlight scattered by its free electrons, called the K-corona (Boe and others, 2021). How dense the gas is at each height comes from a model of the solar wind from the Sun's surface out past Earth's orbit (Mann and others, 2023). The dots follow it: crowded at the surface, sparse by the Alfven surface. Farther out a second, fainter light takes over, sunlight scattered by dust, the F-corona; that dust is drawn as its own cloud. The corona is very hot, up to about {temperature} kelvin, far hotter than the surface below it (NASA).",
+          "hover": "The Sun's outer atmosphere, a very thin gas of electrons and ions. It begins about {base} km above the visible surface, just above the chromosphere, and has no outer edge. It thins out with height, and at the Alfven surface, about {radius} solar radii ({radius_km} km, {radius_au} AU) from the Sun's center, it becomes the solar wind.\nEach dot's place shows how dense the gas is; its brightness shows how much sunlight reaches it.\nThe streamer belt, drawn with it, is the part of the corona where the Sun's magnetic field closes in loops.",
+          "about": "The corona's glow, seen at a total eclipse, is sunlight scattered by its free electrons, called the K-corona (Boe and others, 2021). How dense the gas is at each height comes from a model of the solar wind from the base of the corona out past Earth's orbit (Mann and others, 2023). The dots follow it: crowded at the base, sparse by the Alfven surface. Farther out a second, fainter light takes over, sunlight scattered by dust, the F-corona; that dust is drawn as its own cloud. The corona is very hot, up to about {temperature} kelvin, far hotter than the surface below it (NASA).",
           "note": "The corona is drawn in two parts. The dots show how dense its gas is at each height, on average, drawn the same in every direction. The streamer belt, drawn as a band, shows the brightest part of the corona, where the Sun's magnetic field closes in loops. The dots stop at the Alfven surface, the outer edge of the Sun's atmosphere, where the gas becomes the solar wind.",
           "info_url": "https://en.wikipedia.org/wiki/Solar_corona",
           "color": "rgb(255, 225, 150)",
@@ -721,6 +754,40 @@
             "figures": 3,
             "source": "Mann, Warmuth, Vocks and Rouillard (2023), \"A heliospheric density and magnetic field model\", A&A 679, A64, https://www.aanda.org/articles/aa/full_html/2023/11/aa45050-22/aa45050-22.html -- Sect. 3: the solar wind's density from Parker's equation (eqs. 9 and 10), \"from the bottom of the corona up to a heliocentric distance of 250 solar radii\", \"in the sense of a long-term average global model\"; \"point M is given by Ce = 9.127 x 10^34 s^-1 and T = 1.18 MK.\"",
             "orrery_constant": "constants_new.py::CORONA_MODEL_TEMPERATURE_K"
+          },
+          "base": {
+            "value": 3000.0,
+            "unit": "km",
+            "in": {
+              "au": {
+                "value": 2e-05,
+                "figures": 1,
+                "prints": null
+              },
+              "km": {
+                "value": 3000.0,
+                "figures": 1,
+                "prints": null
+              },
+              "pc": {
+                "value": 1e-10,
+                "figures": 1,
+                "prints": null
+              },
+              "r_earth": {
+                "value": 0.5,
+                "figures": 1,
+                "prints": null
+              },
+              "r_sun": {
+                "value": 0.004,
+                "figures": 1,
+                "prints": null
+              }
+            },
+            "figures": 1,
+            "orrery_constant": "constants_new.py::CORONA_BASE_HEIGHT_KM",
+            "source": "Mann, Warmuth, Vocks and Rouillard (2023), \"A heliospheric density and magnetic field model\", A&A 679, A64, https://www.aanda.org/articles/aa/full_html/2023/11/aa45050-22/aa45050-22.html -- Sect. 2: the base of the corona is defined as the level where the temperature exceeds a million kelvin, about 3 Mm above the photosphere, so the bottom of the corona lies 1.0043 solar radii from the Sun's centre."
           },
           "light": {
             "_declared": "No number: the source of the panel's first sentence, what the corona's glow is.",

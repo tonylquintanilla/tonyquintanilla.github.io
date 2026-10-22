@@ -185,6 +185,11 @@
  *   `source` line is unchanged. And Earth's four inner shells served in
  *   km give their radius in Earth radii first, from the row's served
  *   "in", then the km below it: Tony's approved lines of 2026-10-18.)
+ * Module updated: October 21, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-460: the streamer band starts at its served base_radius, the
+ *   corona's base linked to the orrery's CORONA_BASE_KM, not at a number
+ *   in its drawing block, and is not drawn without it; the corona's i
+ *   panel lists the base's citation as "Where the corona begins".)
  */
 
 (function (global) {
@@ -1847,8 +1852,10 @@
    * point jittered past the fade radius would otherwise carry a non-zero
    * alpha from inside it and draw a stray rim.
    */
-  function streamerBandPoints(cuspR, fadeR, d) {
-    var baseR = d.base_radius, outR = d.outer_radius;
+  function streamerBandPoints(cuspR, fadeR, d, baseR) {
+    // L-460 (2026-10-21): the band starts at the corona's base, a served
+    // row, not at a number in the drawing block.
+    var outR = d.outer_radius;
     var baseW = d.base_half_width_deg * Math.PI / 180;
     var cuspW = d.cusp_half_width_deg * Math.PI / 180;
     var warp = d.warp_amp_deg * Math.PI / 180;
@@ -1986,10 +1993,12 @@
     }
     var cuspR = measuredRadiusRsun(cfg.cusp_radius, where + "/cusp_radius", warn);
     var fadeR = measuredRadiusRsun(cfg.fade_radius, where + "/fade_radius", warn);
+    // L-460: where the band starts, the corona's base, served and linked.
+    var baseR = measuredRadiusRsun(cfg.base_radius, where + "/base_radius", warn);
     var d = cfg.drawing;
-    if (cuspR === null || fadeR === null || !isDict(d)) {
-      warn(where + ": needs cusp_radius, fade_radius and a drawing block " +
-           "-- nothing drawn");
+    if (cuspR === null || fadeR === null || baseR === null || !isDict(d)) {
+      warn(where + ": needs base_radius, cusp_radius, fade_radius and a " +
+           "drawing block -- nothing drawn");
       return [];
     }
     if (basis === null) {
@@ -2001,7 +2010,7 @@
       return [];
     }
 
-    var pts = streamerBandPoints(cuspR, fadeR, d);
+    var pts = streamerBandPoints(cuspR, fadeR, d, baseR);
     var scale = starRadiusKm / KM_PER_AU;
     var xs = [], ys = [], zs = [], colors = [];
     var base = (cfg.color || "rgb(255, 200, 80)")
@@ -2821,6 +2830,7 @@
   // printed twice.
   var FADE_SOURCE_LABELS = [
     ["light", "What the light is"],
+    ["base", "Where the corona begins"],
     ["density_model", "How dense the gas is"],
     ["exponent", "How fast the dust thins"],
     ["tilt", "The middle plane"],

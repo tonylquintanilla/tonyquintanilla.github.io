@@ -238,9 +238,16 @@ const SOFT_BR = "<br soft>";
 // lines of 2026-10-18). Those four are graded, not held to the fixture,
 // so the fixture is unchanged: re-recorded at ca5339fd, it came out byte
 // for byte the same as this one.
-const FIXTURE_AT = "e8f6dd5e";
+// L-460 (2026-10-21): the corona begins at its sourced base, 3,000 km
+// above the visible surface, and its hover says so in Tony's approved
+// words. Re-recorded as fixture_hovers_L460_on_72c3c403.json, from the
+// cache as the cache builder will write it from this config: the L-410
+// one with the corona's hover (its marker, "Sun: Corona#2") replaced and
+// every other hover byte for byte. The L-410 one is left in place,
+// unreferenced.
+const FIXTURE_AT = "72c3c403";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L410_on_e8f6dd5e.json");
+                          "fixture_hovers_L460_on_72c3c403.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

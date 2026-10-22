@@ -233,8 +233,11 @@ check("the Hills cloud draws the served dots, every one, as given",
       torus.z.every((v, i) => v === servedDots.z[i]),
       (torus ? torus.x.length : 0) + " drawn, " + servedDots.dots + " served");
 const [tl, th] = span(torus);
-check("the Hills cloud thins out by its served outer edge",
-      th <= hillsCfg.outer_radius.value + 1 && tl < hillsCfg.inner_radius.value,
+// L-460 (2026-10-21): every dot between the served edges. Until then this
+// line REQUIRED a dot inside the inner edge (tl < inner_radius), which is
+// how the drawing's dots at 257 AU, where no row puts the cloud, passed.
+check("the Hills cloud lies between its served inner and outer edges",
+      th <= hillsCfg.outer_radius.value + 1 && tl >= hillsCfg.inner_radius.value - 1,
       Math.round(tl) + " - " + Math.round(th) + " AU");
 // The plane through the dots, by power iteration on the inverse of the
 // moment matrix: this check's own arithmetic, not the renderer's or the

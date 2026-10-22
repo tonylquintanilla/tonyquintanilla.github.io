@@ -168,6 +168,9 @@ Module updated: October 21, 2026 with Anthropic's Claude Opus 5.5
 (L-460: the "Drawer order" checker runs documentation/smoke_drawer_order.js
 and gates; the live check also fetches gallery/drawer_order.js, which the
 page loads with a script tag.)
+Module updated: October 21, 2026 with Anthropic's Claude Opus 5.5
+(L-460, second patch: the "Drawn ends" checker runs
+documentation/smoke_drawn_ends.js and gates.)
 """
 
 import hashlib
@@ -509,6 +512,18 @@ OFFLINE_CHECKERS = [
     # Gates.
     ("Drawer order", "node",
      ["documentation/smoke_drawer_order.js"], ".", "===", False),
+
+    # L-460 (2026-10-21, Tony: "we should double check our drawings for
+    # correct distances"): every drawing in the Sun and Earth rooms starts
+    # and stops on a length its own served row gives, or on a HELD end
+    # with its reason and the distance it was measured at. It builds both
+    # rooms with the real renderers and the served drawings, measures each
+    # shell's nearest and farthest drawn point, and fails, naming the
+    # room, the shell and the end, on an end no row sets that is not held,
+    # or a held end that moved. Its self-test plants the corona back at
+    # the Sun's surface and a Hills cloud dot at 257 AU. Gates.
+    ("Drawn ends", "node",
+     ["documentation/smoke_drawn_ends.js"], ".", "===", False),
 
     # L-281 (2026-09-26): the lobby's guest book. It renders the real
     # data/guestbook.json with the real gallery/guestbook.js and fails
