@@ -39,6 +39,15 @@ WHAT THIS IS
                 shell outward ten times the volume of the last. The dust
                 cloud thins only from its depletion zone outward, and its
                 middle plane must lie within 3 degrees of its served tilt
+    the outer   (L-434) the outer Oort cloud and the galactic tide
+    cloud       record no tilt: every dot must lie between its row's
+                served inner_radius and outer_radius, in AU. The tide's
+                dots must also follow |sin b cos b| about the SERVED
+                galactic pole: counted in five shells of |sin b|, b the
+                galactic latitude worked out here from the pole's served
+                RA and Dec and the served frame angle, each shell within
+                four standard deviations of chance or 15 percent of what
+                the rule gives
     the SHA     data/drawings/pulled_at.sha names the orrery commit the
                 drawings were pulled at
 
@@ -51,7 +60,9 @@ WHAT THIS IS
     moved off the body, a dot moved inside the inner edge, and the dots
     spread evenly in volume so they no longer thin out. The exosphere and
     the corona are round, so turning their frame changes nothing; the
-    dust cloud is flattened, so it gets the turned frame as well.
+    dust cloud is flattened, so it gets the turned frame as well. The
+    outer cloud and the tide get a dot moved inside the inner edge, and
+    the tide the turned frame, which moves its pole.
 
     The last line starts "DRAWINGS:", which the maintenance run quotes,
     and names each drawing with its dots, its fitted tilt and its sha256.
@@ -83,6 +94,12 @@ its own served edges (FADES); the dust cloud, which is flattened and
 thins only outside the zone near the Sun where its dust is depleted, is
 judged from there outward and by its middle plane's tilt, with the
 turned frame as a fourth fault.)
+Module updated: October 22, 2026 with Anthropic's Claude Opus 5.5
+(L-434: the outer Oort cloud and the galactic tide, the sixth and seventh
+stored drawings, are checked by their mechanism: between their served
+edges, and the tide's dots thickest halfway between the galaxy's plane
+and its served pole, as |sin b cos b| gives; with a dot planted inside
+the inner edge in each, and the tide's frame turned.)
 """
 
 import hashlib
@@ -140,6 +157,18 @@ FADES = {
                       "unit": "AU", "slack": 0.0005},
 }
 FADE_TILT_DEG = 3.0
+# L-434 (2026-10-22): the outer Oort cloud's two stored drawings, by name,
+# and where each one's row is served. The tide's dots are judged about
+# the galactic pole its row serves; COVERAGE carries the frame angle that
+# turns that pole into the drawing frame, as the page reads it.
+OUTER = {
+    "outer_oort_cloud": {"at": ("sun", "oort_cloud", "outer_oort_clumpy")},
+    "galactic_tide": {"at": ("sun", "oort_cloud", "galactic_tide"),
+                      "pole": "galactic_pole"},
+}
+OUTER_SLACK_AU = 1.0           # the files round each coordinate to 1 AU
+SIN_B_EDGES = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+COVERAGE = os.path.join(ROOT, "data", "solar-system", "coverage_index.json")
 
 
 def plane_tilt_deg(x, y, z):
@@ -315,8 +344,91 @@ def fade_problems(name, content, edges):
     return out
 
 
+def obliquity_deg():
+    """The served frame angle, EARTH_OBLIQUITY_J2000_DEG, from the served
+    cache, or None."""
+    try:
+        with open(COVERAGE, "r", encoding="utf-8") as handle:
+            rows = json.load(handle)["frame_constants"]["rows"]
+        return float(rows["EARTH_OBLIQUITY_J2000_DEG"]["value"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def outer_edges(config, name, obliquity):
+    """{inner, outer, pole} for an outer cloud drawing, in AU, from the
+    served config: pole is the served galactic pole as a unit vector in
+    the drawing frame, turned by the served frame angle, or None where
+    the row serves no pole. None if a served edge cannot be read."""
+    spec = OUTER.get(name)
+    if spec is None:
+        return None
+    slug, group, member = spec["at"]
+    try:
+        body = [o for o in config["objects"] if o.get("slug") == slug][0]
+        entry = body["features"][group][member]
+        if (entry["inner_radius"]["unit"] != "au" or
+                entry["outer_radius"]["unit"] != "au"):
+            return None
+        out = {"inner": float(entry["inner_radius"]["value"]),
+               "outer": float(entry["outer_radius"]["value"]), "pole": None}
+        if "pole" in spec:
+            if obliquity is None:
+                return None
+            gp = entry[spec["pole"]]
+            ra = math.radians(float(gp["ra"]["value"]))
+            dec = math.radians(float(gp["dec"]["value"]))
+            eps = math.radians(obliquity)
+            x = math.cos(dec) * math.cos(ra)
+            y = math.cos(dec) * math.sin(ra)
+            z = math.sin(dec)
+            out["pole"] = (x, y * math.cos(eps) + z * math.sin(eps),
+                           -y * math.sin(eps) + z * math.cos(eps))
+    except (IndexError, KeyError, TypeError, ValueError):
+        return None
+    return out
+
+
+def outer_problems(name, content, edges):
+    """Failures for an outer cloud drawing (L-434): every dot between the
+    served edges; for the tide, the dots in shells of |sin b| about the
+    served pole as |sin b cos b| gives -- the share below t is
+    1 - (1 - t^2)^(3/2), worked out here, not read from the orrery."""
+    if edges is None:
+        return ["%s: no served inner and outer edge (and, for the tide, "
+                "pole and frame angle) to judge the dots by" % name]
+    out = []
+    xs, ys, zs = content["x"], content["y"], content["z"]
+    radii = [math.sqrt(x * x + y * y + z * z) for x, y, z in zip(xs, ys, zs)]
+    off = [r for r in radii if r < edges["inner"] - OUTER_SLACK_AU or
+           r > edges["outer"] + OUTER_SLACK_AU]
+    if off:
+        out.append("%s: %d dot(s) lie outside the served edges, %g to %g AU, "
+                   "e.g. at %.0f" % (name, len(off), edges["inner"],
+                                     edges["outer"], off[0]))
+    pole = edges["pole"]
+    if pole is not None:
+        n = len(radii)
+        sin_b = [abs(pole[0] * x + pole[1] * y + pole[2] * z) / r
+                 for x, y, z, r in zip(xs, ys, zs, radii) if r > 0]
+
+        def cum(t):
+            return 1.0 - (1.0 - t * t) ** 1.5
+        for t0, t1 in zip(SIN_B_EDGES[:-1], SIN_B_EDGES[1:]):
+            got = sum(1 for s in sin_b if t0 <= s < t1 or (t1 == 1.0 and s >= 1.0))
+            want = n * (cum(t1) - cum(t0))
+            allow = max(4.0 * math.sqrt(want), 0.15 * want)
+            if abs(got - want) > allow:
+                out.append("%s: the dots do not follow the tide's latitude "
+                           "rule about the served galactic pole: %d with "
+                           "|sin b| from %.1f to %.1f, where |sin b cos b| "
+                           "gives %.0f (allowing %.0f)"
+                           % (name, got, t0, t1, want, allow))
+    return out
+
+
 def check_one(name, pulled_text, served_text, paper_tilt, edges=None,
-              fades=None):
+              fades=None, outer=None):
     """Failures for one drawing, as sentences, and what was examined."""
     failures = []
     if pulled_text is None:
@@ -345,6 +457,10 @@ def check_one(name, pulled_text, served_text, paper_tilt, edges=None,
         # L-410: a fade records no plane; its mechanism is checked.
         failures.extend(fade_problems(name, content,
                                       (fades or {}).get(name)))
+    elif name in OUTER:
+        # L-434: the outer cloud records no plane; its mechanism is checked.
+        failures.extend(outer_problems(name, content,
+                                       (outer or {}).get(name)))
     elif not isinstance(recorded, (int, float)) or abs(round(tilt, 1) - recorded) > 0.05:
         failures.append("%s: the plane through the dots is tilted %.1f deg; the "
                         "file records %s" % (name, tilt, recorded))
@@ -360,7 +476,7 @@ def check_one(name, pulled_text, served_text, paper_tilt, edges=None,
                       "sha256": hashlib.sha256(pulled_text.encode("utf-8")).hexdigest()}
 
 
-def planted(name, pulled_text, paper_tilt, fades=None):
+def planted(name, pulled_text, paper_tilt, fades=None, outer=None):
     """Three faults, in memory, each with the words that must catch it."""
     out = []
     moved = json.loads(pulled_text)
@@ -370,6 +486,22 @@ def planted(name, pulled_text, paper_tilt, fades=None):
     out.append(("the served copy differs", pulled_text, pulled_text + " ",
                 "served copy is not the pulled one"))
     turned = json.loads(pulled_text)
+    if name in OUTER:
+        # L-434: a dot inside the inner edge, and for the tide the frame
+        # turned, which moves its pole away from the served one.
+        edges = (outer or {}).get(name) or {"inner": 1.0}
+        inside = json.loads(pulled_text)
+        inside["x"][0] = 0.9 * edges["inner"]
+        inside["y"][0] = inside["z"][0] = 0
+        text = json.dumps(inside)
+        out.append(("a dot moved inside the inner edge", text, text,
+                    "outside the served edges"))
+        if "pole" in OUTER[name]:
+            turned["x"], turned["z"] = turned["z"], turned["x"]
+            text = json.dumps(turned)
+            out.append(("the frame turned (x and z swapped)", text, text,
+                        "latitude rule"))
+        return out
     if name in FADES:
         # A fade: its own three. Turning the frame changes a round fade
         # not at all, so only the flattened dust cloud gets that one too.
@@ -439,14 +571,16 @@ def main():
     caught = total = 0
     edges = belt_edges(config)
     fades = dict((n, fade_edges(config, n)) for n in FADES)
+    obliquity = obliquity_deg()
+    outer = dict((n, outer_edges(config, n, obliquity)) for n in OUTER)
     for planted_name in names:
         if texts[planted_name][0] is None:
             continue
         for label, pulled_text, served_text, expect in planted(
-                planted_name, texts[planted_name][0], paper, fades):
+                planted_name, texts[planted_name][0], paper, fades, outer):
             total += 1
             fails, _ = check_one(planted_name, pulled_text, served_text,
-                                 paper, edges, fades)
+                                 paper, edges, fades, outer)
             hit = any(expect in line for line in fails)
             caught += hit
             print("  planted in %-15s %-38s %s" % (planted_name + ":", label,
@@ -459,12 +593,15 @@ def main():
 
     for name in names:
         fails, info = check_one(name, texts[name][0], texts[name][1], paper,
-                                edges, fades)
+                                edges, fades, outer)
         problems.extend(fails)
         if info:
             shape = ("flattened, middle plane tilted %.1f deg" % info["tilt"]
                      if name in FADES and "tilt" in FADES[name]
                      else "round, centred on the body" if name in FADES
+                     else "about the served galactic pole"
+                     if name in OUTER and "pole" in OUTER[name]
+                     else "random directions" if name in OUTER
                      else "plane tilted %.1f deg" % info["tilt"])
             print("  %-15s %d dots, %s (%s), "
                   "served copy %s, sha256 %s"
@@ -472,6 +609,7 @@ def main():
                      "served tilt row %s" % paper if name == "hills_cloud"
                      else "between the served edges, thinning out"
                      if name in FADES
+                     else "between the served edges" if name in OUTER
                      else "the body frame's equator",
                      "MISSING" if texts[name][1] is None else
                      "matches" if texts[name][1] == texts[name][0] else "DIFFERS",
@@ -481,6 +619,9 @@ def main():
                              % (name, info["dots"],
                                 "round" if name in FADES and
                                 "tilt" not in FADES[name]
+                                else "about the galactic pole"
+                                if name == "galactic_tide"
+                                else "between its edges" if name in OUTER
                                 else "tilt %.1f deg" % info["tilt"],
                                 info["sha256"][:12]))
     sha = read(SHA_FILE).strip() if os.path.exists(SHA_FILE) else ""

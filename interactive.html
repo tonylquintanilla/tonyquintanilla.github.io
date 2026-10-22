@@ -287,6 +287,11 @@
         shell at the nearest part of it as drawn, read from its served
         row by gallery/drawer_order.js when the page opens; rows that are
         not shells keep their places; the Solar System room is unchanged)
+     Updated: October 22, 2026 with Anthropic's Claude Opus 5.5
+       (L-468: naming a drawer row opens its own feature's words. The
+        corona's row opened the streamer belt's, whose cross came first
+        in the row; a member drawn with another now yields the row to the
+        host's cross, by GalleryFeatures.labelTraceIndex)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -3833,25 +3838,13 @@ function sunLabelMarker(k) {
     // A room can name the trace a group's text box belongs to. The Solar
     // System room names each body's POSITION marker: the orbit's info
     // cross sits at an arbitrary point on the orbit, and its distance is
-    // not the body's. No trace in the Sun or Earth rooms is named, so the
-    // cross rule below serves them as before.
-    for (let j = 0; j < grp.indices.length; j++) {
-        const t = sunPlotDiv.data[grp.indices[j]];
-        if (t && t.meta && t.meta.label_target === true &&
-            Array.isArray(t.text) && typeof t.text[0] === "string" &&
-            Array.isArray(t.x) && Array.isArray(t.y) && Array.isArray(t.z)) {
-            return t;
-        }
-    }
-    for (let j = 0; j < grp.indices.length; j++) {
-        const t = sunPlotDiv.data[grp.indices[j]];
-        if (t && t.showlegend === false && t.marker && t.marker.symbol === "cross" &&
-            Array.isArray(t.text) && typeof t.text[0] === "string" &&
-            Array.isArray(t.x) && Array.isArray(t.y) && Array.isArray(t.z)) {
-            return t;
-        }
-    }
-    return null;
+    // not the body's. Otherwise the group's own info cross. L-468
+    // (2026-10-22): a cross drawn with another feature (the streamer
+    // belt's, on the corona's row) yields to the row's own, so naming the
+    // corona opens the corona's words. The rule is
+    // GalleryFeatures.labelTraceIndex, which a check reads too.
+    const i = window.GalleryFeatures.labelTraceIndex(sunPlotDiv.data, grp.indices);
+    return i >= 0 ? sunPlotDiv.data[i] : null;
 }
 
 // Rewrap hover text for a label: keep its HARD line breaks, turn its SOFT

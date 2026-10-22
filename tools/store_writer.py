@@ -134,6 +134,9 @@ dots rather than rings, and their `details` carry the field lines'
 citation to the i panel; `hover_line`, a number's own sentence, is a
 served word a patch writes; `panel_words`, sentences moved from a
 hover to its i panel for the 17-line ceiling, is a shell's word).
+Updated October 22, 2026 with Anthropic's Claude Opus 5.5 (L-454: `dash`,
+a line's dash style in a drawing block, is a served setting, never a
+word: the Alfven surface's usual range is drawn as dashed circles).
 """
 
 import json
@@ -226,7 +229,7 @@ SERVED_WORDS_PATCHED = ("radius_note", "cusp_note", "_model", "centre_hover",
 SERVED_SETTINGS = ("color", "colors", "info_border", "info_borders", "shape",
                    "dots", "unit", "figures", "uncertainty",
                    "orrery_constant", "frame", "_comment", "_declared",
-                   "_frame", "drawn_with")
+                   "_frame", "drawn_with", "dash")
 
 # A word that must not be emptied: the shell list is keyed off it, and
 # the renderers fall back to the raw key without it.

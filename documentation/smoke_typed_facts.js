@@ -77,6 +77,9 @@
 // Exit code 0 on pass, 1 on failure, as its siblings.
 //
 // Written October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 2).
+// Updated October 22, 2026 with Anthropic's Claude Opus 5.5 (L-465: the
+// Sun's rotation axis is a drawn guide, and its name joins ALLOWED beside
+// Earth's guides' names).
 // Updated October 17, 2026 with Anthropic's Claude Opus 5.5 (L-451, Tony's
 // rulings: OPEN is empty and the run says so; the Sun room's two sentences
 // about what is drawn by choice are on DESCRIPTIONS. A number's own line
@@ -149,6 +152,9 @@ const ALLOWED = [
   ["Earth: Rotation Axis and Equator", "the picture: a guide's name"],
   ["Earth: Sun Direction", "the picture: a guide's name"],
   ["Earth: Terminator (day-night line)", "the picture: a guide's name"],
+  // L-465 (2026-10-22): the Sun's rotation axis, a guide like Earth's, its
+  // name in Tony's approved words of this day.
+  ["Sun: Rotation Axis", "the picture: a guide's name"],
   ["Moon", "the picture: a body's name"],
   ["Moon label", "the picture: a trace's name"],
   ["Moon (orbit and position)", "the picture: a trace's name"],

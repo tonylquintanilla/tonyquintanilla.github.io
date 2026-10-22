@@ -19,6 +19,10 @@
 //                        nose (the magnetopause, the bow shock);
 //   4. drawn_radius   -- a shell drawn at a distance other than the one
 //                        it reports, where it is drawn (the Roche limit);
+//                        only beside a served radius, which is what makes
+//                        it a distance (L-460, 2026-10-22: the
+//                        magnetotail's drawn_radius is its width about its
+//                        axis, and it serves no radius, so it falls to 8);
 //   5. radius         -- a sphere or a ring drawn at one distance;
 //   6. range.low      -- a band, at its near end;
 //   7. a frame shape  -- FRAME_SHAPES below: not a region of space, so it
@@ -56,6 +60,11 @@
 //
 // Module written: October 21, 2026 with Anthropic's Claude Opus 5.5
 // (new, L-460).
+// Module updated: October 22, 2026 with Anthropic's Claude Opus 5.5
+// (L-460's last loose end: drawn_radius places a shell only beside a
+// served radius, so Earth's magnetotail, whose drawn_radius is its width,
+// is placed where it begins as drawn, 30.6 Earth radii, not at 30. The
+// order is unchanged.)
 //
 // Role: renderer
 // Domain: gallery
@@ -111,7 +120,10 @@
     // A shell drawn at a distance other than the one it reports (the
     // Roche limit, drawn at its formula's full answer) is placed where
     // it is drawn: the order goes by the nearest part of what is shown.
-    if (isValue(row.drawn_radius)) {
+    // Only beside a served radius: the magnetotail's drawn_radius is its
+    // width about its own axis, not a distance from the centre (L-460's
+    // last loose end, 2026-10-22), so it is placed where it is drawn.
+    if (isValue(row.drawn_radius) && isValue(row.radius)) {
       return { from: "drawn_radius", node: row.drawn_radius };
     }
     if (isValue(row.radius)) { return { from: "radius", node: row.radius }; }

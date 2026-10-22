@@ -1,0 +1,46 @@
+{
+  "run_id": "20261022T200533Z",
+  "started": "2026-10-22T20:05:33.154146+00:00",
+  "mode": "nightly",
+  "objects": {
+    "sun": "features-only (frame origin; no ephemeris fetched)",
+    "earth": "nightly(8)",
+    "jupiter": "nightly(8)",
+    "saturn": "nightly(8); drawn around @0",
+    "mercury": "nightly(8)",
+    "venus": "nightly(8)",
+    "mars": "nightly(8)",
+    "uranus": "nightly(8); drawn around @0",
+    "neptune": "nightly(8); drawn around @0",
+    "moon": "nightly(8)",
+    "io": "nightly(8)",
+    "titan": "nightly(8)",
+    "pluto_barycenter": "nightly(8)",
+    "pluto": "nightly(8)",
+    "charon": "nightly(8)",
+    "apophis": "nightly(8)",
+    "voyager_1": "nightly(8)",
+    "encke": "nightly(8)",
+    "halley": "nightly(8)"
+  },
+  "guard_warnings": [],
+  "structural_validation": "pass",
+  "committed": false,
+  "frame_constants": [
+    "EARTH_OBLIQUITY_J2000_DEG",
+    "KM_PER_AU"
+  ],
+  "pole_of_date": {
+    "earth": "served 2026-10-22, tilt 23.43798 deg"
+  },
+  "drawings": {
+    "earth_exosphere": 1500,
+    "galactic_tide": 5000,
+    "hills_cloud": 3600,
+    "outer_oort_cloud": 2736,
+    "sun_corona": 2500,
+    "van_allen_belts": 3200,
+    "zodiacal_dust": 3000
+  },
+  "finished": "2026-10-22T20:05:37.013692+00:00"
+}

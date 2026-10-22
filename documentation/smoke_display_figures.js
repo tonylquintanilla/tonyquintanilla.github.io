@@ -245,9 +245,29 @@ const SOFT_BR = "<br soft>";
 // one with the corona's hover (its marker, "Sun: Corona#2") replaced and
 // every other hover byte for byte. The L-410 one is left in place,
 // unreferenced.
-const FIXTURE_AT = "72c3c403";
+// L-434 (2026-10-22): the outer Oort cloud and the galactic tide draw the
+// orrery's stored dots; the outer cloud is loose dots with clumps, and
+// the tide gains its pink cone, each in Tony's approved words of this
+// day. And L-454, the same day: the Alfven surface's usual range is a
+// new row, two dashed circles, its hover in Tony's approved words.
+// And L-434 again, the same day, Tony's ruling: the Oort cloud's three
+// spheres are gone, so their three hovers are; the Hills cloud fills in
+// across its inner edge's range and the outer cloud names its outer
+// edge's range, in Tony's approved words.
+// Re-recorded as fixture_hovers_L434_on_d7195704.json, from the cache as
+// the cache builder will write it from this config: the L-460 one with
+// the Hills cloud's, the outer cloud's and the tide's hovers replaced,
+// the usual range's added, the three spheres' gone, and every other
+// hover byte for byte. The L-460 one is left in place, unreferenced.
+// L-465 (2026-10-22): the Sun's rotation axis is drawn, its hover printing
+// the served period and tilt by their own sentences, in Tony's approved
+// words. Re-recorded as fixture_hovers_L465_on_d7195704.json, from the
+// cache as the cache builder will write it from this config: the L-434
+// one with the axis's hover added and every other hover byte for byte.
+// The L-434 one is left in place, unreferenced.
+const FIXTURE_AT = "d7195704";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L460_on_72c3c403.json");
+                          "fixture_hovers_L465_on_d7195704.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

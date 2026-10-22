@@ -34,6 +34,9 @@
 //
 // Written September 2026 with Anthropic's Claude Opus 5, from the
 // version written September 17, 2026 with Claude Fable 5.1.
+// Updated October 22, 2026 with Anthropic's Claude Opus 5.5 (L-465: the
+// Sun's rotation axis, a frame element the renderers mark, is drawn on
+// arrival and must carry no shell key).
 
 "use strict";
 const fs = require("fs");
@@ -124,12 +127,31 @@ function featureRequests(slug) {
   });
 }
 
-// Everything buildFeatureTraces returns belongs to a served shell. The
-// frame elements -- the axis, the Sun direction, the terminator, the
-// Moon -- are built by earth_geometry.js and never come through here.
-function shellTraces(slug, bodies, opts) {
+// Everything buildFeatureTraces returns belongs to a served shell, but
+// one kind: a trace the renderers mark meta.frame_element, a guide drawn
+// from an orientation block -- the Sun's rotation axis since L-465
+// (2026-10-22). Earth's frame elements -- the axis, the Sun direction, the
+// terminator, the Moon -- are built by earth_geometry.js and never come
+// through here. A frame element must carry NO shell key: one that did
+// would be hidden by the arrival rule while its mark said it was always
+// drawn, so frameKeyed() names it as a failure.
+function allTraces(slug, bodies, opts) {
   return GalleryFeatures.buildFeatureTraces(
     featureRequests(slug), bodies, opts).traces;
+}
+function isFrameElement(t) { return !!(t && t.meta && t.meta.frame_element); }
+function shellTraces(slug, bodies, opts) {
+  return allTraces(slug, bodies, opts).filter(function (t) {
+    return !isFrameElement(t);
+  });
+}
+function frameKeyed(slug, traces) {
+  traces.filter(isFrameElement).forEach(function (t) {
+    if (t.meta.shell_key) {
+      fail(slug + ": a frame element carries a shell key, so the arrival " +
+           "rule would hide it: " + t.legendgroup);
+    }
+  });
 }
 
 function earthPayload() {
@@ -146,8 +168,11 @@ function earthPayload() {
   return payload;
 }
 function sunTraces() {
-  return shellTraces("sun", { sun: { name: "Sun", position: [0, 0, 0] } },
-                     { sceneHalfRangeAu: 0.25 });
+  return allTraces("sun", { sun: { name: "Sun", position: [0, 0, 0] } },
+                   { sceneHalfRangeAu: 0.25 });
+}
+function sunShellTraces() {
+  return sunTraces().filter(function (t) { return !isFrameElement(t); });
 }
 function earthTraces() {
   return EarthGeometry.composeScene(earthPayload(), {
@@ -206,8 +231,10 @@ function checkStamps(slug, sceneTraces, shellOnly) {
            frame: Object.keys(frame).sort() };
 }
 
+// L-465 (2026-10-22): the Sun's rotation axis is a frame element, always
+// drawn, as Earth's axis is.
 const EXPECTED = {
-  sun: ["Sun: Photosphere"],
+  sun: ["Sun: Photosphere", "Sun: Rotation Axis"],
   earth: ["Earth: Crust", "Earth: Rotation Axis and Equator",
           "Earth: Sun Direction", "Earth: Terminator (day-night line)"]
 };
@@ -334,8 +361,9 @@ console.log("  self-test: four deliberate breaks" +
             (selfOk ? " all produced the wrong-looking result they should"
                     : " DID NOT all behave"));
 console.log("");
-const sunShells = sunTraces();
-const sunStamp = checkStamps("sun", sunShells, sunShells);
+const sunScene = sunTraces();
+frameKeyed("sun", sunScene);
+const sunStamp = checkStamps("sun", sunScene, sunShellTraces());
 const earthStamp = checkStamps("earth", earthTraces(), earthShellTraces());
 [["sun", sunStamp], ["earth", earthStamp]].forEach(function (p) {
   console.log("  " + p[0] + ": " + p[1].stamped + " trace(s) across " +

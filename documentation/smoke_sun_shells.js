@@ -47,20 +47,27 @@ const bodies = {sun:{name:"Sun", position:[0,0,0]}};
 // --- with a 1.1 AU scene (Artifact 1) ---
 const r = GF.buildFeatureTraces(features, bodies, {sceneHalfRangeAu: 1.1});
 check("no unread inputs", r.warnings.length === 0, r.warnings.join(" | "));
-const geo = r.traces.filter(t => t.showlegend === true);
+// L-465: the rotation axis is a frame element, checked on its own below.
+const shellTraces = r.traces.filter(t => !(t.meta && t.meta.frame_element));
+const geo = shellTraces.filter(t => t.showlegend === true);
 // L-408 (2026-10-11): the galactic plane's pole line and its three
 // direction markers are drawn under its legend row too, with no legend
 // entry; an INFO marker is the cross, one per geometry trace.
-const info = r.traces.filter(t => t.showlegend === false &&
+const info = shellTraces.filter(t => t.showlegend === false &&
                                   t.marker && t.marker.symbol === "cross");
 // L-410 with L-131 (2026-10-20): the inner and outer corona spheres are
 // one fade of dots, the corona, and the streamer band is drawn with it
 // under its one legend row (Tony, 2026-10-19); the zodiacal dust cloud is
 // new. So 18 legend rows, and 19 info markers: the band keeps its own.
-check("18 geometry traces (12 spheres + the corona + the dust cloud + 3 Oort shapes + the galactic plane)",
-      geo.length === 18, "got " + geo.length);
-check("19 info markers, one per geometry trace and the band's own",
-      info.length === 19, "got " + info.length);
+// L-454 (2026-10-22): the Alfven surface's usual range is a row of its
+// own, two dashed circles under one legend entry, with one marker. And
+// L-434, the same day: the Oort cloud's three spheres are gone (Tony's
+// ruling: the clouds show its edges across their ranges). So 16 legend
+// rows and 17 info markers.
+check("16 geometry traces (9 spheres + the corona + the dust cloud + 3 Oort shapes + the galactic plane + the Alfven surface's usual range)",
+      geo.length === 16, "got " + geo.length);
+check("17 info markers, one per geometry trace and the band's own",
+      info.length === 17, "got " + info.length);
 
 function radiusOf(t){ return Math.max(...t.x.map(Math.abs), ...t.z.map(Math.abs)); }
 const byName = {}; geo.forEach(t => byName[t.name] = t);
@@ -101,8 +108,39 @@ check("gravitational influence drawn at its served 134,000 AU",
       near(radiusOf(byName["Sun: Gravitational Influence"]), 134000, 1e-9));
 check("Roche limit drawn at 3.45 R_sun, from its drawn_radius",
       near(radiusOf(byName["Sun: Roche Limit (Comets)"]), 3.45*RSUN_KM/AU, 1e-6));
-check("outer Oort drawn at 100000 AU",
-      near(radiusOf(byName["Sun: Outer Oort Cloud"]), 100000, 1e-9));
+// L-454: the usual range's two dashed circles, at its served low and high
+// ends, 10 and 20 solar radii, under one legend row, each lying in the
+// solar equator: its plane tilted 7.25 degrees to the ecliptic, as the
+// band's is below. Tony's look of 2026-10-22: circles, not spheres.
+(function () {
+  const pair = r.traces.filter(t => t.legendgroup === "Sun: Alfven Surface, usual range" &&
+                                    !(t.marker && t.marker.symbol === "cross"));
+  const rr = pair.map(t => Math.max(...t.x.map((x, k) => Math.hypot(x, t.y[k], t.z[k]))) * AU / RSUN_KM)
+                 .sort((a, b) => a - b);
+  const round = pair.every(t => {
+    const q = t.x.map((x, k) => Math.hypot(x, t.y[k], t.z[k]));
+    return Math.max(...q) / Math.min(...q) < 1 + 1e-9;
+  });
+  function tiltOf(t) {
+    const n = t.x.length, a = [t.x[0], t.y[0], t.z[0]];
+    const b = [t.x[Math.floor(n / 4)], t.y[Math.floor(n / 4)], t.z[Math.floor(n / 4)]];
+    const c = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    return Math.acos(Math.abs(c[2]) / Math.hypot(c[0], c[1], c[2])) * 180 / Math.PI;
+  }
+  const tilts = pair.map(tiltOf);
+  check("the usual range's circles lie in the solar equator (7.25 deg to the ecliptic)",
+        pair.length === 2 && tilts.every(x => Math.abs(x - 7.25) < 0.15),
+        tilts.map(x => x.toFixed(3)).join(" and ") + " deg");
+  check("the Alfven surface's usual range: two dashed circles at 10 and 20 R_sun, one legend row",
+        pair.length === 2 && near(rr[0], 10, 1e-6) && near(rr[1], 20, 1e-6) && round &&
+        pair.every(t => t.mode === "lines" && t.line && t.line.dash === "dash") &&
+        pair.filter(t => t.showlegend === true).length === 1,
+        rr.map(x => x.toFixed(3)).join(" and ") + " R_sun");
+})();
+// L-434 (2026-10-22): no Oort sphere is drawn; the clouds carry the edges.
+check("no Oort cloud sphere drawn",
+      !byName["Sun: Outer Oort Cloud"] && !byName["Sun: Inner Oort Cloud"] &&
+      !byName["Sun: Inner Limit of Oort Cloud"]);
 check("chromosphere is ABOVE the photosphere",
       radiusOf(byName["Sun: Chromosphere (2,000 km skin)"]) >
       radiusOf(byName["Sun: Photosphere"]));
@@ -111,7 +149,7 @@ check("chromosphere is ABOVE the photosphere",
 const hidden = geo.filter(t => t.visible === "legendonly").map(t=>t.name).sort();
 const shown  = geo.filter(t => t.visible !== "legendonly").map(t=>t.name).sort();
 check("everything beyond 1.1 AU starts hidden",
-      hidden.length === 11 && shown.length === 7, hidden.length+" hidden / "+shown.length+" shown");
+      hidden.length === 8 && shown.length === 8, hidden.length+" hidden / "+shown.length+" shown");
 console.log("       hidden: " + hidden.join(", "));
 
 // marker separation: photosphere vs chromosphere markers must not coincide
@@ -198,10 +236,86 @@ check("band sits in the SOLAR equator, not the ecliptic (7.25 deg)",
 // defect and it looks perfectly plausible on screen.
 const noPole = features.filter(f => f.feature !== "orientation");
 const r6 = GF.buildFeatureTraces(noPole, bodies, {sceneHalfRangeAu:1.1});
-check("no pole -> band refused and reported, spheres still drawn",
+// L-454: the usual range's circles are refused with the band, by name.
+check("no pole -> band and the usual range's circles refused and reported, spheres still drawn",
       r6.warnings.some(w => w.indexOf("L-229") !== -1) &&
-      r6.traces.filter(t => t.showlegend === true).length === 18,
+      r6.traces.filter(t => t.showlegend === true).length === 15 &&
+      r6.warnings.some(w => w.indexOf("alfven_surface_range") !== -1),
       r6.warnings.filter(w => w.indexOf("L-229") !== -1)[0] || "no L-229 warning");
+
+// --- the rotation axis (L-465, 2026-10-22) ---------------------------
+// Tony from his phone: "The sun's pole and rotational axis like the
+// orrery?" A frame element, not a shell: drawn first, always, with no
+// shell key, every trace marked frame_element. Checked by this file's own
+// arithmetic: the line along the served pole (7.25 degrees from the
+// ecliptic's pole), 1.5 solar radii each way; the arrows turning
+// counter-clockwise seen from above the north pole, because the served
+// period is positive, and the other way round when a planted period is
+// negative; the hover printing the served period and tilt at their served
+// counts with Tony's approved words; the i panel's two citations.
+(function () {
+  const ax = r.traces.filter(t => t.legendgroup === "Sun: Rotation Axis");
+  check("the rotation axis: one legend row, drawn first, every trace a frame element with no shell key",
+        ax.length === 6 && ax.filter(t => t.showlegend === true).length === 1 &&
+        r.traces[0].legendgroup === "Sun: Rotation Axis" &&
+        ax.every(t => t.meta && t.meta.frame_element === true && !t.meta.shell_key) &&
+        ax.every(t => t.visible === undefined),
+        ax.length + " traces");
+  const line = ax.find(t => t.showlegend === true);
+  const d = line ? [line.x[1] - line.x[0], line.y[1] - line.y[0], line.z[1] - line.z[0]] : [0, 0, 1];
+  const len = Math.hypot(d[0], d[1], d[2]);
+  const pole = d.map(x => x / len);
+  const tiltDeg = Math.acos(pole[2]) * 180 / Math.PI;
+  check("the axis lies along the served pole, 7.25 degrees from the ecliptic's, north end up",
+        Math.abs(tiltDeg - 7.25) < 0.01, tiltDeg.toFixed(4) + " deg");
+  check("the axis reaches 1.5 solar radii each way",
+        near(len / 2, 1.5 * RSUN_KM / AU, 1e-9), (len / 2 * AU / RSUN_KM).toFixed(4) + " R_sun");
+  function sense(traces) {
+    const arcs = traces.filter(t => t.type === "scatter3d" && t.mode === "lines" &&
+                                    t.showlegend === false);
+    return arcs.map(function (a) {
+      const k = Math.floor(a.x.length / 3);
+      const u = [a.x[k] - a.x[0], a.y[k] - a.y[0], a.z[k] - a.z[0]];
+      const v = [a.x[2 * k] - a.x[k], a.y[2 * k] - a.y[k], a.z[2 * k] - a.z[k]];
+      const c = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+      return Math.sign(c[0] * pole[0] + c[1] * pole[1] + c[2] * pole[2]);
+    });
+  }
+  const s = sense(ax);
+  check("both arrows turn counter-clockwise seen from above the north pole (the served period is positive)",
+        s.length === 2 && s.every(x => x > 0), s.join(", "));
+  const back = JSON.parse(JSON.stringify(features));
+  back.find(f => f.feature === "orientation").params.rotation_period.value *= -1;
+  const sb = sense(GF.buildFeatureTraces(back, bodies, {sceneHalfRangeAu: 1.1}).traces
+                     .filter(t => t.legendgroup === "Sun: Rotation Axis"));
+  check("planted: a negative period turns both arrows the other way",
+        sb.length === 2 && sb.every(x => x < 0), sb.join(", "));
+  const m = ax.find(t => t.marker && t.marker.symbol === "cross");
+  const h = m ? m.text[0].replace(/<br soft>/g, " ").replace(/<br>/g, "\n") : "";
+  const want = ["North pole up the gold line; the curved arrows show which way the Sun turns.",
+                "The Sun turns once every 25.3800 days, measured against the stars.",
+                "Its equator is tilted 7.25 degrees from the plane of Earth's orbit.",
+                "The turning is not animated.",
+                "Axis drawn to 1,043,550 km (0.00698 AU) -- a drawing length."];
+  const missing = want.filter(w => h.indexOf(w) === -1);
+  check("the axis's hover prints Tony's approved words, the period and tilt at their served counts",
+        !!m && missing.length === 0, missing.length ? "missing: " + missing.join(" | ") : "all five lines");
+  const meta = (m && m.meta) || {};
+  const items = meta.source_items || [];
+  check("the i panel lists the period's and the tilt's citations, and links Solar rotation",
+        items.length === 2 && items[0].label === "Period" && items[1].label === "Tilt" &&
+        /pck00011/.test(items[0].text) && /Archinal/.test(items[0].text) &&
+        /BODY10_POLE_DEC/.test(items[1].text) &&
+        meta.info_url === "https://en.wikipedia.org/wiki/Solar_rotation",
+        items.map(i => i.label).join(", "));
+  const none = JSON.parse(JSON.stringify(features));
+  delete none.find(f => f.feature === "orientation").params.rotation_period;
+  const rn = GF.buildFeatureTraces(none, bodies, {sceneHalfRangeAu: 1.1});
+  check("no period served -> no axis drawn, and the warning says so",
+        rn.traces.every(t => t.legendgroup !== "Sun: Rotation Axis") &&
+        rn.warnings.some(w => w.indexOf("orientation/rotation_period") !== -1),
+        rn.warnings.filter(w => w.indexOf("rotation_period") !== -1)[0] || "no warning");
+})();
 
 // --- the three Oort shapes -------------------------------------------
 // L-421 (2026-10-11, Tony's option A): the Hills cloud is the orrery's own

@@ -171,6 +171,10 @@ page loads with a script tag.)
 Module updated: October 21, 2026 with Anthropic's Claude Opus 5.5
 (L-460, second patch: the "Drawn ends" checker runs
 documentation/smoke_drawn_ends.js and gates.)
+Module updated: October 22, 2026 with Anthropic's Claude Opus 5.5
+(L-434 and L-468: the live check also fetches the two new stored
+drawings, the outer Oort cloud's and the galactic tide's; and the
+"Label words" checker runs documentation/smoke_label_words.js and gates.)
 """
 
 import hashlib
@@ -525,6 +529,16 @@ OFFLINE_CHECKERS = [
     ("Drawn ends", "node",
      ["documentation/smoke_drawn_ends.js"], ".", "===", False),
 
+    # L-468 (2026-10-22): naming a drawer row opens that row's own
+    # feature's words. The corona's row opened the streamer belt's,
+    # whose cross came first in the row. It builds both rooms with the
+    # real renderers and asks the page's own rule
+    # (GalleryFeatures.labelTraceIndex) which words each row opens; a
+    # shell's row must open words that begin with its own name. Its
+    # self-test plants the bug that was found. Gates.
+    ("Label words", "node",
+     ["documentation/smoke_label_words.js"], ".", "===", False),
+
     # L-281 (2026-09-26): the lobby's guest book. It renders the real
     # data/guestbook.json with the real gallery/guestbook.js and fails
     # on a missing time, name or text, or a link the page would drop;
@@ -611,6 +625,9 @@ SERVED_FILES = [
     # the zodiacal dust cloud's the same way.
     "data/solar-system/drawings/sun_corona.json",
     "data/solar-system/drawings/zodiacal_dust.json",
+    # L-434 (2026-10-22): the outer Oort cloud's and the galactic tide's.
+    "data/solar-system/drawings/outer_oort_cloud.json",
+    "data/solar-system/drawings/galactic_tide.json",
     # L-456 (2026-10-20): the page loads it with a script tag.
     "gallery/source_list.js",
     # L-463 (2026-10-21): likewise.

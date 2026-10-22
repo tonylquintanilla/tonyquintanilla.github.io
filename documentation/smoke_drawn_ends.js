@@ -31,12 +31,24 @@
 //
 // WHAT MAKES IT FAIL
 //   An end that matches no row and is not held, or a held end that has
-//   moved, named by room, shell and end. A SELF-TEST plants two faults
-//   first and must go red on both: the corona's dots moved back to the
-//   Sun's surface, and one Hills cloud dot moved to 257 AU.
+//   moved, named by room, shell and end. A SELF-TEST plants three faults
+//   first and must go red on each: the corona's dots moved back to the
+//   Sun's surface, one Hills cloud dot moved to 257 AU, and one outer
+//   Oort cloud dot moved inside 10,000 AU, where its row says it begins.
 //
 // Module written: October 21, 2026 with Anthropic's Claude Opus 5.5 (new,
 // L-460).
+// Module updated: October 22, 2026 with Anthropic's Claude Opus 5.5
+// (L-434: the outer Oort cloud and the galactic tide draw the orrery's
+// stored dots. The outer cloud's near end, held OPEN since L-466 at
+// 21,363 AU because 15 clumps placed at random never reached the
+// 10,000 AU where its row says it begins, is now held as sampling, as
+// the tide's is: loose dots fill the cloud, thin at its row's 10,000 AU,
+// so the nearest falls just past it. Both held distances are measured on
+// the orrery's stored dots. A third self-test plants an outer cloud dot
+// inside its row. And the Hills cloud's near end, now filling in across
+// its inner edge's range, is held as sampling; its far end re-measured on
+// the new dots.)
 //
 // Role: devtool
 // Domain: dev_tools
@@ -63,14 +75,22 @@ const HELD = [
   ["sun", "Sun: Zodiacal Dust Cloud (F-corona)", "near", 0.0249323,
    "sampling: the dust thins to nothing at the dust-free zone, 5 solar " +
    "radii (its row free_zone), so few dots fall near it"],
-  ["sun", "Sun: Hills Cloud (tilted disk)", "far", 19281.2,
+  // L-434 (2026-10-22): the Hills cloud fills in across its inner edge's
+  // range, Tony's ruling, so its near end is held as sampling too; both
+  // ends measured on the orrery's new dots.
+  ["sun", "Sun: Hills Cloud (tilted disk)", "near", 2043.02,
+   "sampling: the disk fills in from 2,000 AU (its row inner_radius) to " +
+   "5,000 AU (its row full_from)"],
+  ["sun", "Sun: Hills Cloud (tilted disk)", "far", 19324.0,
    "sampling: the disk thins to nothing by 20,000 AU (its row " +
    "outer_radius)"],
-  ["sun", "Sun: Outer Oort Cloud (clumps)", "near", 21363,
-   "OPEN, L-434: 15 clumps placed at random; none reaches the 10,000 AU " +
-   "where its row says the clumps begin. Fixed when the clumps become a " +
-   "stored drawing"],
-  ["sun", "Sun: Galactic Tide (sparse at the plane and poles)", "near", 10563,
+  // L-434 (2026-10-22): the outer cloud was held OPEN here at 21,363 AU
+  // (15 clumps alone never reached their row). Its stored drawing adds
+  // loose dots through the band, Tony's choice, so it begins near its row.
+  ["sun", "Sun: Outer Oort Cloud (clumps)", "near", 10777,
+   "sampling: the outer cloud begins thin at 10,000 AU (its row " +
+   "inner_radius), loose dots with clumps among them"],
+  ["sun", "Sun: Galactic Tide (sparse at the plane and poles)", "near", 10831,
    "sampling: the tide begins thin at 10,000 AU (its row inner_radius)"],
   ["earth", "Earth: Magnetopause", "far", 0.000994511,
    "where the fitted surface is cut, at its served cut angle (a row, in " +
@@ -225,6 +245,13 @@ function judge(built) {
   const two = judge(build(near)).bad.filter(b => /Hills/.test(b));
   if (!two.length) fail("self-test: a Hills cloud dot at 257 AU stayed green");
   else console.log("  self-test: a Hills cloud dot at 257 AU -- red: " + two[0]);
+  // L-434: an outer cloud dot inside where its row says the cloud begins.
+  const outer = loadDrawings();
+  outer.outer_oort_cloud.x[0] = 9000; outer.outer_oort_cloud.y[0] = 0;
+  outer.outer_oort_cloud.z[0] = 0;
+  const three = judge(build(outer)).bad.filter(b => /Outer Oort Cloud \(clumps\)/.test(b));
+  if (!three.length) fail("self-test: an outer Oort cloud dot at 9,000 AU stayed green");
+  else console.log("  self-test: an outer Oort cloud dot at 9,000 AU -- red: " + three[0]);
 })();
 
 // --- the rooms ----------------------------------------------------------
@@ -240,4 +267,4 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("=== DRAWN ENDS: every drawing starts and stops on a served row or " +
-            "a held end; self-test red twice");
+            "a held end; self-test red three times");

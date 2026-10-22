@@ -17,8 +17,9 @@
 //      named by legend group. The Galactic Plane must be among them. Cut
 //      to three boxes -- half-widths of 0.3 AU, 0.05 AU (Tony's phone,
 //      2026-10-21, the 0.02 AU grid where the band showed) and 150 AU
-//      (the 50 AU grid) -- every drawn point of every kept line lies
-//      inside the box.
+//      (the 50 AU grid) -- every drawn point of every far line lies
+//      inside the box, and a line within FAR_FACTOR of it is drawn exactly
+//      as served (corrected 2026-10-22, L-454: it said every kept line).
 //   3. interactive.html loads this file, keeps the lines as served,
 //      cuts them before the first draw, and re-cuts them after a frame
 //      change, deferred out of the Plotly event.
@@ -193,10 +194,18 @@ for (const half of [0.3, 0.05, 150]) {
   pl.indices.forEach(function (ti, j) {
     const res = { x: pl.x[j], y: pl.y[j], z: pl.z[j] };
     if (res.x.length !== kept[ti].x.length) { fail("Sun room: " + traces[ti].legendgroup + " changed its point count"); }
-    if (!within(res, lo, hi)) { fail("Sun room, half-width " + half + " AU: " + traces[ti].legendgroup + " draws outside the box"); }
+    // L-454 (2026-10-22): only a FAR line must be cut into the box. A line
+    // within FAR_FACTOR of it is left exactly as served, by the file's own
+    // rule ("a line just past the box is never touched"): the Alfven
+    // surface's usual range, two circles at 0.05 and 0.09 AU, reaches just
+    // past the 0.05 AU box, and this check had said every kept line must
+    // fit inside every box.
+    const far = FL.reach(kept[ti].x, kept[ti].y, kept[ti].z, lo, hi) > FL.FAR_FACTOR;
+    if (far && !within(res, lo, hi)) { fail("Sun room, half-width " + half + " AU: " + traces[ti].legendgroup + " draws outside the box"); }
+    if (!far && JSON.stringify(res) !== JSON.stringify(kept[ti])) { fail("Sun room, half-width " + half + " AU: " + traces[ti].legendgroup + " is not far and was changed"); }
     if (JSON.stringify(res.x) !== JSON.stringify(kept[ti].x)) { cut += 1; }
   });
-  console.log("  half-width " + half + " AU: " + cut + " of " + pl.indices.length + " cut, every drawn point inside the box");
+  console.log("  half-width " + half + " AU: " + cut + " of " + pl.indices.length + " cut, every far line inside the box, the rest as served");
 }
 
 // --- 3: the page ----------------------------------------------------------
