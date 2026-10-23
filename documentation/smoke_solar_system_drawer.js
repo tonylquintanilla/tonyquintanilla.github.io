@@ -29,7 +29,19 @@
 //   row hiding while it is ticked, and All / none unticking the Sun -- so
 //   a green run has shown it can go red.
 //
-// Written October 2, 2026 with Anthropic's Claude Opus 5.5.
+//   4. (L-443) The group rows, by Tony's ruling of 2026-10-22: a group
+//      sits behind See more unless one of its bodies is ticked, folds
+//      open to list its bodies and hides them folded, counts them, ticks
+//      or unticks all of them with its box, is never a body to count or
+//      tick, and an "order": "a" group lists its bodies by served
+//      semi-major axis. The real config's groups are printed by name with
+//      their bodies. Two more breaks in the self-test: a folded group
+//      showing its bodies, and a group's box ticking only those already
+//      shown.
+//
+// Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
+// October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443: the groups,
+// section 4).
 
 "use strict";
 const fs = require("fs");
@@ -44,6 +56,57 @@ const ROWS = [
   { slug: "sun" }, { slug: "mercury" }, { slug: "earth" },
   { slug: "apophis", see_more: true }, { slug: "mars" }
 ];
+
+const GROUPED = [
+  { slug: "sun" }, { group: "neo", label: "Near-Earth asteroids", see_more: true, order: "a" },
+  { slug: "bennu", "in": "neo" }, { slug: "apophis", "in": "neo" }, { slug: "eros", "in": "neo" },
+  { slug: "earth" }
+];
+
+function groupCases(SSD) {
+  const fails = [];
+  const want = function (cond, what) { if (!cond) { fails.push(what); } };
+  const rows = SSD.rowsFromServed(GROUPED);
+  const g = rows[1];
+  want(rows.length === 6 && SSD.isGroup(g) && g.group === "neo" && g.label === "Near-Earth asteroids",
+       "a group row is not read as a group");
+  want(rows[2].group === "neo" && rows[5].group === null, "a body's group is misread");
+  want(!SSD.tickable(g.key), "a group row can be ticked as a body");
+  want(SSD.countLine(rows, {}) === "0 of 4", "the count counts a group row");
+  want(!SSD.rowVisible(g, rows, {}, false, {}), "a See more group shows before See more");
+  want(SSD.rowVisible(g, rows, {}, true, {}), "a group hides after See more");
+  want(SSD.rowVisible(g, rows, { eros: true }, false, {}),
+       "a group with a ticked body hides while the list is short");
+  want(!SSD.rowVisible(rows[2], rows, {}, true, {}), "a folded group shows its bodies");
+  want(SSD.rowVisible(rows[2], rows, {}, true, { neo: true }), "an open group hides its bodies");
+  want(!SSD.rowVisible(rows[2], rows, {}, false, { neo: true }),
+       "a body shows under a group that is itself hidden");
+  want(SSD.rowVisible(rows[5], rows, {}, false, {}), "a body in no group hides");
+  want(SSD.groupCount(rows, "neo", {}, false) === "\u25b8 3" &&
+       SSD.groupCount(rows, "neo", { apophis: true }, true) === "\u25be 1 of 3",
+       "a group's count is wrong");
+  want(SSD.seeMoreLabel(rows, {}, false) === "See more" &&
+       SSD.seeMoreLabel(rows, { bennu: true }, false) === null,
+       "See more does not count a group with a ticked body as showing");
+  const on = SSD.groupToggle(rows, "neo", { apophis: true, earth: true }, ["earth", "apophis"]);
+  want(on.shown.bennu && on.shown.apophis && on.shown.eros && on.shown.earth &&
+       on.order.join() === "earth,apophis,bennu,eros",
+       "a group's box does not tick all its bodies, in served order");
+  const off = SSD.groupToggle(rows, "neo", on.shown, on.order);
+  want(!off.shown.bennu && !off.shown.apophis && !off.shown.eros && off.shown.earth &&
+       off.order.join() === "earth",
+       "a group's box does not untick all its bodies and only them");
+  const ordered = SSD.orderGroups(rows, { bennu: 1.126, apophis: 0.922, eros: 1.458 });
+  want(ordered.map(function (r) { return r.key; }).join() ===
+       "center,group:neo,apophis,bennu,eros,earth",
+       "an order a group is not listed by semi-major axis, or a row left its place");
+  const partial = SSD.orderGroups(rows, { eros: 1.458 });
+  want(partial.map(function (r) { return r.key; }).join() ===
+       "center,group:neo,eros,bennu,apophis,earth",
+       "a body with no served semi-major axis does not keep its served order after the rest");
+  want(SSD.WORDS.groupAll("Comets") === "All / none in Comets", "the group button's words");
+  return fails;
+}
 
 function cases(SSD) {
   const fails = [];
@@ -93,7 +156,7 @@ function cases(SSD) {
   want(SSD.WORDS.enter("Sun") === "Enter the Sun room" &&
        SSD.WORDS.noRoom === "No room or cards yet",
        "the visitor's words are not Tony's");
-  return fails;
+  return fails.concat(groupCases(SSD));
 }
 
 function broken(changes) {
@@ -113,6 +176,14 @@ const breaks = [
      const anyOff = rows.some(function (r) { return !shown[r.key]; });
      const s = {}; rows.forEach(function (r) { s[r.key] = anyOff; });
      return { shown: s, order: anyOff ? rows.map(function (r) { return r.key; }) : [] };
+   } })],
+  ["a folded group showing its bodies",
+   broken({ rowVisible: function (row, rows, shown, open) {
+     return REAL.visible(row, shown[row.key], open);
+   } })],
+  ["a group's box ticking only those already shown",
+   broken({ groupToggle: function (rows, group, shown, order) {
+     return { shown: Object.assign({}, shown), order: (order || []).slice() };
    } })]
 ];
 const caught = [];
@@ -136,7 +207,8 @@ if (!rows.length) {
   if (rows[0].key !== REAL.SUN_KEY) {
     failures.push("the room's first row is " + rows[0].slug + ", not the Sun");
   }
-  const slugs = rows.map(function (r) { return r.slug; });
+  const slugs = rows.filter(function (r) { return !REAL.isGroup(r); })
+    .map(function (r) { return r.slug; });
   (arrival.drawn || []).concat(arrival.highlight ? [arrival.highlight] : [])
     .forEach(function (s) {
       if (slugs.indexOf(s) < 0) {
@@ -144,8 +216,24 @@ if (!rows.length) {
       }
     });
   const extra = rows.filter(function (r) { return r.seeMore; })
+    .map(function (r) { return REAL.isGroup(r) ? r.label : r.slug; });
+  console.log("Rows served (" + rows.length + "): " + slugs.length + " bodies, " +
+              (rows.length - slugs.length) + " groups.");
+  rows.filter(REAL.isGroup).forEach(function (g) {
+    const m = REAL.members(rows, g.group);
+    if (!m.length) { failures.push("the group " + g.label + " has no bodies"); }
+    console.log("  " + g.label + " (" + m.length + (g.order ? ", by semi-major axis" : ", as served") +
+                "): " + m.map(function (r) { return r.slug; }).join(", ") + ".");
+  });
+  const outside = rows.filter(function (r) { return !REAL.isGroup(r) && !r.group; })
     .map(function (r) { return r.slug; });
-  console.log("Rows served (" + rows.length + "): " + slugs.join(", ") + ".");
+  console.log("  In no group: " + outside.join(", ") + ".");
+  ((room.drawer || {}).rows || []).forEach(function (r) {
+    if (r && typeof r["in"] === "string" &&
+        !rows.some(function (g) { return REAL.isGroup(g) && g.group === r["in"]; })) {
+      failures.push(r.slug + " names the group \"" + r["in"] + "\", which the room does not serve");
+    }
+  });
   console.log("Behind See more: " + (extra.join(", ") || "none") + ".");
   console.log("Opens on: " + ((arrival.drawn || []).join(", ") || "nothing") +
               "; highlighted: " + (arrival.highlight || "none") +
@@ -161,8 +249,9 @@ if (page.indexOf('<script src="gallery/solar_system_drawer.js"></script>') < 0) 
   failures.push("interactive.html does not load gallery/solar_system_drawer.js");
 }
 ["rowsFromServed", "openingOrder", "homeTarget", "orderAdd", "orderRemove",
- "seeMoreLabel", "visible", "countLine", "toggleAll", "roomFor", "tickable",
- "WORDS.enter", "WORDS.noRoom"].forEach(function (fn) {
+ "seeMoreLabel", "rowVisible", "countLine", "toggleAll", "roomFor", "tickable",
+ "WORDS.enter", "WORDS.noRoom", "isGroup", "members", "groupCount", "groupToggle",
+ "orderGroups", "WORDS.groupAll"].forEach(function (fn) {
   if (page.indexOf("SSD." + fn) < 0) {
     failures.push("interactive.html never calls SolarSystemDrawer's " + fn);
   }
@@ -171,7 +260,7 @@ if (page.indexOf("frameOnPosition: true,") < 0 || page.indexOf("frameMargin: 1.2
   failures.push("the Solar System room no longer frames on where its bodies are now " +
                 "with a 20% margin (Tony, 2026-10-02)");
 }
-if (page.indexOf("drawer: { rows: rows,") < 0) {
+if (page.indexOf("drawer: { rows: allRows,") < 0) {
   failures.push("the room's compose no longer hands its served rows to the drawer");
 }
 
@@ -182,4 +271,5 @@ if (failures.length) {
 }
 console.log("=== PASS: the Sun is never ticked, See more hides only what is not " +
             "ticked, the handle names the last body ticked, All / none leaves the Sun, " +
-            "rooms are offered only where they exist, and the page asks this file ===");
+            "rooms are offered only where they exist, groups fold and tick their bodies, " +
+            "and the page asks this file ===");

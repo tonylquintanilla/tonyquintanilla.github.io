@@ -48,6 +48,10 @@
 // Updated October 15, 2026 with Anthropic's Claude Opus 5.5 (L-445: Earth's
 // period, asked of the Earth-Moon barycentre, says whose it is; a sixth
 // worked case and a planted fault.)
+// Updated October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443: the
+// drawer's group rows are skipped, and a small body -- an asteroid, a
+// comet, a dwarf planet served as a small body -- with no position_accuracy
+// prints by its drift with the sentence, as Apophis does, named by slug.)
 
 "use strict";
 const fs = require("fs");
@@ -71,6 +75,13 @@ const GROUP = {
   pluto_barycenter: "URANUS_NEPTUNE_PLUTO_POSITION_PLACE_KM"
 };
 const NO_ROW = { sun: true, apophis: true };
+// L-443 (2026-10-22): a small body -- an asteroid, a comet, or a dwarf
+// planet served as a small body -- has no group row in JPL's 2014
+// ephemeris report; its own uncertainty comes with its position query
+// (L-399), not yet served. So it prints by its drift and says so, as
+// Apophis does. Read from each body's served category and its lack of a
+// position_accuracy, and named in the report, so a new one is seen.
+const SMALL_CATEGORIES = { asteroid: true, comet: true, dwarf_planet: true };
 const OUTER = ["uranus", "neptune", "pluto_barycenter"];
 
 const KM_PER_AU_TEST = 149597870.7;
@@ -258,8 +269,22 @@ const cfg = JSON.parse(fs.readFileSync(path.join(root, "data",
 const objs = {};
 (cfg.objects || []).forEach(function (o) { objs[o.slug] = o; });
 const room = ((cfg.rooms || {})["solar-system"] || {});
-const rows = ((room.drawer || {}).rows || []).map(function (r) { return r.slug; });
+// L-443: a group row names no body, so only body rows are matched.
+const rows = ((room.drawer || {}).rows || [])
+  .filter(function (r) { return r && typeof r.slug === "string"; })
+  .map(function (r) { return r.slug; });
 if (!rows.length) { failures.push("the room serves no drawer rows"); }
+const small = [];
+rows.forEach(function (slug) {
+  const o = objs[slug];
+  if (o && !GROUP[slug] && !NO_ROW[slug] && SMALL_CATEGORIES[o.category] &&
+      !o.position_accuracy) {
+    NO_ROW[slug] = true;
+    small.push(slug);
+  }
+});
+console.log("Small bodies, printed by their drift with the sentence (" + small.length +
+            "): " + (small.join(", ") || "none") + ".");
 rows.forEach(function (slug) {
   const o = objs[slug];
   if (!o) { failures.push(slug + ": in the drawer but not in objects"); return; }

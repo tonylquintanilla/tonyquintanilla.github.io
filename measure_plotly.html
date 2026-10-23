@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<!-- measure_plotly.html — Architecture B cold-start measurement
+<!-- measure_plotly.html -- Architecture B cold-start measurement
      Loads Pyodide + NumPy + plotly via micropip, times each step.
      The one unmeasured quantity: WASM multiplier on plotly import.
-     Result determines A vs B′ for Phase 2.
+     Result determines A vs B-prime for Phase 2.
      Author: Tony Quintanilla / Paloma's Orrery
      Created: July 6, 2026 with Anthropic's Claude Opus 4.6 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paloma's Orrery — B′ Measurement</title>
+    <title>Paloma's Orrery -- B-prime Measurement</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -77,32 +77,32 @@
 </head>
 <body>
     <h1>B&prime; Cold-Start Measurement</h1>
-    <div class="subtitle">Architecture decision gate — Phase 2</div>
+    <div class="subtitle">Architecture decision gate -- Phase 2</div>
 
     <div class="card">
         <div class="step">
             <span class="step-label">1. Pyodide runtime</span>
-            <span class="step-time pending" id="t1">—</span>
+            <span class="step-time pending" id="t1">--</span>
         </div>
         <div class="step">
             <span class="step-label">2. NumPy</span>
-            <span class="step-time pending" id="t2">—</span>
+            <span class="step-time pending" id="t2">--</span>
         </div>
         <div class="step">
             <span class="step-label">3. micropip + plotly install</span>
-            <span class="step-time pending" id="t3">—</span>
+            <span class="step-time pending" id="t3">--</span>
         </div>
         <div class="step">
             <span class="step-label">4. import plotly.graph_objects</span>
-            <span class="step-time pending" id="t4">—</span>
+            <span class="step-time pending" id="t4">--</span>
         </div>
         <div class="step">
             <span class="step-label">5. Build figure + to_json()</span>
-            <span class="step-time pending" id="t5">—</span>
+            <span class="step-time pending" id="t5">--</span>
         </div>
         <div class="total">
             <span>Total cold start</span>
-            <span class="total-time" id="ttotal">—</span>
+            <span class="total-time" id="ttotal">--</span>
         </div>
     </div>
 
@@ -113,12 +113,12 @@
     <button class="btn" id="run-btn" onclick="runMeasurement()">Run Measurement</button>
 
     <div class="note">
-        Acceptance: ≤15 s cold on phone WiFi → B&prime; (shared engines).<br>
-        &gt;15 s → A with convention-duplication discipline.<br>
+        Acceptance: <=15 s cold on phone WiFi -> B&prime; (shared engines).<br>
+        &gt;15 s -> A with convention-duplication discipline.<br>
         Stock plotly from PyPI. B&prime; slim wheel will be faster.
     </div>
 
-    <a href="interactive.html" class="back">← Back to Solar System Explorer</a>
+    <a href="interactive.html?exhibit=solar-system-explorer" class="back"><- Back to Solar System Explorer</a>
 
 <script>
 function fmt(ms) {
@@ -134,10 +134,10 @@ function setStep(id, ms, threshold) {
 async function runMeasurement() {
     const btn = document.getElementById('run-btn');
     btn.disabled = true;
-    btn.textContent = 'Running…';
+    btn.textContent = 'Running...';
 
     const verdict = document.getElementById('verdict');
-    verdict.textContent = 'Measuring…';
+    verdict.textContent = 'Measuring...';
     verdict.style.color = 'var(--dim)';
 
     const t0 = performance.now();
@@ -220,18 +220,18 @@ result_json = fig.to_json()
 
         // Verdict
         if (total <= 15000) {
-            verdict.textContent = '✓ PASS — ' + fmt(total) + ' (≤15 s). B′ is viable.';
+            verdict.textContent = '[OK] PASS -- ' + fmt(total) + ' (<=15 s). B-prime is viable.';
             verdict.style.color = 'var(--ok)';
         } else if (total <= 25000) {
-            verdict.textContent = '⚠ MARGINAL — ' + fmt(total) + '. B′ slim wheel may pass.';
+            verdict.textContent = '(!) MARGINAL -- ' + fmt(total) + '. B-prime slim wheel may pass.';
             verdict.style.color = 'var(--warn)';
         } else {
-            verdict.textContent = '✗ FAIL — ' + fmt(total) + ' (>25 s). A recommended.';
+            verdict.textContent = '[X] FAIL -- ' + fmt(total) + ' (>25 s). A recommended.';
             verdict.style.color = 'var(--fail)';
         }
 
     } catch (err) {
-        verdict.textContent = '✗ ERROR: ' + err.message;
+        verdict.textContent = '[X] ERROR: ' + err.message;
         verdict.style.color = 'var(--fail)';
         console.error(err);
     }

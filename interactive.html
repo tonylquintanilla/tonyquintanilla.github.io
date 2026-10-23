@@ -292,6 +292,14 @@
         corona's row opened the streamer belt's, whose cross came first
         in the row; a member drawn with another now yields the row to the
         host's cross, by GalleryFeatures.labelTraceIndex)
+     Updated: October 22, 2026 with Anthropic's Claude Opus 5.5
+       (L-443, slice 1, Tony's rulings of this day: the Solar System
+        room's drawer has group rows -- comets, near-Earth asteroids, the
+        main belt, Jupiter Trojans, centaurs, trans-Neptunian objects --
+        each folding open to list its bodies, its box ticking all of
+        them, its bodies by served semi-major axis where it says so; and
+        stage 10, a bare interactive.html link opens the Solar System
+        room, the Explorer at ?exhibit=solar-system-explorer)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -753,6 +761,18 @@
             text-decoration: none; font-weight: 500; font-size: 13px;
         }
         .sun-row .open-inline[hidden] { display: none; }
+        /* L-443, Tony's ruling of 2026-10-22 (mock-up B): a group row
+           folds open to list its bodies under it. Its bodies sit indented
+           under it; its count, and the arrow saying folded or open, are on
+           the right. A group has no Go To and no room. */
+        .sun-row.sun-group .rname { font-weight: 500; }
+        .sun-row.sun-group .gcount {
+            grid-column: 3; grid-row: 1; justify-self: end;
+            color: var(--text-dim); font-size: 12px; white-space: nowrap;
+        }
+        .sun-row.member .pick { padding-left: 36px; }
+        .sun-row.member .rname { padding-left: 69px; }
+        .sun-see-more.group-all { margin-left: 85px; }
         .sun-see-more {
             display: block; min-height: 44px; margin: 0 16px 0 65px;
             padding: 0; background: none; border: none; cursor: pointer;
@@ -1302,7 +1322,7 @@ let computing = false;
 // Runs on every exhibit path (the Sun never calls initControls).
 (function () {
     const exhibitOf = (search) => (new URLSearchParams(search).get("exhibit") ||
-                                   "solar-system-explorer").toLowerCase();
+                                   "solar-system").toLowerCase();
     const here = exhibitOf(window.location.search);
     function stepBackIfCameFrom(ev, hash) {
         let ref = null;
@@ -1799,8 +1819,15 @@ function buildLayout(range, dateDisplay) {
 //
 // Added August 2026 with Anthropic's Claude Opus 5.
 
+// L-443, stage 10 (Tony's ruling of 2026-10-01, built 2026-10-22): a bare
+// interactive.html link opens the Solar System room, the gallery's
+// alternate front door. The Explorer keeps its page at its own address:
+// any key that is not a room in EXHIBITS opens it, and EXPLORER_EXHIBIT
+// is the one its card links to (tools/json_converter.py reads it, so
+// Studio lists the Explorer as a scene).
+const EXPLORER_EXHIBIT = "solar-system-explorer";
 const EXHIBIT = (new URLSearchParams(window.location.search)
-                     .get("exhibit") || "solar-system-explorer").toLowerCase();
+                     .get("exhibit") || "solar-system").toLowerCase();
 
 // Half-range of the arrival view, in AU.  Tony's ruling, 2026-08-29:
 // core through outer corona (0.2325 AU), with the whole streamer belt
@@ -2073,9 +2100,9 @@ const EARTH_INFO_HTML = [
 // ====================================================================
 // The bodies as their symbols, with their orbits, and no shells. Tony,
 // 2026-09-26: the symbols come first, as they did in the orrery, and
-// each body's shells arrive with its own room. The Explorer
-// (solar-system-explorer, the default) stays as it is until this room
-// has every planet and Tony has accepted it; this key is permanent.
+// each body's shells arrive with its own room. Since 2026-10-22 (L-443,
+// stage 10) this room is the page's default, and the Explorer has its own
+// address, ?exhibit=solar-system-explorer; this key is permanent.
 //
 // Which bodies, in what order, and what the room opens on are SERVED,
 // not listed here: the "rooms" section of data/objects_config.json
@@ -2173,6 +2200,10 @@ for _slug in _bodies:
         # drawn_centre_wanted. A comet or a spacecraft is drawn around the
         # Sun whatever its period's centre, so it never asks for one.
         "drawn_wanted": _drawn_wanted(_objs.get(_slug) or {}),
+        # L-443: the served semi-major axis, AU, so a group's bodies can
+        # be listed nearest first (gallery/solar_system_drawer.js,
+        # orderGroups). Read, never typed.
+        "a_au": (_rec.get("osculating") or {}).get("a_au"),
     }
 
 json.dumps({
@@ -2276,9 +2307,9 @@ const SOLAR_SYSTEM_INFO_HTML = [
     // Tony, 2026-10-02: the two paragraphs approved, as bullet lists.
     // The Home line follows his ruling of 2026-10-03.
     "<ul>",
-    "<li>The Sun, the eight planets and Pluto, each drawn as its symbol on",
-    " its orbit, where it is now: at the minute you opened this room, as",
-    " the line under the title says.</li>",
+    "<li>The Sun, the planets, Pluto, and comets and asteroids, each drawn",
+    " as its symbol on its orbit, where it is now: at the minute you opened",
+    " this room, as the line under the title says.</li>",
     "<li>Open the list below. Tick a body to draw it, and the view widens",
     " to hold every body drawn.</li>",
     "<li>Tap a body's name to select it. A body with a room of its own",
@@ -2291,9 +2322,9 @@ const SOLAR_SYSTEM_INFO_HTML = [
     "</ul>",
     "<ul>",
     "<li>This room is being built up.</li>",
-    "<li>Apophis, the first asteroid here, waits under See more; the other",
-    " asteroids, the comets and the spacecraft join later, each in its",
-    " place in the list.</li>",
+    "<li>See more adds the comets and the asteroids, in groups in their",
+    " places along the list. Tap a group's name to open it, or its box to",
+    " draw all of it. The spacecraft join later.</li>",
     "<li>Each body's own shells &mdash; its atmosphere, rings and magnetic",
     " surroundings &mdash; live in that body's own room; so far the Sun",
     " and Earth have one.</li>",
@@ -2443,12 +2474,28 @@ const EXHIBITS = {
         // text box. A body with no marker is reported.
         compose: function (payload) {
             const room = payload.room || {};
-            const rows = ((room.drawer || {}).rows || []).filter(function (r) {
-                return r && typeof r.slug === "string";
-            });
             const arrival = room.arrival || {};
             const bodies = payload.bodies || {};
             const warnings = [];
+            // L-443: the served rows, group rows included, each group
+            // served "order": "a" listing its bodies by their served
+            // semi-major axis, nearest first. Only a group's bodies move,
+            // among themselves.
+            const SSD = window.SolarSystemDrawer;
+            const served = ((room.drawer || {}).rows || []).filter(function (r) {
+                return r && (typeof r.slug === "string" || typeof r.group === "string");
+            });
+            const rawByKey = {};
+            served.forEach(function (r) {
+                if (typeof r.group === "string") { rawByKey[SSD.GROUP_PREFIX + r.group] = r; }
+                else { rawByKey[r.slug === "sun" ? SSD.SUN_KEY : r.slug] = r; }
+            });
+            const aByKey = {};
+            Object.keys(bodies).forEach(function (s) { aByKey[s] = (bodies[s] || {}).a_au; });
+            const allRows = SSD.orderGroups(SSD.rowsFromServed(served), aByKey)
+                .map(function (p) { return rawByKey[p.key]; })
+                .filter(function (r) { return !!r; });
+            const rows = allRows.filter(function (r) { return typeof r.slug === "string"; });
             if (!rows.length) {
                 warnings.push("data/objects_config.json serves no rows for " +
                               "this room, so only the Sun is drawn");
@@ -2586,7 +2633,7 @@ const EXHIBITS = {
                          ? arrival.highlight : null,
                      // L-363 step 3b: the rows as served, and what the
                      // room opens on, for this room's drawer.
-                     drawer: { rows: rows,
+                     drawer: { rows: allRows,
                                drawn: (arrival.drawn || []).slice(),
                                highlight: arrival.highlight } };
         }
@@ -4288,7 +4335,8 @@ function ssDrawerState(served) {
                    highlight: served.highlight },
         order: SSD.openingOrder(rows, served.drawn, served.highlight),
         open: null,       // the key of the opened row, or null
-        seeMore: false    // See more pressed
+        seeMore: false,   // See more pressed
+        folds: {}         // L-443: {group: true} for each group folded open
     };
 }
 
@@ -4390,7 +4438,8 @@ function ssRender() {
         const grp = sunGroups[Number(rows[r].dataset.k)];
         if (!grp) { continue; }
         const served = ssDrawer.byKey[grp.key];
-        const vis = !served || SSD.visible(served, shown[grp.key], ssDrawer.seeMore);
+        const vis = !served || SSD.rowVisible(served, ssDrawer.rows, shown,
+                                              ssDrawer.seeMore, ssDrawer.folds);
         rows[r].hidden = !vis;
         seen[grp.key] = vis;
         rows[r].setAttribute("aria-expanded",
@@ -4414,10 +4463,35 @@ function ssRender() {
         inlines[q].hidden = hasRoom ? false :
             (!sideways || !(seen[key] && ssDrawer.open === key));
     }
+    // L-443: the group rows, their counts and their All / none buttons.
+    const heads = list.querySelectorAll(".sun-row.sun-group[data-g]");
+    for (let h = 0; h < heads.length; h++) {
+        const g = heads[h].getAttribute("data-g");
+        const served = ssDrawer.byKey[SSD.GROUP_PREFIX + g];
+        const vis = !!served && SSD.rowVisible(served, ssDrawer.rows, shown,
+                                               ssDrawer.seeMore, ssDrawer.folds);
+        const open = !!ssDrawer.folds[g];
+        const on = SSD.members(ssDrawer.rows, g).filter(function (m) { return shown[m.key]; }).length;
+        heads[h].hidden = !vis;
+        heads[h].setAttribute("aria-expanded", (vis && open) ? "true" : "false");
+        heads[h].classList.toggle("on", on > 0);
+        heads[h].querySelector(".box").innerHTML = on ? "&#10003;" : "";
+        heads[h].querySelector(".gcount").textContent =
+            SSD.groupCount(ssDrawer.rows, g, shown, open);
+    }
+    const alls = list.querySelectorAll(".sun-see-more.group-all[data-g]");
+    for (let a = 0; a < alls.length; a++) {
+        const g = alls[a].getAttribute("data-g");
+        const served = ssDrawer.byKey[SSD.GROUP_PREFIX + g];
+        alls[a].hidden = !(served && ssDrawer.folds[g] &&
+            SSD.rowVisible(served, ssDrawer.rows, shown, ssDrawer.seeMore, ssDrawer.folds));
+    }
     const drawn = ssDrawnRows();
     const b = document.getElementById("sun-see-more");
     if (b) {
-        const words = SSD.seeMoreLabel(drawn, shown, ssDrawer.seeMore);
+        const words = SSD.seeMoreLabel(ssDrawer.rows.filter(function (r) {
+            return SSD.isGroup(r) || ssIndex(r.key) >= 0;
+        }), shown, ssDrawer.seeMore);
         b.hidden = !words;
         b.textContent = words || "";
     }
@@ -4477,6 +4551,83 @@ function ssGo(k) {
             .then(function () { return sunLabelShow(k); });
     }
     return sunFocusOn(k).then(function () { return sunLabelShow(k); });
+}
+
+// L-443: a group row's box ticks every body in it if any is off, else
+// unticks them all; the frame then holds everything drawn, as a tick
+// does. Its name folds it open or shut, and moves nothing.
+function ssGroupTick(g) {
+    const SSD = window.SolarSystemDrawer;
+    const drawnRows = ssDrawer.rows.filter(function (r) {
+        return SSD.isGroup(r) || ssIndex(r.key) >= 0;
+    });
+    const next = SSD.groupToggle(drawnRows, g, ssShownByKey(), ssDrawer.order);
+    sunGroups.forEach(function (grp) {
+        if (next.shown.hasOwnProperty(grp.key)) { grp.shown = next.shown[grp.key]; }
+    });
+    ssDrawer.order = next.order;
+    if (ssDrawer.open && !next.shown[ssDrawer.open] && SSD.tickable(ssDrawer.open)) {
+        ssDrawer.open = null;
+    }
+    const done = sunApplyVisibility(true, sunOutermostShown());
+    sunMeasureDrawer();
+    return done;
+}
+
+function ssFold(g) {
+    ssDrawer.folds[g] = !ssDrawer.folds[g];
+    renderSunDrawer();
+    sunMeasureDrawer();
+}
+
+// The rows of this room's drawer, in served order (L-443): each group row
+// before its bodies, then any group the scene drew that no row names.
+function ssBuildRows(list, makeRow) {
+    const SSD = window.SolarSystemDrawer;
+    const placed = {};
+    ssDrawer.rows.forEach(function (served) {
+        if (SSD.isGroup(served)) {
+            const g = served.group;
+            const head = document.createElement("button");
+            head.type = "button";
+            head.className = "sun-row sun-group";
+            head.setAttribute("data-g", g);
+            head.setAttribute("aria-expanded", "false");
+            head.innerHTML =
+                '<span class="pick"><span class="box"></span>' +
+                '<span class="swatch" style="background:transparent"></span></span>' +
+                '<span class="rname"></span><span class="gcount"></span>';
+            head.querySelector(".rname").textContent = served.label;
+            head.onclick = function (ev) {
+                const t = ev.target;
+                if (t && typeof t.closest === "function" && t.closest(".pick")) {
+                    ssGroupTick(g);
+                    return;
+                }
+                ssFold(g);
+            };
+            list.appendChild(head);
+            const all = document.createElement("button");
+            all.type = "button";
+            all.className = "sun-see-more group-all";
+            all.setAttribute("data-g", g);
+            all.hidden = true;
+            all.textContent = SSD.WORDS.groupAll(served.label);
+            all.onclick = function () { ssGroupTick(g); };
+            list.appendChild(all);
+            return;
+        }
+        const k = ssIndex(served.key);
+        if (k < 0) { return; }
+        placed[k] = true;
+        const row = makeRow(sunGroups[k], k);
+        if (served.group) { row.classList.add("member"); }
+        ssWireRow(row, sunGroups[k], k, list);
+    });
+    sunGroups.forEach(function (grp, k) {
+        if (placed[k]) { return; }
+        ssWireRow(makeRow(grp, k), grp, k, list);
+    });
 }
 
 // All / none, leaving the Sun alone. The order follows: everything newly
@@ -4630,7 +4781,7 @@ function buildSunDrawer(traces, order) {
 
     const list = document.getElementById("sun-drawer-list");
     list.innerHTML = "";
-    sunGroups.forEach(function (grp, k) {
+    const makeRow = function (grp, k) {
         const row = document.createElement("button");
         row.type = "button";
         row.className = "sun-row";
@@ -4644,10 +4795,14 @@ function buildSunDrawer(traces, order) {
         // Each row names its group, so renderSunDrawer finds it however
         // many other things sit between the rows (L-363 step 3b).
         row.dataset.k = String(k);
-        if (ssDrawer) {
-            ssWireRow(row, grp, k, list);
-            return;
-        }
+        return row;
+    };
+    // L-443: the Solar System room lists its rows in served order, its
+    // group rows among them.
+    if (ssDrawer) { ssBuildRows(list, makeRow); }
+    sunGroups.forEach(function (grp, k) {
+        if (ssDrawer) { return; }
+        const row = makeRow(grp, k);
         // L-267 Stage B. ONE JOB PER CONTROL. The box decides whether a
         // shell is drawn; everything else on the row moves the camera to
         // it. Before this, clicking anywhere toggled the shell, so

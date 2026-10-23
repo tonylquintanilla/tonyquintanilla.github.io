@@ -59,6 +59,11 @@ a drawing in Earth radii with each dot's weight and belt is served byte
 for byte; one whose weights are not one per dot aborts by name; and a
 missing drawing's abort names every missing drawing, the belts' with the
 Hills cloud's).
+Module updated: October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443:
+stand-in answers for slice 1's fifty bodies; Encke and Halley are
+anchored at today by Tony's ruling of this day, so the checks of the
+perihelion-anchor path run on a copy of the config with Encke anchored
+at perihelion again (_tp_cfg), and the path stays tested.)
 """
 import contextlib
 import io
@@ -96,6 +101,60 @@ ELEMS = {
     # table, used only by the mocks; never served.
     '199': (0.387, 0.206), '299': (0.723, 0.007), '499': (1.524, 0.093),
     '799': (19.2, 0.047), '899': (30.1, 0.009), '9': (39.5, 0.25),
+    # L-443, 2026-10-22: slice 1's fifty bodies, under the ids the
+    # objects mirror writes (a body's helio_id where it has one). Rough
+    # test values like the rest of this table, used only by the mocks;
+    # never served.
+    '90000214': (3.0651, 0.5375),
+    '90000356': (4.0581, 0.7083),
+    'C/1965 S1-A': (91.5746, 0.9999),
+    '90000703': (3.46, 0.65),
+    '90000901': (3.1092, 0.5633),
+    'C/1995 O1': (180.0, 0.995),
+    'C/1996 B2': (1700.0, 0.9998),
+    'C/2020 F3': (270.0, 0.999),
+    'C/2025 A6': (122.053, 0.9957),
+    'C/2025 R2': (86.31, 0.9942),
+    'C/2026 A1': (153.54, 0.9999),
+    'A898 PA': (1.4583, 0.2229),
+    '1999 RQ36': (1.126, 0.2037),
+    '1999 JU3': (1.1909, 0.1911),
+    '1998 SF36': (1.3241, 0.2802),
+    '2016 HO3': (1.0007, 0.1024),
+    '2025 PN7': (1.0011, 0.1079),
+    '2024 PT5': (1.0219, 0.0152),
+    '2025 PY1': (1.1078, 0.2282),
+    '2023 JF': (1.6248, 0.3916),
+    '2024 DW': (2.3543, 0.6872),
+    '2024 YR4': (2.5159, 0.6614),
+    'A801 AA': (2.77, 0.08),
+    'A807 FA': (2.36, 0.09),
+    'A852 FA': (2.9235, 0.1342),
+    'A852 VA': (2.43, 0.16),
+    '1969 VC': (2.36, 0.15),
+    '1981 EQ5': (2.3832, 0.187),
+    '1999 VD57': (2.19, 0.11),
+    '1973 SO': (5.233, 0.0903),
+    'A906 UL': (5.2021, 0.1386),
+    '1999 WB2': (5.1945, 0.0952),
+    '1997 TS25': (5.3235, 0.0656),
+    '1999 VQ10': (5.1234, 0.036),
+    '1997 CU26': (15.74, 0.1702),
+    '2004 DW': (39.3455, 0.2214),
+    '2003 EL61': (43.0216, 0.1954),
+    '2003 UB313': (67.9363, 0.4382),
+    '2005 FY9': (45.5233, 0.1601),
+    '2007 OR10': (66.8865, 0.5034),
+    '2002 LM60': (43.1487, 0.0356),
+    '2003 VB12': (539.8677, 0.8589),
+    '2002 MS4': (41.6, 0.15),
+    '2001 KX76': (39.6, 0.24),
+    '2000 WR106': (43.0, 0.05),
+    '2004 GV9': (42.0, 0.08),
+    '2015 TG387': (1329.0369, 0.9513),
+    '2017 OF201': (800.0, 0.95),
+    '2023 KQ14': (250.0, 0.74),
+    '2014 MU69': (44.3895, 0.0369),
 }
 
 
@@ -235,6 +294,18 @@ def stand_in_drawings(cfg, data_dir):
     return names
 
 
+
+def _tp_cfg(cfg):
+    """L-443: no served comet is anchored at perihelion since 2026-10-22
+    (Tony's ruling: the comets are anchored at today). The builder keeps
+    the perihelion-anchor path, so the tests that hold it use a copy of
+    the config in which Encke is anchored at perihelion again."""
+    out = json.loads(json.dumps(cfg))
+    for o in out['objects']:
+        if o['slug'] == 'encke':
+            o.setdefault('overrides', {})['comet'] = {'anchor': 'Tp', 'max_distance_au': 100}
+    return out
+
 def main():
     install_mocks()
     # A-8 (updated L-114): config lives at data/objects_config.json -- a sibling
@@ -359,14 +430,16 @@ def main():
         check(r_km > 1e6, "earth as_of_today is km-scale (|r|=%.3g)" % r_km)
 
         # comet anchors
+        # L-443 (Tony's ruling of 2026-10-22): the comets are anchored at
+        # today, like every body, so none is served a perihelion anchor.
         enc = objs['encke']
-        check(enc.get('comet') and enc['comet']['Tp_jd'] and enc['comet']['solution_Tp_jd'],
-              "encke serves Tp_jd + solution_Tp_jd")
+        check(not enc.get('comet'),
+              "encke is anchored at today: no perihelion anchor served")
         check(enc['orbit_type'] == 'elliptical', "encke orbit_type elliptical (e<1)")
 
         hal = objs['halley']
-        check(hal.get('comet') and hal['comet']['Tp_jd'] and hal['comet']['solution_Tp_jd'],
-              "halley serves Tp_jd + solution_Tp_jd")
+        check(not hal.get('comet'),
+              "halley is anchored at today: no perihelion anchor served")
         check(hal['orbit_type'] == 'elliptical', "halley orbit_type elliptical (e<1)")        
 
         # pluto/charon barycenter center
@@ -1150,11 +1223,12 @@ def main():
     with tempfile.TemporaryDirectory() as td:
         (Path(td) / 'data').mkdir(parents=True)
         out = Path(td) / 'data' / 'solar-system'
-        b.run_build(cfg, out, mode='first-build', do_commit=False)   # seeds Encke last-good
+        tcfg = _tp_cfg(cfg)
+        b.run_build(tcfg, out, mode='first-build', do_commit=False)   # seeds Encke last-good
         _os = b.fetch_solution_tp
         b.fetch_solution_tp = lambda *a, **k: ('request_failed', None)
         try:
-            rm5 = b.run_build(cfg, out, mode='nightly', do_commit=False)
+            rm5 = b.run_build(tcfg, out, mode='nightly', do_commit=False)
         finally:
             b.fetch_solution_tp = _os
         check(rm5['structural_validation'] == 'pass' and 'served last-good' in str(rm5['objects'].get('encke', '')),
@@ -1235,11 +1309,12 @@ def main():
     with tempfile.TemporaryDirectory() as td:
         (Path(td) / 'data').mkdir(parents=True)
         out = Path(td) / 'data' / 'solar-system'
-        b.run_build(cfg, out, mode='first-build', do_commit=False)
+        tcfg = _tp_cfg(cfg)
+        b.run_build(tcfg, out, mode='first-build', do_commit=False)
         _os2 = b.fetch_solution_tp
         b.fetch_solution_tp = lambda *a, **k: ('request_failed', None)
         try:
-            b.run_build(cfg, out, mode='nightly', do_commit=False)
+            b.run_build(tcfg, out, mode='nightly', do_commit=False)
         finally:
             b.fetch_solution_tp = _os2
         idxc = json.load(open(out / 'coverage_index.json'))

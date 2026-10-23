@@ -38,6 +38,10 @@ Module updated: September 26, 2026 with Anthropic's Claude Opus 5.5 (L-363):
 live_scene_urls() reads a room key written in quotes, as a key with a
 hyphen must be (`"solar-system": {`), so Studio's New Interactive Card
 lists the Solar System room.
+Module updated: October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+stage 10): the Solar System room is the page's default now, and
+live_scene_urls() lists the Explorer at the address interactive.html
+names in EXPLORER_EXHIBIT.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -257,6 +261,13 @@ def live_scene_urls(repo_root):
         if m and key == m.group(1):
             continue
         urls.append((f'interactive.html?exhibit={key}', key))
+    # L-443, stage 10 (2026-10-22): the Explorer is no longer the default
+    # and is no room in EXHIBITS; the page names its address in
+    # EXPLORER_EXHIBIT.
+    ex = re.search(r'const EXPLORER_EXHIBIT\s*=\s*["\']([a-z0-9_-]+)["\']', src)
+    if ex and not (m and ex.group(1) == m.group(1)):
+        urls.append((f'interactive.html?exhibit={ex.group(1)}',
+                     'the Solar System Explorer'))
     return urls
 
 

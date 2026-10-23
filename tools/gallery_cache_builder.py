@@ -99,6 +99,10 @@ Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5 (L-330:
 serve_drawings() serves Earth's radiation belts too, the second stored
 drawing, in Earth radii with each dot's weight and belt; what a drawing
 may be in and carry is read from tools/pull_drawings.py.)
+Module updated: October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443:
+the warning for a comet whose period is around another centre no longer
+says it is drawn at perihelion; the comets are anchored at today now.
+And the served window prints its width and the body that sets it.)
 
 Role: cache
 Domain: cache_builder
@@ -908,8 +912,10 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
                 obj['horizons_id'], obj['id_type'], centre, els['epoch_jd']))
         elif is_comet and period_centre(obj) and \
                 str(period_centre(obj)).lower() not in SUN_CENTRES:
+            # L-443 (2026-10-22): a comet anchored at today is still drawn
+            # around the Sun, so the warning no longer says "at perihelion".
             warn("%s: its period is around %s, but a comet is drawn from its "
-                 "elements at perihelion, around the Sun" % (slug,
+                 "elements around the Sun" % (slug,
                                                               period_centre(obj)))
         e = els.get('e')
         result['orbit_type'] = 'hyperbolic' if (e is not None and e >= 1.0) else 'elliptical'
@@ -1387,14 +1393,19 @@ def derive_served(staging, results, defaults, warn=None, frame=None):
         if wd is None:
             missing.append(slug)
         else:
-            participant_windows.append(wd)
+            participant_windows.append((wd, slug))
     if missing:
         served_window = None
         warn("served_window: null -- trust measurement missing/failed for %s "
             "(FLAG-3: null-on-any-failure is the conservative default)" % missing)
     elif participant_windows:
-        w_min = min(participant_windows)
+        # L-443: the window's width and the body that sets it are printed,
+        # so a body that narrows the room for every visitor is seen by name.
+        w_min, w_slug = min(participant_windows)
         served_window = {'start_jd': as_of_jd - w_min, 'end_jd': as_of_jd + w_min}
+        print("[window] served window: %.1f days either side of today, set by "
+              "%s, the shortest of %d bodies' trusted spans"
+              % (w_min, w_slug, len(participant_windows)), flush=True)
     else:
         served_window = None   # no participants at all (e.g. an empty catalog)
 

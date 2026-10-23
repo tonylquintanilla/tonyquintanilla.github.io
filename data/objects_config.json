@@ -1588,8 +1588,7 @@
       "category": "comet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
-      "overrides": { "comet": { "anchor": "Tp", "max_distance_au": 100 } },
-      "notes": "Tp-anchored conic. Its name, horizons_id and id_type come from the orrery's list (celestial_objects.py) through the objects mirror (L-395). horizons_id is the pinned Horizons record 90000091, the 2023 apparition, the newest of JPL's 61 records for 2P -- not the bare 'DES=2P' designation, which resolves ambiguously across those records and is incompatible with closest_apparition under id_type='smallbody'. A pin does not follow a newer record by itself; the orrery's Horizons check (horizons_check.py, in its maintenance run since 2026-10-14) reports one for a person to decide.",
+      "notes": "Drawn from its elements of today, like every body in the room, since 2026-10-22 (L-443, Tony's ruling of that day: a comet anchored at perihelion is trusted only near that date, and Encke's trusted span had ended in May 2025). Its name, horizons_id and id_type come from the orrery's list (celestial_objects.py) through the objects mirror (L-395). horizons_id is the pinned Horizons record 90000091, the 2023 apparition, the newest of JPL's 61 records for 2P -- not the bare 'DES=2P' designation, which resolves ambiguously across those records and is incompatible with closest_apparition under id_type='smallbody'. A pin does not follow a newer record by itself; the orrery's Horizons check (horizons_check.py, in its maintenance run since 2026-10-14) reports one for a person to decide.",
       "features": {}
     },
     {
@@ -1608,14 +1607,458 @@
       "canonical_frame": "heliocentric",
       "trajectory_of": null,
       "trace_policy": "none",
-      "overrides": {
-        "comet": {
-          "anchor": "Tp",
-          "max_distance_au": 100
-        }
-      },
-      "notes": "id='90000030' pinned to a specific Horizons record (1P/Halley), matching the pattern already proven for Encke (id='90000091'). Verified this session: Halley's ~76-year period means only one apparition is ever current (unlike Encke's ~3.3-year cadence, where a new record supersedes the last every few years) -- no live disambiguation search needed, this record is necessarily the current one. The orrery's own data-arc comment (1835-08-21 to 1994-01-11, celestial_objects.py) describes the observational fit-arc used to derive the elements, not a hard propagation cutoff -- Halley is an exceptionally well-characterized orbit. NOT yet live-verified against a 2026-epoch dry-run (no Horizons access from this session) -- run the routine --dry-run --object halley check before --first-build, same as any newly added object.",
+      "notes": "Drawn from its elements of today, like every body in the room, since 2026-10-22 (L-443, Tony's ruling of that day: its trusted span around its 1986 perihelion had ended in February 2024). id='90000030' pinned to a specific Horizons record (1P/Halley), matching the pattern already proven for Encke (id='90000091'). Verified this session: Halley's ~76-year period means only one apparition is ever current (unlike Encke's ~3.3-year cadence, where a new record supersedes the last every few years) -- no live disambiguation search needed, this record is necessarily the current one. The orrery's own data-arc comment (1835-08-21 to 1994-01-11, celestial_objects.py) describes the observational fit-arc used to derive the elements, not a hard propagation cutoff -- Halley is an exceptionally well-characterized orbit. NOT yet live-verified against a 2026-epoch dry-run (no Horizons access from this session) -- run the routine --dry-run --object halley check before --first-build, same as any newly added object.",
       "features": {}
+    },
+    {
+      "slug": "tempel_2", "name": "Tempel 2", "horizons_id": "90000214", "id_type": "smallbody",
+      "description": "A Jupiter-family comet, discovered in 1873 by Wilhelm Tempel.",
+      "info_url": "https://en.wikipedia.org/wiki/10P/Tempel",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000214", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 5.37, "figures": 3, "text": "5.37"}, "days": {"value": 1960.0, "figures": 4, "text": "1960"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "schaumasse", "name": "Schaumasse", "horizons_id": "90000356", "id_type": "smallbody",
+      "description": "A Jupiter-family comet, discovered in 1911.",
+      "info_url": "https://en.wikipedia.org/wiki/24P/Schaumasse",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000356", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 8.17, "figures": 3, "text": "8.17"}, "days": {"value": 2990.0, "figures": 3, "text": "2990"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "ikeya_seki", "name": "Ikeya-Seki", "horizons_id": "C/1965 S1-A", "id_type": "smallbody",
+      "description": "One of the brightest comets seen in the last thousand years. It goes around the Sun in the opposite direction to the planets.",
+      "info_url": "https://en.wikipedia.org/wiki/Comet_Ikeya%E2%80%93Seki",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "C/1965 S1-A", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 795.159, "figures": 6, "text": "795.159"}, "days": {"value": 290431.7, "figures": 7, "text": "290,431.7"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "churyumov", "name": "Churyumov", "horizons_id": "90000703", "id_type": "smallbody",
+      "description": "67P/Churyumov-Gerasimenko is the comet visited by the Rosetta spacecraft, August 2014 through September 2016.",
+      "info_url": "https://science.nasa.gov/solar-system/comets/67p-churyumov-gerasimenko/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000703", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 6.433, "figures": 4, "text": "6.433"}, "days": {"value": 2350.0, "figures": 4, "text": "2350"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "howell", "name": "Howell", "horizons_id": "90000901", "id_type": "smallbody",
+      "description": "A Jupiter-family comet, discovered in 1981 by Ellen Howell.",
+      "info_url": "https://en.wikipedia.org/wiki/88P/Howell",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000901", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 5.48, "figures": 3, "text": "5.48"}, "days": {"value": 2002.0, "figures": 4, "text": "2002"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "hale_bopp", "name": "Hale-Bopp", "horizons_id": "C/1995 O1", "id_type": "smallbody",
+      "description": "Visible to the naked eye for a record 18 months.",
+      "info_url": "https://science.nasa.gov/solar-system/comets/c-1995-o1-hale-bopp/",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "C/1995 O1", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 2399.0, "figures": 4, "text": "2399"}, "days": {"value": 876400.0, "figures": 4, "text": "876,400"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "hyakutake", "name": "Hyakutake", "horizons_id": "C/1996 B2", "id_type": "smallbody",
+      "description": "Passed very close to Earth in 1996. It goes around the Sun in the opposite direction to the planets.",
+      "info_url": "https://nssdc.gsfc.nasa.gov/planetary/hyakutake.html",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "C/1996 B2", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 72000.0, "figures": 2, "text": "72,000"}, "days": {"value": 26000000.0, "figures": 2, "text": "26,000,000"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "neowise", "name": "NEOWISE", "horizons_id": "C/2020 F3", "id_type": "smallbody",
+      "description": "The brightest comet seen from the Northern Hemisphere since Hale-Bopp in 1997. It goes around the Sun in the opposite direction to the planets.",
+      "info_url": "https://www.nasa.gov/centers-and-facilities/jpl/comet-neowise-sizzles-as-it-slides-by-the-sun-providing-a-treat-for-observers/",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "C/2020 F3", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 6830.0, "figures": 3, "text": "6830"}, "days": {"value": 2500000.0, "figures": 3, "text": "2,500,000"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "lemmon", "name": "Lemmon", "horizons_id": "C/2025 A6", "id_type": "smallbody",
+      "description": "In fall 2025 it brightened in the morning northern sky. It goes around the Sun in the opposite direction to the planets.",
+      "info_url": "https://apod.nasa.gov/apod/ap250930.html",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "C/2025 A6", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1170.0, "figures": 3, "text": "1170"}, "days": {"value": 430000.0, "figures": 2, "text": "430,000"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "swan", "name": "SWAN", "horizons_id": "C/2025 R2", "id_type": "smallbody",
+      "description": "A long-period comet, discovered on September 11, 2025.",
+      "info_url": "https://en.wikipedia.org/wiki/C/2025_R2_(SWAN)",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "C/2025 R2", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 800.0, "figures": 1, "text": "800"}, "days": {"value": 290000.0, "figures": 2, "text": "290,000"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "maps", "name": "MAPS", "horizons_id": "C/2026 A1", "id_type": "smallbody",
+      "description": "Kreutz sungrazer comet discovered on 13 January 2026 from the AMACS1 Observatory in the Atacama Desert, Chile.",
+      "info_url": "https://en.wikipedia.org/wiki/C/2026_A1_(MAPS)",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "C/2026 A1", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1900.0, "figures": 2, "text": "1900"}, "days": {"value": 700000.0, "figures": 1, "text": "700,000"}},
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "eros", "name": "Eros", "horizons_id": "A898 PA", "id_type": "smallbody",
+      "description": "First asteroid to be orbited and landed on by NASA's NEAR Shoemaker spacecraft in 2000-2001.",
+      "info_url": "https://science.nasa.gov/solar-system/asteroids/433-eros/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "A898 PA", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.761, "figures": 5, "text": "1.7610"}, "days": {"value": 643.2, "figures": 4, "text": "643.2"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "bennu", "name": "Bennu", "horizons_id": "1999 RQ36", "id_type": "smallbody",
+      "description": "Studied by NASA's OSIRIS-REx mission.",
+      "info_url": "https://science.nasa.gov/solar-system/asteroids/101955-bennu/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1999 RQ36", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.19472, "figures": 6, "text": "1.19472"}, "days": {"value": 436.37, "figures": 5, "text": "436.37"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "ryugu", "name": "Ryugu", "horizons_id": "1999 JU3", "id_type": "smallbody",
+      "description": "Target of JAXA's Hayabusa2 mission which returned samples to Earth in 2020.",
+      "info_url": "https://en.wikipedia.org/wiki/162173_Ryugu",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1999 JU3", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.2997, "figures": 5, "text": "1.2997"}, "days": {"value": 474.7, "figures": 4, "text": "474.7"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "itokawa", "name": "Itokawa", "horizons_id": "1998 SF36", "id_type": "smallbody",
+      "description": "First asteroid from which samples were returned to Earth by JAXA's Hayabusa mission in 2010.",
+      "info_url": "https://science.nasa.gov/solar-system/asteroids/25143-itokawa/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1998 SF36", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.5237, "figures": 5, "text": "1.5237"}, "days": {"value": 556.5, "figures": 4, "text": "556.5"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "kamo_oalewa", "name": "Kamo oalewa", "horizons_id": "2016 HO3", "id_type": "smallbody",
+      "description": "Kamo'oalewa is a very small, elongated asteroid belonging to the Apollo group of near-Earth objects.",
+      "info_url": "https://www.jpl.nasa.gov/news/small-asteroid-is-earths-constant-companion/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2016 HO3", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.001, "figures": 4, "text": "1.001"}, "days": {"value": 365.8, "figures": 4, "text": "365.8"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "asteroid_2025_pn7", "name": "2025 PN7", "horizons_id": "2025 PN7", "id_type": "smallbody",
+      "description": "2025 PN7 is a small near-Earth asteroid and the most recently discovered quasi-satellite of Earth.",
+      "info_url": "https://en.wikipedia.org/wiki/2025_PN7",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2025 PN7", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.0, "figures": 3, "text": "1.00"}, "days": {"value": 364.0, "figures": 3, "text": "364"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "asteroid_2024_pt5", "name": "2024 PT5", "horizons_id": "2024 PT5", "id_type": "smallbody",
+      "description": "Passed closest to Earth on August 8, 2024.",
+      "info_url": "https://science.nasa.gov/blogs/planetary-defense/2024/10/02/nasa-to-track-asteroid-2024-pt5-on-next-close-pass-january-2025/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2024 PT5", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.034, "figures": 4, "text": "1.034"}, "days": {"value": 377.6, "figures": 4, "text": "377.6"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "asteroid_2025_py1", "name": "2025 PY1", "horizons_id": "2025 PY1", "id_type": "smallbody",
+      "description": "Near-Earth asteroid.",
+      "info_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=2025%20PY1",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2025 PY1", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.166, "figures": 5, "text": "1.1660"}, "days": {"value": 425.88, "figures": 5, "text": "425.88"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "asteroid_2023_jf", "name": "2023 JF", "horizons_id": "2023 JF", "id_type": "smallbody",
+      "description": "Asteroid 2023 JF flew past Earth on May 9, 2023.",
+      "info_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=2023%20JF",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2023 JF", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 2.072, "figures": 4, "text": "2.072"}, "days": {"value": 757.0, "figures": 3, "text": "757"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "asteroid_2024_dw", "name": "2024 DW", "horizons_id": "2024 DW", "id_type": "smallbody",
+      "description": "Passed closest to Earth on February 22, 2024.",
+      "info_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=2024%20DW",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2024 DW", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.61, "figures": 3, "text": "3.61"}, "days": {"value": 1320.0, "figures": 3, "text": "1320"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "asteroid_2024_yr4", "name": "2024 YR4", "horizons_id": "2024 YR4", "id_type": "smallbody",
+      "description": "Passed close to Earth on December 25, 2024, two days before it was discovered.",
+      "info_url": "https://science.nasa.gov/solar-system/asteroids/2024-yr4/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2024 YR4", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.991, "figures": 4, "text": "3.991"}, "days": {"value": 1458.0, "figures": 4, "text": "1458"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "ceres", "name": "Ceres", "horizons_id": "A801 AA", "id_type": "smallbody",
+      "description": "NASA: \"Ceres was the first object discovered in the main asteroid belt and is named for the Roman goddess of agriculture.\" NASA's Dawn spacecraft went into orbit around it in 2015.",
+      "info_url": "https://science.nasa.gov/dwarf-planets/ceres/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "A801 AA", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 4.6, "figures": 3, "text": "4.60"}, "days": {"value": 1680.0, "figures": 4, "text": "1680"}},
+      "category": "dwarf_planet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "vesta", "name": "Vesta", "horizons_id": "A807 FA", "id_type": "smallbody",
+      "description": "One of the largest objects in the asteroid belt, visited by NASA's Dawn mission.",
+      "info_url": "https://science.nasa.gov/solar-system/asteroids/4-vesta/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "A807 FA", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.628, "figures": 4, "text": "3.628"}, "days": {"value": 1325.0, "figures": 4, "text": "1325"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "psyche", "name": "16 Psyche", "horizons_id": "A852 FA", "id_type": "smallbody",
+      "description": "A metal-rich asteroid in the main asteroid belt. NASA's Psyche spacecraft begins its main mission there in August 2029.",
+      "info_url": "https://science.nasa.gov/solar-system/asteroids/16-psyche/",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "A852 FA", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 4.97, "figures": 3, "text": "4.97"}, "days": {"value": 1820.0, "figures": 3, "text": "1820"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "lutetia", "name": "Lutetia", "horizons_id": "A852 VA", "id_type": "smallbody",
+      "description": "Studied by European Space Agency's Rosetta mission.",
+      "info_url": "https://www.nasa.gov/image-article/asteroid-lutetia/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "A852 VA", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.799, "figures": 4, "text": "3.799"}, "days": {"value": 1388.0, "figures": 4, "text": "1388"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "steins", "name": "Steins", "horizons_id": "1969 VC", "id_type": "smallbody",
+      "description": "Visited by European Space Agency's Rosetta spacecraft.",
+      "info_url": "https://en.wikipedia.org/wiki/2867_%C5%A0teins",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1969 VC", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.633, "figures": 4, "text": "3.633"}, "days": {"value": 1327.0, "figures": 4, "text": "1327"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "donaldjohanson", "name": "Donaldjohanson", "horizons_id": "1981 EQ5", "id_type": "smallbody",
+      "description": "Lucy flew past it on April 20, 2025. It is about 8 km long and 3.5 km wide, a C-type (carbon-rich) asteroid, named for the paleoanthropologist who discovered the \"Lucy\" fossil.",
+      "info_url": "https://science.nasa.gov/solar-system/asteroids/donaldjohanson/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1981 EQ5", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.681, "figures": 4, "text": "3.681"}, "days": {"value": 1344.4, "figures": 5, "text": "1344.4"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "dinkinesh", "name": "Dinkinesh", "horizons_id": "1999 VD57", "id_type": "smallbody",
+      "description": "Dinkinesh was visited by the mission Lucy.",
+      "info_url": "https://science.nasa.gov/solar-system/asteroids/dinkinesh/",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1999 VD57", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.244, "figures": 4, "text": "3.244"}, "days": {"value": 1184.9, "figures": 5, "text": "1184.9"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "eurybates", "name": "Eurybates", "horizons_id": "1973 SO", "id_type": "smallbody",
+      "description": "Lucy flies past it on August 11, 2027. A C-type (carbon-rich) asteroid with a small moon, Queta.",
+      "info_url": "https://en.wikipedia.org/wiki/3548_Eurybates",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "1973 SO", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 11.919, "figures": 5, "text": "11.919"}, "days": {"value": 4353.0, "figures": 4, "text": "4353"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "patroclus", "name": "Patroclus", "horizons_id": "A906 UL", "id_type": "smallbody",
+      "description": "Two Jupiter Trojans of nearly the same size, Patroclus and Menoetius, orbiting each other. Lucy flies past them in March 2033.",
+      "info_url": "https://en.wikipedia.org/wiki/617_Patroclus",
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "A906 UL", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 11.879, "figures": 5, "text": "11.879"}, "days": {"value": 4338.9, "figures": 5, "text": "4338.9"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "polymele", "name": "Polymele", "horizons_id": "1999 WB2", "id_type": "smallbody",
+      "description": "Lucy flies past it in September 2027. A P-type (primitive) asteroid with a small moon, Shaun, found in 2022 when Polymele passed in front of a star.",
+      "info_url": "https://en.wikipedia.org/wiki/15094_Polymele",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "1999 WB2", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 11.83, "figures": 5, "text": "11.830"}, "days": {"value": 4321.0, "figures": 4, "text": "4321"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "leucus", "name": "Leucus", "horizons_id": "1997 TS25", "id_type": "smallbody",
+      "description": "Lucy flies past it on April 18, 2028. A D-type asteroid with a dark, primitive surface, which rotates very slowly.",
+      "info_url": "https://en.wikipedia.org/wiki/11351_Leucus",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "1997 TS25", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 12.237, "figures": 5, "text": "12.237"}, "days": {"value": 4470.0, "figures": 4, "text": "4470"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "orus", "name": "Orus", "horizons_id": "1999 VQ10", "id_type": "smallbody",
+      "description": "Lucy flies past it on November 11, 2028, its last stop among the Trojans that lead Jupiter. A D-type asteroid.",
+      "info_url": "https://en.wikipedia.org/wiki/21900_Orus",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "1999 VQ10", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 11.5742, "figures": 6, "text": "11.5742"}, "days": {"value": 4227.5, "figures": 5, "text": "4227.5"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "chariklo", "name": "Chariklo", "horizons_id": "1997 CU26", "id_type": "smallbody",
+      "description": "Large Centaur.",
+      "info_url": "https://science.nasa.gov/solar-system/asteroids/10199-chariklo/",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "1997 CU26", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 62.486, "figures": 5, "text": "62.486"}, "days": {"value": 22823.0, "figures": 5, "text": "22,823"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "orcus", "name": "Orcus", "horizons_id": "2004 DW", "id_type": "smallbody",
+      "description": "A dwarf planet with a large moon, Vanth, about 16% of its mass: the highest share of any known planet or dwarf planet and its moon.",
+      "info_url": "https://en.wikipedia.org/wiki/Orcus_(dwarf_planet)",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2004 DW", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 246.02, "figures": 6, "text": "246.020"}, "days": {"value": 89858.8, "figures": 6, "text": "89,858.8"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "haumea", "name": "Haumea", "horizons_id": "2003 EL61", "id_type": "smallbody",
+      "description": "A dwarf planet with rings, spinning about once every 4 hours, fast enough to stretch it into an oval like a football.",
+      "info_url": "https://science.nasa.gov/dwarf-planets/haumea/",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2003 EL61", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 282.793, "figures": 6, "text": "282.793"}, "days": {"value": 103290.2, "figures": 7, "text": "103,290.2"}},
+      "category": "dwarf_planet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "eris", "name": "Eris", "horizons_id": "2003 UB313", "id_type": "smallbody",
+      "description": "The most massive known dwarf planet, about the same size as Pluto.",
+      "info_url": "https://science.nasa.gov/dwarf-planets/eris/",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2003 UB313", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 558.34, "figures": 5, "text": "558.34"}, "days": {"value": 203934.0, "figures": 6, "text": "203,934"}},
+      "category": "dwarf_planet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "makemake", "name": "Makemake", "horizons_id": "2005 FY9", "id_type": "smallbody",
+      "description": "Makemake is a dwarf planet slightly smaller than Pluto, and is the second-brightest object in the Kuiper Belt.",
+      "info_url": "https://science.nasa.gov/dwarf-planets/makemake/",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2005 FY9", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 306.701, "figures": 6, "text": "306.701"}, "days": {"value": 112022.0, "figures": 6, "text": "112,022"}},
+      "category": "dwarf_planet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "gonggong", "name": "Gonggong", "horizons_id": "2007 OR10", "id_type": "smallbody",
+      "description": "Dwarf planet with a highly inclined orbit.",
+      "info_url": "https://en.wikipedia.org/wiki/Gonggong_(dwarf_planet)",
+      "period": {"kind": "typed", "typed": true, "center": null, "center_label": null, "open_orbit": false, "fetched": null, "words": "Typed value, not fetched from JPL.", "years": {"value": 550.33662, "figures": 8, "text": "550.33662"}, "days": {"value": 201010.45, "figures": 8, "text": "201010.45"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "quaoar", "name": "Quaoar", "horizons_id": "2002 LM60", "id_type": "smallbody",
+      "description": "Kuiper Belt dwarf planet with a ring system, announced in 2023.",
+      "info_url": "https://en.wikipedia.org/wiki/50000_Quaoar",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2002 LM60", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 285.085, "figures": 6, "text": "285.085"}, "days": {"value": 104127.2, "figures": 7, "text": "104,127.2"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "sedna", "name": "Sedna", "horizons_id": "2003 VB12", "id_type": "smallbody",
+      "description": "A distant trans-Neptunian dwarf planet with an extremely long orbit.",
+      "info_url": "https://en.wikipedia.org/wiki/Sedna_(dwarf_planet)",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2003 VB12", "target_label": null, "open_orbit": false, "fetched": "2026-10-13", "words": null, "years": {"value": 11390.0, "figures": 4, "text": "11,390"}, "days": {"value": 4160000.0, "figures": 3, "text": "4,160,000"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "mani", "name": "Mani", "horizons_id": "2002 MS4", "id_type": "smallbody",
+      "description": "One of the largest Kuiper Belt objects with no known moons.",
+      "info_url": "https://en.wikipedia.org/wiki/307261_Mani",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2002 MS4", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 269.467, "figures": 6, "text": "269.467"}, "days": {"value": 98422.7, "figures": 6, "text": "98,422.7"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "ixion", "name": "Ixion", "horizons_id": "2001 KX76", "id_type": "smallbody",
+      "description": "A large Kuiper Belt object without a known moon.",
+      "info_url": "https://en.wikipedia.org/wiki/28978_Ixion",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2001 KX76", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 248.06, "figures": 6, "text": "248.060"}, "days": {"value": 90604.0, "figures": 5, "text": "90,604"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "varuna", "name": "Varuna", "horizons_id": "2000 WR106", "id_type": "smallbody",
+      "description": "A significant Kuiper Belt Object with a rapid rotation period.",
+      "info_url": "https://en.wikipedia.org/wiki/20000_Varuna",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2000 WR106", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 281.28, "figures": 6, "text": "281.280"}, "days": {"value": 102738.0, "figures": 6, "text": "102,738"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "goibniu", "name": "GV9", "horizons_id": "2004 GV9", "id_type": "smallbody",
+      "description": "A binary Kuiper Belt Object providing precise mass measurements through its moon.",
+      "info_url": "https://en.wikipedia.org/wiki/90568_Goibniu",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2004 GV9", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 271.479, "figures": 6, "text": "271.479"}, "days": {"value": 99158.0, "figures": 5, "text": "99,158"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "leleakuhonua", "name": "Leleakuhonua", "horizons_id": "2015 TG387", "id_type": "smallbody",
+      "description": "A distant trans-Neptunian dwarf planet with an extremely long orbit.",
+      "info_url": "https://en.wikipedia.org/wiki/541132_Lele%C4%81k%C5%ABhonua",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2015 TG387", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 42000.0, "figures": 2, "text": "42,000"}, "days": {"value": 15400000.0, "figures": 3, "text": "15,400,000"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "tno_2017_of201", "name": "2017 OF201", "horizons_id": "2017 OF201", "id_type": "smallbody",
+      "description": "An extreme trans-Neptunian object with an extremely long orbit.",
+      "info_url": "https://en.wikipedia.org/wiki/2017_OF201",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2017 OF201", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 23800.0, "figures": 3, "text": "23,800"}, "days": {"value": 8700000.0, "figures": 2, "text": "8,700,000"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "ammonite", "name": "Ammonite", "horizons_id": "2023 KQ14", "id_type": "smallbody",
+      "description": "Ammonite is classified as a sednoid, after Sedna.",
+      "info_url": "https://en.wikipedia.org/wiki/2023_KQ14",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2023 KQ14", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 4000.0, "figures": 3, "text": "4000"}, "days": {"value": 1461000.0, "figures": 4, "text": "1,461,000"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
+    },
+    {
+      "slug": "arrokoth", "name": "Arrokoth", "horizons_id": "2014 MU69", "id_type": "smallbody",
+      "description": "Arrokoth flyby from New Horizons on January 1, 2019.",
+      "info_url": "https://en.wikipedia.org/wiki/486958_Arrokoth",
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2014 MU69", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 294.0, "figures": 4, "text": "294.0"}, "days": {"value": 107400.0, "figures": 4, "text": "107,400"}},
+      "category": "asteroid", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {}
     }
   ],
   "rooms": {
@@ -1627,21 +2070,81 @@
         "highlight": "earth"
       },
       "drawer": {
-        "_declared": "The drawer's rows, by slug, in order outward from the Sun. A row marked see_more is shown only after the visitor presses See more, in its place in this order. Every row except the Sun can be ticked, and ticking a row also opens it. Apophis is one See more row until the near-Earth asteroids get their own design. A row may carry the words a visitor sees for it: label, the name shown in the drawer and text box when it is not the served name; about, a sentence shown in the text box and the panel; source_note, what the Horizons id in the source line is. Tony's rulings, 2026-09-29 and 2026-09-30 (L-363).",
+        "_declared": "The drawer's rows, by slug, in order outward from the Sun. A row marked see_more is shown only after the visitor presses See more, in its place in this order. Every row except the Sun can be ticked, and ticking a row also opens it. A GROUP row (group, label) gathers the body rows that name it in their in field, listed after it: it folds open to show them, its box ticks and unticks all of them, and see_more puts it behind See more; order a lists its bodies by their served semi-major axis, nearest first, and without it they keep the order here (the comets, by first apparition). Each group is JPL's own class for its bodies (its Small-Body Database). Tony's ruling of 2026-10-22 (L-443): groups fold open in the drawer, and a room is for a body with more than its symbol. A row may carry the words a visitor sees for it: label, the name shown in the drawer and text box when it is not the served name; about, a sentence shown in the text box and the panel; source_note, what the Horizons id in the source line is. Tony's rulings, 2026-09-29 and 2026-09-30 (L-363).",
         "rows": [
           { "slug": "sun" },
+          { "group": "comets", "label": "Comets", "see_more": true },
+          { "slug": "halley", "in": "comets" },
+          { "slug": "encke", "in": "comets" },
+          { "slug": "tempel_2", "in": "comets" },
+          { "slug": "schaumasse", "in": "comets" },
+          { "slug": "ikeya_seki", "in": "comets" },
+          { "slug": "churyumov", "in": "comets", "label": "Churyumov-Gerasimenko" },
+          { "slug": "howell", "in": "comets" },
+          { "slug": "hale_bopp", "in": "comets" },
+          { "slug": "hyakutake", "in": "comets" },
+          { "slug": "neowise", "in": "comets" },
+          { "slug": "lemmon", "in": "comets" },
+          { "slug": "swan", "in": "comets" },
+          { "slug": "maps", "in": "comets" },
           { "slug": "mercury" },
           { "slug": "venus" },
           { "slug": "earth" },
-          { "slug": "apophis", "see_more": true },
+          { "group": "neo", "label": "Near-Earth asteroids", "see_more": true, "order": "a" },
+          { "slug": "apophis", "in": "neo" },
+          { "slug": "eros", "in": "neo" },
+          { "slug": "bennu", "in": "neo" },
+          { "slug": "ryugu", "in": "neo" },
+          { "slug": "itokawa", "in": "neo" },
+          { "slug": "kamo_oalewa", "in": "neo", "label": "Kamo'oalewa" },
+          { "slug": "asteroid_2025_pn7", "in": "neo" },
+          { "slug": "asteroid_2024_pt5", "in": "neo" },
+          { "slug": "asteroid_2025_py1", "in": "neo" },
+          { "slug": "asteroid_2023_jf", "in": "neo" },
+          { "slug": "asteroid_2024_dw", "in": "neo" },
+          { "slug": "asteroid_2024_yr4", "in": "neo" },
           { "slug": "mars" },
+          { "group": "belt", "label": "Main asteroid belt", "see_more": true, "order": "a" },
+          { "slug": "ceres", "in": "belt" },
+          { "slug": "vesta", "in": "belt" },
+          { "slug": "psyche", "in": "belt" },
+          { "slug": "lutetia", "in": "belt" },
+          { "slug": "steins", "in": "belt" },
+          { "slug": "donaldjohanson", "in": "belt" },
+          { "slug": "dinkinesh", "in": "belt" },
           { "slug": "jupiter" },
+          { "group": "trojans", "label": "Jupiter Trojans", "see_more": true, "order": "a" },
+          { "slug": "eurybates", "in": "trojans" },
+          { "slug": "patroclus", "in": "trojans", "label": "Patroclus and Menoetius",
+            "about": "The symbol marks the center of mass (barycenter) that Patroclus and Menoetius orbit together. It lies outside Patroclus itself." },
+          { "slug": "polymele", "in": "trojans" },
+          { "slug": "leucus", "in": "trojans" },
+          { "slug": "orus", "in": "trojans" },
           { "slug": "saturn" },
+          { "group": "centaurs", "label": "Centaurs", "see_more": true, "order": "a" },
+          { "slug": "chariklo", "in": "centaurs" },
           { "slug": "uranus" },
           { "slug": "neptune" },
           { "slug": "pluto_barycenter", "label": "Pluto",
             "about": "The symbol marks the gravitational center (barycenter) that Pluto and its moon Charon orbit together. It lies outside Pluto itself.",
-            "source_note": "the Pluto-Charon barycenter" }
+            "source_note": "the Pluto-Charon barycenter" },
+          { "group": "tno", "label": "Trans-Neptunian objects", "see_more": true, "order": "a" },
+          { "slug": "orcus", "in": "tno",
+            "about": "The symbol marks the center of mass (barycenter) that Orcus and its moon Vanth orbit together. It lies outside Orcus itself." },
+          { "slug": "haumea", "in": "tno" },
+          { "slug": "eris", "in": "tno" },
+          { "slug": "makemake", "in": "tno" },
+          { "slug": "gonggong", "in": "tno" },
+          { "slug": "quaoar", "in": "tno" },
+          { "slug": "sedna", "in": "tno" },
+          { "slug": "mani", "in": "tno" },
+          { "slug": "ixion", "in": "tno" },
+          { "slug": "varuna", "in": "tno" },
+          { "slug": "goibniu", "in": "tno", "label": "Goibniu (2004 GV9)" },
+          { "slug": "leleakuhonua", "in": "tno" },
+          { "slug": "tno_2017_of201", "in": "tno" },
+          { "slug": "ammonite", "in": "tno", "label": "2023 KQ14 (Ammonite)" },
+          { "slug": "arrokoth", "in": "tno" }
         ]
       }
     }

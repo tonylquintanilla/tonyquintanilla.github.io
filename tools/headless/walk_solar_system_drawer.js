@@ -16,7 +16,13 @@
 // booting, so the walk does not depend on what the room is set to open
 // on in data/objects_config.json.
 //
-// Written October 2, 2026 with Anthropic's Claude Opus 5.5.
+// Since L-443 (2026-10-22) the room serves group rows: Apophis sits in
+// the near-Earth asteroids, so See more shows the group and the group
+// folds open to show it; the counts are worked out from the served rows;
+// and section 15 walks a group: fold, its box, its count, its order.
+//
+// Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
+// October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443).
 const h = require("./page_harness.js");
 const fails = []; let n = 0;
 function ok(c, m) { n++; if (!c) { fails.push(m); } }
@@ -49,6 +55,12 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   const count = () => d.getElementById("sun-drawer-count").textContent;
   const seeMore = () => d.getElementById("sun-see-more");
   const near = (a, b) => Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b));
+  // L-443: the bodies that can be ticked, from the served rows, and a
+  // group's row and fold.
+  const N = E("ssDrawer.rows.filter(r => !SolarSystemDrawer.isGroup(r) && SolarSystemDrawer.tickable(r.key) && ssIndex(r.key) >= 0).length");
+  const head = (g) => d.querySelector('#sun-drawer-list .sun-row.sun-group[data-g="' + g + '"]');
+  const groupAll = (g) => d.querySelector('#sun-drawer-list .sun-see-more.group-all[data-g="' + g + '"]');
+  const fold = (g) => click(head(g).querySelector(".rname"));
 
   ok(d.getElementById("loading-status").textContent === "Ready", "boot: not Ready");
   ok(h.errors.length === 0, "boot: errors " + h.errors.join("; "));
@@ -56,9 +68,9 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(near(range(), radius("earth")) && near(E("navArrivalR"), radius("earth")), "opening frame " + range() + " vs " + radius("earth"));
   ok(order() === "earth", "arrival order " + order());
   ok(focus() === "earth" && d.getElementById("sun-drawer-label").textContent === "Earth", "arrival handle");
-  ok(count() === "1 of 10", "arrival count " + count());
+  ok(count() === "1 of " + N, "arrival count " + count());
   ok(row("center").classList.contains("fixed"), "Sun row not fixed");
-  ok(row("apophis").hidden && !seeMore().hidden && seeMore().textContent === "See more", "Apophis not behind See more");
+  ok(row("apophis").hidden && head("neo").hidden && !seeMore().hidden && seeMore().textContent === "See more", "Apophis and its group not behind See more");
   const inl = (key) => row(key).querySelector(".open-inline") ||
     { hidden: true, textContent: "", nextElementSibling: null };
   const expanded = (key) => row(key).getAttribute("aria-expanded") === "true";
@@ -86,7 +98,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(near(range(), radius("earth")), "frame after Mercury " + range() + " vs " + radius("earth"));
   ok(E("__calls.slice(" + calls + ").some(c => c[0] === 'restyle')"), "no restyle on tick");
   ok(d.getElementById("sun-drawer").classList.contains("open") || true, "");
-  ok(count() === "2 of 10", "count after Mercury " + count());
+  ok(count() === "2 of " + N, "count after Mercury " + count());
   // 4. Tick Neptune: frame widens to Neptune; Mercury's row closes, Neptune's opens
   await pick("neptune");
   ok(near(range(), radius("neptune")), "frame after Neptune");
@@ -98,14 +110,16 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(E("__calls.length") === calls && range() === r0, "name tap moved the view");
   // 6. See more / See fewer
   await click(seeMore());
-  ok(!row("apophis").hidden && seeMore().textContent === "See fewer", "See more did not show Apophis");
+  ok(!head("neo").hidden && row("apophis").hidden && seeMore().textContent === "See fewer", "See more did not show the group, or showed Apophis folded");
+  await fold("neo");
+  ok(!row("apophis").hidden && !groupAll("neo").hidden, "the group did not fold open to show Apophis");
   await pick("apophis");
   ok(shown("apophis") && order() === "earth,mercury,neptune,apophis", "Apophis tick " + order());
   await click(seeMore());
-  ok(!row("apophis").hidden, "a ticked See more row hid on See fewer");
-  ok(seeMore().hidden, "See more offered with nothing behind it");
+  ok(!head("neo").hidden && !row("apophis").hidden, "a group with a ticked body hid on See fewer");
+  ok(!seeMore().hidden && seeMore().textContent === "See more", "See more not offered with the other groups behind it");
   await pick("apophis");
-  ok(row("apophis").hidden && !seeMore().hidden && seeMore().textContent === "See more", "unticked Apophis did not go back under See more");
+  ok(row("apophis").hidden && head("neo").hidden && !seeMore().hidden && seeMore().textContent === "See more", "unticked Apophis did not go back under See more with its group");
   ok(order() === "earth,mercury,neptune", "untick removed from order " + order());
   // 7. A tap on a body in the scene: names its row, moves nothing
   E("setSunDrawer(false)");
@@ -128,17 +142,17 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(near(range(), radius("earth")), "fallback frame");
   // 10. Untick everything: Home puts the opening back
   await pick("mercury"); await pick("earth");
-  ok(count() === "0 of 10", "count with nothing ticked " + count());
+  ok(count() === "0 of " + N, "count with nothing ticked " + count());
   await E("navHome()"); await h.done();
   ok(shown("earth") && !shown("mercury") && focus() === "earth" && order() === "earth", "Home did not put back the opening");
   ok(near(range(), E("navArrivalR")), "Home opening frame " + range() + " " + E("navArrivalR"));
   // 11. All / none leave the Sun alone
   await click(d.getElementById("sun-drawer-all"));
-  ok(count() === "10 of 10" && shown("center"), "All " + count());
-  ok(!row("apophis").hidden, "All: ticked Apophis hidden");
-  ok(order().split(",").length === 10 && order().indexOf("earth") === 0, "All order " + order());
+  ok(count() === N + " of " + N && shown("center"), "All " + count());
+  ok(!head("neo").hidden, "All: the group of a ticked Apophis hidden");
+  ok(order().split(",").length === N && order().indexOf("earth") === 0, "All order " + order());
   await click(d.getElementById("sun-drawer-all"));
-  ok(count() === "0 of 10" && shown("center"), "none " + count());
+  ok(count() === "0 of " + N && shown("center"), "none " + count());
   ok(order() === "", "none order " + order());
   // 12. GO on an unticked body: ticks it, closes the drawer, opens its text box
   E("setSunDrawer(true)");
@@ -154,9 +168,15 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   // 13. The panel words, as two bullet lists (Tony, 2026-10-02), and
   // Home's line as he settled it (2026-10-03)
   const info = d.getElementById("info-panel").textContent;
-  ok(info.indexOf("hold every body drawn") >= 0 && info.indexOf("A body with a room of its own has a button on its row") >= 0 && info.indexOf("waits under See more") >= 0, "info words");
+  ok(info.indexOf("hold every body drawn") >= 0 && info.indexOf("A body with a room of its own has a button on its row") >= 0 && info.indexOf("Tap a group's name to open it") >= 0, "info words");
   ok(info.indexOf("Home backs out to hold every body you ticked") >= 0 && info.indexOf("goes back to the last one") < 0, "Home's line");
-  ok(d.querySelectorAll("#info-panel ul").length === 2 && d.querySelectorAll("#info-panel ul li").length === 9, "two lists, nine bullets");
+  // The room's own two lists, found by their words: the i panel also
+  // lists the named body's sources as bullets (L-456), which these are not.
+  const lists = Array.from(d.querySelectorAll("#info-panel ul"));
+  const howTo = lists.filter(u => u.textContent.indexOf("Open the list below") >= 0);
+  const built = lists.filter(u => u.textContent.indexOf("This room is being built up") >= 0);
+  ok(howTo.length === 1 && built.length === 1 && howTo[0].querySelectorAll("li").length === 6 &&
+     built[0].querySelectorAll("li").length === 3, "the room's two lists, six and three bullets");
   // 14. Sideways (Tony, 2026-10-03, option 3): an opened row's button sits
   // on the name's line before GO; upright it is the line under the row
   E("setSunDrawer(true)");
@@ -175,6 +195,29 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   Object.defineProperty(w, "innerHeight", { value: 768, configurable: true });
   E("renderSunDrawer()");
   ok(!panel("mercury").hidden && inl("mercury").hidden, "upright again: the row did not go back under");
+  // 15. L-443: a group. See more, fold it open; its bodies by served
+  // semi-major axis; its box ticks all of them and the frame holds them;
+  // its count; its box again unticks only them; folded, they hide.
+  E("setSunDrawer(true)");
+  if (seeMore().textContent === "See more") { await click(seeMore()); }
+  if (!E("ssDrawer.folds.tno")) { await fold("tno"); }
+  const tno = E("SolarSystemDrawer.members(ssDrawer.rows, 'tno').map(r => r.key)");
+  const listed = Array.from(d.querySelectorAll('#sun-drawer-list .sun-row.member[data-k]'))
+    .map(r => E("sunGroups[" + r.dataset.k + "].key")).filter(k => tno.indexOf(k) >= 0);
+  ok(listed.join() === tno.join(), "the drawer does not list the group in the planned order");
+  const as = tno.map(k => ((data.bodies || {})[k] || {}).a_au);
+  ok(as.every((a, i) => i === 0 || !(typeof a === "number" && typeof as[i - 1] === "number") || a >= as[i - 1]),
+     "the group is not by served semi-major axis: " + as.join());
+  const before = order();
+  await click(head("tno").querySelector(".pick"));
+  ok(tno.every(k => shown(k)), "the group's box did not tick all its bodies");
+  ok(head("tno").querySelector(".gcount").textContent === "\u25be " + tno.length + " of " + tno.length, "the group's count " + head("tno").querySelector(".gcount").textContent);
+  const far = tno.reduce((m, k) => Math.max(m, dist(k)), 0);
+  ok(range() >= far * 1.2 * (1 - 1e-9), "the frame does not hold the group: " + range() + " vs " + far * 1.2);
+  await click(head("tno").querySelector(".pick"));
+  ok(tno.every(k => !shown(k)) && order() === before, "the group's box did not untick only its bodies: " + order());
+  await fold("tno");
+  ok(tno.every(k => row(k).hidden) && groupAll("tno").hidden, "a folded group still shows its bodies");
   ok(h.errors.length === 0, "errors during the walk: " + h.errors.join("; "));
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);

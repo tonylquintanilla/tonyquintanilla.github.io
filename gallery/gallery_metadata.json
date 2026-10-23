@@ -345,7 +345,7 @@
       "room": "solar_system",
       "shape": "9:16",
       "files": {},
-      "live": "interactive.html",
+      "live": "interactive.html?exhibit=solar-system-explorer",
       "featured": false,
       "sources": [
         "Uses standard Keplerian mechanics.",
