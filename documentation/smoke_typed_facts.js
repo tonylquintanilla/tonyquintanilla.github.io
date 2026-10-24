@@ -132,9 +132,10 @@ const ALLOWED = [
    "the picture: why the arc has this length"],
   ["r = # AU (# km)", "the scene: the Moon's propagated distance"],
   ["x = # AU, y = # AU, z = # AU", "the scene: the Moon's propagated position"],
-  ["Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons (elements at JD #), propagated to the epoch by the assembler's Kepler solver (render_orbits.py).",
+  // L-481 (Tony, 2026-10-24): the three Horizons source lines carry its address.
+  ["Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons (https://ssd.jpl.nasa.gov/horizons/) (elements at JD #), propagated to the epoch by the assembler's Kepler solver (render_orbits.py).",
    "the page's own account of its data, with its source (interactive-exhibit: claims about itself)"],
-  ["JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder).",
+  ["JPL Horizons (https://ssd.jpl.nasa.gov/horizons/) osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder).",
    "the page's own account of its data, with its source"],
   // A number's own line may be ALLOWED too, by its shape (L-451, 2026-10-17).
   // This one entered the Earth room with L-431 build 3 and was first met
@@ -143,7 +144,7 @@ const ALLOWED = [
   // page's number came from.
   ["Orbital period: # years (# days), for the Earth-Moon center of mass, around the Sun, from JPL Horizons, fetched ###.",
    "the page's own account of its data: the served period, for the served body and centre, with its source and fetch date"],
-  ["Pole: JPL Horizons, served by the gallery cache builder for ###: the pole is observer quantity # for target #, seen from @sun, retrieved ###T#:#:#+#:#.",
+  ["Pole: JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), served by the gallery cache builder for ###: the pole is observer quantity # for target #, seen from @sun, retrieved ###T#:#:#+#:#.",
    "the pole of date's query, printed from the cache builder's served record (L-421 E4)"],
   ["The tilt is the angle between Earth's pole of date and the pole of the Earth-Moon barycenter's orbit of date, both turned into the ecliptic of J# by the frame angle; that orbit is target # about @sun, in the ecliptic plane.",
    "the page's own account of how the served tilt was computed"],
@@ -176,7 +177,8 @@ const DESCRIPTIONS = [
   ["Tick one and it draws; tap its name and the view moves to hold it.", "how to use the page"],
   ["The computation runs in your browser via Pyodide, using the same Python the desktop orrery uses.", "the page"],
   ["No server.", "the page"],
-  ["Part of Paloma's Orrery - named for the inventor's daughter.", "the page"],
+  // L-481 (Tony, 2026-10-24): "inventor's" reads "creator's".
+  ["Part of Paloma's Orrery - named for the creator's daughter.", "the page"],
   ["The shell radii are drawn from the published sources named in this panel.", "the page's account of its data"],
   ["They are long-term averages, and nothing here moves with time, so this scene has no date, as the line under the title says.", "the picture"],
   ["Rooms that show orbiting bodies take their orbit values from JPL Horizons and credit them there.", "the page's account of its data, sourced"],

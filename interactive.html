@@ -317,6 +317,14 @@
         drawer's handle; L-479, Go To fits a body's whole orbit, and every
         body's hover gives its orbit's near and far distance from the Sun.
         The Sun and Earth rooms keep All / none)
+     Updated: October 24, 2026, afternoon, with Anthropic's Claude Opus 5.5
+       (Tony's phone look of the L-477 build, his three asks: in the Solar
+        System room each line of a body's hover after its name is a
+        bullet; every source line that names JPL Horizons carries its
+        address, https://ssd.jpl.nasa.gov/horizons/, which the i panel
+        makes a link; and each room's closing paragraph, "Part of
+        Paloma's Orrery", reads "the creator's daughter" and is a bulleted
+        list, one sentence to a bullet. L-481)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1026,6 +1034,11 @@
             padding-top: 12px;
             border-top: 1px solid var(--border);
         }
+        /* L-481 (Tony, 2026-10-24): the closing paragraph, one sentence
+           to a bullet, for readability. */
+        .info-panel .info-note ul { margin: 0; padding-left: 16px; }
+        .info-panel .info-note li { margin: 0 0 4px; }
+        .info-panel .info-note a { color: var(--text-secondary); }
         /* L-267 Stage C. The block at the top of the Sun panel that
            follows the focus: swatch, name, link out. Same swatch as the
            drawer handle so the two readouts visibly agree. */
@@ -1208,10 +1221,11 @@
                     <strong>Pyodide</strong> (Python compiled to WebAssembly).
                     No server, no API calls. The math is yours to inspect.
                 </p>
-                <div class="info-note">
-                    Part of Paloma's Orrery &mdash; named for the inventor's daughter.
-                    Data: JPL/NASA. Computation: NumPy via Pyodide.
-                </div>
+                <div class="info-note"><ul>
+                    <li>Part of Paloma's Orrery &mdash; named for the creator's daughter.</li>
+                    <li>Data: JPL/NASA.</li>
+                    <li>Computation: NumPy via Pyodide.</li>
+                </ul></div>
             </div>
 
             <!-- Consent gate (one-time) -->
@@ -1974,17 +1988,18 @@ const SUN_INFO_HTML = [
     " the text beside it says so.</p>",
     "<p>The computation runs in your browser via <strong>Pyodide</strong>,",
     " using the same Python the desktop orrery uses. No server.</p>",
-    "<div class=\"info-note\">Part of Paloma's Orrery &mdash; named for the",
-    " inventor's daughter. The shell radii are drawn from the published",
-    " sources named in this panel. They are long-term averages, and",
+    // L-481 (Tony, 2026-10-24): one sentence to a bullet; creator, not inventor.
+    "<div class=\"info-note\"><ul><li>Part of Paloma's Orrery &mdash; named for the",
+    " creator's daughter.</li><li>The shell radii are drawn from the published",
+    " sources named in this panel.</li><li>They are long-term averages, and",
     " nothing here moves with time, so this scene has no date, as the",
-    " line under the title says. Rooms that show orbiting bodies take",
-    " their orbit values from JPL Horizons and credit them there.",
-    " Each number is shown to as many digits as its source actually",
-    " supports, and no more. That is a claim about precision, not",
+    " line under the title says.</li><li>Rooms that show orbiting bodies take",
+    " their orbit values from <a href=\"https://ssd.jpl.nasa.gov/horizons/\" target=\"_blank\" rel=\"noopener\">JPL Horizons</a> and credit them there.</li>",
+    "<li>Each number is shown to as many digits as its source actually",
+    " supports, and no more.</li><li>That is a claim about precision, not",
     " accuracy &mdash; how finely a thing was measured, not how close",
-    " it is to the truth. A value can be precise and still be wrong,",
-    " which is why the source is named beside it.</div>"
+    " it is to the truth.</li><li>A value can be precise and still be wrong,",
+    " which is why the source is named beside it.</li></ul></div>"
 ].join("");
 
 // ====================================================================
@@ -2136,19 +2151,20 @@ const EARTH_INFO_HTML = [
     " the orrery's store.</p>",
     "<p>The computation runs in your browser via <strong>Pyodide</strong>,",
     " using the same Python the desktop orrery uses. No server.</p>",
-    "<div class=\"info-note\">Part of Paloma's Orrery &mdash; named for the",
-    " inventor's daughter. Shell radii come from the published sources",
-    " named in this panel. The line under the title is the moment shown:",
-    " the minute you opened this room, in UTC. Earth's and the Moon's",
-    " orbit values come from JPL Horizons, the Jet Propulsion Laboratory's",
+    // L-481 (Tony, 2026-10-24): one sentence to a bullet; creator, not inventor.
+    "<div class=\"info-note\"><ul><li>Part of Paloma's Orrery &mdash; named for the",
+    " creator's daughter.</li><li>Shell radii come from the published sources",
+    " named in this panel.</li><li>The line under the title is the moment shown:",
+    " the minute you opened this room, in UTC.</li><li>Earth's and the Moon's",
+    " orbit values come from <a href=\"https://ssd.jpl.nasa.gov/horizons/\" target=\"_blank\" rel=\"noopener\">JPL Horizons</a>, the Jet Propulsion Laboratory's",
     " service for where solar system bodies are, fetched each night; the",
     " page works them forward to that minute, and the Moon, Earth's tilt",
-    " and the day-night edge are drawn for it.",
-    " Each number is shown to as many digits as its source actually",
-    " supports, and no more. That is a claim about precision, not",
+    " and the day-night edge are drawn for it.</li>",
+    "<li>Each number is shown to as many digits as its source actually",
+    " supports, and no more.</li><li>That is a claim about precision, not",
     " accuracy &mdash; how finely a thing was measured, not how close",
-    " it is to the truth. A value can be precise and still be wrong,",
-    " which is why the source is named beside it.</div>"
+    " it is to the truth.</li><li>A value can be precise and still be wrong,",
+    " which is why the source is named beside it.</li></ul></div>"
 ].join("");
 
 // ====================================================================
@@ -2317,6 +2333,10 @@ function solarSystemDay(d) {
     return d.getUTCDate() + " " + SOLAR_SYSTEM_MONTHS[d.getUTCMonth()] +
         " " + d.getUTCFullYear();
 }
+// L-481 (Tony, 2026-10-24): "adding the url to the JPL Horizons sources in
+// the info panels". The address, read live on 2026-10-24 (the page titled
+// "Horizons System"); the i panel makes it a link (gallery/source_list.js).
+const JPL_HORIZONS_URL = "https://ssd.jpl.nasa.gov/horizons/";
 function solarSystemSourceLine(src, sourceNote) {
     if (!src) { return null; }
     // Julian date 2440587.5 is 1970-01-01 00:00, the Unix epoch.
@@ -2327,7 +2347,7 @@ function solarSystemSourceLine(src, sourceNote) {
     const centre = (src.center === "@sun")
         ? "measured from the Sun's centre"
         : "measured from the Horizons centre " + src.center;
-    return "JPL Horizons, Horizons id: " + src.query_target +
+    return "JPL Horizons (" + JPL_HORIZONS_URL + "), Horizons id: " + src.query_target +
         (sourceNote ? ", " + sourceNote : "") +
         ". Osculating orbital elements " + centre +
         (dated ? ", dated " + dated : "") +
@@ -2392,12 +2412,13 @@ const SOLAR_SYSTEM_INFO_HTML = [
     "</ul>",
     "<p>The computation runs in your browser via <strong>Pyodide</strong>,",
     " using the same Python the desktop orrery uses. No server.</p>",
-    "<div class=\"info-note\">Part of Paloma's Orrery &mdash; named for the",
-    " inventor's daughter. The line under the title is the moment shown:",
-    " the minute you opened this room, in UTC. Each body's orbit values",
-    " come from JPL Horizons, the Jet Propulsion Laboratory's service for",
+    // L-481 (Tony, 2026-10-24): one sentence to a bullet; creator, not inventor.
+    "<div class=\"info-note\"><ul><li>Part of Paloma's Orrery &mdash; named for the",
+    " creator's daughter.</li><li>The line under the title is the moment shown:",
+    " the minute you opened this room, in UTC.</li><li>Each body's orbit values",
+    " come from <a href=\"https://ssd.jpl.nasa.gov/horizons/\" target=\"_blank\" rel=\"noopener\">JPL Horizons</a>, the Jet Propulsion Laboratory's service for",
     " where solar system bodies are, fetched each night; the page works",
-    " each body forward to that minute.</div>"
+    " each body forward to that minute.</li></ul></div>"
 ].join("");
 
 // ONE table, three rooms. What differs between the rooms is data:
@@ -2623,16 +2644,22 @@ const EXHIBITS = {
                     t.showlegend = true;
                     t.name = label;
                     const lines = [label];
+                    // L-481 (Tony, 2026-10-24): "add bullets to the
+                    // sentences in the hover to improve readability in
+                    // dense text". Every line after the name is a bullet.
+                    // Written as the number entity: Plotly 2.35.2 converts
+                    // only eight named entities in text, and not "bull".
+                    const bullet = function (s) { return "&#8226; " + s; };
                     if (typeof row.about === "string" && row.about) {
-                        lines.push(solarSystemSoftWrap(row.about, 60));
+                        lines.push(bullet(solarSystemSoftWrap(row.about, 60)));
                     }
                     const dist = SolarSystemFigures.distanceLine(
                         { x: t.x[0], y: t.y[0], z: t.z[0] }, b.trust,
                         epochJd, b.accuracy, GalleryFeatures._KM_PER_AU);
                     if (dist.line) {
-                        lines.push(dist.line);
+                        lines.push(bullet(dist.line));
                         if (dist.note) {
-                            lines.push(solarSystemSoftWrap(dist.note, 60));
+                            lines.push(bullet(solarSystemSoftWrap(dist.note, 60)));
                         }
                     } else {
                         warnings.push(label + ": no distance shown -- " + dist.why);
@@ -2643,7 +2670,7 @@ const EXHIBITS = {
                     // L-431 build 3: the orbital period, every body.
                     const per = SolarSystemFigures.periodLine(b.period);
                     if (per.line) {
-                        lines.push(solarSystemSoftWrap(per.line, 60));
+                        lines.push(bullet(solarSystemSoftWrap(per.line, 60)));
                     } else if (per.warning) {
                         warnings.push(label + ": " + per.warning);
                     }
@@ -2655,7 +2682,7 @@ const EXHIBITS = {
                             Math.max(dist.driftKm, dist.sourceKm,
                                      SolarSystemFigures.FINEST_KM),
                             GalleryFeatures._KM_PER_AU);
-                        if (orb.line) { lines.push(orb.line); }
+                        if (orb.line) { lines.push(bullet(orb.line)); }
                         else { warnings.push(label + ": no orbit line -- " + orb.why); }
                     }
                     t.text = [lines.join("<br>")];

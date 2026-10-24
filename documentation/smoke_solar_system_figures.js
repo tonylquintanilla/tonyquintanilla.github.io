@@ -60,7 +60,8 @@
 // comet, a dwarf planet served as a small body -- with no position_accuracy
 // prints by its drift with the sentence, as Apophis does, named by slug.)
 // Updated October 24, 2026 with Anthropic's Claude Opus 5.5 (L-479: the
-// orbit line, part 6, with three planted faults.)
+// orbit line, part 6, with three planted faults.) Afternoon (L-481): the
+// hover's bullets, JPL Horizons' address, and "creator's", in part 6.
 
 "use strict";
 const fs = require("fs");
@@ -474,10 +475,28 @@ rows.forEach(function (slug) {
 [
   ["SolarSystemFigures.orbitLine(", "the page does not call orbitLine"],
   ['"e": (_rec.get("osculating") or {}).get("e")',
-   "the page's driver does not pass each body's eccentricity"]
+   "the page's driver does not pass each body's eccentricity"],
+  // L-481 (Tony, 2026-10-24): each hover line after the name is a bullet,
+  // written as the number entity Plotly converts; a body's source line
+  // carries JPL Horizons' address.
+  ['const bullet = function (s) { return "&#8226; " + s; };',
+   "a body's hover lines are not bulleted with the entity Plotly converts (L-481)"],
+  ['const JPL_HORIZONS_URL = "https://ssd.jpl.nasa.gov/horizons/";',
+   "the page does not hold JPL Horizons' address (L-481)"],
+  ['return "JPL Horizons (" + JPL_HORIZONS_URL + "), Horizons id: "',
+   "a body's source line does not carry JPL Horizons' address (L-481)"]
 ].forEach(function (pair) {
   if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
 });
+// L-481: Plotly 2.35.2 converts only eight named entities in hover text
+// (mu, amp, lt, gt, nbsp, times, plusmn, deg); any other would show as
+// written. And the panels' closing paragraph says "creator's".
+if (/"&bull; " \+ s/.test(page)) {
+  failures.push("a hover bullet is written &bull;, which Plotly shows as written (L-481)");
+}
+if (page.indexOf("inventor's") >= 0) {
+  failures.push("a panel still says \"the inventor's daughter\" (L-481: the creator's)");
+}
 
 // ---- report -----------------------------------------------------------
 console.log("");

@@ -95,9 +95,16 @@
  * citations also ride as a list, meta.source_items, so the i panel
  * prints them one to a line with their addresses as links. The joined
  * meta.source is unchanged.)
+ * Updated October 24, 2026 with Anthropic's Claude Opus 5.5 (L-481: every
+ * source line naming JPL Horizons carries its address, HORIZONS_URL, which
+ * the i panel makes a link; Tony, 2026-10-24.)
  */
 (function (global) {
   "use strict";
+
+  // L-481: JPL Horizons' address, read live on 2026-10-24 (the page titled
+  // "Horizons System"); a source line naming Horizons carries it.
+  var HORIZONS_URL = "https://ssd.jpl.nasa.gov/horizons/";
 
   var AXIS_COLOR = "rgb(255, 209, 102)";     // orrery _AXIS_COLOR, warm gold
   var SUN_COLOR = "yellow";                  // orrery sun direction indicator
@@ -489,12 +496,12 @@
         tail();
       traces.push(infoMarker(tipS, SUN_COLOR, hSun, gSun, { meta: {
         info_url: guideLink("subsolar"),
-        source: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons" +
+        source: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons (" + HORIZONS_URL + ")" +
           (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +
           ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py)." +
           " The subsolar point: " + guideSource("subsolar"),
         source_items: [
-          { label: null, text: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons" +
+          { label: null, text: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons (" + HORIZONS_URL + ")" +
             (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +
             ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py)." },
           { label: "The subsolar point", text: guideSource("subsolar") }
@@ -572,9 +579,9 @@
         tail();
       traces.push(infoMarker(pm, arc.color || "rgb(200, 200, 200)", hArc, gMoon, { meta: {
         info_url: guideLink("moon_arc"),
-        source: "JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder). The drift outside the arc: " + guideSource("moon_arc"),
+        source: "JPL Horizons (" + HORIZONS_URL + ") osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder). The drift outside the arc: " + guideSource("moon_arc"),
         source_items: [
-          { label: null, text: "JPL Horizons osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder)." },
+          { label: null, text: "JPL Horizons (" + HORIZONS_URL + ") osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder)." },
           { label: "The drift outside the arc", text: guideSource("moon_arc") }
         ]
       } }));
@@ -626,7 +633,7 @@
         ? String(block[key]) : "not served";
     }
     var ps = pod.pole_source, os = pod.orbit_source;
-    return "JPL Horizons, served by the gallery cache builder for " +
+    return "JPL Horizons (" + HORIZONS_URL + "), served by the gallery cache builder for " +
       (pod.date || "the scene's date") + ": the pole is observer quantity " +
       f(ps, "quantity") + " for target " + f(ps, "query_target") +
       ", seen from " + f(ps, "observer") + ", retrieved " +

@@ -39,7 +39,9 @@
 // October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443). Updated
 // October 23, 2026 with Anthropic's Claude Opus 5.5 (L-472, L-474,
 // L-475). Updated October 24, 2026 with Anthropic's Claude Opus 5.5
-// (L-477, L-478, L-479).
+// (L-477, L-478, L-479). Afternoon (L-481): section 19 also holds a
+// body's hover bullets, its source line's Horizons address, and the
+// closing paragraph as three bullets with "creator's".
 const h = require("./page_harness.js");
 const fails = []; let n = 0;
 function ok(c, m) { n++; if (!c) { fails.push(m); } }
@@ -340,6 +342,19 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   const q3 = Number((sb.a_au * (1 - sb.e)).toPrecision(3)), Q3 = Number((sb.a_au * (1 + sb.e)).toPrecision(3));
   ok(sednaText.indexOf("Orbit: " + q3 + " to " + Q3.toLocaleString("en-US") + " AU from the Sun.") >= 0,
      "Sedna's hover lacks its orbit line: " + sednaText.slice(-120));
+  // L-481 (Tony, 2026-10-24): every hover line after the name is a
+  // bullet; the source line carries JPL Horizons' address; the closing
+  // paragraph is a list, "creator's".
+  const sednaLines = sednaText.split(/<br[^>]*>/);
+  const starts = sednaLines.filter(l => l.indexOf("&#8226; ") === 0).length;
+  // Four bulleted lines: the distance, its note, the period, the orbit.
+  ok(sednaLines[0] === "Sedna" && starts === 4,
+     "Sedna's hover lines are not bulleted: " + sednaLines.join(" | ").slice(0, 160));
+  const sednaSrc = E("sunPlotDiv.data").find(t => t.legendgroup === "sedna" && t.meta && t.meta.label_target).meta.source;
+  ok(sednaSrc.indexOf("JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), ") === 0, "Sedna's source line lacks Horizons' address: " + sednaSrc.slice(0, 80));
+  const foot = Array.from(d.querySelectorAll("#info-panel .info-note li")).map(l => l.textContent.trim());
+  ok(foot.length === 3 && foot[0].indexOf("creator's daughter") >= 0 && d.querySelector("#info-panel .info-note a[href='https://ssd.jpl.nasa.gov/horizons/']"),
+     "the closing paragraph is not three bullets with creator's and Horizons' link: " + JSON.stringify(foot));
   // 18. L-475: the i panel's last line opens the lobby's About card.
   const last = d.getElementById("info-panel").lastElementChild;
   const about = last && last.querySelector("a");
