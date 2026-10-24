@@ -38,10 +38,18 @@
 //      their bodies. Two more breaks in the self-test: a folded group
 //      showing its bodies, and a group's box ticking only those already
 //      shown.
+//   5. (L-472) The count line, by Tony's ruling of 2026-10-23: ticked
+//      bodies outside the view are counted on any axis, a body on the
+//      box's edge is inside, a body with no position is not counted, and
+//      the words are the ones he approved. One more break: the count
+//      reading only the x axis. And the page wires it, with L-474's See
+//      more at the top and L-475's About line, which index.html opens at
+//      #about.
 //
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443: the groups,
-// section 4).
+// section 4). Updated October 23, 2026 with Anthropic's Claude Opus 5.5
+// (L-472, L-474, L-475: section 5).
 
 "use strict";
 const fs = require("fs");
@@ -108,6 +116,27 @@ function groupCases(SSD) {
   return fails;
 }
 
+// 5. L-472 (Tony's ruling of 2026-10-23, "The count line"): how many
+// ticked bodies lie outside the view, on any axis, a point on the edge
+// inside; and Tony's approved words.
+function outsideCases(SSD) {
+  const fails = [];
+  const want = function (cond, what) { if (!cond) { fails.push(what); } };
+  const lo = [-1, -1, -1], hi = [1, 1, 1];
+  want(SSD.outsideCount([], lo, hi) === 0, "nothing ticked is not 0 outside");
+  want(SSD.outsideCount([[0.5, 0.2, 0], [1, -1, 1]], lo, hi) === 0,
+       "a body inside, or on the box's edge, counts as outside");
+  want(SSD.outsideCount([[35, 3, 1], [0.5, 0, 0]], lo, hi) === 1, "a body far out on x is not counted");
+  want(SSD.outsideCount([[0, 0, 1.5], [0, -2, 0], [3, 3, 3]], lo, hi) === 3,
+       "a body outside on y or z alone is not counted");
+  want(SSD.outsideCount([[NaN, 0, 0], [0, 0, 5]], lo, hi) === 1,
+       "a body with no position is counted");
+  want(SSD.WORDS.outside(1) === "1 ticked body is outside this view" &&
+       SSD.WORDS.outside(3) === "3 ticked bodies are outside this view",
+       "the count line's words are not Tony's");
+  return fails;
+}
+
 function cases(SSD) {
   const fails = [];
   const want = function (cond, what) { if (!cond) { fails.push(what); } };
@@ -156,7 +185,7 @@ function cases(SSD) {
   want(SSD.WORDS.enter("Sun") === "Enter the Sun room" &&
        SSD.WORDS.noRoom === "No room or cards yet",
        "the visitor's words are not Tony's");
-  return fails.concat(groupCases(SSD));
+  return fails.concat(groupCases(SSD), outsideCases(SSD));
 }
 
 function broken(changes) {
@@ -184,6 +213,10 @@ const breaks = [
   ["a group's box ticking only those already shown",
    broken({ groupToggle: function (rows, group, shown, order) {
      return { shown: Object.assign({}, shown), order: (order || []).slice() };
+   } })],
+  ["the count line reading only the x axis",
+   broken({ outsideCount: function (points, lo, hi) {
+     return (points || []).filter(function (p) { return p[0] < lo[0] || p[0] > hi[0]; }).length;
    } })]
 ];
 const caught = [];
@@ -251,7 +284,7 @@ if (page.indexOf('<script src="gallery/solar_system_drawer.js"></script>') < 0) 
 ["rowsFromServed", "openingOrder", "homeTarget", "orderAdd", "orderRemove",
  "seeMoreLabel", "rowVisible", "countLine", "toggleAll", "roomFor", "tickable",
  "WORDS.enter", "WORDS.noRoom", "isGroup", "members", "groupCount", "groupToggle",
- "orderGroups", "WORDS.groupAll"].forEach(function (fn) {
+ "orderGroups", "WORDS.groupAll", "outsideCount", "WORDS.outside"].forEach(function (fn) {
   if (page.indexOf("SSD." + fn) < 0) {
     failures.push("interactive.html never calls SolarSystemDrawer's " + fn);
   }
@@ -263,6 +296,21 @@ if (page.indexOf("frameOnPosition: true,") < 0 || page.indexOf("frameMargin: 1.2
 if (page.indexOf("drawer: { rows: allRows,") < 0) {
   failures.push("the room's compose no longer hands its served rows to the drawer");
 }
+// L-472, L-474, L-475: the page wires what this file decides. Where each
+// lands is walked headlessly (tools/headless/walk_solar_system_drawer.js,
+// sections 16 to 18); here, that the wiring is there at all.
+[["ssOutsideUpdate();   // L-472", "the count line is not updated at every frame change"],
+ ['id="ss-outside" hidden', "the count line has no place above the grid chip"],
+ ["list.insertBefore(b, list.firstChild);", "See more / See fewer is not put at the top of the drawer"],
+ ["mountAboutLink();", "the i panel's About line is never added"],
+ ['const ABOUT_HREF = "index.html#about";', "the About line does not open the lobby's About card"]
+].forEach(function (c) {
+  if (page.indexOf(c[0]) < 0) { failures.push(c[1]); }
+});
+const lobby = fs.readFileSync(path.join(root, "index.html"), "utf8");
+if (lobby.indexOf("if (hash === 'about') {") < 0) {
+  failures.push("index.html does not open its About card at #about");
+}
 
 if (failures.length) {
   console.log("=== FAIL: " + failures.length + " ===");
@@ -272,4 +320,5 @@ if (failures.length) {
 console.log("=== PASS: the Sun is never ticked, See more hides only what is not " +
             "ticked, the handle names the last body ticked, All / none leaves the Sun, " +
             "rooms are offered only where they exist, groups fold and tick their bodies, " +
+            "the count line counts ticked bodies outside the view, " +
             "and the page asks this file ===");

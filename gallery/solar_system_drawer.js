@@ -46,6 +46,14 @@
 //              none. "order": "a" lists a group's bodies by their served
 //              semi-major axis, nearest first (orderGroups); without it
 //              they keep the served order.
+//   OUTSIDE    Tony's ruling of 2026-10-23 (L-472, "The count line"):
+//              zooming in stays a cutout, and when bodies that are ticked
+//              lie outside the view, one line says how many, never which
+//              (outsideCount, WORDS.outside). The page shows it above the
+//              grid chip and hides it at zero.
+//   SEE MORE'S PLACE  Tony, 2026-10-22 (L-474): at the top of the
+//              drawer's list, where it is easier to find. The page puts
+//              it there; nothing here decides it.
 //
 // Rows are named by KEY: the trace group the scene draws them in. That is
 // the body's slug, except the Sun's, which the assembler draws as the
@@ -54,7 +62,9 @@
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 4, 2026 with Anthropic's Claude Opus 5.5: HOME described as
 // Tony settled it (L-363); the code is unchanged. Updated October 22,
-// 2026 with Anthropic's Claude Opus 5.5 (L-443): GROUPS, above.
+// 2026 with Anthropic's Claude Opus 5.5 (L-443): GROUPS, above. Updated
+// October 23, 2026 with Anthropic's Claude Opus 5.5 (L-472, L-474):
+// OUTSIDE and SEE MORE'S PLACE, above.
 // Everything that counted or ticked bodies counts and ticks bodies only;
 // a group row is never a body.
 
@@ -70,7 +80,12 @@
     seeFewer: "See fewer",
     noRoom: "No room or cards yet",
     enter: function (name) { return "Enter the " + name + " room"; },
-    groupAll: function (label) { return "All / none in " + label; }
+    groupAll: function (label) { return "All / none in " + label; },
+    // L-472, Tony's approval of 2026-10-23.
+    outside: function (n) {
+      return n === 1 ? "1 ticked body is outside this view"
+                     : n + " ticked bodies are outside this view";
+    }
   };
 
   const GROUP_PREFIX = "group:";   // a group row's key; never a trace group
@@ -261,6 +276,22 @@
     return on.length + " of " + can.length;
   }
 
+  // OUTSIDE THE VIEW (L-472). How many of the given points lie outside
+  // the box lo..hi ([x, y, z] each), on any axis; a point on the box's
+  // edge is inside. The page hands it each ticked body's marker, where
+  // the body is now. A point with a coordinate that is not a finite
+  // number is not counted; the page names such a body in its notes.
+  function outsideCount(points, lo, hi) {
+    let n = 0;
+    (points || []).forEach(function (p) {
+      if (!p || ![0, 1, 2].every(function (k) { return isFinite(p[k]); })) { return; }
+      for (let k = 0; k < 3; k++) {
+        if (p[k] < lo[k] || p[k] > hi[k]) { n++; return; }
+      }
+    });
+    return n;
+  }
+
   // All / none. If anything that can be ticked is off, tick everything,
   // adding the newly ticked to the order in served order; otherwise
   // untick everything and empty the order. The Sun is never touched.
@@ -298,6 +329,7 @@
     homeTarget: homeTarget,
     openingOrder: openingOrder,
     countLine: countLine,
+    outsideCount: outsideCount,
     toggleAll: toggleAll
   };
 

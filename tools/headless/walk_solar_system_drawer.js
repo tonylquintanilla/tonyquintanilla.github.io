@@ -21,8 +21,15 @@
 // folds open to show it; the counts are worked out from the served rows;
 // and section 15 walks a group: fold, its box, its count, its order.
 //
+// Since 2026-10-23: section 16, See more / See fewer at the top of the
+// list (L-474); section 17, the count line of ticked bodies outside the
+// view, through ticks, zooms and Home (L-472); section 18, the i panel
+// ending with the About line (L-475).
+//
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
-// October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443).
+// October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443). Updated
+// October 23, 2026 with Anthropic's Claude Opus 5.5 (L-472, L-474,
+// L-475).
 const h = require("./page_harness.js");
 const fails = []; let n = 0;
 function ok(c, m) { n++; if (!c) { fails.push(m); } }
@@ -218,6 +225,66 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(tno.every(k => !shown(k)) && order() === before, "the group's box did not untick only its bodies: " + order());
   await fold("tno");
   ok(tno.every(k => row(k).hidden) && groupAll("tno").hidden, "a folded group still shows its bodies");
+  // 16. L-474 (Tony, 2026-10-22): See more / See fewer at the top of the
+  // drawer's list, both ways round.
+  const list = d.getElementById("sun-drawer-list");
+  ok(list.firstElementChild === seeMore(), "See fewer is not the drawer's first item");
+  await click(seeMore());
+  ok(list.firstElementChild === seeMore() && seeMore().textContent === "See more", "See more is not the drawer's first item");
+  // 17. L-472 (Tony's ruling of 2026-10-23): the count line. Worked out
+  // here, from each ticked body's marker and the scene's three ranges,
+  // and the words written out here, not by the page's helpers.
+  const line = () => d.getElementById("ss-outside");
+  const words = (k) => k === 1 ? "1 ticked body is outside this view" : k + " ticked bodies are outside this view";
+  const expected = () => {
+    const sc = E("sunPlotDiv.layout.scene");
+    const lo = ["xaxis", "yaxis", "zaxis"].map(a => Math.min(...sc[a].range));
+    const hi = ["xaxis", "yaxis", "zaxis"].map(a => Math.max(...sc[a].range));
+    return E("sunPlotDiv.data").filter(t => t.meta && t.meta.label_target === true &&
+      t.legendgroup !== "center" && E("sunGroups[" + idx(t.legendgroup) + "] && sunGroups[" + idx(t.legendgroup) + "].shown"))
+      .filter(t => [t.x[0], t.y[0], t.z[0]].some((v, k) => v < lo[k] || v > hi[k])).length;
+  };
+  const lineOk = (what) => {
+    const k = expected();
+    ok(k === 0 ? line().hidden : (!line().hidden && line().textContent === words(k)),
+       what + ": expected " + k + " outside, the line reads " + (line().hidden ? "(hidden)" : line().textContent));
+    return k;
+  };
+  // From a clean drawer: whatever earlier sections left ticked is
+  // unticked first, so the counts below are Halley's and Sedna's alone.
+  for (const k of E("sunGroups.filter(g => g.shown && SolarSystemDrawer.tickable(g.key)).map(g => g.key)")) {
+    await E("ssTick(ssIndex(" + JSON.stringify(k) + "), false)");
+  }
+  await h.done();
+  lineOk("nothing ticked");
+  await E("ssTick(ssIndex('halley'), true)"); await h.done();
+  ok(lineOk("Halley ticked, framed") === 0, "the frame after ticking Halley does not hold it");
+  // Outside means past the box on some axis: a body can sit in a
+  // square box's corner farther out than its half-width.
+  const reachOf = (key) => {
+    const t = w.eval("sunPlotDiv.data").find(t => t.legendgroup === key && t.meta && t.meta.label_target === true);
+    return Math.max(Math.abs(t.x[0]), Math.abs(t.y[0]), Math.abs(t.z[0]));
+  };
+  let taps = 0;
+  while (range() >= reachOf("halley") && taps < 20) { await E("navFrameZoom(-1)"); await h.done(); taps++; }
+  const past = lineOk("zoomed in past Halley in " + taps + " taps");
+  const shownNow = E("sunGroups.filter(g => g.shown && SolarSystemDrawer.tickable(g.key)).map(g => g.key).join()");
+  ok(past === 1, "zooming in past Halley does not leave it alone outside: " + past + " outside, ticked " + shownNow);
+  await E("ssTick(ssIndex('sedna'), true)"); await h.done();
+  ok(lineOk("Sedna ticked, framed") === 0, "ticking Sedna does not frame both");
+  taps = 0;
+  while (range() >= reachOf("halley") && taps < 20) { await E("navFrameZoom(-1)"); await h.done(); taps++; }
+  ok(lineOk("zoomed in past both") === 2, "zooming in past Halley and Sedna does not leave both outside");
+  await E("navHome()"); await h.done();
+  ok(lineOk("Home") === 0, "Home does not hold every body ticked");
+  await E("ssTick(ssIndex('halley'), false)"); await E("ssTick(ssIndex('sedna'), false)"); await h.done();
+  lineOk("Halley and Sedna unticked");
+  // 18. L-475: the i panel's last line opens the lobby's About card.
+  const last = d.getElementById("info-panel").lastElementChild;
+  const about = last && last.querySelector("a");
+  ok(last && last.id === "info-about" && about && about.getAttribute("href") === "index.html#about" &&
+     about.textContent === "About Paloma's Orrery",
+     "the i panel does not end with the About line: " + (last ? last.outerHTML.slice(0, 120) : "nothing"));
   ok(h.errors.length === 0, "errors during the walk: " + h.errors.join("; "));
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);

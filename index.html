@@ -154,7 +154,12 @@
          who Paloma is, and so why the doves. Tony's words, version A.
        - "interactive scene(s)" reads "live in 3D" on the doors and the
          subject pages. The fallback sentence, the no-script text and the
-         link-preview descriptions carry the same sentence. -->
+         link-preview descriptions carry the same sentence.
+     Updated: October 23, 2026 with Anthropic's Claude Opus 5.5 (L-475)
+       - The About card has an address: index.html#about opens the lobby
+         with the card showing, and closing it returns to the lobby's
+         own address. Every exhibit's i panel ends with a link to it
+         (Tony's phone look, 2026-10-22). -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4872,7 +4877,14 @@
         var aboutClose = document.getElementById('about-close');
 
         function openAbout() { if (aboutOverlay) aboutOverlay.classList.add('open'); }
-        function closeAbout() { if (aboutOverlay) aboutOverlay.classList.remove('open'); }
+        // L-475: closing the card that #about opened leaves the lobby's
+        // own address, so a reload does not open it again.
+        function closeAbout() {
+            if (aboutOverlay) aboutOverlay.classList.remove('open');
+            if (window.location.hash === '#about') {
+                history.replaceState(null, '', window.location.pathname);
+            }
+        }
 
         if (aboutBtn) aboutBtn.addEventListener('click', openAbout);
         if (aboutClose) aboutClose.addEventListener('click', closeAbout);
@@ -4984,6 +4996,14 @@
         // ---- URL hash routing ----
         function handleHash() {
             var hash = window.location.hash.replace('#', '');
+            // The About card's address (L-475, 2026-10-23): every
+            // exhibit's i panel ends with a link here. The lobby, with the
+            // card open over it.
+            if (hash === 'about') {
+                if (currentVizId || currentRoom) goHome(true);
+                openAbout();
+                return;
+            }
             // A room's address (L-286): #room=<path>
             if (hash.indexOf('room=') === 0) {
                 showRoom(decodeURIComponent(hash.slice(5)), false);

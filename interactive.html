@@ -300,6 +300,13 @@
         them, its bodies by served semi-major axis where it says so; and
         stage 10, a bare interactive.html link opens the Solar System
         room, the Explorer at ?exhibit=solar-system-explorer)
+     Updated: October 23, 2026 with Anthropic's Claude Opus 5.5
+       (Tony's phone look of slice 1 and his rulings of this day: L-472,
+        zooming in the Solar System room stays a cutout, and a line above
+        the grid chip counts the ticked bodies outside the view; L-474,
+        See more / See fewer at the top of that room's drawer; L-475,
+        "About Paloma's Orrery" at the bottom of every room's i panel,
+        opening the lobby's About card at index.html#about)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -541,6 +548,16 @@
             color: var(--text-secondary); letter-spacing: 0.3px; white-space: nowrap;
         }
         .sun-grid-chip b { color: var(--text-primary); font-weight: 600; }
+        /* L-472 (Tony, 2026-10-23, "The count line"): how many ticked
+           bodies lie outside the view, above the grid chip, in the
+           chip's own type. Hidden at zero. */
+        .ss-outside {
+            background: rgba(17,24,39,0.94); border: 1px solid var(--border);
+            border-radius: 20px; padding: 5px 11px;
+            font: 500 11px 'DM Sans', system-ui, sans-serif;
+            color: var(--text-primary); letter-spacing: 0.3px; white-space: nowrap;
+        }
+        .ss-outside[hidden] { display: none; }
         .sun-frame-note {
             position: absolute; right: 10px; left: 10px;
             bottom: calc(168px + env(safe-area-inset-bottom));
@@ -1016,6 +1033,14 @@
             margin-right: 12px;
         }
         .info-focus a:hover { color: var(--text-primary); }
+        /* L-475: the last line of every room's i panel, in the panel's
+           link style. */
+        .info-panel .info-about { margin: 14px 0 0; font-size: 13px; }
+        .info-panel .info-about a {
+            color: var(--accent); text-decoration: none;
+            border-bottom: 1px solid var(--accent-dim);
+        }
+        .info-panel .info-about a:hover { color: var(--text-primary); }
         /* L-456 (Tony, 2026-10-20, from the phone: "need hyperlinks" and
            "need some kind of itemization for readability"): the sources,
            one citation to a line, in the panel's footnote type. A long
@@ -1219,6 +1244,8 @@
                 <svg class="sun-triad" id="sun-triad" viewBox="0 0 104 120"
                      xmlns="http://www.w3.org/2000/svg" role="img"
                      aria-label="Axis directions x, y, z"></svg>
+                <!-- L-472: filled by ssOutsideUpdate, Solar System room only. -->
+                <div class="ss-outside" id="ss-outside" hidden></div>
                 <div class="sun-grid-chip" id="sun-grid-chip"></div>
             </div>
             <div class="sun-frame-note sun-chrome" id="sun-frame-note" hidden role="tooltip">
@@ -2679,7 +2706,27 @@ function reportSunNotes(notes) {
         html += "&bull; " + notes[i] + "<br>";
     }
     box.innerHTML = html;
-    info.appendChild(box);
+    // The About line stays last (L-475).
+    info.insertBefore(box, document.getElementById("info-about"));
+}
+
+// L-475 (Tony, at his phone look of 2026-10-22: "this should be on every
+// info panel at the bottom"; the words approved 2026-10-23). The last
+// line of every room's i panel, the Explorer's too, opens the lobby with
+// its About card showing: index.html reads #about for that. One function
+// for every room, called once after the room's panel is filled.
+const ABOUT_HREF = "index.html#about";
+function mountAboutLink() {
+    const info = document.getElementById("info-panel");
+    if (!info || document.getElementById("info-about")) { return; }
+    const p = document.createElement("p");
+    p.className = "info-about";
+    p.id = "info-about";
+    const a = document.createElement("a");
+    a.href = ABOUT_HREF;
+    a.textContent = "About Paloma's Orrery";
+    p.appendChild(a);
+    info.appendChild(p);
 }
 
 // ARRIVAL: what a room opens on. The function that was here moved to
@@ -3804,6 +3851,7 @@ function sunHudSchedule(ev) {
 // relayout chain. Does nothing off the Sun.
 function sunHudUpdate() {
     if (sunPlotDiv && sunHudBound) { sunGridChipUpdate(); sunTriadUpdate(); }
+    ssOutsideUpdate();   // L-472: every frame change ends here
     // The interior axes are scene geometry, so unlike the chip and the
     // triad they have to be re-cut to the new range (L-289, 2026-09-06).
     return sunOriginAxesUpdate();
@@ -4412,6 +4460,8 @@ function ssPhoneSideways() {
     return window.innerWidth > window.innerHeight && window.innerHeight <= 500;
 }
 
+// L-474 (Tony, 2026-10-22): See more / See fewer sits at the top of the
+// list, where it is easier to find. Until then it came after the rows.
 function ssAddSeeMore(list) {
     const b = document.createElement("button");
     b.type = "button";
@@ -4423,7 +4473,48 @@ function ssAddSeeMore(list) {
         renderSunDrawer();
         sunMeasureDrawer();
     };
-    list.appendChild(b);
+    list.insertBefore(b, list.firstChild);
+}
+
+// L-472 (Tony's ruling of 2026-10-23, "The count line"). Zooming in
+// stays a cutout: the box can be smaller than the farthest body ticked,
+// whose orbit's near end and orbit cross then stay in view while the
+// body does not, and that reads as the body. So the line above the grid
+// chip says how many ticked bodies are outside the view, never which,
+// and is hidden at zero. A body is where its marker is, now; the box is
+// the scene's three axis ranges. Called at the end of every frame
+// change (sunHudUpdate), which every tick, zoom, Go To and Home reach.
+// Reads the plot and writes only the line; it never calls Plotly.
+function ssOutsideUpdate() {
+    const el = document.getElementById("ss-outside");
+    if (!el) { return; }
+    const SSD = window.SolarSystemDrawer;
+    const gd = sunPlotDiv;
+    const sc = gd && gd.layout && gd.layout.scene;
+    if (!ssDrawer || !SSD || !sc || !Array.isArray(gd.data)) { el.hidden = true; return; }
+    const lo = [], hi = [];
+    const axes = ["xaxis", "yaxis", "zaxis"];
+    for (let a = 0; a < 3; a++) {
+        const r = sc[axes[a]] && sc[axes[a]].range;
+        if (!Array.isArray(r) || r.length < 2) { el.hidden = true; return; }
+        lo.push(Math.min(r[0], r[1]));
+        hi.push(Math.max(r[0], r[1]));
+    }
+    const points = [];
+    sunGroups.forEach(function (grp) {
+        if (!grp.shown || !SSD.tickable(grp.key)) { return; }
+        for (let j = 0; j < grp.indices.length; j++) {
+            const t = gd.data[grp.indices[j]];
+            if (t && t.meta && t.meta.label_target === true &&
+                Array.isArray(t.x) && Array.isArray(t.y) && Array.isArray(t.z)) {
+                points.push([t.x[0], t.y[0], t.z[0]]);
+                return;
+            }
+        }
+    });
+    const n = SSD.outsideCount(points, lo, hi);
+    el.textContent = n > 0 ? SSD.WORDS.outside(n) : "";
+    el.hidden = !(n > 0);
 }
 
 // renderSunDrawer's part for this room: which rows show, which row is
@@ -5215,6 +5306,8 @@ if (EX) {
 }
 // Both rooms get the same three buttons (L-267 step 7).
 mountNavCluster();
+// Every room's i panel ends with the About line (L-475).
+mountAboutLink();
 
 // Check for prior consent
 if (localStorage.getItem(CONSENT_KEY) === 'yes') {
