@@ -1965,7 +1965,7 @@
       "slug": "gonggong", "name": "Gonggong", "horizons_id": "2007 OR10", "id_type": "smallbody",
       "description": "Dwarf planet with a highly inclined orbit.",
       "info_url": "https://en.wikipedia.org/wiki/Gonggong_(dwarf_planet)",
-      "period": {"kind": "typed", "typed": true, "center": null, "center_label": null, "open_orbit": false, "fetched": null, "words": "Typed value, not fetched from JPL.", "years": {"value": 550.33662, "figures": 8, "text": "550.33662"}, "days": {"value": 201010.45, "figures": 8, "text": "201010.45"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2007 OR10", "target_label": null, "open_orbit": false, "fetched": "2026-10-23", "words": null, "years": {"value": 548.9, "figures": 4, "text": "548.9"}, "days": {"value": 200480.0, "figures": 5, "text": "200,480"}},
       "category": "asteroid", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none", "features": {}

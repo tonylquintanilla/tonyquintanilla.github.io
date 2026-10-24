@@ -10,9 +10,9 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 53  
-**Total Lines of Code (non-blank):** 26,449  
-**Total Public Functions/Classes:** 412
+**Total Python Files:** 51  
+**Total Lines of Code (non-blank):** 25,951  
+**Total Public Functions/Classes:** 408
 
 ## Classification Coverage
 
@@ -116,9 +116,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (871 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (808 lines) |
 | `mirror_objects.py` | - write each served object's identity, description and NASA link into data/objects_config.json from the orrery's objects export, and name every difference it finds. (247 lines) |
-| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (838 lines) |
-| `patch_L443_2_slice1_website_20261022.py` | - L-443, slice 1 of the orrery's objects on the website: the website half. (340 lines) |
-| `patch_L472_1_view_drawer_panel_20261023.py` | - the Solar System room's count line, See more at the top of its drawer, and the About line in every room's i panel (L-472, L-474, L-475; Tony's rulings and approved words of 2026-10-23). (159 lines) |
+| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (839 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (146 lines) |
 | `pull_drawings.py` | - copy the orrery's stored drawings into the gallery, and record the SHA they came from. (198 lines) |
 | `pull_objects_export.py` | - copy the orrery's objects export into the gallery, and record the SHA it came from. (105 lines) |
