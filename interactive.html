@@ -307,6 +307,16 @@
         See more / See fewer at the top of that room's drawer; L-475,
         "About Paloma's Orrery" at the bottom of every room's i panel,
         opening the lobby's About card at index.html#about)
+     Updated: October 24, 2026 with Anthropic's Claude Opus 5.5
+       (Tony's rulings of this day on his phone look of Oct 23: L-477,
+        the Solar System room's drawer has no See more and no "All": the
+        groups are always listed, folded, and a group row only folds; the
+        top bar's All / none reads Reset there and puts back what the
+        room opened on, and an open group's "Reset <group>" unticks its
+        bodies; L-478, the count line moves to the lower left, above the
+        drawer's handle; L-479, Go To fits a body's whole orbit, and every
+        body's hover gives its orbit's near and far distance from the Sun.
+        The Sun and Earth rooms keep All / none)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -549,15 +559,23 @@
         }
         .sun-grid-chip b { color: var(--text-primary); font-weight: 600; }
         /* L-472 (Tony, 2026-10-23, "The count line"): how many ticked
-           bodies lie outside the view, above the grid chip, in the
-           chip's own type. Hidden at zero. */
+           bodies lie outside the view, in the grid chip's own type.
+           Hidden at zero. L-478 (Tony, 2026-10-24): at the lower left,
+           above the drawer's handle, at the height of the frame HUD on
+           the right, where it no longer covers the Aries mark; it steps
+           aside with the HUD while the drawer is open. */
         .ss-outside {
+            position: absolute; left: 10px;
+            bottom: calc(58px + env(safe-area-inset-bottom));
+            z-index: 5; pointer-events: none;
+            max-width: calc(100% - 150px);
             background: rgba(17,24,39,0.94); border: 1px solid var(--border);
             border-radius: 20px; padding: 5px 11px;
             font: 500 11px 'DM Sans', system-ui, sans-serif;
             color: var(--text-primary); letter-spacing: 0.3px; white-space: nowrap;
         }
         .ss-outside[hidden] { display: none; }
+        body.sun-exhibit.sun-drawer-open .ss-outside { display: none; }
         .sun-frame-note {
             position: absolute; right: 10px; left: 10px;
             bottom: calc(168px + env(safe-area-inset-bottom));
@@ -737,7 +755,7 @@
         /* L-363 step 3b, the Solar System room's drawer only. A hidden
            row must stay hidden against .sun-row's display: flex (the
            touch-path rule: write the hidden rule at least as specific). */
-        .sun-row[hidden], .sun-row-open[hidden], .sun-see-more[hidden] {
+        .sun-row[hidden], .sun-row-open[hidden], .sun-group-reset[hidden] {
             display: none;
         }
         /* The Sun is the scene's fixed centre: no box to tick, no GO. Its
@@ -787,11 +805,20 @@
             grid-column: 3; grid-row: 1; justify-self: end;
             color: var(--text-dim); font-size: 12px; white-space: nowrap;
         }
+        /* L-477 (Tony, 2026-10-24): a group row only folds. Where a body
+           row has its tick box, a group row has its fold arrow, in the
+           box's width, so the names keep one column. */
+        .sun-row.sun-group .fold {
+            width: 18px; flex-shrink: 0; text-align: center;
+            color: var(--text-dim); font-size: 13px; line-height: 1;
+        }
         .sun-row.member .pick { padding-left: 36px; }
         .sun-row.member .rname { padding-left: 69px; }
-        .sun-see-more.group-all { margin-left: 85px; }
-        .sun-see-more {
-            display: block; min-height: 44px; margin: 0 16px 0 65px;
+        /* L-477: "Reset <group>", under an open group's row, once one of
+           its bodies is ticked. It replaced the group's All / none, and
+           the room's See more, whose style it keeps. */
+        .sun-group-reset {
+            display: block; min-height: 44px; margin: 0 16px 0 85px;
             padding: 0; background: none; border: none; cursor: pointer;
             color: var(--interactive); text-align: left;
             font: 600 12px 'DM Sans', sans-serif; letter-spacing: 0.6px;
@@ -1244,10 +1271,12 @@
                 <svg class="sun-triad" id="sun-triad" viewBox="0 0 104 120"
                      xmlns="http://www.w3.org/2000/svg" role="img"
                      aria-label="Axis directions x, y, z"></svg>
-                <!-- L-472: filled by ssOutsideUpdate, Solar System room only. -->
-                <div class="ss-outside" id="ss-outside" hidden></div>
                 <div class="sun-grid-chip" id="sun-grid-chip"></div>
             </div>
+            <!-- L-472: filled by ssOutsideUpdate, Solar System room only.
+                 L-478 (Tony, 2026-10-24): at the lower left, above the
+                 drawer's handle, out of the HUD on the right. -->
+            <div class="ss-outside sun-chrome" id="ss-outside" hidden></div>
             <div class="sun-frame-note sun-chrome" id="sun-frame-note" hidden role="tooltip">
                 <h4>The frame</h4>
                 <p>The <b>x</b> arrow points at the vernal equinox, the First
@@ -2231,6 +2260,10 @@ for _slug in _bodies:
         # be listed nearest first (gallery/solar_system_drawer.js,
         # orderGroups). Read, never typed.
         "a_au": (_rec.get("osculating") or {}).get("a_au"),
+        # L-479: the served eccentricity, so the hover can say how near
+        # and how far the orbit runs from the Sun (a(1 - e), a(1 + e)).
+        # Read, never typed.
+        "e": (_rec.get("osculating") or {}).get("e"),
     }
 
 json.dumps({
@@ -2338,20 +2371,21 @@ const SOLAR_SYSTEM_INFO_HTML = [
     " as its symbol on its orbit, where it is now: at the minute you opened",
     " this room, as the line under the title says.</li>",
     "<li>Open the list below. Tick a body to draw it, and the view widens",
-    " to hold every body drawn.</li>",
+    " to hold every body drawn. Reset puts the room back as you found",
+    " it.</li>",
     "<li>Tap a body's name to select it. A body with a room of its own",
     " has a button on its row to enter it.</li>",
     "<li>Tap a body in the picture to find its row.</li>",
-    "<li>Go To takes the view to a body, and Home backs out to hold every",
-    " body you ticked.</li>",
+    "<li>Go To takes the view to a body's whole orbit, and Home backs out",
+    " to hold every body you ticked.</li>",
     "<li>The body named on the list's handle has its description and",
     " source at the top of this panel.</li>",
     "</ul>",
     "<ul>",
     "<li>This room is being built up.</li>",
-    "<li>See more adds the comets and the asteroids, in groups in their",
-    " places along the list. Tap a group's name to open it, or its box to",
-    " draw all of it. The spacecraft join later.</li>",
+    "<li>The comets and the asteroids are in groups in their places along",
+    " the list. Tap a group's name to open it, then tick its bodies one at",
+    " a time. The spacecraft join later.</li>",
     "<li>Each body's own shells &mdash; its atmosphere, rings and magnetic",
     " surroundings &mdash; live in that body's own room; so far the Sun",
     " and Earth have one.</li>",
@@ -2489,6 +2523,9 @@ const EXHIBITS = {
         // may run past the box and is cut off at its edge until the
         // visitor zooms out. The farthest body ticked sets the frame.
         // The Sun and Earth rooms keep framing whole shapes at 10%.
+        // Go To is the exception, by Tony's ruling of 2026-10-24 (L-479,
+        // "Let's try B1"): it fits the body's whole orbit at the same 20%
+        // and opens its text box, the same for every body (ssGo).
         frameOnPosition: true,
         frameMargin: 1.2,
         // Draw the minute the room is opened (Tony, 2026-09-26). The Sun
@@ -2609,6 +2646,17 @@ const EXHIBITS = {
                         lines.push(solarSystemSoftWrap(per.line, 60));
                     } else if (per.warning) {
                         warnings.push(label + ": " + per.warning);
+                    }
+                    // L-479 (Tony, 2026-10-24): how near and how far the
+                    // orbit runs from the Sun, from the served a and e,
+                    // never finer than the distance line's own error.
+                    if (dist.line) {
+                        const orb = SolarSystemFigures.orbitLine(b.a_au, b.e,
+                            Math.max(dist.driftKm, dist.sourceKm,
+                                     SolarSystemFigures.FINEST_KM),
+                            GalleryFeatures._KM_PER_AU);
+                        if (orb.line) { lines.push(orb.line); }
+                        else { warnings.push(label + ": no orbit line -- " + orb.why); }
                     }
                     t.text = [lines.join("<br>")];
                     const extra = { label_target: true };
@@ -2773,12 +2821,14 @@ function sunTraceExtentAu(trace) {
 
 // Radius to frame on: the widest thing in the group, which is the info
 // marker at r * 1.05 for a sphere shell. Times 1.1 for margin.
-function sunGroupRadius(k) {
+// whole (L-479): measure the whole group -- for a body, its whole orbit --
+// even in a room that frames on where its bodies are now.
+function sunGroupRadius(k, whole) {
     const grp = sunGroups[k];
     if (!grp) { return 0; }
     // A room that frames on where its bodies are NOW (the Solar System
     // room) measures the body's distance from the Sun, not its orbit.
-    if (EX && EX.frameOnPosition) {
+    if (EX && EX.frameOnPosition && !whole) {
         return sunPositionRadius(sunPlotDiv ? sunPlotDiv.data : null, grp.indices);
     }
     let maxR = 0;
@@ -2825,9 +2875,9 @@ function sunGridDtick(span) {
 
 // One half-range on all three axes, so a sphere stays a sphere. Plotly's
 // own autorange fits each axis separately and would draw ellipsoids.
-function sunFrameOn(k) {
+function sunFrameOn(k, whole) {
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
-    const rad = sunGroupRadius(k);
+    const rad = sunGroupRadius(k, whole);
     const r = rad > 0 ? rad * sunFrameMargin() : (EX ? EX.halfRangeAu : SUN_HALF_RANGE_AU);
     const d = sunGridDtick(2 * r);
     return Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv, {
@@ -2858,12 +2908,12 @@ function sunOutermostShown() {
 // 3; on a phone the empty frame read as a tap that did nothing). This
 // function still switches nothing on, and a marker tap can only reach a
 // shell that is drawn.
-function sunFocusOn(k) {
+function sunFocusOn(k, whole) {
     if (k < 0 || k >= sunGroups.length) { return Promise.resolve(); }
     sunFocusIdx = k;
     setSunDrawer(false);
     renderSunDrawer();
-    return sunFrameOn(k);
+    return sunFrameOn(k, whole);
 }
 
 // ---- Navigation cluster: +, -, Home (L-267 step 7, 2026-09-04) ----
@@ -2932,8 +2982,12 @@ function navFrameZoom(direction) {
         const rng = gd.layout.scene[ax] && gd.layout.scene[ax].range;
         if (!rng || rng.length < 2) { return; }
         const c = (rng[0] + rng[1]) / 2;
-        let h = Math.abs(rng[1] - rng[0]) / 2 * f;
-        h = Math.max(NAV_HALF_RANGE_MIN_AU, Math.min(NAV_HALF_RANGE_MAX_AU, h));
+        const was = Math.abs(rng[1] - rng[0]) / 2;
+        let h = was * f;
+        // L-479: Go To can frame a far orbit wider than the cap (Hyakutake's,
+        // about 5,600 AU); a zoom-out tap then never makes the view smaller.
+        h = Math.max(NAV_HALF_RANGE_MIN_AU,
+                     Math.min(Math.max(NAV_HALF_RANGE_MAX_AU, was), h));
         update["scene." + ax + ".range"] = [c - h, c + h];
         if (2 * h > span) { span = 2 * h; }
     });
@@ -3553,6 +3607,11 @@ async function initSunExhibit() {
         // (the Solar System room) gets the body drawer; the Sun and Earth
         // rooms hand none and keep theirs.
         ssDrawer = built.drawer ? ssDrawerState(built.drawer) : null;
+        // L-477: there the top bar's button is Reset, not All / none.
+        if (ssDrawer) {
+            document.getElementById("sun-drawer-all").textContent =
+                window.SolarSystemDrawer.WORDS.reset;
+        }
         buildSunDrawer(traces, drawerPlan ? drawerPlan.order : null);
         // L-289: the three axis lines through the origin go in AFTER the
         // drawer, so the drawer has no row for them, and after the
@@ -4361,7 +4420,9 @@ function sunSwatchColor(trace) {
 //   - "Enter the ... room" sits on the row of every body with a room in
 //     EXHIBITS, always (L-429, 2026-10-10); a row with none opens to
 //     "No room or cards yet".
-//   - See more / See fewer for the rows the room marks see_more.
+//   - The groups fold open; a group row ticks nothing (L-477).
+//   - Reset puts back what the room opened on; an open group's Reset
+//     unticks its bodies (L-477, Tony, 2026-10-24). No See more.
 //   - Home remembers the order bodies were ticked, for this tab only.
 // Selecting and ticking are different acts. Ticking draws a body, frames
 // everything drawn, and opens and names its row (Tony, 2026-09-30).
@@ -4383,7 +4444,6 @@ function ssDrawerState(served) {
                    highlight: served.highlight },
         order: SSD.openingOrder(rows, served.drawn, served.highlight),
         open: null,       // the key of the opened row, or null
-        seeMore: false,   // See more pressed
         folds: {}         // L-443: {group: true} for each group folded open
     };
 }
@@ -4407,7 +4467,7 @@ function ssDrawnRows() {
 function ssWireRow(row, grp, k, list) {
     const SSD = window.SolarSystemDrawer;
     const served = ssDrawer.byKey[grp.key] ||
-        { key: grp.key, slug: grp.key, seeMore: false };
+        { key: grp.key, slug: grp.key };
     if (!SSD.tickable(grp.key)) { row.classList.add("fixed"); }
     row.setAttribute("aria-expanded", "false");
     row.onclick = function (ev) {
@@ -4460,27 +4520,15 @@ function ssPhoneSideways() {
     return window.innerWidth > window.innerHeight && window.innerHeight <= 500;
 }
 
-// L-474 (Tony, 2026-10-22): See more / See fewer sits at the top of the
-// list, where it is easier to find. Until then it came after the rows.
-function ssAddSeeMore(list) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "sun-see-more";
-    b.id = "sun-see-more";
-    b.hidden = true;
-    b.onclick = function () {
-        ssDrawer.seeMore = !ssDrawer.seeMore;
-        renderSunDrawer();
-        sunMeasureDrawer();
-    };
-    list.insertBefore(b, list.firstChild);
-}
+// L-477 (Tony, 2026-10-24): "No "see more" Let that be permanent." The
+// See more / See fewer button (L-474 had put it at the top of the list)
+// is gone; the groups are always listed, folded shut.
 
 // L-472 (Tony's ruling of 2026-10-23, "The count line"). Zooming in
 // stays a cutout: the box can be smaller than the farthest body ticked,
 // whose orbit's near end and orbit cross then stay in view while the
-// body does not, and that reads as the body. So the line above the grid
-// chip says how many ticked bodies are outside the view, never which,
+// body does not, and that reads as the body. So the line at the lower
+// left (L-478) says how many ticked bodies are outside the view, never which,
 // and is hidden at zero. A body is where its marker is, now; the box is
 // the scene's three axis ranges. Called at the end of every frame
 // change (sunHudUpdate), which every tick, zoom, Go To and Home reach.
@@ -4518,7 +4566,7 @@ function ssOutsideUpdate() {
 }
 
 // renderSunDrawer's part for this room: which rows show, which row is
-// open, the See more button's words. Returns the count line.
+// open, each group's arrow, count and Reset. Returns the count line.
 function ssRender() {
     const SSD = window.SolarSystemDrawer;
     const shown = ssShownByKey();
@@ -4530,7 +4578,7 @@ function ssRender() {
         if (!grp) { continue; }
         const served = ssDrawer.byKey[grp.key];
         const vis = !served || SSD.rowVisible(served, ssDrawer.rows, shown,
-                                              ssDrawer.seeMore, ssDrawer.folds);
+                                              ssDrawer.folds);
         rows[r].hidden = !vis;
         seen[grp.key] = vis;
         rows[r].setAttribute("aria-expanded",
@@ -4554,38 +4602,28 @@ function ssRender() {
         inlines[q].hidden = hasRoom ? false :
             (!sideways || !(seen[key] && ssDrawer.open === key));
     }
-    // L-443: the group rows, their counts and their All / none buttons.
+    // L-443, L-477: the group rows -- always listed -- with their fold
+    // arrow and count, and each open group's Reset.
     const heads = list.querySelectorAll(".sun-row.sun-group[data-g]");
     for (let h = 0; h < heads.length; h++) {
         const g = heads[h].getAttribute("data-g");
         const served = ssDrawer.byKey[SSD.GROUP_PREFIX + g];
-        const vis = !!served && SSD.rowVisible(served, ssDrawer.rows, shown,
-                                               ssDrawer.seeMore, ssDrawer.folds);
         const open = !!ssDrawer.folds[g];
         const on = SSD.members(ssDrawer.rows, g).filter(function (m) { return shown[m.key]; }).length;
-        heads[h].hidden = !vis;
-        heads[h].setAttribute("aria-expanded", (vis && open) ? "true" : "false");
+        heads[h].hidden = !served;
+        heads[h].setAttribute("aria-expanded", (served && open) ? "true" : "false");
         heads[h].classList.toggle("on", on > 0);
-        heads[h].querySelector(".box").innerHTML = on ? "&#10003;" : "";
+        heads[h].querySelector(".fold").textContent = SSD.groupArrow(open);
         heads[h].querySelector(".gcount").textContent =
-            SSD.groupCount(ssDrawer.rows, g, shown, open);
+            SSD.groupCount(ssDrawer.rows, g, shown);
     }
-    const alls = list.querySelectorAll(".sun-see-more.group-all[data-g]");
-    for (let a = 0; a < alls.length; a++) {
-        const g = alls[a].getAttribute("data-g");
-        const served = ssDrawer.byKey[SSD.GROUP_PREFIX + g];
-        alls[a].hidden = !(served && ssDrawer.folds[g] &&
-            SSD.rowVisible(served, ssDrawer.rows, shown, ssDrawer.seeMore, ssDrawer.folds));
+    const resets = list.querySelectorAll(".sun-group-reset[data-g]");
+    for (let a = 0; a < resets.length; a++) {
+        const g = resets[a].getAttribute("data-g");
+        resets[a].hidden = !(ssDrawer.byKey[SSD.GROUP_PREFIX + g] &&
+            SSD.groupResetOffered(ssDrawer.rows, g, shown, ssDrawer.folds));
     }
     const drawn = ssDrawnRows();
-    const b = document.getElementById("sun-see-more");
-    if (b) {
-        const words = SSD.seeMoreLabel(ssDrawer.rows.filter(function (r) {
-            return SSD.isGroup(r) || ssIndex(r.key) >= 0;
-        }), shown, ssDrawer.seeMore);
-        b.hidden = !words;
-        b.textContent = words || "";
-    }
     return SSD.countLine(drawn, shown);
 }
 
@@ -4628,7 +4666,11 @@ function ssTick(k, on) {
 }
 
 // GO, as in the other rooms: a body not drawn is ticked first; then the
-// view goes to it, the drawer closes and its text box opens.
+// view goes to it, the drawer closes and its text box opens. L-479
+// (Tony, 2026-10-24, "Let's try B1"): the view fits the body's WHOLE
+// orbit, at the room's 20%, so a far orbit like Sedna's is seen whole;
+// the text box opens as before, and one tap on the picture closes it.
+// Ticking still frames on where the bodies are now (2026-10-02).
 function ssGo(k) {
     const SSD = window.SolarSystemDrawer;
     const grp = sunGroups[k];
@@ -4638,21 +4680,21 @@ function ssGo(k) {
         ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);
         sunFocusIdx = k;
         setSunDrawer(false);
-        return sunApplyVisibility(true)
+        return sunApplyVisibility(true, k, true)
             .then(function () { return sunLabelShow(k); });
     }
-    return sunFocusOn(k).then(function () { return sunLabelShow(k); });
+    return sunFocusOn(k, true).then(function () { return sunLabelShow(k); });
 }
 
-// L-443: a group row's box ticks every body in it if any is off, else
-// unticks them all; the frame then holds everything drawn, as a tick
-// does. Its name folds it open or shut, and moves nothing.
-function ssGroupTick(g) {
+// L-477 (Tony, 2026-10-24): an open group's "Reset <group>" unticks every
+// body in it; the frame then holds what is still drawn, as an untick
+// does. A group row only folds open or shut, and moves nothing.
+function ssGroupReset(g) {
     const SSD = window.SolarSystemDrawer;
     const drawnRows = ssDrawer.rows.filter(function (r) {
         return SSD.isGroup(r) || ssIndex(r.key) >= 0;
     });
-    const next = SSD.groupToggle(drawnRows, g, ssShownByKey(), ssDrawer.order);
+    const next = SSD.groupReset(drawnRows, g, ssShownByKey(), ssDrawer.order);
     sunGroups.forEach(function (grp) {
         if (next.shown.hasOwnProperty(grp.key)) { grp.shown = next.shown[grp.key]; }
     });
@@ -4684,28 +4726,23 @@ function ssBuildRows(list, makeRow) {
             head.className = "sun-row sun-group";
             head.setAttribute("data-g", g);
             head.setAttribute("aria-expanded", "false");
+            // L-477: the row's whole width folds it; its left end holds
+            // the fold arrow where a body row has its tick box.
             head.innerHTML =
-                '<span class="pick"><span class="box"></span>' +
+                '<span class="pick"><span class="fold"></span>' +
                 '<span class="swatch" style="background:transparent"></span></span>' +
                 '<span class="rname"></span><span class="gcount"></span>';
             head.querySelector(".rname").textContent = served.label;
-            head.onclick = function (ev) {
-                const t = ev.target;
-                if (t && typeof t.closest === "function" && t.closest(".pick")) {
-                    ssGroupTick(g);
-                    return;
-                }
-                ssFold(g);
-            };
+            head.onclick = function () { ssFold(g); };
             list.appendChild(head);
-            const all = document.createElement("button");
-            all.type = "button";
-            all.className = "sun-see-more group-all";
-            all.setAttribute("data-g", g);
-            all.hidden = true;
-            all.textContent = SSD.WORDS.groupAll(served.label);
-            all.onclick = function () { ssGroupTick(g); };
-            list.appendChild(all);
+            const reset = document.createElement("button");
+            reset.type = "button";
+            reset.className = "sun-group-reset";
+            reset.setAttribute("data-g", g);
+            reset.hidden = true;
+            reset.textContent = SSD.WORDS.groupReset(served.label);
+            reset.onclick = function () { ssGroupReset(g); };
+            list.appendChild(reset);
             return;
         }
         const k = ssIndex(served.key);
@@ -4721,20 +4758,16 @@ function ssBuildRows(list, makeRow) {
     });
 }
 
-// All / none, leaving the Sun alone. The order follows: everything newly
-// ticked is added in served order; none empties it.
-function ssToggleAll() {
-    const SSD = window.SolarSystemDrawer;
-    const next = SSD.toggleAll(ssDrawnRows(), ssShownByKey(), ssDrawer.order);
-    sunGroups.forEach(function (g) {
-        if (next.shown.hasOwnProperty(g.key)) { g.shown = next.shown[g.key]; }
-    });
-    ssDrawer.order = next.order;
-    if (ssDrawer.open && !next.shown[ssDrawer.open] &&
-        SSD.tickable(ssDrawer.open)) {
-        ssDrawer.open = null;
-    }
-    return sunApplyVisibility(false);
+// L-477 (Tony, 2026-10-24): Reset, in the top bar where the other rooms
+// have All / none, "resets the view to the starting view when the
+// visitor wants a fresh start": what the room opened on, ticked, in its
+// opening order, with its highlighted row named, every group folded
+// shut, the opening frame and angle, the drawer closed. Home differs:
+// it keeps what is ticked unless nothing is.
+function ssReset() {
+    const gd = navPlotDiv();
+    if (!gd || !window.Plotly) { return Promise.resolve(); }
+    return ssHome(gd, true);
 }
 
 // Home, as Tony settled it on 2026-10-03 (option 2): the opening camera
@@ -4746,11 +4779,12 @@ function ssToggleAll() {
 // put back and the opening frame with it -- the one time Home changes
 // what is drawn. (The design wrote "ticks Earth again", when the room opened on
 // Earth alone; what the room opens on is now served and can change.)
-function ssHome(gd) {
+function ssHome(gd, reset) {
     const SSD = window.SolarSystemDrawer;
-    let key = SSD.homeTarget(ssDrawer.order, ssShownByKey());
+    let key = reset ? null : SSD.homeTarget(ssDrawer.order, ssShownByKey());
     let first = Promise.resolve();
     let r;
+    if (reset) { ssDrawer.folds = {}; }   // L-477: every group folded shut
     if (key === null) {
         const want = {};
         ssDrawer.opening.drawn.forEach(function (s) { want[s] = true; });
@@ -4952,8 +4986,6 @@ function buildSunDrawer(traces, order) {
         row.querySelector(".rname").textContent = what + " -- not yet drawn";
         list.appendChild(row);
     }
-    if (ssDrawer) { ssAddSeeMore(list); }
-
     renderSunDrawer();
 }
 
@@ -5183,7 +5215,7 @@ function renderSunInfo(grp) {
 // frameIdx, if given, is the group to frame on instead of the focus:
 // the Solar System room frames everything drawn while naming the body
 // just ticked (L-363 step 3b). The Sun and Earth rooms never pass it.
-function sunApplyVisibility(keepFocus, frameIdx) {
+function sunApplyVisibility(keepFocus, frameIdx, whole) {
     if (!keepFocus) { sunFocusIdx = sunOutermostShown(); }
     renderSunDrawer();
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
@@ -5197,7 +5229,7 @@ function sunApplyVisibility(keepFocus, frameIdx) {
     if (!idx.length) { return Promise.resolve(); }
     const focusAt = (typeof frameIdx === "number") ? frameIdx : sunFocusIdx;
     return Plotly.restyle(sunPlotDiv, { visible: vis }, idx)
-        .then(function () { return sunFrameOn(focusAt); })
+        .then(function () { return sunFrameOn(focusAt, whole); })
         .then(sunLabelIfHidden);   // L-318: an unticked shell loses its label
 }
 
@@ -5236,9 +5268,8 @@ function wireSunDrawer() {
         sunLabelClose();
     };
     document.getElementById("sun-drawer-all").onclick = function () {
-        // The Solar System room leaves the Sun alone and keeps Home's
-        // order (L-363 step 3b).
-        if (ssDrawer) { ssToggleAll(); return; }
+        // The Solar System room: Reset (L-477, Tony, 2026-10-24).
+        if (ssDrawer) { ssReset(); return; }
         const anyOff = sunGroups.some(function (g) { return !g.shown; });
         sunGroups.forEach(function (g) { g.shown = anyOff; });
         sunApplyVisibility(false);

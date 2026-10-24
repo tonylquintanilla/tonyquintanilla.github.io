@@ -16,10 +16,11 @@
 //              from the Sun (data/objects_config.json, "rooms"). The Sun
 //              is the fixed centre of the scene: always drawn, never
 //              ticked, but its row still highlights and opens.
-//   SEE MORE   A row the room marks "see_more" (Apophis, until the
-//              near-Earth asteroids get their own design) shows only
-//              after See more is pressed -- unless it is ticked. The
-//              drawer never hides something the scene shows.
+//   NO SEE MORE  Tony's ruling of 2026-10-24 (L-477): "No "see more"
+//              Let that be permanent." Until then a row the room marked
+//              "see_more" waited behind a See more button. The groups are
+//              now always listed, folded shut, and a served "see_more" is
+//              not read.
 //   OPENING    Tapping a name opens its row; ticking a body opens it
 //              too. An open row offers "Enter the <name> room" where
 //              the body has a room of its own, and says "No room or
@@ -37,23 +38,33 @@
 //              information between sessions locally" (Tony, 2026-09-30).
 //   GROUPS     Tony's ruling of 2026-10-22 (L-443, mock-up B): a served
 //              row {group, label} gathers the body rows that name it in
-//              their "in" field. It sits behind See more (when served so,
-//              unless one of its bodies is ticked) and folds open to list
-//              its bodies under it; folded, it hides them, and its line
-//              says how many it holds and how many are ticked. Its box
-//              ticks all of them if any is off, else unticks all. A room
-//              is for a body with more than its symbol, so a group has
-//              none. "order": "a" lists a group's bodies by their served
-//              semi-major axis, nearest first (orderGroups); without it
-//              they keep the served order.
+//              their "in" field. It is always listed and folds open to
+//              list its bodies under it; folded, it hides them, and its
+//              line says how many it holds and how many are ticked. A
+//              room is for a body with more than its symbol, so a group
+//              has none. "order": "a" lists a group's bodies by their
+//              served semi-major axis, nearest first (orderGroups);
+//              without it they keep the served order.
+//   ONE BODY AT A TIME  Tony's rulings of 2026-10-24 (L-477): "change
+//              all/none to "Reset" that resets the view to the starting
+//              view when the visitor wants a fresh start," and, for the
+//              groups, "The starting view is unticked. The visitor tries
+//              some objects. A Reset button can bring back the original
+//              unticked list. "All" is very confusing with too many
+//              orbits all at once." So a group row only folds; it has no
+//              box. Inside an open group, once one of its bodies is
+//              ticked, "Reset <group>" unticks them all (groupReset,
+//              groupResetOffered). The room's own Reset puts back what
+//              it opened on -- the page does that, by Home's rule for an
+//              empty tick order, with every group folded shut. Nothing
+//              ticks many bodies at once.
 //   OUTSIDE    Tony's ruling of 2026-10-23 (L-472, "The count line"):
 //              zooming in stays a cutout, and when bodies that are ticked
 //              lie outside the view, one line says how many, never which
-//              (outsideCount, WORDS.outside). The page shows it above the
-//              grid chip and hides it at zero.
-//   SEE MORE'S PLACE  Tony, 2026-10-22 (L-474): at the top of the
-//              drawer's list, where it is easier to find. The page puts
-//              it there; nothing here decides it.
+//              (outsideCount, WORDS.outside). The page shows it at the
+//              lower left, above the drawer's handle (L-478, Tony,
+//              2026-10-24; until then above the grid chip, where it
+//              covered the Aries mark), and hides it at zero.
 //
 // Rows are named by KEY: the trace group the scene draws them in. That is
 // the body's slug, except the Sun's, which the assembler draws as the
@@ -64,7 +75,10 @@
 // Tony settled it (L-363); the code is unchanged. Updated October 22,
 // 2026 with Anthropic's Claude Opus 5.5 (L-443): GROUPS, above. Updated
 // October 23, 2026 with Anthropic's Claude Opus 5.5 (L-472, L-474):
-// OUTSIDE and SEE MORE'S PLACE, above.
+// OUTSIDE and SEE MORE'S PLACE (since retired). Updated October 24, 2026
+// with Anthropic's Claude Opus 5.5 (L-477): NO SEE MORE and ONE BODY AT A
+// TIME, above; seeMoreLabel, visible, groupToggle and toggleAll removed,
+// groupReset and groupResetOffered added.
 // Everything that counted or ticked bodies counts and ticks bodies only;
 // a group row is never a body.
 
@@ -74,13 +88,13 @@
   const SUN_KEY = "center";     // the Sun's trace group in this room
   const SUN_SLUG = "sun";       // the Sun's slug in the served rows
 
-  // The visitor's words. All four are Tony's, 2026-09-30.
+  // The visitor's words. noRoom and enter are Tony's, 2026-09-30; the
+  // two resets are his, 2026-10-24 (L-477).
   const WORDS = {
-    seeMore: "See more",
-    seeFewer: "See fewer",
     noRoom: "No room or cards yet",
     enter: function (name) { return "Enter the " + name + " room"; },
-    groupAll: function (label) { return "All / none in " + label; },
+    reset: "Reset",
+    groupReset: function (label) { return "Reset " + label; },
     // L-472, Tony's approval of 2026-10-23.
     outside: function (n) {
       return n === 1 ? "1 ticked body is outside this view"
@@ -90,8 +104,8 @@
 
   const GROUP_PREFIX = "group:";   // a group row's key; never a trace group
 
-  // [{key, slug, seeMore, group}] from the room's served rows, and
-  // {key, group, label, seeMore, isGroup} for a group row. A row with
+  // [{key, slug, group}] from the room's served rows, and
+  // {key, group, label, order, isGroup} for a group row. A row with
   // neither a slug nor a group is skipped; the page's own compose
   // reports it. A body row's group is its served "in", when that names
   // a group row the room serves.
@@ -108,7 +122,6 @@
           key: GROUP_PREFIX + r.group,
           group: r.group,
           label: (typeof r.label === "string" && r.label) ? r.label : r.group,
-          seeMore: r.see_more === true,
           order: r.order === "a" ? "a" : null,
           isGroup: true
         });
@@ -118,7 +131,6 @@
       out.push({
         key: r.slug === SUN_SLUG ? SUN_KEY : r.slug,
         slug: r.slug,
-        seeMore: r.see_more === true,
         group: (typeof r["in"] === "string" && groups[r["in"]]) ? r["in"] : null
       });
     });
@@ -145,66 +157,49 @@
     return (roomKeys || []).indexOf(row.slug) >= 0 ? row.slug : null;
   }
 
-  // Shown in the list? A See more row only once See more is open, or
-  // while it is ticked.
-  function visible(row, shown, seeMoreOpen) {
-    return !row.seeMore || !!seeMoreOpen || !!shown;
-  }
-
   // How many of a group's bodies are ticked.
   function groupOn(rows, group, shownByKey) {
     return members(rows, group).filter(function (r) { return shownByKey[r.key]; }).length;
   }
 
-  // Shown in the list, groups included (L-443). A group row: as a See
-  // more row, counted as ticked while any of its bodies is. A body in a
-  // group: only while its group shows and is folded open. Any other row:
-  // visible(), as before. folds is {group: true} for the open groups.
-  function rowVisible(row, rows, shownByKey, seeMoreOpen, folds) {
-    if (isGroup(row)) {
-      return visible(row, groupOn(rows, row.group, shownByKey) > 0, seeMoreOpen);
-    }
+  // Shown in the list, groups included (L-443, L-477). A group row:
+  // always. A body in a group: only while its group is folded open. Any
+  // other row: always. folds is {group: true} for the open groups.
+  function rowVisible(row, rows, shownByKey, folds) {
+    if (isGroup(row)) { return true; }
     if (row.group) {
-      const g = groupRow(rows, row.group);
-      return !!(g && rowVisible(g, rows, shownByKey, seeMoreOpen, folds) &&
-                folds && folds[row.group]);
+      return !!(groupRow(rows, row.group) && folds && folds[row.group]);
     }
-    return visible(row, shownByKey[row.key], seeMoreOpen);
+    return true;
   }
 
-  // A group row's count: "12" folded with none ticked, "3 of 12" when
-  // some are; the arrow says whether it is folded (right) or open (down).
-  function groupCount(rows, group, shownByKey, open) {
+  // A group row's count: "12" with none ticked, "3 of 12" when some are.
+  function groupCount(rows, group, shownByKey) {
     const n = members(rows, group).length;
     const on = groupOn(rows, group, shownByKey);
-    return (open ? "\u25be " : "\u25b8 ") + (on ? on + " of " + n : String(n));
+    return on ? on + " of " + n : String(n);
   }
 
-  // The button's words, or null for no button: none when the room has no
-  // See more rows, or when every one of them is already showing because
-  // it is ticked. A group row counts as ticked while any of its bodies
-  // is (L-443).
-  function seeMoreLabel(rows, shownByKey, open) {
-    const extra = rows.filter(function (r) { return r.seeMore; });
-    if (!extra.length) { return null; }
-    if (open) { return WORDS.seeFewer; }
-    const hidden = extra.some(function (r) {
-      return isGroup(r) ? groupOn(rows, r.group, shownByKey) === 0 : !shownByKey[r.key];
-    });
-    return hidden ? WORDS.seeMore : null;
+  // The arrow where a body row has its box: folded (right) or open (down).
+  function groupArrow(open) {
+    return open ? "\u25be" : "\u25b8";
   }
 
-  // A group's box: tick every body in it if any is off, else untick them
-  // all, adding the newly ticked to the order in served order.
-  function groupToggle(rows, group, shownByKey, order) {
-    const can = members(rows, group).filter(function (r) { return tickable(r.key); });
-    const anyOff = can.some(function (r) { return !shownByKey[r.key]; });
+  // L-477: "Reset <group>" is offered inside an open group once one of
+  // its bodies is ticked; with none ticked there is nothing to reset.
+  function groupResetOffered(rows, group, shownByKey, folds) {
+    return !!(folds && folds[group]) && groupOn(rows, group, shownByKey) > 0;
+  }
+
+  // L-477: "Reset <group>" unticks every body in the group and takes them
+  // out of Home's order; every other body is left as it was.
+  function groupReset(rows, group, shownByKey, order) {
     const shown = Object.assign({}, shownByKey);
     let next = (order || []).slice();
-    can.forEach(function (r) {
-      if (anyOff && !shown[r.key]) { next = orderAdd(next, r.key); }
-      if (!anyOff) { next = orderRemove(next, r.key); }
-      shown[r.key] = anyOff;
+    members(rows, group).forEach(function (r) {
+      if (!tickable(r.key)) { return; }
+      shown[r.key] = false;
+      next = orderRemove(next, r.key);
     });
     return { shown: shown, order: next };
   }
@@ -292,22 +287,6 @@
     return n;
   }
 
-  // All / none. If anything that can be ticked is off, tick everything,
-  // adding the newly ticked to the order in served order; otherwise
-  // untick everything and empty the order. The Sun is never touched.
-  function toggleAll(rows, shownByKey, order) {
-    const can = rows.filter(function (r) { return tickable(r.key); });
-    const anyOff = can.some(function (r) { return !shownByKey[r.key]; });
-    const shown = Object.assign({}, shownByKey);
-    let next = (order || []).slice();
-    can.forEach(function (r) {
-      if (anyOff && !shown[r.key]) { next = orderAdd(next, r.key); }
-      shown[r.key] = anyOff;
-    });
-    if (!anyOff) { next = []; }
-    return { shown: shown, order: next };
-  }
-
   global.SolarSystemDrawer = {
     SUN_KEY: SUN_KEY,
     WORDS: WORDS,
@@ -318,19 +297,18 @@
     members: members,
     rowVisible: rowVisible,
     groupCount: groupCount,
-    groupToggle: groupToggle,
+    groupArrow: groupArrow,
+    groupReset: groupReset,
+    groupResetOffered: groupResetOffered,
     orderGroups: orderGroups,
     tickable: tickable,
     roomFor: roomFor,
-    visible: visible,
-    seeMoreLabel: seeMoreLabel,
     orderAdd: orderAdd,
     orderRemove: orderRemove,
     homeTarget: homeTarget,
     openingOrder: openingOrder,
     countLine: countLine,
-    outsideCount: outsideCount,
-    toggleAll: toggleAll
+    outsideCount: outsideCount
   };
 
 })(typeof window !== "undefined" ? window : globalThis);

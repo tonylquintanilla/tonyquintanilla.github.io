@@ -6,18 +6,17 @@
 // WHAT IT CHECKS
 //   It requires the real gallery/solar_system_drawer.js and:
 //   1. Worked cases on a small list of rows: the Sun can never be
-//      ticked; a See more row shows only once See more is pressed or
-//      while it is ticked; the button's words, and no button when there
-//      is nothing behind it; the body the handle names after Home, the
+//      ticked; every row outside a group is always listed (no See more,
+//      L-477); the body the handle names after Home, the
 //      last ticked that is still ticked, and null when nothing is
 //      ticked (Home's frame, which holds every body ticked, is the
 //      page's and is walked headlessly, not here); the order the room starts
-//      with ends on the highlighted body; All / none never touches the
-//      Sun; "Enter the ... room" only where a room exists.
+//      with ends on the highlighted body; "Enter the ... room" only
+//      where a room exists.
 //   2. The real data/objects_config.json, the file the browser fetches:
-//      the room's rows convert with the Sun first, the See more rows are
-//      named, and what the room opens on names rows it has. Printed by
-//      name, so a change to the served list is seen.
+//      the room's rows convert with the Sun first, no row is served
+//      see_more (L-477), and what the room opens on names rows it has.
+//      Printed by name, so a change to the served list is seen.
 //   3. interactive.html loads this file and asks it every question: the
 //      script tag, and each function the page must call. And the room's
 //      row keeps Tony's framing ruling of 2026-10-02: frame on where the
@@ -25,31 +24,38 @@
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and breaks the
-//   logic three ways -- Home ignoring what is still ticked, a See more
-//   row hiding while it is ticked, and All / none unticking the Sun -- so
-//   a green run has shown it can go red.
+//   logic -- Home ignoring what is still ticked, a group hidden until
+//   something in it is ticked (See more come back), a folded group
+//   showing its bodies, a group's Reset leaving a body ticked, a group's
+//   Reset unticking a body outside the group, Reset offered in a folded
+//   group, and the count line reading only the x axis -- so a green run
+//   has shown it can go red.
 //
-//   4. (L-443) The group rows, by Tony's ruling of 2026-10-22: a group
-//      sits behind See more unless one of its bodies is ticked, folds
-//      open to list its bodies and hides them folded, counts them, ticks
-//      or unticks all of them with its box, is never a body to count or
-//      tick, and an "order": "a" group lists its bodies by served
-//      semi-major axis. The real config's groups are printed by name with
-//      their bodies. Two more breaks in the self-test: a folded group
-//      showing its bodies, and a group's box ticking only those already
-//      shown.
+//   4. (L-443, L-477) The group rows, by Tony's rulings of 2026-10-22
+//      and 2026-10-24: a group is always listed, folds open to list its
+//      bodies and hides them folded, counts them, shows its fold arrow,
+//      is never a body to count or tick, and an "order": "a" group lists
+//      its bodies by served semi-major axis. Inside an open group, once
+//      one of its bodies is ticked, "Reset <group>" unticks them all and
+//      no other. The real config's groups are printed by name with their
+//      bodies.
 //   5. (L-472) The count line, by Tony's ruling of 2026-10-23: ticked
 //      bodies outside the view are counted on any axis, a body on the
 //      box's edge is inside, a body with no position is not counted, and
-//      the words are the ones he approved. One more break: the count
-//      reading only the x axis. And the page wires it, with L-474's See
-//      more at the top and L-475's About line, which index.html opens at
-//      #about.
+//      the words are the ones he approved. And the page wires it, with
+//      L-475's About line, which index.html opens at #about; since L-478
+//      the line sits at the lower left, out of the HUD on the right.
+//   6. (L-477, L-479, L-480) The page: the top bar's button reads Reset in
+//      this room and calls ssReset; See more's button and the groups'
+//      All / none are gone; Go To frames the whole orbit; index.html
+//      steps back to the room when the About card it opened is closed.
 //
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443: the groups,
 // section 4). Updated October 23, 2026 with Anthropic's Claude Opus 5.5
-// (L-472, L-474, L-475: section 5).
+// (L-472, L-474, L-475: section 5). Updated October 24, 2026 with
+// Anthropic's Claude Opus 5.5 (L-477, L-478, L-479, L-480: no See more,
+// no "All", the resets, sections 1, 4 and 6, and four new breaks).
 
 "use strict";
 const fs = require("fs");
@@ -60,6 +66,7 @@ global.window = global;
 require(path.join(root, "gallery", "solar_system_drawer.js"));
 const REAL = global.SolarSystemDrawer;
 
+// A served "see_more" (Apophis's here) is no longer read (L-477).
 const ROWS = [
   { slug: "sun" }, { slug: "mercury" }, { slug: "earth" },
   { slug: "apophis", see_more: true }, { slug: "mars" }
@@ -81,29 +88,30 @@ function groupCases(SSD) {
   want(rows[2].group === "neo" && rows[5].group === null, "a body's group is misread");
   want(!SSD.tickable(g.key), "a group row can be ticked as a body");
   want(SSD.countLine(rows, {}) === "0 of 4", "the count counts a group row");
-  want(!SSD.rowVisible(g, rows, {}, false, {}), "a See more group shows before See more");
-  want(SSD.rowVisible(g, rows, {}, true, {}), "a group hides after See more");
-  want(SSD.rowVisible(g, rows, { eros: true }, false, {}),
-       "a group with a ticked body hides while the list is short");
-  want(!SSD.rowVisible(rows[2], rows, {}, true, {}), "a folded group shows its bodies");
-  want(SSD.rowVisible(rows[2], rows, {}, true, { neo: true }), "an open group hides its bodies");
-  want(!SSD.rowVisible(rows[2], rows, {}, false, { neo: true }),
-       "a body shows under a group that is itself hidden");
-  want(SSD.rowVisible(rows[5], rows, {}, false, {}), "a body in no group hides");
-  want(SSD.groupCount(rows, "neo", {}, false) === "\u25b8 3" &&
-       SSD.groupCount(rows, "neo", { apophis: true }, true) === "\u25be 1 of 3",
+  want(SSD.rowVisible(g, rows, {}, {}), "a group is not listed with nothing in it ticked");
+  want(SSD.rowVisible(g, rows, { eros: true }, { neo: true }), "an open group with a ticked body is not listed");
+  want(!SSD.rowVisible(rows[2], rows, {}, {}), "a folded group shows its bodies");
+  want(SSD.rowVisible(rows[2], rows, {}, { neo: true }), "an open group hides its bodies");
+  want(!SSD.rowVisible(rows[2], rows, { bennu: true }, {}), "a folded group shows a ticked body");
+  want(SSD.rowVisible(rows[5], rows, {}, {}), "a body in no group hides");
+  want(SSD.groupCount(rows, "neo", {}) === "3" &&
+       SSD.groupCount(rows, "neo", { apophis: true }) === "1 of 3",
        "a group's count is wrong");
-  want(SSD.seeMoreLabel(rows, {}, false) === "See more" &&
-       SSD.seeMoreLabel(rows, { bennu: true }, false) === null,
-       "See more does not count a group with a ticked body as showing");
-  const on = SSD.groupToggle(rows, "neo", { apophis: true, earth: true }, ["earth", "apophis"]);
-  want(on.shown.bennu && on.shown.apophis && on.shown.eros && on.shown.earth &&
-       on.order.join() === "earth,apophis,bennu,eros",
-       "a group's box does not tick all its bodies, in served order");
-  const off = SSD.groupToggle(rows, "neo", on.shown, on.order);
-  want(!off.shown.bennu && !off.shown.apophis && !off.shown.eros && off.shown.earth &&
-       off.order.join() === "earth",
-       "a group's box does not untick all its bodies and only them");
+  want(SSD.groupArrow(false) === "\u25b8" && SSD.groupArrow(true) === "\u25be",
+       "a group's arrow does not say folded or open");
+  want(!SSD.groupResetOffered(rows, "neo", {}, { neo: true }),
+       "a group's Reset is offered with none of its bodies ticked");
+  want(SSD.groupResetOffered(rows, "neo", { eros: true }, { neo: true }),
+       "a group's Reset is not offered in an open group with a body ticked");
+  want(!SSD.groupResetOffered(rows, "neo", { eros: true }, {}),
+       "a group's Reset is offered while the group is folded");
+  const start = { apophis: true, eros: true, earth: true };
+  const reset = SSD.groupReset(rows, "neo", start, ["earth", "apophis", "eros"]);
+  want(!reset.shown.bennu && !reset.shown.apophis && !reset.shown.eros,
+       "a group's Reset leaves one of its bodies ticked");
+  want(reset.shown.earth === true && reset.order.join() === "earth",
+       "a group's Reset touches a body outside the group, or the order is wrong");
+  want(start.apophis === true, "a group's Reset changed the state it was handed");
   const ordered = SSD.orderGroups(rows, { bennu: 1.126, apophis: 0.922, eros: 1.458 });
   want(ordered.map(function (r) { return r.key; }).join() ===
        "center,group:neo,apophis,bennu,eros,earth",
@@ -112,7 +120,12 @@ function groupCases(SSD) {
   want(partial.map(function (r) { return r.key; }).join() ===
        "center,group:neo,eros,bennu,apophis,earth",
        "a body with no served semi-major axis does not keep its served order after the rest");
-  want(SSD.WORDS.groupAll("Comets") === "All / none in Comets", "the group button's words");
+  want(SSD.WORDS.groupReset("Comets") === "Reset Comets" && SSD.WORDS.reset === "Reset",
+       "the resets' words are not Tony's");
+  want(SSD.groupAll === undefined && SSD.groupToggle === undefined &&
+       SSD.toggleAll === undefined && SSD.seeMoreLabel === undefined &&
+       SSD.WORDS.seeMore === undefined && SSD.WORDS.groupAll === undefined,
+       "something that ticks many bodies at once, or See more, is still offered");
   return fails;
 }
 
@@ -145,17 +158,8 @@ function cases(SSD) {
        "the Sun's row is not keyed \"center\" (the assembler's centre group)");
   want(!SSD.tickable("center") && SSD.tickable("earth"),
        "the Sun can be ticked, or a planet cannot");
-  const apo = rows[3];
-  want(!SSD.visible(apo, false, false), "a See more row shows before See more");
-  want(SSD.visible(apo, false, true), "a See more row hides after See more");
-  want(SSD.visible(apo, true, false), "a TICKED See more row hides while the list is short");
-  want(SSD.visible(rows[1], false, false), "an ordinary row hides");
-  want(SSD.seeMoreLabel(rows, {}, false) === "See more", "the button does not say See more");
-  want(SSD.seeMoreLabel(rows, {}, true) === "See fewer", "the button does not say See fewer");
-  want(SSD.seeMoreLabel(rows, { apophis: true }, false) === null,
-       "See more is offered with nothing behind it");
-  want(SSD.seeMoreLabel(rows.filter(function (r) { return !r.seeMore; }), {}, false) === null,
-       "See more is offered in a list with no See more rows");
+  want(rows.every(function (r) { return SSD.rowVisible(r, rows, {}, {}); }),
+       "a row in no group is hidden (a served see_more is not read, L-477)");
   let order = SSD.orderAdd([], "earth");
   order = SSD.orderAdd(order, "mars");
   order = SSD.orderAdd(order, "earth");
@@ -171,13 +175,6 @@ function cases(SSD) {
        "the Sun entered the tick order");
   want(SSD.countLine(rows, { center: true, earth: true }) === "1 of 4",
        "the count counts the Sun");
-  const all = SSD.toggleAll(rows, { center: true, earth: true }, ["earth"]);
-  want(all.shown.center === true && all.shown.mars === true && all.shown.apophis === true,
-       "All does not tick everything, or touches the Sun");
-  want(all.order.join() === "earth,mercury,apophis,mars", "All: the order is not served order");
-  const none = SSD.toggleAll(rows, all.shown, all.order);
-  want(none.shown.center === true && none.shown.mars === false && none.order.length === 0,
-       "none unticks the Sun, or leaves a body or the order");
   want(SSD.roomFor(rows[0], ["sun", "earth", "solar-system"]) === "sun" &&
        SSD.roomFor(rows[2], ["sun", "earth"]) === "earth" &&
        SSD.roomFor(rows[4], ["sun", "earth"]) === null,
@@ -198,21 +195,28 @@ let failures = [];
 const breaks = [
   ["Home ignoring what is still ticked",
    broken({ homeTarget: function (o) { return o.length ? o[o.length - 1] : null; } })],
-  ["a See more row hiding while ticked",
-   broken({ visible: function (r, s, open) { return !r.seeMore || !!open; } })],
-  ["All / none unticking the Sun",
-   broken({ toggleAll: function (rows, shown, order) {
-     const anyOff = rows.some(function (r) { return !shown[r.key]; });
-     const s = {}; rows.forEach(function (r) { s[r.key] = anyOff; });
-     return { shown: s, order: anyOff ? rows.map(function (r) { return r.key; }) : [] };
+  ["a group hidden until one of its bodies is ticked (See more come back)",
+   broken({ rowVisible: function (row, rows, shown, folds) {
+     if (REAL.isGroup(row)) { return REAL.members(rows, row.group).some(function (m) { return shown[m.key]; }); }
+     return REAL.rowVisible(row, rows, shown, folds);
    } })],
   ["a folded group showing its bodies",
-   broken({ rowVisible: function (row, rows, shown, open) {
-     return REAL.visible(row, shown[row.key], open);
+   broken({ rowVisible: function () { return true; } })],
+  ["a group's Reset leaving a body ticked",
+   broken({ groupReset: function (rows, group, shown, order) {
+     const out = REAL.groupReset(rows, group, shown, order);
+     const m = REAL.members(rows, group);
+     if (m.length) { out.shown[m[m.length - 1].key] = !!shown[m[m.length - 1].key]; }
+     return out;
    } })],
-  ["a group's box ticking only those already shown",
-   broken({ groupToggle: function (rows, group, shown, order) {
-     return { shown: Object.assign({}, shown), order: (order || []).slice() };
+  ["a group's Reset unticking a body outside the group",
+   broken({ groupReset: function (rows, group, shown, order) {
+     const s = {}; Object.keys(shown).forEach(function (k) { s[k] = false; });
+     return { shown: s, order: [] };
+   } })],
+  ["Reset offered in a folded group",
+   broken({ groupResetOffered: function (rows, group, shown) {
+     return REAL.members(rows, group).some(function (m) { return shown[m.key]; });
    } })],
   ["the count line reading only the x axis",
    broken({ outsideCount: function (points, lo, hi) {
@@ -248,8 +252,15 @@ if (!rows.length) {
         failures.push("the room opens on \"" + s + "\", which is not one of its rows");
       }
     });
-  const extra = rows.filter(function (r) { return r.seeMore; })
-    .map(function (r) { return REAL.isGroup(r) ? r.label : r.slug; });
+  // L-477: no row may be served see_more; the page would not read it,
+  // and the served words would then say something the drawer does not do.
+  const flagged = ((room.drawer || {}).rows || []).filter(function (r) {
+    return r && r.see_more !== undefined;
+  }).map(function (r) { return r.group || r.slug; });
+  if (flagged.length) {
+    failures.push("rows are still served see_more, which the drawer no longer reads: " +
+                  flagged.join(", "));
+  }
   console.log("Rows served (" + rows.length + "): " + slugs.length + " bodies, " +
               (rows.length - slugs.length) + " groups.");
   rows.filter(REAL.isGroup).forEach(function (g) {
@@ -267,7 +278,7 @@ if (!rows.length) {
       failures.push(r.slug + " names the group \"" + r["in"] + "\", which the room does not serve");
     }
   });
-  console.log("Behind See more: " + (extra.join(", ") || "none") + ".");
+  console.log("Served see_more: " + (flagged.join(", ") || "none") + ".");
   console.log("Opens on: " + ((arrival.drawn || []).join(", ") || "nothing") +
               "; highlighted: " + (arrival.highlight || "none") +
               "; Home's first answer: " +
@@ -282,9 +293,10 @@ if (page.indexOf('<script src="gallery/solar_system_drawer.js"></script>') < 0) 
   failures.push("interactive.html does not load gallery/solar_system_drawer.js");
 }
 ["rowsFromServed", "openingOrder", "homeTarget", "orderAdd", "orderRemove",
- "seeMoreLabel", "rowVisible", "countLine", "toggleAll", "roomFor", "tickable",
- "WORDS.enter", "WORDS.noRoom", "isGroup", "members", "groupCount", "groupToggle",
- "orderGroups", "WORDS.groupAll", "outsideCount", "WORDS.outside"].forEach(function (fn) {
+ "rowVisible", "countLine", "roomFor", "tickable",
+ "WORDS.enter", "WORDS.noRoom", "isGroup", "members", "groupCount", "groupArrow",
+ "groupReset", "groupResetOffered", "orderGroups", "WORDS.groupReset",
+ "outsideCount", "WORDS.outside"].forEach(function (fn) {
   if (page.indexOf("SSD." + fn) < 0) {
     failures.push("interactive.html never calls SolarSystemDrawer's " + fn);
   }
@@ -300,25 +312,44 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
 // lands is walked headlessly (tools/headless/walk_solar_system_drawer.js,
 // sections 16 to 18); here, that the wiring is there at all.
 [["ssOutsideUpdate();   // L-472", "the count line is not updated at every frame change"],
- ['id="ss-outside" hidden', "the count line has no place above the grid chip"],
- ["list.insertBefore(b, list.firstChild);", "See more / See fewer is not put at the top of the drawer"],
+ ['<div class="ss-outside sun-chrome" id="ss-outside" hidden></div>', "the count line has no place of its own at the lower left (L-478)"],
+ ["window.SolarSystemDrawer.WORDS.reset;", "the top bar's button does not read Reset in this room (L-477)"],
+ ["if (ssDrawer) { ssReset(); return; }", "the top bar's button does not call Reset in this room (L-477)"],
+ ["return ssHome(gd, true);", "Reset does not put back what the room opened on (L-477)"],
+ ["if (reset) { ssDrawer.folds = {}; }", "Reset does not fold every group shut (L-477)"],
+ ["return sunApplyVisibility(true, k, true)", "Go To on an unticked body does not fit its whole orbit (L-479)"],
+ ["return sunFocusOn(k, true).then(", "Go To on a ticked body does not fit its whole orbit (L-479)"],
  ["mountAboutLink();", "the i panel's About line is never added"],
  ['const ABOUT_HREF = "index.html#about";', "the About line does not open the lobby's About card"]
 ].forEach(function (c) {
   if (page.indexOf(c[0]) < 0) { failures.push(c[1]); }
 });
+[["ssAddSeeMore", "the See more button is still built"],
+ ["sun-see-more", "a See more button's style or class is still there"],
+ ["ssGroupTick", "a group's box still ticks all its bodies"],
+ ["ssToggleAll", "All / none still ticks every body in this room"]
+].forEach(function (c) {
+  if (page.indexOf(c[0]) >= 0) { failures.push(c[1] + " (L-477)"); }
+});
 const lobby = fs.readFileSync(path.join(root, "index.html"), "utf8");
 if (lobby.indexOf("if (hash === 'about') {") < 0) {
   failures.push("index.html does not open its About card at #about");
 }
+// L-480: closing the card a room's About line opened steps back there.
+[["/\\/interactive\\.html$/.test(aboutRef.pathname)", "index.html does not know a room sent the visitor to #about"],
+ ["if (wasOpen && aboutFromRoom && window.location.hash === '#about' &&", "closing the About card does not check that a room opened it"],
+ ["window.history.back();\n                return;", "closing the About card does not step back to the room"]
+].forEach(function (c) {
+  if (lobby.indexOf(c[0]) < 0) { failures.push(c[1] + " (L-480)"); }
+});
 
 if (failures.length) {
   console.log("=== FAIL: " + failures.length + " ===");
   failures.forEach(function (f) { console.log("  - " + f); });
   process.exit(1);
 }
-console.log("=== PASS: the Sun is never ticked, See more hides only what is not " +
-            "ticked, the handle names the last body ticked, All / none leaves the Sun, " +
-            "rooms are offered only where they exist, groups fold and tick their bodies, " +
+console.log("=== PASS: the Sun is never ticked, every row and group is listed, " +
+            "the handle names the last body ticked, nothing ticks many bodies at once, " +
+            "rooms are offered only where they exist, groups fold and reset their bodies, " +
             "the count line counts ticked bodies outside the view, " +
             "and the page asks this file ===");

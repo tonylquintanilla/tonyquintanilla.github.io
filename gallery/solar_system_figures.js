@@ -69,6 +69,22 @@
 // around the Sun, from JPL Horizons, fetched <date>." A period served
 // with no target_label prints as before.
 
+// THE ORBIT'S NEAR AND FAR DISTANCE (L-479, October 24, 2026). Tony,
+// offered "Its orbit runs from 76 to 1,000 AU from the Sun.": "It would
+// be informative but may be too long. It would also give an intuitive
+// sense of the eccentricity." Offered one short line, "Orbit: 76 to
+// 1,000 AU from the Sun.": "Yes". orbitLine works the two distances out
+// from the body's served Sun-centred elements, perihelion a(1 - e) and
+// aphelion a(1 + e), at full digits, and prints each in AU, never typed.
+// HOW MANY FIGURES. Each prints three significant figures, the length of
+// the AU in brackets on the room's shell hovers (Tony's ruling of
+// 2026-09-28: a comparison aid kept short), and never finer than the
+// Report test's place for the same error the body's distance line uses
+// (A Computed Position Prints What Its Errors Earn): two points on the
+// drawn orbit are not known better than the body on it. Only a closed
+// orbit (0 <= e < 1) has an aphelion; an open path prints no line, and
+// the room's notes say why.
+
 (function (global) {
   "use strict";
 
@@ -162,6 +178,35 @@
     };
   }
 
+  // L-479: "Orbit: q to Q AU from the Sun." aAu and e: the body's served
+  // Sun-centred elements. errKm: the error the body's distance line used,
+  // the larger of its drift and JPL's accuracy, at least half a km.
+  var ORBIT_FIGURES = 3;
+  function orbitLine(aAu, e, errKm, kmPerAu) {
+    if (!(typeof aAu === "number" && aAu > 0 && isFinite(aAu))) {
+      return { line: null, why: "no semi-major axis is served for it" };
+    }
+    if (!(typeof e === "number" && e >= 0 && isFinite(e))) {
+      return { line: null, why: "no eccentricity is served for it" };
+    }
+    if (e >= 1) {
+      return { line: null, why: "its orbit is open, so it has no far end" };
+    }
+    if (!(typeof errKm === "number" && errKm > 0 && isFinite(errKm)) ||
+        !(typeof kmPerAu === "number" && kmPerAu > 0)) {
+      return { line: null, why: "no measured error is served for it, " +
+                                "so no figures are earned" };
+    }
+    var earned = reportPlace(errKm / kmPerAu);
+    var fmt = function (v) {
+      var lead = Math.floor(Math.log10(v));
+      var r = roundTo(v, Math.max(earned, lead - (ORBIT_FIGURES - 1)));
+      return r.place < 0 ? r.value.toFixed(-r.place) : withCommas(r.value);
+    };
+    return { line: "Orbit: " + fmt(aAu * (1 - e)) + " to " + fmt(aAu * (1 + e)) +
+                   " AU from the Sun.", why: null };
+  }
+
   // A served value printed at its served figure count: rounded once to
   // that many significant figures, plain digits, and, when asked, the
   // separators the orrery's digits rule prints from 10,000 up.
@@ -251,6 +296,8 @@
   global.SolarSystemFigures = {
     servedFigures: servedFigures,
     periodLine: periodLine,
+    orbitLine: orbitLine,
+    ORBIT_FIGURES: ORBIT_FIGURES,
     periodAroundSun: periodAroundSun,
     FINEST_KM: FINEST_KM,
     NO_SOURCE_ACCURACY: NO_SOURCE_ACCURACY,

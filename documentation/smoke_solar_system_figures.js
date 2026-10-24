@@ -31,6 +31,13 @@
 //      printed exactly as the orrery printed it -- each number the
 //      export's own text, at the export's figure count -- with the page
 //      calling periodLine and its driver passing "period".
+//   6. (L-479) The orbit's near and far distance, "Orbit: q to Q AU from
+//      the Sun.": five worked cases (Sedna, Earth, a body whose error
+//      earns fewer than three figures, an open orbit, no eccentricity),
+//      every drawer body's line from the served cache's elements and its
+//      own distance error, printed as a table, and the page calling
+//      orbitLine with its driver passing "e". Three planted faults first:
+//      four figures, the error's place ignored, an open orbit printed.
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and makes the
@@ -52,6 +59,8 @@
 // drawer's group rows are skipped, and a small body -- an asteroid, a
 // comet, a dwarf planet served as a small body -- with no position_accuracy
 // prints by its drift with the sentence, as Apophis does, named by slug.)
+// Updated October 24, 2026 with Anthropic's Claude Opus 5.5 (L-479: the
+// orbit line, part 6, with three planted faults.)
 
 "use strict";
 const fs = require("fs");
@@ -202,6 +211,35 @@ function periodWorked(lib) {
   return out;
 }
 
+// The orbit line's worked cases (L-479), each worked out by hand here.
+function orbitWorked(lib) {
+  const out = [];
+  const K = 149597870.7;
+  const want = function (name, got, line) {
+    if (got.line !== line) {
+      out.push(name + ": expected " + JSON.stringify(line) + ", got " +
+               JSON.stringify(got.line));
+    }
+  };
+  // Sedna, elements of 2026-10-24: q = 539.584 x 0.141156 = 76.166,
+  // three figures 76.2; Q = 539.584 x 1.858844 = 1002.99, three figures
+  // 1.00e3, printed 1,000. A 5,000 km error earns far finer.
+  want("Sedna", lib.orbitLine(539.5843205401925, 0.8588442564677704, 5000, K),
+       "Orbit: 76.2 to 1,000 AU from the Sun.");
+  // Earth: q = 0.983289, Q = 1.016716 -> 0.983 and 1.02.
+  want("Earth", lib.orbitLine(1.00000261, 0.01671123, 0.5, K),
+       "Orbit: 0.983 to 1.02 AU from the Sun.");
+  // An error of 0.1 AU earns the tenths: the Report test's place for
+  // 0.1003 AU is 10^-1, coarser than three figures, so 0.5 and 1.5.
+  want("an error that earns fewer than three figures",
+       lib.orbitLine(1, 0.5, 0.1003 * K, K), "Orbit: 0.5 to 1.5 AU from the Sun.");
+  const open = lib.orbitLine(3, 1.2, 1, K);
+  if (open.line !== null || !open.why) { out.push("an open orbit printed a line"); }
+  const none = lib.orbitLine(3, undefined, 1, K);
+  if (none.line !== null || !none.why) { out.push("a body with no eccentricity printed a line"); }
+  return out;
+}
+
 // ---- self-test: the checks must be able to fail -------------------
 // Three copies of the REAL file, each with one deliberate fault, loaded
 // in a sandbox. Each must fail the worked cases.
@@ -248,6 +286,18 @@ const selfFailures = [];
     selfFailures.push(fault[0] + " passed the period's worked cases");
   }
 });
+[
+  ["the orbit line at four figures",
+   "var ORBIT_FIGURES = 3;", "var ORBIT_FIGURES = 4;"],
+  ["the orbit line ignoring the place its error earns",
+   "Math.max(earned, lead - (ORBIT_FIGURES - 1))", "lead - (ORBIT_FIGURES - 1)"],
+  ["an open orbit printed",
+   "if (e >= 1) {", "if (false) {"]
+].forEach(function (fault) {
+  if (orbitWorked(loadWith(fault[1], fault[2])).length === 0) {
+    selfFailures.push(fault[0] + " passed the orbit line's worked cases");
+  }
+});
 if (selfFailures.length) {
   console.log("SELF-TEST FAILED -- the checks below cannot fail:");
   selfFailures.forEach(function (f) { console.log("  " + f); });
@@ -258,10 +308,12 @@ console.log("Self-test: the worked cases fail on a Report test one place " +
             "sentence printed for a body with a row; the period's on a " +
             "print to more figures than the export's count, on a " +
             "period with no centre shown, and on a period asked of " +
-            "another body printed as the body's own.");
+            "another body printed as the body's own; the orbit line's on " +
+            "four figures, on its error's place ignored, and on an open " +
+            "orbit printed.");
 
 // ---- 1. worked cases ----------------------------------------------
-const failures = worked(SSF).concat(periodWorked(SSF));
+const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF));
 
 // ---- 2. the real config -------------------------------------------
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "data",
@@ -398,6 +450,35 @@ rows.forEach(function (slug) {
   if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
 });
 
+// ---- 6. the orbit lines (L-479) -------------------------------------
+// Each drawer body's line from the served cache's Sun-centred elements,
+// with the error its own distance line used, as the page passes it.
+const orbits = [];
+rows.forEach(function (slug) {
+  if (slug === "sun") { return; }
+  const rec = (cov.objects || {})[slug] || {};
+  const osc = rec.osculating || {};
+  const p = rec.as_of_today;
+  if (!p || !rec.trust) { return; }   // reported in part 3
+  const d = SSF.distanceLine(
+    { x: p.x / kmPerAu, y: p.y / kmPerAu, z: p.z / kmPerAu },
+    { rate_deg_per_day: rec.trust.error_rate_deg_per_day,
+      element_epoch_jd: rec.trust.element_epoch_jd },
+    p.t, (objs[slug] || {}).position_accuracy || null, kmPerAu);
+  if (!d.line) { return; }            // reported in part 3
+  const r = SSF.orbitLine(osc.a_au, osc.e,
+    Math.max(d.driftKm, d.sourceKm, SSF.FINEST_KM), kmPerAu);
+  if (!r.line) { failures.push(slug + ": no orbit line -- " + r.why); return; }
+  orbits.push([slug, r.line]);
+});
+[
+  ["SolarSystemFigures.orbitLine(", "the page does not call orbitLine"],
+  ['"e": (_rec.get("osculating") or {}).get("e")',
+   "the page's driver does not pass each body's eccentricity"]
+].forEach(function (pair) {
+  if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
+});
+
 // ---- report -----------------------------------------------------------
 console.log("");
 console.log("Distances at each body's served minute (data/solar-system/" +
@@ -414,6 +495,11 @@ periods.forEach(function (t) {
               (t[1] + "        ").slice(0, 8) + t[2]);
 });
 console.log("");
+console.log("Orbit lines as each body's hover prints them, " + orbits.length + " bodies:");
+orbits.forEach(function (t) {
+  console.log("  " + (t[0] + "                  ").slice(0, 18) + t[1]);
+});
+console.log("");
 if (failures.length) {
   console.log("=== FAIL: " + failures.length + " problem(s)");
   failures.forEach(function (f) { console.log("  " + f); });
@@ -424,4 +510,5 @@ console.log("=== PASS: 6 worked cases, " + rows.length + " drawer rows " +
             " served distances; Uranus, Neptune and Pluto print to " +
             "JPL's ten-thousands place; 6 period cases and " +
             periods.length + " served periods printed as the orrery " +
-            "printed them ===");
+            "printed them; 5 orbit-line cases and " + orbits.length +
+            " served orbit lines ===");

@@ -159,7 +159,12 @@
        - The About card has an address: index.html#about opens the lobby
          with the card showing, and closing it returns to the lobby's
          own address. Every exhibit's i panel ends with a link to it
-         (Tony's phone look, 2026-10-22). -->
+         (Tony's phone look, 2026-10-22).
+     Updated: October 24, 2026 with Anthropic's Claude Opus 5.5 (L-480)
+       - Closing the About card that a room's i panel opened steps back
+         to that room, as the room's Gallery button steps back to the
+         lobby. Arriving at #about any other way, closing it stays in the
+         lobby, as before (Tony's phone look, 2026-10-23). -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4877,10 +4882,29 @@
         var aboutClose = document.getElementById('about-close');
 
         function openAbout() { if (aboutOverlay) aboutOverlay.classList.add('open'); }
+        // L-480 (2026-10-24): did a room send the visitor here? True when
+        // the page opened at #about from interactive.html on this site --
+        // the About line at the foot of every room's i panel. Closing
+        // the card then steps back to that room, through the browser's
+        // own history, as the room's Gallery button steps back here.
+        var aboutFromRoom = false;
+        try {
+            var aboutRef = document.referrer ? new URL(document.referrer) : null;
+            aboutFromRoom = !!(aboutRef && aboutRef.origin === window.location.origin &&
+                /\/interactive\.html$/.test(aboutRef.pathname) &&
+                window.location.hash === '#about');
+        } catch (e) { aboutFromRoom = false; }
         // L-475: closing the card that #about opened leaves the lobby's
         // own address, so a reload does not open it again.
         function closeAbout() {
+            var wasOpen = !!(aboutOverlay && aboutOverlay.classList.contains('open'));
             if (aboutOverlay) aboutOverlay.classList.remove('open');
+            if (wasOpen && aboutFromRoom && window.location.hash === '#about' &&
+                    window.history.length > 1) {
+                aboutFromRoom = false;
+                window.history.back();
+                return;
+            }
             if (window.location.hash === '#about') {
                 history.replaceState(null, '', window.location.pathname);
             }

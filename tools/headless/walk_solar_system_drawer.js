@@ -26,10 +26,20 @@
 // view, through ticks, zooms and Home (L-472); section 18, the i panel
 // ending with the About line (L-475).
 //
+// Since 2026-10-24 (L-477, L-478, L-479): no See more and no "All".
+// Section 1 finds every group listed and folded and the top bar's
+// button reading Reset; section 6 folds a group and uses its Reset;
+// section 11 is the room's Reset; section 12b has Go To fit Pluto's
+// whole orbit; section 15 walks a group's Reset among its bodies;
+// section 16 finds See more gone and the count line out of the HUD;
+// section 19 has Go To fit Sedna's whole orbit and a zoom-out after Go
+// To on Hyakutake never shrink the view.
+//
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443). Updated
 // October 23, 2026 with Anthropic's Claude Opus 5.5 (L-472, L-474,
-// L-475).
+// L-475). Updated October 24, 2026 with Anthropic's Claude Opus 5.5
+// (L-477, L-478, L-479).
 const h = require("./page_harness.js");
 const fails = []; let n = 0;
 function ok(c, m) { n++; if (!c) { fails.push(m); } }
@@ -60,14 +70,18 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   const pick = (key) => click(row(key).querySelector(".pick"));
   const name = (key) => click(row(key).querySelector(".rname"));
   const count = () => d.getElementById("sun-drawer-count").textContent;
-  const seeMore = () => d.getElementById("sun-see-more");
   const near = (a, b) => Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b));
   // L-443: the bodies that can be ticked, from the served rows, and a
   // group's row and fold.
   const N = E("ssDrawer.rows.filter(r => !SolarSystemDrawer.isGroup(r) && SolarSystemDrawer.tickable(r.key) && ssIndex(r.key) >= 0).length");
   const head = (g) => d.querySelector('#sun-drawer-list .sun-row.sun-group[data-g="' + g + '"]');
-  const groupAll = (g) => d.querySelector('#sun-drawer-list .sun-see-more.group-all[data-g="' + g + '"]');
+  const groupReset = (g) => d.querySelector('#sun-drawer-list .sun-group-reset[data-g="' + g + '"]');
   const fold = (g) => click(head(g).querySelector(".rname"));
+  // L-479: a body's whole drawn group -- its orbit -- measured here, as
+  // the widest coordinate of any of its traces, independent of the page.
+  const wholeR = (key) => w.eval("sunPlotDiv.data").filter(t => t.legendgroup === key)
+    .reduce((m, t) => ["x", "y", "z"].reduce((mm, a) => (t[a] || []).reduce((q, v) =>
+      (isFinite(v) ? Math.max(q, Math.abs(v)) : q), mm), m), 0) * 1.2;
 
   ok(d.getElementById("loading-status").textContent === "Ready", "boot: not Ready");
   ok(h.errors.length === 0, "boot: errors " + h.errors.join("; "));
@@ -77,7 +91,11 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(focus() === "earth" && d.getElementById("sun-drawer-label").textContent === "Earth", "arrival handle");
   ok(count() === "1 of " + N, "arrival count " + count());
   ok(row("center").classList.contains("fixed"), "Sun row not fixed");
-  ok(row("apophis").hidden && head("neo").hidden && !seeMore().hidden && seeMore().textContent === "See more", "Apophis and its group not behind See more");
+  ok(row("apophis").hidden && !head("neo").hidden && !E("ssDrawer.folds.neo"), "the near-Earth asteroids are not listed, folded");
+  ok(!d.getElementById("sun-see-more") && !d.querySelector(".sun-see-more"), "See more is still on the page (L-477)");
+  ok(Array.from(d.querySelectorAll(".sun-row.sun-group[data-g]")).every(h => !h.hidden && h.getAttribute("aria-expanded") === "false" && h.querySelector(".fold").textContent === "\u25b8" && !h.querySelector(".box")),
+     "a group is hidden, open, shows no fold arrow, or still has a box");
+  ok(d.getElementById("sun-drawer-all").textContent === "Reset", "the top bar's button does not read Reset (L-477)");
   const inl = (key) => row(key).querySelector(".open-inline") ||
     { hidden: true, textContent: "", nextElementSibling: null };
   const expanded = (key) => row(key).getAttribute("aria-expanded") === "true";
@@ -115,19 +133,25 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   await name("earth");
   ok(focus() === "earth" && expanded("earth") && panel("earth").hidden && panel("neptune").hidden, "name tap did not name+open Earth");
   ok(E("__calls.length") === calls && range() === r0, "name tap moved the view");
-  // 6. See more / See fewer
-  await click(seeMore());
-  ok(!head("neo").hidden && row("apophis").hidden && seeMore().textContent === "See fewer", "See more did not show the group, or showed Apophis folded");
-  await fold("neo");
-  ok(!row("apophis").hidden && !groupAll("neo").hidden, "the group did not fold open to show Apophis");
+  // 6. L-477: a group folds open with nothing ticked; its Reset appears
+  // once one of its bodies is ticked, and unticks only them.
+  calls = E("__calls.length");
+  await click(head("neo").querySelector(".pick"));
+  ok(!row("apophis").hidden && !shown("apophis") && E("__calls.length") === calls,
+     "the group's left end did not just fold it open, or ticked or moved something");
+  ok(head("neo").querySelector(".fold").textContent === "\u25be", "the open group's arrow does not point down");
+  ok(groupReset("neo").hidden, "a group's Reset is offered with nothing in it ticked");
   await pick("apophis");
   ok(shown("apophis") && order() === "earth,mercury,neptune,apophis", "Apophis tick " + order());
-  await click(seeMore());
-  ok(!head("neo").hidden && !row("apophis").hidden, "a group with a ticked body hid on See fewer");
-  ok(!seeMore().hidden && seeMore().textContent === "See more", "See more not offered with the other groups behind it");
-  await pick("apophis");
-  ok(row("apophis").hidden && head("neo").hidden && !seeMore().hidden && seeMore().textContent === "See more", "unticked Apophis did not go back under See more with its group");
-  ok(order() === "earth,mercury,neptune", "untick removed from order " + order());
+  ok(!groupReset("neo").hidden && groupReset("neo").textContent === "Reset Near-Earth asteroids",
+     "the group's Reset is not offered once Apophis is ticked: " + groupReset("neo").textContent);
+  await click(groupReset("neo"));
+  ok(!shown("apophis") && shown("earth") && shown("mercury") && shown("neptune"),
+     "the group's Reset did not untick Apophis alone");
+  ok(order() === "earth,mercury,neptune", "the group's Reset left the order " + order());
+  ok(groupReset("neo").hidden && !row("apophis").hidden, "after its Reset the group closed, or its Reset stayed");
+  await fold("neo");
+  ok(row("apophis").hidden && groupReset("neo").hidden, "the group did not fold shut");
   // 7. A tap on a body in the scene: names its row, moves nothing
   E("setSunDrawer(false)");
   const nep = E("sunPlotDiv.data.findIndex(t => t.legendgroup === 'mercury' && t.meta && t.meta.label_target)");
@@ -153,25 +177,37 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   await E("navHome()"); await h.done();
   ok(shown("earth") && !shown("mercury") && focus() === "earth" && order() === "earth", "Home did not put back the opening");
   ok(near(range(), E("navArrivalR")), "Home opening frame " + range() + " " + E("navArrivalR"));
-  // 11. All / none leave the Sun alone
-  await click(d.getElementById("sun-drawer-all"));
-  ok(count() === N + " of " + N && shown("center"), "All " + count());
-  ok(!head("neo").hidden, "All: the group of a ticked Apophis hidden");
-  ok(order().split(",").length === N && order().indexOf("earth") === 0, "All order " + order());
-  await click(d.getElementById("sun-drawer-all"));
-  ok(count() === "0 of " + N && shown("center"), "none " + count());
-  ok(order() === "", "none order " + order());
+  // 11. L-477: Reset puts back what the room opened on -- Earth alone
+  // here -- with every group folded, the opening frame and angle, and
+  // the drawer closed, whatever was ticked or folded before.
+  E("setSunDrawer(true)");
+  await pick("mars"); await pick("neptune"); await fold("tno"); await pick("sedna");
+  E("sunPlotDiv.layout.scene.camera = {eye: {x: 3, y: 0, z: 0}}");
+  await click(d.getElementById("sun-drawer-all")); await h.done();
+  ok(shown("earth") && !shown("mars") && !shown("neptune") && !shown("sedna") && shown("center"),
+     "Reset did not put back the opening: " + count());
+  ok(count() === "1 of " + N && order() === "earth" && focus() === "earth", "Reset's count, order or name " + count() + " " + order() + " " + focus());
+  ok(Object.keys(E("ssDrawer.folds")).every(k => !E("ssDrawer.folds")[k]) && row("sedna").hidden, "Reset left a group open");
+  ok(near(range(), E("navArrivalR")) && E("sunPlotDiv.layout.scene.camera.eye.x") === 1.25, "Reset's frame or angle " + range());
+  ok(!d.getElementById("sun-drawer").classList.contains("open"), "Reset left the drawer open");
+  await pick("earth");
+  ok(count() === "0 of " + N, "count after unticking Earth " + count());
   // 12. GO on an unticked body: ticks it, closes the drawer, opens its text box
   E("setSunDrawer(true)");
   await click(row("jupiter").querySelector(".go"));
   ok(shown("jupiter") && order() === "jupiter", "GO did not tick Jupiter");
   ok(!d.getElementById("sun-drawer").classList.contains("open"), "GO left the drawer open");
   ok(E("sunLabelGroup") === idx("jupiter"), "GO did not open Jupiter's text box");
-  // 12b. GO on Pluto frames Pluto where it is now, inside its whole orbit
+  // 12b. L-479 (Tony, 2026-10-24, B1): GO on Pluto fits its whole orbit,
+  // reaching past Pluto where it is now, and opens its text box
   E("setSunDrawer(true)");
   await click(row("pluto_barycenter").querySelector(".go"));
-  ok(near(range(), radius("pluto_barycenter")), "GO Pluto frame " + range() + " vs " + radius("pluto_barycenter"));
-  ok(range() < 45, "Pluto framed on its whole orbit: " + range());
+  ok(near(range(), wholeR("pluto_barycenter")), "GO Pluto frame " + range() + " vs " + wholeR("pluto_barycenter"));
+  ok(range() > radius("pluto_barycenter") && range() > 45, "Pluto framed on where it is now, not its whole orbit: " + range());
+  ok(E("sunLabelGroup") === idx("pluto_barycenter"), "GO did not open Pluto's text box");
+  // A tick still frames on where the bodies are now (2026-10-02).
+  E("setSunDrawer(true)"); await pick("jupiter");
+  ok(near(range(), radius("pluto_barycenter")), "a tick did not go back to framing on positions: " + range());
   // 13. The panel words, as two bullet lists (Tony, 2026-10-02), and
   // Home's line as he settled it (2026-10-03)
   const info = d.getElementById("info-panel").textContent;
@@ -206,7 +242,6 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   // semi-major axis; its box ticks all of them and the frame holds them;
   // its count; its box again unticks only them; folded, they hide.
   E("setSunDrawer(true)");
-  if (seeMore().textContent === "See more") { await click(seeMore()); }
   if (!E("ssDrawer.folds.tno")) { await fold("tno"); }
   const tno = E("SolarSystemDrawer.members(ssDrawer.rows, 'tno').map(r => r.key)");
   const listed = Array.from(d.querySelectorAll('#sun-drawer-list .sun-row.member[data-k]'))
@@ -216,21 +251,25 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(as.every((a, i) => i === 0 || !(typeof a === "number" && typeof as[i - 1] === "number") || a >= as[i - 1]),
      "the group is not by served semi-major axis: " + as.join());
   const before = order();
-  await click(head("tno").querySelector(".pick"));
-  ok(tno.every(k => shown(k)), "the group's box did not tick all its bodies");
-  ok(head("tno").querySelector(".gcount").textContent === "\u25be " + tno.length + " of " + tno.length, "the group's count " + head("tno").querySelector(".gcount").textContent);
-  const far = tno.reduce((m, k) => Math.max(m, dist(k)), 0);
-  ok(range() >= far * 1.2 * (1 - 1e-9), "the frame does not hold the group: " + range() + " vs " + far * 1.2);
-  await click(head("tno").querySelector(".pick"));
-  ok(tno.every(k => !shown(k)) && order() === before, "the group's box did not untick only its bodies: " + order());
+  ok(head("tno").querySelector(".gcount").textContent === String(tno.length), "the group's count " + head("tno").querySelector(".gcount").textContent);
+  await pick(tno[0]); await pick(tno[tno.length - 1]);
+  ok(shown(tno[0]) && shown(tno[tno.length - 1]) && tno.slice(1, -1).every(k => !shown(k)),
+     "ticking two of the group ticked more or fewer");
+  ok(head("tno").querySelector(".gcount").textContent === "2 of " + tno.length, "the group's count with two ticked " + head("tno").querySelector(".gcount").textContent);
+  const far = Math.max(dist(tno[0]), dist(tno[tno.length - 1]));
+  ok(range() >= far * 1.2 * (1 - 1e-9), "the frame does not hold the two: " + range() + " vs " + far * 1.2);
+  await click(groupReset("tno"));
+  ok(tno.every(k => !shown(k)) && order() === before, "the group's Reset did not untick only its bodies: " + order());
   await fold("tno");
-  ok(tno.every(k => row(k).hidden) && groupAll("tno").hidden, "a folded group still shows its bodies");
-  // 16. L-474 (Tony, 2026-10-22): See more / See fewer at the top of the
-  // drawer's list, both ways round.
+  ok(tno.every(k => row(k).hidden) && groupReset("tno").hidden, "a folded group still shows its bodies");
+  // 16. L-477: See more is gone (L-474 had put it at the top); the list
+  // starts with the Sun. L-478: the count line is out of the HUD on the
+  // right, a page element of its own.
   const list = d.getElementById("sun-drawer-list");
-  ok(list.firstElementChild === seeMore(), "See fewer is not the drawer's first item");
-  await click(seeMore());
-  ok(list.firstElementChild === seeMore() && seeMore().textContent === "See more", "See more is not the drawer's first item");
+  ok(list.firstElementChild === row("center"), "the drawer's list does not start with the Sun");
+  const lineEl = d.getElementById("ss-outside");
+  ok(lineEl && !lineEl.closest(".sun-hud") && lineEl.classList.contains("sun-chrome"),
+     "the count line is still inside the HUD on the right (L-478)");
   // 17. L-472 (Tony's ruling of 2026-10-23): the count line. Worked out
   // here, from each ticked body's marker and the scene's three ranges,
   // and the words written out here, not by the page's helpers.
@@ -279,6 +318,28 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(lineOk("Home") === 0, "Home does not hold every body ticked");
   await E("ssTick(ssIndex('halley'), false)"); await E("ssTick(ssIndex('sedna'), false)"); await h.done();
   lineOk("Halley and Sedna unticked");
+  // 19. L-479: GO on Sedna fits its whole orbit, about 1,000 AU out,
+  // where a tick frames it where it is now, about 83 AU out.
+  E("setSunDrawer(true)");
+  await click(row("sedna").querySelector(".go"));
+  ok(near(range(), wholeR("sedna")) && range() > 1000, "GO Sedna frame " + range() + " vs " + wholeR("sedna"));
+  ok(E("sunLabelGroup") === idx("sedna"), "GO did not open Sedna's text box");
+  // GO on Hyakutake, the farthest aphelion served (about 4,650 AU),
+  // fits its whole orbit too. No orbit served today reaches past the
+  // zoom buttons' 5,000 AU cap, so the cap is tested on a 6,000 AU view:
+  // a zoom-out tap never makes a view smaller.
+  E("setSunDrawer(true)");
+  await click(row("hyakutake").querySelector(".go"));
+  ok(near(range(), wholeR("hyakutake")), "GO Hyakutake frame " + range() + " vs " + wholeR("hyakutake"));
+  await E("Plotly.relayout(sunPlotDiv, {'scene.xaxis.range': [-6000, 6000], 'scene.yaxis.range': [-6000, 6000], 'scene.zaxis.range': [-6000, 6000]})");
+  await E("navFrameZoom(1)"); await h.done();
+  ok(range() >= 6000, "a zoom-out tap shrank a 6,000 AU view to " + range());
+  // The hover: the orbit line from the served a and e, worked out here.
+  const sednaText = E("sunPlotDiv.data").find(t => t.legendgroup === "sedna" && t.meta && t.meta.label_target).text[0];
+  const sb = data.bodies.sedna;
+  const q3 = Number((sb.a_au * (1 - sb.e)).toPrecision(3)), Q3 = Number((sb.a_au * (1 + sb.e)).toPrecision(3));
+  ok(sednaText.indexOf("Orbit: " + q3 + " to " + Q3.toLocaleString("en-US") + " AU from the Sun.") >= 0,
+     "Sedna's hover lacks its orbit line: " + sednaText.slice(-120));
   // 18. L-475: the i panel's last line opens the lobby's About card.
   const last = d.getElementById("info-panel").lastElementChild;
   const about = last && last.querySelector("a");
