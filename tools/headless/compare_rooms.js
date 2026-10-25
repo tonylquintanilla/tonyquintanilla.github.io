@@ -1,8 +1,10 @@
 // compare_rooms.js -- drive one room the same way in two copies of the
 // gallery and say whether anything differs: the drawer's rows, the count,
 // the handle, and the trail of what is drawn and named as every row's box
-// is clicked in turn, then All / none and Home. Use it when a change to
-// SHARED chrome must leave the other rooms exactly as they were.
+// is clicked in turn, then the top bar's button twice and Home. Use it
+// when a change to SHARED chrome must leave the other rooms exactly as
+// they were. Since L-482 (2026-10-24) that button is Reset in every room;
+// walk_shell_reset.js checks what it puts back.
 //
 // Claude-only tooling (L-405); needs jsdom (see page_harness.js).
 //   node tools/headless/compare_rooms.js <before> <after> sun /tmp/payload_sun.json

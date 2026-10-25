@@ -325,6 +325,14 @@
         makes a link; and each room's closing paragraph, "Part of
         Paloma's Orrery", reads "the creator's daughter" and is a bulleted
         list, one sentence to a bullet. L-481)
+     Updated: October 24, 2026, evening, with Anthropic's Claude Opus 5.5
+       (Tony's ruling of this day on L-482: "Yes all rooms should use the
+        same Reset button and no 'see more'." The top bar's button reads
+        Reset in every room. In the Sun and Earth rooms it puts the room
+        back as it opened: every shell ticked or unticked as the served
+        arrival block left it, the text box closed, then Home's opening
+        frame and angle with the drawer closed. It no longer ticks or
+        unticks every shell. No room has a See more. L-482)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -354,8 +362,9 @@
     <!-- The figures a body's distance prints with in the Solar System
          room (L-398). Its own file so that a check can require it. -->
     <script src="gallery/solar_system_figures.js"></script>
-    <!-- What the Solar System room's drawer does: See more, opened rows,
-         the Sun's fixed row, Home's memory (L-363 step 3b). Its own file
+    <!-- What the Solar System room's drawer does: group rows, opened rows,
+         the Sun's fixed row, Reset, Home's memory (L-363 step 3b; L-477).
+         Its words (WORDS.reset) serve every room's top bar (L-482). Its own file
          so that a check can require it. -->
     <script src="gallery/solar_system_drawer.js"></script>
     <!-- The three-button navigation cluster (+, -, Home). One control
@@ -993,7 +1002,7 @@
         /* L-267 Stage C, Tony's option C (2026-09-03): on the Sun
            exhibit the panel and the drawer SHARE the height. While the
            drawer is open the panel's bottom edge sits at the drawer's
-           top edge, so no row, GO or All / none is covered. The
+           top edge, so no row, GO or Reset is covered. The
            drawer's height is measured (setSunDrawer, onSunResize) and
            carried in --sun-drawer-h; nothing moves sideways. */
         body.sun-exhibit .info-panel {
@@ -1266,7 +1275,7 @@
                 <div class="sun-drawer-head">
                     <span>In this scene &mdash;
                         <span id="sun-drawer-count"></span></span>
-                    <button type="button" id="sun-drawer-all">All / none</button>
+                    <button type="button" id="sun-drawer-all">Reset</button>
                 </div>
                 <div class="sun-drawer-list" id="sun-drawer-list"></div>
             </div>
@@ -3634,12 +3643,19 @@ async function initSunExhibit() {
         // (the Solar System room) gets the body drawer; the Sun and Earth
         // rooms hand none and keep theirs.
         ssDrawer = built.drawer ? ssDrawerState(built.drawer) : null;
-        // L-477: there the top bar's button is Reset, not All / none.
-        if (ssDrawer) {
-            document.getElementById("sun-drawer-all").textContent =
-                window.SolarSystemDrawer.WORDS.reset;
-        }
+        // L-477, L-482 (Tony, 2026-10-24: "Yes all rooms should use the
+        // same Reset button and no 'see more'"): the top bar's button
+        // reads Reset in every room, its word kept in one place, the
+        // drawer's WORDS.
+        document.getElementById("sun-drawer-all").textContent =
+            window.SolarSystemDrawer.WORDS.reset;
         buildSunDrawer(traces, drawerPlan ? drawerPlan.order : null);
+        // L-482: in a room whose drawer is shells, Reset puts back what
+        // the room opened on -- what the served arrival block left drawn,
+        // above. It is recorded once, here, from the drawer as built in
+        // this same boot, so the opening has one definition and Reset
+        // does not read the block a second time.
+        sunOpening = ssDrawer ? null : sunOpeningState();
         // L-289: the three axis lines through the origin go in AFTER the
         // drawer, so the drawer has no row for them, and after the
         // arrival extent has been measured, so they cannot widen it.
@@ -5019,8 +5035,8 @@ function buildSunDrawer(traces, order) {
 function renderSunDrawer() {
     let n = 0;
     // A row is matched to its group by the group it names (data-k), not
-    // by its place in the list: the Solar System room puts opened rows
-    // and a See more button between them. In the Sun and Earth rooms the
+    // by its place in the list: the Solar System room puts opened rows,
+    // group rows and a group's Reset between them. In the Sun and Earth rooms the
     // k-th row is group k, as before, and the "not yet drawn" rows after
     // them name no group and are passed over, as before.
     const rows = document.querySelectorAll("#sun-drawer-list .sun-row[data-k]");
@@ -5246,6 +5262,18 @@ function sunApplyVisibility(keepFocus, frameIdx, whole) {
     if (!keepFocus) { sunFocusIdx = sunOutermostShown(); }
     renderSunDrawer();
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
+    const shown = sunShownRestyle();
+    if (!shown) { return Promise.resolve(); }
+    const focusAt = (typeof frameIdx === "number") ? frameIdx : sunFocusIdx;
+    return Plotly.restyle(sunPlotDiv, { visible: shown.vis }, shown.idx)
+        .then(function () { return sunFrameOn(focusAt, whole); })
+        .then(sunLabelIfHidden);   // L-318: an unticked shell loses its label
+}
+
+// Every drawer trace and whether its group is ticked, as one restyle;
+// null when the drawer has no traces. Split out of sunApplyVisibility
+// (L-482) so Reset sends the same list. Nothing else changed.
+function sunShownRestyle() {
     const idx = [], vis = [];
     for (let i = 0; i < sunGroups.length; i++) {
         for (let j = 0; j < sunGroups[i].indices.length; j++) {
@@ -5253,11 +5281,38 @@ function sunApplyVisibility(keepFocus, frameIdx, whole) {
             vis.push(sunGroups[i].shown ? true : SUN_HIDDEN);
         }
     }
-    if (!idx.length) { return Promise.resolve(); }
-    const focusAt = (typeof frameIdx === "number") ? frameIdx : sunFocusIdx;
-    return Plotly.restyle(sunPlotDiv, { visible: vis }, idx)
-        .then(function () { return sunFrameOn(focusAt, whole); })
-        .then(sunLabelIfHidden);   // L-318: an unticked shell loses its label
+    return idx.length ? { idx: idx, vis: vis } : null;
+}
+
+// L-482 (Tony, 2026-10-24: "Yes all rooms should use the same Reset
+// button and no 'see more'"). What a room whose drawer is shells opened
+// on, by group key; recorded once at boot (initSunExhibit). The Solar
+// System room keeps its own Reset (ssReset, L-477) and leaves this null.
+let sunOpening = null;
+function sunOpeningState() {
+    const o = {};
+    sunGroups.forEach(function (g) { o[g.key] = !!g.shown; });
+    return o;
+}
+
+// Reset in the Sun and Earth rooms: every shell ticked or unticked as
+// the room opened, the text box closed, then Home -- the opening frame
+// and angle, the drawer closed, the handle naming the outermost shell
+// drawn. It replaces All / none, which ticked or unticked every shell.
+function sunReset() {
+    if (!sunOpening) { return Promise.resolve(); }
+    sunGroups.forEach(function (g) {
+        if (Object.prototype.hasOwnProperty.call(sunOpening, g.key)) {
+            g.shown = sunOpening[g.key];
+        }
+    });
+    return sunLabelClose()
+        .then(function () {
+            const shown = sunShownRestyle();
+            if (!shown || !sunPlotDiv || !window.Plotly) { return null; }
+            return Plotly.restyle(sunPlotDiv, { visible: shown.vis }, shown.idx);
+        })
+        .then(navHome);
 }
 
 // The drawer's rendered height, handed to the i panel as a CSS
@@ -5295,11 +5350,11 @@ function wireSunDrawer() {
         sunLabelClose();
     };
     document.getElementById("sun-drawer-all").onclick = function () {
-        // The Solar System room: Reset (L-477, Tony, 2026-10-24).
+        // Reset, in every room (L-477; L-482, Tony, 2026-10-24). The Solar
+        // System room's puts back its served opening and folds its groups;
+        // the Sun's and Earth's put back their arrival.
         if (ssDrawer) { ssReset(); return; }
-        const anyOff = sunGroups.some(function (g) { return !g.shown; });
-        sunGroups.forEach(function (g) { g.shown = anyOff; });
-        sunApplyVisibility(false);
+        sunReset();
     };
     document.addEventListener("keydown", function (ev) {
         if (ev.key === "Escape") { setSunDrawer(false); }
