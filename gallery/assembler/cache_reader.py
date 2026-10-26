@@ -19,6 +19,10 @@ was currently null at HEAD until 2026-08-23, a month after it stopped
 being true.)
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B: the caller may also hand it the spacecraft position files it has
+fetched, {slug: parsed positions/<slug>.json}, read by position_file(); it
+still opens nothing itself.)
 
 Role: cache
 Domain: assembler
@@ -30,8 +34,12 @@ from .errors import MissingCachePayloadError, UnknownObjectError
 
 
 class CacheReader:
-    def __init__(self, coverage_index: Dict[str, Any]):
+    def __init__(self, coverage_index: Dict[str, Any],
+                 position_files: Optional[Dict[str, Any]] = None):
         self._raw = coverage_index
+        # L-443 build B: spacecraft position files, already fetched and
+        # parsed by the caller (the page), keyed by slug.
+        self._position_files = position_files or {}
         self._objects = coverage_index.get("objects", {}) or {}
         # A stable id for the snapshot the assembly was built against, so the
         # L-080 fingerprint can detect "same scene, different underlying data."
@@ -60,6 +68,12 @@ class CacheReader:
                 "(coverage_index.json)." % slug
             )
         return self._objects[slug]
+
+    def position_file(self, slug: str) -> Optional[Dict[str, Any]]:
+        """The parsed positions/<slug>.json the caller handed in, or None
+        when it was not (the page could not fetch it, or a room that draws
+        no spacecraft)."""
+        return self._position_files.get(slug)
 
     def require_orbit_payload(self, slug: str) -> Dict[str, Any]:
         """Return the osculating block for slug, or fail with an

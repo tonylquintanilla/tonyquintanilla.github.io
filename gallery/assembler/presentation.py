@@ -17,6 +17,9 @@ Module updated: September 30, 2026 with Anthropic's Claude Opus 5.5 (L-363:
 colours for Mercury, Venus, Mars, Uranus, Neptune and the Pluto-Charon
 barycentre, from the orrery's color_map).
 
+Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B: the twelve spacecraft's colours, the orrery's.)
+
 Role: rendering
 Domain: assembler
 """
@@ -53,7 +56,6 @@ _COLORS = {
     "encke": "#9fd0b0",
     "pluto": "#c9a0dc",
     "charon": "#9aa0b0",
-    "voyager_1": "#ff6f61",
     "apophis": "#e07a5f",
     # L-363, 2026-09-30: the bodies the Solar System room added, in the
     # orrery's own colours (color_map in constants_new.py, orrery
@@ -65,6 +67,22 @@ _COLORS = {
     "uranus": "rgb(173, 216, 230)",
     "neptune": "rgb(0, 0, 255)",
     "pluto_barycenter": "rgb(205, 92, 92)",
+    # L-443 build B, 2026-10-25: the twelve spacecraft, in the orrery's own
+    # colours (color_map in constants_new.py, by each entry's color_key,
+    # orrery 0c27f47). Voyager 1's was #ff6f61 here, a choice of this file;
+    # it takes the orrery's now. A first choice for Tony's phone look.
+    "voyager_1": "white",
+    "voyager_2": "magenta",
+    "new_horizons": "cyan",
+    "juno": "cyan",
+    "osiris_apex": "cyan",
+    "parker_solar_probe": "goldenrod",
+    "bepicolombo": "red",
+    "solar_orbiter": "red",
+    "lucy": "green",
+    "juice": "blue",
+    "psyche_spacecraft": "green",
+    "europa_clipper": "red",
 }
 _DEFAULT_COLOR = "#8ab4f8"
 

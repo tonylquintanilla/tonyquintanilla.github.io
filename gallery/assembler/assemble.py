@@ -16,6 +16,11 @@ ring trace. (This was a real merge error in synthesis v1, caught and
 reversed -- manifest v2 Section 0. Internalized, not just complied with.)
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B: a spacecraft is drawn from its served positions file, handed in
+through the CacheReader -- its path solid to the minute shown and dashed
+after, its marker worked out between the points; a file not handed in is
+named in the warnings.)
 Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
 build 3: an object whose served record carries a drawn_orbit has its
 ellipse drawn from it, moved by render_orbits.drawn_orbit_offset; one that
@@ -33,7 +38,8 @@ from .models import (
     AssemblyResult, ROLE_ORBIT, ROLE_ORBIT_INFO, ROLE_OBJECT_MARKER,
     ROLE_CENTER_MARKER, ROLE_LABEL, SceneSpec,
 )
-from . import render_orbits, render_objects, presentation
+from . import render_orbits, render_objects, render_spacecraft, presentation
+from .models import ROLE_SPACECRAFT_ARC
 from .resolver import resolve
 
 
@@ -53,8 +59,29 @@ def assemble_scene(scene_dict: Dict[str, Any], catalog: Catalog,
         color = presentation.color_for(obj.slug)
         lg = obj.slug
 
-        # Spacecraft (positions arc) is artifact 5; artifact 1 objects are
-        # analytic (osculating). Guard rather than assume.
+        # L-443 build B: a spacecraft is drawn from its served positions,
+        # its path solid to the minute shown and dashed after
+        # (render_spacecraft). Its positions file comes from the caller,
+        # through the CacheReader; one that is not there is named.
+        if obj.category == "spacecraft" and obj.positions:
+            payload = cache.position_file(obj.slug)
+            if payload is None:
+                extra_warnings.append(
+                    "%s: its positions file (%s) was not handed to the "
+                    "assembler, so its path is not drawn"
+                    % (obj.slug, (obj.positions or {}).get("file")))
+                continue
+            parts, sc_warn = render_spacecraft.build_spacecraft_traces(
+                obj.name, payload, ctx.resolved_epoch_jd, color, lg)
+            extra_warnings.extend(sc_warn)
+            role_of = {"flown": ROLE_SPACECRAFT_ARC,
+                       "predicted": ROLE_SPACECRAFT_ARC,
+                       "marker": ROLE_OBJECT_MARKER, "label": ROLE_LABEL}
+            for part, trace in parts:
+                traces_with_roles.append((role_of[part], trace))
+                roles.append(role_of[part])
+            continue
+
         if obj.osculating:
             # Orbit shape polyline + single info marker. L-431 build 3: a
             # body whose period is taken around the barycentre has a served

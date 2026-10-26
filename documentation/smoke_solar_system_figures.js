@@ -62,6 +62,14 @@
 // Updated October 24, 2026 with Anthropic's Claude Opus 5.5 (L-479: the
 // orbit line, part 6, with three planted faults.) Afternoon (L-481): the
 // hover's bullets, JPL Horizons' address, and "creator's", in part 6.
+// Updated October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443 build
+// B): part 7, the spacecraft. Parts 2, 3, 5 and 6 are about bodies with
+// orbits and skip them; part 7 has three worked cases of pathDistanceLine
+// (whole kilometres, the working-out's error governing, no error served),
+// two planted faults (the error ignored, the sentence dropped), and every
+// spacecraft in the drawer: no accuracy row, no period, a path copied from
+// the orrery, a positions file in the served cache, and its distance at
+// its served minute, printed as a table with the sentence.
 
 "use strict";
 const fs = require("fs");
@@ -241,6 +249,29 @@ function orbitWorked(lib) {
   return out;
 }
 
+// ---- 7. worked cases: a spacecraft's distance (L-443 build B) ------
+function pathWorked(lib) {
+  const out = [];
+  const AU = KM_PER_AU_TEST;
+  // 170 AU exactly, no error: whole kilometres; 0.5 km in AU is about
+  // 3.3e-9, whose Report place is 1e-8.
+  const a = lib.pathDistanceLine({ x: 170, y: 0, z: 0 }, 0, AU);
+  if (a.line !== "170.00000000 AU from the Sun (25,431,638,019 km)" ||
+      a.note !== lib.NO_SOURCE_ACCURACY) {
+    out.push("170 AU with no error printed " + JSON.stringify(a.line) +
+             " / " + JSON.stringify(a.note));
+  }
+  // 5.2 AU, 1,500 km worked out between points: 2 x 1,500 = 3,000, so
+  // thousands of km; 1,500 km is 1.0e-5 AU, whose Report place is 1e-5.
+  const b = lib.pathDistanceLine({ x: 5.2, y: 0, z: 0 }, 1500, AU);
+  if (b.line !== "5.20000 AU from the Sun (777,909,000 km)") {
+    out.push("5.2 AU with a 1,500 km error printed " + JSON.stringify(b.line));
+  }
+  const c = lib.pathDistanceLine({ x: 1, y: 0, z: 0 }, undefined, AU);
+  if (c.line !== null || !c.why) { out.push("a path with no error served printed a line"); }
+  return out;
+}
+
 // ---- self-test: the checks must be able to fail -------------------
 // Three copies of the REAL file, each with one deliberate fault, loaded
 // in a sandbox. Each must fail the worked cases.
@@ -299,6 +330,17 @@ const selfFailures = [];
     selfFailures.push(fault[0] + " passed the orbit line's worked cases");
   }
 });
+[
+  ["a spacecraft's distance ignoring its error",
+   "var useKm = Math.max(errKm, FINEST_KM);", "var useKm = FINEST_KM;"],
+  ["a spacecraft's distance without the sentence",
+   "      note: NO_SOURCE_ACCURACY,\n      governs: (useKm",
+   "      note: null,\n      governs: (useKm"]
+].forEach(function (fault) {
+  if (pathWorked(loadWith(fault[1], fault[2])).length === 0) {
+    selfFailures.push(fault[0] + " passed the spacecraft's worked cases");
+  }
+});
 if (selfFailures.length) {
   console.log("SELF-TEST FAILED -- the checks below cannot fail:");
   selfFailures.forEach(function (f) { console.log("  " + f); });
@@ -311,10 +353,12 @@ console.log("Self-test: the worked cases fail on a Report test one place " +
             "period with no centre shown, and on a period asked of " +
             "another body printed as the body's own; the orbit line's on " +
             "four figures, on its error's place ignored, and on an open " +
-            "orbit printed.");
+            "orbit printed; a spacecraft's on its error ignored and on " +
+            "the sentence dropped.");
 
 // ---- 1. worked cases ----------------------------------------------
-const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF));
+const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF),
+                                    pathWorked(SSF));
 
 // ---- 2. the real config -------------------------------------------
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "data",
@@ -323,9 +367,15 @@ const objs = {};
 (cfg.objects || []).forEach(function (o) { objs[o.slug] = o; });
 const room = ((cfg.rooms || {})["solar-system"] || {});
 // L-443: a group row names no body, so only body rows are matched.
-const rows = ((room.drawer || {}).rows || [])
+const allRows = ((room.drawer || {}).rows || [])
   .filter(function (r) { return r && typeof r.slug === "string"; })
   .map(function (r) { return r.slug; });
+// L-443 build B: a spacecraft has no orbit, accuracy row or period; part 7
+// holds them. Parts 2 to 6 are the bodies that orbit.
+const crafts = allRows.filter(function (s) {
+  return (objs[s] || {}).category === "spacecraft";
+});
+const rows = allRows.filter(function (s) { return crafts.indexOf(s) < 0; });
 if (!rows.length) { failures.push("the room serves no drawer rows"); }
 const small = [];
 rows.forEach(function (slug) {
@@ -498,6 +548,41 @@ if (page.indexOf("inventor's") >= 0) {
   failures.push("a panel still says \"the inventor's daughter\" (L-481: the creator's)");
 }
 
+// ---- 7. the spacecraft (L-443 build B) ------------------------------
+const craftTable = [];
+crafts.forEach(function (slug) {
+  const o = objs[slug] || {};
+  if (o.position_accuracy) { failures.push(slug + ": a spacecraft serving a position_accuracy"); }
+  if (o.period !== undefined) { failures.push(slug + ": a spacecraft serving a period"); }
+  if (!o.path || !o.path.span || !o.path.made) {
+    failures.push(slug + ": serves no path plan (run tools/mirror_objects.py after the orrery's export is pulled)");
+  }
+  const rec = (cov.objects || {})[slug];
+  if (!rec) {
+    failures.push(slug + ": the served cache has no record for it (run the cache builder)");
+    return;
+  }
+  const file = (rec.positions || {}).file;
+  if (!file || !fs.existsSync(path.join(root, "data", "solar-system", file))) {
+    failures.push(slug + ": the served cache names no positions file on disk");
+  }
+  const p = rec.as_of_today;
+  if (!p) { failures.push(slug + ": the served cache has no as_of_today for it"); return; }
+  // At a served point the working-out has nothing to bridge.
+  const r = SSF.pathDistanceLine({ x: p.x / kmPerAu, y: p.y / kmPerAu,
+                                   z: p.z / kmPerAu }, 0, kmPerAu);
+  if (!r.line) { failures.push(slug + ": no line -- " + r.why); return; }
+  if (r.note !== SSF.NO_SOURCE_ACCURACY) { failures.push(slug + ": the sentence is missing"); }
+  craftTable.push([slug, r.line]);
+});
+[
+  ["SolarSystemFigures.pathDistanceLine(", "the page does not call pathDistanceLine"],
+  ['"kind": ("spacecraft" if _rec.get("category") == "spacecraft"',
+   "the page's driver does not mark a spacecraft"]
+].forEach(function (pair) {
+  if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
+});
+
 // ---- report -----------------------------------------------------------
 console.log("");
 console.log("Distances at each body's served minute (data/solar-system/" +
@@ -519,6 +604,12 @@ orbits.forEach(function (t) {
   console.log("  " + (t[0] + "                  ").slice(0, 18) + t[1]);
 });
 console.log("");
+console.log("Spacecraft distances at each one's served minute, " +
+            craftTable.length + " spacecraft:");
+craftTable.forEach(function (t) {
+  console.log("  " + (t[0] + "                  ").slice(0, 18) + t[1]);
+});
+console.log("");
 if (failures.length) {
   console.log("=== FAIL: " + failures.length + " problem(s)");
   failures.forEach(function (f) { console.log("  " + f); });
@@ -530,4 +621,5 @@ console.log("=== PASS: 6 worked cases, " + rows.length + " drawer rows " +
             "JPL's ten-thousands place; 6 period cases and " +
             periods.length + " served periods printed as the orrery " +
             "printed them; 5 orbit-line cases and " + orbits.length +
-            " served orbit lines ===");
+            " served orbit lines; 3 spacecraft cases and " +
+            craftTable.length + " served spacecraft ===");

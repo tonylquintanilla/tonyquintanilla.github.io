@@ -23,11 +23,28 @@ Role: devtool
 Domain: gallery
 
 Written October 2, 2026 with Anthropic's Claude Opus 5.5.
+Updated October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443 build B:
+the Solar System room's spacecraft position files are handed to the
+driver as POS_JSON, as the page fetches them.)
 """
 
 import json
 import re
 import sys
+
+
+def position_files(cov, cfg):
+    rows = (((cfg.get("rooms") or {}).get("solar-system") or {})
+            .get("drawer") or {}).get("rows") or []
+    out = {}
+    for row in rows:
+        rec = (cov.get("objects") or {}).get((row or {}).get("slug"))
+        if rec and rec.get("category") == "spacecraft":
+            f = (rec.get("positions") or {}).get("file")
+            if f:
+                with open("data/solar-system/" + f, encoding="utf-8") as h:
+                    out[row["slug"]] = json.load(h)
+    return out
 
 
 def main(argv):
@@ -44,10 +61,15 @@ def main(argv):
     last = src.rfind("json.dumps(")
     if last < 0:
         raise SystemExit("%s does not end in json.dumps(...)" % name)
+    cov = open("data/solar-system/coverage_index.json", encoding="utf-8").read()
+    cfg = open("data/objects_config.json", encoding="utf-8").read()
     space = {
-        "COV_JSON": open("data/solar-system/coverage_index.json", encoding="utf-8").read(),
-        "CFG_JSON": open("data/objects_config.json", encoding="utf-8").read(),
+        "COV_JSON": cov,
+        "CFG_JSON": cfg,
         "EPOCH_ISO": epoch,
+        # L-443 build B: as the page's solarSystemPositionFiles does, each
+        # spacecraft among the Solar System room's rows, its positions file.
+        "POS_JSON": json.dumps(position_files(json.loads(cov), json.loads(cfg))),
     }
     exec(src[:last] + "HEADLESS_OUT = " + src[last:], space)
     with open(out, "w", encoding="utf-8") as handle:

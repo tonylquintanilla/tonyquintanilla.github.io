@@ -21,6 +21,10 @@ Module created: October 1, 2026 with Anthropic's Claude Opus 5.5
 Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
 build 3: the period's copy, its refusals, and a planted mirror that drops
 the centre, each forced on a fixture.)
+Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B: a spacecraft's path is copied without the orrery's bookkeeping,
+none for another body, and a planted mirror that drops the events is
+caught.)
 """
 
 import json
@@ -148,6 +152,47 @@ def cases():
     failures = mo.plan(cfg4, ex6)[2]
     check(any(f.startswith("mars.period:") for f in failures),
           "a fetched period with no centre was not refused")
+    # L-443 build B: a spacecraft's path, copied without the orrery's
+    # bookkeeping; none for a body that is not one.
+    plan = {"made": "2026-10-25",
+            "span": {"start": "1977-09-06", "end": "2099-12-31"},
+            "backbone": {"step": "7d", "thin_tol_au": 0.02},
+            "events": [{"body": "Jupiter", "kind": "flyby", "stays": False,
+                        "closest": "1979-03-05 12:05", "jd": 2443938.0,
+                        "dist_km": 348436.0, "v_kms": 29.0,
+                        "hill_km": 53000000, "ideal_step_s": 1200.0,
+                        "window": ["1979-03-04 16:00", "1979-03-06 08:00"],
+                        "step": "30m"}],
+            "searched": ["Sun", "Jupiter"]}
+    ex8 = json.loads(json.dumps(ex5))
+    ex8["objects"]["apophis"]["path"] = plan
+    ex8["objects"]["mars"]["path"] = None
+    edits, changes, failures, linked = mo.plan(cfg4, ex8)
+    by8 = {o["slug"]: o for o in json.loads(mo.apply(cfg4, edits))["objects"]}
+    got = by8["apophis"].get("path") or {}
+    ev = (got.get("events") or [{}])[0]
+    check(not failures and got.get("span") == plan["span"]
+          and ev.get("window") == plan["events"][0]["window"]
+          and ev.get("step") == "30m" and ev.get("kind") == "flyby",
+          "a path was not copied with its span and each event's window, "
+          "step and kind")
+    check("searched" not in got and "v_kms" not in ev and "jd" not in ev
+          and ev.get("dist_km") == 348436.0,
+          "the orrery's bookkeeping was copied with the path")
+    check("path" not in by8["mars"], "a null path was written")
+    # A planted mirror that drops the events: the next plan sees it.
+    real_path = mo.path_copy
+    mo.path_copy = lambda p_: (dict(real_path(p_), events=[])
+                               if isinstance(p_, dict) else p_)
+    try:
+        dropped8 = mo.apply(cfg4, mo.plan(cfg4, ex8)[0])
+    finally:
+        mo.path_copy = real_path
+    check(any(c.startswith("apophis.path:")
+              for c in mo.plan(dropped8, ex8)[1]),
+          "a mirror that drops a path's events was not caught on the next "
+          "check")
+
     # An export older than schema 2 is refused.
     ex7 = json.loads(json.dumps(ex5))
     ex7["schema"] = 1
@@ -191,7 +236,11 @@ def main():
           "without an object refused, a null over held words refused; a "
           "period copied with its centre and without the orrery's record, "
           "a mirror that drops the centre caught, a fetched period with no "
-          "centre refused, an export older than schema 2 refused (L-431).")
+          "centre refused, an export older than schema 2 refused (L-431); "
+          "a spacecraft's path copied with its span and each event's "
+          "window, step and kind, without the orrery's bookkeeping, none "
+          "for a body that is not one, and a mirror that drops the events "
+          "caught (L-443).")
     print("MIRROR OBJECTS SUITE: pass")
     return 0
 

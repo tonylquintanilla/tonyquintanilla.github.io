@@ -175,6 +175,9 @@ Module updated: October 22, 2026 with Anthropic's Claude Opus 5.5
 (L-434 and L-468: the live check also fetches the two new stored
 drawings, the outer Oort cloud's and the galactic tide's; and the
 "Label words" checker runs documentation/smoke_label_words.js and gates.)
+Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5
+(L-443 build B: the live check also fetches the eleven new spacecraft
+positions files, which the Solar System room fetches before it draws.)
 """
 
 import hashlib
@@ -634,6 +637,19 @@ SERVED_FILES = [
     "gallery/far_lines.js",
     # L-460 (2026-10-21): likewise.
     "gallery/drawer_order.js",
+    # L-443 build B (2026-10-25): the Solar System room fetches each
+    # spacecraft's positions file before it draws (Voyager 1's above).
+    "data/solar-system/positions/voyager_2.json",
+    "data/solar-system/positions/new_horizons.json",
+    "data/solar-system/positions/juno.json",
+    "data/solar-system/positions/osiris_apex.json",
+    "data/solar-system/positions/parker_solar_probe.json",
+    "data/solar-system/positions/bepicolombo.json",
+    "data/solar-system/positions/solar_orbiter.json",
+    "data/solar-system/positions/lucy.json",
+    "data/solar-system/positions/juice.json",
+    "data/solar-system/positions/psyche_spacecraft.json",
+    "data/solar-system/positions/europa_clipper.json",
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing

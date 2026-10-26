@@ -333,6 +333,17 @@
         arrival block left it, the text box closed, then Home's opening
         frame and angle with the drawer closed. It no longer ticks or
         unticks every shell. No room has a See more. L-482)
+     Updated: October 25, 2026 with Anthropic's Claude Opus 5.5
+       (L-443, slice 2, build B: the twelve spacecraft still flying among
+        the planets join the Solar System room, in a Spacecraft group after
+        Earth's row. Each is drawn from its served positions file, which
+        the page fetches for the room's rows before the driver runs: its
+        path solid up to the minute shown and dashed after, JPL's predicted
+        part, its marker worked out between the served points, and a text
+        box giving its distance to the place that working-out earns, the
+        sentence that JPL's own uncertainty is not included, and how far
+        its path runs. Its source line names its span and step. Words by
+        Tony, 2026-10-25)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2214,7 +2225,13 @@ from assembler.catalog import Catalog
 from assembler.cache_reader import CacheReader
 from assembler.assemble import assemble_scene
 
-_cache = CacheReader(json.loads(COV_JSON))
+# L-443 build B: the spacecraft position files the page fetched for this
+# room's rows, {slug: positions file}, read through the CacheReader.
+try:
+    _pos = json.loads(POS_JSON)
+except NameError:
+    _pos = {}
+_cache = CacheReader(json.loads(COV_JSON), _pos)
 _cfg = json.loads(CFG_JSON)
 
 # The room's served settings (data/objects_config.json, "rooms"): its
@@ -2223,6 +2240,11 @@ _cfg = json.loads(CFG_JSON)
 _room = (_cfg.get("rooms") or {}).get("solar-system") or {}
 _bodies = [_r.get("slug") for _r in ((_room.get("drawer") or {}).get("rows") or [])
            if isinstance(_r, dict) and _r.get("slug") and _r.get("slug") != "sun"]
+# L-443 build B: a row the served cache does not hold yet (a body added to
+# the rows before the cache builder has run for it, or whose first fetch
+# failed) is named and left out, rather than stopping the whole room.
+_unserved = [_s for _s in _bodies if not _cache.has(_s)]
+_bodies = [_s for _s in _bodies if _cache.has(_s)]
 
 result = assemble_scene(
     {
@@ -2289,6 +2311,16 @@ for _slug in _bodies:
         # and how far the orbit runs from the Sun (a(1 - e), a(1 + e)).
         # Read, never typed.
         "e": (_rec.get("osculating") or {}).get("e"),
+        # L-443 build B: a spacecraft, drawn from its served positions, and
+        # what its source line names: the Horizons id it was asked by, the
+        # centre, when it was retrieved, and the backbone's step from its
+        # plan (the config's copy of the orrery's).
+        "kind": ("spacecraft" if _rec.get("category") == "spacecraft"
+                 else None),
+        "path_source": ((_pos.get(_slug) or {}).get("source")
+                        if _rec.get("category") == "spacecraft" else None),
+        "path_step": (((_objs.get(_slug) or {}).get("path") or {})
+                      .get("backbone") or {}).get("step"),
     }
 
 json.dumps({
@@ -2298,7 +2330,9 @@ json.dumps({
             "info_url": (_objs.get("sun") or {}).get("info_url")},
     "room": _room,
     "epoch_jd": result.context.resolved_epoch_jd,
-    "warnings": result.report["warnings"],
+    "warnings": result.report["warnings"] + [
+        "%s: in the room's rows but not in the served cache yet (the cache "
+        "builder has not served it)" % _s for _s in _unserved],
 })
 `;
 
@@ -2366,6 +2400,49 @@ function solarSystemSourceLine(src, sourceNote) {
         " under the title.";
 }
 
+// L-443 build B: a Julian date as "5 September 1977", or null.
+function solarSystemJdDay(jd) {
+    if (typeof jd !== "number" || !isFinite(jd)) { return null; }
+    // Julian date 2440587.5 is 1970-01-01 00:00, the Unix epoch.
+    return solarSystemDay(new Date(Math.round((jd - 2440587.5) * 86400000)));
+}
+
+// L-443 build B: a spacecraft's path line, about the picture (solid and
+// dashed), ended by the served path's last date. Tony's words, 2026-10-25,
+// with JPL's own word for the dashed part, "predicted" (his ruling: "use
+// the word JPL uses"; Voyager 1's data sheet: "a new solution and
+// prediction"; Juno's: "The trajectory after 2026-Sep-23 is a planning
+// prediction.").
+const SPACECRAFT_PATH_WORDS = "Its path is solid where it has already " +
+    "flown, and dashed where JPL's predicted path takes it next, as far as ";
+
+// L-443 build B: a spacecraft's source line, from what the positions file
+// says it was fetched by (the Horizons id, the centre, the day) and the
+// span drawn, the served path's first and last points. The step is the
+// plan's backbone, as served on the entry ("7d" reads "7 days").
+function spacecraftSourceLine(b, meta) {
+    const src = b.path_source || {};
+    if (!src.query_target) { return null; }
+    const from = solarSystemJdDay(meta.path_start_jd);
+    const to = solarSystemJdDay(meta.path_end_jd);
+    const got = solarSystemDay(new Date(String(src.retrieved)));
+    const centre = (src.center === "@sun")
+        ? "measured from the Sun's centre"
+        : "measured from the Horizons centre " + src.center;
+    const m = /^(\d+)d$/.exec(String(b.path_step || ""));
+    const step = m ? (m[1] === "1" ? "A point every day" :
+                      "A point every " + m[1] + " days") : null;
+    return "JPL Horizons (" + JPL_HORIZONS_URL + "), Horizons id: " +
+        src.query_target + ". Positions " + centre +
+        (from && to ? ", from " + from + " to " + to + ", as far as JPL's " +
+                      "data runs" : "") +
+        (got ? ", retrieved " + got : "") + "." +
+        (step ? " " + step + ", closer together around each flyby, with " +
+                "the straightest stretches thinned." : "") +
+        " The position shown is worked out from the points on either side" +
+        " of the minute under the title.";
+}
+
 // The distance line in a body's text box is built by
 // gallery/solar_system_figures.js (L-398): the place the larger of the
 // measured drift and JPL's own accuracy earns, written out. It left this
@@ -2414,7 +2491,10 @@ const SOLAR_SYSTEM_INFO_HTML = [
     "<li>This room is being built up.</li>",
     "<li>The comets and the asteroids are in groups in their places along",
     " the list. Tap a group's name to open it, then tick its bodies one at",
-    " a time. The spacecraft join later.</li>",
+    " a time.</li>",
+    // L-443 build B: Tony's words, 2026-10-25.
+    "<li>The spacecraft are a group after Earth. Each path is solid where",
+    " the spacecraft has flown and dashed where JPL predicts it will go.</li>",
     "<li>Each body's own shells &mdash; its atmosphere, rings and magnetic",
     " surroundings &mdash; live in that body's own room; so far the Sun",
     " and Earth have one.</li>",
@@ -2558,6 +2638,10 @@ const EXHIBITS = {
         // and opens its text box, the same for every body (ssGo).
         frameOnPosition: true,
         frameMargin: 1.2,
+        // L-443 build B: the spacecraft among its rows are drawn from
+        // their served positions files, which the page fetches before the
+        // driver runs (solarSystemPositionFiles).
+        servedPositions: true,
         // Draw the minute the room is opened (Tony, 2026-09-26). The Sun
         // and Earth rooms leave this out and draw today at 00:00 UTC.
         epochNow: true,
@@ -2662,41 +2746,69 @@ const EXHIBITS = {
                     if (typeof row.about === "string" && row.about) {
                         lines.push(bullet(solarSystemSoftWrap(row.about, 60)));
                     }
-                    const dist = SolarSystemFigures.distanceLine(
-                        { x: t.x[0], y: t.y[0], z: t.z[0] }, b.trust,
-                        epochJd, b.accuracy, GalleryFeatures._KM_PER_AU);
-                    if (dist.line) {
-                        lines.push(bullet(dist.line));
-                        if (dist.note) {
+                    if (b.kind === "spacecraft") {
+                        // L-443 build B: a spacecraft, drawn from its
+                        // served positions. Its distance prints to what
+                        // working out between its points earns; JPL's own
+                        // uncertainty for it is not served, which the text
+                        // box says; it has no period and no orbit line.
+                        const sc = t.meta || {};
+                        const dist = SolarSystemFigures.pathDistanceLine(
+                            { x: t.x[0], y: t.y[0], z: t.z[0] },
+                            sc.interp_err_km, GalleryFeatures._KM_PER_AU);
+                        if (dist.line) {
+                            lines.push(bullet(dist.line));
                             lines.push(bullet(solarSystemSoftWrap(dist.note, 60)));
+                        } else {
+                            warnings.push(label + ": no distance shown -- " + dist.why);
+                        }
+                        const ends = solarSystemJdDay(sc.path_end_jd);
+                        if (ends) {
+                            lines.push(bullet(solarSystemSoftWrap(
+                                SPACECRAFT_PATH_WORDS + ends + ".", 60)));
+                        } else {
+                            warnings.push(label + ": the end of its served path " +
+                                          "is not known, so the path line is not shown");
                         }
                     } else {
-                        warnings.push(label + ": no distance shown -- " + dist.why);
-                    }
-                    if (dist.accuracyWhy) {
-                        warnings.push(label + ": " + dist.accuracyWhy);
-                    }
-                    // L-431 build 3: the orbital period, every body.
-                    const per = SolarSystemFigures.periodLine(b.period);
-                    if (per.line) {
-                        lines.push(bullet(solarSystemSoftWrap(per.line, 60)));
-                    } else if (per.warning) {
-                        warnings.push(label + ": " + per.warning);
-                    }
-                    // L-479 (Tony, 2026-10-24): how near and how far the
-                    // orbit runs from the Sun, from the served a and e,
-                    // never finer than the distance line's own error.
-                    if (dist.line) {
-                        const orb = SolarSystemFigures.orbitLine(b.a_au, b.e,
-                            Math.max(dist.driftKm, dist.sourceKm,
-                                     SolarSystemFigures.FINEST_KM),
-                            GalleryFeatures._KM_PER_AU);
-                        if (orb.line) { lines.push(bullet(orb.line)); }
-                        else { warnings.push(label + ": no orbit line -- " + orb.why); }
+                        const dist = SolarSystemFigures.distanceLine(
+                            { x: t.x[0], y: t.y[0], z: t.z[0] }, b.trust,
+                            epochJd, b.accuracy, GalleryFeatures._KM_PER_AU);
+                        if (dist.line) {
+                            lines.push(bullet(dist.line));
+                            if (dist.note) {
+                                lines.push(bullet(solarSystemSoftWrap(dist.note, 60)));
+                            }
+                        } else {
+                            warnings.push(label + ": no distance shown -- " + dist.why);
+                        }
+                        if (dist.accuracyWhy) {
+                            warnings.push(label + ": " + dist.accuracyWhy);
+                        }
+                        // L-431 build 3: the orbital period, every body.
+                        const per = SolarSystemFigures.periodLine(b.period);
+                        if (per.line) {
+                            lines.push(bullet(solarSystemSoftWrap(per.line, 60)));
+                        } else if (per.warning) {
+                            warnings.push(label + ": " + per.warning);
+                        }
+                        // L-479 (Tony, 2026-10-24): how near and how far the
+                        // orbit runs from the Sun, from the served a and e,
+                        // never finer than the distance line's own error.
+                        if (dist.line) {
+                            const orb = SolarSystemFigures.orbitLine(b.a_au, b.e,
+                                Math.max(dist.driftKm, dist.sourceKm,
+                                         SolarSystemFigures.FINEST_KM),
+                                GalleryFeatures._KM_PER_AU);
+                            if (orb.line) { lines.push(bullet(orb.line)); }
+                            else { warnings.push(label + ": no orbit line -- " + orb.why); }
+                        }
                     }
                     t.text = [lines.join("<br>")];
                     const extra = { label_target: true };
-                    const line = solarSystemSourceLine(b.source, row.source_note);
+                    const line = (b.kind === "spacecraft")
+                        ? spacecraftSourceLine(b, t.meta || {})
+                        : solarSystemSourceLine(b.source, row.source_note);
                     if (line) { extra.source = line; }
                     if (b.source && b.source.center !== "@sun") {
                         warnings.push(label + " is served measured from " +
@@ -2775,6 +2887,35 @@ async function fetchTextOrThrow(url) {
     const r = await fetch(url);
     if (!r.ok) { throw new Error(url + " -> HTTP " + r.status); }
     return await r.text();
+}
+
+// L-443 build B: the positions files of the spacecraft among the Solar
+// System room's rows, {slug: parsed file}, each named in the served
+// cache's record (positions.file, under data/solar-system/). Only the
+// room's own rows, so a spacecraft served for another room costs this one
+// nothing. A file that cannot be fetched is named in notes.
+async function solarSystemPositionFiles(cov, cfg, notes) {
+    const rows = ((((cfg.rooms || {})["solar-system"] || {}).drawer || {}).rows || []);
+    const out = {};
+    for (const row of rows) {
+        const slug = row && row.slug;
+        const rec = slug ? ((cov.objects || {})[slug] || null) : null;
+        if (!rec || rec.category !== "spacecraft") { continue; }
+        const file = (rec.positions || {}).file;
+        if (!file) {
+            notes.push(slug + ": the served cache names no positions file, " +
+                       "so its path is not drawn");
+            continue;
+        }
+        try {
+            out[slug] = JSON.parse(await fetchTextOrThrow(
+                "data/solar-system/" + file));
+        } catch (err) {
+            notes.push(slug + ": its positions file could not be read (" +
+                       err.message + "), so its path is not drawn");
+        }
+    }
+    return out;
 }
 
 // Anything the assembler or the renderers could not read is REPORTED,
@@ -3450,6 +3591,16 @@ async function initSunExhibit() {
             JSON.parse(cov).frame_constants);
         pyodide.globals.set("COV_JSON", cov);
         pyodide.globals.set("CFG_JSON", cfg);
+        // L-443 build B: a room that draws spacecraft (servedPositions)
+        // fetches each one's positions file, for its own rows only, and
+        // hands them to the driver. One that cannot be fetched is named
+        // and that path is not drawn; the rest of the room is.
+        const positionNotes = [];
+        if (EX.servedPositions) {
+            const posFiles = await solarSystemPositionFiles(
+                JSON.parse(cov), JSON.parse(cfg), positionNotes);
+            pyodide.globals.set("POS_JSON", JSON.stringify(posFiles));
+        }
         // Today at 00:00 UTC, or, for a room that asks, the current
         // minute (the Solar System room, epochNow).
         pyodide.globals.set(
@@ -3500,7 +3651,7 @@ async function initSunExhibit() {
         const drawerPlan = built.drawer ? null : DrawerOrder.plan(
             built.traces, payload.features || [], GalleryFeatures._KM_PER_AU);
 
-        const notes = frameNotes.concat(payload.warnings || [], drawingNotes,
+        const notes = frameNotes.concat(positionNotes, payload.warnings || [], drawingNotes,
                                         built.warnings || [],
                                         drawerPlan ? drawerPlan.warnings : []);
         for (let i = 0; i < notes.length; i++) {

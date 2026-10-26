@@ -45,8 +45,19 @@ WHAT IT WRITES, PER LINKED OBJECT
                   ORBIT drawn around its centre follows only when the
                   cache builder runs, since the builder fetches the
                   elements around that centre. The Sun's period is null in
-                  the export and nothing is written for it. Inserted
-                  likewise, as one line
+                  the export and nothing is written for it, nor for a
+                  spacecraft's (L-443 build B). Inserted likewise, as one
+                  line
+    path          a spacecraft's path plan, the orrery's (L-443 build B,
+                  path_plan.py): the day it was made, its span (JPL's own,
+                  launch to where JPL's data ends), the backbone's step and
+                  thinning, and each event's body, kind, moment, distance,
+                  window and step (PATH_FIELDS, EVENT_FIELDS). The cache builder
+                  fetches the path by it, whole again whenever the plan is
+                  a new one, so a new plan reaches a visitor only when the
+                  builder runs. Null for a body that is not a spacecraft,
+                  and nothing is written then. Inserted likewise, as one
+                  line
 
     Every change is printed, field by field, with the old and the new
     value, so a fix is reported and not only made (Tony's ruling,
@@ -92,6 +103,9 @@ Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
 build 3: each linked object's period is copied, without the orrery's
 record; an export older than schema 2, and a fetched period with no
 centre, are refused.)
+Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B: a spacecraft's path plan is copied, without the orrery's
+bookkeeping, for the cache builder to fetch the path by.)
 """
 
 import json
@@ -104,8 +118,28 @@ CONFIG = os.path.join("data", "objects_config.json")
 EXPORT = os.path.join("data", "objects_export.json")
 ROOM = "solar-system"
 REPLACED = ("name", "horizons_id", "id_type")
-INSERTED = ("description", "info_url", "period")
+INSERTED = ("description", "info_url", "period", "path")
 MIN_SCHEMA = 2
+
+# L-443 build B: what the config holds of a spacecraft's path plan -- what
+# the cache builder fetches by and the room names -- and of each event,
+# what the builder fetches around it and thins it by (its distance), and a
+# room may name it by. The rest of the export's plan (the bodies searched,
+# each event's speed and Hill sphere) is the orrery's and is not copied.
+PATH_FIELDS = ("made", "span", "backbone", "events")
+EVENT_FIELDS = ("body", "kind", "stays", "closest", "dist_km", "window",
+                "step")
+
+
+def path_copy(path):
+    """What the config holds of an exported path. None stays None (a
+    spacecraft not yet planned, and every body that is not one)."""
+    if not isinstance(path, dict):
+        return path
+    out = dict((k, path.get(k)) for k in PATH_FIELDS)
+    out["events"] = [dict((f, e.get(f)) for f in EVENT_FIELDS if f in e)
+                     for e in (path.get("events") or [])]
+    return out
 
 
 def period_copy(period):
@@ -120,6 +154,8 @@ def wanted(want, field):
     """The value the config should hold for one inserted field."""
     if field == "period":
         return period_copy(want.get("period"))
+    if field == "path":
+        return path_copy(want.get("path"))
     return want.get(field)
 
 

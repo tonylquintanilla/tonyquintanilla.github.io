@@ -103,6 +103,17 @@ Module updated: October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443:
 the warning for a comet whose period is around another centre no longer
 says it is drawn at perihelion; the comets are anchored at today now.
 And the served window prints its width and the body that sets it.)
+Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B: a spacecraft is fetched by the path plan the orrery makes, which
+the objects mirror copies onto its entry -- the backbone across JPL's own
+span, launch to the end of JPL's data, thinned where it runs straight;
+each event's window at its own step, thinned at its own scale; the daily
+tail, today and two days on -- whole again whenever the plan is a new one,
+and only the tail otherwise. Its points are keyed to the minute. Its
+as_of_today is today's point, not the plan's last. The shrink gate holds a
+path fetched again by a new plan out of its count, by name. The spacecraft
+sanity bound is 1,000 AU. A spacecraft with no plan and no typed start is
+named and served last-good, never asked from 1970.)
 
 Role: cache
 Domain: cache_builder
@@ -353,8 +364,15 @@ def _require_astro():
             "with the fetch functions monkeypatched.")
 
 
+# L-443 build B: a path fetched by its plan holds points closer together
+# than a day (an event window's step can be a minute), so its points are
+# keyed to the minute; every other range keeps the day.
+DAY_KEY = '%Y-%m-%d'
+MINUTE_KEY = '%Y-%m-%d %H:%M'
+
+
 def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1d',
-                        hkwargs=None, epoch_jds=None):
+                        hkwargs=None, epoch_jds=None, key_fmt=DAY_KEY):
     """Fetch a daily range of position vectors in the object's canonical center.
     Returns {date_str 'YYYY-MM-DD': {'jd': float, 'x','y','z': AU}}.
     Source pattern: orbit_data_manager.py:~676-690 (range query, TDB epochs,
@@ -394,7 +412,7 @@ def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1
     for row in eph:
         jd = float(row['datetime_jd'])
         dt = Time(jd, format='jd').datetime.replace(tzinfo=timezone.utc)
-        out[dt.strftime('%Y-%m-%d')] = {
+        out[dt.strftime(key_fmt)] = {
             'jd': jd, 'x': float(row['x']), 'y': float(row['y']), 'z': float(row['z']),
         }
     return out
@@ -653,6 +671,9 @@ def measure_trust(obj, osc, warn):
 # GUARD v2 -- MONITOR (F8): warn on either bound, never reject/discard.
 # ===========================================================================
 
+SPACECRAFT_SANITY_AU = 1000.0
+
+
 def guard_monitor(slug, category, points, a, e, k, max_distance_au):
     """Return a list of warning dicts (empty if clean). Never rejects; the raw
     archive keeps every point regardless. Bands: elliptical q/k <= |r| <= k*Q;
@@ -662,12 +683,15 @@ def guard_monitor(slug, category, points, a, e, k, max_distance_au):
         prev_jd = None
         for date, p in sorted(points.items()):
             r = math.sqrt(p['x'] ** 2 + p['y'] ** 2 + p['z'] ** 2)
-            bad = (not math.isfinite(r)) or r <= 0 or r >= 200.0
+            # L-443 build B: 1,000 AU, not 200 -- a path fetched by its plan
+            # runs to the end of JPL's data, and the Voyagers' run to 2100,
+            # past 400 AU. Still a sanity bound, far beyond any real path.
+            bad = (not math.isfinite(r)) or r <= 0 or r >= SPACECRAFT_SANITY_AU
             if prev_jd is not None and p['jd'] <= prev_jd:
                 bad = True
             if bad:
                 warnings.append({'slug': slug, 'date': date, 'r_au': r,
-                                 'band': 'spacecraft-sanity(0<r<200, t increasing)',
+                                 'band': 'spacecraft-sanity(0<r<%g, t increasing)' % SPACECRAFT_SANITY_AU,
                                  'severity': 'review'})
             prev_jd = p['jd']
         return warnings
@@ -857,11 +881,23 @@ def build_position_file(root, slug, obj, raw_points):
             'size_kb': int(round(outp.stat().st_size / 1024.0))}
 
 
-def as_of_today_km(raw_points):
-    """Last (today) raw point converted to km/JD -- the honest 'you are here'."""
+def as_of_today_km(raw_points, upto_jd=None):
+    """Last (today) raw point converted to km/JD -- the honest 'you are here'.
+    L-443 build B: a path fetched by its plan runs into JPL's predicted future,
+    so its last point is not today. With upto_jd, the latest point at or
+    before it, and None when none lies within two days before it (a path
+    whose data ended long ago serves no 'you are here')."""
     if not raw_points:
         return None
-    d = sorted(raw_points.keys())[-1]
+    if upto_jd is None:
+        d = sorted(raw_points.keys())[-1]
+    else:
+        before = [k for k, p in raw_points.items() if p['jd'] <= upto_jd]
+        if not before:
+            return None
+        d = max(before, key=lambda k: raw_points[k]['jd'])
+        if upto_jd - raw_points[d]['jd'] > 2.0:
+            return None
     p = raw_points[d]
     return {'t': p['jd'], 'x': p['x'] * KM_PER_AU, 'y': p['y'] * KM_PER_AU,
             'z': p['z'] * KM_PER_AU}
@@ -936,8 +972,39 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
         if _c.get('no_fragments'):
             hk_v['no_fragments'] = True
 
-    if is_spacecraft:
+    if is_spacecraft and obj.get('path'):
+        # L-443 build B: the path is fetched by the plan the orrery made
+        # (path_plan.py), which the objects mirror copies onto the entry.
+        # Whole, again, whenever the plan is a new one (made again on its
+        # 30-day cycle, or its span moved), so JPL's revised predicted part
+        # replaces the old; otherwise only the tail, as every night.
+        plan = obj['path']
+        new_plan = (refresh_spacecraft or mode == 'first-build' or not points
+                    or raw.get('plan_made') != plan.get('made')
+                    or raw.get('plan_span') != plan.get('span'))
+        if new_plan:
+            points.clear()
+            new = fetch_path_by_plan(obj, plan, today, freeze, warn)
+            raw['plan_made'] = plan.get('made')
+            raw['plan_span'] = plan.get('span')
+            run_manifest['objects'][slug] = (
+                'path fetched by its plan made %s (%d points)'
+                % (plan.get('made'), len(new)))
+            run_manifest.setdefault('replanned', []).append(slug)
+        else:
+            new = fetch_path_tail(obj, plan, today, freeze)
+            run_manifest['objects'].setdefault(slug, 'nightly(%d)' % len(new))
+        points.update(new)
+    elif is_spacecraft:
         sc = obj.get('overrides', {}).get('spacecraft', {})
+        if not sc.get('start'):
+            # L-443 build B: a spacecraft is served by its path plan, which
+            # the objects mirror copies from the orrery. None yet, and no
+            # typed start either: say so by name rather than ask Horizons
+            # from 1970 (served last-good, or left out, by the caller).
+            raise ValueError("no path plan is served for this spacecraft yet "
+                             "(the orrery's path_plan.py makes it; the objects "
+                             "mirror copies it)")
         if refresh_spacecraft:
             points.clear()                          # A-10: force a full re-backfill
         if mode == 'first-build' or refresh_spacecraft or not points:
@@ -989,7 +1056,9 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
         run_manifest['guard_warnings'].extend(w)
 
     save_raw_vectors(root, slug, raw)
-    result['as_of_today'] = as_of_today_km(points)
+    result['as_of_today'] = as_of_today_km(
+        points, _dt_to_jd(today) + 0.5 if (is_spacecraft and obj.get('path'))
+        else None)
     result['_raw_points'] = points
     return result
 
@@ -1002,6 +1071,77 @@ def _spacecraft_start(obj):
     name so the curated date can be fixed at source (non-blocking)."""
     sc = obj.get('overrides', {}).get('spacecraft', {})
     return _parse_calendar(sc.get('start', '1970-01-01'))
+
+
+# A window's points are thinned at its own event's scale: a point is kept
+# where the path bends away from the chord by more than this fraction of
+# the passing distance. Without it a pass of the Sun at 0.3 AU, whose
+# window by the encounter rule runs about 50 days either side at 6-hour
+# steps, served some 400 points for a gentle curve (the first simulated
+# build of 2026-10-25: about 1.7 MB of positions for twelve spacecraft).
+WINDOW_THIN_FRACTION = 0.01
+
+# How far past today a path's daily tail runs, so the room, drawing the
+# minute it is opened, finds a point on each side of that minute until the
+# next build. Days.
+PATH_TAIL_AHEAD_DAYS = 2
+
+
+def _plan_span(plan):
+    span = plan.get('span') or {}
+    return _parse_calendar(span['start']), _parse_calendar(span['end'])
+
+
+def fetch_path_tail(obj, plan, today, freeze):
+    """The daily tail of a path fetched by its plan: from freeze days before
+    today to PATH_TAIL_AHEAD_DAYS after, inside the plan's span. {} when
+    today is outside the span."""
+    start, end = _plan_span(plan)
+    t0 = max(start, today - timedelta(days=freeze))
+    t1 = min(end, today + timedelta(days=PATH_TAIL_AHEAD_DAYS))
+    if t0 >= t1:
+        return {}
+    return fetch_vectors_range(obj['horizons_id'], obj['id_type'],
+                               obj['canonical_center'], t0, t1, '1d',
+                               key_fmt=MINUTE_KEY)
+
+
+def fetch_path_by_plan(obj, plan, today, freeze, warn):
+    """A spacecraft's whole path by the orrery's plan (L-443 build B):
+    the backbone across the plan's span -- JPL's own, launch to where its
+    data ends, the predicted part included -- at the plan's step, thinned by
+    Douglas-Peucker where it runs straight; then each event's window at the
+    event's own step, thinned at the event's own scale (WINDOW_THIN_FRACTION
+    of its passing distance) and merged after the backbone's thinning, so a
+    flyby is never thinned away; then the daily tail, unthinned, so the
+    room's marker has a point each side of today. Nothing is extended past
+    the span. Every point is keyed to the minute (MINUTE_KEY)."""
+    start, end = _plan_span(plan)
+    bb = plan.get('backbone') or {}
+    hid, ity, ctr = obj['horizons_id'], obj['id_type'], obj['canonical_center']
+    glide = fetch_vectors_range(hid, ity, ctr, start, end,
+                                bb.get('step', '7d'), key_fmt=MINUTE_KEY)
+    tol = bb.get('thin_tol_au')
+    if tol:
+        before = len(glide)
+        glide = douglas_peucker(glide, float(tol))
+        warn("%s: DP thin backbone %d -> %d points (tol=%s AU)"
+             % (obj['slug'], before, len(glide), tol))
+    new = dict(glide)
+    for ev in plan.get('events') or []:
+        w0, w1 = (_parse_calendar(ev['window'][0]),
+                  _parse_calendar(ev['window'][1]))
+        w0, w1 = max(w0, start), min(w1, end)
+        if w0 >= w1:
+            continue
+        got = fetch_vectors_range(hid, ity, ctr, w0, w1, ev['step'],
+                                  key_fmt=MINUTE_KEY)
+        if ev.get('dist_km'):
+            got = douglas_peucker(
+                got, float(ev['dist_km']) * WINDOW_THIN_FRACTION / KM_PER_AU)
+        new.update(got)
+    new.update(fetch_path_tail(obj, plan, today, freeze))
+    return new
 
 
 def douglas_peucker(points_dict, tol_au):
@@ -1598,10 +1738,14 @@ def assert_structural(index, staging):
                 raise ValidationAbort("#T %s: as_of_today.t not within 48h of generated" % slug)
 
 
-def shrink_gate(staging_root, live_root, warn):
+def shrink_gate(staging_root, live_root, warn, replanned=()):
     """Point-count >= 95% per object AND aggregate vs live raw. Data-LOSS gate:
     abort. Pattern: orbit_data_manager.py:418-450 (orrery 4e2629c), re-expressed
-    as point-count (truer than bytes for date-keyed dicts)."""
+    as point-count (truer than bytes for date-keyed dicts).
+
+    L-443 build B: a spacecraft path fetched again by a NEW plan this run
+    (replanned) has the count its plan gives, not the old one, so it is
+    held out of both counts -- and named, so the exemption is seen."""
     if live_root is None or not (live_root / 'raw' / 'vectors').exists():
         return  # first build: nothing to shrink from
     def counts(root):
@@ -1613,6 +1757,14 @@ def shrink_gate(staging_root, live_root, warn):
                     c[p.stem] = len(json.load(f).get('points', {}))
         return c
     live, staged = counts(live_root), counts(staging_root)
+    held = sorted(s for s in replanned if s in live)
+    if held:
+        warn("shrink gate: %s fetched again by a new path plan; held out of "
+             "the count (old %s, new %s)"
+             % (", ".join(held), ", ".join(str(live[s]) for s in held),
+                ", ".join(str(staged.get(s, 0)) for s in held)))
+        for s in held:
+            live.pop(s, None)
     live_total = sum(live.values()) or 1
     staged_total = sum(staged.get(s, 0) for s in live)
     if staged_total < 0.95 * live_total:
@@ -2346,7 +2498,8 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
         run_manifest['drawings'] = serve_drawings(
             staging, index, out_dir.parent / 'drawings')
         assert_structural(index, staging)
-        shrink_gate(staging, out_dir if (out_dir / 'raw').exists() else None, warn)
+        shrink_gate(staging, out_dir if (out_dir / 'raw').exists() else None, warn,
+                    replanned=run_manifest.get('replanned', ()))
         run_manifest['structural_validation'] = 'pass'
     except ValidationAbort as e:
         run_manifest['structural_validation'] = 'fail: %s' % e

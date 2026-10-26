@@ -51,6 +51,20 @@ WHAT IT DOES
     look at GitHub Desktop's change list, commit and push, and run the
     maintenance run's live pass.
 
+    IF THE ORRERY PULLED IS NOT THE ONE IN YOUR ORRERY FOLDER, THE DAILY
+    RUN STOPS (L-461; Tony, 2026-10-25: "stop. confirmed."). After the
+    pulls, each pull's recorded orrery commit (data/constants_export.sha,
+    data/objects_export.sha, data/drawings/pulled_at.sha) is compared
+    with the newest commit in your orrery folder, the folder
+    palomas_orrery_for_github beside this one, read from its .git
+    folder. When they differ the run stops before the cache builder,
+    naming both commits and the two likely causes: the orrery's work is
+    not pushed, or GitHub has not finished serving a push. No retry, no
+    wait: the one time it happened (2026-10-21) the cause was an unpushed
+    orrery, which waiting cannot fix. If the folder or its commit cannot
+    be read, the run stops too and says where it looked, because a check
+    that cannot look is not passing.
+
     IF A RUN RECORD IS LOST, THE DAILY RUN STOPS (L-449; Tony,
     2026-10-17: stop and name). Between steps 3 and 4 it compares the
     records in the new cache, data/solar-system/raw/runs, with those in
@@ -84,7 +98,10 @@ HOW TO RUN IT
                                   script is missing. The gallery
                                   maintenance run runs this, so a rename
                                   that would break the Daily Run is
-                                  caught on the day it happens.
+                                  caught on the day it happens. Since
+                                  L-461 it also runs the pull-match
+                                  check on five made-up cases, two of
+                                  them planted faults it must catch.
 
 Role: devtool
 Domain: dev_tools
@@ -108,6 +125,11 @@ with the replaced cache's and stops before the maintenance run on a loss,
 naming each lost record and where its copy is; Tony, 2026-10-17: stop and
 name. It is not a step of its own and has no button: it runs no script,
 and it means something only straight after a build.)
+Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-461,
+built with L-443's build B: after the pulls, each pulled orrery commit is
+compared with the newest commit in Tony's orrery folder, and a difference
+STOPS the Daily Run before the cache builder, by Tony's ruling of
+2026-10-25, "stop. confirmed."; --check runs the comparison's fixtures.)
 """
 
 import datetime
@@ -141,6 +163,13 @@ LIVE_RUNS = os.path.join("data", "solar-system", "raw", "runs")
 PREV_RUNS = os.path.join("data", "solar-system.prev", "raw", "runs")
 LINE = "=" * 70
 
+# L-461: Tony's orrery folder, beside this one, and the files in which
+# each pull records the orrery commit it fetched.
+ORRERY_FOLDER = os.path.join(os.path.dirname(ROOT), "palomas_orrery_for_github")
+PULLED_SHAS = (os.path.join("data", "constants_export.sha"),
+               os.path.join("data", "objects_export.sha"),
+               os.path.join("data", "drawings", "pulled_at.sha"))
+
 
 def last_build():
     """(time, outcome) of the last real cache swap, or (None, reason)."""
@@ -168,6 +197,139 @@ def last_build():
     return when, last.get("outcome", "?")
 
 
+def local_head(folder):
+    """(sha, None) for the newest commit in a git folder, read from its
+    .git directory -- HEAD, then the branch's loose ref or packed-refs --
+    so no git command is needed; or (None, why) when it cannot be read."""
+    git = os.path.join(folder, ".git")
+    try:
+        with open(os.path.join(git, "HEAD"), "r", encoding="utf-8") as f:
+            head = f.read().strip()
+    except OSError as exc:
+        return None, "its .git/HEAD could not be read (%s)" % exc
+    if not head.startswith("ref:"):
+        return (head, None) if len(head) == 40 else (
+            None, "its .git/HEAD is not a commit: %r" % head[:60])
+    ref = head[4:].strip()
+    loose = os.path.join(git, *ref.split("/"))
+    if os.path.exists(loose):
+        with open(loose, "r", encoding="utf-8") as f:
+            sha = f.read().strip()
+        return (sha, None) if len(sha) == 40 else (
+            None, "its %s is not a commit" % ref)
+    packed = os.path.join(git, "packed-refs")
+    if os.path.exists(packed):
+        with open(packed, "r", encoding="utf-8") as f:
+            for line in f:
+                bits = line.strip().split()
+                if len(bits) == 2 and bits[1] == ref and len(bits[0]) == 40:
+                    return bits[0], None
+    return None, "its branch %s was found in neither refs nor packed-refs" % ref
+
+
+def pulled_shas(root):
+    """{file: sha or None} for each pull's recorded orrery commit."""
+    out = {}
+    for rel in PULLED_SHAS:
+        try:
+            with open(os.path.join(root, rel), "r", encoding="utf-8") as f:
+                out[rel] = f.read().strip() or None
+        except OSError:
+            out[rel] = None
+    return out
+
+
+def pull_matches_push(root, orrery_folder):
+    """L-461. {"status": "ok" | "differ" | "cannot", "local", "pulled",
+    "lines"}: whether every pull fetched the orrery commit that is newest
+    in the orrery folder. "lines" say what was compared, or why not."""
+    local, why = local_head(orrery_folder)
+    pulled = pulled_shas(root)
+    if local is None:
+        return {"status": "cannot", "local": None, "pulled": pulled,
+                "lines": ["Pull matches push: could not read the newest "
+                          "commit in your orrery folder,",
+                          "  %s: %s." % (orrery_folder, why)]}
+    missing = [rel for rel, sha in pulled.items() if not sha]
+    if missing:
+        return {"status": "cannot", "local": local, "pulled": pulled,
+                "lines": ["Pull matches push: no pulled commit recorded in "
+                          + ", ".join(missing) + "."]}
+    differ = sorted(set(sha for sha in pulled.values() if sha != local))
+    if not differ:
+        return {"status": "ok", "local": local, "pulled": pulled,
+                "lines": ["Pull matches push: the orrery pulled is %s, the "
+                          "newest commit in your orrery folder." % local[:8]]}
+    return {"status": "differ", "local": local, "pulled": pulled,
+            "lines": ["Pull matches push: NO. The pulls fetched the orrery at "
+                      + ", ".join(s[:8] for s in differ) + ";",
+                      "  your orrery folder's newest commit is %s." % local[:8]]}
+
+
+def _fixture_git(root, sha, packed=False):
+    git = os.path.join(root, ".git")
+    os.makedirs(os.path.join(git, "refs", "heads"))
+    with open(os.path.join(git, "HEAD"), "w") as f:
+        f.write("ref: refs/heads/main\n")
+    if packed:
+        with open(os.path.join(git, "packed-refs"), "w") as f:
+            f.write("# pack-refs with: peeled fully-peeled sorted\n"
+                    "%s refs/heads/main\n" % sha)
+    else:
+        with open(os.path.join(git, "refs", "heads", "main"), "w") as f:
+            f.write(sha + "\n")
+
+
+def pull_match_fixtures():
+    """(passed, total, lines): the comparison on made-up folders. Five
+    cases -- a match by loose ref, a match by packed-refs, a difference, an
+    unreadable folder, a pull with no recorded commit -- then two planted
+    faults (a comparison that always matches; one that ignores the
+    drawings' pull) that must fail a case."""
+    import shutil
+    import tempfile
+    a, b = "a" * 40, "b" * 40
+
+    def case(local, pulls, packed=False, broken=False, fn=None):
+        tmp = tempfile.mkdtemp(prefix="pull_match_")
+        try:
+            orrery = os.path.join(tmp, "orrery")
+            gal = os.path.join(tmp, "gallery")
+            os.makedirs(os.path.join(gal, "data", "drawings"))
+            if not broken:
+                _fixture_git(orrery, local, packed)
+            for rel, sha in zip(PULLED_SHAS, pulls):
+                if sha:
+                    with open(os.path.join(gal, rel), "w") as f:
+                        f.write(sha + "\n")
+            return (fn or pull_matches_push)(gal, orrery)["status"]
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def run(fn=None):
+        got = [case(a, [a, a, a], fn=fn) == "ok",
+               case(a, [a, a, a], packed=True, fn=fn) == "ok",
+               case(a, [a, a, b], fn=fn) == "differ",
+               case(a, [a, a, a], broken=True, fn=fn) == "cannot",
+               case(a, [a, None, a], fn=fn) == "cannot"]
+        return got
+
+    got = run()
+    always = lambda root, folder: {"status": "ok"}
+
+    def no_drawings(root, folder):
+        saved = globals()["PULLED_SHAS"]
+        globals()["PULLED_SHAS"] = saved[:2]
+        try:
+            return pull_matches_push(root, folder)
+        finally:
+            globals()["PULLED_SHAS"] = saved
+    caught = [not all(run(always)), not all(run(no_drawings))]
+    lines = ["  pull-match fixtures: %d of %d cases right; planted faults "
+             "caught %d of 2" % (sum(got), len(got), sum(caught))]
+    return sum(got) + sum(caught), len(got) + 2, lines
+
+
 def check():
     print("Daily Run steps, from %s:" % ROOT)
     missing = 0
@@ -176,10 +338,19 @@ def check():
         print("  %d. %-34s %s  %s" % (n, label, script, "found" if found else "MISSING"))
         if not found:
             missing += 1
+    passed, total, lines = pull_match_fixtures()
+    for line in lines:
+        print(line)
     if missing:
         print("=== DAILY RUN: %d of %d step scripts MISSING" % (missing, len(STEPS)))
         return 1
-    print("=== DAILY RUN: all %d step scripts found" % len(STEPS))
+    if passed != total:
+        print("=== DAILY RUN: all %d step scripts found, but the pull-match "
+              "check FAILED %d of %d fixture checks (L-461)"
+              % (len(STEPS), total - passed, total))
+        return 1
+    print("=== DAILY RUN: all %d step scripts found; the pull-match check "
+          "passed %d of %d fixture checks (L-461)" % (len(STEPS), passed, total))
     return 0
 
 
@@ -335,12 +506,27 @@ def main():
     pulled, named = run_pulls(2, *STEPS[PULLS_STEP])
     results.append(("Pulls from the orrery", pulled))
     stopped = pulled != "ok"
+    # L-461 (Tony, 2026-10-25: "stop. confirmed."): the orrery the pulls
+    # brought must be the newest commit in the orrery folder, or the run
+    # STOPS here, before the cache builder. No retry, no wait.
+    match = None
+    if not stopped:
+        match = pull_matches_push(ROOT, ORRERY_FOLDER)
+        print("")
+        for line in match["lines"]:
+            print(line)
+        results.append(("Pull matches push",
+                        "ok" if match["status"] == "ok" else
+                        ("DIFFERS: stopped" if match["status"] == "differ"
+                         else "could not compare: stopped")))
+        stopped = match["status"] != "ok"
 
     records = None
     if stopped:
-        results.append(("Cache builder", "not run: the pulls failed"))
-        results.append(("Maintenance run, offline",
-                        "not run: the pulls failed"))
+        why = ("the pulls failed" if pulled != "ok"
+               else "the pull does not match the push")
+        results.append(("Cache builder", "not run: " + why))
+        results.append(("Maintenance run, offline", "not run: " + why))
     else:
         # 3. The cache build. No OneDrive pause since 2026-10-10 (L-216):
         # Tony, "the retry is sufficient" -- the builder retries a refused
@@ -381,6 +567,28 @@ def main():
                 and not result.startswith("ok")
                 and not result.startswith("not run:")]
     print("")
+    if stopped and match is not None and match["status"] != "ok":
+        print("  STOPPED after the pulls, before the cache builder (L-461).")
+        for line in match["lines"]:
+            print("  " + line)
+        if match["status"] == "differ":
+            print("  The two likely causes:")
+            print("    - the orrery's work is committed but not pushed, or")
+            print("    - you pushed a moment ago and GitHub has not finished")
+            print("      serving it.")
+            print("  NEXT:")
+            print("    1. In GitHub Desktop, open the orrery and push it (or, if")
+            print("       it shows the push just went, wait a minute).")
+            print("    2. Run the Daily Run again.")
+        else:
+            print("  NEXT:")
+            print("    1. Check that your orrery folder is at")
+            print("       %s and is a GitHub Desktop repository." % ORRERY_FOLDER)
+            print("    2. Run the Daily Run again.")
+        print("  Nothing was built. What you approved in the guest book is")
+        print("  already saved.")
+        print(LINE)
+        return 1
     if stopped:
         print("  STOPPED after the pulls, before the cache builder (L-446).")
         if named:

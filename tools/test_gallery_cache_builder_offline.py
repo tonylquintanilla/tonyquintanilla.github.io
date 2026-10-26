@@ -48,6 +48,16 @@ builder serves as LF, and "every named drawing served byte for byte"
 failed on Tony's machine alone. A fourth check holds the builder's rule:
 a drawing pulled with Windows line endings is served with LF).
 
+Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B: the fake answers every spacecraft and the minute keys a path
+fetched by its plan uses; the spacecraft sanity bound is 1,000 AU; and
+nine checks of a spacecraft fetched by its plan: the whole span with its
+event window kept, today's point served, the raw archive naming its plan,
+a night asking only the tail, a new plan fetched whole and held out of the
+shrink gate by name, that exemption shown live by a planted fault, a
+window thinned at its own event's scale, and a path that ended years ago
+serving no as_of_today; the trust checks hold every spacecraft; and a
+stand-in plan for a spacecraft the config serves none, as for drawings.)
 Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5 (L-449:
 four checks of the run records. The nightly re-run's [RUNS] lines say what
 the copy carried; the Daily Run's compare_run_records, run on that build's
@@ -183,7 +193,7 @@ def _step_days(step):
 
 
 def fake_vectors(horizons_id, id_type, center, start_dt, stop_dt, step='1d',
-                 hkwargs=None, epoch_jds=None):
+                 hkwargs=None, epoch_jds=None, key_fmt='%Y-%m-%d'):
     # M2 (Option B): a SEPARATE, additive branch for the trust measurement's
     # check-vector fetch, genuinely Kepler-consistent with fake_elements' own
     # i=5/omega=100/Omega=50/M0=100 convention and mocked n -- so the
@@ -222,14 +232,29 @@ def fake_vectors(horizons_id, id_type, center, start_dt, stop_dt, step='1d',
     total = max((stop_dt - start_dt).days, 1)
     d = start_dt
     while d <= stop_dt:
-        if horizons_id == '-31':  # spacecraft: straight arc growing 1 -> ~160 AU
-            r = 1.0 + 159.0 * (min((d - start_dt).days, total) / total)
-            out[d.strftime('%Y-%m-%d')] = {'jd': b._dt_to_jd(d), 'x': r, 'y': 0.0, 'z': 0.0}
+        # L-443 build B: every spacecraft (an id starting with '-'), not
+        # only Voyager 1, and the key format the builder asks for (a path
+        # fetched by its plan is keyed to the minute).
+        if str(horizons_id).startswith('-'):  # spacecraft: straight arc
+            r = FAKE_SC_R(d)
+            out[d.strftime(key_fmt)] = {'jd': b._dt_to_jd(d), 'x': r, 'y': 0.0, 'z': 0.0}
         else:
             a, e = ELEMS[horizons_id]
-            out[d.strftime('%Y-%m-%d')] = {'jd': b._dt_to_jd(d), 'x': a, 'y': 0.0, 'z': 0.0}
+            out[d.strftime(key_fmt)] = {'jd': b._dt_to_jd(d), 'x': a, 'y': 0.0, 'z': 0.0}
         d += timedelta(days=stride)
     return out
+
+
+# A spacecraft's distance from the Sun on a day: a straight arc, 1 AU in
+# 1977 growing to about 160 AU in 2026 and on, so a path asked to 2100
+# stays under the 1,000 AU sanity bound (L-443 build B). Until then the arc
+# grew from wherever the asked range began, which a fixed day replaces so
+# every fetch of one craft agrees.
+_SC_T0 = datetime(1977, 9, 6, tzinfo=timezone.utc)
+
+
+def FAKE_SC_R(d):
+    return 1.0 + 3.25 * max((d - _SC_T0).days, 0) / 365.25
 
 
 def fake_solution_tp(name, horizons_id=None, id_type='smallbody', hkwargs=None):
@@ -261,9 +286,33 @@ REAL_RUN_BUILD = b.run_build
 
 def run_build_with_stand_ins(config, out_dir, *args, **kwargs):
     """L-421: every build here gets the stand-in drawings first, in the
-    data folder beside its served directory, unless they are there."""
+    data folder beside its served directory, unless they are there.
+    L-443 build B: and every spacecraft served neither a path plan nor a
+    typed start gets a stand-in plan, as the drawings do, so the suite does
+    not depend on a pull: in the config as committed, a spacecraft's plan
+    arrives only when the objects mirror copies it from the pulled export."""
     stand_in_drawings(config, Path(out_dir).parent)
-    return REAL_RUN_BUILD(config, out_dir, *args, **kwargs)
+    return REAL_RUN_BUILD(stand_in_plans(config), out_dir, *args, **kwargs)
+
+
+STAND_IN_PLAN = {'made': '2026-07-01',
+                 'span': {'start': '1977-09-06', 'end': '2099-12-31'},
+                 'backbone': {'step': '7d', 'thin_tol_au': 0.02},
+                 'events': []}
+
+
+def stand_in_plans(cfg):
+    if not any(o.get('category') == 'spacecraft' and not o.get('path')
+               and not (o.get('overrides') or {}).get('spacecraft', {})
+               .get('start') for o in cfg.get('objects', [])):
+        return cfg
+    c = json.loads(json.dumps(cfg))
+    for o in c['objects']:
+        if (o.get('category') == 'spacecraft' and not o.get('path')
+                and not (o.get('overrides') or {}).get('spacecraft', {})
+                .get('start')):
+            o['path'] = json.loads(json.dumps(STAND_IN_PLAN))
+    return c
 
 
 def install_mocks():
@@ -563,10 +612,12 @@ def main():
         for slug2, block2 in objs.items():
             tr = block2.get('trust')
             check(tr is not None, "M2: %s serves a trust block" % slug2)
-            if slug2 == 'voyager_1':
+            if block2.get('category') == 'spacecraft':
+                # L-443 build B: every spacecraft, not only Voyager 1.
                 check(tr.get('method') == 'fetched_positions',
-                      "M2: voyager_1 trust method == fetched_positions")
-                check(tr.get('window') is None, "M2: voyager_1 trust window is null")
+                      "M2: %s trust method == fetched_positions" % slug2)
+                check(tr.get('window') is None,
+                      "M2: %s trust window is null" % slug2)
             elif block2.get('canonical_frame') == b.FEATURES_ONLY_FRAME:
                 # L-256: a frame origin has no orbit because it IS the
                 # centre, so features_only_result() serves 'not_applicable'
@@ -1050,8 +1101,12 @@ def main():
 
     # spacecraft sanity path
     w_sc = b.guard_monitor('voyager_1', 'spacecraft',
-                           {'d': {'jd': 1.0, 'x': 250.0, 'y': 0, 'z': 0}}, None, None, 2.0, None)
-    check(len(w_sc) == 1, "guard: spacecraft |r|>200 AU -> sanity warning")
+                           {'d': {'jd': 1.0, 'x': 1500.0, 'y': 0, 'z': 0}}, None, None, 2.0, None)
+    check(len(w_sc) == 1, "guard: spacecraft |r|>1,000 AU -> sanity warning")
+    w_sc2 = b.guard_monitor('voyager_1', 'spacecraft',
+                            {'d': {'jd': 1.0, 'x': 450.0, 'y': 0, 'z': 0}}, None, None, 2.0, None)
+    check(not w_sc2, "L-443 build B: a spacecraft at 450 AU (the Voyagers by "
+                     "2100, in JPL's data) is no sanity warning")
 
     # --- A-1/N1: a crash mid whole-generation swap must not lose the archive ---
     with tempfile.TemporaryDirectory() as td:
@@ -1453,9 +1508,144 @@ def main():
               "L-330: a drawing whose weights are not one per dot ABORTs by "
               "name (%s)" % why330[:90])
 
+    path_by_plan_checks(cfg, check)
+
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
     return 1 if failures else 0
+
+
+def _plan_cfg(cfg, made, events=True, start='1977-09-06', end='2099-12-31',
+              dist_km=None):
+    """A copy of the config with Voyager 1 served a path plan, as the
+    objects mirror copies one from the orrery's export (L-443 build B), and
+    every other spacecraft left out, so the counts below are Voyager's."""
+    c = json.loads(json.dumps(cfg))
+    c['objects'] = [o for o in c['objects']
+                    if o.get('category') != 'spacecraft'
+                    or o.get('slug') == 'voyager_1']
+    for o in c['objects']:
+        if o.get('slug') == 'voyager_1':
+            o.pop('overrides', None)
+            o['path'] = {
+                'made': made,
+                'span': {'start': start, 'end': end},
+                'backbone': {'step': '7d', 'thin_tol_au': 0.02},
+                'events': ([{'body': 'Jupiter', 'kind': 'flyby',
+                             'closest': '1979-03-05 12:05',
+                             'window': ['1979-03-04 16:00', '1979-03-06 08:00'],
+                             'step': '1h'}] if events else []),
+                'searched': ['Sun', 'Jupiter'],
+            }
+            if dist_km is not None:
+                o['path']['events'][0]['dist_km'] = dist_km
+    return c
+
+
+def path_by_plan_checks(cfg, check):
+    """L-443 build B: a spacecraft fetched by its plan. Voyager 1 is given
+    a plan with one event window; the fake arc is straight, so the thinned
+    backbone keeps its ends and the window keeps every hourly point."""
+    calls = []
+    real = b.fetch_vectors_range
+
+    def spy(*a, **k):
+        calls.append((a[0], a[3], a[4], a[5] if len(a) > 5 else k.get('step')))
+        return real(*a, **k)
+
+    b.fetch_vectors_range = spy
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td) / 'data').mkdir(parents=True)
+            out = Path(td) / 'data' / 'solar-system'
+            c1 = _plan_cfg(cfg, '2026-07-01')
+            del calls[:]
+            rm = b.run_build(c1, out, mode='first-build', do_commit=True)
+            raw = b.load_raw_vectors(out, 'voyager_1')
+            keys = sorted(raw['points'])
+            window = [k for k in keys if '1979-03-04 16' <= k <= '1979-03-06 08:00']
+            idx = json.load(open(out / 'coverage_index.json'))
+            v = idx['objects']['voyager_1']
+            today_jd = b._dt_to_jd(FIXED_NOW.replace(hour=0, minute=0))
+            check(rm['structural_validation'] == 'pass'
+                  and 'path fetched by its plan made 2026-07-01'
+                  in rm['objects']['voyager_1'],
+                  "L-443 build B: a spacecraft with a plan is fetched by it "
+                  "(%s)" % rm['objects'].get('voyager_1'))
+            check(len(window) >= 40 and all(len(k) == 16 for k in keys),
+                  "L-443 build B: the event window's hourly points are all "
+                  "kept, every point keyed to the minute (%d in the window)"
+                  % len(window))
+            check(keys[-1][:10] >= '2099-12-24' and keys[0][:10] == '1977-09-06',
+                  "L-443 build B: the path runs across the plan's whole span, "
+                  "JPL's predicted part included (%s to %s)" % (keys[0], keys[-1]))
+            aot = v['as_of_today']
+            check(aot is not None and 0.0 <= today_jd + 0.5 - aot['t'] < 1.0,
+                  "L-443 build B: as_of_today is today's point, not the last "
+                  "point of the plan's span (t %s)" % (aot and aot['t']))
+            check(raw.get('plan_made') == '2026-07-01',
+                  "L-443 build B: the raw archive records the plan it was "
+                  "fetched by")
+            # the same plan, a night later: only the tail
+            del calls[:]
+            rm2 = b.run_build(c1, out, mode='nightly', do_commit=True)
+            sc_calls = [c_ for c_ in calls if c_[0] == '-31']
+            check(rm2['structural_validation'] == 'pass' and len(sc_calls) == 1
+                  and sc_calls[0][3] == '1d',
+                  "L-443 build B: with the same plan, a night asks only the "
+                  "daily tail (%d question(s) for Voyager 1)" % len(sc_calls))
+            # a new plan with no event: fetched whole again, fewer points,
+            # and the shrink gate holds it out by name
+            c2 = _plan_cfg(cfg, '2026-07-08', events=False)
+            del calls[:]
+            seen = []
+            rm3 = b.run_build(c2, out, mode='nightly', do_commit=True)
+            n_after = len(b.load_raw_vectors(out, 'voyager_1')['points'])
+            check(rm3['structural_validation'] == 'pass'
+                  and 'voyager_1' in rm3.get('replanned', [])
+                  and n_after < len(keys),
+                  "L-443 build B: a new plan fetches the path whole again, "
+                  "with fewer points, and the shrink gate holds it out (%d -> "
+                  "%d, %s)" % (len(keys), n_after,
+                               rm3['structural_validation']))
+            # planted fault: the shrink gate's exemption off
+            c3 = _plan_cfg(cfg, '2026-07-15', events=True)
+            b.run_build(c3, out, mode='nightly', do_commit=True)
+            real_gate = b.shrink_gate
+            b.shrink_gate = (lambda st, lv, w, replanned=():
+                             real_gate(st, lv, w))
+            try:
+                c4 = _plan_cfg(cfg, '2026-07-22', events=False)
+                rm4 = b.run_build(c4, out, mode='nightly', do_commit=False)
+            finally:
+                b.shrink_gate = real_gate
+            check(str(rm4['structural_validation']).startswith('fail')
+                  and 'voyager_1' in str(rm4['structural_validation']),
+                  "L-443 build B: planted fault caught -- without the "
+                  "exemption the shrink gate refuses the same re-fetch (%s)"
+                  % str(rm4['structural_validation'])[:70])
+            # a window is thinned at its event's scale: the fake arc is a
+            # straight line, so with a distance served only the window's
+            # two ends are left
+            c6 = _plan_cfg(cfg, '2026-08-05', dist_km=348436.0)
+            rm6 = b.run_build(c6, out, mode='nightly', do_commit=False)
+            k6 = sorted(b.load_raw_vectors(out, 'voyager_1')['points'])
+            w6 = [k for k in k6 if '1979-03-04 16' <= k <= '1979-03-06 08:00']
+            check(rm6['structural_validation'] == 'pass' and 1 <= len(w6) <= 3,
+                  "L-443 build B: a window is thinned at its own event's "
+                  "scale -- on a straight arc only its ends are left (%d "
+                  "points, where 41 were kept with no distance)" % len(w6))
+            # a path whose data ended long ago serves no 'you are here'
+            c5 = _plan_cfg(cfg, '2026-07-29', events=False, end='2003-09-29')
+            rm5 = b.run_build(c5, out, mode='nightly', do_commit=False)
+            got5 = (json.load(open(out / 'coverage_index.json'))
+                    ['objects']['voyager_1'].get('as_of_today', 'absent'))
+            check(rm5['structural_validation'] == 'pass' and got5 is None,
+                  "L-443 build B: a path whose JPL data ended years ago "
+                  "serves no as_of_today, and passes #T (%s)"
+                  % rm5['structural_validation'])
+    finally:
+        b.fetch_vectors_range = real
 
 
 if __name__ == '__main__':

@@ -42,6 +42,11 @@
 // (L-477, L-478, L-479). Afternoon (L-481): section 19 also holds a
 // body's hover bullets, its source line's Horizons address, and the
 // closing paragraph as three bullets with "creator's".
+// Updated October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443 build
+// B): the room's second list has four bullets, the spacecraft line among
+// them; section 20 walks the spacecraft -- their group after Earth's row,
+// in launch order, a path solid then dashed meeting at its marker, the
+// three-line text box and source line, Go To on a whole path, and Reset.
 const h = require("./page_harness.js");
 const fails = []; let n = 0;
 function ok(c, m) { n++; if (!c) { fails.push(m); } }
@@ -221,7 +226,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   const howTo = lists.filter(u => u.textContent.indexOf("Open the list below") >= 0);
   const built = lists.filter(u => u.textContent.indexOf("This room is being built up") >= 0);
   ok(howTo.length === 1 && built.length === 1 && howTo[0].querySelectorAll("li").length === 6 &&
-     built[0].querySelectorAll("li").length === 3, "the room's two lists, six and three bullets");
+     built[0].querySelectorAll("li").length === 4, "the room's two lists, six and four bullets");
   // 14. Sideways (Tony, 2026-10-03, option 3): an opened row's button sits
   // on the name's line before GO; upright it is the line under the row
   E("setSunDrawer(true)");
@@ -355,6 +360,62 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   const foot = Array.from(d.querySelectorAll("#info-panel .info-note li")).map(l => l.textContent.trim());
   ok(foot.length === 3 && foot[0].indexOf("creator's daughter") >= 0 && d.querySelector("#info-panel .info-note a[href='https://ssd.jpl.nasa.gov/horizons/']"),
      "the closing paragraph is not three bullets with creator's and Horizons' link: " + JSON.stringify(foot));
+  // 20. L-443 build B: the spacecraft. A group right after Earth's row,
+  // folded; each craft drawn from its served positions, its path solid to
+  // the minute shown and dashed after; its text box and source line; Go To
+  // fits its whole path. Run only on a payload that serves them.
+  if (data.bodies.juno && data.bodies.juno.kind === "spacecraft") {
+    await click(d.getElementById("sun-drawer-all"));
+    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"));
+    const at = rowsDom.indexOf(row("earth"));
+    ok(rowsDom[at + 1] === head("spacecraft") && !head("spacecraft").hidden &&
+       !E("ssDrawer.folds.spacecraft"),
+       "the Spacecraft group is not listed, folded, right after Earth's row");
+    ok(row("juno").hidden, "Juno is shown with its group folded");
+    await fold("spacecraft");
+    const crafts = E("ssDrawer.rows.filter(r => r.group === 'spacecraft' && !SolarSystemDrawer.isGroup(r)).map(r => r.key).join(',')");
+    ok(crafts === "voyager_2,voyager_1,new_horizons,juno,osiris_apex,parker_solar_probe," +
+       "bepicolombo,solar_orbiter,lucy,juice,psyche_spacecraft,europa_clipper",
+       "the spacecraft are not in launch order: " + crafts);
+    ok(row("osiris_apex").querySelector(".rname").textContent.indexOf("OSIRIS-APEX") >= 0,
+       "OSIRIS-APEX's row does not read its label");
+    await pick("juno");
+    const jt = E("sunPlotDiv.data").filter(t => t.legendgroup === "juno");
+    const flown = jt.find(t => t.meta && t.meta.path_part === "flown");
+    const ahead = jt.find(t => t.meta && t.meta.path_part === "predicted");
+    const mk = jt.find(t => t.meta && t.meta.label_target === true);
+    ok(flown && ahead && mk && flown.line.dash === "solid" && ahead.line.dash === "dash",
+       "Juno's path is not drawn solid then dashed");
+    ok(flown && mk && flown.x[flown.x.length - 1] === mk.x[0] && ahead.x[0] === mk.x[0],
+       "Juno's two parts do not meet at its marker");
+    ok(jt.every(t => t.visible !== "legendonly" && t.visible !== false),
+       "ticking Juno did not draw every part of it");
+    ok(near(range(), Math.max(radius("earth"), radius("juno"))),
+       "Juno's frame " + range() + " is not on the farthest body's position");
+    const jl = mk.text[0].split(/<br[^>]*>/);
+    const endDay = (() => { const dd = new Date(Math.round((mk.meta.path_end_jd - 2440587.5) * 86400000));
+      return dd.getUTCDate() + " " + ["January","February","March","April","May","June","July",
+        "August","September","October","November","December"][dd.getUTCMonth()] + " " + dd.getUTCFullYear(); })();
+    const joined = jl.join(" ").replace(/<br soft>/g, " ");
+    ok(jl[0] === "Juno" && jl.filter(l => l.indexOf("&#8226; ") === 0).length === 3 &&
+       / AU from the Sun \([0-9,]+ km\)/.test(jl[1]) &&
+       joined.indexOf("JPL's own uncertainty for this position is not yet included.") >= 0 &&
+       joined.indexOf("dashed where JPL's predicted path takes it next, as far as " + endDay + ".") >= 0 &&
+       joined.indexOf("Orbital period") < 0 && joined.indexOf("Orbit:") < 0,
+       "Juno's text box is not its three lines: " + joined.slice(0, 260));
+    ok(mk.meta.source.indexOf("JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), Horizons id: -61. " +
+       "Positions measured from the Sun's centre, from ") === 0 &&
+       mk.meta.source.indexOf("A point every 7 days, closer together around each flyby") > 0,
+       "Juno's source line: " + mk.meta.source.slice(0, 200));
+    ok(mk.meta.about === data.bodies.juno.description && mk.meta.info_url === data.bodies.juno.info_url,
+       "Juno's panel words are not the orrery's description and link");
+    E("setSunDrawer(true)");
+    await click(row("voyager_1").querySelector(".go"));
+    ok(near(range(), wholeR("voyager_1")), "GO Voyager 1 frame " + range() + " vs its whole path " + wholeR("voyager_1"));
+    await click(d.getElementById("sun-drawer-all"));
+    ok(order() === "earth" && !E("ssDrawer.folds.spacecraft"),
+       "Reset did not put back the opening and fold the Spacecraft group");
+  }
   // 18. L-475: the i panel's last line opens the lobby's About card.
   const last = d.getElementById("info-panel").lastElementChild;
   const about = last && last.querySelector("a");

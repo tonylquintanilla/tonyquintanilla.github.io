@@ -85,6 +85,14 @@
 // orbit (0 <= e < 1) has an aphelion; an open path prints no line, and
 // the room's notes say why.
 
+// A SPACECRAFT'S DISTANCE (L-443 build B, October 25, 2026). A spacecraft
+// is drawn from its served positions, and its marker is worked out between
+// them (gallery/assembler/render_spacecraft.py), which hands the room how
+// far that working-out may be off. pathDistanceLine prints the distance
+// to the place that error earns, never finer than whole kilometres, and
+// always with Tony's sentence of 2026-10-01: JPL's own uncertainty for a
+// spacecraft is not served.
+
 (function (global) {
   "use strict";
 
@@ -175,6 +183,41 @@
       auPlace: au.place,
       driftKm: driftKm,
       sourceKm: sourceKm
+    };
+  }
+
+  // L-443 build B: a spacecraft's distance. Its position is not worked
+  // out from elements but between its served points (render_spacecraft),
+  // so the error is that working-out's -- errKm, handed to the marker by
+  // the assembler -- and never finer than whole kilometres. JPL's own
+  // uncertainty for a spacecraft is not served, so the text box says so,
+  // in the sentence of 2026-10-01, every time.
+  function pathDistanceLine(pos, errKm, kmPerAu) {
+    if (!(typeof kmPerAu === "number" && kmPerAu > 0)) {
+      return { line: null, why: "kilometres per AU is not served" };
+    }
+    var x = pos && pos.x, y = pos && pos.y, z = pos && pos.z;
+    var rAu = Math.sqrt(x * x + y * y + z * z);
+    if (!(rAu > 0 && isFinite(rAu))) {
+      return { line: null, why: "its position is not a number" };
+    }
+    if (!(typeof errKm === "number" && errKm >= 0 && isFinite(errKm))) {
+      return { line: null, why: "no error is served for its worked-out " +
+                                "position, so no figures are earned" };
+    }
+    var useKm = Math.max(errKm, FINEST_KM);
+    var km = roundTo(rAu * kmPerAu, reportPlace(useKm));
+    var au = roundTo(rAu, reportPlace(useKm / kmPerAu));
+    var auText = au.place < 0 ? au.value.toFixed(-au.place)
+                              : withCommas(au.value);
+    return {
+      line: auText + " AU from the Sun (" + withCommas(km.value) + " km)",
+      note: NO_SOURCE_ACCURACY,
+      governs: (useKm === FINEST_KM) ? "whole kilometres"
+                                     : "working out between points",
+      kmPlace: km.place,
+      auPlace: au.place,
+      errKm: useKm
     };
   }
 
@@ -305,7 +348,8 @@
     roundTo: roundTo,
     withCommas: withCommas,
     sourcePlaceKm: sourcePlaceKm,
-    distanceLine: distanceLine
+    distanceLine: distanceLine,
+    pathDistanceLine: pathDistanceLine
   };
 
 })(typeof window !== "undefined" ? window : globalThis);

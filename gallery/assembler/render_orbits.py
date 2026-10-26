@@ -43,6 +43,10 @@ Centre). It is not the retired composition of positions: the two vectors
 are each a few hundred AU at most and differ by about 0.005 AU, which
 double precision holds to about 1e-13 AU, and nothing is sampled.)
 
+Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B: a wrong comment corrected -- scatter3d lines do take a dash. No
+code changed.)
+
 Role: rendering
 Domain: assembler
 """
@@ -199,9 +203,12 @@ def build_orbit_traces(name: str, osc: Dict[str, Any], color: str,
         ys = [y + dy for y in ys]
         zs = [z + dz for z in zs]
     kind = "mean orbit" if is_mean else "osculating orbit"
-    # scatter3d line has no 'dash' attribute (2D-only); distinguish the mean
-    # conic by width instead, which 3D supports. (Refine under Mode 5 at
-    # artifact 4, where mean orbits are first drawn.)
+    # The mean conic is told apart by width. (Corrected 2026-10-25, L-443:
+    # this said scatter3d lines have no 'dash'; they do -- Plotly 2.35.2's
+    # schema lists dash, dashdot, dot, longdash, longdashdot and solid for
+    # scatter3d line.dash, read from the shipped bundle on 2026-10-23, and
+    # render_spacecraft draws a path's predicted part dashed. Whether the
+    # mean conic should be dashed instead is a Mode 5 choice, at artifact 4.)
     width = 1.5 if is_mean else 2
 
     polyline = {
