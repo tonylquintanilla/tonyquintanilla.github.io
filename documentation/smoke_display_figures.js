@@ -265,9 +265,16 @@ const SOFT_BR = "<br soft>";
 // cache as the cache builder will write it from this config: the L-434
 // one with the axis's hover added and every other hover byte for byte.
 // The L-434 one is left in place, unreferenced.
-const FIXTURE_AT = "d7195704";
+// L-494 (2026-10-26): Tony's option C. No text box ends with the old
+// pointer to the i button any more; a first visit is greeted by a note on
+// the button instead. Re-recorded as fixture_hovers_L494_on_dae4a7cd.json,
+// from the cache as it is served: the L-465 one with that last sentence,
+// and the blank line before it, gone from every hover that carried it,
+// and every other hover byte for byte. The L-465 one is left in place,
+// unreferenced.
+const FIXTURE_AT = "dae4a7cd";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L465_on_d7195704.json");
+                          "fixture_hovers_L494_on_dae4a7cd.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

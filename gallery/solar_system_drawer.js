@@ -79,13 +79,26 @@
 //              lower left, above the drawer's handle (L-478, Tony,
 //              2026-10-24; until then above the grid chip, where it
 //              covered the Aries mark), and hides it at zero.
+//   FIND       Tony's approval of 2026-10-26 (L-493) of the mock-up "Find
+//              a body": a search box at the top of the drawer. Typing
+//              keeps only the bodies one of whose names holds the typed
+//              letters -- the name the drawer shows, the orrery's name,
+//              JPL's name, or the Horizons id when it is not a bare
+//              number -- capitals, spaces and punctuation ignored. A
+//              group with a match is shown open, "k of n shown"; one with
+//              none is hidden. A body found only by JPL's name or its
+//              Horizons id says so under its name. Clearing the box puts
+//              the list back as it was: the search never changes the
+//              folds (searchHits, searchVisible, searchGroupCount,
+//              searchVia, WORDS.found).
 //
 // Rows are named by KEY: the trace group the scene draws them in. That is
 // the body's slug, except the Sun's, which the assembler draws as the
 // scene's centre marker under the group "center".
 //
 // Updated October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443):
-// COMPANIONS, above.
+// COMPANIONS, above. Updated October 26, 2026 with Anthropic's Claude
+// Opus 5.5 (L-493): FIND, above.
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 4, 2026 with Anthropic's Claude Opus 5.5: HOME described as
 // Tony settled it (L-363); the code is unchanged. Updated October 22,
@@ -115,7 +128,16 @@
     outside: function (n) {
       return n === 1 ? "1 ticked body is outside this view"
                      : n + " ticked bodies are outside this view";
-    }
+    },
+    // L-493: the search box's words (the approved mock-up).
+    find: "Find a body",
+    clear: "Clear the search",
+    found: function (n) {
+      return n === 0 ? "No body matches" :
+             n === 1 ? "1 body matches" : n + " bodies match";
+    },
+    shown: function (k, n) { return k + " of " + n + " shown"; },
+    via: ["", "", "JPL's name: ", "Horizons id: "]
   };
 
   const GROUP_PREFIX = "group:";   // a group row's key; never a trace group
@@ -342,7 +364,66 @@
              unmatched: unmatched };
   }
 
+  // FIND (L-493, 2026-10-26). namesByKey: {key: [the drawer's label, the
+  // orrery's name, JPL's name, the Horizons id]}, any of them null. Returns
+  // null for an empty search, else {keys: {key: true}, groups: {group:
+  // matches}, via: {key: index of the first name that matched}, n}.
+  function searchKey(s) {
+    return String(s == null ? "" : s).toLowerCase().replace(/[^a-z0-9]+/g, "");
+  }
+
+  function searchNames(label, name, jplName, horizonsId) {
+    const id = (typeof horizonsId === "string" && !/^\d+$/.test(horizonsId))
+      ? horizonsId : null;
+    return [label || null, name || null, jplName || null, id];
+  }
+
+  function searchHits(rows, query, namesByKey) {
+    const q = searchKey(query);
+    if (!q) { return null; }
+    const keys = {}, groups = {}, via = {};
+    let n = 0;
+    bodies(rows).forEach(function (r) {
+      const names = (namesByKey && namesByKey[r.key]) || [];
+      for (let i = 0; i < names.length; i++) {
+        if (names[i] && searchKey(names[i]).indexOf(q) >= 0) {
+          keys[r.key] = true;
+          via[r.key] = i;
+          n++;
+          if (r.group) { groups[r.group] = (groups[r.group] || 0) + 1; }
+          return;
+        }
+      }
+    });
+    return { keys: keys, groups: groups, via: via, n: n };
+  }
+
+  function searchVisible(row, hits) {
+    if (!hits) { return null; }
+    if (isGroup(row)) { return !!hits.groups[row.group]; }
+    return !!hits.keys[row.key];
+  }
+
+  function searchGroupCount(rows, group, hits) {
+    return WORDS.shown((hits && hits.groups[group]) || 0, members(rows, group).length);
+  }
+
+  // The line under a found body's name, when only JPL's name or its
+  // Horizons id held the letters: "JPL's name: ATLAS (C/2025 K1)".
+  function searchVia(key, hits, namesByKey) {
+    if (!hits || !hits.keys[key]) { return ""; }
+    const i = hits.via[key];
+    const names = (namesByKey && namesByKey[key]) || [];
+    return (i >= 2 && names[i]) ? WORDS.via[i] + names[i] : "";
+  }
+
   global.SolarSystemDrawer = {
+    searchKey: searchKey,
+    searchNames: searchNames,
+    searchHits: searchHits,
+    searchVisible: searchVisible,
+    searchGroupCount: searchGroupCount,
+    searchVia: searchVia,
     companions: companions,
     SUN_KEY: SUN_KEY,
     WORDS: WORDS,

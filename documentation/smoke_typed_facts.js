@@ -40,8 +40,9 @@
 // WHAT A TYPED SENTENCE MAY BE, and the list is short and printed in full
 // every run, so an addition shows:
 //
-//   - the pointer line every hover ends with (GalleryFeatures.HOVER_TAIL,
-//     read from the renderers, not typed here);
+//   - the pointer line a hover ends with (GalleryFeatures.HOVER_TAIL,
+//     read from the renderers, not typed here) -- none since 2026-10-26
+//     (L-494), when the first visit's note took its place;
 //   - a NUMBER'S OWN LINE: a sentence whose numbers are served. Told
 //     apart by a third build in which every served number is scaled: a
 //     sentence whose numbers moved with it printed served numbers. Its
@@ -85,6 +86,8 @@
 // about what is drawn by choice are on DESCRIPTIONS. A number's own line
 // may be on ALLOWED, by its shape: the Earth room's orbital period line,
 // first met when the scene was re-recorded, is the first).
+// Updated October 26, 2026 with Anthropic's Claude Opus 5.5 (L-494: the
+// pointer line is served empty, and the run says none is served).
 
 "use strict";
 
@@ -474,7 +477,8 @@ console.log("  vocabulary from tools/store_writer.py: " + WORDS.size + " served 
 console.log("  rooms built three ways (served, words masked, numbers scaled): " +
             Object.keys(ROOMS).join(", "));
 console.log("");
-console.log("  The pointer line, typed on purpose: " + found.pointer + " hover(s).");
+console.log("  The pointer line, typed on purpose: " + found.pointer + " hover(s)" +
+            (GF.HOVER_TAIL ? "." : "; none is served since 2026-10-26 (L-494)."));
 const labels = [...new Set(found.label)].sort();
 console.log("  A number's own line, its numbers served, its typed words a label (" +
             labels.length + "):");

@@ -98,6 +98,8 @@
  * Updated October 24, 2026 with Anthropic's Claude Opus 5.5 (L-481: every
  * source line naming JPL Horizons carries its address, HORIZONS_URL, which
  * the i panel makes a link; Tony, 2026-10-24.)
+ * Updated October 26, 2026 with Anthropic's Claude Opus 5.5 (L-494: the
+ * four hovers end with no pointer sentence, as every hover now does.)
  */
 (function (global) {
   "use strict";
@@ -212,7 +214,9 @@
 
   function tail() {
     var GFx = global.GalleryFeatures;
-    return (GFx && typeof GFx.HOVER_TAIL === "string")
+    // L-494 (2026-10-26): HOVER_TAIL is empty since the first-visit note
+    // took its place, and an empty tail adds no breaks.
+    return (GFx && typeof GFx.HOVER_TAIL === "string" && GFx.HOVER_TAIL)
       ? "<br><br>" + GFx.HOVER_TAIL : "";
   }
 

@@ -11,6 +11,7 @@
   "objects": [
     {
       "slug": "sun", "name": "Sun", "horizons_id": "10", "id_type": "majorbody",
+      "horizons_name": "Sun",
       "description": "NASA: \"The Sun's gravity holds the solar system together, keeping everything in its orbit.\"",
       "info_url": "https://science.nasa.gov/sun/",
       "category": "star", "availability": "analytic", "parent": null,
@@ -525,6 +526,7 @@
       "name": "Earth",
       "horizons_id": "399",
       "id_type": "majorbody",
+      "horizons_name": "Earth",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "3", "target_label": "the Earth-Moon center of mass", "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 1.0, "figures": 6, "text": "1.00000"}, "days": {"value": 365.25, "figures": 5, "text": "365.25"}},
       "description": "Our home planet.",
       "info_url": "https://science.nasa.gov/earth/",
@@ -1346,6 +1348,7 @@
     },
     {
       "slug": "jupiter", "name": "Jupiter", "horizons_id": "599", "id_type": "majorbody",
+      "horizons_name": "Jupiter",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "599", "target_label": null, "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 11.864, "figures": 5, "text": "11.864"}, "days": {"value": 4333.2, "figures": 5, "text": "4333.2"}},
       "description": "NASA: \"Jupiter is the largest and oldest planet in our solar system.\"",
       "info_url": "https://science.nasa.gov/jupiter/",
@@ -1390,6 +1393,7 @@
     },
     {
       "slug": "saturn", "name": "Saturn", "horizons_id": "699", "id_type": "majorbody",
+      "horizons_name": "Saturn",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "699", "target_label": null, "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 29.44, "figures": 4, "text": "29.44"}, "days": {"value": 10750.0, "figures": 4, "text": "10,750"}},
       "description": "NASA: \"Saturn is the sixth planet from the Sun and the second largest planet in our solar system.\"",
       "info_url": "https://science.nasa.gov/saturn/",
@@ -1426,6 +1430,7 @@
     },
     {
       "slug": "mercury", "name": "Mercury", "horizons_id": "199", "id_type": "majorbody",
+      "horizons_name": "Mercury",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "199", "target_label": null, "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 0.240846, "figures": 6, "text": "0.240846"}, "days": {"value": 87.969, "figures": 5, "text": "87.969"}},
       "description": "NASA: \"Mercury is the smallest planet in our solar system and the nearest to the Sun.\"",
       "info_url": "https://science.nasa.gov/mercury/",
@@ -1444,6 +1449,7 @@
     },
     {
       "slug": "venus", "name": "Venus", "horizons_id": "299", "id_type": "majorbody",
+      "horizons_name": "Venus",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "299", "target_label": null, "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 0.6152, "figures": 4, "text": "0.6152"}, "days": {"value": 224.71, "figures": 5, "text": "224.71"}},
       "description": "NASA: \"Venus is the second planet from the Sun, and the sixth largest planet. It's the hottest planet in our solar system.\"",
       "info_url": "https://science.nasa.gov/venus/",
@@ -1461,6 +1467,7 @@
     },
     {
       "slug": "mars", "name": "Mars", "horizons_id": "499", "id_type": "majorbody",
+      "horizons_name": "Mars",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "499", "target_label": null, "open_orbit": false, "fetched": "2026-10-20", "words": null, "years": {"value": 1.8809, "figures": 5, "text": "1.8809"}, "days": {"value": 687.0, "figures": 4, "text": "687.0"}},
       "description": "NASA: \"Mars is one of the easiest planets to spot in the night sky -- it looks like a bright red point of light.\"",
       "info_url": "https://science.nasa.gov/mars/",
@@ -1478,6 +1485,7 @@
     },
     {
       "slug": "uranus", "name": "Uranus", "horizons_id": "799", "id_type": "majorbody",
+      "horizons_name": "Uranus",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "799", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 83.997, "figures": 5, "text": "83.997"}, "days": {"value": 30680.0, "figures": 5, "text": "30,680"}},
       "description": "NASA: \"Uranus is the seventh planet from the Sun, and the third largest planet in our solar system -- about four times wider than Earth.\"",
       "info_url": "https://science.nasa.gov/uranus/",
@@ -1495,6 +1503,7 @@
     },
     {
       "slug": "neptune", "name": "Neptune", "horizons_id": "899", "id_type": "majorbody",
+      "horizons_name": "Neptune",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "899", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 164.78, "figures": 5, "text": "164.78"}, "days": {"value": 60180.0, "figures": 4, "text": "60,180"}},
       "description": "NASA: \"Dark, cold and whipped by supersonic winds, giant Neptune is the eighth and most distant major planet orbiting our Sun.\"",
       "info_url": "https://science.nasa.gov/neptune/",
@@ -1530,6 +1539,7 @@
     },
     {
       "slug": "pluto_barycenter", "name": "Pluto-Charon Barycenter", "horizons_id": "9", "id_type": "majorbody",
+      "horizons_name": "Pluto Barycenter",
       "period": {"kind": "none", "typed": false, "center": null, "center_label": null, "open_orbit": false, "fetched": null, "years": null, "days": null, "words": "Not yet fetched from JPL."},
       "description": "Center of mass for Pluto-Charon binary planet system.",
       "info_url": "https://science.nasa.gov/dwarf-planets/pluto/",
@@ -1560,6 +1570,7 @@
     },
     {
       "slug": "apophis", "name": "Apophis", "horizons_id": "2004 MN4", "id_type": "smallbody",
+      "horizons_name": "99942 Apophis",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2004 MN4", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 0.88581, "figures": 5, "text": "0.88581"}, "days": {"value": 323.54, "figures": 5, "text": "323.54"}},
       "description": "A near-Earth asteroid that will make a close approach in 2029. Future OSIRIS-APEX target.",
       "info_url": "https://cneos.jpl.nasa.gov/apophis/",
@@ -1569,6 +1580,7 @@
     },
     {
       "slug": "voyager_1", "name": "Voyager 1", "horizons_id": "-31", "id_type": "id",
+      "horizons_name": "Voyager 1 (spacecraft)",
       "description": "Launched in 1977, Voyager 1 is the farthest spacecraft from Earth. In 2012 it became the first spacecraft to reach interstellar space.",
       "info_url": "https://voyager.jpl.nasa.gov/mission/",
       "path": {"made": "2026-10-25", "span": {"end": "2100-01-01", "start": "1977-09-06"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Jupiter", "kind": "flyby", "stays": false, "closest": "1979-03-05 12:05", "dist_km": 348435.7, "window": ["1979-03-04 16:05", "1979-03-06 08:04"], "step": "30m"}, {"body": "Saturn", "kind": "flyby", "stays": false, "closest": "1980-11-12 23:46", "dist_km": 184031.0, "window": ["1980-11-12 11:38", "1980-11-13 11:53"], "step": "30m"}]},
@@ -1579,6 +1591,7 @@
     },
     {
       "slug": "voyager_2", "name": "Voyager 2", "horizons_id": "-32", "id_type": "id",
+      "horizons_name": "Voyager 2 (spacecraft)",
       "description": "Launched in 1977, Voyager 2 is the only spacecraft to have visited all four giant planets, and the only one to visit Uranus and Neptune.",
       "info_url": "https://voyager.jpl.nasa.gov/mission/",
       "path": {"made": "2026-10-25", "span": {"end": "2100-01-01", "start": "1977-08-21"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "1977-08-29 17:41", "dist_km": 150040530.0, "window": ["1976-12-05 20:58", "1978-05-23 14:23"], "step": "4d"}, {"body": "Jupiter", "kind": "flyby", "stays": false, "closest": "1979-07-09 22:30", "dist_km": 721375.5, "window": ["1979-07-07 11:04", "1979-07-12 09:55"], "step": "1h"}, {"body": "Saturn", "kind": "flyby", "stays": false, "closest": "1981-08-26 03:25", "dist_km": 160691.3, "window": ["1981-08-25 16:21", "1981-08-26 14:28"], "step": "30m"}, {"body": "Uranus", "kind": "flyby", "stays": false, "closest": "1986-01-24 18:00", "dist_km": 107154.4, "window": ["1986-01-24 08:05", "1986-01-25 03:54"], "step": "30m"}, {"body": "Neptune", "kind": "flyby", "stays": false, "closest": "1989-08-25 03:57", "dist_km": 29241.0, "window": ["1989-08-25 02:09", "1989-08-25 05:44"], "step": "1m"}]},
@@ -1589,6 +1602,7 @@
     },
     {
       "slug": "new_horizons", "name": "New Horizons", "horizons_id": "-98", "id_type": "id",
+      "horizons_name": "New Horizons (spacecraft)",
       "description": "New Horizons flew past Pluto in July 2015 and past Arrokoth on January 1, 2019. It is still travelling outward through the Kuiper Belt.",
       "info_url": "https://science.nasa.gov/mission/new-horizons/",
       "path": {"made": "2026-10-25", "span": {"end": "2049-12-31", "start": "2006-01-20"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Jupiter", "kind": "flyby", "stays": false, "closest": "2007-02-28 05:45", "dist_km": 2304504.8, "window": ["2007-02-20 16:44", "2007-03-07 18:45"], "step": "3h"}, {"body": "Pluto", "kind": "flyby", "stays": false, "closest": "2015-07-14 11:50", "dist_km": 13679.8, "window": ["2015-07-14 10:10", "2015-07-14 13:29"], "step": "1m"}]},
@@ -1599,6 +1613,7 @@
     },
     {
       "slug": "juno", "name": "Juno", "horizons_id": "-61", "id_type": "id",
+      "horizons_name": "Juno (spacecraft)",
       "description": "NASA's Juno has orbited Jupiter since July 2016, studying its interior, its atmosphere and the region its magnetic field controls, the magnetosphere.",
       "info_url": "https://science.nasa.gov/mission/juno/",
       "path": {"made": "2026-10-25", "span": {"end": "2028-09-02", "start": "2011-08-06"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2011-08-15 08:40", "dist_km": 150984249.6, "window": ["2010-10-18 20:22", "2012-06-10 20:57"], "step": "5d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2013-08-31 04:36", "dist_km": 131868001.9, "window": ["2013-01-02 15:57", "2014-04-28 17:14"], "step": "4d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2013-10-09 19:23", "dist_km": 6941.8, "window": ["2013-10-09 18:36", "2013-10-09 20:09"], "step": "1m"}, {"body": "Jupiter", "kind": "arrival", "stays": true, "closest": "2016-07-05 02:49", "dist_km": 75978.5, "window": ["2016-07-05 00:37", "2016-07-05 05:00"], "step": "5m"}]},
@@ -1609,6 +1624,7 @@
     },
     {
       "slug": "osiris_apex", "name": "OSIRISAPE", "horizons_id": "-64", "id_type": "id",
+      "horizons_name": "OSIRIS-REx (spacecraft)",
       "description": "OSIRIS-APEX, formerly OSIRIS-REx, is on its way to asteroid Apophis. It reaches Apophis in June 2029, soon after the asteroid passes close to Earth in April 2029.",
       "info_url": "https://science.nasa.gov/mission/osiris-apex/",
       "path": {"made": "2026-10-25", "span": {"end": "2030-03-22", "start": "2023-09-24"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Earth", "kind": "flyby", "stays": false, "closest": "2023-09-24 14:46", "dist_km": 7151.5, "window": ["2023-09-24 13:47", "2023-09-24 15:44"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-01-02 13:30", "dist_km": 74877470.5, "window": ["2023-09-18 00:44", "2024-04-18 02:15"], "step": "1d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-09-02 01:19", "dist_km": 74870545.4, "window": ["2024-05-18 12:53", "2024-12-17 13:44"], "step": "1d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-05-03 13:38", "dist_km": 74871366.7, "window": ["2025-01-17 01:10", "2025-08-18 02:05"], "step": "1d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2025-09-23 17:01", "dist_km": 9815.0, "window": ["2025-09-23 15:31", "2025-09-23 18:30"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-12-02 13:27", "dist_km": 123092536.5, "window": ["2025-04-11 12:43", "2026-07-25 14:10"], "step": "4d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-01-07 13:37", "dist_km": 123102063.2, "window": ["2026-05-17 12:07", "2027-08-30 15:06"], "step": "4d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2027-03-16 03:31", "dist_km": 10559.1, "window": ["2027-03-16 01:52", "2027-03-16 05:09"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-08-08 20:32", "dist_km": 75683534.9, "window": ["2027-04-22 02:55", "2027-11-25 14:08"], "step": "1d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2028-04-05 20:02", "dist_km": 75681655.5, "window": ["2027-12-19 02:32", "2028-07-23 13:31"], "step": "1d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2028-12-02 19:25", "dist_km": 75677515.5, "window": ["2028-08-16 02:09", "2029-03-21 12:40"], "step": "1d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2029-04-13 23:07", "dist_km": 7526.1, "window": ["2029-04-13 22:03", "2029-04-14 00:10"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2029-06-13 15:34", "dist_km": 133822735.5, "window": ["2028-09-16 00:24", "2030-03-11 06:43"], "step": "4d"}]},
@@ -1619,6 +1635,7 @@
     },
     {
       "slug": "parker_solar_probe", "name": "Parker", "horizons_id": "-96", "id_type": "id",
+      "horizons_name": "Parker Solar Probe (spacecraft)",
       "description": "NASA's Parker Solar Probe, launched in August 2018, became the first spacecraft to fly through the corona, the Sun's upper atmosphere, in 2021. It studies how the corona is heated and what speeds up the solar wind.",
       "info_url": "https://science.nasa.gov/mission/parker-solar-probe/",
       "path": {"made": "2026-10-25", "span": {"end": "2029-12-31", "start": "2018-08-13"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Venus", "kind": "flyby", "stays": false, "closest": "2018-10-03 08:46", "dist_km": 8498.2, "window": ["2018-10-03 08:11", "2018-10-03 09:20"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2018-11-06 03:29", "dist_km": 24818593.9, "window": ["2018-10-19 01:33", "2018-11-24 05:24"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2019-04-04 22:41", "dist_km": 24818980.2, "window": ["2019-03-17 20:45", "2019-04-23 00:36"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2019-09-01 17:51", "dist_km": 24817842.9, "window": ["2019-08-14 15:57", "2019-09-19 19:44"], "step": "6h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2019-12-26 18:16", "dist_km": 9057.4, "window": ["2019-12-26 17:38", "2019-12-26 18:53"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2020-01-29 09:39", "dist_km": 19392522.8, "window": ["2020-01-17 01:36", "2020-02-10 17:41"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2020-06-07 08:24", "dist_km": 19391854.1, "window": ["2020-05-26 00:22", "2020-06-19 16:25"], "step": "6h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2020-07-11 03:25", "dist_km": 6889.7, "window": ["2020-07-11 02:57", "2020-07-11 03:52"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2020-09-27 09:17", "dist_km": 14159390.7, "window": ["2020-09-19 19:12", "2020-10-04 23:21"], "step": "3h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2021-01-17 17:40", "dist_km": 14158950.3, "window": ["2021-01-10 03:35", "2021-01-25 07:44"], "step": "3h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2021-02-20 20:07", "dist_km": 8437.7, "window": ["2021-02-20 19:32", "2021-02-20 20:41"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2021-04-29 08:48", "dist_km": 11114015.6, "window": ["2021-04-24 03:22", "2021-05-04 14:13"], "step": "2h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2021-08-09 19:12", "dist_km": 11114009.9, "window": ["2021-08-04 13:46", "2021-08-15 00:37"], "step": "2h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2021-10-16 09:32", "dist_km": 9860.6, "window": ["2021-10-16 08:51", "2021-10-16 10:12"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2021-11-21 08:27", "dist_km": 9237744.4, "window": ["2021-11-17 10:00", "2021-11-25 06:53"], "step": "2h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-02-25 15:37", "dist_km": 9237702.1, "window": ["2022-02-21 17:10", "2022-03-01 14:03"], "step": "2h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-06-01 22:51", "dist_km": 9238222.9, "window": ["2022-05-29 00:23", "2022-06-05 21:18"], "step": "2h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-09-06 06:05", "dist_km": 9238151.9, "window": ["2022-09-02 07:37", "2022-09-10 04:32"], "step": "2h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-12-11 13:17", "dist_km": 9238758.5, "window": ["2022-12-07 14:49", "2022-12-15 11:44"], "step": "2h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-03-17 20:32", "dist_km": 9239725.0, "window": ["2023-03-13 22:03", "2023-03-21 19:00"], "step": "2h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-06-22 03:47", "dist_km": 9240228.7, "window": ["2023-06-18 05:17", "2023-06-26 02:16"], "step": "2h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2023-08-21 12:04", "dist_km": 10057.6, "window": ["2023-08-21 11:22", "2023-08-21 12:45"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-09-27 23:30", "dist_km": 7955709.0, "window": ["2023-09-24 20:21", "2023-10-01 02:38"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-12-29 00:56", "dist_km": 7955627.6, "window": ["2023-12-25 21:47", "2024-01-01 04:04"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-03-30 02:23", "dist_km": 7955695.2, "window": ["2024-03-26 23:14", "2024-04-02 05:31"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-06-30 03:48", "dist_km": 7955712.9, "window": ["2024-06-27 00:39", "2024-07-03 06:56"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-09-30 05:16", "dist_km": 7955924.3, "window": ["2024-09-27 02:07", "2024-10-03 08:24"], "step": "1h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2024-11-06 18:45", "dist_km": 6433.3, "window": ["2024-11-06 18:19", "2024-11-06 19:10"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-12-24 11:42", "dist_km": 6862560.0, "window": ["2024-12-21 23:44", "2024-12-26 23:39"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-03-22 22:26", "dist_km": 6862291.6, "window": ["2025-03-20 10:28", "2025-03-25 10:23"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-06-19 09:09", "dist_km": 6862151.6, "window": ["2025-06-16 21:12", "2025-06-21 21:05"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-09-15 20:17", "dist_km": 6862510.5, "window": ["2025-09-13 08:19", "2025-09-18 08:14"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-12-13 07:03", "dist_km": 6862386.3, "window": ["2025-12-10 19:05", "2025-12-15 19:00"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-03-11 18:05", "dist_km": 6855835.2, "window": ["2026-03-09 06:13", "2026-03-14 05:56"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-06-08 04:19", "dist_km": 6855664.3, "window": ["2026-06-05 16:27", "2026-06-10 16:10"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-09-04 14:33", "dist_km": 6855302.5, "window": ["2026-09-02 02:41", "2026-09-07 02:24"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-12-02 00:46", "dist_km": 6855386.7, "window": ["2026-11-29 12:54", "2026-12-04 12:37"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-02-28 11:01", "dist_km": 6855307.9, "window": ["2027-02-25 23:09", "2027-03-02 22:52"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-05-27 21:14", "dist_km": 6853482.1, "window": ["2027-05-25 09:23", "2027-05-30 09:04"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-08-24 07:17", "dist_km": 6853212.3, "window": ["2027-08-21 19:27", "2027-08-26 19:06"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-11-20 17:19", "dist_km": 6853498.7, "window": ["2027-11-18 05:28", "2027-11-23 05:09"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2028-02-17 03:21", "dist_km": 6853817.3, "window": ["2028-02-14 15:30", "2028-02-19 15:11"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2028-05-15 13:23", "dist_km": 6854020.7, "window": ["2028-05-13 01:32", "2028-05-18 01:13"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2028-08-11 23:24", "dist_km": 6853258.6, "window": ["2028-08-09 11:34", "2028-08-14 11:13"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2028-11-08 09:20", "dist_km": 6853517.0, "window": ["2028-11-05 21:29", "2028-11-10 21:10"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2029-02-04 19:14", "dist_km": 6853705.4, "window": ["2029-02-02 07:23", "2029-02-07 07:04"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2029-05-04 05:10", "dist_km": 6854553.0, "window": ["2029-05-01 17:19", "2029-05-06 17:00"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2029-07-31 15:05", "dist_km": 6854632.4, "window": ["2029-07-29 03:14", "2029-08-03 02:55"], "step": "1h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2029-10-28 00:57", "dist_km": 6854707.5, "window": ["2029-10-25 13:05", "2029-10-30 12:48"], "step": "1h"}]},
@@ -1629,6 +1646,7 @@
     },
     {
       "slug": "bepicolombo", "name": "BepiColombo", "horizons_id": "-121", "id_type": "id",
+      "horizons_name": "BepiColombo (Spacecraft)",
       "description": "BepiColombo, led by ESA with Japan's space agency JAXA, launched in October 2018 to study Mercury from orbit.",
       "info_url": "https://www.esa.int/Science_Exploration/Space_Science/BepiColombo",
       "path": {"made": "2026-10-25", "span": {"end": "2027-04-10", "start": "2018-10-21"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2019-01-01 17:46", "dist_km": 132819135.4, "window": ["2018-04-02 23:04", "2019-10-02 12:27"], "step": "4d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2020-01-28 00:36", "dist_km": 131729915.7, "window": ["2019-05-04 09:04", "2020-10-22 16:07"], "step": "4d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2020-04-10 04:26", "dist_km": 19064.1, "window": ["2020-04-10 00:14", "2020-04-10 08:37"], "step": "5m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2020-09-09 18:00", "dist_km": 93644605.1, "window": ["2020-04-07 09:03", "2021-02-12 02:56"], "step": "2d"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2020-10-15 04:00", "dist_km": 16774.6, "window": ["2020-10-15 01:13", "2020-10-15 06:46"], "step": "5m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2021-03-14 16:40", "dist_km": 77748071.5, "window": ["2020-11-16 22:21", "2021-07-10 10:58"], "step": "2d"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2021-08-10 13:53", "dist_km": 6604.4, "window": ["2021-08-10 13:01", "2021-08-10 14:44"], "step": "1m"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2021-10-01 23:36", "dist_km": 2640.2, "window": ["2021-10-01 23:02", "2021-10-02 00:09"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2021-10-13 15:14", "dist_km": 47996539.9, "window": ["2021-08-20 10:37", "2021-12-06 19:50"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-02-23 00:14", "dist_km": 48180017.2, "window": ["2021-12-30 10:32", "2022-04-18 13:55"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2022-06-23 09:46", "dist_km": 2646.2, "window": ["2022-06-23 09:10", "2022-06-23 10:21"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-07-06 09:04", "dist_km": 45424435.8, "window": ["2022-05-17 03:41", "2022-08-25 14:26"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-10-31 06:17", "dist_km": 45615851.1, "window": ["2022-09-10 16:29", "2022-12-20 20:04"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-02-25 18:26", "dist_km": 46304888.4, "window": ["2023-01-04 22:05", "2023-04-18 14:46"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2023-06-19 19:36", "dist_km": 2678.0, "window": ["2023-06-19 18:46", "2023-06-19 20:25"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-06-26 08:33", "dist_km": 45784207.1, "window": ["2023-05-05 23:14", "2023-08-16 17:51"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-10-15 04:38", "dist_km": 46421185.3, "window": ["2023-08-23 14:35", "2023-12-06 18:40"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-02-03 13:29", "dist_km": 46345978.2, "window": ["2023-12-13 01:19", "2024-03-27 01:38"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-05-23 12:27", "dist_km": 46285866.6, "window": ["2024-04-01 00:45", "2024-07-15 00:08"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2024-09-04 21:50", "dist_km": 2603.9, "window": ["2024-09-04 20:57", "2024-09-04 22:42"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-09-09 23:24", "dist_km": 45802208.5, "window": ["2024-07-18 06:55", "2024-11-02 15:52"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2024-12-01 14:25", "dist_km": 40066.1, "window": ["2024-11-30 15:04", "2024-12-02 13:45"], "step": "30m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-12-06 13:37", "dist_km": 45969821.4, "window": ["2024-10-13 11:04", "2025-01-29 16:09"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2025-01-08 06:00", "dist_km": 2735.5, "window": ["2025-01-08 04:58", "2025-01-08 07:01"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-02-27 18:39", "dist_km": 45783775.4, "window": ["2025-01-04 18:27", "2025-04-22 18:50"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-05-25 10:35", "dist_km": 45780744.8, "window": ["2025-04-01 11:12", "2025-07-18 09:57"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-08-19 19:59", "dist_km": 46236999.1, "window": ["2025-06-26 00:12", "2025-10-13 15:45"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-11-15 19:31", "dist_km": 46706033.9, "window": ["2025-09-21 02:51", "2026-01-10 12:10"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-02-12 17:57", "dist_km": 47010403.7, "window": ["2025-12-18 13:20", "2026-04-09 22:33"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-05-14 01:45", "dist_km": 47195951.7, "window": ["2026-03-18 13:18", "2026-07-09 14:11"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-08-12 09:03", "dist_km": 47330152.9, "window": ["2026-06-16 14:55", "2026-10-08 03:10"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2026-10-26 12:56", "dist_km": 88207.5, "window": ["2026-10-16 19:00", "2026-11-05 06:51"], "step": "3h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-11-10 10:00", "dist_km": 45808044.6, "window": ["2026-09-17 13:42", "2027-01-03 06:17"], "step": "6h"}, {"body": "Mercury", "kind": "arrival", "stays": true, "closest": "2026-11-21 18:49", "dist_km": 3072.2, "window": ["2026-11-21 17:26", "2026-11-21 20:11"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-02-06 06:12", "dist_km": 45993895.7, "window": ["2026-12-14 02:46", "2027-04-01 09:37"], "step": "6h"}]},
@@ -1639,6 +1657,7 @@
     },
     {
       "slug": "solar_orbiter", "name": "SolO", "horizons_id": "-144", "id_type": "id",
+      "horizons_name": "Solar Orbiter (spacecraft)",
       "description": "Solar Orbiter, an ESA mission with a NASA contribution, launched in February 2020 to study the Sun up close. It has taken the first close-up pictures of the Sun's poles.",
       "info_url": "https://www.esa.int/Science_Exploration/Space_Science/Solar_Orbiter",
       "path": {"made": "2026-10-25", "span": {"end": "2030-11-20", "start": "2020-02-11"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2020-06-15 07:38", "dist_km": 77170642.2, "window": ["2020-02-23 14:17", "2020-10-06 00:58"], "step": "1d"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2020-12-27 12:40", "dist_km": 13493.5, "window": ["2020-12-27 11:00", "2020-12-27 14:19"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2021-02-10 09:45", "dist_km": 73980861.0, "window": ["2020-10-27 16:19", "2021-05-27 03:10"], "step": "1d"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2021-08-09 04:42", "dist_km": 14048.6, "window": ["2021-08-09 02:57", "2021-08-09 06:26"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2021-09-12 08:16", "dist_km": 87751138.1, "window": ["2021-04-30 05:49", "2022-01-25 10:42"], "step": "2d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2021-11-27 04:32", "dist_km": 6836.9, "window": ["2021-11-27 03:46", "2021-11-27 05:17"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-03-26 11:51", "dist_km": 48262556.2, "window": ["2022-02-02 14:41", "2022-05-17 09:00"], "step": "6h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2022-09-04 01:28", "dist_km": 12507.6, "window": ["2022-09-04 00:24", "2022-09-04 02:31"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-10-12 19:14", "dist_km": 43775150.7, "window": ["2022-08-29 04:10", "2022-11-26 10:17"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-04-10 13:18", "dist_km": 43770570.3, "window": ["2023-02-24 22:25", "2023-05-25 04:10"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-10-07 07:26", "dist_km": 43768978.6, "window": ["2023-08-23 16:37", "2023-11-20 22:14"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-04-04 01:50", "dist_km": 43773472.1, "window": ["2024-02-19 10:51", "2024-05-18 16:48"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-09-30 20:04", "dist_km": 43769666.2, "window": ["2024-08-17 05:14", "2024-11-14 10:53"], "step": "6h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2025-02-18 20:50", "dist_km": 6430.4, "window": ["2025-02-18 20:19", "2025-02-18 21:20"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-03-31 13:55", "dist_km": 44012551.8, "window": ["2025-02-14 05:50", "2025-05-15 21:59"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-09-16 03:06", "dist_km": 44013438.8, "window": ["2025-08-01 18:59", "2025-10-31 11:12"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-03-03 15:43", "dist_km": 44006043.3, "window": ["2026-01-17 07:53", "2026-04-17 23:32"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-08-19 04:07", "dist_km": 44007014.2, "window": ["2026-07-04 20:14", "2026-10-03 11:59"], "step": "6h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2026-12-24 22:59", "dist_km": 7000.4, "window": ["2026-12-24 22:25", "2026-12-24 23:32"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-02-06 21:47", "dist_km": 42009940.4, "window": ["2026-12-26 09:40", "2027-03-21 09:53"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-07-06 17:01", "dist_km": 42011129.5, "window": ["2027-05-25 04:51", "2027-08-18 05:10"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-12-03 12:14", "dist_km": 42011613.7, "window": ["2027-10-22 00:03", "2028-01-15 00:24"], "step": "6h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2028-03-18 08:18", "dist_km": 6421.2, "window": ["2028-03-18 07:47", "2028-03-18 08:48"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2028-05-08 05:28", "dist_km": 49028123.8, "window": ["2028-03-14 01:03", "2028-07-02 09:52"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2028-10-05 00:43", "dist_km": 49028711.5, "window": ["2028-08-10 20:16", "2028-11-29 05:09"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2029-03-03 19:56", "dist_km": 49026210.9, "window": ["2029-01-07 15:35", "2029-04-28 00:16"], "step": "6h"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2029-06-10 17:43", "dist_km": 6414.6, "window": ["2029-06-10 17:12", "2029-06-10 18:13"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2029-08-11 18:36", "dist_km": 55452681.9, "window": ["2029-06-04 11:31", "2029-10-19 01:40"], "step": "1d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2030-01-08 13:48", "dist_km": 55453263.0, "window": ["2029-11-01 06:41", "2030-03-17 20:54"], "step": "1d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2030-06-07 08:59", "dist_km": 55452101.4, "window": ["2030-03-31 01:55", "2030-08-14 16:02"], "step": "1d"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2030-09-03 02:59", "dist_km": 8670.3, "window": ["2030-09-03 02:16", "2030-09-03 03:41"], "step": "1m"}]},
@@ -1649,6 +1668,7 @@
     },
     {
       "slug": "lucy", "name": "Lucy", "horizons_id": "-49", "id_type": "id",
+      "horizons_name": "Lucy (spacecraft)",
       "description": "NASA's Lucy, launched in October 2021, is on its way to the Trojan asteroids, which share an orbit around the Sun with Jupiter.",
       "info_url": "https://science.nasa.gov/mission/lucy/",
       "path": {"made": "2026-10-25", "span": {"end": "2033-04-02", "start": "2021-10-17"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-07-27 20:15", "dist_km": 125385289.3, "window": ["2021-11-21 12:46", "2023-04-02 03:43"], "step": "4d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2022-10-16 11:06", "dist_km": 6740.4, "window": ["2022-10-16 10:10", "2022-10-16 12:01"], "step": "1m"}, {"body": "Moon", "kind": "flyby", "stays": false, "closest": "2022-10-17 05:38", "dist_km": 56148.5, "window": ["2022-10-16 13:10", "2022-10-17 22:05"], "step": "30m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-11-02 12:26", "dist_km": 127477167.3, "window": ["2024-03-19 14:02", "2025-06-18 10:49"], "step": "3d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2024-12-13 04:17", "dist_km": 6734.9, "window": ["2024-12-13 03:32", "2024-12-13 05:01"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2030-12-02 14:04", "dist_km": 136192639.8, "window": ["2030-04-15 22:30", "2031-07-21 05:37"], "step": "4d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2030-12-27 00:37", "dist_km": 6998.6, "window": ["2030-12-26 23:54", "2030-12-27 01:19"], "step": "1m"}]},
@@ -1659,6 +1679,7 @@
     },
     {
       "slug": "juice", "name": "JUICE", "horizons_id": "-28", "id_type": "id",
+      "horizons_name": "JUICE (spacecraft)",
       "description": "ESA's Juice (Jupiter Icy Moons Explorer), launched in April 2023, reaches Jupiter in July 2031. It will study the planet and its three large moons that hold oceans: Ganymede, Callisto and Europa.",
       "info_url": "https://www.esa.int/Science_Exploration/Space_Science/Juice",
       "path": {"made": "2026-10-25", "span": {"end": "2031-07-21", "start": "2023-04-15"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-12-10 03:12", "dist_km": 129100632.6, "window": ["2023-03-20 18:12", "2024-08-30 12:11"], "step": "4d"}, {"body": "Moon", "kind": "flyby", "stays": false, "closest": "2024-08-19 21:16", "dist_km": 2489.9, "window": ["2024-08-19 20:16", "2024-08-19 22:15"], "step": "1m"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2024-08-20 21:57", "dist_km": 13211.1, "window": ["2024-08-20 19:20", "2024-08-21 00:33"], "step": "5m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-01-01 21:51", "dist_km": 96238627.3, "window": ["2024-07-23 03:33", "2025-06-13 16:08"], "step": "2d"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2025-08-31 05:30", "dist_km": 11140.1, "window": ["2025-08-31 03:43", "2025-08-31 07:16"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-09-10 07:31", "dist_km": 106051334.5, "window": ["2025-03-17 01:41", "2026-03-06 13:20"], "step": "3d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2026-09-28 11:46", "dist_km": 15018.9, "window": ["2026-09-28 09:51", "2026-09-28 13:40"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-11-09 23:02", "dist_km": 127107421.7, "window": ["2026-03-30 08:02", "2027-06-22 14:01"], "step": "3d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2028-12-09 06:08", "dist_km": 127093694.2, "window": ["2028-04-28 16:00", "2029-07-21 20:15"], "step": "3d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2029-01-17 18:35", "dist_km": 11011.9, "window": ["2029-01-17 17:15", "2029-01-17 19:54"], "step": "1m"}]},
@@ -1669,6 +1690,7 @@
     },
     {
       "slug": "psyche_spacecraft", "name": "Psyche", "horizons_id": "-255", "id_type": "id",
+      "horizons_name": "Psyche (spacecraft)",
       "description": "NASA's Psyche spacecraft, launched in October 2023, is on its way to the metal-rich asteroid 16 Psyche in the main asteroid belt. It begins exploring the asteroid by August 2029.",
       "info_url": "https://science.nasa.gov/mission/psyche/",
       "path": {"made": "2026-10-25", "span": {"end": "2029-02-11", "start": "2023-10-14"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-10-16 08:47", "dist_km": 149213435.7, "window": ["2022-12-30 06:57", "2024-08-01 10:36"], "step": "5d"}, {"body": "Mars", "kind": "flyby", "stays": false, "closest": "2026-05-15 19:29", "dist_km": 8000.4, "window": ["2026-05-15 17:03", "2026-05-15 21:54"], "step": "5m"}]},
@@ -1679,6 +1701,7 @@
     },
     {
       "slug": "europa_clipper", "name": "Clipper", "horizons_id": "-159", "id_type": "id",
+      "horizons_name": "Europa Clipper (spacecraft)",
       "description": "NASA's Europa Clipper, launched in October 2024, reaches Jupiter in April 2030. It will fly past Jupiter's moon Europa 49 times, to learn whether the ocean thought to lie under its ice could support life.",
       "info_url": "https://science.nasa.gov/mission/europa-clipper/",
       "path": {"made": "2026-10-25", "span": {"end": "2034-09-03", "start": "2024-10-15"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-10-22 03:54", "dist_km": 148613374.9, "window": ["2024-01-10 14:39", "2025-08-03 17:08"], "step": "4d"}, {"body": "Mars", "kind": "flyby", "stays": false, "closest": "2025-03-01 17:58", "dist_km": 4274.5, "window": ["2025-03-01 17:19", "2025-03-01 18:36"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-10-23 13:51", "dist_km": 125491559.9, "window": ["2026-03-16 23:03", "2027-06-01 04:38"], "step": "3d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2026-12-03 20:15", "dist_km": 9609.3, "window": ["2026-12-03 19:09", "2026-12-03 21:20"], "step": "1m"}, {"body": "Jupiter", "kind": "arrival", "stays": true, "closest": "2030-04-11 08:25", "dist_km": 801870.1, "window": ["2030-04-08 05:47", "2030-04-14 11:02"], "step": "1h"}]},
@@ -1689,6 +1712,7 @@
     },
     {
       "slug": "encke", "name": "Encke", "horizons_id": "90000091", "id_type": "smallbody",
+      "horizons_name": "2P/Encke",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000091", "target_label": null, "open_orbit": false, "fetched": "2026-10-13", "words": null, "years": {"value": 3.303, "figures": 4, "text": "3.303"}, "days": {"value": 1206.3, "figures": 5, "text": "1206.3"}},
       "description": "A short-period comet whose dust trail is the source of the Taurid meteor showers.",
       "info_url": "https://science.nasa.gov/solar-system/comets/2p-encke/",
@@ -1703,6 +1727,7 @@
       "name": "Halley",
       "horizons_id": "90000030",
       "id_type": "smallbody",
+      "horizons_name": "1P/Halley",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "90000030", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "years": {"value": 75.4613, "figures": 6, "text": "75.4613"}, "days": {"value": 27562.22, "figures": 7, "text": "27,562.22"}},
       "description": "The most famous periodic comet. Its orbit runs backward compared with the planets, and its dust gives two meteor showers each year, the Eta Aquarids and the Orionids.",
       "info_url": "https://science.nasa.gov/solar-system/comets/1p-halley/",
@@ -1719,6 +1744,7 @@
     },
     {
       "slug": "tempel_2", "name": "Tempel 2", "horizons_id": "90000214", "id_type": "smallbody",
+      "horizons_name": "10P/Tempel 2",
       "description": "A Jupiter-family comet, discovered in 1873 by Wilhelm Tempel.",
       "info_url": "https://en.wikipedia.org/wiki/10P/Tempel",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000214", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 5.37, "figures": 3, "text": "5.37"}, "days": {"value": 1960.0, "figures": 4, "text": "1960"}},
@@ -1728,6 +1754,7 @@
     },
     {
       "slug": "schaumasse", "name": "Schaumasse", "horizons_id": "90000356", "id_type": "smallbody",
+      "horizons_name": "24P/Schaumasse",
       "description": "A Jupiter-family comet, discovered in 1911.",
       "info_url": "https://en.wikipedia.org/wiki/24P/Schaumasse",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000356", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 8.17, "figures": 3, "text": "8.17"}, "days": {"value": 2990.0, "figures": 3, "text": "2990"}},
@@ -1737,6 +1764,7 @@
     },
     {
       "slug": "ikeya_seki", "name": "Ikeya-Seki", "horizons_id": "C/1965 S1-A", "id_type": "smallbody",
+      "horizons_name": "Ikeya-Seki (C/1965 S1-A)",
       "description": "One of the brightest comets seen in the last thousand years. It goes around the Sun in the opposite direction to the planets.",
       "info_url": "https://en.wikipedia.org/wiki/Comet_Ikeya%E2%80%93Seki",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "C/1965 S1-A", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 795.159, "figures": 6, "text": "795.159"}, "days": {"value": 290431.7, "figures": 7, "text": "290,431.7"}},
@@ -1746,6 +1774,7 @@
     },
     {
       "slug": "churyumov", "name": "Churyumov", "horizons_id": "90000703", "id_type": "smallbody",
+      "horizons_name": "67P/Churyumov-Gerasimenko",
       "description": "67P/Churyumov-Gerasimenko is the comet visited by the Rosetta spacecraft, August 2014 through September 2016.",
       "info_url": "https://science.nasa.gov/solar-system/comets/67p-churyumov-gerasimenko/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000703", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 6.433, "figures": 4, "text": "6.433"}, "days": {"value": 2350.0, "figures": 4, "text": "2350"}},
@@ -1755,6 +1784,7 @@
     },
     {
       "slug": "howell", "name": "Howell", "horizons_id": "90000901", "id_type": "smallbody",
+      "horizons_name": "88P/Howell",
       "description": "A Jupiter-family comet, discovered in 1981 by Ellen Howell.",
       "info_url": "https://en.wikipedia.org/wiki/88P/Howell",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000901", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 5.48, "figures": 3, "text": "5.48"}, "days": {"value": 2002.0, "figures": 4, "text": "2002"}},
@@ -1764,6 +1794,7 @@
     },
     {
       "slug": "hale_bopp", "name": "Hale-Bopp", "horizons_id": "C/1995 O1", "id_type": "smallbody",
+      "horizons_name": "Hale-Bopp (C/1995 O1)",
       "description": "Visible to the naked eye for a record 18 months.",
       "info_url": "https://science.nasa.gov/solar-system/comets/c-1995-o1-hale-bopp/",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "C/1995 O1", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 2399.0, "figures": 4, "text": "2399"}, "days": {"value": 876400.0, "figures": 4, "text": "876,400"}},
@@ -1773,6 +1804,7 @@
     },
     {
       "slug": "hyakutake", "name": "Hyakutake", "horizons_id": "C/1996 B2", "id_type": "smallbody",
+      "horizons_name": "Hyakutake (C/1996 B2)",
       "description": "Passed very close to Earth in 1996. It goes around the Sun in the opposite direction to the planets.",
       "info_url": "https://nssdc.gsfc.nasa.gov/planetary/hyakutake.html",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "C/1996 B2", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 72000.0, "figures": 2, "text": "72,000"}, "days": {"value": 26000000.0, "figures": 2, "text": "26,000,000"}},
@@ -1782,6 +1814,7 @@
     },
     {
       "slug": "neowise", "name": "NEOWISE", "horizons_id": "C/2020 F3", "id_type": "smallbody",
+      "horizons_name": "NEOWISE (C/2020 F3)",
       "description": "The brightest comet seen from the Northern Hemisphere since Hale-Bopp in 1997. It goes around the Sun in the opposite direction to the planets.",
       "info_url": "https://www.nasa.gov/centers-and-facilities/jpl/comet-neowise-sizzles-as-it-slides-by-the-sun-providing-a-treat-for-observers/",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "C/2020 F3", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 6830.0, "figures": 3, "text": "6830"}, "days": {"value": 2500000.0, "figures": 3, "text": "2,500,000"}},
@@ -1791,6 +1824,7 @@
     },
     {
       "slug": "lemmon", "name": "Lemmon", "horizons_id": "C/2025 A6", "id_type": "smallbody",
+      "horizons_name": "Lemmon (C/2025 A6)",
       "description": "In fall 2025 it brightened in the morning northern sky. It goes around the Sun in the opposite direction to the planets.",
       "info_url": "https://apod.nasa.gov/apod/ap250930.html",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "C/2025 A6", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1170.0, "figures": 3, "text": "1170"}, "days": {"value": 430000.0, "figures": 2, "text": "430,000"}},
@@ -1800,6 +1834,7 @@
     },
     {
       "slug": "swan", "name": "SWAN", "horizons_id": "C/2025 R2", "id_type": "smallbody",
+      "horizons_name": "SWAN (C/2025 R2)",
       "description": "A long-period comet, discovered on September 11, 2025.",
       "info_url": "https://en.wikipedia.org/wiki/C/2025_R2_(SWAN)",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "C/2025 R2", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 800.0, "figures": 1, "text": "800"}, "days": {"value": 290000.0, "figures": 2, "text": "290,000"}},
@@ -1809,6 +1844,7 @@
     },
     {
       "slug": "maps", "name": "MAPS", "horizons_id": "C/2026 A1", "id_type": "smallbody",
+      "horizons_name": "MAPS (C/2026 A1)",
       "description": "Kreutz sungrazer comet discovered on 13 January 2026 from the AMACS1 Observatory in the Atacama Desert, Chile.",
       "info_url": "https://en.wikipedia.org/wiki/C/2026_A1_(MAPS)",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "C/2026 A1", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1900.0, "figures": 2, "text": "1900"}, "days": {"value": 700000.0, "figures": 1, "text": "700,000"}},
@@ -1818,6 +1854,7 @@
     },
     {
       "slug": "eros", "name": "Eros", "horizons_id": "A898 PA", "id_type": "smallbody",
+      "horizons_name": "433 Eros",
       "description": "First asteroid to be orbited and landed on by NASA's NEAR Shoemaker spacecraft in 2000-2001.",
       "info_url": "https://science.nasa.gov/solar-system/asteroids/433-eros/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "A898 PA", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.761, "figures": 5, "text": "1.7610"}, "days": {"value": 643.2, "figures": 4, "text": "643.2"}},
@@ -1827,6 +1864,7 @@
     },
     {
       "slug": "bennu", "name": "Bennu", "horizons_id": "1999 RQ36", "id_type": "smallbody",
+      "horizons_name": "101955 Bennu",
       "description": "Studied by NASA's OSIRIS-REx mission.",
       "info_url": "https://science.nasa.gov/solar-system/asteroids/101955-bennu/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1999 RQ36", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.19472, "figures": 6, "text": "1.19472"}, "days": {"value": 436.37, "figures": 5, "text": "436.37"}},
@@ -1836,6 +1874,7 @@
     },
     {
       "slug": "ryugu", "name": "Ryugu", "horizons_id": "1999 JU3", "id_type": "smallbody",
+      "horizons_name": "162173 Ryugu",
       "description": "Target of JAXA's Hayabusa2 mission which returned samples to Earth in 2020.",
       "info_url": "https://en.wikipedia.org/wiki/162173_Ryugu",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1999 JU3", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.2997, "figures": 5, "text": "1.2997"}, "days": {"value": 474.7, "figures": 4, "text": "474.7"}},
@@ -1845,6 +1884,7 @@
     },
     {
       "slug": "itokawa", "name": "Itokawa", "horizons_id": "1998 SF36", "id_type": "smallbody",
+      "horizons_name": "25143 Itokawa",
       "description": "First asteroid from which samples were returned to Earth by JAXA's Hayabusa mission in 2010.",
       "info_url": "https://science.nasa.gov/solar-system/asteroids/25143-itokawa/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1998 SF36", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.5237, "figures": 5, "text": "1.5237"}, "days": {"value": 556.5, "figures": 4, "text": "556.5"}},
@@ -1854,6 +1894,7 @@
     },
     {
       "slug": "kamo_oalewa", "name": "Kamo oalewa", "horizons_id": "2016 HO3", "id_type": "smallbody",
+      "horizons_name": "469219 Kamo`oalewa",
       "description": "Kamo'oalewa is a very small, elongated asteroid belonging to the Apollo group of near-Earth objects.",
       "info_url": "https://www.jpl.nasa.gov/news/small-asteroid-is-earths-constant-companion/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2016 HO3", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.001, "figures": 4, "text": "1.001"}, "days": {"value": 365.8, "figures": 4, "text": "365.8"}},
@@ -1863,6 +1904,7 @@
     },
     {
       "slug": "asteroid_2025_pn7", "name": "2025 PN7", "horizons_id": "2025 PN7", "id_type": "smallbody",
+      "horizons_name": "(2025 PN7)",
       "description": "2025 PN7 is a small near-Earth asteroid and the most recently discovered quasi-satellite of Earth.",
       "info_url": "https://en.wikipedia.org/wiki/2025_PN7",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2025 PN7", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.0, "figures": 3, "text": "1.00"}, "days": {"value": 364.0, "figures": 3, "text": "364"}},
@@ -1872,6 +1914,7 @@
     },
     {
       "slug": "asteroid_2024_pt5", "name": "2024 PT5", "horizons_id": "2024 PT5", "id_type": "smallbody",
+      "horizons_name": "(2024 PT5)",
       "description": "Passed closest to Earth on August 8, 2024.",
       "info_url": "https://science.nasa.gov/blogs/planetary-defense/2024/10/02/nasa-to-track-asteroid-2024-pt5-on-next-close-pass-january-2025/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2024 PT5", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.034, "figures": 4, "text": "1.034"}, "days": {"value": 377.6, "figures": 4, "text": "377.6"}},
@@ -1881,6 +1924,7 @@
     },
     {
       "slug": "asteroid_2025_py1", "name": "2025 PY1", "horizons_id": "2025 PY1", "id_type": "smallbody",
+      "horizons_name": "(2025 PY1)",
       "description": "Near-Earth asteroid.",
       "info_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=2025%20PY1",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2025 PY1", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 1.166, "figures": 5, "text": "1.1660"}, "days": {"value": 425.88, "figures": 5, "text": "425.88"}},
@@ -1890,6 +1934,7 @@
     },
     {
       "slug": "asteroid_2023_jf", "name": "2023 JF", "horizons_id": "2023 JF", "id_type": "smallbody",
+      "horizons_name": "(2023 JF)",
       "description": "Asteroid 2023 JF flew past Earth on May 9, 2023.",
       "info_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=2023%20JF",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2023 JF", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 2.072, "figures": 4, "text": "2.072"}, "days": {"value": 757.0, "figures": 3, "text": "757"}},
@@ -1899,6 +1944,7 @@
     },
     {
       "slug": "asteroid_2024_dw", "name": "2024 DW", "horizons_id": "2024 DW", "id_type": "smallbody",
+      "horizons_name": "(2024 DW)",
       "description": "Passed closest to Earth on February 22, 2024.",
       "info_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=2024%20DW",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2024 DW", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.61, "figures": 3, "text": "3.61"}, "days": {"value": 1320.0, "figures": 3, "text": "1320"}},
@@ -1908,6 +1954,7 @@
     },
     {
       "slug": "asteroid_2024_yr4", "name": "2024 YR4", "horizons_id": "2024 YR4", "id_type": "smallbody",
+      "horizons_name": "(2024 YR4)",
       "description": "Passed close to Earth on December 25, 2024, two days before it was discovered.",
       "info_url": "https://science.nasa.gov/solar-system/asteroids/2024-yr4/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2024 YR4", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.991, "figures": 4, "text": "3.991"}, "days": {"value": 1458.0, "figures": 4, "text": "1458"}},
@@ -1917,6 +1964,7 @@
     },
     {
       "slug": "ceres", "name": "Ceres", "horizons_id": "A801 AA", "id_type": "smallbody",
+      "horizons_name": "1 Ceres",
       "description": "NASA: \"Ceres was the first object discovered in the main asteroid belt and is named for the Roman goddess of agriculture.\" NASA's Dawn spacecraft went into orbit around it in 2015.",
       "info_url": "https://science.nasa.gov/dwarf-planets/ceres/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "A801 AA", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 4.6, "figures": 3, "text": "4.60"}, "days": {"value": 1680.0, "figures": 4, "text": "1680"}},
@@ -1926,6 +1974,7 @@
     },
     {
       "slug": "vesta", "name": "Vesta", "horizons_id": "A807 FA", "id_type": "smallbody",
+      "horizons_name": "4 Vesta",
       "description": "One of the largest objects in the asteroid belt, visited by NASA's Dawn mission.",
       "info_url": "https://science.nasa.gov/solar-system/asteroids/4-vesta/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "A807 FA", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.628, "figures": 4, "text": "3.628"}, "days": {"value": 1325.0, "figures": 4, "text": "1325"}},
@@ -1935,6 +1984,7 @@
     },
     {
       "slug": "psyche", "name": "16 Psyche", "horizons_id": "A852 FA", "id_type": "smallbody",
+      "horizons_name": "16 Psyche",
       "description": "A metal-rich asteroid in the main asteroid belt. NASA's Psyche spacecraft begins its main mission there in August 2029.",
       "info_url": "https://science.nasa.gov/solar-system/asteroids/16-psyche/",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "A852 FA", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 4.97, "figures": 3, "text": "4.97"}, "days": {"value": 1820.0, "figures": 3, "text": "1820"}},
@@ -1944,6 +1994,7 @@
     },
     {
       "slug": "lutetia", "name": "Lutetia", "horizons_id": "A852 VA", "id_type": "smallbody",
+      "horizons_name": "21 Lutetia",
       "description": "Studied by European Space Agency's Rosetta mission.",
       "info_url": "https://www.nasa.gov/image-article/asteroid-lutetia/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "A852 VA", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.799, "figures": 4, "text": "3.799"}, "days": {"value": 1388.0, "figures": 4, "text": "1388"}},
@@ -1953,6 +2004,7 @@
     },
     {
       "slug": "steins", "name": "Steins", "horizons_id": "1969 VC", "id_type": "smallbody",
+      "horizons_name": "2867 Steins",
       "description": "Visited by European Space Agency's Rosetta spacecraft.",
       "info_url": "https://en.wikipedia.org/wiki/2867_%C5%A0teins",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1969 VC", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.633, "figures": 4, "text": "3.633"}, "days": {"value": 1327.0, "figures": 4, "text": "1327"}},
@@ -1962,6 +2014,7 @@
     },
     {
       "slug": "donaldjohanson", "name": "Donaldjohanson", "horizons_id": "1981 EQ5", "id_type": "smallbody",
+      "horizons_name": "52246 Donaldjohanson",
       "description": "Lucy flew past it on April 20, 2025. It is about 8 km long and 3.5 km wide, a C-type (carbon-rich) asteroid, named for the paleoanthropologist who discovered the \"Lucy\" fossil.",
       "info_url": "https://science.nasa.gov/solar-system/asteroids/donaldjohanson/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1981 EQ5", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.681, "figures": 4, "text": "3.681"}, "days": {"value": 1344.4, "figures": 5, "text": "1344.4"}},
@@ -1971,6 +2024,7 @@
     },
     {
       "slug": "dinkinesh", "name": "Dinkinesh", "horizons_id": "1999 VD57", "id_type": "smallbody",
+      "horizons_name": "152830 Dinkinesh",
       "description": "Dinkinesh was visited by the mission Lucy.",
       "info_url": "https://science.nasa.gov/solar-system/asteroids/dinkinesh/",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "1999 VD57", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 3.244, "figures": 4, "text": "3.244"}, "days": {"value": 1184.9, "figures": 5, "text": "1184.9"}},
@@ -1980,6 +2034,7 @@
     },
     {
       "slug": "eurybates", "name": "Eurybates", "horizons_id": "1973 SO", "id_type": "smallbody",
+      "horizons_name": "3548 Eurybates",
       "description": "Lucy flies past it on August 11, 2027. A C-type (carbon-rich) asteroid with a small moon, Queta.",
       "info_url": "https://en.wikipedia.org/wiki/3548_Eurybates",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "1973 SO", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 11.919, "figures": 5, "text": "11.919"}, "days": {"value": 4353.0, "figures": 4, "text": "4353"}},
@@ -1989,6 +2044,7 @@
     },
     {
       "slug": "patroclus", "name": "Patroclus", "horizons_id": "A906 UL", "id_type": "smallbody",
+      "horizons_name": "617 Patroclus",
       "description": "Two Jupiter Trojans of nearly the same size, Patroclus and Menoetius, orbiting each other. Lucy flies past them in March 2033.",
       "info_url": "https://en.wikipedia.org/wiki/617_Patroclus",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "A906 UL", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 11.879, "figures": 5, "text": "11.879"}, "days": {"value": 4338.9, "figures": 5, "text": "4338.9"}},
@@ -1998,6 +2054,7 @@
     },
     {
       "slug": "polymele", "name": "Polymele", "horizons_id": "1999 WB2", "id_type": "smallbody",
+      "horizons_name": "15094 Polymele",
       "description": "Lucy flies past it in September 2027. A P-type (primitive) asteroid with a small moon, Shaun, found in 2022 when Polymele passed in front of a star.",
       "info_url": "https://en.wikipedia.org/wiki/15094_Polymele",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "1999 WB2", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 11.83, "figures": 5, "text": "11.830"}, "days": {"value": 4321.0, "figures": 4, "text": "4321"}},
@@ -2007,6 +2064,7 @@
     },
     {
       "slug": "leucus", "name": "Leucus", "horizons_id": "1997 TS25", "id_type": "smallbody",
+      "horizons_name": "11351 Leucus",
       "description": "Lucy flies past it on April 18, 2028. A D-type asteroid with a dark, primitive surface, which rotates very slowly.",
       "info_url": "https://en.wikipedia.org/wiki/11351_Leucus",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "1997 TS25", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 12.237, "figures": 5, "text": "12.237"}, "days": {"value": 4470.0, "figures": 4, "text": "4470"}},
@@ -2016,6 +2074,7 @@
     },
     {
       "slug": "orus", "name": "Orus", "horizons_id": "1999 VQ10", "id_type": "smallbody",
+      "horizons_name": "21900 Orus",
       "description": "Lucy flies past it on November 11, 2028, its last stop among the Trojans that lead Jupiter. A D-type asteroid.",
       "info_url": "https://en.wikipedia.org/wiki/21900_Orus",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "1999 VQ10", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 11.5742, "figures": 6, "text": "11.5742"}, "days": {"value": 4227.5, "figures": 5, "text": "4227.5"}},
@@ -2025,6 +2084,7 @@
     },
     {
       "slug": "chariklo", "name": "Chariklo", "horizons_id": "1997 CU26", "id_type": "smallbody",
+      "horizons_name": "10199 Chariklo",
       "description": "Large Centaur.",
       "info_url": "https://science.nasa.gov/solar-system/asteroids/10199-chariklo/",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "1997 CU26", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 62.486, "figures": 5, "text": "62.486"}, "days": {"value": 22823.0, "figures": 5, "text": "22,823"}},
@@ -2034,6 +2094,7 @@
     },
     {
       "slug": "orcus", "name": "Orcus", "horizons_id": "2004 DW", "id_type": "smallbody",
+      "horizons_name": "90482 Orcus",
       "description": "A dwarf planet with a large moon, Vanth, about 16% of its mass: the highest share of any known planet or dwarf planet and its moon.",
       "info_url": "https://en.wikipedia.org/wiki/Orcus_(dwarf_planet)",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2004 DW", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 246.02, "figures": 6, "text": "246.020"}, "days": {"value": 89858.8, "figures": 6, "text": "89,858.8"}},
@@ -2043,6 +2104,7 @@
     },
     {
       "slug": "haumea", "name": "Haumea", "horizons_id": "2003 EL61", "id_type": "smallbody",
+      "horizons_name": "136108 Haumea",
       "description": "A dwarf planet with rings, spinning about once every 4 hours, fast enough to stretch it into an oval like a football.",
       "info_url": "https://science.nasa.gov/dwarf-planets/haumea/",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2003 EL61", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 282.793, "figures": 6, "text": "282.793"}, "days": {"value": 103290.2, "figures": 7, "text": "103,290.2"}},
@@ -2052,6 +2114,7 @@
     },
     {
       "slug": "eris", "name": "Eris", "horizons_id": "2003 UB313", "id_type": "smallbody",
+      "horizons_name": "136199 Eris",
       "description": "The most massive known dwarf planet, about the same size as Pluto.",
       "info_url": "https://science.nasa.gov/dwarf-planets/eris/",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2003 UB313", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 558.34, "figures": 5, "text": "558.34"}, "days": {"value": 203934.0, "figures": 6, "text": "203,934"}},
@@ -2061,6 +2124,7 @@
     },
     {
       "slug": "makemake", "name": "Makemake", "horizons_id": "2005 FY9", "id_type": "smallbody",
+      "horizons_name": "136472 Makemake",
       "description": "Makemake is a dwarf planet slightly smaller than Pluto, and is the second-brightest object in the Kuiper Belt.",
       "info_url": "https://science.nasa.gov/dwarf-planets/makemake/",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2005 FY9", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 306.701, "figures": 6, "text": "306.701"}, "days": {"value": 112022.0, "figures": 6, "text": "112,022"}},
@@ -2070,6 +2134,7 @@
     },
     {
       "slug": "gonggong", "name": "Gonggong", "horizons_id": "2007 OR10", "id_type": "smallbody",
+      "horizons_name": "225088 Gonggong",
       "description": "Dwarf planet with a highly inclined orbit.",
       "info_url": "https://en.wikipedia.org/wiki/Gonggong_(dwarf_planet)",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2007 OR10", "target_label": null, "open_orbit": false, "fetched": "2026-10-23", "words": null, "years": {"value": 548.9, "figures": 4, "text": "548.9"}, "days": {"value": 200480.0, "figures": 5, "text": "200,480"}},
@@ -2079,6 +2144,7 @@
     },
     {
       "slug": "quaoar", "name": "Quaoar", "horizons_id": "2002 LM60", "id_type": "smallbody",
+      "horizons_name": "50000 Quaoar",
       "description": "Kuiper Belt dwarf planet with a ring system, announced in 2023.",
       "info_url": "https://en.wikipedia.org/wiki/50000_Quaoar",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2002 LM60", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 285.085, "figures": 6, "text": "285.085"}, "days": {"value": 104127.2, "figures": 7, "text": "104,127.2"}},
@@ -2088,6 +2154,7 @@
     },
     {
       "slug": "sedna", "name": "Sedna", "horizons_id": "2003 VB12", "id_type": "smallbody",
+      "horizons_name": "90377 Sedna",
       "description": "A distant trans-Neptunian dwarf planet with an extremely long orbit.",
       "info_url": "https://en.wikipedia.org/wiki/Sedna_(dwarf_planet)",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2003 VB12", "target_label": null, "open_orbit": false, "fetched": "2026-10-13", "words": null, "years": {"value": 11390.0, "figures": 4, "text": "11,390"}, "days": {"value": 4160000.0, "figures": 3, "text": "4,160,000"}},
@@ -2097,6 +2164,7 @@
     },
     {
       "slug": "mani", "name": "Mani", "horizons_id": "2002 MS4", "id_type": "smallbody",
+      "horizons_name": "307261 Mani",
       "description": "One of the largest Kuiper Belt objects with no known moons.",
       "info_url": "https://en.wikipedia.org/wiki/307261_Mani",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2002 MS4", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 269.467, "figures": 6, "text": "269.467"}, "days": {"value": 98422.7, "figures": 6, "text": "98,422.7"}},
@@ -2106,6 +2174,7 @@
     },
     {
       "slug": "ixion", "name": "Ixion", "horizons_id": "2001 KX76", "id_type": "smallbody",
+      "horizons_name": "28978 Ixion",
       "description": "A large Kuiper Belt object without a known moon.",
       "info_url": "https://en.wikipedia.org/wiki/28978_Ixion",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2001 KX76", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 248.06, "figures": 6, "text": "248.060"}, "days": {"value": 90604.0, "figures": 5, "text": "90,604"}},
@@ -2115,6 +2184,7 @@
     },
     {
       "slug": "varuna", "name": "Varuna", "horizons_id": "2000 WR106", "id_type": "smallbody",
+      "horizons_name": "20000 Varuna",
       "description": "A significant Kuiper Belt Object with a rapid rotation period.",
       "info_url": "https://en.wikipedia.org/wiki/20000_Varuna",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2000 WR106", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 281.28, "figures": 6, "text": "281.280"}, "days": {"value": 102738.0, "figures": 6, "text": "102,738"}},
@@ -2124,6 +2194,7 @@
     },
     {
       "slug": "goibniu", "name": "GV9", "horizons_id": "2004 GV9", "id_type": "smallbody",
+      "horizons_name": "90568 Goibniu",
       "description": "A binary Kuiper Belt Object providing precise mass measurements through its moon.",
       "info_url": "https://en.wikipedia.org/wiki/90568_Goibniu",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2004 GV9", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 271.479, "figures": 6, "text": "271.479"}, "days": {"value": 99158.0, "figures": 5, "text": "99,158"}},
@@ -2133,6 +2204,7 @@
     },
     {
       "slug": "leleakuhonua", "name": "Leleakuhonua", "horizons_id": "2015 TG387", "id_type": "smallbody",
+      "horizons_name": "541132 Leleakuhonua",
       "description": "A distant trans-Neptunian dwarf planet with an extremely long orbit.",
       "info_url": "https://en.wikipedia.org/wiki/541132_Lele%C4%81k%C5%ABhonua",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2015 TG387", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 42000.0, "figures": 2, "text": "42,000"}, "days": {"value": 15400000.0, "figures": 3, "text": "15,400,000"}},
@@ -2142,6 +2214,7 @@
     },
     {
       "slug": "tno_2017_of201", "name": "2017 OF201", "horizons_id": "2017 OF201", "id_type": "smallbody",
+      "horizons_name": "(2017 OF201)",
       "description": "An extreme trans-Neptunian object with an extremely long orbit.",
       "info_url": "https://en.wikipedia.org/wiki/2017_OF201",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2017 OF201", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 23800.0, "figures": 3, "text": "23,800"}, "days": {"value": 8700000.0, "figures": 2, "text": "8,700,000"}},
@@ -2151,6 +2224,7 @@
     },
     {
       "slug": "ammonite", "name": "Ammonite", "horizons_id": "2023 KQ14", "id_type": "smallbody",
+      "horizons_name": "(2023 KQ14)",
       "description": "Ammonite is classified as a sednoid, after Sedna.",
       "info_url": "https://en.wikipedia.org/wiki/2023_KQ14",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2023 KQ14", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 4000.0, "figures": 3, "text": "4000"}, "days": {"value": 1461000.0, "figures": 4, "text": "1,461,000"}},
@@ -2160,6 +2234,7 @@
     },
     {
       "slug": "arrokoth", "name": "Arrokoth", "horizons_id": "2014 MU69", "id_type": "smallbody",
+      "horizons_name": "486958 Arrokoth",
       "description": "Arrokoth flyby from New Horizons on January 1, 2019.",
       "info_url": "https://en.wikipedia.org/wiki/486958_Arrokoth",
       "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2014 MU69", "target_label": null, "open_orbit": false, "fetched": "2026-10-22", "words": null, "years": {"value": 294.0, "figures": 4, "text": "294.0"}, "days": {"value": 107400.0, "figures": 4, "text": "107,400"}},
@@ -2169,6 +2244,7 @@
     },
     {
       "slug": "west", "name": "West", "horizons_id": "C/1975 V1-A", "id_type": "smallbody",
+      "horizons_name": "West (C/1975 V1-A)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "1975-02-25"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "1976-02-25 05:19", "dist_km": 29411034.0, "window": ["1976-02-03 17:19", "1976-03-17 17:18"], "step": "6h"}]},
       "description": "One of the brightest objects to pass through the inner solar system in 1976. As it passed close to the Sun its nucleus split into four pieces; the path drawn is piece A's, the one JPL tracks. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun.",
       "info_url": "https://en.wikipedia.org/wiki/Comet_West",
@@ -2180,6 +2256,7 @@
     },
     {
       "slug": "mcnaught", "name": "McNaught", "horizons_id": "C/2006 P1", "id_type": "smallbody",
+      "horizons_name": "McNaught (C/2006 P1)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2006-01-12"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2007-01-12 19:10", "dist_km": 25541227.7, "window": ["2006-12-26 09:35", "2007-01-30 04:44"], "step": "6h"}]},
       "description": "Discovered in August 2006 by Robert McNaught and called the Great Comet of 2007, it was the brightest comet in over 40 years, easily seen with the naked eye from the Southern Hemisphere in January and February 2007. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun.",
       "info_url": "https://en.wikipedia.org/wiki/C/2006_P1_(McNaught)",
@@ -2191,6 +2268,7 @@
     },
     {
       "slug": "tsuchinshan_atlas", "name": "Tsuchinshan", "horizons_id": "C/2023 A3", "id_type": "smallbody",
+      "horizons_name": "Tsuchinshan-ATLAS (C/2023 A3)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2023-09-28"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-09-27 17:49", "dist_km": 58556036.5, "window": ["2024-07-29 08:16", "2024-11-27 03:21"], "step": "1d"}]},
       "description": "Discovered in January 2023, it became known as the Great Comet of 2024, visible to the naked eye around its perihelion, its closest pass by the Sun, in late September 2024. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://en.wikipedia.org/wiki/C/2023_A3_(Tsuchinshan-ATLAS)",
@@ -2202,6 +2280,7 @@
     },
     {
       "slug": "wierzchos", "name": "Wierzchos", "horizons_id": "C/2024 E1", "id_type": "smallbody",
+      "horizons_name": "Wierzchos (C/2024 E1)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2025-01-20"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-01-20 18:27", "dist_km": 84689248.4, "window": ["2025-10-07 17:04", "2026-05-05 19:49"], "step": "1d"}]},
       "description": "A comet from the Oort cloud, the far-off cloud of icy bodies thought to surround the solar system, discovered in March 2024 by Kacper Wierzchos. Its activity has been driven by carbon dioxide. After its perihelion, its closest pass by the Sun, it showed three dust tails. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun.",
       "info_url": "https://en.wikipedia.org/wiki/C/2024_E1_(Wierzchos)",
@@ -2213,6 +2292,7 @@
     },
     {
       "slug": "atlas_2024_g3", "name": "ATLAS", "horizons_id": "C/2024 G3", "id_type": "smallbody",
+      "horizons_name": "ATLAS (C/2024 G3)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-01-14"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-01-13 10:18", "dist_km": 13993412.4, "window": ["2025-01-06 08:57", "2025-01-20 11:38"], "step": "2h"}]},
       "description": "Discovered in April 2024 and called the Great Comet of 2025, the brightest comet of that year. After its perihelion, its closest pass by the Sun, it was clearly visible to the naked eye from the Southern Hemisphere. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://en.wikipedia.org/wiki/C/2024_G3_(ATLAS)",
@@ -2224,6 +2304,7 @@
     },
     {
       "slug": "c2025_k1", "name": "C/2025_K1", "horizons_id": "1004075", "id_type": "designation",
+      "horizons_name": "ATLAS (C/2025 K1)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:33", "dist_km": 49997834.6, "window": ["2025-08-21 18:55", "2025-11-25 02:10"], "step": "6h"}]},
       "description": "A comet that broke apart about a month after its perihelion, its closest pass by the Sun: in November 2025 NASA's Hubble Space Telescope caught it splitting into at least four pieces. This path is the comet's own, worked out from sightings before and after the break-up. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://science.nasa.gov/asset/hubble/fragmenting-comet-c-2025-k1/",
@@ -2235,6 +2316,7 @@
     },
     {
       "slug": "c2025_k1_b", "name": "C/2025_K1-B", "horizons_id": "C/2025 K1-B", "id_type": "smallbody",
+      "horizons_name": "ATLAS (C/2025 K1-B)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:52", "dist_km": 50234650.0, "window": ["2025-08-21 11:38", "2025-11-25 10:05"], "step": "6h"}]},
       "description": "Piece B of comet C/2025 K1 (ATLAS), one of at least four pieces Hubble saw in November 2025. Its path is worked out from sightings after the break-up, so the part drawn before then is traced backwards. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://science.nasa.gov/asset/hubble/fragmenting-comet-c-2025-k1/",
@@ -2246,6 +2328,7 @@
     },
     {
       "slug": "c2025_k1_c", "name": "C/2025_K1-C", "horizons_id": "C/2025 K1-C", "id_type": "smallbody",
+      "horizons_name": "ATLAS (C/2025 K1-C)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:33", "dist_km": 49948760.3, "window": ["2025-08-21 20:33", "2025-11-25 00:32"], "step": "6h"}]},
       "description": "Piece C of comet C/2025 K1 (ATLAS), one of at least four pieces Hubble saw in November 2025. Its path is worked out from sightings after the break-up, so the part drawn before then is traced backwards. Near-parabolic: its orbit is so close to the line between an ellipse and an open curve that JPL's numbers cannot yet tell which it is. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://science.nasa.gov/asset/hubble/fragmenting-comet-c-2025-k1/",
@@ -2257,6 +2340,7 @@
     },
     {
       "slug": "c2025_k1_d", "name": "C/2025_K1-D", "horizons_id": "C/2025 K1-D", "id_type": "smallbody",
+      "horizons_name": "ATLAS (C/2025 K1-D)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:55", "dist_km": 50308609.2, "window": ["2025-08-21 09:15", "2025-11-25 12:34"], "step": "6h"}]},
       "description": "Piece D of comet C/2025 K1 (ATLAS), one of at least four pieces Hubble saw in November 2025. It was followed for only 33 days, the shortest of the four, so the part drawn before the break-up is traced backwards. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://science.nasa.gov/asset/hubble/fragmenting-comet-c-2025-k1/",
@@ -2268,6 +2352,7 @@
     },
     {
       "slug": "panstarrs_2025_r3", "name": "PANSTARRS", "horizons_id": "C/2025 R3", "id_type": "smallbody",
+      "horizons_name": "PANSTARRS (C/2025 R3)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2025-04-19"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-04-19 21:27", "dist_km": 74592011.3, "window": ["2026-01-23 01:32", "2026-07-15 17:21"], "step": "1d"}]},
       "description": "A comet from the Oort cloud, the far-off cloud of icy bodies thought to surround the solar system, discovered in September 2025. On April 11, 2026 it was seen with the naked eye. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://en.wikipedia.org/wiki/C/2025_R3_(PanSTARRS)",
@@ -2279,6 +2364,7 @@
     },
     {
       "slug": "borisov_2025_v1", "name": "Borisov", "horizons_id": "C/2025 V1", "id_type": "smallbody",
+      "horizons_name": "Borisov (C/2025 V1)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-11-16"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-11-16 13:02", "dist_km": 69215655.5, "window": ["2025-08-31 01:44", "2026-02-02 00:19"], "step": "1d"}]},
       "description": "A comet discovered in 2025. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=C%2F2025%20V1",
@@ -2290,6 +2376,7 @@
     },
     {
       "slug": "oumuamua", "name": "1I/Oumuamua", "horizons_id": "A/2017 U1", "id_type": "smallbody",
+      "horizons_name": "'Oumuamua",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2016-09-09"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2017-09-09 11:52", "dist_km": 38304585.9, "window": ["2017-08-10 00:32", "2017-10-09 23:11"], "step": "6h"}]},
       "description": "The first known interstellar object, one that came from another star system, seen passing through ours; discovered in October 2017 by the University of Hawaii's Pan-STARRS1 telescope. JPL lists it as an asteroid. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://www.jpl.nasa.gov/news/solar-systems-first-interstellar-visitor-dazzles-scientists/",
@@ -2301,6 +2388,7 @@
     },
     {
       "slug": "borisov_2i", "name": "2I/Borisov", "horizons_id": "C/2019 Q4", "id_type": "smallbody",
+      "horizons_name": "Borisov (C/2019 Q4)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2018-12-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2019-12-08 13:17", "dist_km": 300171607.2, "window": ["2018-08-20 13:56", "2021-03-27 12:37"], "step": "8d"}]},
       "description": "The first confirmed interstellar comet, one that came from another star system, and only the second interstellar visitor of any kind, after 'Oumuamua. Discovered by Gennady Borisov in August 2019. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun.",
       "info_url": "https://science.nasa.gov/solar-system/comets/2i-borisov/",
@@ -2312,6 +2400,7 @@
     },
     {
       "slug": "atlas_3i", "name": "3I/ATLAS", "horizons_id": "C/2025 N1", "id_type": "smallbody",
+      "horizons_name": "ATLAS (C/2025 N1)",
       "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-10-29"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-29 11:35", "dist_km": 202921926.6, "window": ["2025-04-06 06:07", "2026-05-23 17:02"], "step": "3d"}]},
       "description": "The third known interstellar object, one from outside our solar system, first reported on July 1, 2025 by the NASA-funded ATLAS survey telescope in Chile. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://science.nasa.gov/blogs/planetary-defense/2025/07/02/nasa-discovers-interstellar-comet-moving-through-solar-system/",

@@ -268,10 +268,13 @@ const worst = hovers.length ? hovers[0] : null;
 check("at least one hover was found to measure", hovers.length > 0,
       hovers.length + " found");
 
-check("every hover we build points the reader at the i panel",
-      hovers.filter(h => h.ours && !h.pointed).length === 0,
-      hovers.filter(h => h.ours && !h.pointed)
-            .map(h => h.name).join(", ") || "all of them do");
+// L-494 (Tony's choice of 2026-10-26, option C): no hover ends with the
+// pointer sentence any more; the page's first-visit note points at the i
+// button instead, and that note is checked below with the page.
+check("no hover we build still ends with the old pointer sentence",
+      hovers.filter(h => h.ours && h.pointed).length === 0,
+      hovers.filter(h => h.ours && h.pointed)
+            .map(h => h.name).join(", ") || "none does");
 
 // L-318 round 4. Every break in our hovers is one of two tags, so a
 // second way of writing "soft" cannot creep in and go unrejoined.
@@ -308,6 +311,14 @@ check("no hard line break splits a sentence (write it as the soft break)",
 // The phone's label, wrapped by the page's own function rather than a copy.
 if (pagePath) {
     const page = fs.readFileSync(pagePath, "utf8");
+    // L-494: the note that took the sentence's place, under the i button,
+    // shown on a first visit and put away by "Got it" or the button.
+    check("the page greets a first visit with a note pointing at the i button",
+          page.indexOf('id="info-hint"') >= 0 &&
+          page.indexOf("More information and the sources for everything you see are here.") >= 0 &&
+          page.indexOf("function infoHintMaybeShow()") >= 0 &&
+          (page.match(/infoHintMaybeShow\(\);/g) || []).length === 2,
+          pagePath);
     const start = page.indexOf("\nfunction sunLabelWrap(");
     const widthM = page.match(/const SUN_LABEL_WRAP_CHARS = (\d+);/);
     let wrapFn = null;

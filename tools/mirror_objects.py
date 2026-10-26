@@ -115,6 +115,10 @@ bookkeeping, for the cache builder to fetch the path by.)
 Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 build B part 2: a comet's open_path mark is copied, and its path plan as a
 spacecraft's is.)
+Module updated: October 26, 2026, evening, with Anthropic's Claude Opus
+5.5 (L-493: JPL's name for each body, the export's horizons_name, which
+the Horizons check confirms, is copied, for the Solar System room's
+search box to look in.)
 """
 
 import json
@@ -127,7 +131,8 @@ CONFIG = os.path.join("data", "objects_config.json")
 EXPORT = os.path.join("data", "objects_export.json")
 ROOM = "solar-system"
 REPLACED = ("name", "horizons_id", "id_type")
-INSERTED = ("description", "info_url", "period", "path", "open_path")
+INSERTED = ("description", "info_url", "period", "path", "open_path",
+            "horizons_name")
 MIN_SCHEMA = 2
 
 # L-443 build B: what the config holds of a spacecraft's path plan -- what

@@ -64,6 +64,11 @@
 // explained, first in West's text box and panel, and the perihelion in
 // its span sentence. Evening: a comet ticks the farthest planet its path
 // has reached so far, West Pluto and 3I/ATLAS Saturn (Tony: "so far").
+// Section 22 (2026-10-26, evening): the note on the i button on a first
+// visit, put away by Got it or the button, and no text box ending with
+// the old pointer sentence (L-494); finding a body in the drawer by any
+// of its names, its groups shown open, cleared by its button or Reset
+// (L-493).
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -81,6 +86,12 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   fs.writeFileSync(payload, JSON.stringify(data));
   const w = await h.boot(root, "solar-system", payload);
   const d = w.document, E = (s) => w.eval(s);
+  // 22a. L-494: a first visit is greeted by the note on the i button,
+  // once the room is ready (the overlay leaves after 300 ms).
+  await new Promise(r => setTimeout(r, 450));
+  const hint = () => d.getElementById("info-hint");
+  ok(hint() && hint().classList.contains("show"),
+     "a first visit is not greeted by the note on the i button");
   const idx = (key) => E("ssIndex(" + JSON.stringify(key) + ")");
   const row = (key) => d.querySelector('#sun-drawer-list .sun-row[data-k="' + idx(key) + '"]');
   const panel = (key) => d.querySelector('#sun-drawer-list .sun-row-open[data-open-for="' + key + '"]');
@@ -548,6 +559,71 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     await click(d.getElementById("sun-drawer-all"));
     ok(order() === "earth" && !E("ssDrawer.folds.comets_hyp") && !E("ssDrawer.folds.interstellar"),
        "Reset did not put back the opening and fold the comets' groups");
+  }
+  // 22. L-494 and L-493 (2026-10-26). The note on the i button goes when
+  // "Got it" or the i button is tapped, and stays gone in this browser;
+  // no text box ends with the old pointer sentence. Then find a body.
+  {
+    const KEY = "paloma_orrery_info_hint_seen";
+    E("localStorage.removeItem('" + KEY + "'); infoHintMaybeShow()");
+    ok(hint().classList.contains("show"), "the note does not show before it was seen");
+    await click(d.getElementById("info-hint-ok"));
+    ok(!hint().classList.contains("show") && E("localStorage.getItem('" + KEY + "')") === "yes",
+       "Got it did not put the note away for good");
+    E("infoHintMaybeShow()");
+    ok(!hint().classList.contains("show"), "the note came back after Got it");
+    E("localStorage.removeItem('" + KEY + "'); infoHintMaybeShow()");
+    const panelWas = d.getElementById("info-panel").classList.contains("open");
+    await click(d.getElementById("info-toggle"));
+    ok(!hint().classList.contains("show") && E("localStorage.getItem('" + KEY + "')") === "yes",
+       "tapping the i button did not put the note away for good");
+    if (d.getElementById("info-panel").classList.contains("open") !== panelWas) {
+      await click(d.getElementById("info-toggle"));
+    }
+    const pointed = E("sunPlotDiv.data").filter(t => /button top right/.test(String(t.text || "")));
+    ok(pointed.length === 0, "a text box still ends with the old pointer sentence: " +
+       pointed.map(t => t.legendgroup).join(", "));
+
+    const find = d.getElementById("sun-find-input");
+    const type = async (s) => { find.value = s; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done(); };
+    const shownRows = () => Array.from(d.querySelectorAll("#sun-drawer-list .sun-row[data-k]"))
+      .filter(r => !r.hidden).map(r => E("sunGroups[" + r.dataset.k + "].key")).sort().join(",");
+    const shownHeads = () => Array.from(d.querySelectorAll("#sun-drawer-list .sun-row.sun-group[data-g]"))
+      .filter(r => !r.hidden).map(r => r.getAttribute("data-g")).join(",");
+    const foundLine = () => d.getElementById("sun-find-count");
+    ok(!d.getElementById("sun-find").hidden && find.placeholder === "Find a body",
+       "the drawer has no search box reading Find a body");
+    const foldsBefore = E("JSON.stringify(ssDrawer.folds)");
+    await type("yr4");
+    ok(shownRows() === "asteroid_2024_yr4" && shownHeads() === "apollo" &&
+       head("apollo").querySelector(".gcount").textContent === "1 of 10 shown" &&
+       foundLine().textContent === "1 body matches" && !foundLine().hidden,
+       "'yr4' did not find 2024 YR4 alone in its open group: rows " + shownRows() +
+       ", groups " + shownHeads() + ", " + foundLine().textContent);
+    await type("atlas");
+    ok(shownRows() === "atlas_2024_g3,atlas_3i,c2025_k1,c2025_k1_b,c2025_k1_c,c2025_k1_d,tsuchinshan_atlas" &&
+       shownHeads() === "comets,comets_hyp,interstellar" &&
+       foundLine().textContent === "7 bodies match",
+       "'atlas' did not find its seven in three groups: rows " + shownRows() + ", groups " + shownHeads());
+    const via = row("c2025_k1").querySelector(".rname .via");
+    ok(via && !via.hidden && via.textContent === "JPL's name: ATLAS (C/2025 K1)" &&
+       (!row("atlas_3i").querySelector(".rname .via") || row("atlas_3i").querySelector(".rname .via").hidden),
+       "C/2025 K1 does not say it was found by JPL's name: " + (via ? via.textContent : "no line"));
+    await type("C/1975 v1-a");
+    ok(shownRows() === "west", "a designation with its slash and capitals does not find West: " + shownRows());
+    await type("zzzz");
+    ok(shownRows() === "" && shownHeads() === "" && foundLine().textContent === "No body matches",
+       "a search that finds nothing does not say so");
+    await click(d.getElementById("sun-find-clear"));
+    ok(find.value === "" && foundLine().hidden &&
+       E("JSON.stringify(ssDrawer.folds)") === foldsBefore &&
+       Array.from(d.querySelectorAll("#sun-drawer-list .sun-row.sun-group[data-g]")).every(r => !r.hidden) &&
+       !row("earth").hidden && row("apophis").hidden === !E("ssDrawer.folds.aten"),
+       "clearing the search did not put the list back as it was");
+    await type("earth");
+    await click(d.getElementById("sun-drawer-all"));
+    ok(find.value === "" && E("ssDrawer.query") === "" && foundLine().hidden,
+       "Reset did not clear the search");
   }
   // 18. L-475: the i panel's last line opens the lobby's About card.
   const last = d.getElementById("info-panel").lastElementChild;

@@ -223,6 +223,10 @@
  *   their own sentences, with Tony's approved words. A frame element,
  *   drawn first and always. Also: a comment on the range_pair branch
  *   still said two faint spheres; it says two dashed circles.)
+ * Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-494, Tony's choice of option C: no hover ends with the pointer
+ *   sentence any more; HOVER_TAIL is empty and withTail() adds nothing.
+ *   A note on a visitor's first visit points at the i button instead.)
  */
 
 (function (global) {
@@ -2582,11 +2586,19 @@
    * four hovers -- axis, Sun line, terminator, Moon -- with the same words
    * rather than a second copy that can drift.
    */
-  var HOVER_TAIL = "For more information and references please click on " +
-                   "the" + SOFT_BR + "info \"i\" button top right.";
+  /*
+   * L-494, Tony's choice of 2026-10-26 (option C of the design canvas
+   * "More information and search"): the sentence is gone from every
+   * hover, and a note pointing at the i button greets a visitor's first
+   * visit instead (interactive.html, infoHint). A hover is the glance;
+   * the i panel is still the record. HOVER_TAIL is empty and withTail()
+   * adds nothing; the calls keep their places so a later pointer has one
+   * place to go.
+   */
+  var HOVER_TAIL = "";
 
   function withTail(hover) {
-    return hover + "<br><br>" + HOVER_TAIL;
+    return HOVER_TAIL ? hover + "<br><br>" + HOVER_TAIL : hover;
   }
 
   function stampLink(traceList, cfg) {

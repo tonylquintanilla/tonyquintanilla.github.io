@@ -57,6 +57,14 @@
 //      breaks: the flyby planets left out, and the farthest taken by
 //      semi-major axis instead of perihelion. The real config's top-level
 //      body rows are printed, and the page's tick and Go To call it.
+//   8. (L-493, Tony's approval of 2026-10-26) Find a body: a search keeps
+//      the bodies one of whose names holds the typed letters -- the
+//      drawer's name, the orrery's, JPL's, or the Horizons id unless it
+//      is a bare number -- capitals, spaces and punctuation ignored; a
+//      group shows with "k of n shown", or not at all; a body found only
+//      by JPL's name says so; an empty box searches nothing. Two breaks:
+//      JPL's name not searched, and punctuation not ignored. The page has
+//      the box, calls it, and Reset clears it.
 //
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443: the groups,
@@ -65,7 +73,9 @@
 // Anthropic's Claude Opus 5.5 (L-477, L-478, L-479, L-480: no See more,
 // no "All", the resets, sections 1, 4 and 6, and four new breaks).
 // Updated October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443: a
-// spacecraft's companions, section 7, and two breaks).
+// spacecraft's companions, section 7, and two breaks). Updated October
+// 26, 2026 with Anthropic's Claude Opus 5.5 (L-493: find a body, section
+// 8, and two breaks; L-443: compose hands the drawer the names too).
 
 "use strict";
 const fs = require("fs");
@@ -198,6 +208,53 @@ function companionCases(SSD) {
   return fails;
 }
 
+// 8. L-493: find a body.
+function findCases(SSD) {
+  const fails = [];
+  const want = function (cond, what) { if (!cond) { fails.push(what); } };
+  const rows = SSD.rowsFromServed([
+    { slug: "sun" }, { group: "hyp", label: "Hyperbolic comets" },
+    { slug: "c2025_k1", "in": "hyp" }, { slug: "west", "in": "hyp" },
+    { slug: "earth" }, { group: "apollo", label: "Apollo asteroids" },
+    { slug: "asteroid_2024_yr4", "in": "apollo" }, { slug: "bennu", "in": "apollo" }]);
+  const N = {
+    center: SSD.searchNames(null, "Sun", null, null),
+    c2025_k1: SSD.searchNames("C/2025 K1", "C/2025 K1", "ATLAS (C/2025 K1)", "1004075"),
+    west: SSD.searchNames(null, "West", "C/1975 V1-A (West)", "C/1975 V1-A"),
+    earth: SSD.searchNames(null, "Earth", "Earth", "399"),
+    asteroid_2024_yr4: SSD.searchNames(null, "2024 YR4", "(2024 YR4)", "2024 YR4"),
+    bennu: SSD.searchNames(null, "Bennu", "101955 Bennu (1999 RQ36)", "1999 RQ36") };
+  const hits = function (q) { return SSD.searchHits(rows, q, N); };
+  const keys = function (q) { const h = hits(q); return h ? Object.keys(h.keys).sort().join() : null; };
+  want(hits("") === null && hits("  ") === null && hits("/-") === null,
+       "an empty search, or one of spaces or punctuation, searches something");
+  want(keys("yr4") === "asteroid_2024_yr4", "'yr4' does not find 2024 YR4 alone: " + keys("yr4"));
+  want(keys("YR 4") === "asteroid_2024_yr4", "capitals and spaces are not ignored: " + keys("YR 4"));
+  want(keys("atlas") === "c2025_k1", "JPL's name is not searched: " + keys("atlas"));
+  want(keys("c/2025") === "c2025_k1", "the drawer's name with its slash: " + keys("c/2025"));
+  want(keys("1004") === "", "a Horizons id that is a bare number is searched: " + keys("1004"));
+  want(keys("rq36") === "bennu", "JPL's name with its designation is not searched: " + keys("rq36"));
+  want(keys("sun") === "center", "the Sun is not found by its name: " + keys("sun"));
+  const h = hits("atlas");
+  want(h && h.n === 1 && h.groups.hyp === 1 && !h.groups.apollo,
+       "the groups do not count their matches: " + JSON.stringify(h && h.groups));
+  want(SSD.searchVisible(SSD.groupRow ? SSD.groupRow(rows, "hyp") : rows[1], h) === true &&
+       SSD.searchVisible(rows[5], h) === false && SSD.searchVisible(rows[3], h) === false,
+       "a group with no match, or a body that does not match, shows while searching");
+  want(SSD.searchVisible(rows[2], null) === null, "no search still decides visibility");
+  want(SSD.searchGroupCount(rows, "hyp", h) === "1 of 2 shown",
+       "a group's count while searching: " + SSD.searchGroupCount(rows, "hyp", h));
+  want(SSD.searchVia("c2025_k1", h, N) === "JPL's name: ATLAS (C/2025 K1)" &&
+       SSD.searchVia("c2025_k1", hits("k1"), N) === "",
+       "the line under a body found by JPL's name: " + SSD.searchVia("c2025_k1", h, N));
+  want(SSD.searchVia("bennu", hits("1999 rq"), N) === "JPL's name: 101955 Bennu (1999 RQ36)",
+       "JPL's name comes before the Horizons id: " + SSD.searchVia("bennu", hits("1999 rq"), N));
+  want(SSD.WORDS.find === "Find a body" && SSD.WORDS.found(0) === "No body matches" &&
+       SSD.WORDS.found(1) === "1 body matches" && SSD.WORDS.found(7) === "7 bodies match",
+       "the search box's words are not the mock-up's");
+  return fails;
+}
+
 function cases(SSD) {
   const fails = [];
   const want = function (cond, what) { if (!cond) { fails.push(what); } };
@@ -230,7 +287,8 @@ function cases(SSD) {
   want(SSD.WORDS.enter("Sun") === "Enter the Sun room" &&
        SSD.WORDS.noRoom === "No room or cards yet",
        "the visitor's words are not Tony's");
-  return fails.concat(groupCases(SSD), outsideCases(SSD), companionCases(SSD));
+  return fails.concat(groupCases(SSD), outsideCases(SSD), companionCases(SSD),
+                      findCases(SSD));
 }
 
 function broken(changes) {
@@ -273,6 +331,17 @@ const breaks = [
   ["the farthest planet reached taken by semi-major axis, not perihelion",
    broken({ companions: function (sc, c) {
      return REAL.companions(sc, c.map(function (x) { return Object.assign({}, x, { e: 0 }); }));
+   } })],
+  ["JPL's name not searched",
+   broken({ searchHits: function (rows, q, names) {
+     const cut = {};
+     Object.keys(names || {}).forEach(function (k) { cut[k] = names[k].slice(0, 2); });
+     return REAL.searchHits(rows, q, cut);
+   } })],
+  ["punctuation not ignored",
+   broken({ searchHits: function (rows, q, names) {
+     const h = REAL.searchHits(rows, q, names);
+     return (h && /[^a-z0-9]/i.test(q)) ? { keys: {}, groups: {}, via: {}, n: 0 } : h;
    } })],
   ["the count line reading only the x axis",
    broken({ outsideCount: function (points, lo, hi) {
@@ -354,7 +423,8 @@ if (page.indexOf('<script src="gallery/solar_system_drawer.js"></script>') < 0) 
  "rowVisible", "countLine", "roomFor", "tickable",
  "WORDS.enter", "WORDS.noRoom", "isGroup", "members", "groupCount", "groupArrow",
  "groupReset", "groupResetOffered", "orderGroups", "WORDS.groupReset",
- "outsideCount", "WORDS.outside", "companions"].forEach(function (fn) {
+ "outsideCount", "WORDS.outside", "companions", "searchNames", "searchHits",
+ "searchVisible", "searchGroupCount", "searchVia", "WORDS.found"].forEach(function (fn) {
   if (page.indexOf("SSD." + fn) < 0) {
     failures.push("interactive.html never calls SolarSystemDrawer's " + fn);
   }
@@ -382,7 +452,12 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
    "ticking a spacecraft does not tick its companions (L-443)"],
   ["        ssTickCompanions(grp.key);\n        ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);\n        sunFocusIdx = k;\n        setSunDrawer(false);",
    "Go To on an unticked spacecraft does not tick its companions (L-443)"],
-  ["companions: companions } };", "compose does not hand the drawer each spacecraft's companions (L-443)"],
+  ["companions: companions,", "compose does not hand the drawer each spacecraft's companions (L-443)"],
+  ["names: names } };", "compose does not hand the drawer each body's names (L-493)"],
+  ['id="sun-find-input" placeholder="Find a body"', "the drawer has no search box (L-493)"],
+  ["ssFindMount();", "the search box is never wired (L-493)"],
+  ["if (reset) { ssFindSet(\"\"); }", "Reset does not clear the search (L-493)"],
+  ["const hits = SSD.searchHits(ssDrawer.rows, ssDrawer.query, ssDrawer.names);", "the drawer does not search (L-493)"],
  ['const ABOUT_HREF = "index.html#about";', "the About line does not open the lobby's About card"]
 ].forEach(function (c) {
   if (page.indexOf(c[0]) < 0) { failures.push(c[1]); }
@@ -416,4 +491,5 @@ console.log("=== PASS: the Sun is never ticked, every row and group is listed, "
             "but a spacecraft with its companions, " +
             "rooms are offered only where they exist, groups fold and reset their bodies, " +
             "the count line counts ticked bodies outside the view, " +
+            "a search finds a body by any of its names, " +
             "and the page asks this file ===");

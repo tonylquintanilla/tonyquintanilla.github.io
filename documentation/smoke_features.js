@@ -156,10 +156,13 @@ check("5 interior + 2 atmosphere + 1 geocorona + 2 LEO + 1 GEO ring + 2 belts + 
 // the reader is told where to look, and something is waiting when they do.
 const earthMarkers = r1.traces.filter(t => t.showlegend !== true &&
                                           String(t.legendgroup || "").indexOf("Earth:") === 0);
+// L-494 (Tony's choice of 2026-10-26, option C): the pointer sentence
+// left every hover; a note on the first visit points at the i button. So
+// the leg now holds the other way: no Earth info marker still carries it.
 const earthPointed = earthMarkers.filter(t =>
     /button top right/.test(JSON.stringify(t.text || t.hovertext || "")));
-check("every Earth info marker points the reader at the i panel (14 of 14)",
-      earthPointed.length === 14,
+check("no Earth info marker still ends with the old pointer sentence (0 of 14)",
+      earthMarkers.length === 14 && earthPointed.length === 0,
       "got " + earthPointed.length + " of " + earthMarkers.length);
 // The GEO ring lies in Earth's EQUATOR, which the served pole (RA 0, Dec 90,
 // ICRF) puts 23.44 deg from the ecliptic after the obliquity rotation.

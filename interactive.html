@@ -370,6 +370,13 @@
         look: a comet on an open path ticks its companions as a spacecraft
         does, the farthest planet its path has reached so far, Tony's
         "so far"; the dashed year ahead does not count.)
+     Updated: October 26, 2026, evening, with Anthropic's Claude Opus 5.5
+       (L-494, Tony's choice of option C: the sentence pointing at the i
+        button leaves every hover, and a note under the i button greets a
+        visitor's first visit, until "Got it" or the button is tapped.
+        L-493, his approval of the mock-ups: a search box, "Find a body",
+        at the top of the Solar System room's drawer, matching the
+        drawer's name, the orrery's, JPL's or the Horizons id.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -551,6 +558,36 @@
             background: rgba(109, 140, 255, 0.08);
         }
         .info-btn svg { width: 16px; height: 16px; display: block; }
+        /* L-494, Tony's choice of 2026-10-26 (option C of the design
+           canvas "More information and search"): on a visitor's first
+           visit, a note under the i button says what it holds, until
+           "Got it" or the button itself is tapped. It replaces the
+           sentence every hover used to end with. */
+        .top-right { position: relative; }
+        .info-hint {
+            position: absolute; top: calc(100% + 4px); right: -4px;
+            width: 230px; z-index: 40;
+            display: none; flex-direction: column; align-items: flex-end;
+        }
+        .info-hint.show { display: flex; }
+        .info-hint .arrow {
+            width: 0; height: 0; margin-right: 14px;
+            border-left: 10px solid transparent; border-right: 10px solid transparent;
+            border-bottom: 10px solid var(--accent);
+        }
+        .info-hint .box {
+            background: var(--accent); color: var(--bg-deep);
+            border-radius: 10px; padding: 12px 14px;
+            display: flex; flex-direction: column; gap: 10px;
+            font: 500 14px/1.4 'DM Sans', system-ui, sans-serif;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+        }
+        .info-hint .box button {
+            align-self: flex-end; min-height: 36px; padding: 0 14px;
+            background: var(--bg-deep); color: var(--text-primary);
+            border: none; border-radius: 8px; cursor: pointer;
+            font: 600 13px 'DM Sans', system-ui, sans-serif;
+        }
 
         /* --- Viz area --- */
         .viz-area {
@@ -719,6 +756,32 @@
             cursor: pointer; text-transform: uppercase;
         }
         .sun-drawer-list { overflow-y: auto; padding: 4px 0 10px; }
+        /* L-493 (Tony's approval of 2026-10-26, the mock-up "Find a
+           body"): the search box under the drawer's head, this room only. */
+        .sun-find { flex-shrink: 0; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+        .sun-find[hidden] { display: none; }
+        .sun-find-box {
+            display: flex; align-items: center; gap: 8px; min-height: 40px;
+            background: var(--bg-deep); border: 1px solid var(--border);
+            border-radius: 10px; padding: 0 4px 0 10px; color: var(--text-dim);
+        }
+        .sun-find-box:focus-within { border-color: var(--interactive); }
+        .sun-find-box svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .sun-find-box input {
+            flex: 1; min-width: 0; background: none; border: none; outline: none;
+            color: var(--text-primary); font: 400 16px 'DM Sans', system-ui, sans-serif;
+        }
+        .sun-find-box input::-webkit-search-cancel-button { display: none; }
+        .sun-find-box button {
+            width: 36px; height: 36px; flex-shrink: 0; background: none; border: none;
+            color: var(--text-dim); font-size: 15px; cursor: pointer;
+        }
+        .sun-find-count { margin-top: 6px; font-size: 12px; color: var(--text-dim); }
+        .sun-find-count[hidden] { display: none; }
+        .sun-row .rname .via {
+            display: block; font-size: 11px; color: var(--text-dim); font-weight: 400;
+        }
+        .sun-row .rname .via[hidden] { display: none; }
         /* L-429, Tony, 2026-10-10: Go To in the middle of every row.
            Three equal-sided columns: the left end and the name share
            the first, Go To is the second, the room button (Solar System
@@ -1239,6 +1302,14 @@
                 <button class="info-btn" id="info-toggle" aria-label="Show info">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
                 </button>
+                <!-- L-494: the first visit's note on the i button. -->
+                <div class="info-hint" id="info-hint" role="note">
+                    <span class="arrow" aria-hidden="true"></span>
+                    <div class="box">
+                        <span>More information and the sources for everything you see are here.</span>
+                        <button type="button" id="info-hint-ok">Got it</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1313,6 +1384,17 @@
                     <span>In this scene &mdash;
                         <span id="sun-drawer-count"></span></span>
                     <button type="button" id="sun-drawer-all">Reset</button>
+                </div>
+                <!-- L-493: find a body (the Solar System room only). -->
+                <div class="sun-find" id="sun-find" hidden>
+                    <div class="sun-find-box">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+                        <input type="search" id="sun-find-input" placeholder="Find a body"
+                               aria-label="Find a body" autocomplete="off"
+                               autocapitalize="off" spellcheck="false">
+                        <button type="button" id="sun-find-clear" aria-label="Clear the search">&#10005;</button>
+                    </div>
+                    <div class="sun-find-count" id="sun-find-count" aria-live="polite" hidden></div>
                 </div>
                 <div class="sun-drawer-list" id="sun-drawer-list"></div>
             </div>
@@ -1538,7 +1620,31 @@ function wireInfoToggle() {
         const panel = document.getElementById('info-panel');
         panel.classList.toggle('open');
         btn.classList.toggle('active');
+        infoHintDone();
     });
+    const ok = document.getElementById('info-hint-ok');
+    if (ok) { ok.addEventListener('click', infoHintDone); }
+}
+
+// L-494 (Tony's choice of 2026-10-26, option C): the first visit's note
+// on the i button. Shown once the room is ready, in whichever room a
+// visitor opens first, until "Got it" or the i button is tapped; then
+// never again in that browser. The memory is this browser's only, and a
+// browser that keeps none shows the note each visit, which costs a tap.
+const INFO_HINT_KEY = 'paloma_orrery_info_hint_seen';
+function infoHintSeen() {
+    try { return localStorage.getItem(INFO_HINT_KEY) === 'yes'; }
+    catch (e) { return false; }
+}
+function infoHintDone() {
+    const hint = document.getElementById('info-hint');
+    if (hint) { hint.classList.remove('show'); }
+    try { localStorage.setItem(INFO_HINT_KEY, 'yes'); } catch (e) { /* kept for this visit only */ }
+}
+function infoHintMaybeShow() {
+    const hint = document.getElementById('info-hint');
+    if (!hint || infoHintSeen()) { return; }
+    hint.classList.add('show');
 }
 
 function togglePlanet(name, btn) {
@@ -1608,6 +1714,7 @@ async function initPyodide() {
         // Hide loading after brief pause
         setTimeout(() => {
             document.getElementById('loading-overlay').classList.add('hidden');
+            infoHintMaybeShow();   // L-494
         }, 300);
 
         // Initial plot
@@ -2389,6 +2496,11 @@ for _slug in _bodies:
         "path_source": ((_pos.get(_slug) or {}).get("source")
                         if (_rec.get("category") == "spacecraft"
                             or _rec.get("open_path")) else None),
+        # L-493: the names the drawer's search box looks in besides the
+        # label and the name: JPL's (copied by the mirror from the orrery's
+        # export) and the Horizons id.
+        "horizons_name": (_objs.get(_slug) or {}).get("horizons_name"),
+        "horizons_id": (_objs.get(_slug) or {}).get("horizons_id"),
         "path_step": (((_objs.get(_slug) or {}).get("path") or {})
                       .get("backbone") or {}).get("step"),
         "path_events": (_path_events(_objs.get(_slug) or {})
@@ -2965,6 +3077,16 @@ const EXHIBITS = {
                          names: [r.label, b.name].filter(function (x) {
                              return typeof x === "string" && x; }) };
             });
+            // L-493 (2026-10-26): every name a row goes by, for the
+            // drawer's search box (gallery/solar_system_drawer.js, FIND).
+            const names = { center: SSD.searchNames(null, "Sun", null, null) };
+            for (const row of rows) {
+                const b = bodies[row.slug];
+                if (!b || row.slug === "sun") { continue; }
+                names[row.slug] = SSD.searchNames(
+                    (typeof row.label === "string" && row.label) ? row.label : null,
+                    b.name, b.horizons_name, b.horizons_id);
+            }
             const companions = {};
             for (const row of rows) {
                 const b = bodies[row.slug];
@@ -3004,7 +3126,8 @@ const EXHIBITS = {
                      drawer: { rows: allRows,
                                drawn: (arrival.drawn || []).slice(),
                                highlight: arrival.highlight,
-                               companions: companions } };
+                               companions: companions,
+                               names: names } };
         }
     }
 };
@@ -3941,6 +4064,7 @@ async function initSunExhibit() {
         // (the Solar System room) gets the body drawer; the Sun and Earth
         // rooms hand none and keep theirs.
         ssDrawer = built.drawer ? ssDrawerState(built.drawer) : null;
+        ssFindMount();
         // L-477, L-482 (Tony, 2026-10-24: "Yes all rooms should use the
         // same Reset button and no 'see more'"): the top bar's button
         // reads Reset in every room, its word kept in one place, the
@@ -3983,6 +4107,7 @@ async function initSunExhibit() {
         status.textContent = "Ready";
         setTimeout(() => {
             document.getElementById("loading-overlay").classList.add("hidden");
+            infoHintMaybeShow();   // L-494
         }, 300);
 
     } catch (err) {
@@ -4785,9 +4910,41 @@ function ssDrawerState(served) {
                    highlight: served.highlight },
         order: SSD.openingOrder(rows, served.drawn, served.highlight),
         companions: served.companions || {},   // L-443: {spacecraft: [rows]}
+        names: served.names || {},             // L-493: {key: [names]}
+        query: "",                             // L-493: the search box
         open: null,       // the key of the opened row, or null
         folds: {}         // L-443: {group: true} for each group folded open
     };
+}
+
+// L-493 (Tony's approval of 2026-10-26): the drawer's search box, in this
+// room only. What a search finds is gallery/solar_system_drawer.js's FIND;
+// this part types, clears and shows. The search never changes the folds,
+// so clearing it puts the list back as it was.
+function ssFindSet(value) {
+    if (!ssDrawer) { return; }
+    ssDrawer.query = String(value || "");
+    const input = document.getElementById("sun-find-input");
+    if (input && input.value !== ssDrawer.query) { input.value = ssDrawer.query; }
+}
+
+function ssFindMount() {
+    const box = document.getElementById("sun-find");
+    if (!box) { return; }
+    box.hidden = !ssDrawer;
+    if (!ssDrawer || box.dataset.wired === "yes") { return; }
+    box.dataset.wired = "yes";
+    const input = document.getElementById("sun-find-input");
+    const clear = document.getElementById("sun-find-clear");
+    input.addEventListener("input", function () {
+        ssFindSet(input.value);
+        renderSunDrawer();
+    });
+    clear.addEventListener("click", function () {
+        ssFindSet("");
+        renderSunDrawer();
+        input.focus();
+    });
 }
 
 function ssIndex(key) {
@@ -4915,13 +5072,25 @@ function ssRender() {
     const list = document.getElementById("sun-drawer-list");
     const rows = list.querySelectorAll(".sun-row[data-k]");
     const seen = {};
+    // L-493: a search, when one is typed, decides which rows show.
+    const hits = SSD.searchHits(ssDrawer.rows, ssDrawer.query, ssDrawer.names);
     for (let r = 0; r < rows.length; r++) {
         const grp = sunGroups[Number(rows[r].dataset.k)];
         if (!grp) { continue; }
         const served = ssDrawer.byKey[grp.key];
-        const vis = !served || SSD.rowVisible(served, ssDrawer.rows, shown,
-                                              ssDrawer.folds);
+        const vis = hits ? (!!served && SSD.searchVisible(served, hits)) :
+            (!served || SSD.rowVisible(served, ssDrawer.rows, shown,
+                                       ssDrawer.folds));
         rows[r].hidden = !vis;
+        const name = rows[r].querySelector(".rname");
+        let via = name ? name.querySelector(".via") : null;
+        const viaText = SSD.searchVia(grp.key, hits, ssDrawer.names);
+        if (name && viaText && !via) {
+            via = document.createElement("span");
+            via.className = "via";
+            name.appendChild(via);
+        }
+        if (via) { via.textContent = viaText; via.hidden = !viaText; }
         seen[grp.key] = vis;
         rows[r].setAttribute("aria-expanded",
             (vis && ssDrawer.open === grp.key) ? "true" : "false");
@@ -4952,18 +5121,27 @@ function ssRender() {
         const served = ssDrawer.byKey[SSD.GROUP_PREFIX + g];
         const open = !!ssDrawer.folds[g];
         const on = SSD.members(ssDrawer.rows, g).filter(function (m) { return shown[m.key]; }).length;
-        heads[h].hidden = !served;
-        heads[h].setAttribute("aria-expanded", (served && open) ? "true" : "false");
+        // L-493: while searching, a group shows open with its matches,
+        // "k of n shown", or not at all.
+        const looks = hits ? !!hits.groups[g] : open;
+        heads[h].hidden = !served || (!!hits && !hits.groups[g]);
+        heads[h].setAttribute("aria-expanded", (served && looks) ? "true" : "false");
         heads[h].classList.toggle("on", on > 0);
-        heads[h].querySelector(".fold").textContent = SSD.groupArrow(open);
-        heads[h].querySelector(".gcount").textContent =
+        heads[h].querySelector(".fold").textContent = SSD.groupArrow(looks);
+        heads[h].querySelector(".gcount").textContent = hits ?
+            SSD.searchGroupCount(ssDrawer.rows, g, hits) :
             SSD.groupCount(ssDrawer.rows, g, shown);
     }
     const resets = list.querySelectorAll(".sun-group-reset[data-g]");
     for (let a = 0; a < resets.length; a++) {
         const g = resets[a].getAttribute("data-g");
-        resets[a].hidden = !(ssDrawer.byKey[SSD.GROUP_PREFIX + g] &&
+        resets[a].hidden = !!hits || !(ssDrawer.byKey[SSD.GROUP_PREFIX + g] &&
             SSD.groupResetOffered(ssDrawer.rows, g, shown, ssDrawer.folds));
+    }
+    const findCount = document.getElementById("sun-find-count");
+    if (findCount) {
+        findCount.textContent = hits ? SSD.WORDS.found(hits.n) : "";
+        findCount.hidden = !hits;
     }
     const drawn = ssDrawnRows();
     return SSD.countLine(drawn, shown);
@@ -5145,6 +5323,7 @@ function ssHome(gd, reset) {
     let first = Promise.resolve();
     let r;
     if (reset) { ssDrawer.folds = {}; }   // L-477: every group folded shut
+    if (reset) { ssFindSet(""); }        // L-493: and the search cleared
     if (key === null) {
         const want = {};
         ssDrawer.opening.drawn.forEach(function (s) { want[s] = true; });
