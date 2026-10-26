@@ -377,6 +377,13 @@
         L-493, his approval of the mock-ups: a search box, "Find a body",
         at the top of the Solar System room's drawer, matching the
         drawer's name, the orrery's, JPL's or the Horizons id.)
+     Updated: October 26, 2026, night, with Anthropic's Claude Opus 5.5
+       (Tony's phone look: a body's orbit line wraps at 60 like its other
+        bullets; Halley's ran 88 characters and Plotly's box outgrew the
+        view. The grid chip opens a note on what an AU is, its length the
+        served IAU value. And a comet on a closed orbit ticks the farthest
+        planet its orbit reaches, by its aphelion, Tony: "only spacecraft
+        and comets", so not the asteroids or the dwarf planets.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -649,6 +656,8 @@
             color: var(--text-secondary); letter-spacing: 0.3px; white-space: nowrap;
         }
         .sun-grid-chip b { color: var(--text-primary); font-weight: 600; }
+        .sun-grid-chip { cursor: pointer; }
+        .sun-grid-chip:hover { border-color: var(--accent); }
         /* L-472 (Tony, 2026-10-23, "The count line"): how many ticked
            bodies lie outside the view, in the grid chip's own type.
            Hidden at zero. L-478 (Tony, 2026-10-24): at the lower left,
@@ -1433,6 +1442,25 @@
                 target="_blank" rel="noopener">naif.jpl.nasa.gov</a>.
                 The renderer rotates every pole into this frame
                 (feature_renderers.js, poleBasis).</p>
+            </div>
+            <!-- The grid chip's note (Tony, 2026-10-26: "we could use a
+                 hover for the grid au label explaining what au is"). Opens
+                 like the frame note. Its numbers are filled from the
+                 served cache by sunAuNoteFill, never typed here. -->
+            <div class="sun-frame-note sun-chrome" id="sun-au-note" hidden role="tooltip">
+                <h4>The AU</h4>
+                <p>Distances here are in <b>AU</b>, astronomical units. One
+                AU is about the distance from the Sun to Earth, fixed at
+                exactly <span id="sun-au-km"></span> km.
+                <span id="sun-au-grid"></span></p>
+                <p class="src">Source: the International Astronomical Union,
+                which fixed the AU at this length in its Resolution B2 of
+                2012: <a href="https://www.iau.org/static/resolutions/IAU2012_English.pdf"
+                target="_blank" rel="noopener">iau.org</a>; "a unit of
+                length approximating the Sun-Earth distance", its Measuring
+                the Universe page:
+                <a href="https://iauarchive.eso.org/public/themes/measuring/"
+                target="_blank" rel="noopener">iauarchive.eso.org</a>.</p>
             </div>
         </div>
 
@@ -2500,6 +2528,10 @@ for _slug in _bodies:
         # label and the name: JPL's (copied by the mirror from the orrery's
         # export) and the Horizons id.
         "horizons_name": (_objs.get(_slug) or {}).get("horizons_name"),
+        # 2026-10-26 (Tony: "only spacecraft and comets"): a comet on a
+        # closed orbit ticks its farthest planet too, so the page needs to
+        # know which bodies are comets.
+        "category": _rec.get("category"),
         "horizons_id": (_objs.get(_slug) or {}).get("horizons_id"),
         "path_step": (((_objs.get(_slug) or {}).get("path") or {})
                       .get("backbone") or {}).get("step"),
@@ -3035,7 +3067,11 @@ const EXHIBITS = {
                                 Math.max(dist.driftKm, dist.sourceKm,
                                          SolarSystemFigures.FINEST_KM),
                                 GalleryFeatures._KM_PER_AU);
-                            if (orb.line) { lines.push(bullet(orb.line)); }
+                            // Wrapped at 60 like the other bullets (Tony's
+                            // phone, 2026-10-26: Halley's 88-character line
+                            // made Plotly's box wider than the view, cut on
+                            // both sides).
+                            if (orb.line) { lines.push(bullet(solarSystemSoftWrap(orb.line, 60))); }
                             else { warnings.push(label + ": no orbit line -- " + orb.why); }
                         }
                     }
@@ -3087,12 +3123,26 @@ const EXHIBITS = {
                     (typeof row.label === "string" && row.label) ? row.label : null,
                     b.name, b.horizons_name, b.horizons_id);
             }
+            // A comet on a closed orbit (Tony, 2026-10-26, at his phone
+            // look, Ikeya-Seki: "Not every body, not minor planets, only
+            // spacecraft and comets") ticks the farthest planet its orbit
+            // reaches, by the same test, its reach its farthest point from
+            // the Sun, a(1 + e), from the served elements. Its whole
+            // orbit is drawn, so the whole orbit counts.
+            const closedComet = function (b) {
+                return b.category === "comet" && !b.kind &&
+                    typeof b.a_au === "number" && isFinite(b.a_au) && b.a_au > 0 &&
+                    typeof b.e === "number" && isFinite(b.e) && b.e >= 0 && b.e < 1;
+            };
             const companions = {};
             for (const row of rows) {
                 const b = bodies[row.slug];
-                if (!b || (b.kind !== "spacecraft" && b.kind !== "comet_path")) { continue; }
+                if (!b) { continue; }
+                const closed = closedComet(b);
+                if (b.kind !== "spacecraft" && b.kind !== "comet_path" && !closed) { continue; }
                 const c = SSD.companions(
-                    { events: b.path_events || [], reach_au: b.path_reach_au },
+                    { events: closed ? [] : (b.path_events || []),
+                      reach_au: closed ? b.a_au * (1 + b.e) : b.path_reach_au },
                     companionRows);
                 companions[row.slug] = c.keys;
             }
@@ -4288,6 +4338,44 @@ function sunGridChipUpdate() {
         label += " (" + km.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km)";
     }
     chip.innerHTML = "grid <b>" + label + "</b>";
+    sunGridLabel = label;
+    sunAuNoteFill();
+}
+
+// The grid chip's note: what an AU is. The length is the served
+// KM_PER_AU (IAU 2012 Resolution B2, exact) and the spacing is the
+// chip's own, so the note never states a number the page did not read.
+let sunGridLabel = "";
+function sunAuNoteFill() {
+    const km = document.getElementById("sun-au-km");
+    const grid = document.getElementById("sun-au-grid");
+    const K = window.GalleryFeatures && GalleryFeatures._KM_PER_AU;
+    if (km) {
+        km.textContent = K ? K.toLocaleString("en-US", { maximumFractionDigits: 1 }) : "";
+    }
+    if (grid) {
+        grid.textContent = sunGridLabel ? "Here the grid lines are " + sunGridLabel + " apart." : "";
+    }
+}
+let sunAuNoteTimer = 0;
+function sunAuNoteOpen() {
+    const n = document.getElementById("sun-au-note");
+    return !!(n && !n.hidden);
+}
+function sunAuNoteShow(on) {
+    if (sunAuNoteTimer) { clearTimeout(sunAuNoteTimer); sunAuNoteTimer = 0; }
+    const n = document.getElementById("sun-au-note");
+    if (!n) { return; }
+    if (on) { sunAuNoteFill(); sunFrameNoteShow(false); }
+    n.hidden = !on;
+}
+function sunAuNoteLeave() {
+    if (sunAuNoteTimer) { clearTimeout(sunAuNoteTimer); }
+    sunAuNoteTimer = setTimeout(function () {
+        sunAuNoteTimer = 0;
+        const n = document.getElementById("sun-au-note");
+        if (n && !n.matches(":hover")) { n.hidden = true; }
+    }, 250);
 }
 
 // Project the three unit axes onto the screen from the camera.
@@ -4353,6 +4441,7 @@ function sunFrameNoteShow(on) {
     if (sunFrameNoteTimer) { clearTimeout(sunFrameNoteTimer); sunFrameNoteTimer = 0; }
     const n = document.getElementById("sun-frame-note");
     if (n) { n.hidden = !on; }
+    if (on) { const a = document.getElementById("sun-au-note"); if (a) { a.hidden = true; } }
 }
 // The pointer left the glyph: close unless it moved onto the note
 // (the source link lives there). The note's own leave closes it.
@@ -4853,6 +4942,27 @@ function sunHudInstall(gd) {
     });
     const note = document.getElementById("sun-frame-note");
     if (note) { note.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") { sunFrameNoteLeave(); } }); }
+    // The grid chip's note, opened and closed as the Aries note is: a
+    // mouse rests on the chip, a finger taps it, a tap elsewhere closes.
+    const chip = document.getElementById("sun-grid-chip");
+    const auNote = document.getElementById("sun-au-note");
+    document.addEventListener("click", function (ev) {
+        if (auNote && !auNote.hidden && !auNote.contains(ev.target) &&
+            !(chip && chip.contains(ev.target))) { sunAuNoteShow(false); }
+    });
+    if (chip) {
+        chip.setAttribute("role", "button");
+        chip.setAttribute("tabindex", "0");
+        chip.setAttribute("aria-label", "What an AU is");
+        chip.addEventListener("pointerenter", function (ev) { if (ev.pointerType !== "touch") { sunAuNoteShow(true); } });
+        chip.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") { sunAuNoteLeave(); } });
+        chip.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            if (!window.matchMedia("(hover: hover)").matches) { sunAuNoteShow(!sunAuNoteOpen()); }
+        });
+        chip.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); sunAuNoteShow(!sunAuNoteOpen()); } });
+    }
+    if (auNote) { auNote.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") { sunAuNoteLeave(); } }); }
     const sc = (gd.layout && gd.layout.scene) || {};
     const xa = sc.xaxis || {};
     let ready = Promise.resolve();

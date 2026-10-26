@@ -68,7 +68,10 @@
 // visit, put away by Got it or the button, and no text box ending with
 // the old pointer sentence (L-494); finding a body in the drawer by any
 // of its names, its groups shown open, cleared by its button or Reset
-// (L-493).
+// (L-493). Section 23 (2026-10-26, Tony's phone): no body's text line
+// wider than its wrap, and the grid chip's AU note; a comet on a closed
+// orbit ticks its farthest planet, and nothing else that is not a
+// spacecraft or a comet does.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -337,6 +340,10 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   await h.done();
   lineOk("nothing ticked");
   await E("ssTick(ssIndex('halley'), true)"); await h.done();
+  // Halley brings Pluto (2026-10-26, a comet on a closed orbit ticks its
+  // farthest planet); Pluto is unticked so the counts stay Halley's.
+  ok(E("sunGroups[ssIndex('pluto_barycenter')].shown"), "ticking Halley did not tick Pluto");
+  await E("ssTick(ssIndex('pluto_barycenter'), false)"); await h.done();
   ok(lineOk("Halley ticked, framed") === 0, "the frame after ticking Halley does not hold it");
   // Outside means past the box on some axis: a body can sit in a
   // square box's corner farther out than its half-width.
@@ -380,7 +387,8 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   const q3 = Number((sb.a_au * (1 - sb.e)).toPrecision(3)), Q3 = Number((sb.a_au * (1 + sb.e)).toPrecision(3));
   // L-443 build B part 2 (Tony, 2026-10-26): JPL's terms kept, each
   // explained where the visitor meets it.
-  ok(sednaText.indexOf("Orbit: perihelion " + q3 + " AU, its closest to the Sun, to aphelion " +
+  // Read through the soft wrap (2026-10-26: the orbit line is wrapped).
+  ok(sednaText.split("<br soft>").join(" ").indexOf("Orbit: perihelion " + q3 + " AU, its closest to the Sun, to aphelion " +
                        Q3.toLocaleString("en-US") + " AU, its farthest.") >= 0,
      "Sedna's hover lacks its orbit line: " + sednaText.slice(-120));
   // L-481 (Tony, 2026-10-24): every hover line after the name is a
@@ -624,6 +632,54 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     await click(d.getElementById("sun-drawer-all"));
     ok(find.value === "" && E("ssDrawer.query") === "" && foundLine().hidden,
        "Reset did not clear the search");
+  }
+  // 23. 2026-10-26, Tony's phone: no line of a body's text box is wider
+  // than its 60-character wrap and the bullet, or Plotly's box outgrows a
+  // phone's view (Halley's orbit line was 88). And the grid chip's note:
+  // a tap opens it, filled from the served AU and the chip's spacing; a
+  // tap elsewhere closes it; opening the frame note closes it.
+  {
+    const wide = [];
+    E("sunPlotDiv.data").forEach(tr => {
+      if (!tr.meta || !tr.meta.label_target) { return; }
+      String((tr.text || [""])[0]).split(/<br[^>]*>/i).forEach(l => {
+        const v = l.replace(/<[^>]*>/g, "").replace(/&#8226;/g, "*").replace(/&[a-z]+;/g, "x");
+        if (v.length > 62) { wide.push(tr.name + " " + v.length); }
+      });
+    });
+    ok(wide.length === 0, "a body's text box has a line wider than 62 characters: " + wide.slice(0, 8).join(", "));
+    w.matchMedia = () => ({ matches: false });   // a phone: no hover
+    const chip = d.getElementById("sun-grid-chip"), au = d.getElementById("sun-au-note");
+    ok(au && au.hidden, "the AU note is open before the chip is tapped");
+    await click(chip);
+    const said = au.textContent.replace(/\s+/g, " ");
+    const spacing = chip.textContent.replace(/^grid\s*/, "");
+    ok(!au.hidden && said.indexOf("fixed at exactly 149,597,870.7 km.") >= 0 &&
+       said.indexOf("Here the grid lines are " + spacing + " apart.") >= 0,
+       "tapping the grid chip did not open the AU note, filled: " + said.slice(0, 200));
+    await click(d.getElementById("sun-drawer-label"));
+    ok(au.hidden, "a tap elsewhere did not close the AU note");
+    await click(d.getElementById("sun-drawer-label"));
+    await click(chip);
+    E("sunFrameNoteShow(true)");
+    ok(au.hidden && !d.getElementById("sun-frame-note").hidden, "opening the frame note left the AU note open");
+    E("sunFrameNoteShow(false)");
+    // A comet on a closed orbit ticks the farthest planet its orbit
+    // reaches, by its aphelion; an asteroid or a dwarf planet ticks none
+    // (Tony, 2026-10-26: "only spacecraft and comets").
+    const comp = E("ssDrawer.companions");
+    ok(JSON.stringify(comp.ikeya_seki) === '["pluto_barycenter"]' &&
+       JSON.stringify(comp.halley) === '["pluto_barycenter"]' &&
+       JSON.stringify(comp.churyumov) === '["jupiter"]',
+       "a comet on a closed orbit does not tick its farthest planet: Ikeya-Seki " +
+       JSON.stringify(comp.ikeya_seki) + ", Halley " + JSON.stringify(comp.halley) +
+       ", Churyumov " + JSON.stringify(comp.churyumov));
+    const minor = Object.keys(comp).filter(k => {
+      const b = data.bodies[k] || {};
+      return b.kind !== "spacecraft" && b.kind !== "comet_path" && b.category !== "comet";
+    });
+    ok(minor.length === 0 && !comp.sedna && !comp.eris && !comp.apophis,
+       "a body that is neither a spacecraft nor a comet ticks a planet: " + minor.join(", "));
   }
   // 18. L-475: the i panel's last line opens the lobby's About card.
   const last = d.getElementById("info-panel").lastElementChild;
