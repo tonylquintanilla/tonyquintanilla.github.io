@@ -114,6 +114,11 @@ as_of_today is today's point, not the plan's last. The shrink gate holds a
 path fetched again by a new plan out of its count, by name. The spacecraft
 sanity bound is 1,000 AU. A spacecraft with no plan and no typed start is
 named and served last-good, never asked from 1970.)
+Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B part 2: a comet the orrery marks open_path, which the objects
+mirror copies onto its entry, is a path body (is_path_body), fetched by
+its plan as a spacecraft is, with no elements; its served record carries
+open_path. One without a plan yet is named and served last-good.)
 
 Role: cache
 Domain: cache_builder
@@ -210,6 +215,15 @@ def period_centre(obj):
     if isinstance(period, dict) and period.get('kind') == 'fetched':
         return period.get('center')
     return None
+
+
+def is_path_body(obj):
+    """A body drawn from its served positions, fetched by the orrery's path
+    plan, with no elements: a spacecraft, or (L-443, slice 2's comets) a
+    comet the orrery marks open_path -- JPL classes its orbit hyperbolic, or
+    so near parabolic that its numbers cannot tell -- which the objects
+    mirror copies onto the entry."""
+    return obj.get('category') == 'spacecraft' or bool(obj.get('open_path'))
 
 
 def needs_drawn_orbit(obj):
@@ -924,8 +938,10 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
     result = {'slug': slug, 'obj': obj, 'osc_block': None, 'positions': None,
               'as_of_today': None, 'orbit_type': None, 'comet': None}
 
-    is_spacecraft = obj['category'] == 'spacecraft'
-    is_comet = obj['category'] == 'comet'
+    # L-443, slice 2's comets: a comet on an open path is fetched as a
+    # spacecraft is, by its plan, and has no elements (is_path_body).
+    is_spacecraft = is_path_body(obj)
+    is_comet = obj['category'] == 'comet' and not is_spacecraft
 
     # --- 3a: osculating elements (every non-spacecraft) ---
     if not is_spacecraft:
@@ -1002,9 +1018,11 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
             # the objects mirror copies from the orrery. None yet, and no
             # typed start either: say so by name rather than ask Horizons
             # from 1970 (served last-good, or left out, by the caller).
-            raise ValueError("no path plan is served for this spacecraft yet "
+            raise ValueError("no path plan is served for this %s yet "
                              "(the orrery's path_plan.py makes it; the objects "
-                             "mirror copies it)")
+                             "mirror copies it)"
+                             % ('comet' if obj.get('open_path')
+                                else 'spacecraft'))
         if refresh_spacecraft:
             points.clear()                          # A-10: force a full re-backfill
         if mode == 'first-build' or refresh_spacecraft or not points:
@@ -1221,7 +1239,7 @@ def serve_last_good(root, obj, warn, prior_index=None):
     would discard data already in use. Returns a result dict, or None if there is
     no last-good (then the object is dropped + warned)."""
     slug = obj['slug']
-    if obj['category'] == 'spacecraft':
+    if is_path_body(obj):
         raw = load_raw_vectors(root, slug)
         if not raw or not raw['points']:
             return None
@@ -1520,6 +1538,10 @@ def derive_served(staging, results, defaults, warn=None, frame=None):
             'event_link': None,
             'trust': r.get('trust'),   # M2 sec 5.4, additive
         }
+        if obj.get('open_path'):
+            # L-443, slice 2's comets: served so the checks, the
+            # assembler and the room read a comet on an open path as a path.
+            block['open_path'] = True
         if r['comet']:
             block['comet'] = r['comet']
         if r.get('drawn_orbit') is not None:         # L-431 build 3
@@ -1699,9 +1721,9 @@ def assert_structural(index, staging):
                     "#FO %s: features-only entry carries orbital data"
                     % slug)
             continue
-        if o['category'] == 'spacecraft':
+        if o['category'] == 'spacecraft' or o.get('open_path'):
             if o['osculating'] is not None or o['positions'] is None:
-                raise ValidationAbort("#2 %s: spacecraft must have positions, no osculating" % slug)
+                raise ValidationAbort("#2 %s: a path (a spacecraft, or a comet on an open path) must have positions, no osculating" % slug)
         else:
             if o['osculating'] is None:
                 raise ValidationAbort("#3 %s: non-spacecraft missing osculating" % slug)
@@ -2428,7 +2450,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
         try:
             r = process_object(staging, obj, defaults, mode, run_manifest, warn,
                                refresh_spacecraft=refresh_spacecraft)
-            if not (obj['category'] == 'spacecraft'):
+            if not is_path_body(obj):
                 r['osc_block'] = build_osculating_block(r['_els'], obj['center_slug'], obj, warn)
                 r['trust'] = measure_trust(obj, r['osc_block'], warn)
                 if r.get('_els_drawn'):
@@ -2494,7 +2516,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
         for r in results:
             # L-234: features-only entries fetch nothing, so the
             # backfill floor does not apply to them.
-            if (r['obj']['category'] != 'spacecraft'
+            if (not is_path_body(r['obj'])
                     and r['obj'].get('serve_positions') is not False):
                 rr = load_raw_vectors(staging, r['slug'])
                 n = len(rr['points']) if rr else 0

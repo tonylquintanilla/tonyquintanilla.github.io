@@ -221,7 +221,10 @@
     };
   }
 
-  // L-479: "Orbit: q to Q AU from the Sun." aAu and e: the body's served
+  // L-479: the orbit's near and far distance. Since L-443 build B part 2
+  // (Tony, 2026-10-26: keep JPL's words, perihelion and aphelion, and
+  // explain them): "Orbit: perihelion q AU, its closest to the Sun, to
+  // aphelion Q AU, its farthest." aAu and e: the body's served
   // Sun-centred elements. errKm: the error the body's distance line used,
   // the larger of its drift and JPL's accuracy, at least half a km.
   var ORBIT_FIGURES = 3;
@@ -246,8 +249,9 @@
       var r = roundTo(v, Math.max(earned, lead - (ORBIT_FIGURES - 1)));
       return r.place < 0 ? r.value.toFixed(-r.place) : withCommas(r.value);
     };
-    return { line: "Orbit: " + fmt(aAu * (1 - e)) + " to " + fmt(aAu * (1 + e)) +
-                   " AU from the Sun.", why: null };
+    return { line: "Orbit: perihelion " + fmt(aAu * (1 - e)) +
+                   " AU, its closest to the Sun, to aphelion " +
+                   fmt(aAu * (1 + e)) + " AU, its farthest.", why: null };
   }
 
   // A served value printed at its served figure count: rounded once to

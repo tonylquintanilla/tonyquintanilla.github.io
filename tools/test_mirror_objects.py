@@ -21,6 +21,9 @@ Module created: October 1, 2026 with Anthropic's Claude Opus 5.5
 Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
 build 3: the period's copy, its refusals, and a planted mirror that drops
 the centre, each forced on a fixture.)
+Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B part 2: a comet's open_path mark is copied, and written for no
+other body.)
 Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 build B: a spacecraft's path is copied without the orrery's bookkeeping,
 none for another body, and a planted mirror that drops the events is
@@ -193,6 +196,17 @@ def cases():
           "a mirror that drops a path's events was not caught on the next "
           "check")
 
+    # L-443, slice 2's comets: a comet's open_path mark is copied with its
+    # path, and written for no other body.
+    ex9 = json.loads(json.dumps(ex8))
+    ex9["objects"]["apophis"]["open_path"] = True
+    edits9, _c9, failures9, _l9 = mo.plan(cfg4, ex9)
+    by9 = {o["slug"]: o for o in json.loads(mo.apply(cfg4, edits9))["objects"]}
+    check(not failures9 and by9["apophis"].get("open_path") is True
+          and "open_path" not in by9["mars"],
+          "a comet's open_path mark was not copied, or was written for a "
+          "body without one")
+
     # An export older than schema 2 is refused.
     ex7 = json.loads(json.dumps(ex5))
     ex7["schema"] = 1
@@ -240,7 +254,8 @@ def main():
           "a spacecraft's path copied with its span and each event's "
           "window, step and kind, without the orrery's bookkeeping, none "
           "for a body that is not one, and a mirror that drops the events "
-          "caught (L-443).")
+          "caught (L-443); a comet's open_path mark copied, and written for "
+          "no other body (slice 2's comets).")
     print("MIRROR OBJECTS SUITE: pass")
     return 0
 

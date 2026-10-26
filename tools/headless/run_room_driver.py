@@ -26,6 +26,9 @@ Written October 2, 2026 with Anthropic's Claude Opus 5.5.
 Updated October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443 build B:
 the Solar System room's spacecraft position files are handed to the
 driver as POS_JSON, as the page fetches them.)
+Updated October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443 build B
+part 2: and each comet on an open path's, which the room fetches the same
+way.)
 """
 
 import json
@@ -39,7 +42,8 @@ def position_files(cov, cfg):
     out = {}
     for row in rows:
         rec = (cov.get("objects") or {}).get((row or {}).get("slug"))
-        if rec and rec.get("category") == "spacecraft":
+        if rec and (rec.get("category") == "spacecraft"
+                    or rec.get("open_path")):
             f = (rec.get("positions") or {}).get("file")
             if f:
                 with open("data/solar-system/" + f, encoding="utf-8") as h:

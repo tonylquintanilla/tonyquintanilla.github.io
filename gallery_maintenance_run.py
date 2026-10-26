@@ -178,6 +178,9 @@ drawings, the outer Oort cloud's and the galactic tide's; and the
 Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5
 (L-443 build B: the live check also fetches the eleven new spacecraft
 positions files, which the Solar System room fetches before it draws.)
+Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5
+(L-443 build B part 2: and the fourteen comets on open paths' positions
+files, fetched the same way.)
 """
 
 import hashlib
@@ -650,6 +653,21 @@ SERVED_FILES = [
     "data/solar-system/positions/juice.json",
     "data/solar-system/positions/psyche_spacecraft.json",
     "data/solar-system/positions/europa_clipper.json",
+    # L-443 build B part 2 (2026-10-26): and each comet on an open path's.
+    "data/solar-system/positions/wierzchos.json",
+    "data/solar-system/positions/west.json",
+    "data/solar-system/positions/mcnaught.json",
+    "data/solar-system/positions/tsuchinshan_atlas.json",
+    "data/solar-system/positions/atlas_2024_g3.json",
+    "data/solar-system/positions/c2025_k1.json",
+    "data/solar-system/positions/c2025_k1_b.json",
+    "data/solar-system/positions/c2025_k1_c.json",
+    "data/solar-system/positions/c2025_k1_d.json",
+    "data/solar-system/positions/panstarrs_2025_r3.json",
+    "data/solar-system/positions/borisov_2025_v1.json",
+    "data/solar-system/positions/oumuamua.json",
+    "data/solar-system/positions/borisov_2i.json",
+    "data/solar-system/positions/atlas_3i.json",
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing

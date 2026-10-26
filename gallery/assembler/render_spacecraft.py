@@ -1,5 +1,6 @@
 """
-render_spacecraft.py - A spacecraft's path, drawn from its served positions.
+render_spacecraft.py - A spacecraft's path, or a comet's on an open path,
+drawn from its served positions.
 
 L-443, slice 2, build B (October 25, 2026). The cache builder fetches each
 spacecraft's path by the plan the orrery makes (path_plan.py): JPL's own
@@ -39,6 +40,9 @@ Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact
 Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 build B: built. The path split at the minute shown, solid behind and dashed
 ahead; the marker worked out between the served points, with its error.)
+Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B part 2: a comet on an open path is drawn here too, by the same
+rule, its marker the orrery's comet symbol, diamond (symbol_for).)
 
 Role: rendering
 Domain: assembler
@@ -50,8 +54,15 @@ from typing import Any, Dict, List, Optional, Tuple
 AU_KM = 149597870.7   # the assembler's AU (render_orbits, render_objects)
 
 # The orrery's symbol for a spacecraft (celestial_objects.py, every
-# spacecraft entry: 'symbol': 'diamond-open').
+# spacecraft entry: 'symbol': 'diamond-open'), and for a comet ('symbol':
+# 'diamond', every comet entry, the fourteen on open paths among them).
 MARKER_SYMBOL = "diamond-open"
+COMET_SYMBOL = "diamond"
+
+
+def symbol_for(category):
+    """The orrery's marker symbol for a path body of this category."""
+    return COMET_SYMBOL if category == "comet" else MARKER_SYMBOL
 MARKER_SIZE = 6
 LINE_WIDTH = 2
 
@@ -131,7 +142,8 @@ def _line(name, xs, ys, zs, color, legendgroup, dash, part):
 
 def build_spacecraft_traces(name: str, payload: Dict[str, Any],
                             epoch_jd: float, color: str,
-                            legendgroup: str) -> Tuple[List[Tuple[str, Dict[str, Any]]], List[str]]:
+                            legendgroup: str,
+                            symbol: str = MARKER_SYMBOL) -> Tuple[List[Tuple[str, Dict[str, Any]]], List[str]]:
     """([(part, trace)], warnings). part is 'flown', 'predicted', 'marker' or
     'label'. A minute outside the served span draws the whole path solid
     (it has all been flown) or dashed (none of it has), with no marker, and
@@ -172,7 +184,7 @@ def build_spacecraft_traces(name: str, payload: Dict[str, Any],
         "type": "scatter3d",
         "mode": "markers",
         "x": [m[0]], "y": [m[1]], "z": [m[2]],
-        "marker": {"symbol": MARKER_SYMBOL, "size": MARKER_SIZE,
+        "marker": {"symbol": symbol, "size": MARKER_SIZE,
                    "color": color},
         "name": name,
         "legendgroup": legendgroup,

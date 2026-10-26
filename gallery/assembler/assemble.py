@@ -21,6 +21,10 @@ build B: a spacecraft is drawn from its served positions file, handed in
 through the CacheReader -- its path solid to the minute shown and dashed
 after, its marker worked out between the points; a file not handed in is
 named in the warnings.)
+Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B part 2: a comet on an open path is drawn the same way: a body
+served positions and no elements is a path, its marker the orrery's
+symbol for its category.)
 Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
 build 3: an object whose served record carries a drawn_orbit has its
 ellipse drawn from it, moved by render_orbits.drawn_orbit_offset; one that
@@ -62,8 +66,10 @@ def assemble_scene(scene_dict: Dict[str, Any], catalog: Catalog,
         # L-443 build B: a spacecraft is drawn from its served positions,
         # its path solid to the minute shown and dashed after
         # (render_spacecraft). Its positions file comes from the caller,
-        # through the CacheReader; one that is not there is named.
-        if obj.category == "spacecraft" and obj.positions:
+        # through the CacheReader; one that is not there is named. Since
+        # slice 2's comets, a comet on an open path too: a body served
+        # positions and no elements, which only a path is.
+        if obj.positions and not obj.osculating:
             payload = cache.position_file(obj.slug)
             if payload is None:
                 extra_warnings.append(
@@ -72,7 +78,8 @@ def assemble_scene(scene_dict: Dict[str, Any], catalog: Catalog,
                     % (obj.slug, (obj.positions or {}).get("file")))
                 continue
             parts, sc_warn = render_spacecraft.build_spacecraft_traces(
-                obj.name, payload, ctx.resolved_epoch_jd, color, lg)
+                obj.name, payload, ctx.resolved_epoch_jd, color, lg,
+                symbol=render_spacecraft.symbol_for(obj.category))
             extra_warnings.extend(sc_warn)
             role_of = {"flown": ROLE_SPACECRAFT_ARC,
                        "predicted": ROLE_SPACECRAFT_ARC,

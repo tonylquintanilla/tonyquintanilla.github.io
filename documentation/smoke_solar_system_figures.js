@@ -31,8 +31,9 @@
 //      printed exactly as the orrery printed it -- each number the
 //      export's own text, at the export's figure count -- with the page
 //      calling periodLine and its driver passing "period".
-//   6. (L-479) The orbit's near and far distance, "Orbit: q to Q AU from
-//      the Sun.": five worked cases (Sedna, Earth, a body whose error
+//   6. (L-479) The orbit's near and far distance, "Orbit: perihelion q
+//      AU, its closest to the Sun, to aphelion Q AU, its farthest." (the
+//      words since 2026-10-26): five worked cases (Sedna, Earth, a body whose error
 //      earns fewer than three figures, an open orbit, no eccentricity),
 //      every drawer body's line from the served cache's elements and its
 //      own distance error, printed as a table, and the page calling
@@ -70,6 +71,12 @@
 // spacecraft in the drawer: no accuracy row, no period, a path copied from
 // the orrery, a positions file in the served cache, and its distance at
 // its served minute, printed as a table with the sentence.
+// Updated October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443 build
+// B part 2): part 7 holds every comet on an open path as it holds a
+// spacecraft, and checks the page draws one as a "comet_path"; part 6's
+// orbit line reads "perihelion q AU, its closest to the Sun, to aphelion
+// Q AU, its farthest" (Tony, 2026-10-26: keep JPL's words and explain
+// them).
 
 "use strict";
 const fs = require("fs");
@@ -234,14 +241,14 @@ function orbitWorked(lib) {
   // three figures 76.2; Q = 539.584 x 1.858844 = 1002.99, three figures
   // 1.00e3, printed 1,000. A 5,000 km error earns far finer.
   want("Sedna", lib.orbitLine(539.5843205401925, 0.8588442564677704, 5000, K),
-       "Orbit: 76.2 to 1,000 AU from the Sun.");
+       "Orbit: perihelion 76.2 AU, its closest to the Sun, to aphelion 1,000 AU, its farthest.");
   // Earth: q = 0.983289, Q = 1.016716 -> 0.983 and 1.02.
   want("Earth", lib.orbitLine(1.00000261, 0.01671123, 0.5, K),
-       "Orbit: 0.983 to 1.02 AU from the Sun.");
+       "Orbit: perihelion 0.983 AU, its closest to the Sun, to aphelion 1.02 AU, its farthest.");
   // An error of 0.1 AU earns the tenths: the Report test's place for
   // 0.1003 AU is 10^-1, coarser than three figures, so 0.5 and 1.5.
   want("an error that earns fewer than three figures",
-       lib.orbitLine(1, 0.5, 0.1003 * K, K), "Orbit: 0.5 to 1.5 AU from the Sun.");
+       lib.orbitLine(1, 0.5, 0.1003 * K, K), "Orbit: perihelion 0.5 AU, its closest to the Sun, to aphelion 1.5 AU, its farthest.");
   const open = lib.orbitLine(3, 1.2, 1, K);
   if (open.line !== null || !open.why) { out.push("an open orbit printed a line"); }
   const none = lib.orbitLine(3, undefined, 1, K);
@@ -371,9 +378,10 @@ const allRows = ((room.drawer || {}).rows || [])
   .filter(function (r) { return r && typeof r.slug === "string"; })
   .map(function (r) { return r.slug; });
 // L-443 build B: a spacecraft has no orbit, accuracy row or period; part 7
-// holds them. Parts 2 to 6 are the bodies that orbit.
+// holds them. Parts 2 to 6 are the bodies that orbit. Since build B part 2,
+// a comet on an open path (open_path) is a path too, and part 7 holds it.
 const crafts = allRows.filter(function (s) {
-  return (objs[s] || {}).category === "spacecraft";
+  return (objs[s] || {}).category === "spacecraft" || !!(objs[s] || {}).open_path;
 });
 const rows = allRows.filter(function (s) { return crafts.indexOf(s) < 0; });
 if (!rows.length) { failures.push("the room serves no drawer rows"); }
@@ -552,8 +560,8 @@ if (page.indexOf("inventor's") >= 0) {
 const craftTable = [];
 crafts.forEach(function (slug) {
   const o = objs[slug] || {};
-  if (o.position_accuracy) { failures.push(slug + ": a spacecraft serving a position_accuracy"); }
-  if (o.period !== undefined) { failures.push(slug + ": a spacecraft serving a period"); }
+  if (o.position_accuracy) { failures.push(slug + ": a path serving a position_accuracy"); }
+  if (o.period !== undefined) { failures.push(slug + ": a path serving a period"); }
   if (!o.path || !o.path.span || !o.path.made) {
     failures.push(slug + ": serves no path plan (run tools/mirror_objects.py after the orrery's export is pulled)");
   }
@@ -578,7 +586,9 @@ crafts.forEach(function (slug) {
 [
   ["SolarSystemFigures.pathDistanceLine(", "the page does not call pathDistanceLine"],
   ['"kind": ("spacecraft" if _rec.get("category") == "spacecraft"',
-   "the page's driver does not mark a spacecraft"]
+   "the page's driver does not mark a spacecraft"],
+  ['else "comet_path" if _rec.get("open_path") else None),',
+   "the page's driver does not mark a comet on an open path"]
 ].forEach(function (pair) {
   if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
 });
@@ -604,8 +614,8 @@ orbits.forEach(function (t) {
   console.log("  " + (t[0] + "                  ").slice(0, 18) + t[1]);
 });
 console.log("");
-console.log("Spacecraft distances at each one's served minute, " +
-            craftTable.length + " spacecraft:");
+console.log("Path distances at each one's served minute, " +
+            craftTable.length + " paths (spacecraft and comets on open paths):");
 craftTable.forEach(function (t) {
   console.log("  " + (t[0] + "                  ").slice(0, 18) + t[1]);
 });
@@ -621,5 +631,5 @@ console.log("=== PASS: 6 worked cases, " + rows.length + " drawer rows " +
             "JPL's ten-thousands place; 6 period cases and " +
             periods.length + " served periods printed as the orrery " +
             "printed them; 5 orbit-line cases and " + orbits.length +
-            " served orbit lines; 3 spacecraft cases and " +
-            craftTable.length + " served spacecraft ===");
+            " served orbit lines; 3 path cases and " +
+            craftTable.length + " served paths, spacecraft and comets ===");

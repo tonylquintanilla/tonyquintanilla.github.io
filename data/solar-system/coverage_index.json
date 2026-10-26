@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-10-26T14:32:19.573013+00:00",
+  "generated": "2026-10-26T20:09:44.220406+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2461252.136872444,
-    "end_jd": 2461428.074691742
+    "start_jd": 2461252.3711854923,
+    "end_jd": 2461428.3090047906
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -1997,7 +1997,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:09.193600+00:00"
+          "retrieved": "2026-10-26T20:08:53.019726+00:00"
         }
       },
       "positions": null,
@@ -4585,14 +4585,14 @@
           "observer": "@sun",
           "quantity": "32",
           "epoch_jd_ut": 2461339.5,
-          "retrieved": "2026-10-26T14:32:19.572329+00:00"
+          "retrieved": "2026-10-26T20:09:44.219605+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
           "epoch_jd": 2461339.5,
-          "retrieved": "2026-10-26T14:32:19.572329+00:00"
+          "retrieved": "2026-10-26T20:09:44.219605+00:00"
         }
       }
     },
@@ -4619,7 +4619,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:09.431525+00:00"
+          "retrieved": "2026-10-26T20:08:53.243771+00:00"
         }
       },
       "positions": null,
@@ -4736,7 +4736,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:09.619919+00:00"
+          "retrieved": "2026-10-26T20:08:53.497199+00:00"
         }
       },
       "positions": null,
@@ -4837,7 +4837,7 @@
           "query_target": "699",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:09.653395+00:00"
+          "retrieved": "2026-10-26T20:08:53.550463+00:00"
         }
       }
     },
@@ -4864,7 +4864,7 @@
           "query_target": "199",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:09.778610+00:00"
+          "retrieved": "2026-10-26T20:08:53.701835+00:00"
         }
       },
       "positions": null,
@@ -4927,7 +4927,7 @@
           "query_target": "299",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:09.974752+00:00"
+          "retrieved": "2026-10-26T20:08:53.862799+00:00"
         }
       },
       "positions": null,
@@ -4990,7 +4990,7 @@
           "query_target": "499",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:10.181036+00:00"
+          "retrieved": "2026-10-26T20:08:53.997254+00:00"
         }
       },
       "positions": null,
@@ -5053,7 +5053,7 @@
           "query_target": "799",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:10.380071+00:00"
+          "retrieved": "2026-10-26T20:08:54.187975+00:00"
         }
       },
       "positions": null,
@@ -5108,7 +5108,7 @@
           "query_target": "799",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:10.417862+00:00"
+          "retrieved": "2026-10-26T20:08:54.226142+00:00"
         }
       }
     },
@@ -5135,7 +5135,7 @@
           "query_target": "899",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:10.571971+00:00"
+          "retrieved": "2026-10-26T20:08:54.364329+00:00"
         }
       },
       "positions": null,
@@ -5190,7 +5190,7 @@
           "query_target": "899",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:10.611010+00:00"
+          "retrieved": "2026-10-26T20:08:54.397478+00:00"
         }
       }
     },
@@ -5217,7 +5217,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:10.722030+00:00"
+          "retrieved": "2026-10-26T20:08:54.499459+00:00"
         }
       },
       "positions": null,
@@ -5280,7 +5280,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:10.865809+00:00"
+          "retrieved": "2026-10-26T20:08:54.634647+00:00"
         }
       },
       "positions": null,
@@ -5343,7 +5343,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:11.010046+00:00"
+          "retrieved": "2026-10-26T20:08:54.782798+00:00"
         }
       },
       "positions": null,
@@ -5406,7 +5406,7 @@
           "query_target": "9",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:11.160294+00:00"
+          "retrieved": "2026-10-26T20:08:54.910740+00:00"
         }
       },
       "positions": null,
@@ -5469,7 +5469,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:11.300901+00:00"
+          "retrieved": "2026-10-26T20:08:55.053818+00:00"
         }
       },
       "positions": null,
@@ -5532,7 +5532,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:11.447511+00:00"
+          "retrieved": "2026-10-26T20:08:55.211564+00:00"
         }
       },
       "positions": null,
@@ -5595,7 +5595,7 @@
           "query_target": "2004 MN4",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:11.625239+00:00"
+          "retrieved": "2026-10-26T20:08:55.416034+00:00"
         }
       },
       "positions": null,
@@ -6066,7 +6066,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:12.753478+00:00"
+          "retrieved": "2026-10-26T20:08:56.675400+00:00"
         }
       },
       "positions": null,
@@ -6129,7 +6129,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:12.891391+00:00"
+          "retrieved": "2026-10-26T20:08:56.827625+00:00"
         }
       },
       "positions": null,
@@ -6192,7 +6192,7 @@
           "query_target": "90000214",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:12.998087+00:00"
+          "retrieved": "2026-10-26T20:08:56.984838+00:00"
         }
       },
       "positions": null,
@@ -6255,7 +6255,7 @@
           "query_target": "90000356",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:13.104779+00:00"
+          "retrieved": "2026-10-26T20:08:57.154982+00:00"
         }
       },
       "positions": null,
@@ -6318,7 +6318,7 @@
           "query_target": "C/1965 S1-A",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:13.215568+00:00"
+          "retrieved": "2026-10-26T20:08:57.307671+00:00"
         }
       },
       "positions": null,
@@ -6381,7 +6381,7 @@
           "query_target": "90000703",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:13.373061+00:00"
+          "retrieved": "2026-10-26T20:08:57.550104+00:00"
         }
       },
       "positions": null,
@@ -6444,7 +6444,7 @@
           "query_target": "90000901",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:13.493249+00:00"
+          "retrieved": "2026-10-26T20:08:57.719484+00:00"
         }
       },
       "positions": null,
@@ -6507,7 +6507,7 @@
           "query_target": "C/1995 O1",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:13.622047+00:00"
+          "retrieved": "2026-10-26T20:08:57.857734+00:00"
         }
       },
       "positions": null,
@@ -6570,7 +6570,7 @@
           "query_target": "C/1996 B2",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:13.747238+00:00"
+          "retrieved": "2026-10-26T20:08:58.011620+00:00"
         }
       },
       "positions": null,
@@ -6633,7 +6633,7 @@
           "query_target": "C/2020 F3",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:13.872534+00:00"
+          "retrieved": "2026-10-26T20:08:58.161527+00:00"
         }
       },
       "positions": null,
@@ -6696,7 +6696,7 @@
           "query_target": "C/2025 A6",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:13.983279+00:00"
+          "retrieved": "2026-10-26T20:08:58.286310+00:00"
         }
       },
       "positions": null,
@@ -6759,7 +6759,7 @@
           "query_target": "C/2025 R2",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:14.110780+00:00"
+          "retrieved": "2026-10-26T20:08:58.436105+00:00"
         }
       },
       "positions": null,
@@ -6822,7 +6822,7 @@
           "query_target": "C/2026 A1",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:14.242225+00:00"
+          "retrieved": "2026-10-26T20:08:58.608451+00:00"
         }
       },
       "positions": null,
@@ -6885,7 +6885,7 @@
           "query_target": "A898 PA",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:14.359999+00:00"
+          "retrieved": "2026-10-26T20:08:58.749880+00:00"
         }
       },
       "positions": null,
@@ -6948,7 +6948,7 @@
           "query_target": "1999 RQ36",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:14.480479+00:00"
+          "retrieved": "2026-10-26T20:08:58.884905+00:00"
         }
       },
       "positions": null,
@@ -7011,7 +7011,7 @@
           "query_target": "1999 JU3",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:14.605559+00:00"
+          "retrieved": "2026-10-26T20:08:59.004288+00:00"
         }
       },
       "positions": null,
@@ -7074,7 +7074,7 @@
           "query_target": "1998 SF36",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:14.741942+00:00"
+          "retrieved": "2026-10-26T20:08:59.130734+00:00"
         }
       },
       "positions": null,
@@ -7137,7 +7137,7 @@
           "query_target": "2016 HO3",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:14.868948+00:00"
+          "retrieved": "2026-10-26T20:08:59.266785+00:00"
         }
       },
       "positions": null,
@@ -7200,7 +7200,7 @@
           "query_target": "2025 PN7",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:14.986127+00:00"
+          "retrieved": "2026-10-26T20:08:59.419679+00:00"
         }
       },
       "positions": null,
@@ -7263,7 +7263,7 @@
           "query_target": "2024 PT5",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:15.103191+00:00"
+          "retrieved": "2026-10-26T20:08:59.659584+00:00"
         }
       },
       "positions": null,
@@ -7326,7 +7326,7 @@
           "query_target": "2025 PY1",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:15.232964+00:00"
+          "retrieved": "2026-10-26T20:08:59.822186+00:00"
         }
       },
       "positions": null,
@@ -7389,7 +7389,7 @@
           "query_target": "2023 JF",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:15.348401+00:00"
+          "retrieved": "2026-10-26T20:08:59.956919+00:00"
         }
       },
       "positions": null,
@@ -7452,7 +7452,7 @@
           "query_target": "2024 DW",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:15.466040+00:00"
+          "retrieved": "2026-10-26T20:09:00.089466+00:00"
         }
       },
       "positions": null,
@@ -7515,7 +7515,7 @@
           "query_target": "2024 YR4",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:15.594105+00:00"
+          "retrieved": "2026-10-26T20:09:00.248870+00:00"
         }
       },
       "positions": null,
@@ -7578,7 +7578,7 @@
           "query_target": "A801 AA",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:15.742042+00:00"
+          "retrieved": "2026-10-26T20:09:00.394375+00:00"
         }
       },
       "positions": null,
@@ -7641,7 +7641,7 @@
           "query_target": "A807 FA",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:15.855310+00:00"
+          "retrieved": "2026-10-26T20:09:00.513771+00:00"
         }
       },
       "positions": null,
@@ -7704,7 +7704,7 @@
           "query_target": "A852 FA",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.013758+00:00"
+          "retrieved": "2026-10-26T20:09:00.741806+00:00"
         }
       },
       "positions": null,
@@ -7759,7 +7759,7 @@
           "query_target": "A852 FA",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.048902+00:00"
+          "retrieved": "2026-10-26T20:09:00.785881+00:00"
         }
       }
     },
@@ -7786,7 +7786,7 @@
           "query_target": "A852 VA",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.136409+00:00"
+          "retrieved": "2026-10-26T20:09:00.892800+00:00"
         }
       },
       "positions": null,
@@ -7849,7 +7849,7 @@
           "query_target": "1969 VC",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.267846+00:00"
+          "retrieved": "2026-10-26T20:09:01.035130+00:00"
         }
       },
       "positions": null,
@@ -7912,7 +7912,7 @@
           "query_target": "1981 EQ5",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.408370+00:00"
+          "retrieved": "2026-10-26T20:09:01.169872+00:00"
         }
       },
       "positions": null,
@@ -7975,7 +7975,7 @@
           "query_target": "1999 VD57",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.541290+00:00"
+          "retrieved": "2026-10-26T20:09:01.308927+00:00"
         }
       },
       "positions": null,
@@ -8038,7 +8038,7 @@
           "query_target": "1973 SO",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.708832+00:00"
+          "retrieved": "2026-10-26T20:09:01.473748+00:00"
         }
       },
       "positions": null,
@@ -8093,7 +8093,7 @@
           "query_target": "1973 SO",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.743824+00:00"
+          "retrieved": "2026-10-26T20:09:01.508172+00:00"
         }
       }
     },
@@ -8120,7 +8120,7 @@
           "query_target": "A906 UL",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.816331+00:00"
+          "retrieved": "2026-10-26T20:09:01.609447+00:00"
         }
       },
       "positions": null,
@@ -8183,7 +8183,7 @@
           "query_target": "1999 WB2",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.956867+00:00"
+          "retrieved": "2026-10-26T20:09:01.833354+00:00"
         }
       },
       "positions": null,
@@ -8238,7 +8238,7 @@
           "query_target": "1999 WB2",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:16.987302+00:00"
+          "retrieved": "2026-10-26T20:09:01.883473+00:00"
         }
       }
     },
@@ -8265,7 +8265,7 @@
           "query_target": "1997 TS25",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.092775+00:00"
+          "retrieved": "2026-10-26T20:09:02.041956+00:00"
         }
       },
       "positions": null,
@@ -8320,7 +8320,7 @@
           "query_target": "1997 TS25",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.122720+00:00"
+          "retrieved": "2026-10-26T20:09:02.085450+00:00"
         }
       }
     },
@@ -8347,7 +8347,7 @@
           "query_target": "1999 VQ10",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.233043+00:00"
+          "retrieved": "2026-10-26T20:09:02.222093+00:00"
         }
       },
       "positions": null,
@@ -8402,7 +8402,7 @@
           "query_target": "1999 VQ10",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.264902+00:00"
+          "retrieved": "2026-10-26T20:09:02.261088+00:00"
         }
       }
     },
@@ -8429,7 +8429,7 @@
           "query_target": "1997 CU26",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.376925+00:00"
+          "retrieved": "2026-10-26T20:09:02.383202+00:00"
         }
       },
       "positions": null,
@@ -8484,7 +8484,7 @@
           "query_target": "1997 CU26",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.405564+00:00"
+          "retrieved": "2026-10-26T20:09:02.421837+00:00"
         }
       }
     },
@@ -8511,7 +8511,7 @@
           "query_target": "2004 DW",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.519289+00:00"
+          "retrieved": "2026-10-26T20:09:02.579332+00:00"
         }
       },
       "positions": null,
@@ -8566,7 +8566,7 @@
           "query_target": "2004 DW",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.549878+00:00"
+          "retrieved": "2026-10-26T20:09:02.643283+00:00"
         }
       }
     },
@@ -8593,7 +8593,7 @@
           "query_target": "2003 EL61",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.655191+00:00"
+          "retrieved": "2026-10-26T20:09:02.793754+00:00"
         }
       },
       "positions": null,
@@ -8648,7 +8648,7 @@
           "query_target": "2003 EL61",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.684905+00:00"
+          "retrieved": "2026-10-26T20:09:02.845122+00:00"
         }
       }
     },
@@ -8675,7 +8675,7 @@
           "query_target": "2003 UB313",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.794919+00:00"
+          "retrieved": "2026-10-26T20:09:03.000911+00:00"
         }
       },
       "positions": null,
@@ -8730,7 +8730,7 @@
           "query_target": "2003 UB313",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.824087+00:00"
+          "retrieved": "2026-10-26T20:09:03.042450+00:00"
         }
       }
     },
@@ -8757,7 +8757,7 @@
           "query_target": "2005 FY9",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.937341+00:00"
+          "retrieved": "2026-10-26T20:09:03.177699+00:00"
         }
       },
       "positions": null,
@@ -8812,7 +8812,7 @@
           "query_target": "2005 FY9",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:17.965057+00:00"
+          "retrieved": "2026-10-26T20:09:03.216386+00:00"
         }
       }
     },
@@ -8839,7 +8839,7 @@
           "query_target": "2007 OR10",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.074943+00:00"
+          "retrieved": "2026-10-26T20:09:03.336999+00:00"
         }
       },
       "positions": null,
@@ -8894,7 +8894,7 @@
           "query_target": "2007 OR10",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.103410+00:00"
+          "retrieved": "2026-10-26T20:09:03.373383+00:00"
         }
       }
     },
@@ -8921,7 +8921,7 @@
           "query_target": "2002 LM60",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.216876+00:00"
+          "retrieved": "2026-10-26T20:09:03.508147+00:00"
         }
       },
       "positions": null,
@@ -8976,7 +8976,7 @@
           "query_target": "2002 LM60",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.251988+00:00"
+          "retrieved": "2026-10-26T20:09:03.545634+00:00"
         }
       }
     },
@@ -9003,7 +9003,7 @@
           "query_target": "2003 VB12",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.355803+00:00"
+          "retrieved": "2026-10-26T20:09:03.652347+00:00"
         }
       },
       "positions": null,
@@ -9058,7 +9058,7 @@
           "query_target": "2003 VB12",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.384076+00:00"
+          "retrieved": "2026-10-26T20:09:03.685415+00:00"
         }
       }
     },
@@ -9085,7 +9085,7 @@
           "query_target": "2002 MS4",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.496117+00:00"
+          "retrieved": "2026-10-26T20:09:03.795929+00:00"
         }
       },
       "positions": null,
@@ -9140,7 +9140,7 @@
           "query_target": "2002 MS4",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.521656+00:00"
+          "retrieved": "2026-10-26T20:09:03.828230+00:00"
         }
       }
     },
@@ -9167,7 +9167,7 @@
           "query_target": "2001 KX76",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.628708+00:00"
+          "retrieved": "2026-10-26T20:09:03.945050+00:00"
         }
       },
       "positions": null,
@@ -9222,7 +9222,7 @@
           "query_target": "2001 KX76",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.657084+00:00"
+          "retrieved": "2026-10-26T20:09:03.980845+00:00"
         }
       }
     },
@@ -9249,7 +9249,7 @@
           "query_target": "2000 WR106",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.767424+00:00"
+          "retrieved": "2026-10-26T20:09:04.093637+00:00"
         }
       },
       "positions": null,
@@ -9304,7 +9304,7 @@
           "query_target": "2000 WR106",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.799469+00:00"
+          "retrieved": "2026-10-26T20:09:04.137501+00:00"
         }
       }
     },
@@ -9331,7 +9331,7 @@
           "query_target": "2004 GV9",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.911897+00:00"
+          "retrieved": "2026-10-26T20:09:04.304413+00:00"
         }
       },
       "positions": null,
@@ -9386,7 +9386,7 @@
           "query_target": "2004 GV9",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:18.948832+00:00"
+          "retrieved": "2026-10-26T20:09:04.354373+00:00"
         }
       }
     },
@@ -9413,7 +9413,7 @@
           "query_target": "2015 TG387",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:19.059462+00:00"
+          "retrieved": "2026-10-26T20:09:04.492444+00:00"
         }
       },
       "positions": null,
@@ -9468,7 +9468,7 @@
           "query_target": "2015 TG387",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:19.090621+00:00"
+          "retrieved": "2026-10-26T20:09:04.531277+00:00"
         }
       }
     },
@@ -9495,7 +9495,7 @@
           "query_target": "2017 OF201",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:19.200651+00:00"
+          "retrieved": "2026-10-26T20:09:04.652518+00:00"
         }
       },
       "positions": null,
@@ -9550,7 +9550,7 @@
           "query_target": "2017 OF201",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:19.232031+00:00"
+          "retrieved": "2026-10-26T20:09:04.686395+00:00"
         }
       }
     },
@@ -9577,7 +9577,7 @@
           "query_target": "2023 KQ14",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:19.339053+00:00"
+          "retrieved": "2026-10-26T20:09:04.804136+00:00"
         }
       },
       "positions": null,
@@ -9632,7 +9632,7 @@
           "query_target": "2023 KQ14",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:19.367649+00:00"
+          "retrieved": "2026-10-26T20:09:04.837481+00:00"
         }
       }
     },
@@ -9659,7 +9659,7 @@
           "query_target": "2014 MU69",
           "center": "@sun",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:19.480226+00:00"
+          "retrieved": "2026-10-26T20:09:04.958748+00:00"
         }
       },
       "positions": null,
@@ -9714,14 +9714,504 @@
           "query_target": "2014 MU69",
           "center": "@0",
           "epoch": 2461339.5,
-          "retrieved": "2026-10-26T14:32:19.509589+00:00"
+          "retrieved": "2026-10-26T20:09:05.007699+00:00"
         }
       }
+    },
+    "west": {
+      "name": "West",
+      "horizons_id": "C/1975 V1-A",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/west.json",
+        "start": "1975-02-25 00:00",
+        "end": "2027-10-19 00:00",
+        "step_hours": 60.0,
+        "n_points": 54,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": 4581676667.277606,
+        "y": -10509255028.023022,
+        "z": 1007272159.6451879
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "mcnaught": {
+      "name": "McNaught",
+      "horizons_id": "C/2006 P1",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/mcnaught.json",
+        "start": "2006-01-12 00:00",
+        "end": "2027-10-21 00:00",
+        "step_hours": 42.0,
+        "n_points": 51,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": -910436384.1034826,
+        "y": -5184358055.971272,
+        "z": -3113201144.3762693
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "tsuchinshan_atlas": {
+      "name": "Tsuchinshan",
+      "horizons_id": "C/2023 A3",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/tsuchinshan_atlas.json",
+        "start": "2023-09-28 00:00",
+        "end": "2027-10-21 00:00",
+        "step_hours": 111.733,
+        "n_points": 48,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": 56481854.692249455,
+        "y": -1013010348.3443563,
+        "z": 833544697.8918461
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "wierzchos": {
+      "name": "Wierzchos",
+      "horizons_id": "C/2024 E1",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/wierzchos.json",
+        "start": "2025-01-20 00:00",
+        "end": "2027-10-25 00:00",
+        "step_hours": 150.933,
+        "n_points": 49,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": -235877278.9578153,
+        "y": 541769835.0414139,
+        "z": 212641400.02221772
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "atlas_2024_g3": {
+      "name": "ATLAS",
+      "horizons_id": "C/2024 G3",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/atlas_2024_g3.json",
+        "start": "2024-01-14 00:00",
+        "end": "2027-10-24 00:00",
+        "step_hours": 24.0,
+        "n_points": 42,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": 260673624.8529888,
+        "y": -498980727.9725088,
+        "z": -1084531599.8619015
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "c2025_k1": {
+      "name": "C/2025_K1",
+      "horizons_id": "1004075",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/c2025_k1.json",
+        "start": "2024-10-08 00:00",
+        "end": "2027-10-19 00:00",
+        "step_hours": 84.0,
+        "n_points": 46,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": 560589745.9037505,
+        "y": 457716043.6739485,
+        "z": 386896251.7821172
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "c2025_k1_b": {
+      "name": "C/2025_K1-B",
+      "horizons_id": "C/2025 K1-B",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/c2025_k1_b.json",
+        "start": "2024-10-08 00:00",
+        "end": "2027-10-19 00:00",
+        "step_hours": 96.0,
+        "n_points": 44,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": 562579557.5382077,
+        "y": 458978032.1512217,
+        "z": 387790934.8919148
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "c2025_k1_c": {
+      "name": "C/2025_K1-C",
+      "horizons_id": "C/2025 K1-C",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/c2025_k1_c.json",
+        "start": "2024-10-08 00:00",
+        "end": "2027-10-19 00:00",
+        "step_hours": 84.0,
+        "n_points": 46,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": 560262135.2566621,
+        "y": 457630283.8493062,
+        "z": 386781681.4197097
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "c2025_k1_d": {
+      "name": "C/2025_K1-D",
+      "horizons_id": "C/2025 K1-D",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/c2025_k1_d.json",
+        "start": "2024-10-08 00:00",
+        "end": "2027-10-19 00:00",
+        "step_hours": 96.0,
+        "n_points": 44,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": 563125743.9558363,
+        "y": 459166111.95704377,
+        "z": 388003106.94934815
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "panstarrs_2025_r3": {
+      "name": "PANSTARRS",
+      "horizons_id": "C/2025 R3",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/panstarrs_2025_r3.json",
+        "start": "2025-04-19 00:00",
+        "end": "2027-10-23 00:00",
+        "step_hours": 118.467,
+        "n_points": 47,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": 8504087.931733552,
+        "y": 321822494.5351082,
+        "z": -354643242.05511725
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "borisov_2025_v1": {
+      "name": "Borisov",
+      "horizons_id": "C/2025 V1",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/borisov_2025_v1.json",
+        "start": "2024-11-16 00:00",
+        "end": "2027-10-23 00:00",
+        "step_hours": 97.733,
+        "n_points": 48,
+        "size_kb": 4
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": -33991545.70256625,
+        "y": -737971332.1559162,
+        "z": -138883685.55334264
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "oumuamua": {
+      "name": "1I/Oumuamua",
+      "horizons_id": "A/2017 U1",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/oumuamua.json",
+        "start": "2016-09-09 00:00",
+        "end": "2027-10-22 00:00",
+        "step_hours": 59.467,
+        "n_points": 41,
+        "size_kb": 3
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": 7503561570.168323,
+        "y": 1192459590.4247298,
+        "z": 3177589599.9488745
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "borisov_2i": {
+      "name": "2I/Borisov",
+      "horizons_id": "C/2019 Q4",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/borisov_2i.json",
+        "start": "2018-12-08 00:00",
+        "end": "2027-10-23 00:00",
+        "step_hours": 528.0,
+        "n_points": 33,
+        "size_kb": 3
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": 87718659.18815818,
+        "y": -6335439054.599424,
+        "z": -3716913866.337268
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
+    },
+    "atlas_3i": {
+      "name": "3I/ATLAS",
+      "horizons_id": "C/2025 N1",
+      "category": "comet",
+      "availability": "path",
+      "parent": "sun",
+      "stored_center": "sun",
+      "canonical_frame": "arc-natural",
+      "trajectory_of": null,
+      "osculating": null,
+      "positions": {
+        "file": "positions/atlas_3i.json",
+        "start": "2024-10-29 00:00",
+        "end": "2027-10-19 00:00",
+        "step_hours": 281.883,
+        "n_points": 28,
+        "size_kb": 2
+      },
+      "presets": null,
+      "features": {},
+      "orbit_type": null,
+      "as_of_today": {
+        "t": 2461339.500694444,
+        "x": -396193753.8492793,
+        "y": 1851536189.7565427,
+        "z": -103321756.6598623
+      },
+      "event_link": null,
+      "trust": {
+        "schema_version": 1,
+        "method": "fetched_positions",
+        "window": null
+      },
+      "open_path": true
     }
   },
   "frame_constants": {
     "export": "data/constants_export.json",
-    "orrery_sha": "288e83f7d28891376eaf8eb86aed545fe0ff17b8",
+    "orrery_sha": "140db0ae0ff05badc17b85fc7c214d36505ace32",
     "rows": {
       "KM_PER_AU": {
         "value": 149597870.7,

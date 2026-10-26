@@ -57,7 +57,13 @@ WHAT IT WRITES, PER LINKED OBJECT
                   a new one, so a new plan reaches a visitor only when the
                   builder runs. Null for a body that is not a spacecraft,
                   and nothing is written then. Inserted likewise, as one
-                  line
+                  line. Since slice 2's comets, a comet on an open path's
+                  plan too
+    open_path     true for a comet the orrery marks as drawn as a path,
+                  by its plan (L-443, slice 2's comets): the cache builder
+                  fetches it as it fetches a spacecraft. Absent from the
+                  export for every other body, and nothing is written then.
+                  Inserted likewise
 
     Every change is printed, field by field, with the old and the new
     value, so a fix is reported and not only made (Tony's ruling,
@@ -106,6 +112,9 @@ centre, are refused.)
 Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 build B: a spacecraft's path plan is copied, without the orrery's
 bookkeeping, for the cache builder to fetch the path by.)
+Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B part 2: a comet's open_path mark is copied, and its path plan as a
+spacecraft's is.)
 """
 
 import json
@@ -118,7 +127,7 @@ CONFIG = os.path.join("data", "objects_config.json")
 EXPORT = os.path.join("data", "objects_export.json")
 ROOM = "solar-system"
 REPLACED = ("name", "horizons_id", "id_type")
-INSERTED = ("description", "info_url", "period", "path")
+INSERTED = ("description", "info_url", "period", "path", "open_path")
 MIN_SCHEMA = 2
 
 # L-443 build B: what the config holds of a spacecraft's path plan -- what

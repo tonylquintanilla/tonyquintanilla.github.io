@@ -74,6 +74,15 @@ stand-in answers for slice 1's fifty bodies; Encke and Halley are
 anchored at today by Tony's ruling of this day, so the checks of the
 perihelion-anchor path run on a copy of the config with Encke anchored
 at perihelion again (_tp_cfg), and the path stays tested.)
+Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B part 2: a comet on an open path is fetched by its plan like a
+spacecraft. The fake answers a comet asked by its plan with a straight
+line past the Sun; a comet the config serves no plan is given a stand-in
+one, a year before its perihelion to a year after the suite's today; and
+four checks: the config serves fourteen comets on open paths, each is
+served as a path with open_path carried, one is fetched inside its plan's
+span and no further, and one with no plan is named and not fetched. The
+trust checks hold every comet on an open path as they hold a spacecraft.)
 """
 import contextlib
 import io
@@ -238,6 +247,12 @@ def fake_vectors(horizons_id, id_type, center, start_dt, stop_dt, step='1d',
         if str(horizons_id).startswith('-'):  # spacecraft: straight arc
             r = FAKE_SC_R(d)
             out[d.strftime(key_fmt)] = {'jd': b._dt_to_jd(d), 'x': r, 'y': 0.0, 'z': 0.0}
+        elif horizons_id not in ELEMS:
+            # L-443 build B part 2: a comet on an open path, asked by its
+            # plan: a straight line past the Sun at 0.4 AU, nearest on
+            # 2026-01-15.
+            x = FAKE_COMET_AU_PER_DAY * (d - _COMET_T0).total_seconds() / 86400.0
+            out[d.strftime(key_fmt)] = {'jd': b._dt_to_jd(d), 'x': x, 'y': 0.4, 'z': 0.0}
         else:
             a, e = ELEMS[horizons_id]
             out[d.strftime(key_fmt)] = {'jd': b._dt_to_jd(d), 'x': a, 'y': 0.0, 'z': 0.0}
@@ -255,6 +270,12 @@ _SC_T0 = datetime(1977, 9, 6, tzinfo=timezone.utc)
 
 def FAKE_SC_R(d):
     return 1.0 + 3.25 * max((d - _SC_T0).days, 0) / 365.25
+
+
+# L-443 build B part 2: a comet on an open path, a straight line past the
+# Sun (fake_vectors), nearest at 0.4 AU on this day.
+_COMET_T0 = datetime(2026, 1, 15, tzinfo=timezone.utc)
+FAKE_COMET_AU_PER_DAY = 0.02
 
 
 def fake_solution_tp(name, horizons_id=None, id_type='smallbody', hkwargs=None):
@@ -301,17 +322,43 @@ STAND_IN_PLAN = {'made': '2026-07-01',
                  'events': []}
 
 
+# L-443 build B part 2: a comet on an open path's stand-in plan, by the
+# span ruling's shape: a year before its perihelion to a year after the
+# suite's today, its one event the perihelion.
+STAND_IN_COMET_PLAN = {'made': '2026-07-01',
+                       'span': {'start': '2025-01-15', 'end': '2027-07-09'},
+                       'backbone': {'step': '7d', 'thin_tol_au': 0.02},
+                       'events': [{'body': 'Sun', 'kind': 'perihelion',
+                                   'stays': False,
+                                   'closest': '2026-01-15 00:00',
+                                   'dist_km': 59839148.3,
+                                   'window': ['2026-01-05 00:00',
+                                              '2026-01-25 00:00'],
+                                   'step': '1d'}]}
+
+
+def cfg_by_slug(cfg):
+    return {o['slug']: o for o in cfg.get('objects', [])}
+
+
+def _needs_plan(o):
+    if o.get('path'):
+        return False
+    if o.get('open_path'):
+        return True
+    return (o.get('category') == 'spacecraft'
+            and not (o.get('overrides') or {}).get('spacecraft', {})
+            .get('start'))
+
+
 def stand_in_plans(cfg):
-    if not any(o.get('category') == 'spacecraft' and not o.get('path')
-               and not (o.get('overrides') or {}).get('spacecraft', {})
-               .get('start') for o in cfg.get('objects', [])):
+    if not any(_needs_plan(o) for o in cfg.get('objects', [])):
         return cfg
     c = json.loads(json.dumps(cfg))
     for o in c['objects']:
-        if (o.get('category') == 'spacecraft' and not o.get('path')
-                and not (o.get('overrides') or {}).get('spacecraft', {})
-                .get('start')):
-            o['path'] = json.loads(json.dumps(STAND_IN_PLAN))
+        if _needs_plan(o):
+            o['path'] = json.loads(json.dumps(
+                STAND_IN_COMET_PLAN if o.get('open_path') else STAND_IN_PLAN))
     return c
 
 
@@ -431,6 +478,37 @@ def main():
               idx.get('scene_features') == ['asteroid_belt', 'kuiper_belt', 'heliosphere'],
               "B-3: serving_base + scene_features restored for v0.6 parity")
         check('step_hours' in v['positions'], "B-3: positions block carries step_hours")
+
+        # --- L-443 build B part 2: a comet on an open path is a path ---
+        paths = [s for s, o in cfg_by_slug(cfg).items() if o.get('open_path')]
+        check(len(paths) == 14, "L-443 part 2: the config serves 14 comets on "
+              "open paths (%d)" % len(paths))
+        bad = [s for s in paths if not (objs.get(s, {}).get('osculating') is None
+                                        and objs.get(s, {}).get('positions')
+                                        and objs.get(s, {}).get('open_path') is True
+                                        and objs.get(s, {}).get('as_of_today'))]
+        check(not bad, "L-443 part 2: each comet on an open path is served as a "
+              "path -- positions and today's point, no elements, open_path "
+              "carried (%s)" % (", ".join(bad) or "all 14"))
+        if paths:
+            raw_w = sorted(b.load_raw_vectors(out, paths[0])['points'])
+            span_ok = (raw_w and raw_w[0] >= '2025-01-15'
+                       and raw_w[-1] <= '2027-07-09 23:59')
+            check(span_ok, "L-443 part 2: %s's path is fetched inside its "
+                  "plan's span, nothing extended (%s to %s)"
+                  % (paths[0], raw_w[0] if raw_w else None,
+                     raw_w[-1] if raw_w else None))
+        probe = dict(cfg_by_slug(cfg)[paths[0]]) if paths else {}
+        probe.pop('path', None)
+        try:
+            b.process_object(Path(tempfile.mkdtemp()), probe, cfg['defaults'],
+                             'nightly', {'objects': {}, 'guard_warnings': []},
+                             lambda m: None)
+            named = False
+        except ValueError as exc:
+            named = 'no path plan is served for this comet' in str(exc)
+        check(named, "L-443 part 2: a comet on an open path with no plan yet is "
+              "named, not fetched")
 
         # --- L-322 Stage D: Earth's pole of date and the frame rows ---
         pod_blk = e.get('pole_of_date')
@@ -612,8 +690,9 @@ def main():
         for slug2, block2 in objs.items():
             tr = block2.get('trust')
             check(tr is not None, "M2: %s serves a trust block" % slug2)
-            if block2.get('category') == 'spacecraft':
-                # L-443 build B: every spacecraft, not only Voyager 1.
+            if block2.get('category') == 'spacecraft' or block2.get('open_path'):
+                # L-443 build B: every spacecraft, not only Voyager 1; and
+                # (part 2) every comet on an open path.
                 check(tr.get('method') == 'fetched_positions',
                       "M2: %s trust method == fetched_positions" % slug2)
                 check(tr.get('window') is None,

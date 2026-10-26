@@ -51,7 +51,24 @@
 // Juno, Jupiter; Voyager 1 by Go To, Jupiter, Saturn and Pluto -- each
 // before it in Home's order, and unticking it leaves them; the panel
 // shows Juno's description and its source line one sentence to a bullet.
+// Updated October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443 build
+// B part 2): the near-Earth asteroids are split by JPL's class (Tony,
+// 2026-10-26), so Apophis's group is the Aten asteroids, after Venus;
+// the room's second list has five bullets, the comets' paths among them;
+// and Sedna's orbit line names perihelion and aphelion and says what
+// each is.
+// Section 21 (2026-10-26) walks the comets on open paths: their groups'
+// places, West solid then dashed with no companions, its four-line text
+// box and source line, C/2025 K1's name with its space, Go To on
+// 3I/ATLAS's whole path, and Reset. Later that day: each group's class
+// explained, first in West's text box and panel, and the perihelion in
+// its span sentence.
 const h = require("./page_harness.js");
+function solarDay(jd) {
+  const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
+  return dd.getUTCDate() + " " + ["January","February","March","April","May","June","July",
+    "August","September","October","November","December"][dd.getUTCMonth()] + " " + dd.getUTCFullYear();
+}
 const fails = []; let n = 0;
 function ok(c, m) { n++; if (!c) { fails.push(m); } }
 (async () => {
@@ -102,7 +119,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(focus() === "earth" && d.getElementById("sun-drawer-label").textContent === "Earth", "arrival handle");
   ok(count() === "1 of " + N, "arrival count " + count());
   ok(row("center").classList.contains("fixed"), "Sun row not fixed");
-  ok(row("apophis").hidden && !head("neo").hidden && !E("ssDrawer.folds.neo"), "the near-Earth asteroids are not listed, folded");
+  ok(row("apophis").hidden && !head("aten").hidden && !E("ssDrawer.folds.aten"), "the Aten asteroids are not listed, folded");
   ok(!d.getElementById("sun-see-more") && !d.querySelector(".sun-see-more"), "See more is still on the page (L-477)");
   ok(Array.from(d.querySelectorAll(".sun-row.sun-group[data-g]")).every(h => !h.hidden && h.getAttribute("aria-expanded") === "false" && h.querySelector(".fold").textContent === "\u25b8" && !h.querySelector(".box")),
      "a group is hidden, open, shows no fold arrow, or still has a box");
@@ -147,22 +164,22 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   // 6. L-477: a group folds open with nothing ticked; its Reset appears
   // once one of its bodies is ticked, and unticks only them.
   calls = E("__calls.length");
-  await click(head("neo").querySelector(".pick"));
+  await click(head("aten").querySelector(".pick"));
   ok(!row("apophis").hidden && !shown("apophis") && E("__calls.length") === calls,
      "the group's left end did not just fold it open, or ticked or moved something");
-  ok(head("neo").querySelector(".fold").textContent === "\u25be", "the open group's arrow does not point down");
-  ok(groupReset("neo").hidden, "a group's Reset is offered with nothing in it ticked");
+  ok(head("aten").querySelector(".fold").textContent === "\u25be", "the open group's arrow does not point down");
+  ok(groupReset("aten").hidden, "a group's Reset is offered with nothing in it ticked");
   await pick("apophis");
   ok(shown("apophis") && order() === "earth,mercury,neptune,apophis", "Apophis tick " + order());
-  ok(!groupReset("neo").hidden && groupReset("neo").textContent === "Reset Near-Earth asteroids",
-     "the group's Reset is not offered once Apophis is ticked: " + groupReset("neo").textContent);
-  await click(groupReset("neo"));
+  ok(!groupReset("aten").hidden && groupReset("aten").textContent === "Reset Aten asteroids",
+     "the group's Reset is not offered once Apophis is ticked: " + groupReset("aten").textContent);
+  await click(groupReset("aten"));
   ok(!shown("apophis") && shown("earth") && shown("mercury") && shown("neptune"),
      "the group's Reset did not untick Apophis alone");
   ok(order() === "earth,mercury,neptune", "the group's Reset left the order " + order());
-  ok(groupReset("neo").hidden && !row("apophis").hidden, "after its Reset the group closed, or its Reset stayed");
-  await fold("neo");
-  ok(row("apophis").hidden && groupReset("neo").hidden, "the group did not fold shut");
+  ok(groupReset("aten").hidden && !row("apophis").hidden, "after its Reset the group closed, or its Reset stayed");
+  await fold("aten");
+  ok(row("apophis").hidden && groupReset("aten").hidden, "the group did not fold shut");
   // 7. A tap on a body in the scene: names its row, moves nothing
   E("setSunDrawer(false)");
   const nep = E("sunPlotDiv.data.findIndex(t => t.legendgroup === 'mercury' && t.meta && t.meta.label_target)");
@@ -230,7 +247,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   const howTo = lists.filter(u => u.textContent.indexOf("Open the list below") >= 0);
   const built = lists.filter(u => u.textContent.indexOf("This room is being built up") >= 0);
   ok(howTo.length === 1 && built.length === 1 && howTo[0].querySelectorAll("li").length === 6 &&
-     built[0].querySelectorAll("li").length === 4, "the room's two lists, six and four bullets");
+     built[0].querySelectorAll("li").length === 5, "the room's two lists, six and five bullets");
   // 14. Sideways (Tony, 2026-10-03, option 3): an opened row's button sits
   // on the name's line before GO; upright it is the line under the row
   E("setSunDrawer(true)");
@@ -349,15 +366,20 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   const sednaText = E("sunPlotDiv.data").find(t => t.legendgroup === "sedna" && t.meta && t.meta.label_target).text[0];
   const sb = data.bodies.sedna;
   const q3 = Number((sb.a_au * (1 - sb.e)).toPrecision(3)), Q3 = Number((sb.a_au * (1 + sb.e)).toPrecision(3));
-  ok(sednaText.indexOf("Orbit: " + q3 + " to " + Q3.toLocaleString("en-US") + " AU from the Sun.") >= 0,
+  // L-443 build B part 2 (Tony, 2026-10-26): JPL's terms kept, each
+  // explained where the visitor meets it.
+  ok(sednaText.indexOf("Orbit: perihelion " + q3 + " AU, its closest to the Sun, to aphelion " +
+                       Q3.toLocaleString("en-US") + " AU, its farthest.") >= 0,
      "Sedna's hover lacks its orbit line: " + sednaText.slice(-120));
   // L-481 (Tony, 2026-10-24): every hover line after the name is a
   // bullet; the source line carries JPL Horizons' address; the closing
   // paragraph is a list, "creator's".
   const sednaLines = sednaText.split(/<br[^>]*>/);
   const starts = sednaLines.filter(l => l.indexOf("&#8226; ") === 0).length;
-  // Four bulleted lines: the distance, its note, the period, the orbit.
-  ok(sednaLines[0] === "Sedna" && starts === 4,
+  // Five bulleted lines: its class explained (2026-10-26), the distance,
+  // its note, the period, the orbit.
+  ok(sednaLines[0] === "Sedna" && starts === 5 &&
+     sednaLines[1] === "&#8226; Trans-Neptunian: a body whose orbit lies beyond Neptune's.",
      "Sedna's hover lines are not bulleted: " + sednaLines.join(" | ").slice(0, 160));
   const sednaSrc = E("sunPlotDiv.data").find(t => t.legendgroup === "sedna" && t.meta && t.meta.label_target).meta.source;
   ok(sednaSrc.indexOf("JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), ") === 0, "Sedna's source line lacks Horizons' address: " + sednaSrc.slice(0, 80));
@@ -414,9 +436,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
        "Juno's panel is not one sentence to a bullet: " + aboutLis + " of " + wantAbout +
        " description sentences, " + srcLis + " source lines");
     const jl = mk.text[0].split(/<br[^>]*>/);
-    const endDay = (() => { const dd = new Date(Math.round((mk.meta.path_end_jd - 2440587.5) * 86400000));
-      return dd.getUTCDate() + " " + ["January","February","March","April","May","June","July",
-        "August","September","October","November","December"][dd.getUTCMonth()] + " " + dd.getUTCFullYear(); })();
+    const endDay = solarDay(mk.meta.path_end_jd);
     const joined = jl.join(" ").replace(/<br soft>/g, " ");
     ok(jl[0] === "Juno" && jl.filter(l => l.indexOf("&#8226; ") === 0).length === 3 &&
        / AU from the Sun \([0-9,]+ km\)/.test(jl[1]) &&
@@ -447,6 +467,74 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     await click(d.getElementById("sun-drawer-all"));
     ok(order() === "earth" && !E("ssDrawer.folds.spacecraft"),
        "Reset did not put back the opening and fold the Spacecraft group");
+  }
+  // 21. L-443 build B part 2: the comets on open paths. The hyperbolic
+  // comets a group after the Comets, the interstellar objects after them,
+  // each folded; a comet drawn from its served positions, solid to the
+  // minute shown and dashed after, with no companions; its text box and
+  // source line; Go To fits its whole path. Run only on a payload that
+  // serves them.
+  if (data.bodies.west && data.bodies.west.kind === "comet_path") {
+    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"));
+    const after = (g) => rowsDom[rowsDom.indexOf(head(g)) - 1];
+    ok(!head("comets_hyp").hidden && !E("ssDrawer.folds.comets_hyp") &&
+       !head("interstellar").hidden && !E("ssDrawer.folds.interstellar"),
+       "the hyperbolic and interstellar groups are not listed, folded");
+    const groupsInOrder = E("ssDrawer.rows.filter(r => SolarSystemDrawer.isGroup(r)).map(r => r.group).join(',')");
+    ok(groupsInOrder.indexOf("comets_etc,comets_jfc,comets_htc,comets,comets_hyp,interstellar,aten,spacecraft,apollo,amor,belt") === 0,
+       "the groups are not in their places: " + groupsInOrder);
+    ok(after("aten") === row("venus") && after("apollo") !== undefined,
+       "the Aten asteroids are not right after Venus");
+    await fold("comets_hyp");
+    const hyp = E("ssDrawer.rows.filter(r => r.group === 'comets_hyp' && !SolarSystemDrawer.isGroup(r)).map(r => r.key).join(',')");
+    ok(hyp === "west,mcnaught,tsuchinshan_atlas,wierzchos,atlas_2024_g3,c2025_k1," +
+       "c2025_k1_b,c2025_k1_d,panstarrs_2025_r3,borisov_2025_v1",
+       "the hyperbolic comets are not in designation order: " + hyp);
+    await pick("west");
+    const wt = E("sunPlotDiv.data").filter(t => t.legendgroup === "west");
+    const flown = wt.find(t => t.meta && t.meta.path_part === "flown");
+    const ahead = wt.find(t => t.meta && t.meta.path_part === "predicted");
+    const mk = wt.find(t => t.meta && t.meta.label_target === true);
+    ok(flown && ahead && mk && flown.line.dash === "solid" && ahead.line.dash === "dash",
+       "West's path is not drawn solid then dashed");
+    ok(flown && mk && flown.x[flown.x.length - 1] === mk.x[0] && ahead.x[0] === mk.x[0],
+       "West's two parts do not meet at its marker");
+    ok(mk && mk.marker && mk.marker.symbol === "diamond", "West's marker is not a comet's diamond");
+    ok(order() === "earth,west" && !E("ssDrawer.companions.west"),
+       "ticking West ticked something else: " + order());
+    const wl = mk.text[0].split(/<br[^>]*>/);
+    const joined = wl.join(" ").replace(/<br soft>/g, " ");
+    const endDay = solarDay(mk.meta.path_end_jd);
+    const hypAbout = "Hyperbolic: on an open path around the Sun, not a closed loop.";
+    ok(wl[0] === "West" && wl.filter(l => l.indexOf("&#8226; ") === 0).length === 5 &&
+       wl[1].indexOf("&#8226; Hyperbolic:") === 0 &&
+       joined.indexOf("&#8226; " + hypAbout) > 0 &&
+       joined.indexOf("Its path is solid where it has already travelled, and dashed where JPL " +
+                      "predicts it will go, as far as " + endDay + ".") >= 0 &&
+       joined.indexOf("It is drawn from a year before its perihelion, its closest point to the Sun, to a year after today") >= 0 &&
+       joined.indexOf("Orbital period") < 0 && joined.indexOf("Orbit:") < 0,
+       "West's text box is not its five lines, its class explained first: " + joined.slice(0, 320));
+    const westLists = Array.from(d.querySelectorAll("#sun-info-focus ul.info-sources"));
+    ok(mk.meta.class_about === hypAbout && westLists.length >= 2 &&
+       westLists[0].textContent === hypAbout,
+       "West's panel does not open with its class explained: " +
+       (westLists.length ? westLists[0].textContent : "no list"));
+    ok(mk.meta.source.indexOf("JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), Horizons id: C/1975 V1-A. " +
+       "Positions measured from the Sun's centre, from ") === 0 &&
+       mk.meta.source.indexOf("as far as JPL's data runs") < 0 &&
+       mk.meta.source.indexOf("closer together around its perihelion") > 0,
+       "West's source line: " + mk.meta.source.slice(0, 220));
+    ok(mk.meta.about === data.bodies.west.description && mk.meta.info_url === data.bodies.west.info_url,
+       "West's panel words are not the orrery's description and link");
+    const k1 = E("sunPlotDiv.data").find(t => t.legendgroup === "c2025_k1" && t.meta && t.meta.label_target === true);
+    ok(k1 && k1.name === "C/2025 K1", "C/2025 K1 is not named with its space: " + (k1 && k1.name));
+    E("setSunDrawer(true)");
+    await fold("interstellar");
+    await click(row("atlas_3i").querySelector(".go"));
+    ok(near(range(), wholeR("atlas_3i")), "GO 3I/ATLAS frame " + range() + " vs its whole path " + wholeR("atlas_3i"));
+    await click(d.getElementById("sun-drawer-all"));
+    ok(order() === "earth" && !E("ssDrawer.folds.comets_hyp") && !E("ssDrawer.folds.interstellar"),
+       "Reset did not put back the opening and fold the comets' groups");
   }
   // 18. L-475: the i panel's last line opens the lobby's About card.
   const last = d.getElementById("info-panel").lastElementChild;

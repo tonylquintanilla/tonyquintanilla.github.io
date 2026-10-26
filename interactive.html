@@ -351,6 +351,22 @@
         perspective; the visitor unticks them, and Reset puts the room
         back. L-443. And the i panel, in every room, gives each sentence
         of a description, a note or a citation its own bullet. L-487)
+     Updated: October 26, 2026 with Anthropic's Claude Opus 5.5
+       (L-443, slice 2, build B part 2: the fourteen comets on open paths
+        join the Solar System room, each drawn from its served positions
+        file as a spacecraft is, from a year before its perihelion to a
+        year after today, solid up to the minute shown and dashed after;
+        its text box in Tony's words of 2026-10-26, JPL's terms kept. The
+        drawer's groups follow JPL's classes one row each, Tony's ruling of
+        the same day: four comet groups after the Sun, then Hyperbolic
+        comets and Interstellar objects; Aten asteroids after Venus, Apollo
+        and Amor asteroids after the Spacecraft group. A body's orbit line
+        names its perihelion and aphelion. A name the orrery keys with an
+        underscore, C/2025_K1, is shown with JPL's space. Later the same
+        day, Tony's approval of the words: each drawer group's JPL or IAU
+        class name explained in plain words, from its row's about, first
+        in the text box and the panel of every body in it; a comet's
+        perihelion explained in its span sentence.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2238,7 +2254,15 @@ try:
     _pos = json.loads(POS_JSON)
 except NameError:
     _pos = {}
-_cache = CacheReader(json.loads(COV_JSON), _pos)
+# L-443 build B part 2: a name the orrery keys a body by can carry an
+# underscore where JPL's designation has a space ("C/2025_K1-C" for
+# C/2025 K1-C); a visitor reads the space. Only the name shown changes;
+# every lookup here is by slug.
+_cov = json.loads(COV_JSON)
+for _r in ((_cov.get("objects") or {}).values()):
+    if isinstance(_r, dict) and isinstance(_r.get("name"), str):
+        _r["name"] = _r["name"].replace("_", " ")
+_cache = CacheReader(_cov, _pos)
 _cfg = json.loads(CFG_JSON)
 
 # The room's served settings (data/objects_config.json, "rooms"): its
@@ -2345,10 +2369,13 @@ for _slug in _bodies:
         # what its source line names: the Horizons id it was asked by, the
         # centre, when it was retrieved, and the backbone's step from its
         # plan (the config's copy of the orrery's).
+        # L-443 build B part 2: a comet on an open path is drawn from its
+        # served positions too, kind "comet_path"; it names no companions.
         "kind": ("spacecraft" if _rec.get("category") == "spacecraft"
-                 else None),
+                 else "comet_path" if _rec.get("open_path") else None),
         "path_source": ((_pos.get(_slug) or {}).get("source")
-                        if _rec.get("category") == "spacecraft" else None),
+                        if (_rec.get("category") == "spacecraft"
+                            or _rec.get("open_path")) else None),
         "path_step": (((_objs.get(_slug) or {}).get("path") or {})
                       .get("backbone") or {}).get("step"),
         "path_events": (_path_events(_objs.get(_slug) or {})
@@ -2450,6 +2477,19 @@ function solarSystemJdDay(jd) {
 const SPACECRAFT_PATH_WORDS = "Its path is solid where it has already " +
     "flown, and dashed where JPL's predicted path takes it next, as far as ";
 
+// L-443 build B part 2: a comet's path lines, about the picture, Tony's
+// approved words of 2026-10-26 (documentation/WORDS_L443_comets_20261026.md
+// in the orrery), JPL's word "predicts" kept, as for the spacecraft. The
+// span is the span ruling of 2026-10-24: a year before perihelion to a
+// year after today, inside JPL's data; the two margins are drawing
+// choices, and the second sentence says so.
+const COMET_PATH_WORDS = "Its path is solid where it has already " +
+    "travelled, and dashed where JPL predicts it will go, as far as ";
+const COMET_SPAN_WORDS = "It is drawn from a year before its perihelion, " +
+    "its closest point to the Sun, to a year after today, or less where " +
+    "JPL's path stops sooner; those two years are our choice for the " +
+    "picture.";
+
 // L-443 build B: a spacecraft's source line, from what the positions file
 // says it was fetched by (the Horizons id, the centre, the day) and the
 // span drawn, the served path's first and last points. The step is the
@@ -2466,13 +2506,18 @@ function spacecraftSourceLine(b, meta) {
     const m = /^(\d+)d$/.exec(String(b.path_step || ""));
     const step = m ? (m[1] === "1" ? "A point every day" :
                       "A point every " + m[1] + " days") : null;
+    // A comet's span is the drawing's (a year either side), not JPL's
+    // whole data; its one event is its perihelion (slice 2's comets).
+    const comet = b.kind === "comet_path";
     return "JPL Horizons (" + JPL_HORIZONS_URL + "), Horizons id: " +
         src.query_target + ". Positions " + centre +
-        (from && to ? ", from " + from + " to " + to + ", as far as JPL's " +
-                      "data runs" : "") +
+        (from && to ? ", from " + from + " to " + to +
+                      (comet ? "" : ", as far as JPL's data runs") : "") +
         (got ? ", retrieved " + got : "") + "." +
-        (step ? " " + step + ", closer together around each flyby, with " +
-                "the straightest stretches thinned." : "") +
+        (step ? " " + step + (comet ? ", closer together around its " +
+                                       "perihelion" :
+                                       ", closer together around each flyby") +
+                ", with the straightest stretches thinned." : "") +
         " The position shown is worked out from the points on either side" +
         " of the minute under the title.";
 }
@@ -2529,6 +2574,12 @@ const SOLAR_SYSTEM_INFO_HTML = [
     // L-443 build B: Tony's words, 2026-10-25.
     "<li>The spacecraft are a group after Earth. Each path is solid where",
     " the spacecraft has flown and dashed where JPL predicts it will go.</li>",
+    // L-443 build B part 2: Tony's approved words, 2026-10-26.
+    "<li>The comets on hyperbolic orbits, open curves rather than ellipses,",
+    " are in a group after the Comets, and the interstellar objects, which",
+    " came from other star systems, in a group after that. Each path is",
+    " solid where the comet has already travelled and dashed where JPL",
+    " predicts it will go.</li>",
     "<li>Each body's own shells &mdash; its atmosphere, rings and magnetic",
     " surroundings &mdash; live in that body's own room; so far the Sun",
     " and Earth have one.</li>",
@@ -2708,6 +2759,17 @@ const EXHIBITS = {
                 .map(function (p) { return rawByKey[p.key]; })
                 .filter(function (r) { return !!r; });
             const rows = allRows.filter(function (r) { return typeof r.slug === "string"; });
+            // L-443, 2026-10-26: what each group's JPL or IAU class name
+            // means, served on the group's own row (Tony: "keep these
+            // correct words and explain them"); shown first in the text
+            // box and the panel of every body in the group.
+            const classAbout = {};
+            (served || []).forEach(function (r) {
+                if (r && typeof r.group === "string" && r.group &&
+                    typeof r.about === "string" && r.about) {
+                    classAbout[r.group] = r.about;
+                }
+            });
             if (!rows.length) {
                 warnings.push("data/objects_config.json serves no rows for " +
                               "this room, so only the Sun is drawn");
@@ -2777,10 +2839,14 @@ const EXHIBITS = {
                     // Written as the number entity: Plotly 2.35.2 converts
                     // only eight named entities in text, and not "bull".
                     const bullet = function (s) { return "&#8226; " + s; };
+                    const cls = (typeof row["in"] === "string") ? classAbout[row["in"]] : null;
+                    if (cls) {
+                        lines.push(bullet(solarSystemSoftWrap(cls, 60)));
+                    }
                     if (typeof row.about === "string" && row.about) {
                         lines.push(bullet(solarSystemSoftWrap(row.about, 60)));
                     }
-                    if (b.kind === "spacecraft") {
+                    if (b.kind === "spacecraft" || b.kind === "comet_path") {
                         // L-443 build B: a spacecraft, drawn from its
                         // served positions. Its distance prints to what
                         // working out between its points earns; JPL's own
@@ -2797,9 +2863,15 @@ const EXHIBITS = {
                             warnings.push(label + ": no distance shown -- " + dist.why);
                         }
                         const ends = solarSystemJdDay(sc.path_end_jd);
+                        const comet = b.kind === "comet_path";
                         if (ends) {
                             lines.push(bullet(solarSystemSoftWrap(
-                                SPACECRAFT_PATH_WORDS + ends + ".", 60)));
+                                (comet ? COMET_PATH_WORDS : SPACECRAFT_PATH_WORDS) +
+                                ends + ".", 60)));
+                            if (comet) {
+                                lines.push(bullet(solarSystemSoftWrap(
+                                    COMET_SPAN_WORDS, 60)));
+                            }
                         } else {
                             warnings.push(label + ": the end of its served path " +
                                           "is not known, so the path line is not shown");
@@ -2840,7 +2912,7 @@ const EXHIBITS = {
                     }
                     t.text = [lines.join("<br>")];
                     const extra = { label_target: true };
-                    const line = (b.kind === "spacecraft")
+                    const line = (b.kind === "spacecraft" || b.kind === "comet_path")
                         ? spacecraftSourceLine(b, t.meta || {})
                         : solarSystemSourceLine(b.source, row.source_note);
                     if (line) { extra.source = line; }
@@ -2854,6 +2926,7 @@ const EXHIBITS = {
                     // (L-395, Tony's rulings of 2026-10-01).
                     if (typeof row.about === "string" && row.about) { extra.about = row.about; }
                     else if (typeof b.description === "string" && b.description) { extra.about = b.description; }
+                    if (cls) { extra.class_about = cls; }
                     if (typeof b.info_url === "string" && b.info_url) { extra.info_url = b.info_url; }
                     t.meta = Object.assign({}, t.meta || {}, extra);
                 }
@@ -2956,7 +3029,8 @@ async function solarSystemPositionFiles(cov, cfg, notes) {
     for (const row of rows) {
         const slug = row && row.slug;
         const rec = slug ? ((cov.objects || {})[slug] || null) : null;
-        if (!rec || rec.category !== "spacecraft") { continue; }
+        // L-443 build B part 2: and of the comets on open paths.
+        if (!rec || !(rec.category === "spacecraft" || rec.open_path)) { continue; }
         const file = (rec.positions || {}).file;
         if (!file) {
             notes.push(slug + ": the served cache names no positions file, " +
@@ -5101,6 +5175,7 @@ function buildSunDrawer(traces, order) {
                 color: sunSwatchColor(t),
                 link: sunLinkOf(t),
                 about: (t.meta && typeof t.meta.about === "string") ? t.meta.about : null,
+                class_about: (t.meta && typeof t.meta.class_about === "string") ? t.meta.class_about : null,
                 source: (t.meta && typeof t.meta.source === "string") ? t.meta.source : null,
                 source_note: (t.meta && typeof t.meta.source_note === "string") ? t.meta.source_note : null,
                 source_items: (t.meta && Array.isArray(t.meta.source_items)) ? t.meta.source_items : null,
@@ -5119,7 +5194,7 @@ function buildSunDrawer(traces, order) {
         // trace below still wins where it carries its own.
         if (!byName[g].link) { byName[g].link = sunLinkOf(t); }
         if (t.meta) {
-            ["about", "source", "source_note", "detail", "note"].forEach(function (f) {
+            ["about", "class_about", "source", "source_note", "detail", "note"].forEach(function (f) {
                 if (!byName[g][f] && typeof t.meta[f] === "string") {
                     byName[g][f] = t.meta[f];
                 }
@@ -5137,6 +5212,7 @@ function buildSunDrawer(traces, order) {
             byName[g].color = sunSwatchColor(t);
             byName[g].link = sunLinkOf(t) || byName[g].link;
             if (t.meta && typeof t.meta.about === "string") { byName[g].about = t.meta.about; }
+            if (t.meta && typeof t.meta.class_about === "string") { byName[g].class_about = t.meta.class_about; }
             if (t.meta && typeof t.meta.source === "string") { byName[g].source = t.meta.source; }
             if (t.meta && typeof t.meta.source_note === "string") { byName[g].source_note = t.meta.source_note; }
             if (t.meta && typeof t.meta.source === "string") {
@@ -5396,6 +5472,9 @@ function renderSunInfo(grp) {
     // came from. The served `about` paragraph, condensed from the orrery's
     // own info text; the hover carries its one-sentence `description`.
     // L-487: one sentence to a bullet.
+    // L-443, 2026-10-26: in the Solar System room, what the body's JPL or
+    // IAU class name means comes first (served on its group's row).
+    if (grp.class_about) { sunSentenceList(box, grp.class_about); }
     if (grp.about) { sunSentenceList(box, grp.about); }
 
     if (!grp.link) {

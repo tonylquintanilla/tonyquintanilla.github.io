@@ -20,6 +20,10 @@ barycentre, from the orrery's color_map).
 Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 build B: the twelve spacecraft's colours, the orrery's; later the same
 day Voyager 1 goldenrod, by Tony's phone look.)
+Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443,
+build B part 2: the fourteen comets on open paths' colours, the orrery's;
+then ATLAS (C/2024 G3) goldenrod, the one white comet, by Tony's ruling:
+"change all white comets to gold for contrast".)
 
 Role: rendering
 Domain: assembler
@@ -87,6 +91,26 @@ _COLORS = {
     "juice": "blue",
     "psyche_spacecraft": "green",
     "europa_clipper": "red",
+    # L-443 build B part 2, 2026-10-26: the fourteen comets on open paths,
+    # in the orrery's own colours (color_map in constants_new.py, by each
+    # entry's color_key, orrery 5398439). ATLAS (C/2024 G3) was the
+    # orrery's white; it is goldenrod by Tony's ruling of 2026-10-26,
+    # "change all white comets to gold for contrast", the reason Voyager 1
+    # went gold. It is the one white comet; the orrery keeps its white.
+    "west": "goldenrod",
+    "mcnaught": "green",
+    "tsuchinshan_atlas": "goldenrod",
+    "wierzchos": "cyan",
+    "atlas_2024_g3": "goldenrod",
+    "c2025_k1": "cyan",
+    "c2025_k1_b": "rgb(0, 200, 220)",
+    "c2025_k1_c": "magenta",
+    "c2025_k1_d": "rgb(100, 180, 255)",
+    "panstarrs_2025_r3": "green",
+    "borisov_2025_v1": "green",
+    "oumuamua": "magenta",
+    "borisov_2i": "red",
+    "atlas_3i": "red",
 }
 _DEFAULT_COLOR = "#8ab4f8"
 
