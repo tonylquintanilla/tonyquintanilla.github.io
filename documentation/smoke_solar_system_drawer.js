@@ -49,6 +49,14 @@
 //      this room and calls ssReset; See more's button and the groups'
 //      All / none are gone; Go To frames the whole orbit; index.html
 //      steps back to the room when the About card it opened is closed.
+//   7. (L-443, Tony, 2026-10-25) A spacecraft's companions: ticking it
+//      ticks every top-level body row its plan passes by, matched by any
+//      name the row goes by (Pluto by its label), and the farthest whose
+//      perihelion its path goes beyond, Pluto the last; nearest first; a
+//      name no row goes by (the Moon) is reported, not ticked. Two more
+//      breaks: the flyby planets left out, and the farthest taken by
+//      semi-major axis instead of perihelion. The real config's top-level
+//      body rows are printed, and the page's tick and Go To call it.
 //
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443: the groups,
@@ -56,6 +64,8 @@
 // (L-472, L-474, L-475: section 5). Updated October 24, 2026 with
 // Anthropic's Claude Opus 5.5 (L-477, L-478, L-479, L-480: no See more,
 // no "All", the resets, sections 1, 4 and 6, and four new breaks).
+// Updated October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443: a
+// spacecraft's companions, section 7, and two breaks).
 
 "use strict";
 const fs = require("fs");
@@ -150,6 +160,44 @@ function outsideCases(SSD) {
   return fails;
 }
 
+// 7. L-443 (Tony, 2026-10-25): a spacecraft's companions. The planets'
+// a and e here are the served cache's of 2026-10-26, rounded; only their
+// order matters to the cases.
+const PLANETS = [["mercury", 0.387, 0.206], ["venus", 0.723, 0.007],
+  ["earth", 0.999, 0.016], ["mars", 1.524, 0.093], ["jupiter", 5.202, 0.048],
+  ["saturn", 9.540, 0.055], ["uranus", 19.261, 0.048],
+  ["neptune", 30.068, 0.010], ["pluto_barycenter", 39.345, 0.248]]
+  .map(function (p) {
+    const name = p[0] === "pluto_barycenter" ? "Pluto-Charon Barycenter"
+      : p[0].charAt(0).toUpperCase() + p[0].slice(1);
+    return { key: p[0], a_au: p[1], e: p[2],
+             names: p[0] === "pluto_barycenter" ? ["Pluto", name] : [name] };
+  });
+function companionCases(SSD) {
+  const fails = [];
+  const want = function (cond, what) { if (!cond) { fails.push(what); } };
+  const got = function (events, reach) {
+    return SSD.companions({ events: events, reach_au: reach }, PLANETS);
+  };
+  const v2 = got(["Jupiter", "Saturn", "Uranus", "Neptune"], 376);
+  want(v2.keys.join() === "jupiter,saturn,uranus,neptune,pluto_barycenter",
+       "Voyager 2: not its four flybys and Pluto, nearest first: " + v2.keys.join());
+  want(got(["Jupiter", "Pluto"], 130).keys.join() === "jupiter,pluto_barycenter",
+       "New Horizons: its Pluto flyby is not matched by the row's label");
+  const lucy = got(["Earth", "Moon"], 5.71);
+  want(lucy.keys.join() === "earth,jupiter" && lucy.unmatched.join() === "Moon",
+       "Lucy: not Earth and Jupiter, with the Moon reported: " + JSON.stringify(lucy));
+  want(got([], 30.0).keys.join() === "pluto_barycenter",
+       "a path reaching 30 AU does not reach Pluto, whose perihelion is inside Neptune's");
+  want(got(["Venus"], 1.01).keys.join() === "venus,earth",
+       "Parker: not Venus and Earth: " + got(["Venus"], 1.01).keys.join());
+  want(got(["Mars"], 1.30).keys.join() === "earth,mars",
+       "a path short of Mars's perihelion: " + got(["Mars"], 1.30).keys.join());
+  want(got(["Mars"], null).keys.join() === "mars",
+       "a path with no reach served does not keep its flyby planets");
+  return fails;
+}
+
 function cases(SSD) {
   const fails = [];
   const want = function (cond, what) { if (!cond) { fails.push(what); } };
@@ -182,7 +230,7 @@ function cases(SSD) {
   want(SSD.WORDS.enter("Sun") === "Enter the Sun room" &&
        SSD.WORDS.noRoom === "No room or cards yet",
        "the visitor's words are not Tony's");
-  return fails.concat(groupCases(SSD), outsideCases(SSD));
+  return fails.concat(groupCases(SSD), outsideCases(SSD), companionCases(SSD));
 }
 
 function broken(changes) {
@@ -217,6 +265,14 @@ const breaks = [
   ["Reset offered in a folded group",
    broken({ groupResetOffered: function (rows, group, shown) {
      return REAL.members(rows, group).some(function (m) { return shown[m.key]; });
+   } })],
+  ["a spacecraft's flyby planets left out",
+   broken({ companions: function (sc, c) {
+     return REAL.companions({ events: [], reach_au: sc.reach_au }, c);
+   } })],
+  ["the farthest planet reached taken by semi-major axis, not perihelion",
+   broken({ companions: function (sc, c) {
+     return REAL.companions(sc, c.map(function (x) { return Object.assign({}, x, { e: 0 }); }));
    } })],
   ["the count line reading only the x axis",
    broken({ outsideCount: function (points, lo, hi) {
@@ -272,6 +328,8 @@ if (!rows.length) {
   const outside = rows.filter(function (r) { return !REAL.isGroup(r) && !r.group; })
     .map(function (r) { return r.slug; });
   console.log("  In no group: " + outside.join(", ") + ".");
+  console.log("  A spacecraft's companions are found among: " +
+              outside.filter(function (s) { return s !== "sun"; }).join(", ") + ".");
   ((room.drawer || {}).rows || []).forEach(function (r) {
     if (r && typeof r["in"] === "string" &&
         !rows.some(function (g) { return REAL.isGroup(g) && g.group === r["in"]; })) {
@@ -296,7 +354,7 @@ if (page.indexOf('<script src="gallery/solar_system_drawer.js"></script>') < 0) 
  "rowVisible", "countLine", "roomFor", "tickable",
  "WORDS.enter", "WORDS.noRoom", "isGroup", "members", "groupCount", "groupArrow",
  "groupReset", "groupResetOffered", "orderGroups", "WORDS.groupReset",
- "outsideCount", "WORDS.outside"].forEach(function (fn) {
+ "outsideCount", "WORDS.outside", "companions"].forEach(function (fn) {
   if (page.indexOf("SSD." + fn) < 0) {
     failures.push("interactive.html never calls SolarSystemDrawer's " + fn);
   }
@@ -320,6 +378,11 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
  ["return sunApplyVisibility(true, k, true)", "Go To on an unticked body does not fit its whole orbit (L-479)"],
  ["return sunFocusOn(k, true).then(", "Go To on a ticked body does not fit its whole orbit (L-479)"],
  ["mountAboutLink();", "the i panel's About line is never added"],
+  ["        ssTickCompanions(grp.key);\n        ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);\n        sunFocusIdx = k;\n        ssDrawer.open = grp.key;",
+   "ticking a spacecraft does not tick its companions (L-443)"],
+  ["        ssTickCompanions(grp.key);\n        ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);\n        sunFocusIdx = k;\n        setSunDrawer(false);",
+   "Go To on an unticked spacecraft does not tick its companions (L-443)"],
+  ["companions: companions } };", "compose does not hand the drawer each spacecraft's companions (L-443)"],
  ['const ABOUT_HREF = "index.html#about";', "the About line does not open the lobby's About card"]
 ].forEach(function (c) {
   if (page.indexOf(c[0]) < 0) { failures.push(c[1]); }
@@ -349,7 +412,8 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("=== PASS: the Sun is never ticked, every row and group is listed, " +
-            "the handle names the last body ticked, nothing ticks many bodies at once, " +
+            "the handle names the last body ticked, nothing ticks many bodies at once " +
+            "but a spacecraft with its companions, " +
             "rooms are offered only where they exist, groups fold and reset their bodies, " +
             "the count line counts ticked bodies outside the view, " +
             "and the page asks this file ===");

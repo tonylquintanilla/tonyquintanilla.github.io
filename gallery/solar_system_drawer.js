@@ -57,7 +57,21 @@
 //              groupResetOffered). The room's own Reset puts back what
 //              it opened on -- the page does that, by Home's rule for an
 //              empty tick order, with every group folded shut. Nothing
-//              ticks many bodies at once.
+//              ticks many bodies at once -- save a spacecraft's
+//              companions, below.
+//   COMPANIONS Tony, 2026-10-25 (L-443): "in addition to the default
+//              inner planets, add the farthest planet orbit that the
+//              object has reached ... This gives perspective to a
+//              spacecraft plot," and "Maybe flyby planets too." Ticking
+//              a spacecraft also ticks, among the drawer's top-level body
+//              rows (the planets and Pluto, the rows no group gathers):
+//              every one its path plan names as a flyby, arrival or
+//              departure, and the farthest whose perihelion its path goes
+//              beyond -- Pluto the last, so a path past Pluto's reaches
+//              Pluto. The path is the whole one drawn, the predicted
+//              part included (companions). They are ticked as any row
+//              is: the visitor unticks them, and Reset puts the room back
+//              as it opened. Unticking the spacecraft leaves them.
 //   OUTSIDE    Tony's ruling of 2026-10-23 (L-472, "The count line"):
 //              zooming in stays a cutout, and when bodies that are ticked
 //              lie outside the view, one line says how many, never which
@@ -70,6 +84,8 @@
 // the body's slug, except the Sun's, which the assembler draws as the
 // scene's centre marker under the group "center".
 //
+// Updated October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443):
+// COMPANIONS, above.
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 4, 2026 with Anthropic's Claude Opus 5.5: HOME described as
 // Tony settled it (L-363); the code is unchanged. Updated October 22,
@@ -287,7 +303,47 @@
     return n;
   }
 
+  // COMPANIONS (L-443, 2026-10-25). sc: {events: [body names its plan
+  // passes by], reach_au: the farthest its drawn path goes from the Sun}.
+  // candidates: [{key, names: [the names it goes by], a_au, e}], the
+  // top-level body rows. Returns {keys: the rows to tick with it, nearest
+  // the Sun first; unmatched: event names no candidate goes by}. A
+  // candidate with no served a or e is never the farthest reached, and is
+  // still ticked when the plan names it.
+  function companions(sc, candidates) {
+    const keys = {};
+    const unmatched = [];
+    const cands = (candidates || []).filter(function (c) { return c && c.key; });
+    ((sc && sc.events) || []).forEach(function (name) {
+      const n = String(name || "").toLowerCase();
+      const hit = cands.filter(function (c) {
+        return (c.names || []).some(function (x) {
+          return typeof x === "string" && x.toLowerCase() === n;
+        });
+      });
+      if (hit.length) { hit.forEach(function (c) { keys[c.key] = true; }); }
+      else if (unmatched.indexOf(name) < 0) { unmatched.push(name); }
+    });
+    const reach = sc && sc.reach_au;
+    let far = null;
+    if (typeof reach === "number" && isFinite(reach)) {
+      cands.forEach(function (c) {
+        if (typeof c.a_au !== "number" || typeof c.e !== "number" ||
+            !isFinite(c.a_au) || !isFinite(c.e)) { return; }
+        if (c.a_au * (1 - c.e) <= reach && (!far || c.a_au > far.a_au)) { far = c; }
+      });
+    }
+    if (far) { keys[far.key] = true; }
+    const aOf = function (k) {
+      const c = cands.find(function (x) { return x.key === k; });
+      return (c && typeof c.a_au === "number") ? c.a_au : Infinity;
+    };
+    return { keys: Object.keys(keys).sort(function (p, q) { return aOf(p) - aOf(q); }),
+             unmatched: unmatched };
+  }
+
   global.SolarSystemDrawer = {
+    companions: companions,
     SUN_KEY: SUN_KEY,
     WORDS: WORDS,
     rowsFromServed: rowsFromServed,

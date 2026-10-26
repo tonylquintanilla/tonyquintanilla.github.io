@@ -24,9 +24,26 @@
 // left as text: the address belongs on the row's Source line in the
 // orrery, where provenance-discipline 2.32 puts it.
 //
+// sentences() cuts a paragraph into its sentences, so the panel can give
+// each its own bullet (L-487; Tony, 2026-10-25: "put bullets on all
+// sentences for readability including the source paragraph"). A
+// sentence ends at a full stop, question or exclamation mark, followed by
+// a space and a capital letter. It does not end at a common abbreviation
+// ("e.g.", "St."), at initials ("J.", "U.S.", "A.D."), at a Roman numeral
+// ("II.") or at a journal's abbreviated name in a citation ("Celest. Mech.
+// Dyn. Astron.", "J. Geophys. Res."), whose words are capitalised. The
+// words are cut where the room shows them, never where they are stored:
+// a body's description is the orrery's own. Every served text was cut
+// and its pieces read when this was built (documentation/smoke_source_list.js,
+// part 5, prints the cuts it makes in the served config).
+// sourceBullets() gives each sentence of each citation its own line, the
+// label on the first and the website's note after the last.
+//
 // Module updated: October 20, 2026 with Anthropic's Claude Opus 5.5
 // (new, L-456; Tony from his phone, 2026-10-20: "need hyperlinks" and
 // "need some kind of itemization for readability").
+// Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5
+// (L-487: sentences and sourceBullets).
 
 (function (global) {
   "use strict";
@@ -104,10 +121,74 @@
     return out;
   }
 
+  // Lower-case, as written: a word ending one of these is not the end
+  // of a sentence.
+  var ABBREVIATIONS = ["e.g.", "i.e.", "vs.", "mr.", "mrs.", "ms.", "dr.",
+    "st.", "mt.", "no.", "nos.", "fig.", "figs.", "al.", "prof.", "sr.",
+    "jr.", "approx.", "ca.", "cf.", "eq.", "vol.", "pp.", "p.", "ed.",
+    "eds.", "jan.", "feb.", "mar.", "apr.", "jun.", "jul.", "aug.", "sep.",
+    "sept.", "oct.", "nov.", "dec."];
+  // As written, capitalised: a journal's abbreviated name in a citation.
+  var JOURNAL_WORDS = ["Mech.", "Dyn.", "Astron.", "Astrophys.",
+    "Astronom.", "Res.", "Sci.", "Rev.", "Lett.", "Planet.", "Geophys.",
+    "Phys.", "Cel.", "Celest.", "Nat.", "Natl.", "Proc.", "Soc.", "Mon.",
+    "Not.", "Roy.", "Ann.", "Adv.", "Bull.", "Am.", "Meteor.", "Meteorol.",
+    "Atmos.", "Int.", "Acad.", "Trans.", "Publ.", "Pac.", "Rep.", "Phil.",
+    "Lond.", "Ser.", "Suppl.", "Spec.", "Chem.", "Biol.", "Environ.",
+    "Clim.", "Oceanogr.", "Sol.", "Terr.", "Eur.", "Jpn.", "Assoc.",
+    "Inst.", "Univ.", "Dept.", "Div.", "Comm.", "Commun.", "Conf.",
+    "Symp.", "Tech.", "Geol.", "Geogr.", "Appl.", "Opt.", "Instrum.",
+    "Front.", "Ed.", "Eds.", "Vol."];
+
+  function endsSentence(word) {
+    var w = word.replace(/^["'(\[]+/, "").replace(/["')\]]+$/, "");
+    if (ABBREVIATIONS.indexOf(w.toLowerCase()) >= 0) return false;
+    if (JOURNAL_WORDS.indexOf(w) >= 0) return false;
+    if (/^([A-Za-z]\.)+$/.test(w)) return false;      // J.  U.S.  A.D.
+    if (/^[IVXLC]+\.$/.test(w)) return false;         // II.
+    return true;
+  }
+
+  // The sentences of a paragraph, in order, each trimmed; joined with
+  // single spaces they give back the paragraph. [] for nothing.
+  function sentences(text) {
+    if (!isText(text) || !text.trim()) return [];
+    var out = [], start = 0, m;
+    var re = /[.!?]["')\]]*(\s+)(?=["'(\[]?[A-Z])/g;
+    while ((m = re.exec(text)) !== null) {
+      var end = m.index + m[0].length - m[1].length;
+      var before = text.slice(start, end);
+      var word = before.slice(before.search(/\S+$/));
+      if (!endsSentence(word)) continue;
+      out.push(before.trim());
+      start = end;
+    }
+    var rest = text.slice(start).trim();
+    if (rest) out.push(rest);
+    return out;
+  }
+
+  // The panel's source lines, one sentence to a line: [{label, text,
+  // note}], the citation's label on its first sentence and the website's
+  // note on it after its last, as panelSources() gave them.
+  function sourceBullets(items) {
+    var out = [];
+    (items || []).forEach(function (it) {
+      var ss = sentences(it && it.text);
+      for (var i = 0; i < ss.length; i++) {
+        out.push({ label: i === 0 ? it.label : null, text: ss[i],
+                   note: i === ss.length - 1 ? it.note : null });
+      }
+    });
+    return out;
+  }
+
   global.GallerySources = {
     panelSources: panelSources,
     pieces: pieces,
-    trimAddress: trimAddress
+    trimAddress: trimAddress,
+    sentences: sentences,
+    sourceBullets: sourceBullets
   };
 
 })(typeof window !== "undefined" ? window : globalThis);

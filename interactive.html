@@ -344,6 +344,13 @@
         sentence that JPL's own uncertainty is not included, and how far
         its path runs. Its source line names its span and step. Words by
         Tony, 2026-10-25)
+     Updated: October 25, 2026, night, with Anthropic's Claude Opus 5.5
+       (Tony's two asks from his look at the spacecraft. Ticking a
+        spacecraft also ticks the planets its plan passes by and the
+        farthest planet whose orbit its path reaches, Pluto the last, for
+        perspective; the visitor unticks them, and Reset puts the room
+        back. L-443. And the i panel, in every room, gives each sentence
+        of a description, a note or a citation its own bullet. L-487)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2277,6 +2284,29 @@ def _drawn_wanted(_o):
             and _o.get("canonical_frame") == "heliocentric"
             and _o.get("category") not in ("spacecraft", "comet"))
 
+# L-443, 2026-10-25 (Tony: the farthest planet a spacecraft's path has
+# reached, "and maybe flyby planets too"): the bodies its plan passes by,
+# and the farthest its served path goes from the Sun, the predicted part
+# included, in AU. Read from the plan and the positions file, never typed.
+def _path_events(_o):
+    _evs = ((_o.get("path") or {}).get("events")) or []
+    _out = []
+    for _ev in _evs:
+        if (isinstance(_ev, dict) and _ev.get("kind") in ("flyby", "arrival", "departure")
+                and _ev.get("body") and _ev.get("body") not in _out):
+            _out.append(_ev.get("body"))
+    return _out
+
+def _path_reach_au(_p):
+    _d = (_p or {}).get("data") or {}
+    _x, _y, _z = _d.get("x") or [], _d.get("y") or [], _d.get("z") or []
+    _n = min(len(_x), len(_y), len(_z))
+    if not _n:
+        return None
+    from assembler.render_spacecraft import AU_KM as _AU_KM
+    return max((_x[_i] ** 2 + _y[_i] ** 2 + _z[_i] ** 2) ** 0.5
+               for _i in range(_n)) / _AU_KM
+
 _served = {}
 for _slug in _bodies:
     _rec = _cache.record(_slug)
@@ -2321,6 +2351,10 @@ for _slug in _bodies:
                         if _rec.get("category") == "spacecraft" else None),
         "path_step": (((_objs.get(_slug) or {}).get("path") or {})
                       .get("backbone") or {}).get("step"),
+        "path_events": (_path_events(_objs.get(_slug) or {})
+                        if _rec.get("category") == "spacecraft" else None),
+        "path_reach_au": (_path_reach_au(_pos.get(_slug))
+                          if _rec.get("category") == "spacecraft" else None),
     }
 
 json.dumps({
@@ -2829,6 +2863,27 @@ const EXHIBITS = {
                         " by the assembler");
                 }
             }
+            // L-443, 2026-10-25: what ticking each spacecraft ticks with it
+            // -- the planets its plan passes by and the farthest its path
+            // reaches -- among the top-level body rows, the planets and
+            // Pluto (gallery/solar_system_drawer.js, companions).
+            const companionRows = rows.filter(function (r) {
+                return r.slug && r.slug !== "sun" && !r.in && bodies[r.slug];
+            }).map(function (r) {
+                const b = bodies[r.slug];
+                return { key: r.slug, a_au: b.a_au, e: b.e,
+                         names: [r.label, b.name].filter(function (x) {
+                             return typeof x === "string" && x; }) };
+            });
+            const companions = {};
+            for (const row of rows) {
+                const b = bodies[row.slug];
+                if (!b || b.kind !== "spacecraft") { continue; }
+                const c = SSD.companions(
+                    { events: b.path_events || [], reach_au: b.path_reach_au },
+                    companionRows);
+                companions[row.slug] = c.keys;
+            }
             for (const s of (arrival.drawn || []).concat(arrival.highlight ? [arrival.highlight] : [])) {
                 if (!rank.hasOwnProperty(s)) {
                     warnings.push("the room's arrival names \"" + s +
@@ -2858,7 +2913,8 @@ const EXHIBITS = {
                      // room opens on, for this room's drawer.
                      drawer: { rows: allRows,
                                drawn: (arrival.drawn || []).slice(),
-                               highlight: arrival.highlight } };
+                               highlight: arrival.highlight,
+                               companions: companions } };
         }
     }
 };
@@ -4637,6 +4693,7 @@ function ssDrawerState(served) {
         opening: { drawn: (served.drawn || []).slice(),
                    highlight: served.highlight },
         order: SSD.openingOrder(rows, served.drawn, served.highlight),
+        companions: served.companions || {},   // L-443: {spacecraft: [rows]}
         open: null,       // the key of the opened row, or null
         folds: {}         // L-443: {group: true} for each group folded open
     };
@@ -4847,6 +4904,7 @@ function ssTick(k, on) {
     if (!grp || !SSD.tickable(grp.key)) { return Promise.resolve(); }
     grp.shown = on;
     if (on) {
+        ssTickCompanions(grp.key);
         ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);
         sunFocusIdx = k;
         ssDrawer.open = grp.key;
@@ -4857,6 +4915,22 @@ function ssTick(k, on) {
     const done = sunApplyVisibility(true, sunOutermostShown());
     sunMeasureDrawer();
     return done;
+}
+
+// L-443 (Tony, 2026-10-25): ticking a spacecraft also ticks the planets
+// its plan passes by and the farthest planet its path reaches, for
+// perspective (compose worked them out; gallery/solar_system_drawer.js,
+// companions). Each joins Home's order before the spacecraft, so the
+// handle still names the spacecraft. Unticking the spacecraft leaves
+// them; the visitor unticks them, or Reset puts the room back.
+function ssTickCompanions(key) {
+    const SSD = window.SolarSystemDrawer;
+    (ssDrawer.companions[key] || []).forEach(function (c) {
+        const ci = ssIndex(c);
+        if (ci < 0 || !SSD.tickable(c) || sunGroups[ci].shown) { return; }
+        sunGroups[ci].shown = true;
+        ssDrawer.order = SSD.orderAdd(ssDrawer.order, c);
+    });
 }
 
 // GO, as in the other rooms: a body not drawn is ticked first; then the
@@ -4871,6 +4945,7 @@ function ssGo(k) {
     if (!grp) { return Promise.resolve(); }
     if (!grp.shown && SSD.tickable(grp.key)) {
         grp.shown = true;
+        ssTickCompanions(grp.key);
         ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);
         sunFocusIdx = k;
         setSunDrawer(false);
@@ -5277,6 +5352,24 @@ function sunAppendLinked(parent, text) {
     });
 }
 
+// L-487 (Tony, 2026-10-25: "put bullets on all sentences for
+// readability including the source paragraph"): a paragraph of the panel
+// as a list, one sentence to a bullet, each web address a link. The cut
+// is gallery/source_list.js's; the words are cut here, where they are
+// shown, never where they are stored.
+function sunSentenceList(parent, text) {
+    const ss = GallerySources.sentences(text);
+    if (!ss.length) { return; }
+    const ul = document.createElement("ul");
+    ul.className = "info-sources";
+    ss.forEach(function (s) {
+        const li = document.createElement("li");
+        sunAppendLinked(li, s);
+        ul.appendChild(li);
+    });
+    parent.appendChild(ul);
+}
+
 function renderSunInfo(grp) {
     const box = document.getElementById("sun-info-focus");
     if (!box) { return; }
@@ -5302,12 +5395,8 @@ function renderSunInfo(grp) {
     // L-331 (2026-09-16): what it is comes first, before where the number
     // came from. The served `about` paragraph, condensed from the orrery's
     // own info text; the hover carries its one-sentence `description`.
-    if (grp.about) {
-        const abt = document.createElement("div");
-        abt.className = "info-focus-empty";
-        abt.textContent = grp.about;
-        box.appendChild(abt);
-    }
+    // L-487: one sentence to a bullet.
+    if (grp.about) { sunSentenceList(box, grp.about); }
 
     if (!grp.link) {
         // A blind spot announces. A shell with no link on file says so
@@ -5352,7 +5441,9 @@ function renderSunInfo(grp) {
         box.appendChild(sh);
         const ul = document.createElement("ul");
         ul.className = "info-sources";
-        srcs.items.forEach(function (it) {
+        // L-487: each sentence of each citation on its own line, the
+        // label on its first and the website's note after its last.
+        GallerySources.sourceBullets(srcs.items).forEach(function (it) {
             const li = document.createElement("li");
             if (it.label) {
                 const lab = document.createElement("span");
@@ -5369,32 +5460,17 @@ function renderSunInfo(grp) {
         });
         box.appendChild(ul);
     }
-    if (srcs.note) {
-        const snt = document.createElement("div");
-        snt.className = "info-focus-empty";
-        snt.textContent = srcs.note;
-        box.appendChild(snt);
-    }
+    if (srcs.note) { sunSentenceList(box, srcs.note); }   // L-487
     // L-231 follow-up (2026-09-15): longer reference prose -- a model's own
     // equations, say -- rides in meta.detail and is shown HERE rather than
     // in the hover. The hover has a phone-sized budget; this panel scrolls.
-    if (grp.detail) {
-        const det = document.createElement("div");
-        det.className = "info-focus-empty";
-        det.textContent = grp.detail;
-        box.appendChild(det);
-    }
+    if (grp.detail) { sunSentenceList(box, grp.detail); }   // L-487
     // The served note -- the caveats. It left the hover with the citation
     // on 2026-09-15 and would have been lost in the move if it did not
     // land here: the magnetopause's "under storm compression it can fall
     // inside geostationary orbit" is a note, and it is the kind of thing a
     // reader should still be able to find.
-    if (grp.note) {
-        const nte = document.createElement("div");
-        nte.className = "info-focus-empty";
-        nte.textContent = grp.note;
-        box.appendChild(nte);
-    }
+    if (grp.note) { sunSentenceList(box, grp.note); }   // L-487
 }
 
 // keepFocus true pins the focus where it is. False -- the drawer's own

@@ -47,6 +47,10 @@
 // them; section 20 walks the spacecraft -- their group after Earth's row,
 // in launch order, a path solid then dashed meeting at its marker, the
 // three-line text box and source line, Go To on a whole path, and Reset.
+// Evening (L-443, L-487): ticking a spacecraft ticks its companions --
+// Juno, Jupiter; Voyager 1 by Go To, Jupiter, Saturn and Pluto -- each
+// before it in Home's order, and unticking it leaves them; the panel
+// shows Juno's description and its source line one sentence to a bullet.
 const h = require("./page_harness.js");
 const fails = []; let n = 0;
 function ok(c, m) { n++; if (!c) { fails.push(m); } }
@@ -390,8 +394,25 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
        "Juno's two parts do not meet at its marker");
     ok(jt.every(t => t.visible !== "legendonly" && t.visible !== false),
        "ticking Juno did not draw every part of it");
-    ok(near(range(), Math.max(radius("earth"), radius("juno"))),
+    // L-443, 2026-10-25: Juno's companions -- Earth, a flyby, already
+    // ticked, and Jupiter, its arrival and the farthest it reaches --
+    // ticked with it, each before it in Home's order.
+    ok(shown("jupiter") && order() === "earth,jupiter,juno" &&
+       E("JSON.stringify(ssDrawer.companions.juno)") === '["earth","jupiter"]',
+       "ticking Juno did not tick Jupiter before it: order " + order() + ", companions " +
+       E("JSON.stringify(ssDrawer.companions.juno)"));
+    ok(near(range(), Math.max(radius("earth"), radius("juno"), radius("jupiter"))),
        "Juno's frame " + range() + " is not on the farthest body's position");
+    // L-487: the panel, one sentence to a bullet -- the description, and
+    // the source line's four sentences each on its own line.
+    const infoLists = Array.from(d.querySelectorAll("#sun-info-focus ul.info-sources"));
+    const aboutLis = infoLists.length ? infoLists[0].querySelectorAll("li").length : 0;
+    const srcLis = infoLists.length > 1 ? infoLists[1].querySelectorAll("li").length : 0;
+    const wantAbout = E("GallerySources.sentences(" + JSON.stringify(data.bodies.juno.description) + ").length");
+    ok(infoLists.length >= 2 && aboutLis === wantAbout && wantAbout >= 1 && srcLis === 4 &&
+       infoLists[1].querySelector("li a[href='https://ssd.jpl.nasa.gov/horizons/']"),
+       "Juno's panel is not one sentence to a bullet: " + aboutLis + " of " + wantAbout +
+       " description sentences, " + srcLis + " source lines");
     const jl = mk.text[0].split(/<br[^>]*>/);
     const endDay = (() => { const dd = new Date(Math.round((mk.meta.path_end_jd - 2440587.5) * 86400000));
       return dd.getUTCDate() + " " + ["January","February","March","April","May","June","July",
@@ -412,6 +433,17 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     E("setSunDrawer(true)");
     await click(row("voyager_1").querySelector(".go"));
     ok(near(range(), wholeR("voyager_1")), "GO Voyager 1 frame " + range() + " vs its whole path " + wholeR("voyager_1"));
+    const v1Lists = Array.from(d.querySelectorAll("#sun-info-focus ul.info-sources"));
+    const v1Want = E("GallerySources.sentences(" + JSON.stringify(data.bodies.voyager_1.description) + ").length");
+    ok(v1Lists.length && v1Want === 2 && v1Lists[0].querySelectorAll("li").length === 2,
+       "Voyager 1's two-sentence description is not two bullets (" + v1Want + " sentences)");
+    ok(shown("saturn") && shown("pluto_barycenter") &&
+       order() === "earth,jupiter,juno,saturn,pluto_barycenter,voyager_1",
+       "Go To on Voyager 1 did not tick Saturn and Pluto before it: " + order());
+    E("setSunDrawer(true)");
+    await pick("voyager_1");
+    ok(!shown("voyager_1") && shown("saturn") && shown("pluto_barycenter"),
+       "unticking Voyager 1 took its companions with it");
     await click(d.getElementById("sun-drawer-all"));
     ok(order() === "earth" && !E("ssDrawer.folds.spacecraft"),
        "Reset did not put back the opening and fold the Spacecraft group");
