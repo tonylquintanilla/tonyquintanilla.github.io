@@ -1586,6 +1586,35 @@ def path_by_plan_checks(cfg, check):
             check(raw.get('plan_made') == '2026-07-01',
                   "L-443 build B: the raw archive records the plan it was "
                   "fetched by")
+            # FIXED 2026-10-25: JPL refuses a stop past the end of its data,
+            # and its span's end is in its own time, so no stop asked, once
+            # utc_to_tdb has added its 69 s, may pass the span's end
+            span_end = b._parse_calendar('2099-12-31')
+            past = [c_ for c_ in calls if c_[0] == '-31'
+                    and b.utc_to_tdb(c_[2]) > span_end]
+            check(not past and any(b.utc_to_tdb(c_[2]) == span_end
+                                   for c_ in calls if c_[0] == '-31'),
+                  "L-443 build B: the stop JPL is asked for is the span's "
+                  "end exactly, never past it (%d stop(s) past it)" % len(past))
+            real_span = b._plan_span
+            b._plan_span = lambda p: (b._parse_calendar(p['span']['start']),
+                                      b._parse_calendar(p['span']['end']))
+            del calls[:]
+            try:
+                b.fetch_path_by_plan(
+                    dict(c1['objects'][[o.get('slug') for o in c1['objects']]
+                                       .index('voyager_1')],
+                         horizons_id='-31', id_type='id',
+                         canonical_center='@10', slug='voyager_1'),
+                    [o for o in c1['objects']
+                     if o.get('slug') == 'voyager_1'][0]['path'],
+                    FIXED_NOW, 7, lambda m: None)
+            finally:
+                b._plan_span = real_span
+            check(any(b.utc_to_tdb(c_[2]) > span_end for c_ in calls),
+                  "L-443 build B: planted fault caught -- the span's end "
+                  "taken as it stands asks JPL past the end of its data, as "
+                  "the Voyagers' first build did")
             # the same plan, a night later: only the tail
             del calls[:]
             rm2 = b.run_build(c1, out, mode='nightly', do_commit=True)

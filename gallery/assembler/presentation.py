@@ -18,7 +18,8 @@ colours for Mercury, Venus, Mars, Uranus, Neptune and the Pluto-Charon
 barycentre, from the orrery's color_map).
 
 Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
-build B: the twelve spacecraft's colours, the orrery's.)
+build B: the twelve spacecraft's colours, the orrery's; later the same
+day Voyager 1 goldenrod, by Tony's phone look.)
 
 Role: rendering
 Domain: assembler
@@ -71,7 +72,10 @@ _COLORS = {
     # colours (color_map in constants_new.py, by each entry's color_key,
     # orrery 0c27f47). Voyager 1's was #ff6f61 here, a choice of this file;
     # it takes the orrery's now. A first choice for Tony's phone look.
-    "voyager_1": "white",
+    # Voyager 1 is goldenrod, not the orrery's white, by Tony's phone look
+    # of 2026-10-25: a white path "does not contrast with the white grid";
+    # asked whether to share Parker's gold, he chose "Gold, like Parker".
+    "voyager_1": "goldenrod",
     "voyager_2": "magenta",
     "new_horizons": "cyan",
     "juno": "cyan",

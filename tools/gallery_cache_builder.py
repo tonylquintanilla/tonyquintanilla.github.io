@@ -1088,8 +1088,20 @@ PATH_TAIL_AHEAD_DAYS = 2
 
 
 def _plan_span(plan):
+    """(start, end) of a plan's span, as instants this builder asks for.
+
+    The span's dates are JPL's own, read from its answer, in JPL's time
+    (TDB), and fetch_vectors_range adds utc_to_tdb's 69 s to every time it
+    asks. So the end is taken back by the same 69 s, and the stop JPL is
+    asked for is exactly the span's end, never past it. FIXED, L-443,
+    2026-10-25: the Voyagers' data ends at 2100-01-01 00:00 TDB to the
+    minute, the stop asked was 00:01, and JPL refused both paths ("No
+    ephemeris for target ... after A.D. 2100-JAN-01 00:00:00.0000 TD").
+    The other ten end later in their last day, so the minute did not
+    show."""
     span = plan.get('span') or {}
-    return _parse_calendar(span['start']), _parse_calendar(span['end'])
+    end = _parse_calendar(span['end'])
+    return _parse_calendar(span['start']), end - (utc_to_tdb(end) - end)
 
 
 def fetch_path_tail(obj, plan, today, freeze):
