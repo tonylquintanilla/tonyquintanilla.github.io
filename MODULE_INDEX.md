@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** October 25, 2026 by `module_atlas.py`  
+**Generated:** October 26, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,17 +10,16 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 53  
-**Total Lines of Code (non-blank):** 27,043  
-**Total Public Functions/Classes:** 423
+**Total Python Files:** 52  
+**Total Lines of Code (non-blank):** 26,918  
+**Total Public Functions/Classes:** 421
 
 ## Classification Coverage
 
-**Undetermined role (10).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (9).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L443_15_spacecraft_room_20261025.py`
-- `patch_L443_17_voyagers_span_end_20261025.py`
+- `patch_L443_19_companions_and_sentences_20261025.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -29,11 +28,10 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (8).** No valid `Domain:` tag.
+**Undetermined domain (7).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L443_15_spacecraft_room_20261025.py`
-- `patch_L443_17_voyagers_span_end_20261025.py`
+- `patch_L443_19_companions_and_sentences_20261025.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -140,8 +138,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (690 lines) |
-| `patch_L443_15_spacecraft_room_20261025.py` | The twelve spacecraft join the Solar System room, each path solid where it has flown and dashed where JPL plans it to go (L-443, build B of slice 2); and the Daily Run stops when the orrery it pulls is not the one in your orrery folder (L-461). (131 lines) |
-| `patch_L443_17_voyagers_span_end_20261025.py` | - the Voyagers' paths fetched to JPL's last minute, and Voyager 1 gold (L-443). (95 lines) |
+| `patch_L443_19_companions_and_sentences_20261025.py` | - a spacecraft ticks its planets, and the i panel reads one sentence to a bullet (L-443, L-487). (101 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (753 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
