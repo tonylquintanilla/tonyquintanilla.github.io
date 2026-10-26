@@ -62,7 +62,8 @@
 // box and source line, C/2025 K1's name with its space, Go To on
 // 3I/ATLAS's whole path, and Reset. Later that day: each group's class
 // explained, first in West's text box and panel, and the perihelion in
-// its span sentence.
+// its span sentence. Evening: a comet ticks the farthest planet its path
+// has reached so far, West Pluto and 3I/ATLAS Saturn (Tony: "so far").
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -500,8 +501,13 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     ok(flown && mk && flown.x[flown.x.length - 1] === mk.x[0] && ahead.x[0] === mk.x[0],
        "West's two parts do not meet at its marker");
     ok(mk && mk.marker && mk.marker.symbol === "diamond", "West's marker is not a comet's diamond");
-    ok(order() === "earth,west" && !E("ssDrawer.companions.west"),
-       "ticking West ticked something else: " + order());
+    // L-443, 2026-10-26 (Tony: "so far"): a comet ticks the farthest
+    // planet its path has reached up to the minute shown. West's has
+    // gone past Pluto's orbit.
+    ok(order() === "earth,pluto_barycenter,west" &&
+       E("JSON.stringify(ssDrawer.companions.west)") === '["pluto_barycenter"]',
+       "ticking West did not tick Pluto before it: order " + order() + ", companions " +
+       E("JSON.stringify(ssDrawer.companions.west)"));
     const wl = mk.text[0].split(/<br[^>]*>/);
     const joined = wl.join(" ").replace(/<br soft>/g, " ");
     const endDay = solarDay(mk.meta.path_end_jd);
@@ -532,6 +538,13 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     await fold("interstellar");
     await click(row("atlas_3i").querySelector(".go"));
     ok(near(range(), wholeR("atlas_3i")), "GO 3I/ATLAS frame " + range() + " vs its whole path " + wholeR("atlas_3i"));
+    // So far, not the whole drawn path: 3I/ATLAS has passed Saturn's
+    // orbit, and its dashed year ahead, which reaches past Uranus's
+    // perihelion, does not count.
+    ok(shown("saturn") && !shown("uranus") &&
+       E("JSON.stringify(ssDrawer.companions.atlas_3i)") === '["saturn"]',
+       "Go To on 3I/ATLAS did not tick Saturn alone: companions " +
+       E("JSON.stringify(ssDrawer.companions.atlas_3i)"));
     await click(d.getElementById("sun-drawer-all"));
     ok(order() === "earth" && !E("ssDrawer.folds.comets_hyp") && !E("ssDrawer.folds.interstellar"),
        "Reset did not put back the opening and fold the comets' groups");

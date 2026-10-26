@@ -366,7 +366,10 @@
         day, Tony's approval of the words: each drawer group's JPL or IAU
         class name explained in plain words, from its row's about, first
         in the text box and the panel of every body in it; a comet's
-        perihelion explained in its span sentence.)
+        perihelion explained in its span sentence. Evening, at Tony's phone
+        look: a comet on an open path ticks its companions as a spacecraft
+        does, the farthest planet its path has reached so far, Tony's
+        "so far"; the dashed year ahead does not count.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2321,15 +2324,22 @@ def _path_events(_o):
             _out.append(_ev.get("body"))
     return _out
 
-def _path_reach_au(_p):
+# L-443, 2026-10-26 (Tony, for a comet on an open path: "so far"): a
+# comet's reach counts only the served points up to the moment shown,
+# since its dashed year ahead is a drawing choice, not JPL's plan; a
+# spacecraft's counts its whole path, JPL's predicted part included.
+def _path_reach_au(_p, _until_jd=None):
     _d = (_p or {}).get("data") or {}
     _x, _y, _z = _d.get("x") or [], _d.get("y") or [], _d.get("z") or []
+    _t = _d.get("t") or []
     _n = min(len(_x), len(_y), len(_z))
-    if not _n:
+    _keep = [_i for _i in range(_n)
+             if _until_jd is None or (_i < len(_t) and _t[_i] <= _until_jd)]
+    if not _keep:
         return None
     from assembler.render_spacecraft import AU_KM as _AU_KM
     return max((_x[_i] ** 2 + _y[_i] ** 2 + _z[_i] ** 2) ** 0.5
-               for _i in range(_n)) / _AU_KM
+               for _i in _keep) / _AU_KM
 
 _served = {}
 for _slug in _bodies:
@@ -2370,7 +2380,10 @@ for _slug in _bodies:
         # centre, when it was retrieved, and the backbone's step from its
         # plan (the config's copy of the orrery's).
         # L-443 build B part 2: a comet on an open path is drawn from its
-        # served positions too, kind "comet_path"; it names no companions.
+        # served positions too, kind "comet_path". It ticks companions as a
+        # spacecraft does (Tony, 2026-10-26, at his phone look: "i thought
+        # we were adding the farthest planetary orbit for perspective?"),
+        # the farthest planet its path has reached so far.
         "kind": ("spacecraft" if _rec.get("category") == "spacecraft"
                  else "comet_path" if _rec.get("open_path") else None),
         "path_source": ((_pos.get(_slug) or {}).get("source")
@@ -2379,9 +2392,13 @@ for _slug in _bodies:
         "path_step": (((_objs.get(_slug) or {}).get("path") or {})
                       .get("backbone") or {}).get("step"),
         "path_events": (_path_events(_objs.get(_slug) or {})
-                        if _rec.get("category") == "spacecraft" else None),
+                        if (_rec.get("category") == "spacecraft"
+                            or _rec.get("open_path")) else None),
         "path_reach_au": (_path_reach_au(_pos.get(_slug))
-                          if _rec.get("category") == "spacecraft" else None),
+                          if _rec.get("category") == "spacecraft"
+                          else _path_reach_au(_pos.get(_slug),
+                                              result.context.resolved_epoch_jd)
+                          if _rec.get("open_path") else None),
     }
 
 json.dumps({
@@ -2951,7 +2968,7 @@ const EXHIBITS = {
             const companions = {};
             for (const row of rows) {
                 const b = bodies[row.slug];
-                if (!b || b.kind !== "spacecraft") { continue; }
+                if (!b || (b.kind !== "spacecraft" && b.kind !== "comet_path")) { continue; }
                 const c = SSD.companions(
                     { events: b.path_events || [], reach_au: b.path_reach_au },
                     companionRows);

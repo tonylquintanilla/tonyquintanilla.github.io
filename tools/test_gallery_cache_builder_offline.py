@@ -83,6 +83,10 @@ four checks: the config serves fourteen comets on open paths, each is
 served as a path with open_path carried, one is fetched inside its plan's
 span and no further, and one with no plan is named and not fetched. The
 trust checks hold every comet on an open path as they hold a spacecraft.)
+Module updated: October 26, 2026, evening, with Anthropic's Claude Opus 5.5
+(L-443: the span check reads the comet's own plan's span, the config's
+once the mirror has copied the orrery's plan; it had typed the stand-in's
+dates and failed on the first real plans.)
 """
 import contextlib
 import io
@@ -491,12 +495,20 @@ def main():
               "path -- positions and today's point, no elements, open_path "
               "carried (%s)" % (", ".join(bad) or "all 14"))
         if paths:
+            # The comet's own plan's span: the config's, once the mirror has
+            # copied the orrery's plan, else the suite's stand-in. FIXED: the
+            # stand-in's dates were typed here, so the check failed on Tony's
+            # machine the day the real plans arrived (2026-10-26), with the
+            # builder right (West's plan runs from 1975).
+            span = ((cfg_by_slug(cfg)[paths[0]].get('path') or
+                     STAND_IN_COMET_PLAN)['span'])
             raw_w = sorted(b.load_raw_vectors(out, paths[0])['points'])
-            span_ok = (raw_w and raw_w[0] >= '2025-01-15'
-                       and raw_w[-1] <= '2027-07-09 23:59')
+            span_ok = (raw_w and raw_w[0] >= span['start']
+                       and raw_w[-1] <= span['end'] + ' 23:59')
             check(span_ok, "L-443 part 2: %s's path is fetched inside its "
-                  "plan's span, nothing extended (%s to %s)"
-                  % (paths[0], raw_w[0] if raw_w else None,
+                  "plan's span, %s to %s, nothing extended (%s to %s)"
+                  % (paths[0], span['start'], span['end'],
+                     raw_w[0] if raw_w else None,
                      raw_w[-1] if raw_w else None))
         probe = dict(cfg_by_slug(cfg)[paths[0]]) if paths else {}
         probe.pop('path', None)

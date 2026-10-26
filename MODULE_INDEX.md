@@ -10,18 +10,16 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 54  
-**Total Lines of Code (non-blank):** 27,320  
-**Total Public Functions/Classes:** 430
+**Total Python Files:** 52  
+**Total Lines of Code (non-blank):** 27,106  
+**Total Public Functions/Classes:** 424
 
 ## Classification Coverage
 
-**Undetermined role (11).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (9).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L443_21_comets_room_20261026.py`
-- `patch_L443_22_atlas_gold_20261026.py`
-- `patch_L443_23_class_words_20261026.py`
+- `patch_L443_24_comet_companions_20261026.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -30,12 +28,10 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (9).** No valid `Domain:` tag.
+**Undetermined domain (7).** No valid `Domain:` tag.
 
 - `tools/exhibit_store_editor.py`
-- `patch_L443_21_comets_room_20261026.py`
-- `patch_L443_22_atlas_gold_20261026.py`
-- `patch_L443_23_class_words_20261026.py`
+- `patch_L443_24_comet_companions_20261026.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -130,7 +126,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (131 lines) |
 | `test_drawn_orbit.py` | - an orbit whose period is taken around the solar system's barycentre is drawn around the barycentre, moved to where the barycentre sits seen from the Sun; and every way of getting that wrong is caught (L-431, build 3). (244 lines) |
-| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (1,601 lines) |
+| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (1,613 lines) |
 | `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (281 lines) |
 | `test_mirror_objects.py` | - tools/mirror_objects.py does what it says, on fixtures where each refusal and each kind of write must happen, and then on the real config. (238 lines) |
 | `test_pull_failures.py` | - a pull that cannot fetch fails by name, writes nothing, and the mirror after it does not run; and proof that this check can fail. (311 lines) |
@@ -142,9 +138,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (690 lines) |
-| `patch_L443_21_comets_room_20261026.py` | - the fourteen comets on open paths join the Solar System room, each drawn from a year before its perihelion to a year after today, solid where it has travelled and dashed where JPL predicts it will go; and the drawer's groups become one JPL class to a row (... (116 lines) |
-| `patch_L443_22_atlas_gold_20261026.py` | - ATLAS (C/2024 G3), the one white comet, goes gold for contrast with the grid, by Tony's ruling of Oct 26: "change all white comets to gold for contrast" (L-443). (100 lines) |
-| `patch_L443_23_class_words_20261026.py` | - each drawer group's JPL or IAU class name explained in plain words, and a comet's perihelion explained in its text box, by Tony's approval of Oct 26 ("Approved") of documentation/WORDS_L443_glosses_20261026.md in the orrery (L-443). (115 lines) |
+| `patch_L443_24_comet_companions_20261026.py` | - a comet on an open path ticks its companions as a spacecraft does: the farthest planet whose orbit its path has reached so far, up to the minute shown (Tony, Oct 26, at his phone look: "i thought we were adding the farthest planetary orbit for perspec... (105 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (753 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
