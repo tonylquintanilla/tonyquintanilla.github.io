@@ -181,6 +181,9 @@ positions files, which the Solar System room fetches before it draws.)
 Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5
 (L-443 build B part 2: and the fourteen comets on open paths' positions
 files, fetched the same way.)
+Module updated: October 26, 2026, night, with Anthropic's Claude Opus 5.5
+(Direction arrows: gallery/direction_arrows.js and its check, which
+gates, and the live check fetches the file.)
 """
 
 import hashlib
@@ -490,6 +493,18 @@ OFFLINE_CHECKERS = [
     ("Far lines", "node",
      ["documentation/smoke_far_lines.js"], ".", "===", False),
 
+    # 2026-10-26 (Tony, at his phone): a small arrowhead ahead of each
+    # body in the Solar System room, pointing the way it travels. It
+    # requires the real gallery/direction_arrows.js, works six cases by
+    # hand -- a circle each way round, the seam of a closed orbit, the end
+    # of a path, a body outside the view, a line straight at the Sun --
+    # and checks the page loads the file, keeps each arrow in its body's
+    # group with no hover, and places the arrows before the first draw and
+    # after every frame change. Its self-test breaks the real file three
+    # ways first. Gates.
+    ("Direction arrows", "node",
+     ["documentation/smoke_direction_arrows.js"], ".", "===", False),
+
     # L-363 step 3b (2026-10-02): the Solar System room's drawer. It
     # requires the real gallery/solar_system_drawer.js, works the design's
     # rules on a small list of rows -- the Sun never ticked, See more
@@ -638,6 +653,8 @@ SERVED_FILES = [
     "gallery/source_list.js",
     # L-463 (2026-10-21): likewise.
     "gallery/far_lines.js",
+    # 2026-10-26: likewise, the direction arrows.
+    "gallery/direction_arrows.js",
     # L-460 (2026-10-21): likewise.
     "gallery/drawer_order.js",
     # L-443 build B (2026-10-25): the Solar System room fetches each

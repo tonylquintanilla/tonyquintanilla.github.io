@@ -71,7 +71,11 @@
 // (L-493). Section 23 (2026-10-26, Tony's phone): no body's text line
 // wider than its wrap, and the grid chip's AU note; a comet on a closed
 // orbit ticks its farthest planet, and nothing else that is not a
-// spacecraft or a comet does.
+// spacecraft or a comet does. Section 24 (2026-10-26, night): one
+// direction arrow per body, in its group, pointing the way the served
+// line runs (Earth and Venus counterclockwise, Halley and Ikeya-Seki
+// clockwise), keeping its size through a zoom; the whole triad opens the
+// frame note.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -680,6 +684,61 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     });
     ok(minor.length === 0 && !comp.sedna && !comp.eris && !comp.apophis,
        "a body that is neither a spacecraft nor a comet ticks a planet: " + minor.join(", "));
+  }
+  // 24. 2026-10-26, Tony: a direction arrow ahead of each body, and the
+  // whole triad opens the frame note.
+  {
+    const data2 = E("sunPlotDiv.data");
+    const S = E("sunArrowServed") || {};
+    const idx = Object.keys(S).map(Number);
+    const keysWithArrows = idx.map(i => data2[i].legendgroup);
+    const bodiesWithLines = Object.keys(data.bodies).filter(k => data2.some(t =>
+      t.legendgroup === k && String(t.mode || "").indexOf("lines") >= 0 && (t.x || []).length > 3 && !(t.meta && t.meta.direction_arrow)));
+    const missing = bodiesWithLines.filter(k => keysWithArrows.indexOf(k) < 0);
+    ok(idx.length > 0 && missing.length === 0 && new Set(keysWithArrows).size === keysWithArrows.length,
+       "not every body with a drawn line has one arrow: missing " + missing.slice(0, 8).join(", "));
+    ok(idx.every(i => E("sunTraceGroup[" + i + "]") === E("ssIndex(" + JSON.stringify(data2[i].legendgroup) + ")")),
+       "an arrow is not in its body's drawer group");
+    // Which way round, from the served line: the arrow's heading against
+    // the body's position (z of r x v), each in a frame that holds it:
+    // positive is counterclockwise from the north. An arrow longer than
+    // the orbit it sits on is not drawn, so Earth is read at Home.
+    await click(d.getElementById("sun-drawer-all")); await h.done();
+    const sense = (k) => {
+      const i = idx.find(j => data2[j].legendgroup === k);
+      const t = E("sunPlotDiv.data")[i];
+      if (t.x[1] === null) { return null; }
+      const m = S[i].marker, v = [t.x[1] - (t.x[0] + t.x[2]) / 2, t.y[1] - (t.y[0] + t.y[2]) / 2];
+      return Math.sign(m[0] * v[1] - m[1] * v[0]);
+    };
+    ok(sense("earth") === 1 && sense("venus") === 1, "Earth's or Venus's arrow does not point counterclockwise: " + sense("earth") + ", " + sense("venus"));
+    const ways = {};
+    for (const k of ["halley", "ikeya_seki"]) {
+      await E("ssTick(ssIndex('" + k + "'), true)"); await h.done();
+      await click(row(k).querySelector(".go")); await h.done();
+      ways[k] = sense(k);
+    }
+    ok(ways.halley === -1 && ways.ikeya_seki === -1,
+       "Halley's or Ikeya-Seki's arrow does not point clockwise, the way they go round: " + JSON.stringify(ways));
+    // Re-placed at a frame change: an arrow drawn before and after a zoom
+    // keeps its size against the view.
+    const span = () => { const r = E("sunPlotDiv.layout.scene.xaxis.range"); return Math.abs(r[1] - r[0]); };
+    const wingOf = (i) => { const t = E("sunPlotDiv.data")[i]; return t.x[0] === null ? null : Math.hypot(t.x[0] - t.x[2], t.y[0] - t.y[2], t.z[0] - t.z[2]); };
+    const hI = idx.find(j => data2[j].legendgroup === "halley");
+    const before = wingOf(hI) / span(), span0 = span();
+    await E("navFrameZoom(-1)"); await h.done();
+    const after = wingOf(hI) / span();
+    ok(span() !== span0 && isFinite(before) && isFinite(after) && Math.abs(after - before) < 1e-6 * before,
+       "Halley's arrow did not keep its size against the view through a zoom: " + before + " then " + after);
+    await click(d.getElementById("sun-drawer-all")); await h.done();
+    // The triad: a tap anywhere on it toggles the frame note.
+    w.matchMedia = () => ({ matches: false });
+    const fnote = d.getElementById("sun-frame-note");
+    E("sunFrameNoteShow(false)");
+    await click(d.getElementById("sun-triad"));
+    ok(!fnote.hidden, "a tap on the triad did not open the frame note");
+    await click(d.getElementById("sun-triad"));
+    ok(fnote.hidden, "a second tap on the triad did not close the frame note");
   }
   // 18. L-475: the i panel's last line opens the lobby's About card.
   const last = d.getElementById("info-panel").lastElementChild;

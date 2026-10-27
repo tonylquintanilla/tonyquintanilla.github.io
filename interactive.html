@@ -384,6 +384,12 @@
         served IAU value. And a comet on a closed orbit ticks the farthest
         planet its orbit reaches, by its aphelion, Tony: "only spacecraft
         and comets", so not the asteroids or the dwarf planets.)
+     Updated: October 26, 2026, later that night, with Anthropic's Claude Opus 5.5
+       (Tony's phone look: the whole triad opens the frame note, not the
+        Aries glyph alone. And a small flat arrowhead on each body's orbit
+        or path, 5 arrow lengths ahead of it, pointing the way the served
+        points run, which is the way the body travels; Tony chose the flat
+        arrowhead and the distance from renders. gallery/direction_arrows.js.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -410,6 +416,10 @@
          require it as a file. -->
     <script src="gallery/arrival.js"></script>
     <script src="gallery/far_lines.js"></script>
+    <!-- A small arrowhead ahead of each body in the Solar System room,
+         pointing the way it travels (Tony, 2026-10-26). Its own file so
+         that a check can require it. -->
+    <script src="gallery/direction_arrows.js"></script>
     <!-- The figures a body's distance prints with in the Solar System
          room (L-398). Its own file so that a check can require it. -->
     <script src="gallery/solar_system_figures.js"></script>
@@ -638,8 +648,10 @@
             display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
         }
         body.sun-exhibit.sun-drawer-open .sun-hud { display: none; }
+        /* Tony, 2026-10-26: the whole triad opens the frame note, not
+           only the Aries glyph, which is a small target for a finger. */
         .sun-triad {
-            width: 104px; height: 120px; pointer-events: none;
+            width: 104px; height: 120px; pointer-events: auto; cursor: pointer;
             font: 600 11px 'DM Sans', system-ui, sans-serif;
         }
         .sun-triad text { fill: var(--text-primary); }
@@ -647,7 +659,7 @@
             pointer-events: auto; cursor: pointer; font-size: 15px;
             fill: var(--accent);
         }
-        .sun-triad .aries:hover { fill: #ffd97a; }
+        .sun-triad .aries:hover, .sun-triad:hover .aries { fill: #ffd97a; }
         .sun-grid-chip {
             pointer-events: auto;
             background: rgba(17,24,39,0.94); border: 1px solid var(--border);
@@ -1420,8 +1432,8 @@
                  body carries .sun-exhibit. -->
             <div class="sun-hud sun-chrome" id="sun-hud" aria-label="Frame">
                 <svg class="sun-triad" id="sun-triad" viewBox="0 0 104 120"
-                     xmlns="http://www.w3.org/2000/svg" role="img"
-                     aria-label="Axis directions x, y, z"></svg>
+                     xmlns="http://www.w3.org/2000/svg" role="button" tabindex="0"
+                     aria-label="Axis directions x, y, z: about this frame"></svg>
                 <div class="sun-grid-chip" id="sun-grid-chip"></div>
             </div>
             <!-- L-472: filled by ssOutsideUpdate, Solar System room only.
@@ -3152,6 +3164,47 @@ const EXHIBITS = {
                                   "\", which is not one of its rows");
                 }
             }
+            // Tony, 2026-10-26: a small arrowhead on each body's orbit or
+            // path, a little ahead of the body, pointing the way it
+            // travels (gallery/direction_arrows.js). One trace per body,
+            // in the body's legend group so it is ticked with it, drawn
+            // empty here and placed for the view before the first draw
+            // and at every frame change (sunArrowsOnto, sunArrowsApply).
+            // The lines are copied as served, before any far-line cut.
+            const arrowSpecs = {};
+            const arrowKeys = [];
+            for (const t of traces) {
+                const k = t.legendgroup;
+                if (k && k !== "center" && t.meta && t.meta.label_target &&
+                    arrowKeys.indexOf(k) < 0) { arrowKeys.push(k); }
+            }
+            for (const k of arrowKeys) {
+                const mk = traces.find(function (t) {
+                    return t.legendgroup === k && t.meta && t.meta.label_target;
+                });
+                const lines = traces.filter(function (t) {
+                    return t.legendgroup === k && String(t.mode || "").indexOf("lines") >= 0 &&
+                        (t.x || []).length > 3;
+                });
+                if (!mk || !lines.length) { continue; }
+                const color = (lines[0].line && lines[0].line.color) || sunSwatchColor(mk);
+                traces.push({
+                    type: "scatter3d", mode: "lines",
+                    x: [null, null, null], y: [null, null, null], z: [null, null, null],
+                    line: { color: color, width: 3 },
+                    hoverinfo: "skip", showlegend: false, legendgroup: k,
+                    name: (mk.name || k) + " direction of travel",
+                    visible: mk.visible,
+                    meta: { direction_arrow: true }
+                });
+                arrowSpecs[traces.length - 1] = {
+                    lines: lines.map(function (l) {
+                        return { x: l.x.slice(), y: l.y.slice(), z: l.z.slice() };
+                    }),
+                    marker: [mk.x[0], mk.y[0], mk.z[0]]
+                };
+            }
+            sunArrowServed = arrowSpecs;
             // The Sun's marker gets its text box too.
             for (const t of traces) {
                 if (t.legendgroup === "center" && t.mode === "markers") {
@@ -4030,6 +4083,14 @@ async function initSunExhibit() {
         // phone is never handed it whole. Measured above from the lines
         // as served, so framing still uses their full reach.
         sunFarServed = GalleryFarLines.servedLines(traces, NAV_HALF_RANGE_MIN_AU);
+        // The direction arrows are placed for the view by their own code,
+        // which never draws one outside it, so the far-line cut leaves
+        // them alone (one owner per trace).
+        if (sunFarServed && sunArrowServed) {
+            Object.keys(sunArrowServed).forEach(function (i) { delete sunFarServed[i]; });
+        }
+        sunArrowsOnto(traces, [-arrivalR, -arrivalR, -arrivalR],
+                      [arrivalR, arrivalR, arrivalR]);
         sunFarLastBox = "";
         sunFarLinesOnto(traces, [-arrivalR, -arrivalR, -arrivalR],
                         [arrivalR, arrivalR, arrivalR]);
@@ -4103,6 +4164,7 @@ async function initSunExhibit() {
         });
         sunLabelInstall(gd);   // L-318: tap in the scene closes the drawer label
         sunFarLinesInstall(gd);   // L-463: far lines cut at every frame change
+        sunArrowsInstall(gd);     // 2026-10-26: direction arrows placed at every frame change
         sunTapInstall(gd);     // L-318 round 6: a phone tap reaches the marker
 
         // The drawer is built from the traces that were actually
@@ -4411,25 +4473,13 @@ function sunTriadUpdate(camera) {
         if (i === 0) {
             const ax2 = cx + (L + 26) * sx, ay2 = cy - (L + 26) * sy;
             html += '<text class="aries" id="sun-aries" x="' + ax2.toFixed(1) + '" y="' + (ay2 + 5).toFixed(1) +
-                    '" text-anchor="middle" role="button" tabindex="0" aria-label="About this frame">&#9800;</text>';
+                    '" text-anchor="middle">&#9800;</text>';
         }
     }
     html += '<circle cx="' + cx + '" cy="' + cy + '" r="2" fill="#9a9a9a"/>';
     svg.innerHTML = html;
-    const aries = document.getElementById("sun-aries");
-    if (aries) {
-        // Like every other hover on the page: a mouse opens it by
-        // resting on the glyph and closes it by leaving; a finger
-        // toggles it with a tap (tap elsewhere closes, see install).
-        aries.addEventListener("pointerenter", function (ev) { if (ev.pointerType !== "touch") { sunFrameNoteShow(true); } });
-        aries.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") { sunFrameNoteLeave(); } });
-        aries.addEventListener("click", function (ev) {
-            ev.stopPropagation();
-            // Tap toggles on screens without hover; a mouse already has it.
-            if (!window.matchMedia("(hover: hover)").matches) { sunFrameNoteShow(!sunFrameNoteOpen()); }
-        });
-        aries.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); sunFrameNoteShow(!sunFrameNoteOpen()); } });
-    }
+    // The note opens from the whole triad, wired once in sunHudInstall
+    // (Tony, 2026-10-26: the Aries glyph alone was too small to tap).
 }
 
 let sunFrameNoteTimer = 0;
@@ -4858,6 +4908,66 @@ function sunLabelInstall(gd) {
 // the view's box (gallery/far_lines.js says why: a phone drew the
 // Galactic Plane's ring and pole line as a wide pink band). The lines as
 // served are kept here, by trace index; only those are ever restyled.
+// The direction arrows (Tony, 2026-10-26; gallery/direction_arrows.js):
+// for each arrow trace's index, the body's lines as served and where the
+// body is. Set by the Solar System room's driver; null in the others.
+let sunArrowServed = null;
+let sunArrowLastBox = "";
+
+// Place every arrow for the box lo..hi, into `traces` before the first
+// draw.
+function sunArrowsOnto(traces, lo, hi) {
+    if (!sunArrowServed || !window.GalleryArrows) { return; }
+    Object.keys(sunArrowServed).forEach(function (i) {
+        const a = GalleryArrows.place(sunArrowServed[i], lo, hi);
+        const t = traces[i];
+        if (t) { t.x = a.x; t.y = a.y; t.z = a.z; }
+    });
+    sunArrowLastBox = lo.concat(hi).join(",");
+}
+
+// The same on the drawn plot, for its current axis ranges. Never called
+// from inside a Plotly event (the listener below defers it, L-278).
+function sunArrowsApply(gd) {
+    if (!gd || !sunArrowServed || !window.GalleryArrows || !window.Plotly) {
+        return Promise.resolve();
+    }
+    const sc = gd.layout && gd.layout.scene;
+    if (!sc) { return Promise.resolve(); }
+    const lo = [], hi = [];
+    const axes = ["xaxis", "yaxis", "zaxis"];
+    for (let a = 0; a < axes.length; a++) {
+        const r = sc[axes[a]] && sc[axes[a]].range;
+        if (!r || r.length < 2) { return Promise.resolve(); }
+        lo.push(Math.min(r[0], r[1]));
+        hi.push(Math.max(r[0], r[1]));
+    }
+    const key = lo.concat(hi).join(",");
+    if (key === sunArrowLastBox) { return Promise.resolve(); }
+    sunArrowLastBox = key;
+    const idx = Object.keys(sunArrowServed).map(Number);
+    if (!idx.length) { return Promise.resolve(); }
+    const xs = [], ys = [], zs = [];
+    idx.forEach(function (i) {
+        const a = GalleryArrows.place(sunArrowServed[i], lo, hi);
+        xs.push(a.x); ys.push(a.y); zs.push(a.z);
+    });
+    return Plotly.restyle(gd, { x: xs, y: ys, z: zs }, idx);
+}
+
+function sunArrowsInstall(gd) {
+    if (!gd || !sunArrowServed || !Object.keys(sunArrowServed).length) { return; }
+    gd.on("plotly_relayout", function (upd) {
+        const keys = Object.keys(upd || {});
+        for (let i = 0; i < keys.length; i++) {
+            if (/^scene\.[xyz]axis\.range/.test(keys[i]) || keys[i] === "scene") {
+                setTimeout(function () { sunArrowsApply(gd); }, 0);
+                return;
+            }
+        }
+    });
+}
+
 let sunFarServed = null;
 let sunFarLastBox = "";
 
@@ -4942,6 +5052,21 @@ function sunHudInstall(gd) {
     });
     const note = document.getElementById("sun-frame-note");
     if (note) { note.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") { sunFrameNoteLeave(); } }); }
+    // The frame note opens from anywhere on the triad (Tony, 2026-10-26),
+    // as the Aries glyph alone did before: a mouse rests on it, a finger
+    // taps it, a tap elsewhere closes. Bound to the svg once, since the
+    // triad's drawing is replaced on every camera move.
+    const triad = document.getElementById("sun-triad");
+    if (triad) {
+        triad.addEventListener("pointerenter", function (ev) { if (ev.pointerType !== "touch") { sunFrameNoteShow(true); } });
+        triad.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") { sunFrameNoteLeave(); } });
+        triad.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            // Tap toggles on screens without hover; a mouse already has it.
+            if (!window.matchMedia("(hover: hover)").matches) { sunFrameNoteShow(!sunFrameNoteOpen()); }
+        });
+        triad.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); sunFrameNoteShow(!sunFrameNoteOpen()); } });
+    }
     // The grid chip's note, opened and closed as the Aries note is: a
     // mouse rests on the chip, a finger taps it, a tap elsewhere closes.
     const chip = document.getElementById("sun-grid-chip");
