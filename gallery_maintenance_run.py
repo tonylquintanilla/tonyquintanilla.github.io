@@ -184,6 +184,10 @@ files, fetched the same way.)
 Module updated: October 26, 2026, night, with Anthropic's Claude Opus 5.5
 (Direction arrows: gallery/direction_arrows.js and its check, which
 gates, and the live check fetches the file.)
+Module updated: October 27, 2026 with Anthropic's Claude Opus 5.5
+(L-497, one text box for a tap and Go To: the live check also fetches
+gallery/text_box.js, which the page loads with a script tag; the Hover
+budget row's check now holds the box's words, with a planted fault.)
 """
 
 import hashlib
@@ -657,6 +661,8 @@ SERVED_FILES = [
     "gallery/direction_arrows.js",
     # L-460 (2026-10-21): likewise.
     "gallery/drawer_order.js",
+    # L-497 (2026-10-27): likewise, the one text box's words.
+    "gallery/text_box.js",
     # L-443 build B (2026-10-25): the Solar System room fetches each
     # spacecraft's positions file before it draws (Voyager 1's above).
     "data/solar-system/positions/voyager_2.json",

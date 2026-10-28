@@ -30,9 +30,19 @@
 //   streamer belt's traces built without the mark that says they were
 //   drawn with the corona, as before the fix; the corona's row must then
 //   be named.
+//   Since L-497 (6b, 2026-10-27; Tony: "Yes") the streamer belt is a row
+//   of its own again, under the corona's, so every row has one cross, one
+//   hover and one box. So it also fails if the Sun room has no row of the
+//   belt's own, or a shell row holds more than one info cross. The
+//   self-test now plants the old join on a COPY of the config (the belt
+//   served drawn_with the corona, the mechanism still in the renderers)
+//   and then takes the mark off, as before.
 //
 // Module written: October 22, 2026 with Anthropic's Claude Opus 5.5 (new,
 // L-468).
+// Module updated: October 27, 2026 with Anthropic's Claude Opus 5.5
+// (L-497, 6b: the streamer belt's own row; the self-test's join planted
+// on a copy of the config.)
 //
 // Role: devtool
 // Domain: dev_tools
@@ -63,16 +73,16 @@ if (notes.length) fail("frame constants not served: " + notes.join("; "));
   GF.setDrawings(map);
 })();
 const config = JSON.parse(read("data/objects_config.json"));
-function featuresOf(slug) {
-  const o = (config.objects || []).find(x => x && x.slug === slug);
+function featuresOf(slug, cfg) {
+  const o = ((cfg || config).objects || []).find(x => x && x.slug === slug);
   return Object.keys(o.features).map(k => ({ object: slug, feature: k, params: o.features[k] }));
 }
 
-function build() {
-  const sun = GF.buildFeatureTraces(featuresOf("sun"),
+function build(cfg) {
+  const sun = GF.buildFeatureTraces(featuresOf("sun", cfg),
     { sun: { name: "Sun", position: [0, 0, 0] } }, { sceneHalfRangeAu: 0.25 }).traces;
   const p = JSON.parse(read("documentation/payload_earth_scene.json"));
-  p.features = featuresOf("earth");
+  p.features = featuresOf("earth", cfg);
   const earth = EG.composeScene(p, { GF: GF, halfRangeAu: 6.155e-5,
     epochIso: "x" }).traces;
   return { sun: sun, earth: earth };
@@ -106,6 +116,15 @@ function judge(built) {
       const words = i >= 0 ? plain(traces[i].text[0]) : null;
       seen.push([room, row.name, row.shell, words]);
       if (!row.shell) continue;
+      const crosses = row.indices.filter(j => {
+        const t = traces[j];
+        return t && t.showlegend === false && t.marker && t.marker.symbol === "cross" &&
+          Array.isArray(t.text) && typeof t.text[0] === "string";
+      }).length;
+      if (crosses > 1) {
+        bad.push(room + ": the row " + JSON.stringify(row.name) + " holds " + crosses +
+                 " info crosses; every row has one cross, one hover and one box");
+      }
       if (words === null) {
         bad.push(room + ": the row " + JSON.stringify(row.name) + " opens no words");
       } else if (words.indexOf(row.name) !== 0) {
@@ -118,8 +137,20 @@ function judge(built) {
 }
 
 // --- self-test: the bug that was found ---------------------------------
+// The join it needs is planted on a copy of the config: the streamer belt
+// served drawn_with the corona, as from L-410 until L-497 (6b).
+function joinedCopy() {
+  const copy = JSON.parse(JSON.stringify(config));
+  const sun = copy.objects.find(x => x && x.slug === "sun");
+  const atm = sun && sun.features && sun.features.solar_atmosphere;
+  if (!atm || !atm.streamer_belt || !atm.corona) return null;
+  atm.streamer_belt.drawn_with = "corona";
+  return copy;
+}
 (function selfTest() {
-  const real = build();
+  const copy = joinedCopy();
+  if (!copy) { fail("self-test: the Sun's streamer belt or corona is not in the config"); return; }
+  const real = build(copy);
   // Take the mark off every trace drawn with another, as before the fix.
   for (const room of ["sun", "earth"]) {
     real[room].forEach(t => {
@@ -134,8 +165,13 @@ function judge(built) {
 })();
 
 // --- the rooms -----------------------------------------------------------
-const res = judge(build());
+const built = build();
+const res = judge(built);
 res.bad.forEach(fail);
+// L-497 (6b): the belt is a row of its own, a shell, with its own words.
+if (!rowsOf(built.sun).some(r => r.shell && r.name === "Sun: Streamer Belt (helmet and stalk)")) {
+  fail("sun: the streamer belt has no row of its own (L-497, 6b)");
+}
 let shells = 0;
 res.seen.forEach(s => {
   if (s[2]) shells += 1;

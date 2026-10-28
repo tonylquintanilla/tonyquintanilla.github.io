@@ -227,6 +227,14 @@
  *   (L-494, Tony's choice of option C: no hover ends with the pointer
  *   sentence any more; HOVER_TAIL is empty and withTail() adds nothing.
  *   A note on a visitor's first visit points at the i button instead.)
+ * Module updated: October 27, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-465, the gallery's half: the Sun's axis hover prints the same five
+ *   bullets as the orrery's, each sentence its row's served hover_line,
+ *   every number from its linked row -- the period with the latitude it
+ *   is adopted at, the differential pair, the Carrington count, the tilt
+ *   -- and the spin as a served word; the i panel lists the four new
+ *   rows' citations. L-497, 6b: the streamer belt serves no drawn_with
+ *   and has its own row again; the joining mechanism stays.)
  */
 
 (function (global) {
@@ -2971,8 +2979,9 @@
     // One info marker at the outer edge: over the pole, where the
     // exosphere's sphere shell's sat until 2026-10-17, or stepped off it
     // by the drawing's served info_polar_deg (L-410: the corona's, so it
-    // does not sit on the Alfven surface's marker; the dust cloud's, in
-    // its middle plane, where the cloud is).
+    // does not sit on the Alfven surface's marker; the dust cloud's 25
+    // degrees above its middle plane since 2026-10-27, L-468: in the plane
+    // it sat on the x axis line, hard to see).
     var outerAu = outerR * unitAu;
     var polar = (typeof cfg.drawing.info_polar_deg === "number")
       ? cfg.drawing.info_polar_deg * Math.PI / 180 : 0;
@@ -3204,35 +3213,76 @@
     }
     var first = isDict(words.axis) ? words.axis.hover : null;
     var still = isDict(words.not_animated) ? words.not_animated.hover : null;
-    var periodSaid = servedSentence(rp.hover_line,
-      { value: fmtServed(period, servedFigures(rp), 2) },
-      where + "/rotation_period/hover_line", warn);
-    var tiltSaid = servedSentence(tl.hover_line,
-      { value: fmtServed(tilt, servedFigures(tl), 2) },
-      where + "/tilt/hover_line", warn);
+    // L-465, the gallery's half (2026-10-27): the same five bullets as the
+    // orrery's axis hover (Tony: "Confirmed" at the talk of that day; the
+    // Carrington bullet his rewording), every number from its served row
+    // and each sentence served as its row's hover_line: the period with
+    // the latitude it is adopted at, the differential pair, the Carrington
+    // count, the tilt, and the spin (a served word). A row not served yet
+    // -- a served cache built before these rows -- leaves its bullet out,
+    // with a warning, and the rest print.
+    var al = params.adopted_latitude, de = params.differential_equator,
+        dp = params.differential_pole, cp = params.carrington_period;
+    function rowText(node, unit, name) {
+      if (!isDict(node)) return null;
+      var v = measured(node, unit, where + "/" + name, warn);
+      return v === null ? null : fmtServed(v, servedFigures(node), 2);
+    }
+    var periodText = fmtServed(period, servedFigures(rp), 2);
+    var latText = rowText(al, "deg", "adopted_latitude");
+    var eqText = rowText(de, "days", "differential_equator");
+    var poleText = rowText(dp, "days", "differential_pole");
+    var carText = rowText(cp, "days", "carrington_period");
+    var said = function (node, vals, name) {
+      if (!isDict(node)) {
+        warn(where + "/" + name + ": not served -- its bullet is not printed");
+        return "";
+      }
+      var s = servedSentence(node.hover_line, vals,
+                             where + "/" + name + "/hover_line", warn);
+      return s === null ? "" : wrapHover(s);
+    };
+    var periodSaid = said(rp, latText === null ? { value: periodText }
+                            : { value: periodText, adopted_latitude: latText },
+                          "rotation_period");
+    var diffSaid = said(de, { value: eqText, pole: poleText },
+                        "differential_equator");
+    var carSaid = said(cp, { value: carText, period: periodText },
+                       "carrington_period");
+    var tiltSaid = said(tl, { value: fmtServed(tilt, servedFigures(tl), 2) },
+                        "tilt");
+    var spin = isDict(words.spin) ? words.spin.hover : null;
     var km = half * KM_PER_AU;
     var lines = [servedHover(first, {}, where + "/words/axis", warn),
-                 periodSaid === null ? "" : wrapHover(periodSaid),
-                 tiltSaid === null ? "" : wrapHover(tiltSaid),
+                 periodSaid, diffSaid, carSaid, tiltSaid,
+                 servedHover(spin, {}, where + "/words/spin", warn),
                  servedHover(still, {}, where + "/words/not_animated", warn),
                  "Axis drawn to " +
                    km.toLocaleString("en-US", { maximumFractionDigits: 0 }) +
                    " km (" + half.toPrecision(3) + " AU) -- a drawing length."];
-    var hover = "<b>" + label + "</b><br><br>" +
+    // No blank line under the title (L-465, 2026-10-27): with the five
+    // bullets the hover is 17 lines, the Hover budget's ceiling, and the
+    // one text box drops blank lines anyway (gallery/text_box.js).
+    var hover = "<b>" + label + "</b><br>" +
       lines.filter(function (l) { return l; }).join("<br>");
     var tip = [c[0] + zb[0] * half, c[1] + zb[1] * half, c[2] + zb[2] * half];
     traces.push(infoMarker(tip[0], tip[1], tip[2], AXIS_COLOR,
                            withTail(hover), label));
-    // The i panel: the link, and the two rows' citations, one to a line.
+    // The i panel: the link, and the rows' citations, one to a line.
     // The tilt's citation is the pole's with the frame's angle, so the
-    // pole is not listed twice.
+    // pole is not listed twice. L-465 (2026-10-27): and the four rows of
+    // the five bullets, each by what it gives; the Carrington row's names
+    // the date its count starts from.
     var items = [];
-    if (isDict(rp) && typeof rp.source === "string" && rp.source) {
-      items.push({ label: "Period", text: rp.source });
-    }
-    if (isDict(tl) && typeof tl.source === "string" && tl.source) {
-      items.push({ label: "Tilt", text: tl.source });
-    }
+    [[rp, "Period"], [al, "Latitude of the adopted period"],
+     [de, "Differential rotation, at the equator"],
+     [dp, "Differential rotation, near the poles"],
+     [cp, "Carrington rotation"], [tl, "Tilt"]].forEach(function (pair) {
+      var node = pair[0];
+      if (isDict(node) && typeof node.source === "string" && node.source) {
+        items.push({ label: pair[1], text: node.source });
+      }
+    });
     var out = stampLink(traces, {
       info_url: isDict(words.axis) ? words.axis.info_url : null,
       source: items.map(function (it) {
@@ -3294,6 +3344,10 @@
           // traces join that member's legend group, show no row of their
           // own, and carry its shell key, so the drawer and the arrival
           // treat the two as one.
+          // L-497 (6b, Tony, 2026-10-27: "Yes"): the belt serves no
+          // drawn_with any more and has its own row again, under the
+          // corona's, so every row has one cross, one hover and one box.
+          // The mechanism stays for a member that serves one.
           var bandKey = joinedGroup(bandTraces, params, bodyName, cfg,
                                     where + "/" + key, key, warn);
           traces = traces.concat(stampShell(bandTraces, bandKey));

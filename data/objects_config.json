@@ -65,7 +65,6 @@
         "solar_atmosphere": {
           "streamer_belt": {
             "name": "Streamer Belt (helmet and stalk)", "shape": "streamer_band",
-            "drawn_with": "corona",
             "description": "The brightest part of the Sun's outer atmosphere, seen at a total eclipse as the pearly white halo, shaped by the Sun's magnetic field.",
             "about": "A streamer is two things stacked. The helmet, a dome of closed magnetic loops, rises only a few solar radii. Above its cusp the field opens and the solar wind draws the gas out into a long thin stalk. The band drawn here is one object with both parts: wide and dense at the base, pinched at the cusp, then thinning until it dissolves into the solar wind. It has no drawn outer edge because there is no edge: what the eye sees at an eclipse is a boundary of brightness, not a surface.",
             "info_url": "https://en.wikipedia.org/wiki/Helmet_streamer",
@@ -148,8 +147,8 @@
               "high": { "value": 20, "unit": "r_sun", "in": {"au": {"value": 0.09, "figures": 1, "prints": null}, "km": {"value": 10000000.0, "figures": 1, "prints": null}, "pc": {"value": 5e-07, "figures": 1, "prints": null}, "r_earth": {"value": 2000.0, "figures": 1, "prints": null}, "r_sun": {"value": 20.0, "figures": 1, "prints": null}}, "figures": 1, "orrery_constant": "constants_new.py::ALFVEN_SURFACE_RANGE_HIGH_RADII", "source": "Cranmer, Chhiber, Gilly, Cairns, Colaninno, McComas, Raouafi, Usmanov, Gibson and DeForest (2023), \"The Sun's Alfven Surface: Recent Insights and Prospects for the Polarimeter to Unify the Corona and Heliosphere (PUNCH)\", abstract -- the Alfven surface spends most of its time at heliocentric distances between about 10 and 20 solar radii; sec. 3.1 -- in global models the surface's local maxima sit near the centers of large polar coronal holes and its minima at the tops of helmet streamers. https://arxiv.org/abs/2310.05887" }
             },
             "drawing": {
-              "_declared": "Drawing choices, not measurements: how the two circles look. Where they are is range.low and range.high, the two ends of the range where the Alfven surface spends most of its time (L-454, Tony's ruling of 2026-10-21: every real edge that moves keeps its surface and gets its range drawn beside it, on a row of its own), in the plane of the Sun's equator, turned by the Sun's served pole. Two dashed circles in the surface's own colour, Tony's choice of 2026-10-22 ('first shape then color'); the orrery draws the same.",
-              "steps": 144, "line_width": 2, "opacity": 0.7, "dash": "dash"
+              "_declared": "Drawing choices, not measurements: how the two circles look. Where they are is range.low and range.high, the two ends of the range where the Alfven surface spends most of its time (L-454, Tony's ruling of 2026-10-21: every real edge that moves keeps its surface and gets its range drawn beside it, on a row of its own), in the plane of the Sun's equator, turned by the Sun's served pole. Two dashed circles in the surface's own colour, Tony's choice of 2026-10-22 ('first shape then color'); the orrery draws the same. Heavier since 2026-10-27, width 4 and opacity 1 from 2 and 0.7, the colour kept: the larger circle was lost among the surface's dots (L-454, Tony's phone look of that day).",
+              "steps": 144, "line_width": 4, "opacity": 1.0, "dash": "dash"
             }
           },
           "corona": {
@@ -161,7 +160,7 @@
             },
             "name": "Corona",
             "description": "The Sun's outer atmosphere: a very thin gas that thins out with height until it becomes the solar wind.",
-            "hover": "The Sun's outer atmosphere, a very thin gas of electrons and ions. It begins about {base} km above the visible surface, just above the chromosphere, and has no outer edge. It thins out with height, and at the Alfven surface, about {radius} solar radii ({radius_km} km, {radius_au} AU) from the Sun's center, it becomes the solar wind.\nEach dot's place shows how dense the gas is; its brightness shows how much sunlight reaches it.\nThe streamer belt, drawn with it, is the part of the corona where the Sun's magnetic field closes in loops.",
+            "hover": "The Sun's outer atmosphere, a very thin gas of electrons and ions. It begins about {base} km above the visible surface, just above the chromosphere, and has no outer edge. It thins out with height, and at the Alfven surface, about {radius} solar radii ({radius_km} km, {radius_au} AU) from the Sun's center, it becomes the solar wind.\nEach dot's place shows how dense the gas is; its brightness shows how much sunlight reaches it.\nThe streamer belt, the part of the corona where the Sun's magnetic field closes in loops, has its own row, just below this one.",
             "about": "The corona's glow, seen at a total eclipse, is sunlight scattered by its free electrons, called the K-corona (Boe and others, 2021). How dense the gas is at each height comes from a model of the solar wind from the base of the corona out past Earth's orbit (Mann and others, 2023). The dots follow it: crowded at the base, sparse by the Alfven surface. Farther out a second, fainter light takes over, sunlight scattered by dust, the F-corona; that dust is drawn as its own cloud. The corona is very hot, up to about {temperature} kelvin, far hotter than the surface below it (NASA).",
             "note": "The corona is drawn in two parts. The dots show how dense its gas is at each height, on average, drawn the same in every direction. The streamer belt, drawn as a band, shows the brightest part of the corona, where the Sun's magnetic field closes in loops. The dots stop at the Alfven surface, the outer edge of the Sun's atmosphere, where the gas becomes the solar wind.",
             "info_url": "https://en.wikipedia.org/wiki/Solar_corona",
@@ -204,10 +203,10 @@
           "zodiacal_dust": {
             "shape": "stored_fade",
             "drawing": {
-              "_declared": "Not a number: the name of the stored drawing the zodiacal dust cloud is, data/solar-system/drawings/zodiacal_dust.json. The orrery places the dots (zodiacal_dust_sampler.py, from the rows of Kelsall et al. (1998)'s model and Lamy et al. (2022)'s two edges) and the page draws them as given (L-131, Tony's rulings of 2026-10-19). The dots are in the ecliptic frame already, so the page does not turn them to the Sun's pole. info_polar_deg puts the info marker in the cloud's middle plane, a drawing choice.",
+              "_declared": "Not a number: the name of the stored drawing the zodiacal dust cloud is, data/solar-system/drawings/zodiacal_dust.json. The orrery places the dots (zodiacal_dust_sampler.py, from the rows of Kelsall et al. (1998)'s model and Lamy et al. (2022)'s two edges) and the page draws them as given (L-131, Tony's rulings of 2026-10-19). The dots are in the ecliptic frame already, so the page does not turn them to the Sun's pole. info_polar_deg puts the info marker 25 degrees above the cloud's middle plane, a drawing choice: in the plane it sat on the x axis line and was hard to see (L-468, Tony's phone look of 2026-10-27).",
               "dots": "zodiacal_dust",
               "frame": "ecliptic",
-              "info_polar_deg": 90
+              "info_polar_deg": 65
             },
             "name": "Zodiacal Dust Cloud (F-corona)",
             "description": "Dust spread through the inner solar system in a flattened cloud. Near the Sun its scattered sunlight is the F-corona.",
@@ -475,32 +474,65 @@
         },
         "orientation": {
           "pole": {
-            "ra": { "value": 286.13, "unit": "deg", "figures": 5, "orrery_constant": "constants_new.py::SUN_POLE_RA_J2000_DEG", "source": "NASA NAIF, planetary constants kernel pck00011.tpc, https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- BODY10_POLE_RA = 286.13 degrees, the right ascension of the Sun's north pole in the ICRF, with no change over time. The kernel says the Sun's values are unchanged in the 2015 report of the IAU Working Group on Cartographic Coordinates and Rotational Elements (Archinal et al. 2018, Cel. Mech. Dyn. Astron. 130:22)." },
-            "dec": { "value": 63.87, "unit": "deg", "figures": 4, "orrery_constant": "constants_new.py::SUN_POLE_DEC_J2000_DEG", "source": "NASA NAIF, planetary constants kernel pck00011.tpc, https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- BODY10_POLE_DEC = 63.87 degrees, the declination of the Sun's north pole in the ICRF, with no change over time; unchanged in the IAU working group's 2015 report (Archinal et al. 2018)." }
+            "ra": { "value": 286.13, "unit": "deg", "figures": 5, "orrery_constant": "constants_new.py::SUN_POLE_RA_J2000_DEG", "source": "NASA NAIF, planetary constants kernel pck00011.tpc, https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- BODY10_POLE_RA = 286.13 degrees, the right ascension of the Sun's north pole in the ICRF, with no change over time. The kernel says the Sun's values are unchanged in the 2015 report of the IAU Working Group on Cartographic Coordinates and Rotational Elements (Archinal et al. 2018, Cel. Mech. Dyn. Astron. 130:22). NASA Sun Fact Sheet, D. R. Williams, NASA Goddard Space Flight Center, last updated 9 May 2024, https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html -- \"North Pole of Rotation\", Right Ascension 286.13; its obliquity to ecliptic, 7.25 deg, is the tilt worked out from this pole (SUN_EQUATOR_TILT_DEG)." },
+            "dec": { "value": 63.87, "unit": "deg", "figures": 4, "orrery_constant": "constants_new.py::SUN_POLE_DEC_J2000_DEG", "source": "NASA NAIF, planetary constants kernel pck00011.tpc, https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- BODY10_POLE_DEC = 63.87 degrees, the declination of the Sun's north pole in the ICRF, with no change over time; unchanged in the IAU working group's 2015 report (Archinal et al. 2018). NASA Sun Fact Sheet, D. R. Williams, NASA Goddard Space Flight Center, last updated 9 May 2024, https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html -- \"North Pole of Rotation\", Declination 63.87." }
           },
           "rotation_period": {
-            "hover_line": "The Sun turns once every {value} days, measured against the stars.",
+            "hover_line": "Rotation period: {value} days, sidereal (measured against the stars), the adopted period at {adopted_latitude} degrees latitude.",
             "value": 25.38,
             "unit": "days",
             "figures": 6,
             "orrery_constant": "constants_new.py::SUN_SIDEREAL_ROTATION_PERIOD_D",
-            "source": "NIST Special Publication 811, sec. 5.1.1, Table 6, https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-5-units-outside-si -- the degree is pi/180 radian, so a full turn, 2 pi radians, is 360 degrees by definition.; NASA NAIF, planetary constants kernel pck00011.tpc, https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- BODY10_PM, the angle W of the Sun's prime meridian, 84.176 + 14.18440 d degrees, d in days from J2000; the Sun's values are unchanged in the IAU working group's 2015 report. The sense of the turning: Archinal et al. (2019), Correction to: Report of the IAU Working Group on Cartographic Coordinates and Rotational Elements: 2015, Cel. Mech. Dyn. Astron. 131:61, https://doi.org/10.1007/s10569-019-9925-1 -- Fig. 1 caption: where W increases with time, the body's rotation is prograde."
+            "source": "NIST Special Publication 811, sec. 5.1.1, Table 6, https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-5-units-outside-si -- the degree is pi/180 radian, so a full turn, 2 pi radians, is 360 degrees by definition.; NASA NAIF, planetary constants kernel pck00011.tpc, https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- BODY10_PM, the angle W of the Sun's prime meridian, 84.176 + 14.18440 d degrees, d in days from J2000; the Sun's values are unchanged in the IAU working group's 2015 report. The sense of the turning: Archinal et al. (2019), Correction to: Report of the IAU Working Group on Cartographic Coordinates and Rotational Elements: 2015, Cel. Mech. Dyn. Astron. 131:61, https://doi.org/10.1007/s10569-019-9925-1 -- Fig. 1 caption: where W increases with time, the body's rotation is prograde. NASA Sun Fact Sheet, D. R. Williams, NASA Goddard Space Flight Center, last updated 9 May 2024, https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html -- \"Sidereal rotation period (hrs)* 609.12\", and its note: \"This is the adopted period at 16 deg. latitude - the actual rotation rate varies with latitude\"."
           },
           "tilt": {
-            "hover_line": "Its equator is tilted {value} degrees from the plane of Earth's orbit.",
+            "hover_line": "Tilt: {value} degrees to the ecliptic, the plane of Earth's orbit.",
             "value": 7.25,
             "unit": "deg",
             "figures": 3,
             "orrery_constant": "constants_new.py::SUN_EQUATOR_TILT_DEG",
-            "source": "NASA NAIF, planetary constants kernel pck00011.tpc, https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- BODY10_POLE_DEC = 63.87 degrees, the declination of the Sun's north pole in the ICRF, with no change over time; unchanged in the IAU working group's 2015 report (Archinal et al. 2018).; JPL Horizons manual, https://ssd.jpl.nasa.gov/horizons/manual.html -- Horizons turns the ICRF into its ecliptic of J2000 with the fixed IAU 1976/1980 obliquity of 84381.448 arcseconds at the J2000.0 epoch, a rotation about the ICRF x-axis.; NIST Special Publication 811, sec. 5.1.1, Table 6, https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-5-units-outside-si -- the second of arc is one sixtieth of the minute of arc, which is one sixtieth of the degree, so a degree is 3600 arcseconds by definition.; NASA NAIF, planetary constants kernel pck00011.tpc, https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- BODY10_POLE_RA = 286.13 degrees, the right ascension of the Sun's north pole in the ICRF, with no change over time. The kernel says the Sun's values are unchanged in the 2015 report of the IAU Working Group on Cartographic Coordinates and Rotational Elements (Archinal et al. 2018, Cel. Mech. Dyn. Astron. 130:22)."
+            "source": "NASA NAIF, planetary constants kernel pck00011.tpc, https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- BODY10_POLE_DEC = 63.87 degrees, the declination of the Sun's north pole in the ICRF, with no change over time; unchanged in the IAU working group's 2015 report (Archinal et al. 2018). NASA Sun Fact Sheet, D. R. Williams, NASA Goddard Space Flight Center, last updated 9 May 2024, https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html -- \"North Pole of Rotation\", Declination 63.87.; JPL Horizons manual, https://ssd.jpl.nasa.gov/horizons/manual.html -- Horizons turns the ICRF into its ecliptic of J2000 with the fixed IAU 1976/1980 obliquity of 84381.448 arcseconds at the J2000.0 epoch, a rotation about the ICRF x-axis.; NIST Special Publication 811, sec. 5.1.1, Table 6, https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-5-units-outside-si -- the second of arc is one sixtieth of the minute of arc, which is one sixtieth of the degree, so a degree is 3600 arcseconds by definition.; NASA NAIF, planetary constants kernel pck00011.tpc, https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- BODY10_POLE_RA = 286.13 degrees, the right ascension of the Sun's north pole in the ICRF, with no change over time. The kernel says the Sun's values are unchanged in the 2015 report of the IAU Working Group on Cartographic Coordinates and Rotational Elements (Archinal et al. 2018, Cel. Mech. Dyn. Astron. 130:22). NASA Sun Fact Sheet, D. R. Williams, NASA Goddard Space Flight Center, last updated 9 May 2024, https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html -- \"North Pole of Rotation\", Right Ascension 286.13; its obliquity to ecliptic, 7.25 deg, is the tilt worked out from this pole (SUN_EQUATOR_TILT_DEG)."
           },
           "source": "NASA NAIF, planetary constants kernel pck00011.tpc (N. Bachman, 2022), https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc -- the Sun's north pole in ICRF equatorial coordinates (BODY10_POLE_RA, BODY10_POLE_DEC), as given in the IAU Working Group report of Archinal et al. (2018), Celest. Mech. Dyn. Astron. 130:22",
+          "adopted_latitude": {
+            "value": 16.0,
+            "unit": "deg",
+            "figures": 2,
+            "orrery_constant": "constants_new.py::SUN_ADOPTED_PERIOD_LATITUDE_DEG",
+            "source": "NASA Sun Fact Sheet, D. R. Williams, NASA Goddard Space Flight Center, last updated 9 May 2024, https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html -- the sidereal rotation period 609.12 hours \"is the adopted period at 16 deg. latitude\"."
+          },
+          "differential_equator": {
+            "hover_line": "The Sun is gas, not solid, so it does not turn as one piece: about {value} days at the equator, up to {pole} days near the poles. This is called differential rotation.",
+            "value": 25.0,
+            "unit": "days",
+            "figures": 2,
+            "orrery_constant": "constants_new.py::SUN_DIFFERENTIAL_ROTATION_EQUATOR_D",
+            "source": "NASA SOHO, \"Differential Rotation of the Sun\" (Grades 9-12), lesson page by Ginger Sutula, https://soho.nascom.nasa.gov/explore/lessons/diffrot9_12.html -- \"the Sun rotates every 25 days at the equator\"."
+          },
+          "differential_pole": {
+            "value": 35.0,
+            "unit": "days",
+            "figures": 2,
+            "orrery_constant": "constants_new.py::SUN_DIFFERENTIAL_ROTATION_POLE_D",
+            "source": "NASA SOHO, \"Differential Rotation of the Sun\" (Grades 9-12), lesson page by Ginger Sutula, https://soho.nascom.nasa.gov/explore/lessons/diffrot9_12.html -- \"up to 35 days at the poles\"."
+          },
+          "carrington_period": {
+            "hover_line": "Carrington rotation: the standard count of the Sun's turns, numbered from November 9, 1853. One turn is {value} days as sunspots are seen to come round from Earth, which is {period} days against the stars, because Earth moves along its orbit meanwhile. Named for Richard Carrington, who first noted that sunspots rotate.",
+            "value": 27.28,
+            "unit": "days",
+            "figures": 4,
+            "orrery_constant": "constants_new.py::SUN_CARRINGTON_SYNODIC_PERIOD_D",
+            "source": "NASA SOHO, \"Differential Rotation of the Sun\" (Grades 9-12), lesson page by Ginger Sutula, https://soho.nascom.nasa.gov/explore/lessons/diffrot9_12.html -- \"sunspots rotate every 27.28 days. Rotations are numbered starting with 9 November 1853.\""
+          },
           "note": "Read by the same poleBasis() the gas giants use. The Sun's rotation axis is drawn along it; the tilt of the Sun's equator is the tilt row's.",
           "words": {
             "_comment": "L-465 (2026-10-22): the Sun's rotation axis, drawn from this block by renderRotationAxis in gallery/feature_renderers.js, as Earth's guides are drawn from Earth's. Tony's approved words of this day. The period and the tilt print by their own hover_line, beside their citations; the axis's link is its entry's info_url, Wikipedia's Solar rotation (a fetch returned it this day; no NASA page is specific to it).",
             "axis": {
               "hover": "North pole up the gold line; the curved arrows show which way the Sun turns.",
               "info_url": "https://en.wikipedia.org/wiki/Solar_rotation"
+            },
+            "spin": {
+              "hover": "Spin: prograde, the same way the planets go round the Sun."
             },
             "not_animated": {
               "hover": "The turning is not animated."
@@ -2423,16 +2455,16 @@
         "_declared": "The drawer's rows, by slug, in order outward from the Sun. Every row except the Sun can be ticked, one at a time, and ticking a row also opens it. A GROUP row (group, label) gathers the body rows that name it in their in field, listed after it: it is always listed, folded shut, and a tap folds it open to show them or shut again; it ticks nothing, and once one of its bodies is ticked its Reset unticks them all. There is no See more and nothing ticks many bodies at once: Tony's rulings of 2026-10-24 (L-477), the visitor builds the view one body at a time; order a lists its bodies by their served semi-major axis, nearest first, and without it they keep the order here (the comets, by their designations, the order they were discovered in; the spacecraft, by launch). Each group of small bodies is JPL's own class for its bodies (its Small-Body Database), one row per class, the comets' after the Sun and the near-Earth asteroids' among the planets where their orbits put them: Aten (orbits smaller than Earth's) after Venus, Apollo (larger than Earth's, crossing it) and Amor (larger, staying outside it) after Earth and the Spacecraft group (Tony's ruling of 2026-10-26, L-443, with the class check documentation/CHECK_L443_drawer_classes_20261026.md in the orrery). The comets on open paths are two groups after them, Hyperbolic comets (JPL's HYP) and Interstellar objects (the IAU's I numbers); piece C of C/2025 K1, which JPL classes as a comet, is in Comets. The Spacecraft group follows Earth's row, as the comets follow the Sun (Tony's ruling of 2026-10-24, L-443). Tony's ruling of 2026-10-22 (L-443): groups fold open in the drawer, and a room is for a body with more than its symbol. A row may carry the words a visitor sees for it: label, the name shown in the drawer and text box when it is not the served name; about, a sentence shown in the text box and the panel; source_note, what the Horizons id in the source line is. Tony's rulings, 2026-09-29 and 2026-09-30 (L-363). A GROUP row's about says in plain words what JPL's or the IAU's name for the class means, the name kept (Tony's rulings of 2026-10-26, \"keep these correct words and explain them\" and his approval of documentation/WORDS_L443_glosses_20261026.md in the orrery); it shows as the first bullet in the text box and the panel of every body in the group.",
         "rows": [
           { "slug": "sun" },
-          { "group": "comets_etc", "label": "Encke-type comets", "about": "Encke-type: a comet whose orbit is smaller than Jupiter's; JPL names the class for Comet Encke." },
+          { "group": "comets_etc", "find": ["ETc", "comet"], "label": "Encke-type comets", "about": "Encke-type: a comet whose orbit is smaller than Jupiter's; JPL names the class for Comet Encke." },
           { "slug": "encke", "in": "comets_etc" },
-          { "group": "comets_jfc", "label": "Jupiter-family comets", "about": "Jupiter-family: a comet whose orbit is governed by Jupiter's gravity." },
+          { "group": "comets_jfc", "find": ["JFc", "comet"], "label": "Jupiter-family comets", "about": "Jupiter-family: a comet whose orbit is governed by Jupiter's gravity." },
           { "slug": "tempel_2", "in": "comets_jfc" },
           { "slug": "schaumasse", "in": "comets_jfc" },
           { "slug": "churyumov", "in": "comets_jfc", "label": "Churyumov-Gerasimenko" },
           { "slug": "howell", "in": "comets_jfc" },
-          { "group": "comets_htc", "label": "Halley-type comets", "about": "Halley-type: a comet that returns after decades to centuries; JPL names the class for Halley's Comet." },
+          { "group": "comets_htc", "find": ["HTC", "comet"], "label": "Halley-type comets", "about": "Halley-type: a comet that returns after decades to centuries; JPL names the class for Halley's Comet." },
           { "slug": "halley", "in": "comets_htc" },
-          { "group": "comets", "label": "Comets", "about": "Comet: JPL's class for a comet whose orbit fits none of its named classes." },
+          { "group": "comets", "find": ["COM", "comet"], "label": "Comets", "about": "Comet: JPL's class for a comet whose orbit fits none of its named classes." },
           { "slug": "ikeya_seki", "in": "comets" },
           { "slug": "hale_bopp", "in": "comets" },
           { "slug": "hyakutake", "in": "comets" },
@@ -2441,7 +2473,7 @@
           { "slug": "c2025_k1_c", "in": "comets", "label": "C/2025 K1-C" },
           { "slug": "swan", "in": "comets" },
           { "slug": "maps", "in": "comets" },
-          { "group": "comets_hyp", "label": "Hyperbolic comets", "about": "Hyperbolic: on an open path around the Sun, not a closed loop." },
+          { "group": "comets_hyp", "find": ["HYP", "comet"], "label": "Hyperbolic comets", "about": "Hyperbolic: on an open path around the Sun, not a closed loop." },
           { "slug": "west", "in": "comets_hyp" },
           { "slug": "mcnaught", "in": "comets_hyp" },
           { "slug": "tsuchinshan_atlas", "in": "comets_hyp", "label": "Tsuchinshan-ATLAS" },
@@ -2452,16 +2484,16 @@
           { "slug": "c2025_k1_d", "in": "comets_hyp", "label": "C/2025 K1-D" },
           { "slug": "panstarrs_2025_r3", "in": "comets_hyp", "label": "PANSTARRS (C/2025 R3)" },
           { "slug": "borisov_2025_v1", "in": "comets_hyp", "label": "Borisov (C/2025 V1)" },
-          { "group": "interstellar", "label": "Interstellar objects", "about": "The I in 1I, 2I and 3I stands for interstellar: the IAU's numbering for objects that came from another star system." },
+          { "group": "interstellar", "find": ["HYA", "comet", "interstellar"], "label": "Interstellar objects", "about": "The I in 1I, 2I and 3I stands for interstellar: the IAU's numbering for objects that came from another star system." },
           { "slug": "oumuamua", "in": "interstellar", "label": "1I/'Oumuamua" },
           { "slug": "borisov_2i", "in": "interstellar" },
           { "slug": "atlas_3i", "in": "interstellar" },
-          { "slug": "mercury" },
-          { "slug": "venus" },
-          { "group": "aten", "label": "Aten asteroids", "order": "a", "about": "Aten: a near-Earth asteroid whose orbit is smaller than Earth's but reaches out across it." },
+          { "slug": "mercury", "find": ["planet"] },
+          { "slug": "venus", "find": ["planet"] },
+          { "group": "aten", "find": ["ATE", "asteroid", "near-Earth"], "label": "Aten asteroids", "order": "a", "about": "Aten: a near-Earth asteroid whose orbit is smaller than Earth's but reaches out across it." },
           { "slug": "apophis", "in": "aten" },
-          { "slug": "earth" },
-          { "group": "spacecraft", "label": "Spacecraft" },
+          { "slug": "earth", "find": ["planet"] },
+          { "group": "spacecraft", "find": ["probe", "mission"], "label": "Spacecraft" },
           { "slug": "voyager_2", "in": "spacecraft" },
           { "slug": "voyager_1", "in": "spacecraft" },
           { "slug": "new_horizons", "in": "spacecraft" },
@@ -2474,7 +2506,7 @@
           { "slug": "juice", "in": "spacecraft" },
           { "slug": "psyche_spacecraft", "in": "spacecraft", "label": "Psyche spacecraft" },
           { "slug": "europa_clipper", "in": "spacecraft", "label": "Europa Clipper" },
-          { "group": "apollo", "label": "Apollo asteroids", "order": "a", "about": "Apollo: a near-Earth asteroid whose orbit is larger than Earth's and crosses it." },
+          { "group": "apollo", "find": ["APO", "asteroid", "near-Earth"], "label": "Apollo asteroids", "order": "a", "about": "Apollo: a near-Earth asteroid whose orbit is larger than Earth's and crosses it." },
           { "slug": "bennu", "in": "apollo" },
           { "slug": "ryugu", "in": "apollo" },
           { "slug": "itokawa", "in": "apollo" },
@@ -2485,10 +2517,10 @@
           { "slug": "asteroid_2023_jf", "in": "apollo" },
           { "slug": "asteroid_2024_dw", "in": "apollo" },
           { "slug": "asteroid_2024_yr4", "in": "apollo" },
-          { "group": "amor", "label": "Amor asteroids", "order": "a", "about": "Amor: a near-Earth asteroid that comes close to Earth's orbit from outside without crossing it." },
+          { "group": "amor", "find": ["AMO", "asteroid", "near-Earth"], "label": "Amor asteroids", "order": "a", "about": "Amor: a near-Earth asteroid that comes close to Earth's orbit from outside without crossing it." },
           { "slug": "eros", "in": "amor" },
-          { "slug": "mars" },
-          { "group": "belt", "label": "Main asteroid belt", "order": "a", "about": "Main belt: asteroids whose orbits lie between Mars and Jupiter." },
+          { "slug": "mars", "find": ["planet"] },
+          { "group": "belt", "find": ["MBA", "asteroid"], "label": "Main asteroid belt", "order": "a", "about": "Main belt: asteroids whose orbits lie between Mars and Jupiter." },
           { "slug": "ceres", "in": "belt" },
           { "slug": "vesta", "in": "belt" },
           { "slug": "psyche", "in": "belt" },
@@ -2496,23 +2528,23 @@
           { "slug": "steins", "in": "belt" },
           { "slug": "donaldjohanson", "in": "belt" },
           { "slug": "dinkinesh", "in": "belt" },
-          { "slug": "jupiter" },
-          { "group": "trojans", "label": "Jupiter Trojans", "order": "a", "about": "Jupiter Trojan: an asteroid that shares Jupiter's orbit, in one of two swarms ahead of and behind the planet." },
+          { "slug": "jupiter", "find": ["planet"] },
+          { "group": "trojans", "find": ["TJN", "asteroid"], "label": "Jupiter Trojans", "order": "a", "about": "Jupiter Trojan: an asteroid that shares Jupiter's orbit, in one of two swarms ahead of and behind the planet." },
           { "slug": "eurybates", "in": "trojans" },
           { "slug": "patroclus", "in": "trojans", "label": "Patroclus and Menoetius",
             "about": "The symbol marks the center of mass (barycenter) that Patroclus and Menoetius orbit together. It lies outside Patroclus itself." },
           { "slug": "polymele", "in": "trojans" },
           { "slug": "leucus", "in": "trojans" },
           { "slug": "orus", "in": "trojans" },
-          { "slug": "saturn" },
-          { "group": "centaurs", "label": "Centaurs", "order": "a", "about": "Centaur: a small body whose orbit lies between Jupiter's and Neptune's." },
+          { "slug": "saturn", "find": ["planet"] },
+          { "group": "centaurs", "find": ["CEN"], "label": "Centaurs", "order": "a", "about": "Centaur: a small body whose orbit lies between Jupiter's and Neptune's." },
           { "slug": "chariklo", "in": "centaurs" },
-          { "slug": "uranus" },
-          { "slug": "neptune" },
+          { "slug": "uranus", "find": ["planet"] },
+          { "slug": "neptune", "find": ["planet"] },
           { "slug": "pluto_barycenter", "label": "Pluto",
             "about": "The symbol marks the gravitational center (barycenter) that Pluto and its moon Charon orbit together. It lies outside Pluto itself.",
             "source_note": "the Pluto-Charon barycenter" },
-          { "group": "tno", "label": "Trans-Neptunian objects", "order": "a", "about": "Trans-Neptunian: a body whose orbit lies beyond Neptune's." },
+          { "group": "tno", "find": ["TNO", "Kuiper belt"], "label": "Trans-Neptunian objects", "order": "a", "about": "Trans-Neptunian: a body whose orbit lies beyond Neptune's." },
           { "slug": "orcus", "in": "tno",
             "about": "The symbol marks the center of mass (barycenter) that Orcus and its moon Vanth orbit together. It lies outside Orcus itself." },
           { "slug": "haumea", "in": "tno" },

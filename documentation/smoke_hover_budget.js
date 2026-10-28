@@ -54,6 +54,14 @@
 // which is the served store rather than a fixture and so cannot go stale
 // the way the Earth fixtures can (L-231 follow-up, 2026-09-15).
 //
+// ONE TEXT BOX (L-497, 2026-10-27, Tony's ruling 6a). Plotly's own hover
+// box is gone from the rooms; a tap opens the page's text box with the
+// marker's words, one sentence to a bullet, by gallery/text_box.js. Given
+// interactive.html, this suite checks the page loads that file, turns
+// Plotly's box off and prints the box through it; works five cases of the
+// box's words by hand, and shows they fail on a copy of the file that
+// does not cut sentences; and measures the phone's boxes bulleted.
+//
 // Exit code 0 on pass, 1 on failure, the same as its siblings.
 
 "use strict";
@@ -88,8 +96,38 @@ if (geomPath) { eval(fs.readFileSync(geomPath, "utf8")); }
 // its lines are counted as the page shows them.
 eval(fs.readFileSync(require("path").join(__dirname, "..", "gallery",
                                           "solar_system_figures.js"), "utf8"));
+// L-497 (2026-10-27): the one text box's words, as the page builds them:
+// the panel's sentence cut, then the box's bullets.
+eval(fs.readFileSync(path.join(__dirname, "..", "gallery", "source_list.js"), "utf8"));
+eval(fs.readFileSync(path.join(__dirname, "..", "gallery", "text_box.js"), "utf8"));
 const GF = global.GalleryFeatures;
 const EG = global.EarthGeometry;
+
+// Five worked cases for gallery/text_box.js, by hand. Returns what failed.
+function textBoxCases(TB) {
+    const bad = [];
+    const want = function (name, got, expected) {
+        if (got !== expected) { bad.push(name + ": got " + JSON.stringify(got)); }
+    };
+    if (!TB || typeof TB.bullets !== "function") { return ["no GalleryTextBox.bullets"]; }
+    const B = "&#8226; ";
+    want("title and sentences",
+         TB.bullets("Sun: Corona<br><br>The outer air. It is hot."),
+         "<b>Sun: Corona</b><br>" + B + "The outer air.<br>" + B + "It is hot.");
+    want("a '=' line joins the one before",
+         TB.bullets("X<br>Cusp: 4 solar radii<br>= 3,000,000 km (0.02 AU)"),
+         "<b>X</b><br>" + B + "Cusp: 4 solar radii = 3,000,000 km (0.02 AU)");
+    want("a bulleted line stays",
+         TB.bullets("<b>Mars</b><br>&#8226; Distance: 1.5 AU. Now."),
+         "<b>Mars</b><br>&#8226; Distance: 1.5 AU. Now.");
+    want("a soft break is a space",
+         TB.bullets("T<br>one" + (global.GalleryFeatures || {}).SOFT_BR + "two."),
+         "<b>T</b><br>" + B + "one two.");
+    want("an initial is not a sentence's end",
+         TB.bullets("T<br>Found by J. Smith. Then lost."),
+         "<b>T</b><br>" + B + "Found by J. Smith.<br>" + B + "Then lost.");
+    return bad;
+}
 // L-322 Stage D, patch D7: the renderers take KM_PER_AU and the frame's
 // angle from the SERVED cache, exactly as the page does. A missing row
 // fails this check rather than letting it test nothing.
@@ -333,17 +371,58 @@ if (pagePath) {
     }
     check("the page's label wrapper and its width were found",
           !!wrapFn && !!widthM, pagePath);
+    // L-497 (2026-10-27, Tony's ruling 6a): ONE TEXT BOX for a tap and for
+    // Go To. Plotly's own hover box is off (scene.hovermode false), a tap
+    // opens the page's box with the tapped marker's words, and the words
+    // are one sentence to a bullet, by gallery/text_box.js. The page must
+    // load the file, turn Plotly's box off, and print the box through it.
+    check("the page loads gallery/text_box.js, turns Plotly's own box off, " +
+          "and bullets the one text box",
+          page.indexOf('<script src="gallery/text_box.js"></script>') >= 0 &&
+          /hovermode:\s*false/.test(page) &&
+          page.indexOf("window.GalleryTextBox.bullets(m.text[0])") >= 0 &&
+          page.indexOf("sunLabelShow(k, ti)") >= 0,
+          pagePath);
+    const boxCases = textBoxCases(global.GalleryTextBox);
+    check("the box's words: title bold, one sentence to a bullet, a '=' line " +
+          "joined to the one before, a bulleted line kept, soft breaks joined",
+          boxCases.length === 0, boxCases.join("; ") || "five cases");
+    // The self-test: the same file with its sentence cut taken out must
+    // fail the cases above, or they could not catch a box that stops
+    // bulleting sentences.
+    (function () {
+        const src = fs.readFileSync(path.join(__dirname, "..", "gallery",
+                                              "text_box.js"), "utf8");
+        const broken = src.replace("return ss.length ? ss : [line];",
+                                   "return [line];");
+        const sandbox = {};
+        if (broken === src) {
+            check("self-test: the text box's sentence cut was found to break", false,
+                  "the line to break was not found in gallery/text_box.js");
+            return;
+        }
+        new Function("window", "globalThis", broken)(sandbox, sandbox);
+        sandbox.GallerySources = global.GallerySources;
+        sandbox.GalleryFeatures = global.GalleryFeatures;
+        check("self-test: the box's cases fail on a copy that does not cut sentences",
+              textBoxCases(sandbox.GalleryTextBox).length > 0,
+              textBoxCases(sandbox.GalleryTextBox).join("; ") || "it passed");
+    })();
     if (wrapFn && widthM) {
         const W = Number(widthM[1]);
         check("the label joins a soft break and keeps a hard one",
               wrapFn("one" + SOFT + "two<br>three", W) === "one two<br>three",
               wrapFn("one" + SOFT + "two<br>three", W));
+        const box = function (txt) {
+            return wrapFn(global.GalleryTextBox.bullets(txt), W);
+        };
         const labels = hovers.filter(h => h.ours).map(h => ({
             name: h.name,
-            lines: wrapFn(h.txt, W).split(/<br[^>]*>/i).length
+            lines: box(h.txt).split(/<br[^>]*>/i).length
         })).sort((a, b) => b.lines - a.lines);
         console.log("");
-        console.log("  The tallest labels on the phone (" + W + " characters a line):");
+        console.log("  The tallest text boxes on the phone, bulleted (" + W +
+                    " characters a line):");
         for (const l of labels.slice(0, 5)) {
             console.log("    " + String(l.lines).padStart(3) + " lines  " + l.name);
         }

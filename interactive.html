@@ -390,6 +390,17 @@
         or path, 5 arrow lengths ahead of it, pointing the way the served
         points run, which is the way the body travels; Tony chose the flat
         arrowhead and the distance from renders. gallery/direction_arrows.js.)
+     Updated: October 27, 2026 with Anthropic's Claude Opus 5.5
+       (L-497, Tony's ruling 6a: one text box for a tap and Go To in every
+        room. Plotly's own hover box is off; a tap on a marker opens the
+        page's box with that marker's words, one sentence to a bullet
+        (gallery/text_box.js), the feature's colour on a 2 px border; a
+        resting mouse opens it on a desktop. L-458: "Report a problem"
+        under every focused feature in the i panel, opening the guest
+        book's form with the room, the feature and the page written in.
+        L-496: the search box finds groups by their label and served plain
+        words; several list closed with counts, one opens whole, and a
+        group chosen from the results opens in the list.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -435,6 +446,10 @@
     <!-- The i panel's sources as a list, each web address a link
          (L-456). Its own file so that a check can require it. -->
     <script src="gallery/source_list.js"></script>
+    <!-- The words of the one text box, one sentence to a bullet (L-497).
+         Its own file so that a check can require it. After source_list.js,
+         whose sentence cut it uses. -->
+    <script src="gallery/text_box.js"></script>
     <!-- The drawer's order: each shell at the distance where it begins
          (L-460). Its own file so that a check can require it. -->
     <script src="gallery/drawer_order.js"></script>
@@ -1211,6 +1226,13 @@
             border-bottom: 1px solid var(--accent-dim);
         }
         .info-panel .info-about a:hover { color: var(--text-primary); }
+        /* L-458: "Report a problem" under the focused feature, the line
+           beside it in the footnote type. */
+        .info-focus .info-report { margin: 12px 0 0; }
+        .info-focus .info-report-why {
+            display: block; margin-top: 4px;
+            font-size: 12px; color: var(--text-secondary); font-style: italic;
+        }
         /* L-456 (Tony, 2026-10-20, from the phone: "need hyperlinks" and
            "need some kind of itemization for readability"): the sources,
            one citation to a line, in the panel's footnote type. A long
@@ -3849,6 +3871,12 @@ function buildSunLayout(halfRangeAu) {
             },
             aspectmode: "manual",
             aspectratio: { x: 1, y: 1, z: 1 },
+            // L-497 (Tony's ruling 6a, 2026-10-27): no Plotly hover box.
+            // A tap still reaches plotly_click, and the page's own text
+            // box opens with the marker's words (sunLabelShow). Read from
+            // plotly.js 2.35.2, gl3d/scene.js: hovermode only gates the
+            // box (Fx.loneHover); the click and hover events still fire.
+            hovermode: false,
         },
         paper_bgcolor: "#060a12",
         plot_bgcolor: "#060a12",
@@ -4142,7 +4170,8 @@ async function initSunExhibit() {
             // 12 s to close the box. A tap is counted at pointerdown.
             if (sunClickServedTap === sunTapSerial) { return; }
             sunClickServedTap = sunTapSerial;
-            const k = sunTraceGroup[ev.points[0].curveNumber];
+            const ti = ev.points[0].curveNumber;
+            const k = sunTraceGroup[ti];
             // L-267 click deferral, 2026-09-02. DO NOT call sunFocusOn
             // straight from here. Its relayout re-enters Plotly's
             // layoutReplot while this click dispatch has not returned,
@@ -4157,8 +4186,16 @@ async function initSunExhibit() {
             if (typeof k === "number") {
                 // The Solar System room: a tap on a body highlights its
                 // row and moves nothing (L-363 step 3b, design 3.5).
+                // L-497: in every room the tap then opens the one text
+                // box with the tapped marker's words, where Plotly's own
+                // box used to open.
                 setTimeout(function () {
-                    if (ssDrawer) { ssSelect(k, false); } else { sunFocusOn(k); }
+                    if (ssDrawer) {
+                        ssSelect(k, false);
+                        sunLabelShow(k, ti);
+                    } else {
+                        sunFocusOn(k).then(function () { return sunLabelShow(k, ti); });
+                    }
                 }, 0);
             }
         });
@@ -4561,6 +4598,16 @@ function sunLiveCamera(gd) {
 // Tapping a marker is unchanged: its own hover box, and the camera frames
 // its shell.
 //
+// AMENDED 2026-10-27, L-497, Tony's ruling 6a ("Confirmed"): ONE TEXT BOX
+// for a tap and for Go To, in every room. Plotly's own hover box is gone
+// (the layout's scene.hovermode is false, which draws no box and still
+// sends the tap); a tap on a marker opens THIS label with that marker's
+// words, and the camera frames its shell as before. On a desktop with a
+// mouse, resting the pointer on a marker opens it too, and moving off
+// closes a label the pointer opened. The words are one sentence to a
+// bullet (gallery/text_box.js) and the border carries the feature's
+// colour, two pixels wide, so the box is tied to what it describes.
+//
 // AMENDED 2026-09-15, L-318 round 5, Tony's Mode 5: ON A PORTRAIT PHONE
 // the label has no arrow and is not placed beside its marker. Tied to the
 // marker, a tall box ran off the side or the bottom of the screen, and for
@@ -4586,14 +4633,25 @@ const SUN_LABEL_OFFSET_PX = 36;
 const SUN_LABEL_FONT_PX = 12;
 const SUN_LABEL_TAP_PX = 10;
 const SUN_LABEL_TAP_MS = 500;
+const SUN_LABEL_BORDER_PX = 2;   // L-497: the feature's colour, seen
 let sunLabelGroup = -1;     // the drawer group whose label is up, or -1
+let sunLabelTrace = -1;     // L-497: the trace a tap or a pointer opened it on, or -1
+let sunLabelBy = "";        // L-497: "pointer" when a resting mouse opened it
 let sunLabelApplied = "";   // group and anchoring last sent, to skip repeats
 let sunLabelBound = false;
 
 // The group's info marker: the cross trace carrying its hover text.
+// L-497: a label opened by a tap or a pointer is on the trace that was
+// tapped, when it belongs to the group and carries words; the drawer's
+// name and Go To name the group's own, as below.
 function sunLabelMarker(k) {
     const grp = sunGroups[k];
     if (!grp || !sunPlotDiv || !sunPlotDiv.data) { return null; }
+    if (sunLabelTrace >= 0 && grp.indices.indexOf(sunLabelTrace) >= 0) {
+        const t = sunPlotDiv.data[sunLabelTrace];
+        if (t && Array.isArray(t.text) && typeof t.text[0] === "string" &&
+                Array.isArray(t.x) && t.x.length === 1) { return t; }
+    }
     // A room can name the trace a group's text box belongs to. The Solar
     // System room names each body's POSITION marker: the orbit's info
     // cross sits at an arbitrary point on the orbit, and its distance is
@@ -4615,7 +4673,11 @@ function sunLabelMarker(k) {
 // one of them. The soft token is the renderers' own
 // (GalleryFeatures.SOFT_BR).
 function sunLabelWrap(html, n) {
-    const visible = function (s) { return s.replace(/<[^>]*>/g, "").length; };
+    // An entity such as the bullet's &#8226; is one character on screen
+    // (L-497).
+    const visible = function (s) {
+        return s.replace(/<[^>]*>/g, "").replace(/&#?\w+;/g, "x").length;
+    };
     const soft = (window.GalleryFeatures && window.GalleryFeatures.SOFT_BR) || "<br soft>";
     return String(html).split(soft).join(" ").split(/<br[^>]*>/i).map(function (seg) {
         if (visible(seg) <= n) { return seg; }
@@ -4682,9 +4744,16 @@ function sunLabelRelayout(sceneAnns, pageAnns) {
     return Plotly.relayout(sunPlotDiv, upd);
 }
 
-function sunLabelShow(k) {
+// `ti` (L-497): the trace a tap or a resting pointer landed on, or none
+// for the drawer's name and Go To; `by` is "pointer" for a resting mouse.
+function sunLabelShow(k, ti, by) {
     const grp = sunGroups[k];
+    const was = [sunLabelTrace, sunLabelBy];
+    sunLabelTrace = typeof ti === "number" ? ti : -1;
+    sunLabelBy = by || "";
     if (!grp || !grp.shown || !sunPlotDiv || !window.Plotly || !sunLabelMarker(k)) {
+        sunLabelTrace = was[0];
+        sunLabelBy = was[1];
         return Promise.resolve();
     }
     sunLabelGroup = k;
@@ -4700,15 +4769,18 @@ function sunLabelRefresh() {
     if (!grp || !grp.shown || !m) { return sunLabelClose(); }
     const phone = sunPhonePortrait();
     const side = phone ? null : sunLabelSide(sunPlotDiv, m);
-    const key = sunLabelGroup + ":" +
+    const key = sunLabelGroup + ":" + sunLabelTrace + ":" +
         (phone ? "phone" : side.ax + ":" + side.ay);
     if (key === sunLabelApplied) { return Promise.resolve(); }
     sunLabelApplied = key;
     const color = grp.color || "rgb(200, 200, 200)";
+    // L-497: one sentence to a bullet, the title bold (gallery/text_box.js).
+    const words = window.GalleryTextBox
+        ? window.GalleryTextBox.bullets(m.text[0]) : m.text[0];
     const box = {
-        text: sunLabelWrap(m.text[0], SUN_LABEL_WRAP_CHARS),
+        text: sunLabelWrap(words, SUN_LABEL_WRAP_CHARS),
         align: "left", bgcolor: "rgba(17, 24, 39, 0.95)",
-        bordercolor: color, borderwidth: 1, borderpad: 6,
+        bordercolor: color, borderwidth: SUN_LABEL_BORDER_PX, borderpad: 6,
         font: { size: SUN_LABEL_FONT_PX, color: "#e6edf3" },
         captureevents: false
     };
@@ -4747,6 +4819,8 @@ function sunLabelRefresh() {
 function sunLabelClose() {
     if (sunLabelGroup < 0) { return Promise.resolve(); }
     sunLabelGroup = -1;
+    sunLabelTrace = -1;
+    sunLabelBy = "";
     sunLabelApplied = "";
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
     return sunLabelRelayout([], []);
@@ -4859,6 +4933,7 @@ function sunTapInstall(gd) {
 // where 2.35.2 keeps them this does nothing.
 let sunTapSerial = 0;          // counts presses in the plot
 let sunClickServedTap = -1;    // the press whose plotly_click was acted on
+let sunPointerKind = "";       // L-497: "mouse", "touch" or "pen", last seen
 function sunPlotlyHoverDrop(gd) {
     try {
         const scene = gd && gd._fullLayout && gd._fullLayout.scene
@@ -4884,9 +4959,16 @@ function sunLabelInstall(gd) {
     const down = new Map();
     gd.addEventListener("pointerdown", function (ev) {
         sunTapSerial += 1;             // tap lag: one focus per press
+        sunPointerKind = ev.pointerType || "";
         sunPlotlyHoverDrop(gd);        // tap lag: a new press closes Plotly's box
-        down.set(ev.pointerId, { x: ev.clientX, y: ev.clientY, t: Date.now(), multi: down.size > 0 });
+        down.set(ev.pointerId, { x: ev.clientX, y: ev.clientY, t: Date.now(),
+                                 multi: down.size > 0, serial: sunTapSerial });
         if (down.size > 1) { down.forEach(function (d) { d.multi = true; }); }
+    }, true);
+    // L-497: which kind of pointer last moved over the plot. Only a mouse
+    // opens the box by resting on a marker; a finger opens it by a tap.
+    gd.addEventListener("pointermove", function (ev) {
+        sunPointerKind = ev.pointerType || "";
     }, true);
     const lift = function (ev) {
         const d = down.get(ev.pointerId);
@@ -4896,12 +4978,37 @@ function sunLabelInstall(gd) {
         const tap = ev.type === "pointerup" && !d.multi &&
             Math.hypot(ev.clientX - d.x, ev.clientY - d.y) <= SUN_LABEL_TAP_PX &&
             (Date.now() - d.t) <= SUN_LABEL_TAP_MS;
-        setTimeout(tap ? sunLabelClose : sunLabelRefresh, 0);
+        // L-497: a tap that landed on a marker opens that marker's words
+        // (plotly_click, below), so it does not also close the box.
+        setTimeout(function () {
+            if (tap && sunClickServedTap === d.serial) { return; }
+            return tap ? sunLabelClose() : sunLabelRefresh();
+        }, 0);
     };
     window.addEventListener("pointerup", lift, true);
     window.addEventListener("pointercancel", lift, true);
     gd.on("plotly_relayout", function () {
         if (sunLabelGroup >= 0) { setTimeout(sunLabelRefresh, 0); }
+    });
+    // L-497: on a desktop, a mouse resting on a marker opens its words in
+    // the one box, as Plotly's own box did; moving off closes a box the
+    // pointer opened, and never one a tap or the drawer opened. Deferred,
+    // out of Plotly's event (L-278).
+    gd.on("plotly_hover", function (ev) {
+        if (sunPointerKind !== "mouse" || !ev || !ev.points || !ev.points.length) { return; }
+        const ti = ev.points[0].curveNumber;
+        const k = sunTraceGroup[ti];
+        if (typeof k !== "number") { return; }
+        if (sunLabelGroup === k && sunLabelTrace === ti) { return; }
+        if (sunLabelGroup >= 0 && sunLabelBy !== "pointer") { return; }
+        setTimeout(function () { sunLabelShow(k, ti, "pointer"); }, 0);
+    });
+    gd.on("plotly_unhover", function () {
+        if (sunLabelGroup >= 0 && sunLabelBy === "pointer") {
+            setTimeout(function () {
+                if (sunLabelBy === "pointer") { sunLabelClose(); }
+            }, 0);
+        }
     });
 }
 // L-463 (2026-10-21). Lines that reach far past the view are cut to
@@ -5357,9 +5464,10 @@ function ssRender() {
         const open = !!ssDrawer.folds[g];
         const on = SSD.members(ssDrawer.rows, g).filter(function (m) { return shown[m.key]; }).length;
         // L-493: while searching, a group shows open with its matches,
-        // "k of n shown", or not at all.
-        const looks = hits ? !!hits.groups[g] : open;
-        heads[h].hidden = !served || (!!hits && !hits.groups[g]);
+        // "k of n shown", or not at all. L-496: or closed with its count,
+        // found by its own label or words; or open whole, the one found.
+        const looks = hits ? SSD.searchOpen(g, hits) : open;
+        heads[h].hidden = !served || (!!hits && !SSD.searchVisible(served, hits));
         heads[h].setAttribute("aria-expanded", (served && looks) ? "true" : "false");
         heads[h].classList.toggle("on", on > 0);
         heads[h].querySelector(".fold").textContent = SSD.groupArrow(looks);
@@ -5375,7 +5483,7 @@ function ssRender() {
     }
     const findCount = document.getElementById("sun-find-count");
     if (findCount) {
-        findCount.textContent = hits ? SSD.WORDS.found(hits.n) : "";
+        findCount.textContent = hits ? SSD.WORDS.found(hits.n, hits.g) : "";
         findCount.hidden = !hits;
     }
     const drawn = ssDrawnRows();
@@ -5481,6 +5589,21 @@ function ssGroupReset(g) {
 }
 
 function ssFold(g) {
+    // L-496 (Tony's ruling of 2026-10-27: "choosing one opens it"): a group
+    // chosen from a search's results clears the search and opens that
+    // group in the list, scrolled into view, ticking nothing; the other
+    // groups stay as they were.
+    if (ssDrawer.query) {
+        ssFindSet("");
+        ssDrawer.folds[g] = true;
+        renderSunDrawer();
+        sunMeasureDrawer();
+        const head = document.querySelector('.sun-row.sun-group[data-g="' + g + '"]');
+        if (head && typeof head.scrollIntoView === "function") {
+            head.scrollIntoView({ block: "start" });
+        }
+        return;
+    }
     ssDrawer.folds[g] = !ssDrawer.folds[g];
     renderSunDrawer();
     sunMeasureDrawer();
@@ -5981,6 +6104,67 @@ function renderSunInfo(grp) {
     // inside geostationary orbit" is a note, and it is the kind of thing a
     // reader should still be able to find.
     if (grp.note) { sunSentenceList(box, grp.note); }   // L-487
+    sunReportLink(box, grp);   // L-458
+}
+
+// L-458 (Tony's idea, 2026-10-20; the words approved at talk D of
+// 2026-10-21, DESIGN_talks2_rulings_20261021.md in the orrery): a
+// "Report a problem" link under every focused feature, in every room. It
+// opens the guest book's Google Form with its message box already
+// written: the room and the feature, two prompts, and the room's
+// address. The guest book updater (tools/guestbook_updater.py) shows a
+// message beginning "Problem report" to Tony as a report, private, and
+// never offers it for the lobby. No second form, no second sheet, and
+// the visitor needs no account.
+// THE FORM: the guest book's (data/guestbook.json's form_url,
+// https://forms.gle/JD6iLZRoZd5UHmJA9), at the long address that short
+// link opens, and its message box "Leave a note about the gallery",
+// whose field the form's own page names entry.547008652. Both read from
+// the form's public page on 2026-10-27. If the form is rebuilt and the
+// box gets a new field, the link opens the form with the box empty; the
+// report still reaches the sheet as the visitor types it.
+const REPORT_FORM = {
+    url: "https://docs.google.com/forms/d/e/1FAIpQLSeuAJU852PLsdP0znalpIjn6_I-AKB1RMomob5Q-pF4yYjfaQ/viewform",
+    field: "entry.547008652"
+};
+const REPORT_WORDS = {
+    label: "Report a problem",
+    beside: "Opens our guest book with a note already started. Reports go " +
+        "privately to the person who keeps this gallery and are never shown " +
+        "in the lobby.",
+    first: "Problem report",
+    prompts: ["What looks wrong? It might be a number, a sentence, a source, " +
+              "a link, or the drawing.",
+              "If you know a better source, please name it:"],
+    page: "Page: "
+};
+
+// The message the form opens with, for this room and feature.
+function sunReportMessage(grp) {
+    const room = ((EX && EX.title) || "").replace(/^The /, "") + " room";
+    const feature = String(grp.name || "").replace(/^[^:]+:\s*/, "");
+    const page = window.location.origin + window.location.pathname +
+        "?exhibit=" + encodeURIComponent(EXHIBIT);
+    return [REPORT_WORDS.first + " -- " + room + ", " + feature]
+        .concat(REPORT_WORDS.prompts, ["", REPORT_WORDS.page + page])
+        .join("\n");
+}
+
+function sunReportLink(box, grp) {
+    const p = document.createElement("p");
+    p.className = "info-report";
+    const a = document.createElement("a");
+    a.href = REPORT_FORM.url + "?usp=pp_url&" + REPORT_FORM.field + "=" +
+        encodeURIComponent(sunReportMessage(grp));
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = REPORT_WORDS.label;
+    p.appendChild(a);
+    const why = document.createElement("span");
+    why.className = "info-report-why";
+    why.textContent = REPORT_WORDS.beside;
+    p.appendChild(why);
+    box.appendChild(p);
 }
 
 // keepFocus true pins the focus where it is. False -- the drawer's own

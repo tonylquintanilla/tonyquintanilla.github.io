@@ -111,7 +111,11 @@ const DATES = [
   ["earth", "Earth: Inner Radiation Belt", "in 2020", "IGRF-13",
    "the epoch of the field model the tilt is from, named in the sentence"],
   ["earth", "Earth: Outer Radiation Belt", "in 2020", "IGRF-13",
-   "the epoch of the field model the tilt is from, named in the sentence"]
+   "the epoch of the field model the tilt is from, named in the sentence"],
+  // L-465 (2026-10-27): Tony's Carrington bullet, the same words as the
+  // orrery's axis hover; the date is on the Carrington row's citation.
+  ["sun", "Sun: Rotation Axis", "November 9, 1853", "Differential Rotation of the Sun",
+   "when the Carrington count starts, from NASA SOHO's Differential Rotation of the Sun on the Source line"]
 ];
 
 // Findings on a ledger row, waiting their turn there. [room, feature

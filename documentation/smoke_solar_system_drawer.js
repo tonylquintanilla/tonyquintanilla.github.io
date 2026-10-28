@@ -65,6 +65,12 @@
 //      by JPL's name says so; an empty box searches nothing. Two breaks:
 //      JPL's name not searched, and punctuation not ignored. The page has
 //      the box, calls it, and Reset clears it.
+//   8b. (L-496, Tony's ruling of 2026-10-27) The search finds groups:
+//      by a group's label and its served plain words (`find`), several
+//      listed closed with their counts, one alone opened with all its
+//      bodies; a body row's words find it ("planet"); a body found by its
+//      name still opens its group as before. Two breaks: a group's own
+//      words not searched, and several groups opened rather than listed.
 //
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443: the groups,
@@ -76,6 +82,8 @@
 // spacecraft's companions, section 7, and two breaks). Updated October
 // 26, 2026 with Anthropic's Claude Opus 5.5 (L-493: find a body, section
 // 8, and two breaks; L-443: compose hands the drawer the names too).
+// Updated October 27, 2026 with Anthropic's Claude Opus 5.5 (L-496: the
+// search finds groups, section 8b, and two breaks).
 
 "use strict";
 const fs = require("fs");
@@ -252,6 +260,62 @@ function findCases(SSD) {
   want(SSD.WORDS.find === "Find a body" && SSD.WORDS.found(0) === "No body matches" &&
        SSD.WORDS.found(1) === "1 body matches" && SSD.WORDS.found(7) === "7 bodies match",
        "the search box's words are not the mock-up's");
+  return fails.concat(groupFindCases(SSD));
+}
+
+// 8b. L-496 (Tony's ruling of 2026-10-27): the search finds groups.
+// "results list matching groups closed, with counts; choosing one opens
+// it; a single match opens directly." A group is found by its label and
+// its served plain words, `find`; a body row may serve `find` too.
+function groupFindCases(SSD) {
+  const fails = [];
+  const want = function (cond, what) { if (!cond) { fails.push(what); } };
+  const rows = SSD.rowsFromServed([
+    { slug: "sun" },
+    { group: "jfc", find: ["JFc", "comet"], label: "Jupiter-family comets" },
+    { slug: "tempel_1", "in": "jfc" }, { slug: "wild_2", "in": "jfc" },
+    { group: "hyp", find: ["HYP", "comet"], label: "Hyperbolic comets" },
+    { slug: "west", "in": "hyp" },
+    { slug: "earth", find: ["planet"] }, { slug: "mars", find: ["planet"] },
+    { group: "craft", find: ["probe"], label: "Spacecraft" },
+    { slug: "juno", "in": "craft" }]);
+  const N = {
+    center: SSD.searchNames(null, "Sun", null, null),
+    tempel_1: SSD.searchNames(null, "Tempel 1", "9P/Tempel 1", "9P"),
+    wild_2: SSD.searchNames(null, "Wild 2", "81P/Wild 2", "81P"),
+    west: SSD.searchNames(null, "West", "C/1975 V1-A (West)", "C/1975 V1-A"),
+    earth: SSD.searchNames(null, "Earth", "Earth", "399"),
+    mars: SSD.searchNames(null, "Mars", "Mars", "499"),
+    juno: SSD.searchNames(null, "Juno", "Juno (spacecraft)", "-61") };
+  const hits = function (q) { return SSD.searchHits(rows, q, N); };
+  const row = function (key) { return rows.filter(function (r) { return r.key === key; })[0]; };
+  const G = SSD.GROUP_PREFIX;
+  const c = hits("comet");
+  want(c && c.g === 2 && c.listed.jfc && c.listed.hyp && c.opened === null && c.n === 0,
+       "'comet' does not list the two comet groups: " + JSON.stringify(c && [c.g, c.listed, c.opened, c.n]));
+  want(c && SSD.searchVisible(row(G + "jfc"), c) === true &&
+       SSD.searchVisible(row("tempel_1"), c) === false && SSD.searchOpen("jfc", c) === false,
+       "a group listed by 'comet' is not shown closed, its bodies hidden");
+  want(c && SSD.searchGroupCount(rows, "jfc", c) === "2 bodies" &&
+       SSD.searchGroupCount(rows, "hyp", c) === "1 body",
+       "a listed group's count: " + (c && SSD.searchGroupCount(rows, "jfc", c)));
+  want(SSD.WORDS.found(0, 2) === "2 groups match" && SSD.WORDS.found(0, 1) === "1 group matches" &&
+       SSD.WORDS.found(3, 1) === "3 bodies and 1 group match",
+       "the count line for groups: " + SSD.WORDS.found(0, 2));
+  const p = hits("probe");
+  want(p && p.opened === "craft" && SSD.searchOpen("craft", p) &&
+       SSD.searchVisible(row("juno"), p) === true &&
+       SSD.searchGroupCount(rows, "craft", p) === "1 of 1 shown",
+       "a single group found does not open with all its bodies");
+  const j = hits("jfc");
+  want(j && j.opened === "jfc", "JPL's class code does not find its group");
+  const pl = hits("planet");
+  want(pl && pl.keys.earth && pl.keys.mars && pl.n === 2 && pl.g === 0 &&
+       SSD.searchVia("earth", pl, N) === "",
+       "'planet' does not find the planets by their row's word: " + JSON.stringify(pl && pl.keys));
+  const w = hits("west");
+  want(w && w.n === 1 && w.groups.hyp === 1 && !w.listed.hyp && w.opened === null,
+       "a body found by its name no longer opens its group as before");
   return fails;
 }
 
@@ -342,6 +406,21 @@ const breaks = [
    broken({ searchHits: function (rows, q, names) {
      const h = REAL.searchHits(rows, q, names);
      return (h && /[^a-z0-9]/i.test(q)) ? { keys: {}, groups: {}, via: {}, n: 0 } : h;
+   } })],
+  ["a group's own words not searched (L-496)",
+   broken({ rowsFromServed: function (served) {
+     return REAL.rowsFromServed(served).map(function (r) {
+       return Object.assign({}, r, { find: [] });
+     });
+   } })],
+  ["several groups found opened rather than listed closed (L-496)",
+   broken({ searchHits: function (rows, q, names) {
+     const h = REAL.searchHits(rows, q, names);
+     if (h && Object.keys(h.listed).length) {
+       Object.keys(h.listed).forEach(function (g) { h.groups[g] = 1; });
+       h.listed = {};
+     }
+     return h;
    } })],
   ["the count line reading only the x axis",
    broken({ outsideCount: function (points, lo, hi) {
@@ -491,5 +570,5 @@ console.log("=== PASS: the Sun is never ticked, every row and group is listed, "
             "but a spacecraft with its companions, " +
             "rooms are offered only where they exist, groups fold and reset their bodies, " +
             "the count line counts ticked bodies outside the view, " +
-            "a search finds a body by any of its names, " +
+            "a search finds a body by any of its names and a group by its label or words, " +
             "and the page asks this file ===");

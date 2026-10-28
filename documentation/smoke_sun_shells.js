@@ -64,9 +64,11 @@ const info = shellTraces.filter(t => t.showlegend === false &&
 // L-434, the same day: the Oort cloud's three spheres are gone (Tony's
 // ruling: the clouds show its edges across their ranges). So 16 legend
 // rows and 17 info markers.
-check("16 geometry traces (9 spheres + the corona + the dust cloud + 3 Oort shapes + the galactic plane + the Alfven surface's usual range)",
-      geo.length === 16, "got " + geo.length);
-check("17 info markers, one per geometry trace and the band's own",
+// L-497 (6b, Tony, 2026-10-27: "Yes"): the streamer belt is a row of its
+// own again, so 17 legend rows and 17 info markers, one each.
+check("17 geometry traces (9 spheres + the corona + the streamer belt + the dust cloud + 3 Oort shapes + the galactic plane + the Alfven surface's usual range)",
+      geo.length === 17, "got " + geo.length);
+check("17 info markers, one per geometry trace",
       info.length === 17, "got " + info.length);
 
 function radiusOf(t){ return Math.max(...t.x.map(Math.abs), ...t.z.map(Math.abs)); }
@@ -76,17 +78,21 @@ check("photosphere drawn at 1.0 R_sun",
       near(radiusOf(byName["Sun: Photosphere"]), RSUN_KM/AU, 1e-6),
       radiusOf(byName["Sun: Photosphere"]).toExponential(4) + " AU");
 // The corona's dots lie between the surface and the Alfven surface, and
-// the streamer band is in the corona's legend group with no row of its own.
+// the streamer band has its own row (L-497, 6b; from L-410 until then it
+// sat in the corona's legend group with no row of its own).
 (function () {
   const c = byName["Sun: Corona"];
   const rs = c ? c.x.map((x, k) => Math.hypot(x, c.y[k], c.z[k]) * AU / RSUN_KM) : [];
   check("corona dots between 1 and 19.7 R_sun",
         rs.length > 0 && Math.min(...rs) >= 0.995 && Math.max(...rs) <= 19.7 * 1.002,
         rs.length ? Math.min(...rs).toFixed(3) + " to " + Math.max(...rs).toFixed(2) + " R_sun" : "no corona");
-  const band = r.traces.filter(t => t.legendgroup === "Sun: Corona" && t.showlegend === false &&
+  const band = r.traces.filter(t => t.legendgroup === "Sun: Streamer Belt (helmet and stalk)" &&
                                     !(t.marker && t.marker.symbol === "cross"));
-  check("the streamer band drawn in the corona's legend group, no row of its own",
-        band.length === 1, "got " + band.length);
+  const inCorona = r.traces.filter(t => t.legendgroup === "Sun: Corona" &&
+                                        !(t.marker && t.marker.symbol === "cross"));
+  check("the streamer band drawn on a row of its own, and the corona's row draws only the corona",
+        band.length === 1 && band[0].showlegend === true && inCorona.length === 1,
+        "band " + band.length + ", corona's row " + inCorona.length);
   const d = byName["Sun: Zodiacal Dust Cloud (F-corona)"];
   const dr = d ? d.x.map((x, k) => Math.hypot(x, d.y[k], d.z[k])) : [];
   check("dust dots out to 5.2 AU, not turned to the Sun's pole",
@@ -149,7 +155,7 @@ check("chromosphere is ABOVE the photosphere",
 const hidden = geo.filter(t => t.visible === "legendonly").map(t=>t.name).sort();
 const shown  = geo.filter(t => t.visible !== "legendonly").map(t=>t.name).sort();
 check("everything beyond 1.1 AU starts hidden",
-      hidden.length === 8 && shown.length === 8, hidden.length+" hidden / "+shown.length+" shown");
+      hidden.length === 8 && shown.length === 9, hidden.length+" hidden / "+shown.length+" shown");
 console.log("       hidden: " + hidden.join(", "));
 
 // marker separation: photosphere vs chromosphere markers must not coincide
@@ -206,8 +212,8 @@ check("missing body position reported",
 // The band is the reason the Sun needed a pole. Measured off the DRAWN
 // points by fitting the plane of the helmet, independent of poleBasis, so
 // this check can disagree with the renderer instead of echoing it (L-229).
-// L-410: the band is drawn with the corona, under its legend row.
-const band = r.traces.find(t => t.legendgroup === "Sun: Corona" && t.showlegend === false &&
+// L-497 (6b): the band is drawn on its own row.
+const band = r.traces.find(t => t.legendgroup === "Sun: Streamer Belt (helmet and stalk)" &&
                                 !(t.marker && t.marker.symbol === "cross"));
 check("streamer band drawn", !!band && band.x.length > 1000,
       band ? band.x.length + " points" : "MISSING");
@@ -292,22 +298,46 @@ check("no pole -> band and the usual range's circles refused and reported, spher
         sb.length === 2 && sb.every(x => x < 0), sb.join(", "));
   const m = ax.find(t => t.marker && t.marker.symbol === "cross");
   const h = m ? m.text[0].replace(/<br soft>/g, " ").replace(/<br>/g, "\n") : "";
+  // L-465, the gallery's half (2026-10-27): the same five bullets as the
+  // orrery's axis hover (Tony: "Confirmed"; the Carrington bullet his
+  // rewording), every number at its row's served count.
   const want = ["North pole up the gold line; the curved arrows show which way the Sun turns.",
-                "The Sun turns once every 25.3800 days, measured against the stars.",
-                "Its equator is tilted 7.25 degrees from the plane of Earth's orbit.",
+                "Rotation period: 25.3800 days, sidereal (measured against the stars), the adopted period at 16 degrees latitude.",
+                "The Sun is gas, not solid, so it does not turn as one piece: about 25 days at the equator, up to 35 days near the poles. This is called differential rotation.",
+                "Carrington rotation: the standard count of the Sun's turns, numbered from November 9, 1853. One turn is 27.28 days as sunspots are seen to come round from Earth, which is 25.3800 days against the stars, because Earth moves along its orbit meanwhile. Named for Richard Carrington, who first noted that sunspots rotate.",
+                "Tilt: 7.25 degrees to the ecliptic, the plane of Earth's orbit.",
+                "Spin: prograde, the same way the planets go round the Sun.",
                 "The turning is not animated.",
                 "Axis drawn to 1,043,550 km (0.00698 AU) -- a drawing length."];
   const missing = want.filter(w => h.indexOf(w) === -1);
-  check("the axis's hover prints Tony's approved words, the period and tilt at their served counts",
-        !!m && missing.length === 0, missing.length ? "missing: " + missing.join(" | ") : "all five lines");
+  check("the axis's hover prints the five bullets and the picture's words, every number at its served count",
+        !!m && missing.length === 0, missing.length ? "missing: " + missing.join(" | ") : "all eight lines");
   const meta = (m && m.meta) || {};
   const items = meta.source_items || [];
-  check("the i panel lists the period's and the tilt's citations, and links Solar rotation",
-        items.length === 2 && items[0].label === "Period" && items[1].label === "Tilt" &&
+  const labels = items.map(i => i.label).join(", ");
+  check("the i panel lists the six rows' citations, and links Solar rotation",
+        labels === "Period, Latitude of the adopted period, Differential rotation, at the equator, " +
+                   "Differential rotation, near the poles, Carrington rotation, Tilt" &&
         /pck00011/.test(items[0].text) && /Archinal/.test(items[0].text) &&
-        /BODY10_POLE_DEC/.test(items[1].text) &&
+        /16 deg/.test(items[1].text) && /25 days at the equator/.test(items[2].text) &&
+        /35 days at the poles/.test(items[3].text) && /9 November 1853/.test(items[4].text) &&
+        /BODY10_POLE_DEC/.test(items[5].text) &&
         meta.info_url === "https://en.wikipedia.org/wiki/Solar_rotation",
-        items.map(i => i.label).join(", "));
+        labels);
+  // A served cache built before the four rows: their bullets leave, with
+  // a warning each, and the rest print.
+  const old = JSON.parse(JSON.stringify(features));
+  const op = old.find(f => f.feature === "orientation").params;
+  ["adopted_latitude", "differential_equator", "differential_pole", "carrington_period"]
+    .forEach(k => { delete op[k]; });
+  const ro = GF.buildFeatureTraces(old, bodies, {sceneHalfRangeAu: 1.1});
+  const mo = ro.traces.find(t => t.legendgroup === "Sun: Rotation Axis" && t.marker && t.marker.symbol === "cross");
+  const ho = mo ? mo.text[0].replace(/<br soft>/g, " ") : "";
+  check("without the four rows the axis still draws, those bullets left out and warned",
+        !!mo && ho.indexOf("Carrington") === -1 && ho.indexOf("differential") === -1 &&
+        ho.indexOf("Tilt: 7.25 degrees") >= 0 &&
+        ro.warnings.some(w => w.indexOf("carrington_period: not served") !== -1),
+        ro.warnings.filter(w => w.indexOf("orientation/") !== -1).length + " warning(s)");
   const none = JSON.parse(JSON.stringify(features));
   delete none.find(f => f.feature === "orientation").params.rotation_period;
   const rn = GF.buildFeatureTraces(none, bodies, {sceneHalfRangeAu: 1.1});

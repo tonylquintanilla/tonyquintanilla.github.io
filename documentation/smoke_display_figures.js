@@ -272,9 +272,22 @@ const SOFT_BR = "<br soft>";
 // and the blank line before it, gone from every hover that carried it,
 // and every other hover byte for byte. The L-465 one is left in place,
 // unreferenced.
-const FIXTURE_AT = "dae4a7cd";
+// L-497 and L-465 (2026-10-27): the streamer belt has its own row again
+// (Tony's ruling 6b), so its hover is keyed under its own group and the
+// corona's row holds the corona's alone, its sentence on the belt now a
+// pointer to the belt's row; and the Sun's axis hover prints the five
+// bullets from served rows, with no blank line under its title.
+// Re-recorded as fixture_hovers_L497_on_7a4a03a8.json, from the cache as
+// the cache builder will write it from this config (the config's features
+// laid over the served cache's, which Cache in step holds equal): the
+// L-494 one with exactly those hovers different -- "sun/Sun: Corona",
+// "sun/Sun: Rotation Axis", "sun/Sun: Streamer Belt (helmet and stalk)"
+// new, "sun/Sun: Corona#2" gone -- and the other 44 byte for byte. Until
+// the Daily Run rebuilds the cache, this check fails on those, by name.
+// The L-494 one is left in place, unreferenced.
+const FIXTURE_AT = "7a4a03a8";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L494_on_dae4a7cd.json");
+                          "fixture_hovers_L497_on_7a4a03a8.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

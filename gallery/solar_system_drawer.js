@@ -91,6 +91,20 @@
 //              the list back as it was: the search never changes the
 //              folds (searchHits, searchVisible, searchGroupCount,
 //              searchVia, WORDS.found).
+//   GROUPS FOUND Tony's ruling of 2026-10-27 at the talk (L-496): "results
+//              list matching groups closed, with counts; choosing one
+//              opens it; a single match opens directly." A group is found
+//              by its own label and by the plain words served beside it,
+//              `find` (JPL's class code, and words such as "comet" or
+//              "asteroid"), and a body row may serve `find` too (the
+//              planets serve "planet", which is no row's label). Typing
+//              "comet" lists the comet groups as rows, closed, each with
+//              its count; choosing one clears the search and unfolds that
+//              group, ticking nothing (the page's part). When one group
+//              alone matches and no body outside it does, it shows open
+//              with all its bodies at once. A body found by its own names shows as
+//              before, its group open, "k of n shown" (searchHits'
+//              listed and opened, searchOpen; WORDS.listed, WORDS.found).
 //
 // Rows are named by KEY: the trace group the scene draws them in. That is
 // the body's slug, except the Sun's, which the assembler draws as the
@@ -98,7 +112,8 @@
 //
 // Updated October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443):
 // COMPANIONS, above. Updated October 26, 2026 with Anthropic's Claude
-// Opus 5.5 (L-493): FIND, above.
+// Opus 5.5 (L-493): FIND, above. Updated October 27, 2026 with
+// Anthropic's Claude Opus 5.5 (L-496): GROUPS FOUND, above.
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 4, 2026 with Anthropic's Claude Opus 5.5: HOME described as
 // Tony settled it (L-363); the code is unchanged. Updated October 22,
@@ -132,10 +147,17 @@
     // L-493: the search box's words (the approved mock-up).
     find: "Find a body",
     clear: "Clear the search",
-    found: function (n) {
+    found: function (n, g) {
+      const groups = g === 1 ? "1 group" : g + " groups";
+      if (g > 0) {
+        return n === 0 ? groups + (g === 1 ? " matches" : " match") :
+               (n === 1 ? "1 body" : n + " bodies") + " and " + groups + " match";
+      }
       return n === 0 ? "No body matches" :
              n === 1 ? "1 body matches" : n + " bodies match";
     },
+    // L-496: a group the search lists closed, with its count.
+    listed: function (n) { return n === 1 ? "1 body" : n + " bodies"; },
     shown: function (k, n) { return k + " of " + n + " shown"; },
     via: ["", "", "JPL's name: ", "Horizons id: "]
   };
@@ -161,6 +183,7 @@
           group: r.group,
           label: (typeof r.label === "string" && r.label) ? r.label : r.group,
           order: r.order === "a" ? "a" : null,
+          find: findWords(r.find),
           isGroup: true
         });
         return;
@@ -169,10 +192,17 @@
       out.push({
         key: r.slug === SUN_SLUG ? SUN_KEY : r.slug,
         slug: r.slug,
-        group: (typeof r["in"] === "string" && groups[r["in"]]) ? r["in"] : null
+        group: (typeof r["in"] === "string" && groups[r["in"]]) ? r["in"] : null,
+        find: findWords(r.find)
       });
     });
     return out;
+  }
+
+  // L-496: a row's served plain words, strings only.
+  function findWords(list) {
+    return Array.isArray(list)
+      ? list.filter(function (w) { return typeof w === "string" && w; }) : [];
   }
 
   function isGroup(row) { return !!(row && row.isGroup); }
@@ -368,6 +398,12 @@
   // orrery's name, JPL's name, the Horizons id]}, any of them null. Returns
   // null for an empty search, else {keys: {key: true}, groups: {group:
   // matches}, via: {key: index of the first name that matched}, n}.
+  // L-496 (2026-10-27): and the groups found by their own label or plain
+  // words: `listed` ({group: true}, shown closed with their count),
+  // `opened` (the one group, when it alone matches and no body outside it does,
+  // shown open with all its bodies), and `g`, how many groups matched. A
+  // body found only by its row's plain words ("planet") is found as by
+  // its names, with no line under it.
   function searchKey(s) {
     return String(s == null ? "" : s).toLowerCase().replace(/[^a-z0-9]+/g, "");
   }
@@ -383,29 +419,60 @@
     if (!q) { return null; }
     const keys = {}, groups = {}, via = {};
     let n = 0;
+    const holds = function (w) { return !!w && searchKey(w).indexOf(q) >= 0; };
     bodies(rows).forEach(function (r) {
       const names = (namesByKey && namesByKey[r.key]) || [];
-      for (let i = 0; i < names.length; i++) {
-        if (names[i] && searchKey(names[i]).indexOf(q) >= 0) {
-          keys[r.key] = true;
-          via[r.key] = i;
-          n++;
-          if (r.group) { groups[r.group] = (groups[r.group] || 0) + 1; }
-          return;
-        }
+      let i = -1;
+      for (let j = 0; j < names.length; j++) {
+        if (holds(names[j])) { i = j; break; }
       }
+      if (i < 0 && (r.find || []).some(holds)) { i = names.length; }
+      if (i < 0) { return; }
+      keys[r.key] = true;
+      via[r.key] = i;
+      n++;
+      if (r.group) { groups[r.group] = (groups[r.group] || 0) + 1; }
     });
-    return { keys: keys, groups: groups, via: via, n: n };
+    const matched = (rows || []).filter(function (r) {
+      return isGroup(r) && (holds(r.label) || (r.find || []).some(holds));
+    }).map(function (r) { return r.group; });
+    const listed = {};
+    let opened = null;
+    // One group found, and no body found outside it: that group opens
+    // whole ("probe" finds the Spacecraft and, inside it, Parker Solar
+    // Probe; the group shows with all twelve).
+    const outside = bodies(rows).filter(function (r) {
+      return keys[r.key] && r.group !== matched[0];
+    }).length;
+    if (matched.length === 1 && outside === 0) {
+      opened = matched[0];
+    } else {
+      matched.forEach(function (g) { if (!groups[g]) { listed[g] = true; } });
+    }
+    return { keys: keys, groups: groups, via: via, n: n,
+             listed: listed, opened: opened, g: matched.length };
   }
 
   function searchVisible(row, hits) {
     if (!hits) { return null; }
-    if (isGroup(row)) { return !!hits.groups[row.group]; }
-    return !!hits.keys[row.key];
+    if (isGroup(row)) {
+      return !!hits.groups[row.group] || !!(hits.listed && hits.listed[row.group]) ||
+        hits.opened === row.group;
+    }
+    return !!hits.keys[row.key] || (!!row.group && hits.opened === row.group);
+  }
+
+  // L-496: whether a group shows open while searching: it holds a body
+  // found by its names, or it is the one group found.
+  function searchOpen(group, hits) {
+    return !!hits && (!!hits.groups[group] || hits.opened === group);
   }
 
   function searchGroupCount(rows, group, hits) {
-    return WORDS.shown((hits && hits.groups[group]) || 0, members(rows, group).length);
+    const all = members(rows, group).length;
+    if (hits && hits.opened === group) { return WORDS.shown(all, all); }
+    if (hits && hits.listed && hits.listed[group]) { return WORDS.listed(all); }
+    return WORDS.shown((hits && hits.groups[group]) || 0, all);
   }
 
   // The line under a found body's name, when only JPL's name or its
@@ -422,6 +489,7 @@
     searchNames: searchNames,
     searchHits: searchHits,
     searchVisible: searchVisible,
+    searchOpen: searchOpen,
     searchGroupCount: searchGroupCount,
     searchVia: searchVia,
     companions: companions,

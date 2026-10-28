@@ -44,6 +44,10 @@ Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5 (L-281,
 patch 5): a fourth run changes the sheet address with s, checks a wrong
 one is refused, the new one is saved and fetched at once, and earlier
 decisions survive the change.
+Module updated: October 27, 2026 with Anthropic's Claude Opus 5.5 (L-458):
+a seventh run reads a visitor's problem report, as a room's "Report a
+problem" link writes it; it is shown as a report, never offered for the
+lobby, kept with k, never written to the book, and counted at the end.
 """
 
 import builtins
@@ -270,6 +274,37 @@ def main():
         seed = [e for e in book["entries"] if e["id"] == "seed"][0]
         check(code == 0 and "pinned" not in seed, "run 5: unpinned, the pin is gone from the file")
 
+        # ---- run 7 (L-458): a problem report from a room's i panel ----
+        report_root = make_root()
+        try:
+            report = ("Problem report -- Sun room, Corona\n"
+                      "What looks wrong? It might be a number, a sentence, a source, "
+                      "a link, or the drawing.\nThe base looks too low.\n"
+                      "Page: https://palomasorrery.com/interactive.html?exhibit=sun")
+            sheet = ("Timestamp,Your Name,Overall Gallery Experience Rating,"
+                     "Leave a note about the gallery\r\n"
+                     "9/25/2026 10:00:00,Gil,,\"" + report + "\"\r\n")
+            code, out = run(report_root, [
+                "https://docs.google.com/spreadsheets/d/e/R/pub?output=csv",
+                "k",       # keep the report
+                "q",
+            ], sheet=sheet)
+            check(code == 0, "run 7 finished (%s)" % code)
+            check("A PROBLEM REPORT" in out and "a approve" not in out,
+                  "run 7: shown as a report, and approve never offered")
+            raw, book = book_of(report_root)
+            check([e["name"] for e in book["entries"]] == ["Tony"] and b"Problem report" not in raw,
+                  "run 7: the report is not in the guest book")
+            local = json.load(open(os.path.join(report_root, gu.LOCAL)))
+            check(list(local.get("seen", {}).values()) == ["report"],
+                  "run 7: remembered as a report, so not shown again")
+            check("problem reports read 1" in out, "run 7: the last line counts the report")
+            code, out = run(report_root, ["q"], sheet=sheet)
+            check(code == 0 and "No new messages." in out,
+                  "run 7: the kept report is not shown again")
+        finally:
+            shutil.rmtree(report_root, ignore_errors=True)
+
         # ---- columns in another order ----
         rows, problem = gu.read_rows("Timestamp,Message,Name\n9/24/2026 09:00:00,Hi,Cy\n")
         check(not problem and rows and rows[0]["name"] == "Cy" and rows[0]["message"] == "Hi",
@@ -303,7 +338,7 @@ def main():
     if FAILURES:
         print("=== GUEST BOOK UPDATER: %d of %d checks FAILED" % (len(FAILURES), CHECKS[0]))
         return 1
-    print("=== GUEST BOOK UPDATER: all %d checks passed (6 scripted runs, "
+    print("=== GUEST BOOK UPDATER: all %d checks passed (8 scripted runs, "
           "self-test first)" % CHECKS[0])
     return 0
 

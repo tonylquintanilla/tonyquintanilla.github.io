@@ -12,6 +12,10 @@ WHAT IT DOES
         d  decline   it never appears, and this tool never shows it again
         l  later     it waits, and this tool shows it again next time
         q  stop      stop going through messages for now
+    A message beginning "Problem report" (L-458) is a visitor's report
+    from the "Report a problem" link in a room's i panel. It is shown
+    to you as a report and is never offered for the lobby: k keeps it
+    (read, not shown again), l leaves it for next time, q stops.
     After that it offers a small menu, so you can:
         w  write an entry of your own
         r  reply publicly under an entry
@@ -90,6 +94,11 @@ patch 7): the menu's p choice pins or unpins an entry.
 Module updated: September 28, 2026 with Anthropic's Claude Opus 5.5 (L-281,
 patch 5): the menu's s choice changes the sheet's private address and
 fetches from the new one at once; a failed fetch says to use it.
+Module updated: October 27, 2026 with Anthropic's Claude Opus 5.5 (L-458):
+a message beginning "Problem report" is a visitor's report from a room's
+i panel. It is shown as a report, kept private, and never offered for
+the lobby: the choices are k keep (read; not shown again), l later and
+q stop, and the run's last line counts the reports.
 """
 
 import csv
@@ -104,6 +113,11 @@ import time
 import urllib.request
 
 HOST_NAME = "Tony"
+
+# L-458: the first words of a visitor's report, as the room's "Report a
+# problem" link writes them (interactive.html, REPORT_FORM). A message
+# that begins so is private, never a lobby entry.
+REPORT_PREFIX = "Problem report"
 
 BOOK = os.path.join("data", "guestbook.json")
 LOCAL = os.path.join("tools", "guestbook_local.json")
@@ -376,7 +390,7 @@ def pick_entry(book):
 # ============================================================
 
 def review(rows, book, local, save, targets, by_word):
-    counts = {"approved": 0, "declined": 0, "later": 0}
+    counts = {"approved": 0, "declined": 0, "later": 0, "reports": 0}
     seen = local.setdefault("seen", {})
     pending = [r for r in rows if r["key"] not in seen]
     if not pending:
@@ -397,6 +411,21 @@ def review(rows, book, local, save, targets, by_word):
             print("   " + line)
         for heading, value in row.get("extras", []):
             print("   (private, not published) %s: %s" % (heading, value))
+        if row["message"].lstrip().startswith(REPORT_PREFIX):
+            # L-458: a report. Private, and never offered for the lobby.
+            print("   ** A PROBLEM REPORT from a room's i panel: private, never in the lobby.")
+            answer = ask("k keep (read), l later, q stop > ", {"k", "l", "q"})
+            if answer == "q":
+                counts["later"] += len(pending) - n + 1
+                break
+            if answer == "l":
+                counts["later"] += 1
+                continue
+            seen[row["key"]] = "report"
+            counts["reports"] += 1
+            save()
+            print("   Kept as a report. It will not be shown again.")
+            continue
         answer = ask("a approve, d decline, l later, q stop > ", {"a", "d", "l", "q"})
         if answer == "q":
             counts["later"] += len(pending) - n + 1
@@ -467,7 +496,7 @@ def main():
         write_json(BOOK, book)
         write_json(LOCAL, local)
 
-    counts = {"approved": 0, "declined": 0, "later": 0}
+    counts = {"approved": 0, "declined": 0, "later": 0, "reports": 0}
 
     def ask_sheet_address(intro):
         """Ask for the sheet's CSV address; save it if it is one. Returns
@@ -579,8 +608,10 @@ def main():
     changed = json.dumps(book, sort_keys=True) != before
     print("")
     print("=" * 70)
-    print("  approved %d, declined %d, waiting %d; the guest book now has %d entr%s"
+    print("  approved %d, declined %d, waiting %d, problem reports read %d; "
+          "the guest book now has %d entr%s"
           % (counts["approved"], counts["declined"], counts["later"],
+             counts["reports"],
              len(book.get("entries", [])), "y" if len(book.get("entries", [])) == 1 else "ies"))
     if changed:
         print("  CHANGED: commit data/guestbook.json in GitHub Desktop and push.")
