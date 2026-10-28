@@ -87,6 +87,8 @@ Module updated: October 26, 2026, evening, with Anthropic's Claude Opus 5.5
 (L-443: the span check reads the comet's own plan's span, the config's
 once the mirror has copied the orrery's plan; it had typed the stand-in's
 dates and failed on the first real plans.)
+Module updated: October 28, 2026 with Anthropic's Claude Opus 5.5 (L-501:
+a stand-in answer for 2026 ED138, the first body added since slice 1.)
 """
 import contextlib
 import io
@@ -178,6 +180,10 @@ ELEMS = {
     '2017 OF201': (800.0, 0.95),
     '2023 KQ14': (250.0, 0.74),
     '2014 MU69': (44.3895, 0.0369),
+    # L-501: 2026 ED138, a and e as JPL's Small-Body Database gave them on
+    # 2026-10-28 (documentation/COORD_2026_ED138_words_20261028.md in the
+    # orrery). A stand-in for the fake Horizons, never served.
+    '2026 ED138': (42.948, 0.14174),
 }
 
 
