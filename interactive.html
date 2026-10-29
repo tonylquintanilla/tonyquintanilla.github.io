@@ -2653,10 +2653,16 @@ const SUN_DATE_LINE = "Long-term averages \u00b7 no date";
 // Since 2026-10-29 a date that is a UTC day says "UTC" after it (Tony's
 // phone look of 2026-10-28, 23:39): the day the elements were retrieved,
 // and a path's first and last served days, which the builder asks of JPL
-// at UTC midnight. The elements' own date is not: the builder asks them
-// at 00:00 of JPL's TDB time scale, 69 seconds before UTC midnight, so
-// it keeps its Julian date and no UTC until the builder asks at UTC
-// midnight (recorded on L-504, the clock).
+// at UTC midnight. The elements' own date is not a UTC day: the builder
+// asks them at 00:00 on JPL's ephemeris clock, TDB, as JPL's own tables
+// are dated, and that stays so on purpose. Tony's ruling of 2026-10-29
+// (L-504): do not convert it, print it on JPL's clock, once, in the
+// same sentence -- "dated 29 October 2026, midnight on JPL's ephemeris
+// clock (TDB, 69 seconds ahead of UTC; Julian date 2461342.5)". The 69
+// seconds is the figure the builder's utc_to_tdb uses, copied from the
+// orrery's orbit_data_manager.py (37 leap seconds and TT's 32.184 s); it
+// is typed here, in the page's own account of its data, and not yet a
+// row in the orrery's store (recorded on L-504).
 const SOLAR_SYSTEM_MONTHS = ["January", "February", "March", "April",
     "May", "June", "July", "August", "September", "October", "November",
     "December"];
@@ -2671,10 +2677,9 @@ function solarSystemDay(d) {
 const JPL_HORIZONS_URL = "https://ssd.jpl.nasa.gov/horizons/";
 // Tony's phone look of 2026-10-28, 23:39: after the sentence on elements
 // measured from the Sun's centre, one plain sentence on why another
-// reference's numbers differ. Drafted 2026-10-29 for his word
-// (documentation/WORDS_gallery_L399_L502_L503_20261029.md in the orrery);
-// about the page's data, so typed here, and printed only for elements
-// measured from the Sun's centre.
+// reference's numbers differ. Drafted 2026-10-29; Tony: "approved as
+// drafted" (2026-10-29, morning). About the page's data, so typed here,
+// and printed only for elements measured from the Sun's centre.
 const SOLAR_SYSTEM_CENTRE_WORDS = "Another reference that measures this " +
     "orbit from the solar system's centre of mass, or on another date, " +
     "gives slightly different numbers, because the Sun itself moves " +
@@ -2682,9 +2687,13 @@ const SOLAR_SYSTEM_CENTRE_WORDS = "Another reference that measures this " +
 function solarSystemSourceLine(src, sourceNote) {
     if (!src) { return null; }
     // Julian date 2440587.5 is 1970-01-01 00:00, the Unix epoch.
+    // The JD's day and whether it is midnight, read on JPL's own clock:
+    // the arithmetic of a Julian date, with no conversion to UTC.
     const dated = (typeof src.epoch === "number")
         ? solarSystemDay(new Date(Math.round((src.epoch - 2440587.5) * 86400000)))
         : null;
+    const midnight = (typeof src.epoch === "number") &&
+        Math.abs((src.epoch - 0.5) - Math.round(src.epoch - 0.5)) < 1e-9;
     const got = solarSystemDay(new Date(String(src.retrieved)));
     const centre = (src.center === "@sun")
         ? "measured from the Sun's centre"
@@ -2692,8 +2701,10 @@ function solarSystemSourceLine(src, sourceNote) {
     return "JPL Horizons (" + JPL_HORIZONS_URL + "), Horizons id: " + src.query_target +
         (sourceNote ? ", " + sourceNote : "") +
         ". Osculating orbital elements " + centre +
-        (dated ? ", dated " + dated : "") +
-        " (Julian date " + src.epoch + ")" +
+        (dated ? ", dated " + dated + ", " +
+                 (midnight ? "midnight on" : "on") + " JPL's ephemeris clock" +
+                 " (TDB, 69 seconds ahead of UTC; Julian date " + src.epoch + ")"
+               : " (Julian date " + src.epoch + ")") +
         (got ? ", retrieved " + got + " UTC" : "") + "." +
         (src.center === "@sun" ? " " + SOLAR_SYSTEM_CENTRE_WORDS : "") +
         " The position shown is worked out from these for the minute" +
@@ -2984,12 +2995,15 @@ const EXHIBITS = {
             // semi-major axis, nearest first. Only a group's bodies move,
             // among themselves.
             const SSD = window.SolarSystemDrawer;
+            // L-503: and a row that is a stored drawing, the belt's cloud.
             const served = ((room.drawer || {}).rows || []).filter(function (r) {
-                return r && (typeof r.slug === "string" || typeof r.group === "string");
+                return r && (typeof r.slug === "string" || typeof r.group === "string" ||
+                             typeof r.drawing === "string");
             });
             const rawByKey = {};
             served.forEach(function (r) {
                 if (typeof r.group === "string") { rawByKey[SSD.GROUP_PREFIX + r.group] = r; }
+                else if (typeof r.drawing === "string") { rawByKey[SSD.DRAWING_PREFIX + r.drawing] = r; }
                 else { rawByKey[r.slug === "sun" ? SSD.SUN_KEY : r.slug] = r; }
             });
             const aByKey = {};
@@ -3229,6 +3243,30 @@ const EXHIBITS = {
                     warnings.push("the room's arrival names \"" + s +
                                   "\", which is not one of its rows");
                 }
+            }
+            // L-503 (Tony's ruling of 2026-10-29): a row that is a stored
+            // drawing -- the belt's cloud, first inside the Main asteroid
+            // belt group -- drawn from its row's served feature by
+            // gallery/feature_renderers.js (buildRoomCloud), in the row's
+            // own trace group, hidden until ticked like a body. Its cross
+            // is its text box's marker; Go To fits the cloud's whole
+            // extent, as it fits a body's whole orbit.
+            for (const row of allRows) {
+                if (typeof row.drawing !== "string") { continue; }
+                const key = SSD.DRAWING_PREFIX + row.drawing;
+                const label = (typeof row.label === "string" && row.label) ? row.label : row.drawing;
+                const cloud = GalleryFeatures.buildRoomCloud(row.feature, label, key,
+                    function (m) { warnings.push(m); });
+                if (!cloud.length) {
+                    warnings.push(label + " was asked for and not drawn");
+                    continue;
+                }
+                for (const t of cloud) {
+                    if (!drawn[key]) { t.visible = SUN_HIDDEN; }
+                    traces.push(t);
+                }
+                rank[key] = rows.length + 1;
+                names[key] = SSD.searchNames(label, null, null, null);
             }
             // Tony, 2026-10-26: a small arrowhead on each body's orbit or
             // path, a little ahead of the body, pointing the way it
@@ -4070,7 +4108,13 @@ async function initSunExhibit() {
         // and that shape is not drawn; the rest of the room is.
         const drawingNotes = [];
         const drawings = {};
-        for (const name of GalleryFeatures.drawingNames(payload.features || [])) {
+        // L-503: and each one a room's own row names (the belt's cloud), from
+        // the room's served rows the driver hands back.
+        const roomDrawingRows = (((payload.room || {}).drawer || {}).rows || [])
+            .filter(function (r) { return r && typeof r.drawing === "string"; })
+            .map(function (r) { return { params: r.feature }; });
+        for (const name of GalleryFeatures.drawingNames(
+                (payload.features || []).concat(roomDrawingRows))) {
             try {
                 drawings[name] = JSON.parse(await fetchTextOrThrow(
                     "data/solar-system/drawings/" + name + ".json"));
@@ -5253,6 +5297,9 @@ function sunHudInstall(gd) {
 }
 
 function sunSwatchColor(trace) {
+    // L-503: a trace whose dots each carry a colour (the belt's cloud)
+    // names its swatch in its meta.
+    if (trace.meta && typeof trace.meta.swatch === "string") { return trace.meta.swatch; }
     const m = trace.marker || {};
     const l = trace.line || {};
     if (typeof l.color === "string") { return l.color; }

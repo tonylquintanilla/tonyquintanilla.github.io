@@ -71,6 +71,15 @@
 //      bodies; a body row's words find it ("planet"); a body found by its
 //      name still opens its group as before. Two breaks: a group's own
 //      words not searched, and several groups opened rather than listed.
+//   9. (L-503, Tony's ruling of 2026-10-29) A drawing row, the belt's
+//      cloud: served {drawing, in, label, find}, read as its own row keyed
+//      "drawing:<name>", in its group, first in an "order": "a" group
+//      ahead of the bodies sorted by semi-major axis, tickable, counted
+//      with the group's rows, unticked by the group's Reset, offering no
+//      room, found by its label and words. The real config's belt group
+//      is printed with the cloud first. The page draws it (buildRoomCloud)
+//      and fetches the drawing its row names. Two breaks: the row read as
+//      a body, which sorts it after the bodies, and the row not tickable.
 //
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443: the groups,
@@ -84,6 +93,8 @@
 // 8, and two breaks; L-443: compose hands the drawer the names too).
 // Updated October 27, 2026 with Anthropic's Claude Opus 5.5 (L-496: the
 // search finds groups, section 8b, and two breaks).
+// Updated October 29, 2026 with Anthropic's Claude Opus 5.5 (L-503: a
+// drawing row, the belt's cloud, section 9, and two breaks).
 
 "use strict";
 const fs = require("fs");
@@ -105,6 +116,41 @@ const GROUPED = [
   { slug: "bennu", "in": "neo" }, { slug: "apophis", "in": "neo" }, { slug: "eros", "in": "neo" },
   { slug: "earth" }
 ];
+
+// L-503: a drawing row inside an "order": "a" group.
+const DRAWN = [
+  { slug: "sun" }, { group: "belt", label: "Main asteroid belt", order: "a" },
+  { slug: "ceres", "in": "belt" },
+  { drawing: "main_belt", "in": "belt", label: "The belt's cloud", find: ["cloud"] },
+  { slug: "vesta", "in": "belt" }, { slug: "jupiter" }
+];
+function drawingCases(SSD) {
+  const fails = [];
+  const want = function (cond, what) { if (!cond) { fails.push(what); } };
+  const rows = SSD.rowsFromServed(DRAWN);
+  const d = rows.filter(function (r) { return r.drawing === "main_belt"; })[0];
+  want(d && d.key === "drawing:main_belt" && d.group === "belt" && d.slug === null &&
+       d.label === "The belt's cloud", "a drawing row is not read as its own row in its group");
+  if (!d) { return fails; }
+  const ordered = SSD.orderGroups(rows, { ceres: 2.77, vesta: 2.36 });
+  want(ordered.map(function (r) { return r.key; }).join() ===
+       "center,group:belt,drawing:main_belt,vesta,ceres,jupiter",
+       "the drawing row does not lead its group: " +
+       ordered.map(function (r) { return r.key; }).join());
+  want(SSD.tickable(d.key), "a drawing row cannot be ticked");
+  want(SSD.groupCount(rows, "belt", {}) === "3" &&
+       SSD.groupCount(rows, "belt", { "drawing:main_belt": true }) === "1 of 3",
+       "the group's count does not count the drawing row with its bodies");
+  const reset = SSD.groupReset(rows, "belt", { "drawing:main_belt": true, ceres: true, jupiter: true },
+                               ["jupiter", "drawing:main_belt", "ceres"]);
+  want(!reset.shown["drawing:main_belt"] && !reset.shown.ceres && reset.shown.jupiter === true &&
+       reset.order.join() === "jupiter", "the group's Reset does not untick the drawing row");
+  want(SSD.roomFor(d, ["sun", "earth", "main_belt"]) === null, "a drawing row offers a room");
+  const hits = SSD.searchHits(rows, "cloud",
+                              { "drawing:main_belt": SSD.searchNames("The belt's cloud", null, null, null) });
+  want(hits && hits.keys && hits.keys["drawing:main_belt"], "the drawing row is not found by its words");
+  return fails;
+}
 
 function groupCases(SSD) {
   const fails = [];
@@ -352,7 +398,7 @@ function cases(SSD) {
        SSD.WORDS.noRoom === "No room or cards yet",
        "the visitor's words are not Tony's");
   return fails.concat(groupCases(SSD), outsideCases(SSD), companionCases(SSD),
-                      findCases(SSD));
+                      findCases(SSD), drawingCases(SSD));
 }
 
 function broken(changes) {
@@ -421,6 +467,16 @@ const breaks = [
        h.listed = {};
      }
      return h;
+   } })],
+  ["a drawing row read as a body, sorted after the bodies (L-503)",
+   broken({ rowsFromServed: function (served) {
+     return REAL.rowsFromServed(served).map(function (r) {
+       return Object.assign({}, r, { isDrawing: false });
+     });
+   } })],
+  ["a drawing row not tickable (L-503)",
+   broken({ tickable: function (k) {
+     return REAL.tickable(k) && String(k).indexOf("drawing:") !== 0;
    } })],
   ["the count line reading only the x axis",
    broken({ outsideCount: function (points, lo, hi) {
@@ -537,7 +593,10 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
   ["ssFindMount();", "the search box is never wired (L-493)"],
   ["if (reset) { ssFindSet(\"\"); }", "Reset does not clear the search (L-493)"],
   ["const hits = SSD.searchHits(ssDrawer.rows, ssDrawer.query, ssDrawer.names);", "the drawer does not search (L-493)"],
- ['const ABOUT_HREF = "index.html#about";', "the About line does not open the lobby's About card"]
+ ['const ABOUT_HREF = "index.html#about";', "the About line does not open the lobby's About card"],
+  ["GalleryFeatures.buildRoomCloud(row.feature, label, key,", "the page does not draw a drawing row (L-503)"],
+  ['typeof r.drawing === "string");', "the page does not keep a drawing row among its rows (L-503)"],
+  [".map(function (r) { return { params: r.feature }; });", "the page does not fetch the drawing a row names (L-503)"]
 ].forEach(function (c) {
   if (page.indexOf(c[0]) < 0) { failures.push(c[1]); }
 });
@@ -559,6 +618,19 @@ if (lobby.indexOf("if (hash === 'about') {") < 0) {
 ].forEach(function (c) {
   if (lobby.indexOf(c[0]) < 0) { failures.push(c[1] + " (L-480)"); }
 });
+
+// 9. (L-503) The real config's belt group, as the drawer lists it.
+(function () {
+  const ordered = REAL.orderGroups(rows, null)
+    .filter(function (r) { return r.group === "belt" && !REAL.isGroup(r); });
+  const cloud = rows.filter(function (r) { return REAL.isDrawing(r); });
+  console.log("Drawing rows (" + cloud.length + "): " +
+              (cloud.map(function (r) { return r.label + " in " + r.group; }).join(", ") || "none") +
+              "; the belt group lists " + ordered.map(function (r) { return r.key; }).join(", ") + ".");
+  if (cloud.length && (!ordered.length || !REAL.isDrawing(ordered[0]))) {
+    failures.push("the belt's cloud is not first in its group (L-503)");
+  }
+})();
 
 if (failures.length) {
   console.log("=== FAIL: " + failures.length + " ===");

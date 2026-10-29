@@ -125,6 +125,17 @@
 // groupReset and groupResetOffered added.
 // Everything that counted or ticked bodies counts and ticks bodies only;
 // a group row is never a body.
+//
+// A DRAWING ROW (L-503, Tony's ruling of 2026-10-29). The belt's cloud is
+// a row of its own, first inside the Main asteroid belt group, "ticked and
+// reset like a body, Go To fitting the cloud". It is served as
+// {drawing, in, label, find, feature}: no slug, because it is no body the
+// orrery lists. Its key is "drawing:<name>", the trace group the page draws
+// it in. It is tickable and counted with the group's rows, so the group's
+// line counts the rows it shows; Reset and the group's Reset untick it; it
+// opens no room. In an "order": "a" group it stays first, ahead of the
+// bodies sorted by their semi-major axis. Updated October 29, 2026 with
+// Anthropic's Claude Opus 5.5.
 
 (function (global) {
   "use strict";
@@ -163,6 +174,7 @@
   };
 
   const GROUP_PREFIX = "group:";   // a group row's key; never a trace group
+  const DRAWING_PREFIX = "drawing:";   // L-503: a drawing row's trace group
 
   // [{key, slug, group}] from the room's served rows, and
   // {key, group, label, order, isGroup} for a group row. A row with
@@ -188,6 +200,18 @@
         });
         return;
       }
+      if (typeof r.drawing === "string" && r.drawing) {
+        out.push({
+          key: DRAWING_PREFIX + r.drawing,
+          slug: null,
+          drawing: r.drawing,
+          label: (typeof r.label === "string" && r.label) ? r.label : r.drawing,
+          group: (typeof r["in"] === "string" && groups[r["in"]]) ? r["in"] : null,
+          find: findWords(r.find),
+          isDrawing: true
+        });
+        return;
+      }
       if (typeof r.slug !== "string" || !r.slug) { return; }
       out.push({
         key: r.slug === SUN_SLUG ? SUN_KEY : r.slug,
@@ -206,6 +230,7 @@
   }
 
   function isGroup(row) { return !!(row && row.isGroup); }
+  function isDrawing(row) { return !!(row && row.isDrawing); }
   function bodies(rows) { return (rows || []).filter(function (r) { return !isGroup(r); }); }
   function members(rows, group) {
     return (rows || []).filter(function (r) { return !isGroup(r) && r.group === group; });
@@ -285,6 +310,8 @@
       out.forEach(function (r, i) { if (!isGroup(r) && r.group === g.group) { slots.push(i); } });
       const sorted = slots.map(function (i, n) { return { r: out[i], n: n }; })
         .sort(function (p, q) {
+          // L-503: a drawing row leads its group.
+          if (isDrawing(p.r) !== isDrawing(q.r)) { return isDrawing(p.r) ? -1 : 1; }
           const a = aByKey ? aByKey[p.r.key] : undefined;
           const b = aByKey ? aByKey[q.r.key] : undefined;
           const ha = typeof a === "number" && isFinite(a);
@@ -496,6 +523,8 @@
     SUN_KEY: SUN_KEY,
     WORDS: WORDS,
     rowsFromServed: rowsFromServed,
+    DRAWING_PREFIX: DRAWING_PREFIX,
+    isDrawing: isDrawing,
     GROUP_PREFIX: GROUP_PREFIX,
     isGroup: isGroup,
     bodies: bodies,

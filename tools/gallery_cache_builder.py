@@ -129,6 +129,10 @@ position does not match the served point, or that gives no figure, serves
 nothing, named; the index's position_uncertainty lists who was asked and
 why each missing one is missing. A failed answer never costs the orbit.
 The planets and Pluto keep JPL's planetary report, from the config.)
+Module updated: October 29, 2026 with Anthropic's Claude Opus 5.5 (L-503:
+serve_drawings() also serves a stored drawing named on a room's row in
+the config's "rooms" -- the main belt's cloud, the Solar System room's
+own row -- which the served index does not hold.)
 
 Role: cache
 Domain: cache_builder
@@ -1826,7 +1830,7 @@ def _drawing_names(node, found=None):
     return found
 
 
-def serve_drawings(staging, index, drawings_dir):
+def serve_drawings(staging, index, drawings_dir, rooms=None):
     """L-421 (2026-10-11, Tony's option A): copy each stored drawing the
     served features name into staging/drawings/<name>.json, byte for byte
     (line endings made LF), from the copy tools/pull_drawings.py keeps in
@@ -1836,7 +1840,11 @@ def serve_drawings(staging, index, drawings_dir):
     cache would otherwise
     serve a feature that names a drawing it does not hold. Returns
     {name: dots} for the run manifest."""
-    names = sorted(_drawing_names(index.get('objects', {})))
+    # L-503 (2026-10-29): and each one a room's row names -- the main
+    # belt's cloud, the Solar System room's own row -- read from the
+    # config's "rooms", which the cache does not hold.
+    names = sorted(_drawing_names(index.get('objects', {})) |
+                   _drawing_names(rooms or {}))
     served = {}
     if not names:
         return served
@@ -2754,7 +2762,8 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
         # L-421 (2026-10-11): the stored drawings the features name, into
         # the served cache beside coverage_index.json.
         run_manifest['drawings'] = serve_drawings(
-            staging, index, out_dir.parent / 'drawings')
+            staging, index, out_dir.parent / 'drawings',
+            rooms=config.get('rooms'))
         assert_structural(index, staging)
         shrink_gate(staging, out_dir if (out_dir / 'raw').exists() else None, warn,
                     replanned=run_manifest.get('replanned', ()))

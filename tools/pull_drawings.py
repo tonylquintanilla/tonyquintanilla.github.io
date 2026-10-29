@@ -16,6 +16,9 @@ WHAT THIS IS
     WHICH drawings is read from data/objects_config.json: every feature
     whose `drawing` block names one under "dots". So a drawing joins the
     pull by being named in the config, with nothing to change here.
+    Since L-503 (2026-10-29) that is a feature under an object or on a
+    room's row in the "rooms" section: the main belt's cloud is the
+    Solar System room's own row, not any body's shell.
 
     The cache builder then copies each named drawing into the served
     cache, data/solar-system/drawings/, which is the file the browser
@@ -64,6 +67,9 @@ cache builder read them.)
 Module updated: October 20, 2026 with Anthropic's Claude Opus 5.5
 (L-410 with L-131: solar radii join the units, for the Sun's corona; the
 zodiacal dust cloud is in AU, like the Hills cloud.)
+Module updated: October 29, 2026 with Anthropic's Claude Opus 5.5
+(L-503: a drawing named on a room's row is pulled too, so the main belt's
+cloud, the Solar System room's row, joins by being named there.)
 """
 
 import json
@@ -107,6 +113,7 @@ def named_drawings(config):
                 walk(value)
 
     walk(config.get("objects"))
+    walk(config.get("rooms"))      # L-503: a room's own row, the belt's cloud
     return sorted(names)
 
 

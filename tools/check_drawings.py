@@ -100,6 +100,12 @@ stored drawings, are checked by their mechanism: between their served
 edges, and the tide's dots thickest halfway between the galaxy's plane
 and its served pole, as |sin b cos b| gives; with a dot planted inside
 the inner edge in each, and the tide's frame turned.)
+Module updated: October 29, 2026 with Anthropic's Claude Opus 5.5
+(L-503: the main belt's cloud, the eighth stored drawing and the first
+that is a room's own row, is checked by its ends: every dot between its
+row's distance table's two ends and within its latitude table's last
+entry of the ecliptic; with a dot planted inside the near edge and the
+frame turned.)
 """
 
 import hashlib
@@ -167,6 +173,13 @@ OUTER = {
                       "pole": "galactic_pole"},
 }
 OUTER_SLACK_AU = 1.0           # the files round each coordinate to 1 AU
+# L-503 (2026-10-29): a drawing that is a room's own row, not a body's
+# shell -- the main belt's cloud, the Solar System room's row. It records
+# no plane; its ends are its row's served tables: every dot between the
+# distance table's 0th and 100th entries, and within the latitude table's
+# 100th entry of the ecliptic, each allowing half a unit of the entry's
+# last declared figure (the tables are served rounded).
+ROOM_ROWS = {"main_belt": ("solar-system", "main_belt")}
 SIN_B_EDGES = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
 COVERAGE = os.path.join(ROOT, "data", "solar-system", "coverage_index.json")
 
@@ -427,8 +440,53 @@ def outer_problems(name, content, edges):
     return out
 
 
+def _half_unit(value, figures):
+    return 0.5 * 10.0 ** (math.floor(math.log10(abs(value))) - int(figures) + 1)
+
+
+def room_edges(config, name):
+    """L-503: a room row's drawing's edges, from the row's served tables,
+    or None when the row or a table is not served."""
+    room, drawing = ROOM_ROWS[name]
+    rows = ((((config.get("rooms") or {}).get(room) or {}).get("drawer") or {})
+            .get("rows") or [])
+    row = [r for r in rows if isinstance(r, dict) and r.get("drawing") == drawing]
+    if not row:
+        return None
+    feature = row[0].get("feature") or {}
+    dist, lat = feature.get("distance") or {}, feature.get("latitude") or {}
+    try:
+        near, far = float(dist["value"]["0"]), float(dist["value"]["100"])
+        top = float(lat["value"]["100"])
+        return {"near": near, "far": far, "lat": top,
+                "d_half": _half_unit(far, dist["figures"]),
+                "l_half": _half_unit(top, lat["figures"])}
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def room_problems(name, content, edges):
+    """L-503: a room row's drawing held to its row's tables."""
+    if edges is None:
+        return ["%s: its room's row serves no distance and latitude tables "
+                "to judge it by" % name]
+    out = []
+    r_min, r_max, lat_max = float("inf"), 0.0, 0.0
+    for x, y, z in zip(content["x"], content["y"], content["z"]):
+        r = math.sqrt(x * x + y * y + z * z)
+        r_min, r_max = min(r_min, r), max(r_max, r)
+        lat_max = max(lat_max, abs(math.degrees(math.asin(z / r))) if r else 0.0)
+    if r_min < edges["near"] - edges["d_half"] or r_max > edges["far"] + edges["d_half"]:
+        out.append("%s: its dots run from %.3f to %.3f AU, outside the served "
+                   "edges %s to %s AU" % (name, r_min, r_max, edges["near"], edges["far"]))
+    if lat_max > edges["lat"] + edges["l_half"]:
+        out.append("%s: its dots reach %.1f deg from the ecliptic, past its "
+                   "row's latitude %s deg" % (name, lat_max, edges["lat"]))
+    return out
+
+
 def check_one(name, pulled_text, served_text, paper_tilt, edges=None,
-              fades=None, outer=None):
+              fades=None, outer=None, rooms=None):
     """Failures for one drawing, as sentences, and what was examined."""
     failures = []
     if pulled_text is None:
@@ -461,6 +519,9 @@ def check_one(name, pulled_text, served_text, paper_tilt, edges=None,
         # L-434: the outer cloud records no plane; its mechanism is checked.
         failures.extend(outer_problems(name, content,
                                        (outer or {}).get(name)))
+    elif name in ROOM_ROWS:
+        # L-503: a room's own row records no plane; its ends are checked.
+        failures.extend(room_problems(name, content, (rooms or {}).get(name)))
     elif not isinstance(recorded, (int, float)) or abs(round(tilt, 1) - recorded) > 0.05:
         failures.append("%s: the plane through the dots is tilted %.1f deg; the "
                         "file records %s" % (name, tilt, recorded))
@@ -486,6 +547,19 @@ def planted(name, pulled_text, paper_tilt, fades=None, outer=None):
     out.append(("the served copy differs", pulled_text, pulled_text + " ",
                 "served copy is not the pulled one"))
     turned = json.loads(pulled_text)
+    if name in ROOM_ROWS:
+        # L-503: a dot moved inside the near edge, and the frame turned,
+        # which stands the belt on its edge, far from the ecliptic.
+        inside = json.loads(pulled_text)
+        inside["x"][0], inside["y"][0], inside["z"][0] = 0.5, 0.0, 0.0
+        text = json.dumps(inside)
+        out.append(("a dot moved inside the near edge", text, text,
+                    "outside the served edges"))
+        turned["x"], turned["z"] = turned["z"], turned["x"]
+        text = json.dumps(turned)
+        out.append(("the frame turned (x and z swapped)", text, text,
+                    "past its row's latitude"))
+        return out
     if name in OUTER:
         # L-434: a dot inside the inner edge, and for the tide the frame
         # turned, which moves its pole away from the served one.
@@ -573,6 +647,7 @@ def main():
     fades = dict((n, fade_edges(config, n)) for n in FADES)
     obliquity = obliquity_deg()
     outer = dict((n, outer_edges(config, n, obliquity)) for n in OUTER)
+    rooms = dict((n, room_edges(config, n)) for n in ROOM_ROWS)
     for planted_name in names:
         if texts[planted_name][0] is None:
             continue
@@ -580,7 +655,7 @@ def main():
                 planted_name, texts[planted_name][0], paper, fades, outer):
             total += 1
             fails, _ = check_one(planted_name, pulled_text, served_text,
-                                 paper, edges, fades, outer)
+                                 paper, edges, fades, outer, rooms)
             hit = any(expect in line for line in fails)
             caught += hit
             print("  planted in %-15s %-38s %s" % (planted_name + ":", label,
@@ -593,7 +668,7 @@ def main():
 
     for name in names:
         fails, info = check_one(name, texts[name][0], texts[name][1], paper,
-                                edges, fades, outer)
+                                edges, fades, outer, rooms)
         problems.extend(fails)
         if info:
             shape = ("flattened, middle plane tilted %.1f deg" % info["tilt"]
@@ -602,6 +677,7 @@ def main():
                      else "about the served galactic pole"
                      if name in OUTER and "pole" in OUTER[name]
                      else "random directions" if name in OUTER
+                     else "a room's own row" if name in ROOM_ROWS
                      else "plane tilted %.1f deg" % info["tilt"])
             print("  %-15s %d dots, %s (%s), "
                   "served copy %s, sha256 %s"
@@ -610,6 +686,7 @@ def main():
                      else "between the served edges, thinning out"
                      if name in FADES
                      else "between the served edges" if name in OUTER
+                     else "between its row's tables' ends" if name in ROOM_ROWS
                      else "the body frame's equator",
                      "MISSING" if texts[name][1] is None else
                      "matches" if texts[name][1] == texts[name][0] else "DIFFERS",

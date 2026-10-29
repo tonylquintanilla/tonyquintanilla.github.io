@@ -86,6 +86,17 @@
 // is held to its served cache: with an uncertainty, no sentence; without
 // one, the sentence -- and once a build has asked, a small body neither
 // served one nor named as missing fails, by name.
+// Updated October 29, 2026 with Anthropic's Claude Opus 5.5 (L-503): part
+// 9, the belt's cloud, the room's drawing row. Built with the real
+// gallery/feature_renderers.js from the served row and the stored
+// drawing: its words must be the orrery's, every number from its served
+// row by the orrery's print, worked out here by the check's own
+// arithmetic, with no kilometres (the tables are served rounded); every
+// dot must lie between the distance table's two ends and within its
+// latitude table's last entry; and its cross must sit just past the far
+// end, off every axis line. Two planted faults first: the class bounds
+// printed without their trailing zero, and the cross placed at the 95th
+// entry.
 
 "use strict";
 const fs = require("fs");
@@ -351,7 +362,11 @@ const selfFailures = [];
    "return { km: u, errKm: u, kind:", "return { km: u, errKm: u / 2, kind:"],
   ["the sentence printed for a body with its uncertainty",
    "note: (src.km === null) ? NO_SOURCE_ACCURACY : null,",
-   "note: (src.kind === 'uncertainty' || src.km === null) ? NO_SOURCE_ACCURACY : null,"]
+   "note: (src.kind === 'uncertainty' || src.km === null) ? NO_SOURCE_ACCURACY : null,"],
+  // Tony, 2026-10-29: a body JPL gave no uncertainty for (Halley,
+  // Ikeya-Seki and Bennu on that day's build) must still say so.
+  ["the sentence dropped for a body JPL gave no uncertainty for",
+   "note: (src.km === null) ? NO_SOURCE_ACCURACY : null,", "note: null,"]
 ].forEach(function (fault) {
   if (uncertaintyWorked(loadWith(fault[1], fault[2])).length === 0) {
     selfFailures.push(fault[0] + " passed the uncertainty's worked cases");
@@ -409,7 +424,8 @@ console.log("Self-test: the worked cases fail on a Report test one place " +
             "four figures, on its error's place ignored, and on an open " +
             "orbit printed; a spacecraft's on its error ignored and on " +
             "the sentence dropped; a small body's uncertainty on its " +
-            "3-sigma halved and on the sentence printed beside it.");
+            "3-sigma halved, on the sentence printed beside it, and on " +
+            "the sentence dropped where JPL gave none.");
 
 // ---- 1. worked cases ----------------------------------------------
 const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF),
@@ -666,6 +682,123 @@ crafts.forEach(function (slug) {
   if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
 });
 
+// ---- 9. the belt's cloud (L-503) -----------------------------------------
+const RENDERERS = path.join(root, "gallery", "feature_renderers.js");
+function loadRenderers(from, to) {
+  const src = fs.readFileSync(RENDERERS, "utf8");
+  if (from && src.indexOf(from) < 0) {
+    console.log("SELF-TEST CANNOT RUN: the text it breaks is not in " +
+                "gallery/feature_renderers.js: " + from);
+    process.exit(1);
+  }
+  const sandbox = {};
+  new Function("window", from ? src.replace(from, to) : src)(sandbox);
+  return sandbox.GalleryFeatures;
+}
+const beltRow = (((room.drawer || {}).rows) || []).filter(function (r) {
+  return r && typeof r.drawing === "string";
+})[0];
+const beltDrawingPath = path.join(root, "data", "drawings", "main_belt.json");
+let beltLine = "no drawing row is served";
+function beltIssues(GF) {
+  const out = [];
+  if (!beltRow) { return ["the room serves no drawing row (the belt's cloud)"]; }
+  if (!fs.existsSync(beltDrawingPath)) {
+    return ["data/drawings/main_belt.json is not pulled (the gallery run's Drawings pull fetches it)"];
+  }
+  GF.setFrameConstants(cov.frame_constants);
+  GF.setDrawings({ main_belt: JSON.parse(fs.readFileSync(beltDrawingPath, "utf8")) });
+  const f = beltRow.feature || {};
+  const warnings = [];
+  const traces = GF.buildRoomCloud(f, beltRow.label, "drawing:main_belt",
+                                   function (m) { warnings.push(m); });
+  warnings.forEach(function (w) { out.push("the belt's cloud: " + w); });
+  if (traces.length !== 2) { out.push("the belt's cloud is not a cloud and a cross"); return out; }
+  // The check's own print of each number, the orrery's rule.
+  const commas = function (n) { return Math.round(n).toLocaleString("en-US"); };
+  const g = function (v, fig) {
+    let t = Number(v).toPrecision(Number(fig));
+    if (t.indexOf(".") >= 0) { t = t.replace(/0+$/, "").replace(/\.$/, ""); }
+    return t;
+  };
+  const D = f.distance || {}, H = f.height || {}, L = f.latitude || {};
+  const au = function (node, k) { return g(node.value[k], node.figures) + " AU"; };
+  const want = "This cloud shows how far the main asteroid belt reaches, measured from " +
+    commas(f.sample_orbits.value) + " of JPL's main-belt orbits. The dots are not asteroids: " +
+    "they are placed at random inside that measured spread, so the cloud is the same on every " +
+    "date. JPL classes an asteroid a Main-belt Asteroid (MBA) when its semi-major axis, its " +
+    "average distance from the Sun, is between " + f.a_inner.value.toFixed(1) + " and " +
+    f.a_outer.value.toFixed(1) + " AU, and its perihelion, its nearest point to the Sun, is " +
+    "beyond " + g(f.q_min.value, f.q_min.figures) + " AU. Following those orbits all the way " +
+    "round, the asteroids come as near as " + au(D, "0") + " and go as far as " + au(D, "100") +
+    ". Nine tenths of the time they are between " + au(D, "5") + " and " + au(D, "95") +
+    " from the Sun, and within " + au(H, "90") + " of the plane of Earth's orbit; half the " +
+    "time within " + au(H, "50") + ". The " + commas(f.sample_orbits.value) + " are the " +
+    "brightest of JPL's " + commas(f.jpl_count.value) + " main-belt asteroids, absolute " +
+    "magnitude " + g(f.h_max.value, 6) + " or brighter, which are roughly the larger ones. " +
+    "Which asteroids to measure was our choice, made to keep the cloud readable; it is not a " +
+    "measurement.";
+  const cross = traces[1];
+  const about = (cross.meta || {}).about;
+  if (about !== want) {
+    out.push("the belt's words are not the orrery's: " + JSON.stringify(about).slice(0, 200));
+  }
+  if (/million km|\{/.test(String(cross.text[0]))) {
+    out.push("the belt's text box prints kilometres or an unfilled name");
+  }
+  // The drawing's ends, against its rows, allowing the tables' rounding.
+  const lo = D.value["0"], hi = D.value["100"], latHi = L.value["100"];
+  const halfD = 0.5 * Math.pow(10, Math.floor(Math.log10(hi)) - Number(D.figures) + 1);
+  const halfL = 0.5 * Math.pow(10, Math.floor(Math.log10(latHi)) - Number(L.figures) + 1);
+  const c = traces[0];
+  let rMin = Infinity, rMax = 0, latMax = 0;
+  for (let i = 0; i < c.x.length; i++) {
+    const r = Math.sqrt(c.x[i] * c.x[i] + c.y[i] * c.y[i] + c.z[i] * c.z[i]);
+    rMin = Math.min(rMin, r); rMax = Math.max(rMax, r);
+    latMax = Math.max(latMax, Math.abs(Math.asin(c.z[i] / r)) * 180 / Math.PI);
+  }
+  if (rMin < lo - halfD || rMax > hi + halfD) {
+    out.push("the belt's dots run from " + rMin.toFixed(3) + " to " + rMax.toFixed(3) +
+             " AU, outside its rows' " + lo + " to " + hi + " AU");
+  }
+  if (latMax > latHi + halfL) {
+    out.push("the belt's dots reach " + latMax.toFixed(1) + " degrees from the ecliptic, past " +
+             "its row's " + latHi);
+  }
+  // The cross: just past the far end, off every axis line.
+  const cx = cross.x[0], cy = cross.y[0], cz = cross.z[0];
+  const cr = Math.sqrt(cx * cx + cy * cy + cz * cz);
+  const off = Math.min.apply(null, [cx, cy, cz].map(function (v) {
+    return Math.acos(Math.min(1, Math.abs(v) / cr)) * 180 / Math.PI;
+  }));
+  if (Math.abs(cr - hi * 1.02) > 1e-9 || off < 15) {
+    out.push("the belt's cross sits at " + cr.toFixed(3) + " AU, " + off.toFixed(0) +
+             " degrees off an axis line; it belongs at " + (hi * 1.02).toFixed(3) + " AU, off them");
+  }
+  if (!(cross.meta && cross.meta.label_target === true && cross.meta.info_url &&
+        (cross.meta.source_items || []).length >= 3)) {
+    out.push("the belt's cross does not carry its text box, link and citations");
+  }
+  beltLine = c.x.length + " dots, " + rMin.toFixed(3) + " to " + rMax.toFixed(3) + " AU from the " +
+    "Sun (rows " + lo + " to " + hi + "), within " + latMax.toFixed(1) + " degrees of the " +
+    "ecliptic (row " + latHi + "); cross at " + cr.toFixed(3) + " AU, " + off.toFixed(0) +
+    " degrees off the nearest axis line; " + (cross.meta.source_items || []).length + " citations";
+  return out;
+}
+[
+  ["the class bounds printed without their trailing zero",
+   "a_inner: cloudFigures(cfg.a_inner, fixedFigures),", "a_inner: cloudFigures(cfg.a_inner, pyG),"],
+  ["the belt's cross placed at the 95th entry",
+   "var R = far.value * 1.02;", "var R = d95.value * 1.02;"]
+].forEach(function (fault) {
+  if (beltIssues(loadRenderers(fault[1], fault[2])).length === 0) {
+    failures.push("SELF-TEST: the belt's checks stayed green with " + fault[0]);
+  }
+});
+beltIssues(loadRenderers()).forEach(function (f) { failures.push(f); });
+[["GalleryFeatures.buildRoomCloud(", "the page does not draw the belt's cloud"]]
+  .forEach(function (pair) { if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); } });
+
 // ---- report -----------------------------------------------------------
 console.log("");
 console.log("Distances at each body's served minute (data/solar-system/" +
@@ -694,6 +827,9 @@ console.log("Orbit lines as each body's hover prints them, " + orbits.length + "
 orbits.forEach(function (t) {
   console.log("  " + (t[0] + "                  ").slice(0, 18) + t[1]);
 });
+console.log("");
+console.log("The belt's cloud (L-503): " + beltLine + ". Self-test: red on the class " +
+            "bounds printed without their trailing zero and on the cross at the 95th entry.");
 console.log("");
 console.log("Path distances at each one's served minute, " +
             craftTable.length + " paths (spacecraft and comets on open paths):");

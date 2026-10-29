@@ -235,6 +235,14 @@
  *   -- and the spin as a served word; the i panel lists the four new
  *   rows' citations. L-497, 6b: the streamer belt serves no drawn_with
  *   and has its own row again; the joining mechanism stays.)
+ * Module updated: October 29, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-503: buildRoomCloud, a stored drawing that is a room's own row
+ *   rather than a body's shell -- the main belt's cloud in the Solar
+ *   System room. Its words are the orrery's, each number named in braces
+ *   and printed from its served row by the orrery's own print rule; the
+ *   distances in AU only, since the tables are served rounded and with no
+ *   kilometres. L-502: the three outer clouds' crosses turn off the x axis
+ *   by their drawings' served info_polar_deg.)
  */
 
 (function (global) {
@@ -2621,6 +2629,142 @@
     return HOVER_TAIL ? hover + "<br><br>" + HOVER_TAIL : hover;
   }
 
+  /*
+   * L-503 (Tony's ruling of 2026-10-29): a stored drawing that is a room's
+   * own row, not a body's shell -- the main asteroid belt's cloud, first
+   * inside the Solar System room's Main asteroid belt group, ticked and
+   * reset like a body. The orrery places the dots
+   * (main_belt_sampler.drawn_main_belt) and the page draws them as given.
+   * cfg is the row's served "feature"; key is the row's trace group.
+   *
+   * THE WORDS are the orrery's main_belt_sampler.hover_text(), served as
+   * cfg.hover with each number named in braces, and each number is
+   * printed from its served row (written by tools/mirror_constants.py) by
+   * the orrery's own rule: a count with separators, the class bounds and
+   * a table entry at their declared figures (Python's %g, trailing zeros
+   * dropped). The orrery also prints each distance in kilometres, worked
+   * out from its store's full digits; the website is served the tables
+   * rounded to their declared figures and with no kilometres, and working
+   * kilometres out of a rounded number prints 637 million where the
+   * orrery prints 638 (interactive-exhibit: a hover never converts a
+   * served number to print it). So the website prints the AU alone,
+   * until the orrery's export serves the kilometres (L-503).
+   *
+   * THE CROSS sits just past the farthest drawn point, the distance
+   * table's 100th entry times 1.02, turned info_azimuth_deg round from
+   * the x axis in the ecliptic, off every axis line (L-502). It carries
+   * the words, and it is the row's text-box marker (meta.label_target),
+   * so naming the row or tapping the cross opens one box, and the room
+   * frames the row by it as it frames a body by its marker.
+   */
+  function pyG(v, figures) {
+    var n = Math.max(1, Math.min(21, Math.round(Number(figures))));
+    var t = Number(v).toPrecision(n);
+    if (t.indexOf("e") < 0 && t.indexOf(".") >= 0) {
+      t = t.replace(/0+$/, "").replace(/\.$/, "");
+    }
+    return t;
+  }
+  function fixedFigures(v, figures) {
+    return Number(v).toPrecision(Math.max(1, Math.min(21, Math.round(Number(figures)))));
+  }
+  function cloudCommas(n) {
+    return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  function cloudCount(node) {
+    return (isDict(node) && typeof node.value === "number" && isFinite(node.value))
+      ? cloudCommas(node.value) : null;
+  }
+  function cloudFigures(node, fmt) {
+    if (!isDict(node) || typeof node.value !== "number" || !isFinite(node.value)) {
+      return null;
+    }
+    return fmt(node.value, node.figures);
+  }
+  function cloudEntry(node, pct) {
+    if (!isDict(node) || !isDict(node.value)) return null;
+    var v = node.value[pct];
+    if (typeof v !== "number" || !isFinite(v)) return null;
+    var f = (typeof node.figures === "number" || typeof node.figures === "string")
+      ? node.figures : null;
+    return f === null ? null : { value: v, text: pyG(v, f) + " AU" };
+  }
+  function buildRoomCloud(cfg, label, key, warn) {
+    var where = "the room's row " + key;
+    if (!isDict(cfg) || !isDict(cfg.drawing)) {
+      warn(where + ": no feature with a drawing block is served -- not drawn");
+      return [];
+    }
+    var d = cfg.drawing;
+    var dots = servedDots(d, where, warn);
+    if (dots === null) return [];
+    var near = cloudEntry(cfg.distance, "0"), far = cloudEntry(cfg.distance, "100");
+    var d5 = cloudEntry(cfg.distance, "5"), d95 = cloudEntry(cfg.distance, "95");
+    var h90 = cloudEntry(cfg.height, "90"), h50 = cloudEntry(cfg.height, "50");
+    var vals = {
+      sample_orbits: cloudCount(cfg.sample_orbits),
+      jpl_count: cloudCount(cfg.jpl_count),
+      h_max: cloudFigures(cfg.h_max, function (v) { return pyG(v, 6); }),
+      // The class bounds keep their declared figures, trailing zero and
+      // all, as the orrery prints them ("2.0 and 3.2 AU").
+      a_inner: cloudFigures(cfg.a_inner, fixedFigures),
+      a_outer: cloudFigures(cfg.a_outer, fixedFigures),
+      q_min: cloudFigures(cfg.q_min, pyG),
+      near: near && near.text, far: far && far.text,
+      d5: d5 && d5.text, d95: d95 && d95.text,
+      h90: h90 && h90.text, h50: h50 && h50.text
+    };
+    Object.keys(vals).forEach(function (k) { if (vals[k] === null) delete vals[k]; });
+    var words = servedSentence(cfg.hover, vals, where, warn);
+    if (words === null || far === null || near === null) {
+      warn(where + ": its words or its distance table are not served whole -- not drawn");
+      return [];
+    }
+    var hover = label + "<br><br>" + words.split("\n").map(wrapHover).join("<br>");
+    // Rendering settings: the orrery's colour ramp, reddish-brown near
+    // the Sun to grey-brown far out, across the table's two ends.
+    var colors = [];
+    for (var i = 0; i < dots.x.length; i++) {
+      var r = Math.sqrt(dots.x[i] * dots.x[i] + dots.y[i] * dots.y[i] +
+                        dots.z[i] * dots.z[i]);
+      var c = Math.max(0, Math.min(1, (r - near.value) / (far.value - near.value)));
+      colors.push("rgb(" + Math.floor(180 + 30 * (1 - c)) + ", " +
+                  Math.floor(140 + 20 * (1 - c)) + ", " +
+                  Math.floor(100 + 30 * c) + ")");
+    }
+    var cloud = cloudTrace(dots.x, dots.y, dots.z, [0, 0, 0], label, colors,
+                           d.opacity, d.marker_size);
+    var az = (typeof d.info_azimuth_deg === "number" ? d.info_azimuth_deg : 0) *
+      Math.PI / 180;
+    var R = far.value * 1.02;
+    var color = cfg.color || "rgb(195, 150, 115)";
+    var marker = infoMarker(R * Math.cos(az), R * Math.sin(az), 0, color,
+                            withTail(hover), key, cfg.info_border);
+    // The i panel: the words, one sentence to a bullet where the room
+    // shows them, the link, and the rows' citations, each once.
+    var items = [], seen = {};
+    ["sample_orbits", "jpl_count", "a_inner", "a_outer", "q_min", "distance",
+     "latitude", "height", "h_max"].forEach(function (k) {
+      var n = cfg[k];
+      if (isDict(n) && typeof n.source === "string" && n.source && !seen[n.source]) {
+        seen[n.source] = true;
+        items.push({ label: null, text: n.source, note: null });
+      }
+    });
+    var meta = { label_target: true, about: words.replace(/\n/g, " ") };
+    if (typeof cfg.info_url === "string" && cfg.info_url) { meta.info_url = cfg.info_url; }
+    if (items.length) {
+      meta.source = items.map(function (it) { return it.text; }).join("; ");
+      meta.source_items = items;
+    }
+    marker.meta = meta;
+    cloud.legendgroup = key;
+    cloud.name = label;
+    // Its dots carry a colour each, so the drawer's swatch is the served one.
+    cloud.meta = { room_drawing: key, swatch: color };
+    return [cloud, marker];
+  }
+
   function stampLink(traceList, cfg) {
     var meta = null;
     if (typeof cfg.info_url === "string" && cfg.info_url) {
@@ -4290,6 +4434,8 @@
     // before drawing.
     drawingNames: drawingNames,
     setDrawings: setDrawings,
+    // L-503: a stored drawing that is a room's own row (the belt's cloud).
+    buildRoomCloud: buildRoomCloud,
     labelTraceIndex: labelTraceIndex,
     // L-320: the marker offset off the pole, shared with earth_geometry.js.
     infoMarkerOffsetDeg: INFO_MARKER_OFFSET_DEG,

@@ -405,7 +405,8 @@ def stand_in_drawings(cfg, data_dir):
     """L-421: a small stand-in for each stored drawing the config names,
     in data_dir/drawings/, so a build here never depends on a pull. The
     real dots are the orrery's; what is tested is how they are served."""
-    names = sorted(b._drawing_names(cfg.get('objects', [])))
+    # L-503: and the drawings a room's row names (the belt's cloud).
+    names = sorted(b._drawing_names([cfg.get('objects', []), cfg.get('rooms', {})]))
     (data_dir / 'drawings').mkdir(parents=True, exist_ok=True)
     for name in names:
         if (data_dir / 'drawings' / (name + '.json')).exists():
@@ -452,7 +453,7 @@ def main():
     with tempfile.TemporaryDirectory() as td:
         out = Path(td) / 'data' / 'solar-system'
         out.mkdir(parents=True)
-        drawing_names = sorted(b._drawing_names(cfg['objects']))
+        drawing_names = sorted(b._drawing_names([cfg['objects'], cfg.get('rooms', {})]))
 
         # --- first build ---
         rm = b.run_build(cfg, out, mode='first-build', do_commit=False)
@@ -1587,7 +1588,8 @@ def main():
         rm421 = REAL_RUN_BUILD(cfg, out421, mode='first-build', do_commit=False)
         verdict = str(rm421.get('structural_validation'))
         check(verdict.startswith('fail') and 'drawing' in verdict and
-              all(n in verdict for n in sorted(b._drawing_names(cfg['objects']))),
+              all(n in verdict for n in sorted(b._drawing_names(
+                  [cfg['objects'], cfg.get('rooms', {})]))),
               "L-421: a missing named drawing ABORTs the build by name (%s)"
               % verdict[:90])
 
