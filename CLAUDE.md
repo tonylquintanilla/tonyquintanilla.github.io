@@ -75,6 +75,11 @@ version with the manifest's row; if they disagree, stop and say so.
   folder: the ledger item, and WHERE_WE_ARE.md edited section by
   section, its box carrying a plain-word summary of what changed and
   why. Nothing below the page's run-record marker is touched.
+- The run-record zone below that marker is empty by design. Tony's
+  record is his timestamped copy of the page
+  (`WHERE_WE_ARE_<m-d-yy>_<hhmm>_run_record.md`), one session per
+  copy, and he writes only there (his ruling of Oct 28, 2026). An
+  empty zone is not a missing record: read his latest copy instead.
 - Your final report lists every file changed with the number of
   edits, in both folders, the way a patch prints "ok <file> (n
   edits)"; then his run order; then the Tony-action rollup.
