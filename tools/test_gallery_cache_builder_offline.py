@@ -58,6 +58,13 @@ shrink gate by name, that exemption shown live by a planted fault, a
 window thinned at its own event's scale, and a path that ended years ago
 serving no as_of_today; the trust checks hold every spacecraft; and a
 stand-in plan for a spacecraft the config serves none, as for drawings.)
+
+Module updated: October 29, 2026 with Anthropic's Claude Opus 5.5 (L-399:
+every small body is served JPL's own 3-sigma range uncertainty from a
+mocked 2xr answer at its served point's moment, and nothing else is; three
+planted answers -- a position that does not match, no answer, an n.a.
+uncertainty -- each serve nothing, named, with the orbit still served; the
+match test shown able to fail; the 2xr parser read by column name.)
 Module updated: October 17, 2026 with Anthropic's Claude Opus 5.5 (L-449:
 four checks of the run records. The nightly re-run's [RUNS] lines say what
 the copy carried; the Daily Run's compare_run_records, run on that build's
@@ -308,6 +315,17 @@ def fake_pole_radec(jd):
     return FAKE_POLE
 
 
+# L-399: a small body's 2xr answer, in the shape the builder's parser
+# gives it -- its position where fake_vectors put it (a, 0, 0) and a
+# 1-sigma range uncertainty. FAKE_R_S_AU is a stand-in, never served.
+FAKE_R_S_AU = 2e-8
+
+
+def fake_2xr(horizons_id, id_type, center, jd, hkwargs=None, timeout=60):
+    a, _e = ELEMS[horizons_id]
+    return {'JDTDB': jd, 'X': a, 'Y': 0.0, 'Z': 0.0, 'R_s': FAKE_R_S_AU}
+
+
 def fake_orbit_plane(jd):
     return FAKE_ORBIT_PLANE
 
@@ -379,6 +397,7 @@ def install_mocks():
     b.fetch_elements = fake_elements
     b.fetch_vectors_range = fake_vectors
     b.fetch_solution_tp = fake_solution_tp
+    b.fetch_small_body_2xr = fake_2xr
     b._NOW_OVERRIDE = FIXED_NOW
 
 
@@ -1606,6 +1625,7 @@ def main():
               "name (%s)" % why330[:90])
 
     path_by_plan_checks(cfg, check)
+    uncertainty_checks(cfg, check)
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
@@ -1772,6 +1792,105 @@ def path_by_plan_checks(cfg, check):
                   % rm5['structural_validation'])
     finally:
         b.fetch_vectors_range = real
+
+
+# A 2xr answer as Horizons prints it, its columns in an order the parser
+# must not assume, and one uncertainty JPL does not give ("n.a.").
+SAMPLE_2XR = """*******************************************************************
+ JDTDB, Calendar Date (TDB), R_s, X, Y, Z, VX, VY, VZ, VR_s, VT_s, VN_s,
+$$SOE
+2461342.500000000, A.D. 2026-Oct-29 00:00:00.0000,  n.a., 4.2E+01, 1.5E+00, -2.0E-01, 1.0E-03, 2.0E-03, 0.0E+00, n.a., n.a., n.a.,
+$$EOE
+"""
+
+
+def uncertainty_checks(cfg, check):
+    """L-399: each small body's own position uncertainty, asked of JPL's
+    vector table 2xr at its served "you are here" moment."""
+    small = sorted(o['slug'] for o in cfg['objects'] if b.is_small_body_target(o))
+    real_fetch = b.fetch_small_body_2xr
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / 'data' / 'solar-system'
+        out.mkdir(parents=True)
+        rm = b.run_build(cfg, out, mode='first-build', do_commit=False)
+        idx = json.load(open(out / 'coverage_index.json'))
+        objs = idx['objects']
+        want_km = 3 * FAKE_R_S_AU * b.KM_PER_AU
+        bad = [s for s in small
+               if not ((objs[s].get('position_uncertainty') or {}).get('range_3sigma_km') == want_km
+                       and objs[s]['position_uncertainty'].get('jd') == objs[s]['as_of_today']['t'])]
+        check(rm['structural_validation'] == 'pass' and small and not bad,
+              "L-399: every small body (%d) is served JPL's 3-sigma range "
+              "uncertainty, three times R_s, at its served point's moment (%s)"
+              % (len(small), ', '.join(bad) or 'all'))
+        check('2026_ed138' in small or any('ed138' in s for s in small),
+              "L-399: 2026 ED138, Tony's test case, is among them")
+        others = sorted(s for s, o in objs.items()
+                        if s not in small and 'position_uncertainty' in o)
+        check(not others, "L-399: no planet, Pluto, spacecraft or comet on an "
+              "open path is served one (%s)" % (', '.join(others) or 'none'))
+        summ = idx.get('position_uncertainty') or {}
+        check(summ.get('asked') == small and summ.get('missing') == {}
+              and summ.get('sigma') == 3,
+              "L-399: the index names the %d asked and none missing"
+              % len(summ.get('asked') or []))
+
+        # Planted: three answers that must serve nothing, each named, and
+        # the build still passes with the body's orbit served.
+        victims = small[:3]
+
+        def planted(horizons_id, id_type, center, jd, hkwargs=None, timeout=60):
+            row = fake_2xr(horizons_id, id_type, center, jd)
+            slug = [o['slug'] for o in cfg['objects']
+                    if o.get('horizons_id') == horizons_id][0]
+            if slug == victims[0]:
+                row['X'] += 1e-5                 # another record answered
+            elif slug == victims[1]:
+                raise ConnectionError('planted: no answer')
+            elif slug == victims[2]:
+                row['R_s'] = None                # JPL printed n.a.
+            return row
+        b.fetch_small_body_2xr = planted
+        try:
+            rm2 = b.run_build(cfg, out, mode='nightly', do_commit=False)
+            idx2 = json.load(open(out / 'coverage_index.json'))
+            miss = (idx2.get('position_uncertainty') or {}).get('missing') or {}
+            o2 = idx2['objects']
+            check(rm2['structural_validation'] == 'pass'
+                  and all('position_uncertainty' not in o2[v] and o2[v].get('osculating')
+                          for v in victims)
+                  and 'another record answered' in miss.get(victims[0], '')
+                  and 'could not reach JPL' in miss.get(victims[1], '')
+                  and 'no range uncertainty' in miss.get(victims[2], ''),
+                  "L-399: planted -- a position that does not match, no "
+                  "answer, and an n.a. uncertainty each serve nothing, named, "
+                  "and the orbit is still served (%s)" % miss)
+            # The match test can fail: with it switched off, the mismatched
+            # answer would have been served.
+            real_tol = b.UNCERTAINTY_MATCH_AU
+            b.UNCERTAINTY_MATCH_AU = float('inf')
+            try:
+                b.run_build(cfg, out, mode='nightly', do_commit=False)
+                leaked = 'position_uncertainty' in json.load(
+                    open(out / 'coverage_index.json'))['objects'][victims[0]]
+            finally:
+                b.UNCERTAINTY_MATCH_AU = real_tol
+            check(leaked, "L-399: planted fault caught -- without the match "
+                  "test, another record's uncertainty is served")
+        finally:
+            b.fetch_small_body_2xr = real_fetch
+    rows = b.parse_vectors_2xr(SAMPLE_2XR)
+    check(len(rows) == 1 and rows[0].get('X') == 42.0 and rows[0].get('R_s') is None
+          and rows[0].get('Z') == -0.2,
+          "L-399: the 2xr parser reads columns by name, in any order, and "
+          "reads n.a. as missing, never zero")
+    check(b.is_small_body_target({'horizons_id': '90000030', 'id_type': 'id'})
+          and not b.is_small_body_target({'horizons_id': '599', 'id_type': 'majorbody'})
+          and not b.is_small_body_target({'horizons_id': '-31', 'id_type': 'smallbody'})
+          and not b.is_small_body_target({'horizons_id': '2026 ED138',
+                                          'id_type': 'smallbody', 'open_path': True}),
+          "L-399: a pinned comet record is a small body; a planet, a "
+          "spacecraft id and a path are not")
 
 
 if __name__ == '__main__':

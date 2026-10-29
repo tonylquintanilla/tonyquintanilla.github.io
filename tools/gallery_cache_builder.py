@@ -119,6 +119,16 @@ build B part 2: a comet the orrery marks open_path, which the objects
 mirror copies onto its entry, is a path body (is_path_body), fetched by
 its plan as a spacecraft is, with no elements; its served record carries
 open_path. One without a plan yet is named and served last-good.)
+Module updated: October 29, 2026 with Anthropic's Claude Opus 5.5 (L-399:
+each small body -- an asteroid, a comet, a dwarf planet asked as a small
+body -- is asked JPL's own uncertainty for its position the way the orrery
+asks it (Horizons' vector table 2xr, read by column name), at the moment
+of its served "you are here" point, and served as position_uncertainty on
+its entry: the 3-sigma of its distance from the Sun. An answer whose
+position does not match the served point, or that gives no figure, serves
+nothing, named; the index's position_uncertainty lists who was asked and
+why each missing one is missing. A failed answer never costs the orbit.
+The planets and Pluto keep JPL's planetary report, from the config.)
 
 Role: cache
 Domain: cache_builder
@@ -511,6 +521,174 @@ def fetch_solution_tp(name, horizons_id=None, id_type='smallbody', hkwargs=None)
     except Exception as e:
         print("[SOLUTION TP] parse failed for %s: %s" % (name, e), flush=True)
         return ('parse_failed', None)
+
+
+# ===========================================================================
+# L-399 -- A SMALL BODY'S OWN POSITION UNCERTAINTY. Horizons' vector table
+# 2xr carries, beside the state, its 1-sigma uncertainties; the range's,
+# R_s, times three is the 3-sigma of the distance from the centre asked
+# (horizons-orbital-mechanics, A Small Body's Uncertainty Comes With Its
+# Position). Copied with provenance from the orrery's position_accuracy.py
+# (fetch_small_body_state, parse_vectors_2xr, uncertainty_record; orrery
+# c143f73b): astroquery's own request with VEC_TABLE added, sent directly,
+# its columns read by name, never by position, and a missing or "n.a."
+# column read as missing, never as zero.
+#
+# One difference from the orrery, and its reason. In the orrery the 2xr
+# query IS the position query. Here the position comes from the nightly
+# range fetch through astroquery, which cannot read the 2xr columns, so
+# the uncertainty is one more question per small body, asked at the exact
+# moment of the body's served "you are here" point. Its answer's position
+# must agree with that point, or a different record answered and nothing
+# is served. A failed answer costs only the uncertainty: the body is
+# served as before, and the room says its uncertainty is not included.
+# ===========================================================================
+
+UNCERTAINTY_SIGMA = 3                        # the orrery's SIGMA_MULTIPLE
+UNCERTAINTY_CENTRE = '@sun'                  # the room prints the distance from the Sun
+# The 2xr answer and the served point are the same JPL solution at the
+# same moment, so they agree to Horizons' printed digits; 1e-7 AU is
+# about 15 km, far above that and far below any other record's position.
+UNCERTAINTY_MATCH_AU = 1e-7
+_2XR_STATE_COLUMNS = ('X', 'Y', 'Z')
+
+
+def is_small_body_target(obj):
+    """Is this entry a Horizons small body, which states its own
+    uncertainty? The orrery's test (orbital_period._is_small_body and
+    position_accuracy.is_small_body_fetch, orrery c143f73b): an asteroid or
+    comet by its id_type, or a pinned small-body record number (9 then
+    seven digits) whatever its id_type. A path body is drawn from its
+    positions, and a body served for its features only fetches nothing."""
+    if is_path_body(obj) or obj.get('serve_positions') is False:
+        return False
+    hid = str(obj.get('horizons_id') or '').strip()
+    if not hid:
+        return False
+    if obj.get('id_type') in ('smallbody', 'designation', 'asteroid_name',
+                              'comet_name'):
+        return not hid.startswith('-')
+    return bool(re.match(r'^9\d{7}$', hid))
+
+
+def _2xr_num(tok):
+    tok = tok.strip()
+    if not tok or tok.lower().strip('.') in ('n.a', 'na'):
+        return None
+    try:
+        return float(tok)
+    except ValueError:
+        return None
+
+
+def parse_vectors_2xr(text):
+    """The rows of a Horizons vector table, as dicts keyed by column name.
+    Raises ValueError, quoting Horizons, when there is no data block.
+    Source: position_accuracy.parse_vectors_2xr (orrery c143f73b)."""
+    lines = text.split('\n')
+    try:
+        soe = next(i for i, ln in enumerate(lines) if '$$SOE' in ln)
+        eoe = next(i for i, ln in enumerate(lines) if '$$EOE' in ln)
+    except StopIteration:
+        snippet = ' | '.join(ln.strip() for ln in lines if ln.strip())[:400]
+        raise ValueError('Horizons returned no vector table: %s' % snippet)
+    header = None
+    for ln in reversed(lines[:soe]):
+        if 'JDTDB' in ln and ',' in ln:
+            header = ln
+            break
+    if header is None:
+        raise ValueError('Horizons vector table has no column header')
+    names = [h.strip() for h in header.split(',')]
+    if names and 'JDTDB' in names[0] and 'Calendar' in names[0]:
+        names = ['JDTDB', 'Calendar Date (TDB)'] + names[1:]
+    rows = []
+    for ln in lines[soe + 1:eoe]:
+        if not ln.strip() or 'Cut-off' in ln:
+            continue
+        row = {}
+        for name, tok in zip(names, ln.split(',')):
+            if name:
+                row[name] = tok.strip() if name.startswith('Calendar') else _2xr_num(tok)
+        rows.append(row)
+    missing = [c for c in _2XR_STATE_COLUMNS if c not in names]
+    if missing:
+        raise ValueError('Horizons vector table lacks columns %s' % ', '.join(missing))
+    return rows
+
+
+def fetch_small_body_2xr(horizons_id, id_type, center, jd, hkwargs=None,
+                         timeout=60):
+    """One Horizons vector query for a small body at one moment (a TDB
+    Julian date, as the vector table's own JDTDB column gives it), asking
+    for the 2xr table. Returns the row as a dict keyed by column name.
+    Source: position_accuracy.fetch_small_body_state (orrery c143f73b).
+    The only network call of this block; the offline suite replaces it."""
+    _require_astro()
+    import requests
+    from astroquery.jplhorizons import conf
+    h = Horizons(id=horizons_id, id_type=_norm_id_type(id_type),
+                 location=_normalize_center(center), epochs=[jd])
+    payload = h.vectors(get_query_payload=True, refplane='ecliptic',
+                        **(hkwargs or {}))
+    payload['VEC_TABLE'] = "'2xr'"
+    payload['OBJ_DATA'] = 'NO'
+    resp = requests.get(conf.horizons_server, params=payload, timeout=timeout)
+    resp.raise_for_status()
+    rows = parse_vectors_2xr(resp.text)
+    if not rows:
+        raise ValueError('Horizons returned an empty vector table')
+    return rows[0]
+
+
+def build_position_uncertainty(obj, as_of_today, hkwargs=None):
+    """The served "position_uncertainty" for a small body: JPL's own 3-sigma
+    uncertainty of its distance from the Sun, at the moment of its served
+    as_of_today point. Returns (block, None), or (None, reason) when nothing
+    can be served honestly -- never a tiny invented figure."""
+    if not as_of_today or as_of_today.get('t') is None:
+        return None, 'no "you are here" point is served to ask it at'
+    if obj.get('canonical_center') != UNCERTAINTY_CENTRE:
+        return None, 'it is not served measured from the Sun'
+    jd = float(as_of_today['t'])
+    row = fetch_small_body_2xr(obj['horizons_id'], obj['id_type'],
+                               UNCERTAINTY_CENTRE, jd, hkwargs=hkwargs)
+    got = [row.get(c) for c in _2XR_STATE_COLUMNS]
+    if None in got:
+        return None, "JPL's answer has an empty position column"
+    served = [as_of_today[k] * KM_TO_AU for k in ('x', 'y', 'z')]
+    off = math.sqrt(sum((g - s) ** 2 for g, s in zip(got, served)))
+    if off > UNCERTAINTY_MATCH_AU:
+        return None, ("JPL's 2xr answer sits %.3g AU from the served point, "
+                      "so another record answered" % off)
+    try:
+        r_s = float(row.get('R_s'))
+    except (TypeError, ValueError):
+        r_s = None
+    if r_s is None or not math.isfinite(r_s) or r_s <= 0:
+        return None, "JPL gives no range uncertainty (R_s) for it"
+    return {
+        'range_1sigma_au': r_s,
+        'sigma': UNCERTAINTY_SIGMA,
+        'range_3sigma_km': UNCERTAINTY_SIGMA * r_s * KM_PER_AU,
+        'jd': jd,
+        'center': UNCERTAINTY_CENTRE,
+        'source': {
+            'service': 'JPL Horizons vector table 2xr',
+            'column': 'R_s, 1-sigma, times %d' % UNCERTAINTY_SIGMA,
+            'query_target': obj['horizons_id'],
+            'retrieved': datetime.now(timezone.utc).isoformat(),
+        },
+    }, None
+
+
+def _comet_hkwargs(obj):
+    """The apparition options a comet's position fetch is asked with (P2-4),
+    so its uncertainty is asked of the same record."""
+    if obj.get('category') != 'comet':
+        return {}
+    c = (obj.get('overrides') or {}).get('comet', {})
+    return {k: True for k in ('closest_apparition', 'no_fragments') if c.get(k)}
 
 
 # ===========================================================================
@@ -1511,14 +1689,20 @@ def build_pole_of_date(obj, day, frame, warn):
     return block
 
 
-def derive_served(staging, results, defaults, warn=None, frame=None):
+def derive_served(staging, results, defaults, warn=None, frame=None,
+                  uncertainty=None):
     """Assemble coverage_index.json (v0.6 schema parity + conic additions) and
     write it under the staging tree. warn (M2, optional): callback for
     FLAG-3 served_window-null warnings; defaults to a no-op so existing
     callers (e.g. the shape-validator regression test) are unaffected.
     frame (L-322 Stage D, optional): load_frame_constants' result, served
     as frame_constants; an object whose config asks for a pole of date
-    gets pole_of_date, None when the fetch failed."""
+    gets pole_of_date, None when the fetch failed.
+    uncertainty (L-399, optional): which small bodies were asked for their
+    own position uncertainty, and why each one not served was not, served
+    as the index's position_uncertainty so a check can tell a body never
+    asked from one whose answer failed; each served body's block goes on
+    its own entry."""
     if warn is None:
         warn = lambda msg: None
     objects = {}
@@ -1548,6 +1732,8 @@ def derive_served(staging, results, defaults, warn=None, frame=None):
             block['drawn_orbit'] = r['drawn_orbit']
         if obj.get('pole_of_date') is not None:     # L-322 Stage D
             block['pole_of_date'] = r.get('pole_of_date')
+        if r.get('position_uncertainty') is not None:   # L-399
+            block['position_uncertainty'] = r['position_uncertainty']
         objects[slug] = block
 
     # M2 sec 5.5, corrected L-149: global served_window. Participants are
@@ -1599,6 +1785,12 @@ def derive_served(staging, results, defaults, warn=None, frame=None):
     }
     if frame is not None:                           # L-322 Stage D
         index['frame_constants'] = frame
+    if uncertainty is not None:                     # L-399
+        index['position_uncertainty'] = {
+            'sigma': UNCERTAINTY_SIGMA,
+            'asked': sorted(uncertainty['asked']),
+            'missing': dict(sorted(uncertainty['missing'].items())),
+        }
     with open(staging / 'coverage_index.json', 'w') as f:
         json.dump(index, f, indent=2)
     features_out = {}
@@ -2494,7 +2686,39 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                 'served %s, tilt %s' % (got['date'], 'none' if got['tilt'] is None
                                         else '%.*g deg' % (TILT_FIGURES, got['tilt']['value'])))
 
-    index = derive_served(staging, results, defaults, warn, frame=frame)
+    # L-399: each small body's own position uncertainty, from JPL, at its
+    # served "you are here" moment. Kept apart from the orbit's try/except
+    # above, as the pole is, so an answer that cannot be had costs only the
+    # uncertainty, never the orbit; a body served last-good has no
+    # as_of_today and is named, not asked.
+    unc = {'asked': [], 'served': [], 'missing': {}}
+    for r in results:
+        if not is_small_body_target(r['obj']):
+            continue
+        slug = r['slug']
+        unc['asked'].append(slug)
+        try:
+            block, why = build_position_uncertainty(
+                r['obj'], r.get('as_of_today'), hkwargs=_comet_hkwargs(r['obj']))
+        except Exception as e:
+            block, why = None, 'could not reach JPL (%s)' % e
+        if block is None:
+            unc['missing'][slug] = why
+            warn("%s: no position uncertainty served -- %s" % (slug, why))
+        else:
+            r['position_uncertainty'] = block
+            unc['served'].append(slug)
+    run_manifest['position_uncertainty'] = {
+        'asked': len(unc['asked']), 'served': len(unc['served']),
+        'missing': unc['missing']}
+    print("[UNCERTAINTY] JPL's own position uncertainty served for %d of %d "
+          "small bodies%s" % (len(unc['served']), len(unc['asked']),
+                              ('; not served: ' + ', '.join(
+                                  '%s (%s)' % kv for kv in sorted(unc['missing'].items())))
+                              if unc['missing'] else ''), flush=True)
+
+    index = derive_served(staging, results, defaults, warn, frame=frame,
+                          uncertainty=unc)
 
     # N3: object-set continuity -- a run must not silently DROP an object the
     # prior generation served (a first appearance on first-build is fine). This

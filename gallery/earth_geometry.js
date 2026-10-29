@@ -630,18 +630,29 @@
    * of omitting them silently (the magnetosphere until L-305).
    */
   /* L-421: the pole of date's provenance, from the served record. A field
-     the record lacks prints as "not served". */
+     the record lacks prints as "not served". Since 2026-10-29 every date
+     it prints says UTC (Tony's phone look of 2026-10-28, 23:39): the
+     pole's date is the cache builder's UTC day, asked of JPL in UT, and
+     the moment it was retrieved is printed to the minute in UTC, as the
+     served ISO stamp ("+00:00") is. */
+  function utcMinute(iso) {
+    var m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})[^+Z]*(\+00:00|Z)$/.exec(String(iso));
+    return m ? m[1] + " " + m[2] + " UTC" : String(iso);
+  }
   function poleOfDateSource(pod) {
     function f(block, key) {
       return (isDict(block) && block[key] !== undefined && block[key] !== null)
         ? String(block[key]) : "not served";
     }
+    var got = (isDict(pod.pole_source) && pod.pole_source.retrieved)
+      ? utcMinute(pod.pole_source.retrieved) : "not served";
     var ps = pod.pole_source, os = pod.orbit_source;
     return "JPL Horizons (" + HORIZONS_URL + "), served by the gallery cache builder for " +
-      (pod.date || "the scene's date") + ": the pole is observer quantity " +
+      (pod.date ? pod.date + " UTC" : "the scene's date") +
+      ": the pole is observer quantity " +
       f(ps, "quantity") + " for target " + f(ps, "query_target") +
       ", seen from " + f(ps, "observer") + ", retrieved " +
-      f(ps, "retrieved") + ". The tilt is " +
+      got + ". The tilt is " +
       ((pod.tilt && typeof pod.tilt.derived === "string")
         ? pod.tilt.derived : "not described") +
       "; that orbit is target " + f(os, "query_target") + " about " +

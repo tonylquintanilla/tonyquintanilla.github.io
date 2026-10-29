@@ -77,6 +77,15 @@
 // orbit line reads "perihelion q AU, its closest to the Sun, to aphelion
 // Q AU, its farthest" (Tony, 2026-10-26: keep JPL's words and explain
 // them).
+// Updated October 29, 2026 with Anthropic's Claude Opus 5.5 (L-399): a
+// small body's own uncertainty, JPL's 3-sigma from the vector table 2xr,
+// served by the cache builder as "position_uncertainty" on its cached
+// record and used whole as the error (part 8's two worked cases, with
+// two planted faults: the 3-sigma halved as if it were a place, and the
+// sentence printed for a body that has one). In part 3 each small body
+// is held to its served cache: with an uncertainty, no sentence; without
+// one, the sentence -- and once a build has asked, a small body neither
+// served one nor named as missing fails, by name.
 
 "use strict";
 const fs = require("fs");
@@ -103,9 +112,11 @@ const NO_ROW = { sun: true, apophis: true };
 // L-443 (2026-10-22): a small body -- an asteroid, a comet, or a dwarf
 // planet served as a small body -- has no group row in JPL's 2014
 // ephemeris report; its own uncertainty comes with its position query
-// (L-399), not yet served. So it prints by its drift and says so, as
-// Apophis does. Read from each body's served category and its lack of a
-// position_accuracy, and named in the report, so a new one is seen.
+// (L-399), which the cache builder serves on its cached record as
+// "position_uncertainty" since 2026-10-29; until it has, the body prints
+// by its drift and says so. Read from each body's served category and its
+// lack of a position_accuracy, and named in the report, so a new one is
+// seen.
 const SMALL_CATEGORIES = { asteroid: true, comet: true, dwarf_planet: true };
 const OUTER = ["uranus", "neptune", "pluto_barycenter"];
 
@@ -279,6 +290,29 @@ function pathWorked(lib) {
   return out;
 }
 
+// ---- 8. worked cases: a small body's own uncertainty (L-399) -------
+function uncertaintyWorked(lib) {
+  const out = [];
+  // 2 AU, JPL's 3-sigma 3,000 km, used whole: 2 x 3,000 = 6,000, log10
+  // 3.78, +0.5, floor 4 -> ten-thousands of km: 299,195,741.4 ->
+  // 299,200,000. In AU, 3,000 km is 2.0054e-5; log10 4.01e-5 = -4.40,
+  // +0.5, floor -4 -> 2.0000. Halved, 1,500 km would earn thousands.
+  let r = lib.distanceLine({ x: 2, y: 0, z: 0 }, STILL, 2461314.5,
+                           { range_3sigma_km: 3000 }, KM_PER_AU_TEST);
+  if (r.line !== "2.0000 AU from the Sun (299,200,000 km)" ||
+      r.governs !== "JPL's uncertainty" || r.note !== null) {
+    out.push("2 AU with a 3,000 km 3-sigma printed " + JSON.stringify(r.line) +
+             " / " + r.governs + " / " + JSON.stringify(r.note));
+  }
+  // A served block with no figure: reported, and the sentence shows.
+  r = lib.distanceLine({ x: 2, y: 0, z: 0 }, STILL, 2461314.5,
+                       { range_3sigma_km: null }, KM_PER_AU_TEST);
+  if (r.note !== lib.NO_SOURCE_ACCURACY || !r.accuracyWhy) {
+    out.push("an uncertainty with no figure was not reported with the sentence");
+  }
+  return out;
+}
+
 // ---- self-test: the checks must be able to fail -------------------
 // Three copies of the REAL file, each with one deliberate fault, loaded
 // in a sandbox. Each must fail the worked cases.
@@ -300,7 +334,7 @@ const selfFailures = [];
    "return Math.floor(Math.log10(2 * uncertainty) + 0.5);",
    "return Math.floor(Math.log10(2 * uncertainty) + 0.5) - 1;"],
   ["a rule that ignores JPL's accuracy",
-   "var sourceKm = (src.km === null) ? 0 : src.km / 2;",
+   "var sourceKm = src.errKm;",
    "var sourceKm = 0;"],
   ["the sentence printed for a body with a row",
    "note: (src.km === null) ? NO_SOURCE_ACCURACY : null,",
@@ -308,6 +342,19 @@ const selfFailures = [];
 ].forEach(function (fault) {
   if (worked(loadWith(fault[1], fault[2])).length === 0) {
     selfFailures.push(fault[0] + " passed the worked cases");
+  }
+});
+// L-399: a small body's 3-sigma halved as if it were a place, and the
+// sentence printed for a body whose uncertainty is served.
+[
+  ["a 3-sigma uncertainty halved as if it were a place",
+   "return { km: u, errKm: u, kind:", "return { km: u, errKm: u / 2, kind:"],
+  ["the sentence printed for a body with its uncertainty",
+   "note: (src.km === null) ? NO_SOURCE_ACCURACY : null,",
+   "note: (src.kind === 'uncertainty' || src.km === null) ? NO_SOURCE_ACCURACY : null,"]
+].forEach(function (fault) {
+  if (uncertaintyWorked(loadWith(fault[1], fault[2])).length === 0) {
+    selfFailures.push(fault[0] + " passed the uncertainty's worked cases");
   }
 });
 [
@@ -361,11 +408,12 @@ console.log("Self-test: the worked cases fail on a Report test one place " +
             "another body printed as the body's own; the orbit line's on " +
             "four figures, on its error's place ignored, and on an open " +
             "orbit printed; a spacecraft's on its error ignored and on " +
-            "the sentence dropped.");
+            "the sentence dropped; a small body's uncertainty on its " +
+            "3-sigma halved and on the sentence printed beside it.");
 
 // ---- 1. worked cases ----------------------------------------------
 const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF),
-                                    pathWorked(SSF));
+                                    pathWorked(SSF), uncertaintyWorked(SSF));
 
 // ---- 2. the real config -------------------------------------------
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "data",
@@ -394,7 +442,7 @@ rows.forEach(function (slug) {
     small.push(slug);
   }
 });
-console.log("Small bodies, printed by their drift with the sentence (" + small.length +
+console.log("Small bodies, with no group row in JPL's ephemeris report (" + small.length +
             "): " + (small.join(", ") || "none") + ".");
 rows.forEach(function (slug) {
   const o = objs[slug];
@@ -426,6 +474,11 @@ const kmRow = ((cov.frame_constants || {}).rows || {}).KM_PER_AU;
 const kmPerAu = kmRow && kmRow.value;
 if (!(kmPerAu > 0)) { failures.push("the served cache serves no KM_PER_AU"); }
 const table = [];
+// L-399: who the builder asked for their own uncertainty, and why each one
+// it could not serve is missing. A cache built before L-399 has no such
+// list, and its small bodies print with the sentence until the next build.
+const uncAsked = cov.position_uncertainty || null;
+const uncServed = [], uncMissing = [];
 rows.forEach(function (slug) {
   if (slug === "sun") { return; }
   const rec = (cov.objects || {})[slug];
@@ -438,15 +491,33 @@ rows.forEach(function (slug) {
     { x: p.x / kmPerAu, y: p.y / kmPerAu, z: p.z / kmPerAu },
     { rate_deg_per_day: rec.trust.error_rate_deg_per_day,
       element_epoch_jd: rec.trust.element_epoch_jd },
-    p.t, (objs[slug] || {}).position_accuracy || null, kmPerAu);
+    p.t, (objs[slug] || {}).position_accuracy || rec.position_uncertainty || null,
+    kmPerAu);
   if (!r.line) { failures.push(slug + ": no line -- " + r.why); return; }
   table.push([slug, r.line, r.governs, r.note ? "+ sentence" : ""]);
+  const unc = rec.position_uncertainty;
+  if (unc && (objs[slug] || {}).position_accuracy) {
+    failures.push(slug + ": serves both a position_accuracy and its own uncertainty");
+  }
+  if (NO_ROW[slug]) {
+    if (unc) {
+      uncServed.push(slug);
+      if (r.note) { failures.push(slug + ": its uncertainty is served, but the sentence prints"); }
+      if (r.accuracyWhy) { failures.push(slug + ": " + r.accuracyWhy); }
+    } else {
+      const why = uncAsked && (uncAsked.missing || {})[slug];
+      uncMissing.push(slug + (why ? " (" + why + ")" : ""));
+      if (uncAsked && !why) {
+        failures.push(slug + ": the builder neither served its uncertainty nor said why");
+      }
+    }
+  }
   if (OUTER.indexOf(slug) >= 0 &&
       (r.governs !== "JPL's accuracy" || r.kmPlace !== 4)) {
     failures.push(slug + ": expected JPL's accuracy at the ten-thousands " +
                   "place, got " + r.governs + " at 10^" + r.kmPlace + " km");
   }
-  if (NO_ROW[slug] && r.note !== SSF.NO_SOURCE_ACCURACY) {
+  if (NO_ROW[slug] && !unc && r.note !== SSF.NO_SOURCE_ACCURACY) {
     failures.push(slug + ": the sentence is missing");
   }
   if ((objs[slug] || {}).position_accuracy && r.note) {
@@ -460,7 +531,9 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
   ['<script src="gallery/solar_system_figures.js"></script>',
    "the page does not load gallery/solar_system_figures.js"],
   ["SolarSystemFigures.distanceLine(", "the page does not call the file"],
-  ["position_accuracy", "the page's driver does not pass position_accuracy"]
+  ["position_accuracy", "the page's driver does not pass position_accuracy"],
+  ['_rec.get("position_uncertainty")',
+   "the page's driver does not pass a small body's position_uncertainty"]
 ].forEach(function (pair) {
   if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
 });
@@ -602,6 +675,14 @@ table.forEach(function (t) {
               "  -- set by " + t[2] + (t[3] ? "  " + t[3] : ""));
 });
 console.log("");
+console.log("Small bodies' own uncertainty (L-399): " +
+            (uncAsked ? "served for " + uncServed.length + " -- " +
+                        (uncServed.join(", ") || "none") + "; "
+                      : "the served cache was built before L-399, so none is " +
+                        "served yet; ") +
+            "printed with the sentence, " + uncMissing.length + ": " +
+            (uncMissing.join(", ") || "none") + ".");
+console.log("");
 console.log("Orbital periods as each body's hover prints them (data/" +
             "objects_config.json), " + periods.length + " bodies:");
 periods.forEach(function (t) {
@@ -625,7 +706,7 @@ if (failures.length) {
   failures.forEach(function (f) { console.log("  " + f); });
   process.exit(1);
 }
-console.log("=== PASS: 6 worked cases, " + rows.length + " drawer rows " +
+console.log("=== PASS: 8 worked cases, " + rows.length + " drawer rows " +
             "matched to their accuracy rows, " + table.length +
             " served distances; Uranus, Neptune and Pluto print to " +
             "JPL's ten-thousands place; 6 period cases and " +

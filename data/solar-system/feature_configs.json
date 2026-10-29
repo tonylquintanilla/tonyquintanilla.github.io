@@ -1403,10 +1403,11 @@
             "orrery_constant": "constants_new.py::INNER_OORT_CLOUD_AU"
           },
           "drawing": {
-            "_declared": "Drawing choices, not measurements: how the dots look. Where they are is not here. The orrery places them (hills_cloud_sampler.py, from its rows) and they are served as the stored drawing named by dots, data/solar-system/drawings/hills_cloud.json, drawn as given (L-421, Tony's option A, 2026-10-11).",
+            "_declared": "Drawing choices, not measurements: how the dots look. Where they are is not here. The orrery places them (hills_cloud_sampler.py, from its rows) and they are served as the stored drawing named by dots, data/solar-system/drawings/hills_cloud.json, drawn as given (L-421, Tony's option A, 2026-10-11). info_polar_deg turns the info marker, at the outer edge, 45 degrees up from the x axis line toward the ecliptic's north pole, a drawing choice: on the x axis it sat at the edge of the dots, hard to see (L-468, L-502, Tony's phone looks of 2026-10-21 and 2026-10-27); there 8 of the 3,600 dots lie within 10 degrees of it, where 41 did on the axis.",
             "dots": "hills_cloud",
             "opacity": 0.28,
-            "marker_size": 1.6
+            "marker_size": 1.6,
+            "info_polar_deg": 45
           },
           "note": "Drawn as dots along orbits picked where the model's orbits lie (its Fig. 3), so the tilt and the two arms come out of the orbits. How stretched the orbits are is chosen for the picture: the model shows it only as a plot. The dots thin out between {near} and {far} AU."
         },
@@ -1593,10 +1594,11 @@
             "source": "NASA Science, \"Oort Cloud Facts\", https://science.nasa.gov/solar-system/oort-cloud/facts/ -- the outer edge of the Oort cloud is thought to lie between 10,000 and 100,000 AU from the Sun."
           },
           "drawing": {
-            "_declared": "Drawing choices, not measurements: how the dots look. Where they are is not here. The orrery places them (outer_oort_sampler.py, from its rows: loose dots through the cloud and 15 clumps among them, from a fixed seed) and they are served as the stored drawing named by dots, data/solar-system/drawings/outer_oort_cloud.json, drawn as given (L-434, Tony's rulings of 2026-10-20 and 2026-10-22). No survey has resolved an Oort clump; the clumps show only that the cloud is not smooth.",
+            "_declared": "Drawing choices, not measurements: how the dots look. Where they are is not here. The orrery places them (outer_oort_sampler.py, from its rows: loose dots through the cloud and 15 clumps among them, from a fixed seed) and they are served as the stored drawing named by dots, data/solar-system/drawings/outer_oort_cloud.json, drawn as given (L-434, Tony's rulings of 2026-10-20 and 2026-10-22). No survey has resolved an Oort clump; the clumps show only that the cloud is not smooth. info_polar_deg turns the info marker, at the outer edge, 225 degrees from the ecliptic's north pole, down and away from the x axis on its far side, a drawing choice: on the x axis it sat on the axis line and on the galactic tide's cross (L-468, L-502, Tony's phone look of 2026-10-27); there 5 of the 2,736 dots lie within 10 degrees of it, and the galactic plane's ring is 15 degrees away.",
             "dots": "outer_oort_cloud",
             "opacity": 0.3,
-            "marker_size": 1.2
+            "marker_size": 1.2,
+            "info_polar_deg": 225
           },
           "note": "The clumping is illustrative. That the cloud is lumpy is expected from stellar perturbations; where the lumps are is not known and is not claimed here."
         },
@@ -1736,12 +1738,13 @@
             "source": "Delsemme (1987), A&A 187:913 -- the aphelia of 152 long-period comets avoid both galactic polar caps and a strip along the galactic equator; Matese and Whitmire, https://arxiv.org/abs/1004.4584, sec. 2.2 -- the tide's main term goes as |sin B cos B|. Higuchi (2020), AJ 160:134, https://arxiv.org/abs/2008.04324, reads the pattern differently"
           },
           "drawing": {
-            "_declared": "Drawing choices, not measurements: how the dots and the cone look, and how many steps draw the cone around. Where the dots are is not here. The orrery places them (galactic_tide_sampler.py, from the galactic_pole, density, inner_radius, full_from and outer_radius rows, from a fixed seed) and they are served as the stored drawing named by dots, data/solar-system/drawings/galactic_tide.json, drawn as given (L-434). The faint double cone is worked out in the page from the same rows, as the orrery works it out: about the galactic pole, where the density peaks, from full_from to outer_radius (L-420; Tony's ruling of 2026-10-20 for the phone). The pink, the size and the opacity are the orrery's. The 50,000 AU distance, the 0.3 spread, the 0.5 and 1.5 cut-offs and the 0.5 asymmetry this block held until 2026-10-02 were removed rather than promoted (L-406).",
+            "_declared": "Drawing choices, not measurements: how the dots and the cone look, and how many steps draw the cone around. Where the dots are is not here. The orrery places them (galactic_tide_sampler.py, from the galactic_pole, density, inner_radius, full_from and outer_radius rows, from a fixed seed) and they are served as the stored drawing named by dots, data/solar-system/drawings/galactic_tide.json, drawn as given (L-434). The faint double cone is worked out in the page from the same rows, as the orrery works it out: about the galactic pole, where the density peaks, from full_from to outer_radius (L-420; Tony's ruling of 2026-10-20 for the phone). The pink, the size and the opacity are the orrery's. The 50,000 AU distance, the 0.3 spread, the 0.5 and 1.5 cut-offs and the 0.5 asymmetry this block held until 2026-10-02 were removed rather than promoted (L-406). info_polar_deg turns the info marker, at the outer edge, 135 degrees from the ecliptic's north pole, down from the x axis line on its near side, a drawing choice: on the x axis it sat on the axis line, on the outer Oort cloud's cross and in a thick part of the tide's dots (L-468, L-502, Tony's phone look of 2026-10-27); there 31 of the 5,000 dots lie within 10 degrees of it, where 51 did on the axis, and the south galactic pole's mark is 15 degrees away.",
             "dots": "galactic_tide",
             "opacity": 0.45,
             "marker_size": 1.6,
             "cone_opacity": 0.12,
-            "cone_steps": 72
+            "cone_steps": 72,
+            "info_polar_deg": 135
           },
           "note": "The thinning at the plane and the poles follows the tide's strength, and comets arriving for the first time show it. Where the comets in the cloud really are is not known."
         },

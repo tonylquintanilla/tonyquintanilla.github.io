@@ -15,7 +15,11 @@
 //
 // WHY IT IS ITS OWN FILE. Tony's ruling, 2026-09-18 (L-338): logic that
 // needs no browser lives in its own file, so a check can reach it as a
-// file: documentation/smoke_text_box.js.
+// file. Its check is the gallery run's Hover budget row,
+// documentation/smoke_hover_budget.js: five worked cases for this file,
+// the page loading it, and a copy with its sentence cut taken out, which
+// must fail. (Until 2026-10-29 this line named a
+// documentation/smoke_text_box.js, which never existed; L-502.)
 //
 // WHAT bullets() DOES, to a hover as the renderers and the assembler
 // build it:

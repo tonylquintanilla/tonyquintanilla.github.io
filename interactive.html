@@ -652,16 +652,30 @@
         body:not(.sun-exhibit) .sun-chrome { display: none; }
         /* Frame HUD (L-289 rebuilt, September 5, 2026): the triad, the
            grid chip and the Aries note live in the page, not the scene,
-           so they never shrink, clip or float. Bottom-right, above the
-           drawer button (centre). The + and - buttons are at the top left;
-           on a portrait phone the arrow cross is at the top right
-           (2026-09-16). */
+           so they never shrink, clip or float. The + and - buttons are at
+           the top left; on a portrait phone the arrow cross is at the top
+           right (2026-09-16).
+           L-502 (Tony's phone look of 2026-10-27, 23:59: "the triad hover
+           is now easy to trip where it is at on the bottom right. one's
+           thumb easily goes there. could we relocate it in the bottom
+           center above the row label to the left of the grid label?"):
+           the HUD is a row across the bottom, above the drawer button
+           (the row label): the triad in its centre, the grid chip at its
+           right end, where it was. Every room. Until 2026-10-29 the triad
+           stood over the chip at the bottom right.
+           Centred by text-align, not flex: body.sun-exhibit .sun-chrome
+           sets display: block and outweighs a display on .sun-hud, so a
+           flex rule here is never applied (read on a 390 px page,
+           2026-10-29: the triad sat at the left). */
         .sun-hud {
-            position: absolute; right: 10px;
+            position: absolute; left: 10px; right: 10px;
             bottom: calc(58px + env(safe-area-inset-bottom));
             z-index: 5; pointer-events: none;
-            display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+            text-align: center; line-height: 0;
         }
+        .sun-hud .sun-triad { vertical-align: bottom; }
+        .sun-hud .sun-grid-chip { position: absolute; right: 0; bottom: 0;
+                                  line-height: normal; }
         body.sun-exhibit.sun-drawer-open .sun-hud { display: none; }
         /* Tony, 2026-10-26: the whole triad opens the frame note, not
            only the Aries glyph, which is a small target for a finger. */
@@ -690,18 +704,26 @@
            Hidden at zero. L-478 (Tony, 2026-10-24): at the lower left,
            above the drawer's handle, at the height of the frame HUD on
            the right, where it no longer covers the Aries mark; it steps
-           aside with the HUD while the drawer is open. */
+           aside with the HUD while the drawer is open. L-502
+           (2026-10-29): the triad now stands in the bottom centre, so the
+           line keeps to the left of it, wrapping where it must: half the
+           width, less the triad's half (52 px) and two 10 px gaps. */
         .ss-outside {
             position: absolute; left: 10px;
             bottom: calc(58px + env(safe-area-inset-bottom));
             z-index: 5; pointer-events: none;
-            max-width: calc(100% - 150px);
+            max-width: calc(50% - 72px);
             background: rgba(17,24,39,0.94); border: 1px solid var(--border);
             border-radius: 20px; padding: 5px 11px;
             font: 500 11px 'DM Sans', system-ui, sans-serif;
-            color: var(--text-primary); letter-spacing: 0.3px; white-space: nowrap;
+            color: var(--text-primary); letter-spacing: 0.3px; white-space: normal;
         }
         .ss-outside[hidden] { display: none; }
+        /* Must outrank body.sun-exhibit .sun-chrome, or hidden loses, as
+           the frame note's rule says below: until 2026-10-29 a hidden
+           count line showed in every room as an empty pill at the lower
+           left (found while placing the triad, L-502). */
+        body.sun-exhibit .ss-outside[hidden] { display: none; }
         body.sun-exhibit.sun-drawer-open .ss-outside { display: none; }
         .sun-frame-note {
             position: absolute; right: 10px; left: 10px;
@@ -2468,7 +2490,10 @@ result = assemble_scene(
 # JPL's own accuracy for the body's group, read from its entry in the
 # config, where the mirror writes it from the orrery's row (L-398). The
 # panel names the source; the text box prints the figures the larger
-# of the two errors earns.
+# of the two errors earns. L-399: a small body has no group row; its own
+# uncertainty, JPL's 3-sigma from the vector table 2xr, is served by the
+# cache builder on its cached record as "position_uncertainty", and is
+# passed in its place.
 _objs = {_o.get("slug"): _o for _o in (_cfg.get("objects") or [])
          if isinstance(_o, dict)}
 def _drawn_wanted(_o):
@@ -2521,7 +2546,8 @@ for _slug in _bodies:
             "rate_deg_per_day": _trust.get("error_rate_deg_per_day"),
             "element_epoch_jd": _trust.get("element_epoch_jd"),
         },
-        "accuracy": (_objs.get(_slug) or {}).get("position_accuracy"),
+        "accuracy": ((_objs.get(_slug) or {}).get("position_accuracy")
+                     or _rec.get("position_uncertainty")),
         # L-395: what the body is and where to read more, written into
         # the config by tools/mirror_objects.py from the orrery's own
         # object list. The panel shows both; the hover does not.
@@ -2624,6 +2650,13 @@ const SUN_DATE_LINE = "Long-term averages \u00b7 no date";
 // (Tony, 2026-09-30: "target" was the Horizons id, and a name is fine
 // where it is explained, not shorthand). A served source_note names
 // what the id is when the row's label does not (Pluto's).
+// Since 2026-10-29 a date that is a UTC day says "UTC" after it (Tony's
+// phone look of 2026-10-28, 23:39): the day the elements were retrieved,
+// and a path's first and last served days, which the builder asks of JPL
+// at UTC midnight. The elements' own date is not: the builder asks them
+// at 00:00 of JPL's TDB time scale, 69 seconds before UTC midnight, so
+// it keeps its Julian date and no UTC until the builder asks at UTC
+// midnight (recorded on L-504, the clock).
 const SOLAR_SYSTEM_MONTHS = ["January", "February", "March", "April",
     "May", "June", "July", "August", "September", "October", "November",
     "December"];
@@ -2636,6 +2669,16 @@ function solarSystemDay(d) {
 // the info panels". The address, read live on 2026-10-24 (the page titled
 // "Horizons System"); the i panel makes it a link (gallery/source_list.js).
 const JPL_HORIZONS_URL = "https://ssd.jpl.nasa.gov/horizons/";
+// Tony's phone look of 2026-10-28, 23:39: after the sentence on elements
+// measured from the Sun's centre, one plain sentence on why another
+// reference's numbers differ. Drafted 2026-10-29 for his word
+// (documentation/WORDS_gallery_L399_L502_L503_20261029.md in the orrery);
+// about the page's data, so typed here, and printed only for elements
+// measured from the Sun's centre.
+const SOLAR_SYSTEM_CENTRE_WORDS = "Another reference that measures this " +
+    "orbit from the solar system's centre of mass, or on another date, " +
+    "gives slightly different numbers, because the Sun itself moves " +
+    "around that centre.";
 function solarSystemSourceLine(src, sourceNote) {
     if (!src) { return null; }
     // Julian date 2440587.5 is 1970-01-01 00:00, the Unix epoch.
@@ -2651,8 +2694,9 @@ function solarSystemSourceLine(src, sourceNote) {
         ". Osculating orbital elements " + centre +
         (dated ? ", dated " + dated : "") +
         " (Julian date " + src.epoch + ")" +
-        (got ? ", retrieved " + got : "") +
-        ". The position shown is worked out from these for the minute" +
+        (got ? ", retrieved " + got + " UTC" : "") + "." +
+        (src.center === "@sun" ? " " + SOLAR_SYSTEM_CENTRE_WORDS : "") +
+        " The position shown is worked out from these for the minute" +
         " under the title.";
 }
 
@@ -2706,9 +2750,9 @@ function spacecraftSourceLine(b, meta) {
     const comet = b.kind === "comet_path";
     return "JPL Horizons (" + JPL_HORIZONS_URL + "), Horizons id: " +
         src.query_target + ". Positions " + centre +
-        (from && to ? ", from " + from + " to " + to +
+        (from && to ? ", from " + from + " UTC to " + to + " UTC" +
                       (comet ? "" : ", as far as JPL's data runs") : "") +
-        (got ? ", retrieved " + got : "") + "." +
+        (got ? ", retrieved " + got + " UTC" : "") + "." +
         (step ? " " + step + (comet ? ", closer together around its " +
                                        "perihelion" :
                                        ", closer together around each flyby") +

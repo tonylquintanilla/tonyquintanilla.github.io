@@ -43,6 +43,16 @@
 // Module updated: October 27, 2026 with Anthropic's Claude Opus 5.5
 // (L-497, 6b: the streamer belt's own row; the self-test's join planted
 // on a copy of the config.)
+// Module updated: October 29, 2026 with Anthropic's Claude Opus 5.5
+// (L-502, Tony's phone look of 2026-10-27: "can we move the hover crosses
+// away from the most dense areas where they get lost in the glare?"). In
+// the Sun room every stored drawing's info cross -- the corona, the dust
+// cloud, the Hills cloud, the outer Oort cloud, the galactic tide -- must
+// stand at least 15 degrees off every axis line through the Sun, and no
+// two of them within 10 degrees of each other in direction; it prints
+// each one's place. A second self-test takes the Hills cloud's served
+// info_polar_deg off a copy of the config, which puts its cross back on
+// the x axis, and must go red.
 //
 // Role: devtool
 // Domain: dev_tools
@@ -164,10 +174,80 @@ function joinedCopy() {
   else console.log("  self-test: the streamer belt's cross unmarked -- red: " + r[0]);
 })();
 
+// --- L-502: a stored drawing's cross stands off the axis lines ---------
+const AXIS_CLEAR_DEG = 15, APART_DEG = 10;
+function storedCrosses(traces, cfg) {
+  const sun = ((cfg || config).objects || []).find(x => x && x.slug === "sun");
+  const names = [];
+  (function walk(n) {
+    if (!n || typeof n !== "object") return;
+    if (n.drawing && typeof n.drawing.dots === "string" && typeof n.name === "string") {
+      names.push("Sun: " + n.name);
+    }
+    Object.keys(n).forEach(k => walk(n[k]));
+  })(sun && sun.features);
+  const out = [];
+  names.forEach(name => {
+    const t = traces.find(tr => tr && tr.legendgroup === name && tr.showlegend === false &&
+      tr.marker && tr.marker.symbol === "cross" && Array.isArray(tr.text));
+    if (!t) { out.push({ name: name, missing: true }); return; }
+    const v = [t.x[0], t.y[0], t.z[0]];
+    const r = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    const u = v.map(c => c / r);
+    const off = Math.min.apply(null, u.map(c => Math.acos(Math.min(1, Math.abs(c))) * 180 / Math.PI));
+    out.push({ name: name, r: r, u: u, off: off });
+  });
+  return out;
+}
+function judgeCrosses(crosses) {
+  const bad = [];
+  crosses.forEach(c => {
+    if (c.missing) { bad.push("sun: " + c.name + " draws no info cross"); return; }
+    if (c.off < AXIS_CLEAR_DEG) {
+      bad.push("sun: " + c.name + "'s cross is " + c.off.toFixed(1) +
+               " degrees from an axis line (at least " + AXIS_CLEAR_DEG + ")");
+    }
+  });
+  for (let i = 0; i < crosses.length; i++) {
+    for (let j = i + 1; j < crosses.length; j++) {
+      const a = crosses[i], b = crosses[j];
+      if (a.missing || b.missing) continue;
+      const cosv = a.u[0] * b.u[0] + a.u[1] * b.u[1] + a.u[2] * b.u[2];
+      const deg = Math.acos(Math.max(-1, Math.min(1, cosv))) * 180 / Math.PI;
+      if (deg < APART_DEG && Math.max(a.r, b.r) / Math.min(a.r, b.r) < 1.5) {
+        bad.push("sun: " + a.name + " and " + b.name + " have their crosses " +
+                 deg.toFixed(1) + " degrees apart");
+      }
+    }
+  }
+  return bad;
+}
+(function selfTestCrosses() {
+  const copy = JSON.parse(JSON.stringify(config));
+  let hit = false;
+  (function walk(n) {
+    if (!n || typeof n !== "object") return;
+    if (n.drawing && n.drawing.dots === "hills_cloud") { delete n.drawing.info_polar_deg; hit = true; }
+    Object.keys(n).forEach(k => walk(n[k]));
+  })((copy.objects.find(x => x && x.slug === "sun") || {}).features);
+  if (!hit) { fail("self-test: the Hills cloud's drawing is not in the config"); return; }
+  const r = judgeCrosses(storedCrosses(build(copy).sun, copy)).filter(b => /Hills/.test(b));
+  if (!r.length) fail("self-test: the Hills cloud's cross back on the x axis, and the check stayed green");
+  else console.log("  self-test: the Hills cloud's cross back on the x axis -- red: " + r[0]);
+})();
+
 // --- the rooms -----------------------------------------------------------
 const built = build();
 const res = judge(built);
 res.bad.forEach(fail);
+const crosses = storedCrosses(built.sun);
+judgeCrosses(crosses).forEach(fail);
+crosses.forEach(c => {
+  if (!c.missing) {
+    console.log("  sun / " + c.name + ": cross at " + c.r.toPrecision(3) + " AU, " +
+                c.off.toFixed(0) + " degrees off the nearest axis line");
+  }
+});
 // L-497 (6b): the belt is a row of its own, a shell, with its own words.
 if (!rowsOf(built.sun).some(r => r.shell && r.name === "Sun: Streamer Belt (helmet and stalk)")) {
   fail("sun: the streamer belt has no row of its own (L-497, 6b)");
@@ -185,4 +265,5 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("=== LABEL WORDS: all " + shells + " shell rows in both rooms open " +
-            "their own feature's words; self-test red once");
+            "their own feature's words; " + crosses.length + " stored drawings' " +
+            "crosses stand off the axis lines; self-test red twice");

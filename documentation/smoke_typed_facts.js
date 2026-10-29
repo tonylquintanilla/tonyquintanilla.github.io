@@ -147,7 +147,10 @@ const ALLOWED = [
   // page's number came from.
   ["Orbital period: # years (# days), for the Earth-Moon center of mass, around the Sun, from JPL Horizons, fetched ###.",
    "the page's own account of its data: the served period, for the served body and centre, with its source and fetch date"],
-  ["Pole: JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), served by the gallery cache builder for ###: the pole is observer quantity # for target #, seen from @sun, retrieved ###T#:#:#+#:#.",
+  // Since 2026-10-29 its two dates say UTC, the retrieved moment to the
+  // minute (Tony's phone look of 2026-10-28, 23:39: every date the i
+  // panel's source lines print says UTC).
+  ["Pole: JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), served by the gallery cache builder for ### UTC: the pole is observer quantity # for target #, seen from @sun, retrieved ### #:# UTC.",
    "the pole of date's query, printed from the cache builder's served record (L-421 E4)"],
   ["The tilt is the angle between Earth's pole of date and the pole of the Earth-Moon barycenter's orbit of date, both turned into the ecliptic of J# by the frame angle; that orbit is target # about @sun, in the ecliptic plane.",
    "the page's own account of how the served tilt was computed"],

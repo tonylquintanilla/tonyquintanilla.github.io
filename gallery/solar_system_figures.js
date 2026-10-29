@@ -34,11 +34,22 @@
 // counts. Numbers are written out, never as exponents (Tony,
 // 2026-09-30).
 //
-// A body with no "position_accuracy" (an asteroid, until L-399 fetches
-// its own uncertainty) prints by its drift alone, and its text box says
-// so in the sentence Tony approved on 2026-10-01. That sentence is
-// printed exactly when the row is absent, so the words and the data
-// cannot disagree.
+// A SMALL BODY'S OWN UNCERTAINTY (L-399, October 29, 2026). An asteroid,
+// a comet or a dwarf planet asked as a small body has no group in JPL's
+// ephemeris report; JPL states its own uncertainty with its position
+// instead (Horizons' vector table 2xr). The cache builder asks it the way
+// the orrery does and serves it on the body's cached record as
+// "position_uncertainty", the 3-sigma of its distance from the Sun in km.
+// That figure IS the error, so it is used whole, where a planet's row is
+// a place and half a unit of it is used. The larger of it and the drift
+// then sets the print, as for a planet. Written October 29, 2026 with
+// Anthropic's Claude Opus 5.5.
+//
+// A body with neither (until the builder has served it, or when JPL's
+// answer could not be had) prints by its drift alone, and its text box
+// says so in the sentence Tony approved on 2026-10-01. That sentence is
+// printed exactly when no source error is served, so the words and the
+// data cannot disagree.
 //
 // Written October 1, 2026 with Anthropic's Claude Opus 5.5, from the
 // functions L-363 step 3a built inside interactive.html on 2026-09-30.
@@ -143,9 +154,29 @@
     return { km: v, why: null };
   }
 
+  // L-399: the source's error in kilometres, from either kind of served
+  // node. A "position_uncertainty" (range_3sigma_km) is the error itself;
+  // a "position_accuracy" row is a place, so half a unit of it.
+  function sourceError(node) {
+    if (node && typeof node === "object" &&
+        node.range_3sigma_km !== undefined) {
+      var u = node.range_3sigma_km;
+      if (!(typeof u === "number" && u > 0 && isFinite(u))) {
+        return { km: null, errKm: 0, kind: "uncertainty",
+                 why: "its position_uncertainty serves no kilometres, so " +
+                      "JPL's uncertainty was not applied" };
+      }
+      return { km: u, errKm: u, kind: "uncertainty", why: null };
+    }
+    var p = sourcePlaceKm(node);
+    return { km: p.km, errKm: (p.km === null) ? 0 : p.km / 2,
+             kind: "place", why: p.why };
+  }
+
   // pos: {x, y, z} in AU about the Sun, as the assembler drew it.
   // trust: {rate_deg_per_day, element_epoch_jd} from the served cache.
-  // epochJd: the minute drawn. accuracy: the served node, or null.
+  // epochJd: the minute drawn. accuracy: the served node -- a planet's
+  // "position_accuracy" or a small body's "position_uncertainty" -- or null.
   // kmPerAu: from the served cache's frame constants.
   function distanceLine(pos, trust, epochJd, accuracy, kmPerAu) {
     if (!(typeof kmPerAu === "number" && kmPerAu > 0)) {
@@ -165,11 +196,14 @@
     var rKm = rAu * kmPerAu;
     var days = Math.abs(epochJd - trust.element_epoch_jd);
     var driftKm = rKm * trust.rate_deg_per_day * days * Math.PI / 180;
-    var src = sourcePlaceKm(accuracy);
-    var sourceKm = (src.km === null) ? 0 : src.km / 2;
+    var src = sourceError(accuracy);
+    var sourceKm = src.errKm;
     var errKm = Math.max(driftKm, sourceKm, FINEST_KM);
     var governs = (errKm === FINEST_KM) ? "whole kilometres"
-                : (errKm === sourceKm) ? "JPL's accuracy" : "drift";
+                : (errKm === sourceKm)
+                  ? (src.kind === "uncertainty" ? "JPL's uncertainty"
+                                                : "JPL's accuracy")
+                  : "drift";
     var km = roundTo(rKm, reportPlace(errKm));
     var au = roundTo(rAu, reportPlace(errKm / kmPerAu));
     var auText = au.place < 0 ? au.value.toFixed(-au.place)
@@ -352,6 +386,7 @@
     roundTo: roundTo,
     withCommas: withCommas,
     sourcePlaceKm: sourcePlaceKm,
+    sourceError: sourceError,
     distanceLine: distanceLine,
     pathDistanceLine: pathDistanceLine
   };

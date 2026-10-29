@@ -2439,6 +2439,18 @@
     // those notes had been read by nothing. The hover ends with the
     // pointer line like every other hover has since L-231.
     hover = withTail(hover);
+    // L-502 (Tony's phone look of 2026-10-27, 23:59: "can we move the
+    // hover crosses away from the most dense areas where they get lost in
+    // the glare?"): the marker stays at the outer edge, 1.02 times it, and
+    // the drawing's served info_polar_deg turns it off the x axis line,
+    // the angle from the ecliptic's north pole in the plane through the x
+    // axis, as the dust cloud's does. Absent, it is 90: the x axis, where
+    // all three sat until 2026-10-29.
+    if (typeof d.info_polar_deg === "number") {
+      var ipol = d.info_polar_deg * Math.PI / 180;
+      var redge = marker[0];
+      marker = [redge * Math.sin(ipol), 0, redge * Math.cos(ipol)];
+    }
     var color = cfg.color || "rgb(200, 200, 255)";
     return [
       cloudTrace(pts.x, pts.y, pts.z, center, label, color,
