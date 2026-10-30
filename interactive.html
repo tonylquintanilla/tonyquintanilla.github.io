@@ -401,6 +401,12 @@
         L-496: the search box finds groups by their label and served plain
         words; several list closed with counts, one opens whole, and a
         group chosen from the results opens in the list.)
+     Updated: October 29, 2026, evening, with Anthropic's Claude Opus 5.5
+       (L-502, Tony's second look, "can we move it further down?": the
+        frame HUD row and the count line sit at 48 px, just clear of the
+        drawer button, and the triad is drawn at three quarters, 78 by 90
+        px, its letters still printing at 11 px; its top edge comes down
+        from 178 to 138 px. Every room.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -666,10 +672,15 @@
            Centred by text-align, not flex: body.sun-exhibit .sun-chrome
            sets display: block and outweighs a display on .sun-hud, so a
            flex rule here is never applied (read on a 390 px page,
-           2026-10-29: the triad sat at the left). */
+           2026-10-29: the triad sat at the left).
+           L-502, second look (Tony, 2026-10-29: "yes, but can we move it
+           further down?"): the row sits at 48 px, just clear of the
+           drawer button, whose top was measured at 46.4 px on a 375 px
+           page (it was 58, 12 px clear), and the triad is drawn at three
+           quarters, below, so its top edge comes down 40 px in all. */
         .sun-hud {
             position: absolute; left: 10px; right: 10px;
-            bottom: calc(58px + env(safe-area-inset-bottom));
+            bottom: calc(48px + env(safe-area-inset-bottom));
             z-index: 5; pointer-events: none;
             text-align: center; line-height: 0;
         }
@@ -678,10 +689,15 @@
                                   line-height: normal; }
         body.sun-exhibit.sun-drawer-open .sun-hud { display: none; }
         /* Tony, 2026-10-26: the whole triad opens the frame note, not
-           only the Aries glyph, which is a small target for a finger. */
+           only the Aries glyph, which is a small target for a finger.
+           L-502 (2026-10-29): drawn at three quarters, 78 by 90 px over
+           its 104 by 120 viewBox, which scales what it holds. Its letters
+           are set in the viewBox's units, so 14.7 there prints the 11 px
+           they printed before; the Aries glyph shrinks with the drawing,
+           15 to about 11 px. */
         .sun-triad {
-            width: 104px; height: 120px; pointer-events: auto; cursor: pointer;
-            font: 600 11px 'DM Sans', system-ui, sans-serif;
+            width: 78px; height: 90px; pointer-events: auto; cursor: pointer;
+            font: 600 14.7px 'DM Sans', system-ui, sans-serif;
         }
         .sun-triad text { fill: var(--text-primary); }
         .sun-triad .aries {
@@ -707,12 +723,14 @@
            aside with the HUD while the drawer is open. L-502
            (2026-10-29): the triad now stands in the bottom centre, so the
            line keeps to the left of it, wrapping where it must: half the
-           width, less the triad's half (52 px) and two 10 px gaps. */
+           width, less the triad's half (39 px since it is drawn at three
+           quarters; 52 before) and two 10 px gaps. At the HUD's height,
+           48 px since L-502's second look. */
         .ss-outside {
             position: absolute; left: 10px;
-            bottom: calc(58px + env(safe-area-inset-bottom));
+            bottom: calc(48px + env(safe-area-inset-bottom));
             z-index: 5; pointer-events: none;
-            max-width: calc(50% - 72px);
+            max-width: calc(50% - 59px);
             background: rgba(17,24,39,0.94); border: 1px solid var(--border);
             border-radius: 20px; padding: 5px 11px;
             font: 500 11px 'DM Sans', system-ui, sans-serif;
@@ -725,9 +743,11 @@
            left (found while placing the triad, L-502). */
         body.sun-exhibit .ss-outside[hidden] { display: none; }
         body.sun-exhibit.sun-drawer-open .ss-outside { display: none; }
+        /* Over the triad's top edge, 10 px into it, as before L-502's
+           second look moved that edge from 178 to 138 px. */
         .sun-frame-note {
             position: absolute; right: 10px; left: 10px;
-            bottom: calc(168px + env(safe-area-inset-bottom));
+            bottom: calc(128px + env(safe-area-inset-bottom));
             max-width: 340px; margin-left: auto; z-index: 8;
             background: rgba(17,24,39,0.97); border: 1px solid var(--border);
             border-radius: 10px; padding: 12px 14px;

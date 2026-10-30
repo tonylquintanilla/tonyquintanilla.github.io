@@ -96,6 +96,13 @@ once the mirror has copied the orrery's plan; it had typed the stand-in's
 dates and failed on the first real plans.)
 Module updated: October 28, 2026 with Anthropic's Claude Opus 5.5 (L-501:
 a stand-in answer for 2026 ED138, the first body added since slice 1.)
+Module updated: October 29, 2026, evening, with Anthropic's Claude Opus 5.5
+(L-399, the guard corrected: "another record" planted half an AU away;
+an answer inside its own 3-sigma but beyond the 1e-7 AU floor is served;
+one beyond the 1e-3 AU cap is refused, and served with the cap switched
+off; a refusal's fields read back from the run record; and every one of
+the builder's astroquery questions asks JPL afresh, cache=False, called
+against a recorder, with the setting turned on as a planted fault.)
 """
 import contextlib
 import io
@@ -388,6 +395,14 @@ def stand_in_plans(cfg):
             o['path'] = json.loads(json.dumps(
                 STAND_IN_COMET_PLAN if o.get('open_path') else STAND_IN_PLAN))
     return c
+
+
+# L-399, 2026-10-29: the builder's own JPL functions, kept before
+# install_mocks replaces them, so fresh_answer_checks can call them against
+# a recorder in place of astroquery.
+_REAL_FETCHES = {n: getattr(b, n) for n in (
+    'fetch_vectors_range', 'fetch_elements', 'fetch_solution_tp',
+    'fetch_pole_radec', 'fetch_orbit_plane')}
 
 
 def install_mocks():
@@ -1628,6 +1643,7 @@ def main():
 
     path_by_plan_checks(cfg, check)
     uncertainty_checks(cfg, check)
+    fresh_answer_checks(check)
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
@@ -1838,19 +1854,34 @@ def uncertainty_checks(cfg, check):
               % len(summ.get('asked') or []))
 
         # Planted: three answers that must serve nothing, each named, and
-        # the build still passes with the body's orbit served.
-        victims = small[:3]
+        # the build still passes with the body's orbit served. Since
+        # 2026-10-29 the match is the body's own 3-sigma, floored and
+        # capped (b.uncertainty_match_tolerance), so "another record" sits
+        # half an AU away, a different body's distance, beyond any body's
+        # tolerance; and two more: an answer inside its own 3-sigma but
+        # beyond the floor, which is served (2026 ED138's case), and one
+        # inside its 3-sigma but beyond the cap, which is not (a split
+        # comet's piece standing in for another).
+        victims = small[:5]
+        inside_r_s, inside_shift = 1e-4, 1e-5      # 3-sigma 3e-4 AU
+        cap_r_s, cap_shift = 1e-2, 2e-3            # 3-sigma 3e-2, cap 1e-3
 
         def planted(horizons_id, id_type, center, jd, hkwargs=None, timeout=60):
             row = fake_2xr(horizons_id, id_type, center, jd)
             slug = [o['slug'] for o in cfg['objects']
                     if o.get('horizons_id') == horizons_id][0]
             if slug == victims[0]:
-                row['X'] += 1e-5                 # another record answered
+                row['X'] += 0.5                  # another record answered
             elif slug == victims[1]:
                 raise ConnectionError('planted: no answer')
             elif slug == victims[2]:
                 row['R_s'] = None                # JPL printed n.a.
+            elif slug == victims[3]:
+                row['R_s'] = inside_r_s          # JPL revised the orbit
+                row['X'] += inside_shift
+            elif slug == victims[4]:
+                row['R_s'] = cap_r_s             # a close piece answered
+                row['X'] += cap_shift
             return row
         b.fetch_small_body_2xr = planted
         try:
@@ -1858,15 +1889,38 @@ def uncertainty_checks(cfg, check):
             idx2 = json.load(open(out / 'coverage_index.json'))
             miss = (idx2.get('position_uncertainty') or {}).get('missing') or {}
             o2 = idx2['objects']
+            refused = (rm2.get('position_uncertainty') or {}).get('refused') or {}
             check(rm2['structural_validation'] == 'pass'
                   and all('position_uncertainty' not in o2[v] and o2[v].get('osculating')
-                          for v in victims)
+                          for v in victims[:3] + victims[4:])
                   and 'another record answered' in miss.get(victims[0], '')
                   and 'could not reach JPL' in miss.get(victims[1], '')
-                  and 'no range uncertainty' in miss.get(victims[2], ''),
-                  "L-399: planted -- a position that does not match, no "
-                  "answer, and an n.a. uncertainty each serve nothing, named, "
-                  "and the orbit is still served (%s)" % miss)
+                  and 'no range uncertainty' in miss.get(victims[2], '')
+                  and 'another record answered' in miss.get(victims[4], ''),
+                  "L-399: planted -- a position half an AU off, no answer, "
+                  "an n.a. uncertainty, and a position inside its 3-sigma but "
+                  "beyond the cap each serve nothing, named, and the orbit is "
+                  "still served (%s)" % miss)
+            got3 = (o2[victims[3]].get('position_uncertainty') or {}).get('range_3sigma_km')
+            check(got3 == 3 * inside_r_s * b.KM_PER_AU and victims[3] not in miss,
+                  "L-399: an answer %g AU off, beyond the %g AU floor but "
+                  "inside the body's own 3-sigma (%g AU), is served (%s)"
+                  % (inside_shift, b.UNCERTAINTY_MATCH_AU, 3 * inside_r_s, got3))
+            # The refusal names its items, in the run record.
+            r0 = refused.get(victims[0]) or {}
+            hid0 = [o['horizons_id'] for o in cfg['objects'] if o['slug'] == victims[0]][0]
+            check(r0.get('asked_id') == hid0
+                  and len(r0.get('answer_au') or []) == 3
+                  and len(r0.get('served_au') or []) == 3
+                  and abs(r0['answer_au'][0] - r0['served_au'][0] - 0.5) < 1e-9
+                  and r0.get('r_s_au') == FAKE_R_S_AU
+                  and r0.get('tolerance_au') == b.UNCERTAINTY_MATCH_AU
+                  and abs(r0.get('off_au', 0) - 0.5) < 1e-9
+                  and hid0 in miss.get(victims[0], '')
+                  and set(refused) == {victims[0], victims[4]},
+                  "L-399: a refusal names the id asked, JPL's X, Y, Z, the "
+                  "served point's, the R_s, the distance and the tolerance, "
+                  "in the run record and its reason (%s)" % sorted(refused))
             # The match test can fail: with it switched off, the mismatched
             # answer would have been served.
             real_tol = b.UNCERTAINTY_MATCH_AU
@@ -1879,6 +1933,17 @@ def uncertainty_checks(cfg, check):
                 b.UNCERTAINTY_MATCH_AU = real_tol
             check(leaked, "L-399: planted fault caught -- without the match "
                   "test, another record's uncertainty is served")
+            # And the cap can fail: without it, the close piece is served.
+            real_cap = b.UNCERTAINTY_MATCH_CAP_AU
+            b.UNCERTAINTY_MATCH_CAP_AU = float('inf')
+            try:
+                b.run_build(cfg, out, mode='nightly', do_commit=False)
+                leaked_cap = 'position_uncertainty' in json.load(
+                    open(out / 'coverage_index.json'))['objects'][victims[4]]
+            finally:
+                b.UNCERTAINTY_MATCH_CAP_AU = real_cap
+            check(leaked_cap, "L-399: planted fault caught -- without the "
+                  "cap, a close piece's uncertainty is served")
         finally:
             b.fetch_small_body_2xr = real_fetch
     rows = b.parse_vectors_2xr(SAMPLE_2XR)
@@ -1893,6 +1958,85 @@ def uncertainty_checks(cfg, check):
                                           'id_type': 'smallbody', 'open_path': True}),
           "L-399: a pinned comet record is a small body; a planet, a "
           "spacecraft id and a path are not")
+
+
+
+class _AskStop(Exception):
+    pass
+
+
+class _AskRecorder:
+    """Stands in for astroquery's Horizons: records each question's cache
+    setting, then stops the call before anything is parsed."""
+    asked = []
+
+    def __init__(self, **kw):
+        pass
+
+    def _ask(self, name, kw):
+        _AskRecorder.asked.append((name, kw.get('cache', 'not passed')))
+        raise _AskStop(name)
+
+    def vectors(self, **kw):
+        self._ask('vectors', kw)
+
+    def vectors_async(self, **kw):
+        self._ask('vectors_async', kw)
+
+    def elements(self, **kw):
+        self._ask('elements', kw)
+
+    def ephemerides(self, **kw):
+        self._ask('ephemerides', kw)
+
+
+def fresh_answer_checks(check):
+    """L-399, 2026-10-29: every question the builder asks through
+    astroquery goes to JPL, never to astroquery's week-long saved answers,
+    which served a same-day rebuild the earlier build's orbit for 2026
+    ED138. Each real fetch function is called against a recorder."""
+    day = datetime(2026, 10, 29, tzinfo=timezone.utc)
+    calls = [
+        ('positions by range', lambda: _REAL_FETCHES['fetch_vectors_range'](
+            'x', 'smallbody', '@sun', day, day + timedelta(days=1))),
+        ('positions by epochs', lambda: _REAL_FETCHES['fetch_vectors_range'](
+            'x', 'smallbody', '@sun', None, None, epoch_jds=[2461342.5])),
+        ('elements', lambda: _REAL_FETCHES['fetch_elements'](
+            'x', 'smallbody', '@sun', 2461342.5)),
+        ('solution TP', lambda: _REAL_FETCHES['fetch_solution_tp']('x')),
+        ('pole of date', lambda: _REAL_FETCHES['fetch_pole_radec'](2461342.5)),
+        ('orbit plane', lambda: _REAL_FETCHES['fetch_orbit_plane'](2461342.5)),
+    ]
+    real_h, real_req = b.Horizons, b._require_astro
+
+    def ask_all():
+        _AskRecorder.asked = []
+        for _name, call in calls:
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    call()
+            except _AskStop:
+                pass
+        return list(_AskRecorder.asked)
+
+    b.Horizons, b._require_astro = _AskRecorder, (lambda: None)
+    try:
+        asked = ask_all()
+        real_cache = b.HORIZONS_CACHE
+        b.HORIZONS_CACHE = True
+        try:
+            planted = ask_all()
+        finally:
+            b.HORIZONS_CACHE = real_cache
+    finally:
+        b.Horizons, b._require_astro = real_h, real_req
+    check(len(asked) == len(calls) and all(c is False for _n, c in asked),
+          "L-399: every one of the builder's %d astroquery questions asks "
+          "JPL afresh, cache=False (%s)" % (len(calls),
+                                           ', '.join('%s %s' % a for a in asked)))
+    check(len(planted) == len(calls) and all(c is True for _n, c in planted),
+          "L-399: planted fault caught -- with the setting turned on, every "
+          "question would read astroquery's saved answers")
 
 
 if __name__ == '__main__':

@@ -133,6 +133,14 @@ Module updated: October 29, 2026 with Anthropic's Claude Opus 5.5 (L-503:
 serve_drawings() also serves a stored drawing named on a room's row in
 the config's "rooms" -- the main belt's cloud, the Solar System room's
 own row -- which the served index does not hold.)
+Module updated: October 29, 2026 with Anthropic's Claude Opus 5.5 (L-399,
+the guard corrected: a small body's 2xr answer is accepted within its own
+3-sigma range, 3 x R_s, floored at 1e-7 AU and capped at 1e-3 AU
+(uncertainty_match_tolerance), R_s read first; a refused answer is
+recorded with its items in the run record's position_uncertainty.refused.
+And every astroquery question is asked of JPL, never answered from
+astroquery's week-long saved answers (HORIZONS_CACHE), which had served a
+same-day rebuild the earlier build's orbit and points for 2026 ED138.)
 
 Role: cache
 Domain: cache_builder
@@ -392,6 +400,19 @@ def _require_astro():
             "with the fetch functions monkeypatched.")
 
 
+# L-399, 2026-10-29: every astroquery question is asked of JPL, never
+# answered from astroquery's saved answers. astroquery keeps each answer on
+# disk for a week (astroquery.cache_conf.cache_timeout, 604800 s, in
+# ~/.astropy/cache/astroquery/Horizons) and hands it back when the same
+# question is asked again, so a second build on the same day served the
+# first build's orbit and positions under a new "retrieved" stamp. On
+# 2026-10-29 JPL revised 2026 ED138's orbit between the 14:05 and 21:57
+# UTC builds; the 21:57 build served the saved orbit and point while its
+# 2xr question, sent directly, met the new one, and the match refused it.
+# The offline suite holds every call to this setting.
+HORIZONS_CACHE = False
+
+
 # L-443 build B: a path fetched by its plan holds points closer together
 # than a day (an event window's step can be a minute), so its points are
 # keyed to the minute; every other range keeps the day.
@@ -425,7 +446,8 @@ def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1
     if epoch_jds is not None:
         obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type),
                        location=location, epochs=list(epoch_jds))
-        eph = obj.vectors(refplane='ecliptic', **(hkwargs or {}))
+        eph = obj.vectors(refplane='ecliptic', cache=HORIZONS_CACHE,
+                          **(hkwargs or {}))
         return {i: {'jd': float(row['datetime_jd']), 'x': float(row['x']),
                     'y': float(row['y']), 'z': float(row['z'])}
                 for i, row in enumerate(eph)}
@@ -435,7 +457,8 @@ def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1
         'step': step,
     }
     obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type), location=location, epochs=epochs)
-    eph = obj.vectors(refplane='ecliptic', **(hkwargs or {}))
+    eph = obj.vectors(refplane='ecliptic', cache=HORIZONS_CACHE,
+                      **(hkwargs or {}))
     out = {}
     for row in eph:
         jd = float(row['datetime_jd'])
@@ -455,7 +478,7 @@ def fetch_elements(horizons_id, id_type, center, epoch_jd, hkwargs=None):
     _require_astro()
     location = _normalize_center(center)
     obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type), location=location, epochs=epoch_jd)
-    el = obj.elements(**(hkwargs or {}))
+    el = obj.elements(cache=HORIZONS_CACHE, **(hkwargs or {}))
     if len(el) == 0:
         raise ValueError("No elements returned for %s" % horizons_id)
     row = el[0]
@@ -511,7 +534,7 @@ def fetch_solution_tp(name, horizons_id=None, id_type='smallbody', hkwargs=None)
     try:
         epoch_jd = Time('2025-01-01').jd
         obj = Horizons(id=query_id, id_type=_norm_id_type(id_type), location='@sun', epochs=epoch_jd)
-        raw = obj.vectors_async(**(hkwargs or {})).text
+        raw = obj.vectors_async(cache=HORIZONS_CACHE, **(hkwargs or {})).text
     except Exception as e:
         print("[SOLUTION TP] request failed for %s: %s" % (name, e), flush=True)
         return ('request_failed', None)
@@ -543,17 +566,30 @@ def fetch_solution_tp(name, horizons_id=None, id_type='smallbody', hkwargs=None)
 # range fetch through astroquery, which cannot read the 2xr columns, so
 # the uncertainty is one more question per small body, asked at the exact
 # moment of the body's served "you are here" point. Its answer's position
-# must agree with that point, or a different record answered and nothing
-# is served. A failed answer costs only the uncertainty: the body is
+# must agree with that point within the body's own 3-sigma (capped), or a
+# different record answered and nothing is served. A failed answer costs only the uncertainty: the body is
 # served as before, and the room says its uncertainty is not included.
 # ===========================================================================
 
 UNCERTAINTY_SIGMA = 3                        # the orrery's SIGMA_MULTIPLE
 UNCERTAINTY_CENTRE = '@sun'                  # the room prints the distance from the Sun
-# The 2xr answer and the served point are the same JPL solution at the
-# same moment, so they agree to Horizons' printed digits; 1e-7 AU is
-# about 15 km, far above that and far below any other record's position.
+# How far the 2xr answer may sit from the served point (L-399, corrected
+# 2026-10-29; uncertainty_match_tolerance). Asked at the same moment of the
+# same record, the two can still differ when JPL revises the body's orbit
+# between the range fetch and this question -- on 2026-10-29 2026 ED138's
+# answer sat 8.88e-05 AU (13,000 km) across its motion from a point the
+# fetch had read from astroquery's saved answers (HORIZONS_CACHE, above),
+# a thirtieth of its own 3-sigma. So the tolerance is the body's own
+# 3-sigma, 3 x R_s, floored at 1e-7 AU (about 15 km, the earlier fixed
+# tolerance; Ceres and Apophis keep it) and capped at 1e-3 AU (about
+# 150,000 km). The cap is the one case where another record sits close:
+# the pieces of a split comet. C/2025 K1's B and D were 0.0042 AU apart on
+# 2026-10-29 and D's own 3-sigma was 0.0043 AU, so D's answer standing in
+# for B's would pass the 3-sigma alone; the cap is under half the closest
+# pair measured that day (the parent and C, 0.0024 AU). Every other body
+# sits AU away: the closest neighbour of any body asked was 0.117 AU.
 UNCERTAINTY_MATCH_AU = 1e-7
+UNCERTAINTY_MATCH_CAP_AU = 1e-3
 _2XR_STATE_COLUMNS = ('X', 'Y', 'Z')
 
 
@@ -645,32 +681,64 @@ def fetch_small_body_2xr(horizons_id, id_type, center, jd, hkwargs=None,
     return rows[0]
 
 
+def uncertainty_match_tolerance(r_s):
+    """How far JPL's 2xr answer may sit from the served point and still be
+    the same body (L-399, 2026-10-29): the body's own 3-sigma range, 3 x
+    R_s, floored at UNCERTAINTY_MATCH_AU and capped at
+    UNCERTAINTY_MATCH_CAP_AU. Ceres and Apophis keep the floor; 2026 ED138
+    gets its own 3-sigma."""
+    return max(UNCERTAINTY_MATCH_AU,
+               min(UNCERTAINTY_SIGMA * r_s, UNCERTAINTY_MATCH_CAP_AU))
+
+
 def build_position_uncertainty(obj, as_of_today, hkwargs=None):
     """The served "position_uncertainty" for a small body: JPL's own 3-sigma
     uncertainty of its distance from the Sun, at the moment of its served
-    as_of_today point. Returns (block, None), or (None, reason) when nothing
-    can be served honestly -- never a tiny invented figure."""
+    as_of_today point. Returns (block, None, None), or (None, reason,
+    refused) when nothing can be served honestly -- never a tiny invented
+    figure. refused is None, or, for an answer refused by its position,
+    the items that let the refusal be read later: the id asked, JPL's X, Y,
+    Z and the served point's (AU), the R_s, the distance and the
+    tolerance."""
     if not as_of_today or as_of_today.get('t') is None:
-        return None, 'no "you are here" point is served to ask it at'
+        return None, 'no "you are here" point is served to ask it at', None
     if obj.get('canonical_center') != UNCERTAINTY_CENTRE:
-        return None, 'it is not served measured from the Sun'
+        return None, 'it is not served measured from the Sun', None
     jd = float(as_of_today['t'])
     row = fetch_small_body_2xr(obj['horizons_id'], obj['id_type'],
                                UNCERTAINTY_CENTRE, jd, hkwargs=hkwargs)
     got = [row.get(c) for c in _2XR_STATE_COLUMNS]
     if None in got:
-        return None, "JPL's answer has an empty position column"
-    served = [as_of_today[k] * KM_TO_AU for k in ('x', 'y', 'z')]
-    off = math.sqrt(sum((g - s) ** 2 for g, s in zip(got, served)))
-    if off > UNCERTAINTY_MATCH_AU:
-        return None, ("JPL's 2xr answer sits %.3g AU from the served point, "
-                      "so another record answered" % off)
+        return None, "JPL's answer has an empty position column", None
+    # R_s first: an answer with no range uncertainty serves nothing,
+    # whatever its position, and the tolerance below is measured by it.
     try:
         r_s = float(row.get('R_s'))
     except (TypeError, ValueError):
         r_s = None
     if r_s is None or not math.isfinite(r_s) or r_s <= 0:
-        return None, "JPL gives no range uncertainty (R_s) for it"
+        return None, "JPL gives no range uncertainty (R_s) for it", None
+    served = [as_of_today[k] * KM_TO_AU for k in ('x', 'y', 'z')]
+    off = math.sqrt(sum((g - s) ** 2 for g, s in zip(got, served)))
+    tol = uncertainty_match_tolerance(r_s)
+    if off > tol:
+        refused = {
+            'asked_id': obj['horizons_id'],
+            'jd': jd,
+            'answer_au': got,
+            'served_au': served,
+            'r_s_au': r_s,
+            'off_au': off,
+            'tolerance_au': tol,
+        }
+        return None, ("JPL's 2xr answer for %s sits %.3g AU from the served "
+                      "point, beyond its tolerance of %.3g AU (3 x R_s = %.3g "
+                      "AU, floored at %.3g and capped at %.3g), so another "
+                      "record answered; JPL's X, Y, Z %s and the served %s AU"
+                      % (obj['horizons_id'], off, tol, UNCERTAINTY_SIGMA * r_s,
+                         UNCERTAINTY_MATCH_AU, UNCERTAINTY_MATCH_CAP_AU,
+                         ', '.join('%.12g' % v for v in got),
+                         ', '.join('%.12g' % v for v in served))), refused
     return {
         'range_1sigma_au': r_s,
         'sigma': UNCERTAINTY_SIGMA,
@@ -683,7 +751,7 @@ def build_position_uncertainty(obj, as_of_today, hkwargs=None):
             'query_target': obj['horizons_id'],
             'retrieved': datetime.now(timezone.utc).isoformat(),
         },
-    }, None
+    }, None, None
 
 
 def _comet_hkwargs(obj):
@@ -1613,7 +1681,8 @@ def fetch_pole_radec(jd):
     _require_astro()
     obj = Horizons(id=POLE_QUERY['target'], location=POLE_QUERY['observer'],
                    epochs=jd)
-    table = obj.ephemerides(quantities=POLE_QUERY['quantity'])
+    table = obj.ephemerides(quantities=POLE_QUERY['quantity'],
+                            cache=HORIZONS_CACHE)
     return float(table['NPole_RA'][0]), float(table['NPole_DEC'][0])
 
 
@@ -1630,7 +1699,7 @@ def fetch_orbit_plane(jd):
     _require_astro()
     obj = Horizons(id=ORBIT_QUERY['target'], location=ORBIT_QUERY['center'],
                    epochs=jd)
-    table = obj.elements(refplane=ORBIT_QUERY['refplane'])
+    table = obj.elements(refplane=ORBIT_QUERY['refplane'], cache=HORIZONS_CACHE)
     return float(table['incl'][0]), float(table['Omega'][0])
 
 
@@ -2699,26 +2768,31 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     # above, as the pole is, so an answer that cannot be had costs only the
     # uncertainty, never the orbit; a body served last-good has no
     # as_of_today and is named, not asked.
-    unc = {'asked': [], 'served': [], 'missing': {}}
+    unc = {'asked': [], 'served': [], 'missing': {}, 'refused': {}}
     for r in results:
         if not is_small_body_target(r['obj']):
             continue
         slug = r['slug']
         unc['asked'].append(slug)
         try:
-            block, why = build_position_uncertainty(
+            block, why, refused = build_position_uncertainty(
                 r['obj'], r.get('as_of_today'), hkwargs=_comet_hkwargs(r['obj']))
         except Exception as e:
-            block, why = None, 'could not reach JPL (%s)' % e
+            block, why, refused = None, 'could not reach JPL (%s)' % e, None
         if block is None:
             unc['missing'][slug] = why
+            if refused is not None:
+                unc['refused'][slug] = refused
             warn("%s: no position uncertainty served -- %s" % (slug, why))
         else:
             r['position_uncertainty'] = block
             unc['served'].append(slug)
+    # A refusal read a week later is diagnosable from the record alone
+    # (L-399, 2026-10-29): what JPL answered, the point it was compared
+    # with, the R_s it carried, the tolerance and the id asked.
     run_manifest['position_uncertainty'] = {
         'asked': len(unc['asked']), 'served': len(unc['served']),
-        'missing': unc['missing']}
+        'missing': unc['missing'], 'refused': unc['refused']}
     print("[UNCERTAINTY] JPL's own position uncertainty served for %d of %d "
           "small bodies%s" % (len(unc['served']), len(unc['asked']),
                               ('; not served: ' + ', '.join(
