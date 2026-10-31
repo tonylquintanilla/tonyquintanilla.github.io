@@ -1,0 +1,362 @@
+{
+  "_comment": "Written by daily_run.py --night on a clean night only (L-485), so this is the website's last clean run. A red night writes nothing: its record is the run's log on GitHub.",
+  "schema": 1,
+  "clean_run_utc": "2026-10-31T18:29:04.813797+00:00",
+  "started_utc": "2026-10-31T18:25:23.605654+00:00",
+  "where": "GitHub Actions",
+  "orrery_pulled": "3aa0d40b4b4f9c4f701f5836250f8bebaa442b28",
+  "pulls_asked": "with the run's GITHUB_TOKEN",
+  "swap_log_line": {
+    "attempts": {
+      "live_to_prev": 1,
+      "staging_to_live": 1
+    },
+    "error": null,
+    "mode": "nightly",
+    "outcome": "ok",
+    "reached": "staging_to_live",
+    "run_id": "20261031T182527Z",
+    "time": "2026-10-31T18:28:24.713137+00:00"
+  },
+  "run_records": "Run records: carried 120 of 120, plus tonight's: 20261031T182527Z.json.",
+  "served_files_changed": 96,
+  "steps": [
+    {
+      "step": "Guest book updater",
+      "result": "skipped: his morning's",
+      "seconds": 0.0
+    },
+    {
+      "step": "Pulls from the orrery",
+      "result": "ok",
+      "seconds": 3.2
+    },
+    {
+      "step": "Pull matches push (runner)",
+      "result": "ok",
+      "seconds": 0.0
+    },
+    {
+      "step": "Cache builder",
+      "result": "exit 0",
+      "seconds": 177.8
+    },
+    {
+      "step": "Run records",
+      "result": "ok",
+      "seconds": 0.0
+    },
+    {
+      "step": "Maintenance run, night pass",
+      "result": "exit 0",
+      "seconds": 38.5
+    }
+  ],
+  "rows": [
+    {
+      "row": "Constants export pull",
+      "kind": "generator",
+      "verdict": "PASS",
+      "note": "no change to data/constants_export.json, data/constants_export.sha",
+      "seconds": 0.6
+    },
+    {
+      "row": "Config mirror",
+      "kind": "generator",
+      "verdict": "PASS",
+      "note": "no change to data/objects_config.json",
+      "seconds": 0.1
+    },
+    {
+      "row": "Objects export pull",
+      "kind": "generator",
+      "verdict": "PASS",
+      "note": "no change to data/objects_export.json, data/objects_export.sha",
+      "seconds": 0.5
+    },
+    {
+      "row": "Objects mirror",
+      "kind": "generator",
+      "verdict": "PASS",
+      "note": "no change to data/objects_config.json",
+      "seconds": 0.1
+    },
+    {
+      "row": "Drawings pull",
+      "kind": "generator",
+      "verdict": "PASS",
+      "note": "no change to data/drawings/hills_cloud.json, data/drawings/van_allen_belts.json, data/drawings/earth_exosphere.json, data/drawings/pulled_at.sha",
+      "seconds": 1.1
+    },
+    {
+      "row": "Cache builder suite",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "PASS (498 checks, 0 failures)",
+      "seconds": 13.1
+    },
+    {
+      "row": "Pole of date",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "POLE OF DATE: all 11 checks passed (frame angle, orrery, ERFA, block checker, and each shown able to fail).",
+      "seconds": 0.1
+    },
+    {
+      "row": "Mirror suite",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "All 77 mirror checks passed: served, spelling, relabel refused and accepted, conflict refused, definition as exactly 1, fallback and absent named, no-slot refused, five shapes, formatting kept, idempotent, report writes nothing, uncertainty written as served, Earth's pole served, print count written as served, \"in\" written as served and a slot served in another unit from it, and the citation written as served, a website-only citation named, an old export refused.",
+      "seconds": 0.1
+    },
+    {
+      "row": "Store writer suite",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "All 469 store-writer checks passed: an allow list that lets through only a shell's words, a belt's words and the arrival settings, the rooms section's included; a no-edit round trip; one line per change; empty words handled; a refused batch writing nothing; awkward text; and the shell list matching the cache check's rule.",
+      "seconds": 18.1
+    },
+    {
+      "row": "Store editor suite",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "All 377 store-editor checks passed: every box the form offers is one the writer allows; the word list and the tick list differ by the belts, on purpose; nothing typed saves nothing; the save message does not promise a visitor sees what they cannot yet; and a red Cache in step is explained rather than just shown.",
+      "seconds": 0.2
+    },
+    {
+      "row": "Objects mirror suite",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "MIRROR OBJECTS SUITE: pass",
+      "seconds": 0.1
+    },
+    {
+      "row": "Objects mirror check",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "OBJECTS MIRROR: pass",
+      "seconds": 0.1
+    },
+    {
+      "row": "Config mirror check",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "Every served link holds the export's value, unit, figure count and citation; 179 link(s) compared, 174 citation(s) word for word, 5 declared with none, 3 not served; store 0c1e4bbe865a.",
+      "seconds": 0.1
+    },
+    {
+      "row": "Pull failures",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "PULL FAILURES: all 16 checks passed (3 pulls x 3 ways to fail, the run after a failed pull, the run's token to GitHub's interface only, and 5 planted faults caught)",
+      "seconds": 0.1
+    },
+    {
+      "row": "Horizons confirmations",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "HORIZONS CONFIRMATIONS: pass -- 90 of 90 confirmed, and 63 periods, within 30 days",
+      "seconds": 0.0
+    },
+    {
+      "row": "Pointer join",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "Every link is accounted for: 182 link(s) against orrery 3aa0d40b, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
+      "seconds": 0.1
+    },
+    {
+      "row": "Cache in step",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "The served cache holds the config's 95 object(s) and their features exactly: 4 object(s) with 34 named shell(s), in both cache files.",
+      "seconds": 0.0
+    },
+    {
+      "row": "Drawn orbit",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "DRAWN ORBIT: pass -- 18 checks, every planted fault caught",
+      "seconds": 0.5
+    },
+    {
+      "row": "Drawings",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery 3aa0d40b; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
+      "seconds": 0.4
+    },
+    {
+      "row": "Collapsed features",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "32 stored as themselves, 16 collapsed, 0 unclassified.",
+      "seconds": 0.0
+    },
+    {
+      "row": "Feature renderers",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== ALL CHECKS PASSED ===",
+      "seconds": 1.4
+    },
+    {
+      "row": "Page framing",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== ALL CHECKS PASSED ===",
+      "seconds": 0.1
+    },
+    {
+      "row": "Sun shells",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "ALL CHECKS PASSED",
+      "seconds": 0.2
+    },
+    {
+      "row": "Earth scene geometry",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== ALL CHECKS PASSED ===",
+      "seconds": 0.1
+    },
+    {
+      "row": "Hover budget",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== ALL CHECKS PASSED ===",
+      "seconds": 0.1
+    },
+    {
+      "row": "Typed facts",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "TYPED FACTS: PASS -- 0 typed facts in the Sun and Earth rooms; 17 number line(s), 28 of 28 allowed sentence(s) seen, 0 held open (L-451); 26 word field(s) masked.",
+      "seconds": 0.1
+    },
+    {
+      "row": "Typed numbers",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "TYPED NUMBERS: PASS -- 0 typed numbers in the Sun and Earth rooms' served words; 315 number(s) masked, 8 held.",
+      "seconds": 0.2
+    },
+    {
+      "row": "Arrival",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "Arrival: both rooms open on the right things; every shell trace carries its key; the fallback with no arrival block is unchanged.",
+      "seconds": 0.2
+    },
+    {
+      "row": "Display figures",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: 61 hover(s) and 312 number(s) examined; 14 graded, 7 graded by line, 47 held to the fixture ===",
+      "seconds": 0.1
+    },
+    {
+      "row": "Solar System figures",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: 8 worked cases, 64 drawer rows matched to their accuracy rows, 63 served distances; Uranus, Neptune and Pluto print to JPL's ten-thousands place; 6 period cases and 63 served periods printed as the orrery printed them; 5 orbit-line cases and 63 served orbit lines; 3 path cases and 26 served paths, spacecraft and comets ===",
+      "seconds": 0.1
+    },
+    {
+      "row": "Far lines",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: far lines are cut to the view's box ===",
+      "seconds": 0.1
+    },
+    {
+      "row": "Direction arrows",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: the arrows point the way the points run, sit ahead of the body, stay in the view, and the page places them ===",
+      "seconds": 0.0
+    },
+    {
+      "row": "Solar System drawer",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: the Sun is never ticked, every row and group is listed, the handle names the last body ticked, nothing ticks many bodies at once but a spacecraft with its companions, rooms are offered only where they exist, groups fold and reset their bodies, the count line counts ticked bodies outside the view, a search finds a body by any of its names and a group by its label or words, and the page asks this file ===",
+      "seconds": 0.0
+    },
+    {
+      "row": "Source list",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: the i panel's sources are a list, every address a link, and its words are one sentence to a bullet ===",
+      "seconds": 0.1
+    },
+    {
+      "row": "Drawer order",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== DRAWER ORDER: both rooms list their shells where each begins; self-test red twice",
+      "seconds": 0.1
+    },
+    {
+      "row": "Drawn ends",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== DRAWN ENDS: every drawing starts and stops on a served row or a held end; self-test red three times",
+      "seconds": 0.2
+    },
+    {
+      "row": "Label words",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== LABEL WORDS: all 34 shell rows in both rooms open their own feature's words; 5 stored drawings' crosses stand off the axis lines; self-test red twice",
+      "seconds": 0.1
+    },
+    {
+      "row": "Guest book",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== GUEST BOOK: all 8 checks passed",
+      "seconds": 0.0
+    },
+    {
+      "row": "Guest book updater",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== GUEST BOOK UPDATER: all 49 checks passed (8 scripted runs, self-test first)",
+      "seconds": 0.1
+    },
+    {
+      "row": "Daily run steps",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== DAILY RUN: all 4 step scripts found; the pull-match and night checks passed 32 of 32 fixture checks (L-461, L-485)",
+      "seconds": 0.1
+    },
+    {
+      "row": "Artifact 1 assembler",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== ALL CHECKS PASSED -- 5 verdicts and T3's feature set match the 2026-08-31 pin ===",
+      "seconds": 0.1
+    },
+    {
+      "row": "Cache siblings",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "RESULT: no sibling directories and nothing in data/ the builder did not make.",
+      "seconds": 0.0
+    }
+  ],
+  "skipped": [
+    {
+      "row": "Guest book updater",
+      "why": "needs Tony's answers; his morning's (Tony's ruling of Oct 31, 2026, 10:20)"
+    },
+    {
+      "row": "Module atlas",
+      "why": "writes MODULE_ATLAS.md and MODULE_INDEX.md, which are documents; the night commits no page or word (Tony's R1, 2026-10-25)"
+    }
+  ],
+  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/41229277552"
+}
