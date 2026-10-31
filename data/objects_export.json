@@ -1,9 +1,9 @@
 {
   "schema": 3,
   "source_sha256": "296eff87a9572efb2c94854f87b6a6a2ecfa9936bfad404b122a5cf1c8752a66",
-  "period_inputs_sha256": "e38497b6254577a2aec01fb1a9f131bbaa499cdce78a1886d93ce85c806ab4f5",
-  "confirmations_sha256": "74a37038a55884e75c9667af47228fa84c7f6b1acbbd615fafae5e927487b13d",
-  "paths_sha256": "6a1816d3bbf3a80f62c52e62f56e896faca20a4821b21a15346ea03d57157dbc",
+  "period_inputs_sha256": "8edfc6114b76695235f1fd4c8049b9e70a978eb5ade0333019bf271fb302c042",
+  "confirmations_sha256": "8894135a4667371aa49c7fc9939cf74ee27886e483951ac69eca06e7d9bd1bac",
+  "paths_sha256": "3c18a250c4a04e25a1fddedd01323723f1d7b8e31f9b8ca02a4eb773768d1fe8",
   "cadence_days": 30,
   "objects": {
     "sun": {
@@ -17,7 +17,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "10",
           "id_type": null,
           "horizons_name": "Sun"
@@ -75,13 +75,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "199",
           "id_type": null,
           "horizons_name": "Mercury"
         },
         "period": {
-          "confirmed": "2026-10-20",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-20 08:55",
           "days": 87.96885430477843,
@@ -140,13 +140,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "299",
           "id_type": null,
           "horizons_name": "Venus"
         },
         "period": {
-          "confirmed": "2026-10-20",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-20 08:55",
           "days": 224.7058361266309,
@@ -171,7 +171,7 @@
         "target": "3",
         "target_label": "the Earth-Moon center of mass",
         "open_orbit": false,
-        "fetched": "2026-10-20",
+        "fetched": "2026-10-28",
         "words": null,
         "years": {
           "value": 1.0,
@@ -184,39 +184,39 @@
           "text": "365.25"
         },
         "record": {
-          "days": 365.2504409595509,
-          "error_days": 0.004394715139255823,
+          "days": 365.2498770507308,
+          "error_days": 0.004099075940587227,
           "error_from": "year_change",
           "sbdb_status": "not a small body; SBDB not asked",
-          "epoch": "2026-10-20 08:55",
+          "epoch": "2026-10-28 23:02",
           "elements": {
-            "a": 0.9999892274463135,
-            "e": 0.01665980301274755,
-            "i": 0.003555353921330366,
-            "omega": 288.3707931165595,
-            "Omega": 174.715264269434,
-            "TP": 2461409.58151722,
-            "MA": 285.3783345824875,
-            "TA": 283.5277171195,
-            "q": 0.9833296039021883,
-            "epoch": "2026-10-20 08:55 osc."
+            "a": 0.9999881981929077,
+            "e": 0.01666534971924718,
+            "i": 0.003578713484288009,
+            "omega": 288.1100613331521,
+            "Omega": 174.9865390523067,
+            "TP": 2461409.591382199,
+            "MA": 293.8332492085932,
+            "TA": 292.0718442576858,
+            "q": 0.9833230451549031,
+            "epoch": "2026-10-28 23:02 osc."
           }
         }
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "399",
           "id_type": null,
           "horizons_name": "Earth"
         },
         "period": {
-          "confirmed": "2026-10-20",
+          "confirmed": "2026-10-31",
           "center": "@sun",
-          "epoch": "2026-10-20 08:55",
-          "days": 365.2504409595509,
-          "jpl_days": 365.2504409595509,
-          "error_days": 0.004394715139255823
+          "epoch": "2026-10-28 23:02",
+          "days": 365.2498770507308,
+          "jpl_days": 365.2498770507308,
+          "error_days": 0.004099075940587227
         }
       }
     },
@@ -236,7 +236,7 @@
         "target": "499",
         "target_label": null,
         "open_orbit": false,
-        "fetched": "2026-10-20",
+        "fetched": "2026-10-28",
         "words": null,
         "years": {
           "value": 1.8809,
@@ -249,39 +249,39 @@
           "text": "687.0"
         },
         "record": {
-          "days": 686.9855954400858,
-          "error_days": 0.04526813649488304,
+          "days": 686.9961190010482,
+          "error_days": 0.05359560300621524,
           "error_from": "year_change",
           "sbdb_status": "not a small body; SBDB not asked",
-          "epoch": "2026-10-20 08:55",
+          "epoch": "2026-10-28 23:02",
           "elements": {
-            "a": 1.523700170391638,
-            "e": 0.09340890801896552,
-            "i": 1.847445147757617,
-            "omega": 286.6518061775132,
-            "Omega": 49.48066040297453,
-            "TP": 2461125.839502549,
-            "MA": 109.0147007148808,
-            "TA": 118.7168061980916,
-            "q": 1.381373001327043,
-            "epoch": "2026-10-20 08:55 osc."
+            "a": 1.523715730844724,
+            "e": 0.0934044760376825,
+            "i": 1.847441098014382,
+            "omega": 286.6578340287883,
+            "Omega": 49.48052332524622,
+            "TP": 2461125.847594696,
+            "MA": 113.5091796776376,
+            "TA": 122.845408092471,
+            "q": 1.381393861374799,
+            "epoch": "2026-10-28 23:02 osc."
           }
         }
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "499",
           "id_type": null,
           "horizons_name": "Mars"
         },
         "period": {
-          "confirmed": "2026-10-20",
+          "confirmed": "2026-10-31",
           "center": "@sun",
-          "epoch": "2026-10-20 08:55",
-          "days": 686.9855954400858,
-          "jpl_days": 686.9855954400858,
-          "error_days": 0.04526813649488304
+          "epoch": "2026-10-28 23:02",
+          "days": 686.9961190010482,
+          "jpl_days": 686.9961190010482,
+          "error_days": 0.05359560300621524
         }
       }
     },
@@ -301,52 +301,52 @@
         "target": "599",
         "target_label": null,
         "open_orbit": false,
-        "fetched": "2026-10-20",
+        "fetched": "2026-10-28",
         "words": null,
         "years": {
-          "value": 11.864,
+          "value": 11.862,
           "figures": 5,
-          "text": "11.864"
+          "text": "11.862"
         },
         "days": {
-          "value": 4333.2,
-          "figures": 5,
-          "text": "4333.2"
+          "value": 4333.0,
+          "figures": 4,
+          "text": "4333"
         },
         "record": {
-          "days": 4333.179516760591,
-          "error_days": 0.10166797334386501,
+          "days": 4332.659211918214,
+          "error_days": 0.40608472381791216,
           "error_from": "year_change",
           "sbdb_status": "not a small body; SBDB not asked",
-          "epoch": "2026-10-20 08:55",
+          "epoch": "2026-10-28 23:02",
           "elements": {
-            "a": 5.203277188412995,
-            "e": 0.04817383091845735,
-            "i": 1.303440437714351,
-            "omega": 273.6993045303175,
-            "Omega": 100.5136523793855,
-            "TP": 2459967.360184468,
-            "MA": 113.5295876131798,
-            "TA": 118.4658896288913,
-            "q": 4.952615392916521,
-            "epoch": "2026-10-20 08:55 osc."
+            "a": 5.202860659089396,
+            "e": 0.04815491667907704,
+            "i": 1.303515010557819,
+            "omega": 273.5802512195456,
+            "Omega": 100.515671415801,
+            "TP": 2459966.030129709,
+            "MA": 114.3673271006076,
+            "TA": 119.2660329760584,
+            "q": 4.952317337558098,
+            "epoch": "2026-10-28 23:02 osc."
           }
         }
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "599",
           "id_type": null,
           "horizons_name": "Jupiter"
         },
         "period": {
-          "confirmed": "2026-10-20",
+          "confirmed": "2026-10-31",
           "center": "@sun",
-          "epoch": "2026-10-20 08:55",
-          "days": 4333.179516760591,
-          "jpl_days": 4333.179516760591,
-          "error_days": 0.10166797334386501
+          "epoch": "2026-10-28 23:02",
+          "days": 4332.659211918214,
+          "jpl_days": 4332.659211918214,
+          "error_days": 0.40608472381791216
         }
       }
     },
@@ -412,13 +412,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1973 SO",
           "id_type": "smallbody",
           "horizons_name": "3548 Eurybates"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 4353.268679654878,
@@ -477,13 +477,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "A906 UL",
           "id_type": "smallbody",
           "horizons_name": "617 Patroclus"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 4338.918430996448,
@@ -554,13 +554,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1999 WB2",
           "id_type": "smallbody",
           "horizons_name": "15094 Polymele"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 4320.940289044181,
@@ -631,13 +631,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1997 TS25",
           "id_type": "smallbody",
           "horizons_name": "11351 Leucus"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 4469.563443306468,
@@ -708,13 +708,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1999 VQ10",
           "id_type": "smallbody",
           "horizons_name": "21900 Orus"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 4227.481372278889,
@@ -785,13 +785,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "699",
           "id_type": null,
           "horizons_name": "Saturn"
         },
         "period": {
-          "confirmed": "2026-10-20",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-20 08:55",
           "days": 10751.30962654848,
@@ -862,13 +862,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "799",
           "id_type": null,
           "horizons_name": "Uranus"
         },
         "period": {
-          "confirmed": "2026-10-15",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-15 10:52",
           "days": 30679.94522205484,
@@ -939,13 +939,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "899",
           "id_type": null,
           "horizons_name": "Neptune"
         },
         "period": {
-          "confirmed": "2026-10-15",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-15 10:52",
           "days": 60184.8784092995,
@@ -1016,13 +1016,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1997 CU26",
           "id_type": "smallbody",
           "horizons_name": "10199 Chariklo"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 22822.87186136115,
@@ -1093,13 +1093,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "9",
           "id_type": null,
           "horizons_name": "Pluto Barycenter"
         },
         "period": {
-          "confirmed": "2026-10-28",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-28 20:36",
           "days": 90578.39025812282,
@@ -1124,7 +1124,7 @@
         "target": "A801 AA",
         "target_label": null,
         "open_orbit": false,
-        "fetched": "2026-10-22",
+        "fetched": "2026-10-28",
         "words": null,
         "years": {
           "value": 4.6,
@@ -1137,39 +1137,39 @@
           "text": "1680"
         },
         "record": {
-          "days": 1680.408249057453,
-          "error_days": 1.0816514196978915,
+          "days": 1680.449424661375,
+          "error_days": 1.0018175924831212,
           "error_from": "year_change",
           "sbdb_status": "SBDB sigma",
-          "epoch": "2026-10-22 20:37",
+          "epoch": "2026-10-28 23:02",
           "elements": {
-            "a": 2.766161836683337,
-            "e": 0.07979402100342009,
-            "i": 10.58710753327099,
-            "omega": 73.15727541096646,
-            "Omega": 80.24880532877276,
-            "TP": 2461599.285109748,
-            "MA": 303.6723846348406,
-            "TA": 295.6449612266621,
-            "q": 2.545438660988168,
-            "epoch": "2026-10-22 20:37 osc."
+            "a": 2.766207023289665,
+            "e": 0.07980302577306402,
+            "i": 10.58702879375373,
+            "omega": 73.14819646009879,
+            "Omega": 80.2487335040861,
+            "TP": 2461599.247936813,
+            "MA": 304.9886703544939,
+            "TA": 297.068801246426,
+            "q": 2.545455332916449,
+            "epoch": "2026-10-28 23:02 osc."
           }
         }
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "A801 AA",
           "id_type": "smallbody",
           "horizons_name": "1 Ceres"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
-          "epoch": "2026-10-22 20:37",
-          "days": 1680.408249057453,
-          "jpl_days": 1680.408249057453,
-          "error_days": 1.0816514196978915
+          "epoch": "2026-10-28 23:02",
+          "days": 1680.449424661375,
+          "jpl_days": 1680.449424661375,
+          "error_days": 1.0018175924831212
         }
       }
     },
@@ -1235,13 +1235,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2003 EL61",
           "id_type": "smallbody",
           "horizons_name": "136108 Haumea"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 103290.2392277069,
@@ -1312,13 +1312,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2003 UB313",
           "id_type": "smallbody",
           "horizons_name": "136199 Eris"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 203933.7197943077,
@@ -1389,13 +1389,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2007 OR10",
           "id_type": "smallbody",
           "horizons_name": "225088 Gonggong"
         },
         "period": {
-          "confirmed": "2026-10-23",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-23 21:36",
           "days": 200476.3596847122,
@@ -1466,13 +1466,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2005 FY9",
           "id_type": "smallbody",
           "horizons_name": "136472 Makemake"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 112022.3651480326,
@@ -1543,13 +1543,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2002 MS4",
           "id_type": "smallbody",
           "horizons_name": "307261 Mani"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 98422.6762328787,
@@ -1620,13 +1620,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2004 DW",
           "id_type": "smallbody",
           "horizons_name": "90482 Orcus"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 89858.84252528189,
@@ -1697,13 +1697,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2002 LM60",
           "id_type": "smallbody",
           "horizons_name": "50000 Quaoar"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 104127.2108388088,
@@ -1774,13 +1774,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2003 VB12",
           "id_type": "smallbody",
           "horizons_name": "90377 Sedna"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-13 08:30",
           "days": 4160095.697859893,
@@ -1851,13 +1851,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2015 TG387",
           "id_type": "smallbody",
           "horizons_name": "541132 Leleakuhonua"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 15404152.60983637,
@@ -1928,13 +1928,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2017 OF201",
           "id_type": "smallbody",
           "horizons_name": "(2017 OF201)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 8704810.133733368,
@@ -2005,17 +2005,17 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-28",
+          "confirmed": "2026-10-31",
           "horizons_id": "2026 ED138",
           "id_type": "smallbody",
           "horizons_name": "(2026 ED138)"
         },
         "period": {
-          "confirmed": "2026-10-28",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-28 14:53",
           "days": 103248.9414310349,
-          "jpl_days": 103248.9414310349,
+          "jpl_days": 103249.7029099222,
           "error_days": 10.294
         }
       }
@@ -2070,13 +2070,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2025 PN7",
           "id_type": "smallbody",
           "horizons_name": "(2025 PN7)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 364.3987087951941,
@@ -2135,13 +2135,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2024 PT5",
           "id_type": "smallbody",
           "horizons_name": "(2024 PT5)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 377.5685856602425,
@@ -2200,13 +2200,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2025 PY1",
           "id_type": "smallbody",
           "horizons_name": "(2025 PY1)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 425.8790928323511,
@@ -2265,13 +2265,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2023 JF",
           "id_type": "smallbody",
           "horizons_name": "(2023 JF)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 756.6317538257155,
@@ -2330,13 +2330,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2024 DW",
           "id_type": "smallbody",
           "horizons_name": "(2024 DW)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 1319.493367559023,
@@ -2395,13 +2395,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2024 YR4",
           "id_type": "smallbody",
           "horizons_name": "(2024 YR4)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 1457.74810558693,
@@ -2460,13 +2460,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2016 HO3",
           "id_type": "smallbody",
           "horizons_name": "469219 Kamo`oalewa"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 365.7710228507339,
@@ -2491,7 +2491,7 @@
         "target": "A852 FA",
         "target_label": null,
         "open_orbit": false,
-        "fetched": "2026-10-22",
+        "fetched": "2026-10-28",
         "words": null,
         "years": {
           "value": 4.97,
@@ -2504,51 +2504,51 @@
           "text": "1820"
         },
         "record": {
-          "days": 1816.533486695136,
-          "error_days": 3.1234027012651495,
+          "days": 1816.677176589282,
+          "error_days": 2.998002337996013,
           "error_from": "year_change",
           "sbdb_status": "SBDB sigma",
-          "epoch": "2026-10-22 20:37",
+          "epoch": "2026-10-28 23:02",
           "elements": {
-            "a": 2.914903008759678,
-            "e": 0.1379524735981109,
-            "i": 3.103203630204124,
-            "omega": 229.0645305828253,
-            "Omega": 150.0122050373043,
-            "TP": 2460794.721747299,
-            "MA": 107.341495436528,
-            "TA": 121.5463300675072,
-            "q": 2.512784928402704,
-            "epoch": "2026-10-22 20:37 osc."
+            "a": 2.915056721526777,
+            "e": 0.138006226614302,
+            "i": 3.103265211282721,
+            "omega": 229.0957687118707,
+            "Omega": 150.0120278015238,
+            "TP": 2460794.885242447,
+            "MA": 108.5095443810159,
+            "TA": 122.583997953948,
+            "q": 2.512760743022208,
+            "epoch": "2026-10-28 23:02 osc."
           },
           "paired": true,
           "sun_elements": {
-            "a": 2.926051320294956,
-            "e": 0.135508528805588,
-            "i": 3.10131124103363,
-            "omega": 230.1139639002216,
-            "Omega": 149.9565001307822,
-            "epoch": "2026-10-22 20:37 osc.",
-            "TP": 2460796.067365221,
-            "MA": 106.3921122562892,
-            "TA": 120.4664349388903
+            "a": 2.926025595621726,
+            "e": 0.1355371490125039,
+            "i": 3.101426426681981,
+            "omega": 230.1139075011446,
+            "Omega": 149.9561672362762,
+            "epoch": "2026-10-28 23:02 osc.",
+            "TP": 2460796.088087009,
+            "MA": 107.5907754327973,
+            "TA": 121.5356098029256
           }
         }
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "A852 FA",
           "id_type": "smallbody",
           "horizons_name": "16 Psyche"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
-          "epoch": "2026-10-22 20:37",
-          "days": 1816.533486695136,
-          "jpl_days": 1816.533486695136,
-          "error_days": 3.1234027012651495
+          "epoch": "2026-10-28 23:02",
+          "days": 1816.677176589282,
+          "jpl_days": 1816.677176589282,
+          "error_days": 2.998002337996013
         }
       }
     },
@@ -2602,13 +2602,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "2004 MN4",
           "id_type": "smallbody",
           "horizons_name": "99942 Apophis"
         },
         "period": {
-          "confirmed": "2026-10-15",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-15 10:52",
           "days": 323.5420892338735,
@@ -2667,13 +2667,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1999 RQ36",
           "id_type": "smallbody",
           "horizons_name": "101955 Bennu"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 436.3732719920993,
@@ -2732,13 +2732,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "A898 PA",
           "id_type": "smallbody",
           "horizons_name": "433 Eros"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 643.215817786095,
@@ -2797,13 +2797,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1999 VD57",
           "id_type": "smallbody",
           "horizons_name": "152830 Dinkinesh"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 1184.854324196151,
@@ -2862,13 +2862,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1998 SF36",
           "id_type": "smallbody",
           "horizons_name": "25143 Itokawa"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 556.5365233045601,
@@ -2927,13 +2927,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "A852 VA",
           "id_type": "smallbody",
           "horizons_name": "21 Lutetia"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 1387.517316461594,
@@ -2992,13 +2992,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1999 JU3",
           "id_type": "smallbody",
           "horizons_name": "162173 Ryugu"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 474.6984819744807,
@@ -3057,13 +3057,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1969 VC",
           "id_type": "smallbody",
           "horizons_name": "2867 Steins"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 1326.971343961377,
@@ -3122,13 +3122,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "1981 EQ5",
           "id_type": "smallbody",
           "horizons_name": "52246 Donaldjohanson"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 1344.447146625269,
@@ -3187,13 +3187,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "A807 FA",
           "id_type": "smallbody",
           "horizons_name": "4 Vesta"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 1325.244321538131,
@@ -3264,13 +3264,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2014 MU69",
           "id_type": "smallbody",
           "horizons_name": "486958 Arrokoth"
         },
         "period": {
-          "confirmed": "2026-10-28",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-28 14:53",
           "days": 107374.0052121068,
@@ -3341,13 +3341,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2001 KX76",
           "id_type": "smallbody",
           "horizons_name": "28978 Ixion"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 90604.04383513043,
@@ -3418,13 +3418,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2004 GV9",
           "id_type": "smallbody",
           "horizons_name": "90568 Goibniu"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 99157.79563354861,
@@ -3495,13 +3495,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2000 WR106",
           "id_type": "smallbody",
           "horizons_name": "20000 Varuna"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 102737.6404443444,
@@ -3572,13 +3572,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "2023 KQ14",
           "id_type": "smallbody",
           "horizons_name": "(2023 KQ14)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 1461191.327376826,
@@ -3637,13 +3637,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "90000214",
           "id_type": "smallbody",
           "horizons_name": "10P/Tempel 2"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 1959.815586031509,
@@ -3702,13 +3702,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "90000356",
           "id_type": "smallbody",
           "horizons_name": "24P/Schaumasse"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 2985.728485198871,
@@ -3767,13 +3767,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "90000901",
           "id_type": "smallbody",
           "horizons_name": "88P/Howell"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 2002.204541274829,
@@ -3832,13 +3832,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "90000703",
           "id_type": "smallbody",
           "horizons_name": "67P/Churyumov-Gerasimenko"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 2349.755907776515,
@@ -3909,13 +3909,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/1995 O1",
           "id_type": "smallbody",
           "horizons_name": "Hale-Bopp (C/1995 O1)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 876356.1111669387,
@@ -3986,13 +3986,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "90000030",
           "id_type": "smallbody",
           "horizons_name": "1P/Halley"
         },
         "period": {
-          "confirmed": "2026-10-15",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-15 10:52",
           "days": 27562.22169273424,
@@ -4051,17 +4051,17 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-10",
+          "confirmed": "2026-10-31",
           "horizons_id": "90000091",
           "id_type": "smallbody",
           "horizons_name": "2P/Encke"
         },
         "period": {
-          "confirmed": "2026-10-14",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-13 08:30",
           "days": 1206.320223793072,
-          "jpl_days": 1206.320223793072,
+          "jpl_days": 1206.320412715588,
           "error_days": 0.15083758920104628
         }
       }
@@ -4128,13 +4128,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/1996 B2",
           "id_type": "smallbody",
           "horizons_name": "Hyakutake (C/1996 B2)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 26361894.16382161,
@@ -4205,13 +4205,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2025 A6",
           "id_type": "smallbody",
           "horizons_name": "Lemmon (C/2025 A6)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 426377.2010872945,
@@ -4282,13 +4282,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/1965 S1-A",
           "id_type": "smallbody",
           "horizons_name": "Ikeya-Seki (C/1965 S1-A)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 290431.658953062,
@@ -4359,13 +4359,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2020 F3",
           "id_type": "smallbody",
           "horizons_name": "NEOWISE (C/2020 F3)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@0",
           "epoch": "2026-10-22 20:37",
           "days": 2495048.759533776,
@@ -4386,7 +4386,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2024 E1",
           "id_type": "smallbody",
           "horizons_name": "Wierzchos (C/2024 E1)"
@@ -4477,13 +4477,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2025 R2",
           "id_type": "smallbody",
           "horizons_name": "SWAN (C/2025 R2)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 289076.9822466811,
@@ -4542,13 +4542,13 @@
       },
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2026 A1",
           "id_type": "smallbody",
           "horizons_name": "MAPS (C/2026 A1)"
         },
         "period": {
-          "confirmed": "2026-10-22",
+          "confirmed": "2026-10-31",
           "center": "@sun",
           "epoch": "2026-10-22 20:37",
           "days": 693761.814793487,
@@ -4569,7 +4569,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/1975 V1-A",
           "id_type": "smallbody",
           "horizons_name": "West (C/1975 V1-A)"
@@ -4622,7 +4622,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2006 P1",
           "id_type": "smallbody",
           "horizons_name": "McNaught (C/2006 P1)"
@@ -4675,7 +4675,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2023 A3",
           "id_type": "smallbody",
           "horizons_name": "Tsuchinshan-ATLAS (C/2023 A3)"
@@ -4728,7 +4728,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2024 G3",
           "id_type": "smallbody",
           "horizons_name": "ATLAS (C/2024 G3)"
@@ -4781,7 +4781,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "1004075",
           "id_type": "designation",
           "horizons_name": "ATLAS (C/2025 K1)"
@@ -4834,7 +4834,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2025 K1-B",
           "id_type": "smallbody",
           "horizons_name": "ATLAS (C/2025 K1-B)"
@@ -4887,7 +4887,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2025 K1-C",
           "id_type": "smallbody",
           "horizons_name": "ATLAS (C/2025 K1-C)"
@@ -4940,7 +4940,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2025 K1-D",
           "id_type": "smallbody",
           "horizons_name": "ATLAS (C/2025 K1-D)"
@@ -4993,7 +4993,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2025 R3",
           "id_type": "smallbody",
           "horizons_name": "PANSTARRS (C/2025 R3)"
@@ -5046,7 +5046,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2025 V1",
           "id_type": "smallbody",
           "horizons_name": "Borisov (C/2025 V1)"
@@ -5099,7 +5099,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "A/2017 U1",
           "id_type": "smallbody",
           "horizons_name": "'Oumuamua"
@@ -5152,7 +5152,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2019 Q4",
           "id_type": "smallbody",
           "horizons_name": "Borisov (C/2019 Q4)"
@@ -5205,7 +5205,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-26",
+          "confirmed": "2026-10-31",
           "horizons_id": "C/2025 N1",
           "id_type": "smallbody",
           "horizons_name": "ATLAS (C/2025 N1)"
@@ -5257,7 +5257,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-31",
           "id_type": "id",
           "horizons_name": "Voyager 1 (spacecraft)"
@@ -5343,7 +5343,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-32",
           "id_type": "id",
           "horizons_name": "Voyager 2 (spacecraft)"
@@ -5480,7 +5480,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-98",
           "id_type": "id",
           "horizons_name": "New Horizons (spacecraft)"
@@ -5566,7 +5566,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-61",
           "id_type": "id",
           "horizons_name": "Juno (spacecraft)"
@@ -5686,7 +5686,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-64",
           "id_type": "id",
           "horizons_name": "OSIRIS-REx (spacecraft)"
@@ -5959,7 +5959,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-96",
           "id_type": "id",
           "horizons_name": "Parker Solar Probe (spacecraft)"
@@ -6844,7 +6844,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-49",
           "id_type": "id",
           "horizons_name": "Lucy (spacecraft)"
@@ -7015,7 +7015,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-28",
           "id_type": "id",
           "horizons_name": "JUICE (spacecraft)"
@@ -7237,7 +7237,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-255",
           "id_type": "id",
           "horizons_name": "Psyche (spacecraft)"
@@ -7323,7 +7323,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-159",
           "id_type": "id",
           "horizons_name": "Europa Clipper (spacecraft)"
@@ -7460,7 +7460,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-121",
           "id_type": "id",
           "horizons_name": "BepiColombo (Spacecraft)"
@@ -7468,7 +7468,7 @@
         "period": null
       },
       "path": {
-        "made": "2026-10-25",
+        "made": "2026-10-30",
         "span": {
           "end": "2027-04-10",
           "start": "2018-10-21"
@@ -8107,7 +8107,7 @@
       "period": null,
       "confirmation": {
         "identity": {
-          "confirmed": "2026-10-25",
+          "confirmed": "2026-10-31",
           "horizons_id": "-144",
           "id_type": "id",
           "horizons_name": "Solar Orbiter (spacecraft)"
@@ -8115,7 +8115,7 @@
         "period": null
       },
       "path": {
-        "made": "2026-10-25",
+        "made": "2026-10-30",
         "span": {
           "end": "2030-11-20",
           "start": "2020-02-11"
