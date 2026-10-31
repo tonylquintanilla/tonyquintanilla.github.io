@@ -33,6 +33,7 @@ after a push.
     python gallery_maintenance_run.py           before you commit
     python gallery_maintenance_run.py --live    after you push
     python gallery_maintenance_run.py --pull    the Daily Run's step 2
+    python gallery_maintenance_run.py --night   the offline pass, at night
 
 The default pass is offline and deterministic. The --live pass adds the
 two checks that can only mean something once GitHub Pages has deployed,
@@ -56,6 +57,20 @@ and names the pull, never "no change", because a mirror run after a
 failed pull writes the config from the old export. And a generator that
 fails makes the whole run fail and is named in the summary: a FAIL row
 under a green "N of N passed" is the shape L-388 was.
+
+THE NIGHT'S PASS (L-485, the website's nightly run)
+===================================================
+--night is the offline pass with two differences, for the night form of
+the Daily Run (daily_run.py --night, on GitHub's computers). The Module
+atlas is SKIPPED, printed by name with its reason: it writes
+MODULE_ATLAS.md and MODULE_INDEX.md, which are documents, and Tony's R1
+forbids the night committing a page or a word (NIGHT_SKIPS). Every
+checker runs; none opens a window or reads a git diff. And a row that
+could not run, UNREACHABLE, turns the night red: node missing on a
+runner is a setup fault, not an outside failure, and a night that did
+not check is not a clean night. By day an UNREACHABLE row still neither
+passes nor fails. daily_run.py --night calls night_pass() in-process, so
+the night's record carries each row's verdict.
 
 THREE STATES, NOT TWO
 =====================
@@ -188,6 +203,10 @@ Module updated: October 27, 2026 with Anthropic's Claude Opus 5.5
 (L-497, one text box for a tap and Go To: the live check also fetches
 gallery/text_box.js, which the page loads with a script tag; the Hover
 budget row's check now holds the box's words, with a planted fault.)
+Module updated: October 31, 2026 with Anthropic's Claude Opus 5.5
+(L-485, the gallery half: --night and night_pass(), the offline pass with
+the Module atlas skipped by name and UNREACHABLE counted red, for the
+night form of the Daily Run.)
 """
 
 import hashlib
@@ -262,6 +281,14 @@ PULL_ROWS = ["Constants export pull", "Config mirror",
 # that pull failed. mirror -> the pull that feeds it.
 FED_BY = {"Config mirror": "Constants export pull",
           "Objects mirror": "Objects export pull"}
+
+# L-485: the one generator the night does not run, and why. Printed by
+# name every night; the night's gate refuses the two files besides.
+NIGHT_SKIPS = {
+    "Module atlas": ("writes MODULE_ATLAS.md and MODULE_INDEX.md, which are "
+                     "documents; the night commits no page or word (Tony's "
+                     "R1, 2026-10-25)"),
+}
 
 # ---- offline checkers ------------------------------------------------
 # (label, runner, argv-tail, cwd, verdict hint, report_only)
@@ -1378,13 +1405,18 @@ LIVE_CHECKERS = [
 # MAIN
 # ============================================================
 
-def run_generators(root, results, only=None):
+def run_generators(root, results, only=None, skip=None):
     """Run GENERATORS in order, or only the labels in `only`, in
-    GENERATORS' order. A mirror whose pull failed is not run (FED_BY)."""
+    GENERATORS' order. A mirror whose pull failed is not run (FED_BY).
+    A label in `skip` (label -> reason) is not run, and is printed as
+    SKIP with its reason (L-485, the night); it adds no result row."""
     print("GENERATORS -- rewritten every time; a no-op when nothing moved")
     states = {}
     for label, argv_tail, cwd, outputs in GENERATORS:
         if only is not None and label not in only:
+            continue
+        if skip and label in skip:
+            print_row("SKIP", label, 0.0, "not run tonight: " + skip[label])
             continue
         feeder = FED_BY.get(label)
         if feeder and states.get(feeder, "PASS") != "PASS":
@@ -1598,14 +1630,35 @@ def summarize(results, root=None):
     return 1 if (failed or generators_failed) else 0
 
 
+def night_pass(root):
+    """L-485: the offline pass for the night. (exit code, results,
+    skipped): the Module atlas skipped by name (NIGHT_SKIPS), every
+    checker run, and an UNREACHABLE row counted red."""
+    results = []
+    run_generators(root, results, skip=NIGHT_SKIPS)
+    run_checkers(root, OFFLINE_CHECKERS, results)
+    code = summarize(results, root)
+    unreachable = [row[1] for row in results if row[6] and row[0] == "N-A"]
+    if unreachable:
+        print("  NIGHT: %d UNREACHABLE row(s) are red tonight -- a check "
+              "that could not run on this computer is a setup fault, not a "
+              "pass: %s" % (len(unreachable), ", ".join(unreachable)))
+        code = 1
+    print("  NIGHT: skipped by name -- %s"
+          % "; ".join("%s (%s)" % kv for kv in sorted(NIGHT_SKIPS.items())))
+    return code, results, sorted(NIGHT_SKIPS.items())
+
+
 def main():
     args = sys.argv[1:]
     live = "--live" in args
     pull = "--pull" in args
-    unknown = [arg for arg in args if arg not in ("--live", "--pull")]
-    if unknown or (live and pull):
+    night = "--night" in args
+    unknown = [arg for arg in args
+               if arg not in ("--live", "--pull", "--night")]
+    if unknown or (live + pull + night) > 1:
         print("gallery_maintenance_run.py takes one optional flag, "
-              "--live or --pull.")
+              "--live, --pull or --night.")
         print("Not understood: %s" % " ".join(args))
         return 2
 
@@ -1620,6 +1673,7 @@ def main():
     print("  gallery maintenance run -- %s"
           % ("LIVE (after a push)" if live else
              "PULLS (before the cache builder)" if pull else
+             "NIGHT (offline, the Module atlas skipped)" if night else
              "OFFLINE (before a commit)"))
     print("  root: %s   (found %s)" % (root, where))
     print("=" * 70)
@@ -1635,6 +1689,8 @@ def main():
             return 2
         run_generators(root, results, only=PULL_ROWS)
         return summarize_pulls(results)
+    if night:
+        return night_pass(root)[0]
     if live:
         run_live(root, results)
     else:

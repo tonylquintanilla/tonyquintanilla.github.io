@@ -56,6 +56,18 @@ WHAT MAKES IT FAIL, NAMED BY ENTRY
     served objects the check does not reach yet because the orrery's list
     gives them no key.
 
+WHICH DAY IS TODAY
+
+    Today is the date in UTC, not the computer's own date. The orrery
+    stamps every confirmation with the UTC date since L-504 (its
+    utc_clock.utc_today()). On Oct 30, 2026 at 20:10 Chicago the orrery
+    had stamped Oct 31 while this check read Oct 30 from the laptop's
+    clock, and every entry failed as "confirmed on 2026-10-31, which is
+    after today". The website cannot import the orrery's utc_clock, so
+    main() reads datetime.now(timezone.utc) itself; a date read is not a
+    stored number, so this makes no second store. On GitHub's computers
+    the local date is already UTC; the fix is for the evening Daily Run.
+
 Role: devtool
 Domain: gallery
 
@@ -65,6 +77,8 @@ Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
 build 3, with L-395's move: it reads the dates from the pulled export, not
 from a record of its own, keeps its own copy of the due rule, judges the
 periods too, and shows itself failing on a 31-day-old export first.)
+Module updated: October 31, 2026 with Anthropic's Claude Opus 5.5 (L-485,
+the gallery half, closing L-504's website item: today is read in UTC.)
 """
 
 import datetime
@@ -269,7 +283,10 @@ def run(root, today, echo=print):
 
 def main():
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return run(root, datetime.date.today())
+    # Today is read in UTC, the clock the orrery stamps its confirmations
+    # by (L-504). The machine's local date ran a day behind every evening
+    # in Chicago (see WHICH DAY IS TODAY in the docstring).
+    return run(root, datetime.datetime.now(datetime.timezone.utc).date())
 
 
 if __name__ == "__main__":

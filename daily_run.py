@@ -89,11 +89,55 @@ WHAT IT DOES
     Each step is also its own button on the dashboard, so the guest
     book updater can be run alone as often as you like.
 
+THE NIGHT FORM (L-485, the website's nightly run; python daily_run.py
+--night, run by .github/workflows/nightly.yml at 08:17 UTC)
+    The same steps without a keyboard, ending in one gate (Tony's R1 of
+    2026-10-25: the checkers are the gate). What changes at night:
+    - The guest book is SKIPPED, by name: it needs Tony's answers, and
+      it stays his morning's (his ruling of Oct 31, 2026, 10:20). Nothing
+      is read from Google; no address, secret or sign-in is on the
+      runner. R5's "lists new messages" is not built, by that ruling.
+    - The pulls run as by day; on GitHub's computers they ask GitHub's
+      interface with the run's own token (tools/pull_constants_export.py).
+    - Pull matches push, the runner form (L-461): there is no orrery
+      folder beside the website there, so the three pulled commits must
+      agree with each other AND with the orrery's GitHub copy, read live
+      with git ls-remote. A difference stops the night before the
+      builder: no retry, no wait; tomorrow reads the new commit.
+    - The builder runs with no flags, NEVER --commit, under the
+      maintenance run's 900-second limit; its swap must be read back off
+      the swap log as tonight's run, outcome ok.
+    - The run records check runs; a loss, or "could not compare", is red.
+    - The maintenance run's night pass (gallery_maintenance_run.py
+      --night): every checker, the Module atlas skipped by name, and an
+      UNREACHABLE row red.
+    - The gate, exit 0 only when ALL hold, each reason named in the last
+      line, "NIGHT RUN: RED -- ..." otherwise: the pulls passed and match
+      the orrery's GitHub copy, and the pulled commit did not move after
+      the build; the builder exited 0 and tonight's swap is ok; the run
+      records were carried; the night pass passed with nothing
+      UNREACHABLE; git sees nothing changed or new outside the allow-list
+      (night_allow_list); every changed file is ASCII; and the change
+      under data/solar-system/ is not deletions only -- the guard
+      gallery-cache-builder recorded as designed and not built (the
+      Aug 10 commit of a half-swapped cache), built here, in the gate.
+    - A clean night writes data/nightly_run_record.json (UTC stamps, the
+      run's log address, each step's seconds, each row's verdict, the
+      rows skipped and why, the pulled orrery commit, the swap log's
+      line). A red night writes nothing: its record is the run's log.
+    Nothing in the Daily Run commits or pushes, by day or by night; the
+    workflow does, after the gate.
+
 HOW TO RUN IT
     From the dashboard: Daily Run, at the top of the Daily Run group.
     From VS Code: open this file and press Run. Answer questions in the
     panel that opens.
 
+    python daily_run.py --night   the night form, on GitHub's computers
+                                  (THE NIGHT FORM, below); by hand it
+                                  goes red on any uncommitted edit.
+    python daily_run.py --allow-list   what the night may commit, for the
+                                  workflow's commit step.
     python daily_run.py --check   lists the four steps and fails if a
                                   script is missing. The gallery
                                   maintenance run runs this, so a rename
@@ -130,6 +174,10 @@ built with L-443's build B: after the pulls, each pulled orrery commit is
 compared with the newest commit in Tony's orrery folder, and a difference
 STOPS the Daily Run before the cache builder, by Tony's ruling of
 2026-10-25, "stop. confirmed."; --check runs the comparison's fixtures.)
+Module updated: October 31, 2026 with Anthropic's Claude Opus 5.5 (L-485,
+the gallery half: --night, the night form for GitHub's computers, and its
+gate; the runner form of pull matches push; --allow-list; --check runs
+the night's fixtures with their planted faults.)
 """
 
 import datetime
@@ -137,6 +185,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -341,16 +390,35 @@ def check():
     passed, total, lines = pull_match_fixtures()
     for line in lines:
         print(line)
+    # L-485: the night form's runner-side pull match and its gate, each
+    # on made-up cases with planted faults; and its allow-list readable.
+    night_passed, night_total = 0, 0
+    for fixtures in (remote_match_fixtures, night_gate_fixtures):
+        p_, t_, lines = fixtures()
+        night_passed += p_
+        night_total += t_
+        for line in lines:
+            print(line)
+    try:
+        files, folders = night_allow_list(ROOT)
+        print("  night allow-list: %d files and %s"
+              % (len(files), ", ".join(f + " (whole)" for f in folders)))
+    except Exception as exc:          # a check must say it could not look
+        print("  night allow-list: could not be read (%s)" % exc)
+        night_total += 1
+    passed += night_passed
+    total += night_total
     if missing:
         print("=== DAILY RUN: %d of %d step scripts MISSING" % (missing, len(STEPS)))
         return 1
     if passed != total:
         print("=== DAILY RUN: all %d step scripts found, but the pull-match "
-              "check FAILED %d of %d fixture checks (L-461)"
+              "and night checks FAILED %d of %d fixture checks (L-461, L-485)"
               % (len(STEPS), total - passed, total))
         return 1
-    print("=== DAILY RUN: all %d step scripts found; the pull-match check "
-          "passed %d of %d fixture checks (L-461)" % (len(STEPS), passed, total))
+    print("=== DAILY RUN: all %d step scripts found; the pull-match and night "
+          "checks passed %d of %d fixture checks (L-461, L-485)"
+          % (len(STEPS), passed, total))
     return 0
 
 
@@ -471,6 +539,543 @@ def records_result(r):
         return ("could not compare (scroll up)", False)
     return ("ok: carried %d of %d, plus %d new"
             % (r["old_count"], r["old_count"], len(r["added"])), False)
+
+
+# ============================================================
+# THE NIGHT (L-485, the website's nightly run, on GitHub's computers)
+# ============================================================
+# The same Daily Run, without a keyboard, ending in one gate. Run by
+# .github/workflows/nightly.yml as "python daily_run.py --night"; the
+# workflow commits, after the gate, and only then (R1). Nothing here
+# commits or pushes.
+
+NIGHT_RECORD = os.path.join("data", "nightly_run_record.json")
+SERVED_DIR = "data/solar-system/"
+ORRERY_REMOTE = "https://github.com/tonylquintanilla/palomas_orrery"
+GUEST_BOOK_SKIP = ("needs Tony's answers; his morning's (Tony's ruling of "
+                   "Oct 31, 2026, 10:20)")
+NIGHT_LINE = "NIGHT RUN:"
+
+
+def _slash(path):
+    return path.replace(os.sep, "/")
+
+
+def utc_stamp(when):
+    """The builder's run-id form, 20261031T140937Z, for comparing."""
+    return when.strftime("%Y%m%dT%H%M%SZ")
+
+
+def remote_head(url=ORRERY_REMOTE):
+    """(sha, None) for the orrery's newest commit on GitHub, read live
+    with git ls-remote, the read the coordinating session makes; or
+    (None, why)."""
+    try:
+        done = subprocess.run(["git", "ls-remote", url, "HEAD"],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return None, "git ls-remote %s HEAD could not run (%s)" % (url, exc)
+    text = done.stdout.decode("utf-8", "replace").strip()
+    bits = text.split()
+    if done.returncode != 0 or not bits or len(bits[0]) != 40:
+        return None, "git ls-remote %s HEAD answered %r" % (url, text[:120])
+    return bits[0], None
+
+
+def pull_matches_remote(root, head=remote_head):
+    """L-461, the runner form (L-485). On GitHub's computer there is no
+    orrery folder beside the website, so the same question is asked of
+    the only copy a runner can see: the three pulled commits must agree
+    with each other AND with the orrery's GitHub copy, read live.
+    {"status": "ok" | "differ" | "cannot", "remote", "pulled", "lines"}."""
+    pulled = pulled_shas(root)
+    missing = [_slash(rel) for rel, sha in pulled.items() if not sha]
+    if missing:
+        return {"status": "cannot", "remote": None, "pulled": pulled,
+                "lines": ["Pull matches push (runner form): no pulled commit "
+                          "recorded in " + ", ".join(missing) + "."]}
+    remote, why = head()
+    if remote is None:
+        return {"status": "cannot", "remote": None, "pulled": pulled,
+                "lines": ["Pull matches push (runner form): could not read "
+                          "the orrery's GitHub copy: %s." % why]}
+    if sorted(set(pulled.values())) == [remote]:
+        return {"status": "ok", "remote": remote, "pulled": pulled,
+                "lines": ["Pull matches push (runner form): the three pulls "
+                          "fetched the orrery at %s, its GitHub copy's newest "
+                          "commit, read live." % remote[:8]]}
+    return {"status": "differ", "remote": remote, "pulled": pulled,
+            "lines": ["Pull matches push (runner form): NO. The pulls "
+                      "fetched " + ", ".join(
+                          "%s %s" % (_slash(rel), sha[:8])
+                          for rel, sha in sorted(pulled.items())) + ";",
+                      "  the orrery's GitHub copy is at %s. It was pushed "
+                      "during the pulls; the night stops, and tomorrow's "
+                      "run reads the new commit." % remote[:8]]}
+
+
+def remote_match_fixtures():
+    """(passed, total, lines): the runner form on made-up pulls. Five
+    cases -- all three agree with GitHub, the pulls disagree among
+    themselves, they agree and GitHub is newer, GitHub cannot be read, a
+    pull with no recorded commit -- then two planted faults (a
+    comparison that always matches; one that never asks GitHub) that
+    must fail a case."""
+    import shutil
+    import tempfile
+    a, b = "a" * 40, "b" * 40
+
+    def case(remote, pulls, fn=None):
+        tmp = tempfile.mkdtemp(prefix="remote_match_")
+        try:
+            os.makedirs(os.path.join(tmp, "data", "drawings"))
+            for rel, sha in zip(PULLED_SHAS, pulls):
+                if sha:
+                    with open(os.path.join(tmp, rel), "w") as f:
+                        f.write(sha + "\n")
+            head = (lambda: (remote, None)) if remote else \
+                (lambda: (None, "planted: no answer"))
+            return (fn or pull_matches_remote)(tmp, head)["status"]
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def run(fn=None):
+        return [case(a, [a, a, a], fn) == "ok",
+                case(a, [a, b, a], fn) == "differ",
+                case(b, [a, a, a], fn) == "differ",
+                case(None, [a, a, a], fn) == "cannot",
+                case(a, [a, a, None], fn) == "cannot"]
+
+    got = run()
+    always = lambda root, head: {"status": "ok"}
+
+    def never_asks(root, head):
+        pulled = pulled_shas(root)
+        if not all(pulled.values()):
+            return {"status": "cannot"}
+        return {"status": "ok" if len(set(pulled.values())) == 1
+                else "differ"}
+    caught = [not all(run(always)), not all(run(never_asks))]
+    lines = ["  runner-form pull-match fixtures: %d of %d cases right; "
+             "planted faults caught %d of 2" % (sum(got), len(got), sum(caught))]
+    return sum(got) + sum(caught), len(got) + 2, lines
+
+
+def swap_log_rows(root):
+    """Every readable line of the swap log, oldest first."""
+    rows = []
+    path = os.path.join(root, SWAP_LOG)
+    if not os.path.exists(path):
+        return rows
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except ValueError:
+                continue
+    return rows
+
+
+def this_runs_swap(before_ids, started, rows):
+    """(ok, last line, why). Read back off the disk: the swap log's last
+    line must be a run that was not there before tonight's build, begun
+    after the night started, with outcome ok. A build that did not reach
+    the swap is not a build."""
+    if not rows:
+        return False, None, "the swap log holds no line"
+    last = rows[-1]
+    rid = str(last.get("run_id") or "")
+    if not rid or rid in before_ids or rid < started:
+        return False, last, ("the swap log's last line is run %s, not "
+                             "tonight's: the build did not reach its swap"
+                             % (rid or "with no id"))
+    if last.get("outcome") != "ok":
+        return False, last, ("tonight's swap, run %s, ended %r, not ok"
+                             % (rid, last.get("outcome")))
+    return True, last, None
+
+
+def git_changes(root):
+    """([(kind, path)], None) for what git sees changed or new, kind
+    "added", "modified" or "deleted", paths with forward slashes; or
+    (None, why)."""
+    try:
+        done = subprocess.run(
+            ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+            cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            timeout=120)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return None, "git status could not run (%s)" % exc
+    if done.returncode != 0:
+        return None, "git status failed: %s" % done.stderr.decode(
+            "utf-8", "replace").strip()[:200]
+    parts = done.stdout.decode("utf-8", "replace").split("\0")
+    out, i = [], 0
+    while i < len(parts):
+        entry = parts[i]
+        i += 1
+        if len(entry) < 4:
+            continue
+        xy, path = entry[:2], entry[3:]
+        if "R" in xy or "C" in xy:
+            orig = parts[i] if i < len(parts) else ""
+            i += 1
+            if "R" in xy and orig:
+                out.append(("deleted", orig))
+            out.append(("added", path))
+        elif xy == "??":
+            out.append(("added", path))
+        elif "D" in xy:
+            out.append(("deleted", path))
+        else:
+            out.append(("modified", path))
+    return out, None
+
+
+def night_allow_list(root):
+    """(files, folders): what the night's commit may touch, read from the
+    tools' declared outputs (one home). The five pull-and-mirror rows'
+    outputs from the maintenance run's GENERATORS; the drawings the
+    drawings pull itself would fetch (its own list, named_drawings, read
+    from the config: the row's declared list names only three); the
+    swap log; the night's record; and the whole served cache, deletions
+    included, under the deletions-only guard of the gate. Never
+    data/guestbook.json, never a page, a script, a card or MODULE_ATLAS.md."""
+    import gallery_maintenance_run as gmr
+    tools = os.path.join(root, "tools")
+    if tools not in sys.path:
+        sys.path.insert(0, tools)
+    import pull_drawings
+    files = set()
+    for label, _argv, _cwd, outputs in gmr.GENERATORS:
+        if label in gmr.PULL_ROWS:
+            files.update(outputs)
+    with open(os.path.join(root, pull_drawings.CONFIG), "r",
+              encoding="utf-8") as f:
+        names = pull_drawings.named_drawings(json.load(f))
+    files.update("data/drawings/%s.json" % name for name in names)
+    files.add(_slash(pull_drawings.SHA_FILE))
+    files.update([_slash(SWAP_LOG), _slash(NIGHT_RECORD)])
+    return sorted(files), [SERVED_DIR]
+
+
+def _allowed(path, allow):
+    files, folders = allow
+    return path in files or any(path.startswith(f) for f in folders)
+
+
+def _is_ascii(data):
+    return data is not None and all(byte < 128 for byte in data)
+
+
+def night_gate(facts, changes, allow, read):
+    """The night's gate (R1). Returns the reasons the night is red, each
+    named; an empty list is a clean night. facts: pulls_ok, match (the
+    runner form's status), held (the pulled commit unchanged since the
+    build), builder_exit, swap_ok and swap_why, records ("ok", "lost",
+    "cannot"), checks_code (the night pass's exit), unreachable (labels),
+    git_why. changes: git_changes()'s list, or None. allow:
+    night_allow_list()'s pair. read(path) -> bytes or None."""
+    reasons = []
+    if not facts.get("pulls_ok"):
+        reasons.append("a pull from the orrery failed")
+    elif facts.get("match") != "ok":
+        reasons.append("the pull does not match the orrery's GitHub copy "
+                       "(%s)" % facts.get("match"))
+    elif facts.get("held") is not True:
+        reasons.append("the pulled orrery commit moved after the build "
+                       "(the maintenance run's pull rows read a newer one)")
+    if facts.get("builder_exit") != 0:
+        reasons.append("the cache builder exited %s"
+                       % facts.get("builder_exit"))
+    if not facts.get("swap_ok"):
+        reasons.append(facts.get("swap_why")
+                       or "tonight's swap is not in the swap log")
+    if facts.get("records") != "ok":
+        reasons.append("the run records were not carried (%s)"
+                       % facts.get("records"))
+    if facts.get("checks_code") != 0:
+        reasons.append("the maintenance run's night pass failed (a gating "
+                       "checker or a generator; scroll up)")
+    if facts.get("unreachable"):
+        reasons.append("UNREACHABLE on this computer, a setup fault: "
+                       + ", ".join(facts["unreachable"]))
+    if changes is None:
+        reasons.append("git could not list the changes (%s)"
+                       % facts.get("git_why"))
+        return reasons
+    outside = sorted(p for _k, p in changes if not _allowed(p, allow))
+    if outside:
+        reasons.append("changed outside the allow-list: " + ", ".join(outside))
+    bad = sorted(p for k, p in changes
+                 if k != "deleted" and _allowed(p, allow)
+                 and not _is_ascii(read(p)))
+    if bad:
+        reasons.append("a non-ASCII byte (or an unreadable file) in: "
+                       + ", ".join(bad))
+    served = [k for k, p in changes if p.startswith(SERVED_DIR)]
+    if served and all(k == "deleted" for k in served):
+        reasons.append("the change under %s is deletions only (%d files): a "
+                       "half-swapped cache, the Aug 10 commit, never "
+                       "committed" % (SERVED_DIR, len(served)))
+    return reasons
+
+
+def night_gate_fixtures():
+    """(passed, total, lines): the gate on made-up nights. A clean night
+    and fourteen red ones, each of which must name its reason; then three
+    planted faults (an allow-list that admits every path, deletions
+    unseen, UNREACHABLE dropped), each of which must fail a case."""
+    allow = (["data/objects_config.json", "data/cache_swap_log.jsonl",
+              "data/nightly_run_record.json"], [SERVED_DIR])
+    clean = {"pulls_ok": True, "match": "ok", "held": True,
+             "builder_exit": 0, "swap_ok": True, "records": "ok",
+             "checks_code": 0, "unreachable": []}
+    base = [("modified", "data/solar-system/coverage_index.json"),
+            ("deleted", "data/solar-system/positions/old.json"),
+            ("modified", "data/objects_config.json")]
+
+    def read(path):
+        return b"\xc3\xa9" if path.endswith("accent.json") else b"plain"
+    cases = [
+        ("a clean night", clean, base, None),
+        ("a pull failed", dict(clean, pulls_ok=False), base, "pull from"),
+        ("the pull differs", dict(clean, match="differ"), base, "does not match"),
+        ("the commit moved", dict(clean, held=False), base, "moved after"),
+        ("the builder failed", dict(clean, builder_exit=1), base, "builder exited"),
+        ("no swap tonight", dict(clean, swap_ok=False, swap_why="not tonight's"),
+         base, "not tonight's"),
+        ("records lost", dict(clean, records="lost"), base, "run records"),
+        ("records not compared", dict(clean, records="cannot"), base, "run records"),
+        ("a checker failed", dict(clean, checks_code=1), base, "night pass failed"),
+        ("node missing", dict(clean, unreachable=["Typed facts"]), base, "UNREACHABLE"),
+        ("a page changed", clean, base + [("modified", "index.html")], "outside the allow-list"),
+        ("the guest book changed", clean, base + [("modified", "data/guestbook.json")],
+         "outside the allow-list"),
+        ("a non-ASCII file", clean, base + [("added", "data/solar-system/accent.json")],
+         "non-ASCII"),
+        ("deletions only", clean, [("deleted", "data/solar-system/a.json"),
+                                   ("deleted", "data/solar-system/b.json")], "deletions only"),
+        ("git unreadable", dict(clean, git_why="planted"), None, "git could not"),
+    ]
+
+    def run(gate):
+        right = []
+        for _label, facts, changes, want in cases:
+            reasons = gate(facts, changes, allow, read)
+            right.append(not reasons if want is None
+                         else any(want in r for r in reasons))
+        return right
+
+    got = run(night_gate)
+    faults = [
+        lambda f, c, a, r: night_gate(f, c, ([], [""]), r),
+        lambda f, c, a, r: night_gate(
+            f, None if c is None else [x for x in c if x[0] != "deleted"], a, r),
+        lambda f, c, a, r: night_gate(dict(f, unreachable=[]), c, a, r),
+    ]
+    caught = [not all(run(fault)) for fault in faults]
+    lines = ["  night gate fixtures: %d of %d nights judged right; planted "
+             "faults caught %d of %d" % (sum(got), len(got), sum(caught),
+                                         len(faults))]
+    return sum(got) + sum(caught), len(got) + len(faults), lines
+
+
+def write_night_record(root, body):
+    """The last clean night, ASCII and LF (json's ensure_ascii)."""
+    if os.environ.get("GITHUB_RUN_ID"):
+        body["run_log"] = "%s/%s/actions/runs/%s" % (
+            os.environ.get("GITHUB_SERVER_URL", "https://github.com"),
+            os.environ.get("GITHUB_REPOSITORY", ""),
+            os.environ["GITHUB_RUN_ID"])
+    else:
+        body["run_log"] = None
+    text = json.dumps(body, indent=2, ensure_ascii=True) + "\n"
+    with open(os.path.join(root, NIGHT_RECORD), "w", encoding="ascii",
+              newline="") as f:
+        f.write(text)
+
+
+def night_red(reasons, steps, started):
+    print("")
+    print(LINE)
+    print("  THE NIGHT -- summary")
+    print(LINE)
+    for label, said, seconds in steps:
+        print("  %-30s %-36s %7.1fs" % (label, said, seconds))
+    print("")
+    print("  Nothing is to be committed: the site keeps serving the previous")
+    print("  cache, and tomorrow's run tries again. This log is the record.")
+    print(LINE)
+    total = (datetime.datetime.now(datetime.timezone.utc) - started).total_seconds()
+    print("%s RED -- %s (%.0f seconds)" % (NIGHT_LINE, "; ".join(reasons), total))
+    return 1
+
+
+def night_main():
+    started = datetime.datetime.now(datetime.timezone.utc)
+    stamp = utc_stamp(started)
+    print(LINE)
+    print("  DAILY RUN, THE NIGHT FORM -- %s UTC" % started.strftime("%Y-%m-%d %H:%M"))
+    print("  root: %s" % ROOT)
+    print("  where: %s" % ("GitHub Actions" if os.environ.get("GITHUB_ACTIONS")
+                           else "a local run"))
+    print(LINE)
+    if check() != 0:
+        return night_red(["the Daily Run's own check failed"], [], started)
+    steps = []
+    asked = ("with the run's GITHUB_TOKEN" if os.environ.get("GITHUB_TOKEN")
+             else "without signing in")
+
+    # 1. The guest book: skipped, by name (Tony's ruling of Oct 31, 2026,
+    # 10:20). Nothing is read from Google, so no address, secret or
+    # sign-in exists on the runner.
+    print("")
+    print("  SKIP  step 1, Guest book updater: %s." % GUEST_BOOK_SKIP)
+    steps.append(("Guest book updater", "skipped: his morning's", 0.0))
+
+    # 2. The pulls, as by day, then the runner form of pull matches push.
+    print("")
+    print("The pulls ask GitHub's interface %s." % asked)
+    t0 = time.time()
+    pulled, named = run_pulls(2, *STEPS[PULLS_STEP])
+    steps.append(("Pulls from the orrery", pulled, time.time() - t0))
+    if pulled != "ok":
+        return night_red(["a pull from the orrery failed: %s"
+                          % (named or "scroll up")], steps, started)
+    match = pull_matches_remote(ROOT)
+    print("")
+    for line in match["lines"]:
+        print(line)
+    steps.append(("Pull matches push (runner)", match["status"], 0.0))
+    if match["status"] != "ok":
+        return night_red(["the pull does not match the orrery's GitHub copy "
+                          "(%s); stopped before the builder (Tony, Oct 25: "
+                          "\"stop. confirmed.\")" % match["status"]],
+                         steps, started)
+    held_sha = match["remote"]
+
+    # 3. The builder, no flags: never --commit, which commits and pushes
+    # before the checks run. The maintenance run's own per-tool limit.
+    import gallery_maintenance_run as gmr
+    before = set(str(r.get("run_id")) for r in swap_log_rows(ROOT))
+    print("")
+    print(LINE)
+    print("  DAILY RUN step 3 of %d: %s (up to %d seconds)"
+          % (len(STEPS), STEPS[2][0], gmr.TOOL_TIMEOUT_SECONDS))
+    print(LINE)
+    sys.stdout.flush()
+    t0 = time.time()
+    try:
+        builder_exit = subprocess.call([sys.executable, STEPS[2][1]], cwd=ROOT,
+                                       timeout=gmr.TOOL_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        builder_exit = "timed out after %d seconds" % gmr.TOOL_TIMEOUT_SECONDS
+    except OSError as exc:
+        builder_exit = "could not start (%s)" % exc
+    steps.append(("Cache builder", "exit %s" % builder_exit, time.time() - t0))
+    swap_ok, swap_line, swap_why = this_runs_swap(before, stamp, swap_log_rows(ROOT))
+    print("")
+    print("Swap log, read back: %s" % (json.dumps(swap_line, sort_keys=True)
+                                       if swap_line else "no line"))
+    if builder_exit != 0 or not swap_ok:
+        return night_red([r for r in [
+            "the cache builder exited %s" % builder_exit if builder_exit != 0 else None,
+            swap_why] if r], steps, started)
+
+    # The run records (L-449). A loss, or no comparison, is red at night:
+    # "could not compare" means the builder itself failed.
+    records = compare_run_records(os.path.join(ROOT, LIVE_RUNS),
+                                  os.path.join(ROOT, PREV_RUNS))
+    print("")
+    report = report_run_records(records)
+    for line in report:
+        print(line)
+    steps.append(("Run records", records["status"], 0.0))
+    if records["status"] != "ok":
+        return night_red(["the run records were not carried (%s)"
+                          % records["status"]], steps, started)
+
+    # 4. The maintenance run's night pass, whole, minus the Module atlas.
+    print("")
+    print(LINE)
+    print("  DAILY RUN step 4 of %d: the maintenance run's night pass" % len(STEPS))
+    print(LINE)
+    t0 = time.time()
+    checks_code, mrows, skipped = gmr.night_pass(ROOT)
+    steps.append(("Maintenance run, night pass", "exit %s" % checks_code,
+                  time.time() - t0))
+    after = pulled_shas(ROOT)
+
+    # The gate (R1).
+    changes, git_why = git_changes(ROOT)
+    allow = night_allow_list(ROOT)
+
+    def read(path):
+        try:
+            with open(os.path.join(ROOT, path), "rb") as f:
+                return f.read()
+        except OSError:
+            return None
+    facts = {"pulls_ok": True, "match": "ok",
+             "held": sorted(set(after.values())) == [held_sha],
+             "builder_exit": builder_exit, "swap_ok": swap_ok,
+             "swap_why": swap_why, "records": records["status"],
+             "checks_code": checks_code,
+             "unreachable": [row[1] for row in mrows if row[6] and row[0] == "N-A"],
+             "git_why": git_why}
+    reasons = night_gate(facts, changes, allow, read)
+    if reasons:
+        return night_red(reasons, steps, started)
+
+    finished = datetime.datetime.now(datetime.timezone.utc)
+    served = [p for _k, p in (changes or []) if p.startswith(SERVED_DIR)]
+    write_night_record(ROOT, {
+        "_comment": ("Written by daily_run.py --night on a clean night only "
+                     "(L-485), so this is the website's last clean run. A red "
+                     "night writes nothing: its record is the run's log on "
+                     "GitHub."),
+        "schema": 1,
+        "clean_run_utc": finished.isoformat(),
+        "started_utc": started.isoformat(),
+        "where": ("GitHub Actions" if os.environ.get("GITHUB_ACTIONS")
+                  else "a local run"),
+        "orrery_pulled": held_sha,
+        "pulls_asked": asked,
+        "swap_log_line": swap_line,
+        "run_records": report[0],
+        "served_files_changed": len(served),
+        "steps": [{"step": label, "result": said, "seconds": round(sec, 1)}
+                  for label, said, sec in steps],
+        "rows": [{"row": row[1], "kind": "checker" if row[6] else "generator",
+                  "verdict": row[0], "note": row[3],
+                  "seconds": round(row[2], 1)} for row in mrows],
+        "skipped": ([{"row": "Guest book updater", "why": GUEST_BOOK_SKIP}]
+                    + [{"row": label, "why": why} for label, why in skipped]),
+    })
+    print("")
+    print(LINE)
+    print("  THE NIGHT -- summary")
+    print(LINE)
+    for label, said, seconds in steps:
+        print("  %-30s %-36s %7.1fs" % (label, said, seconds))
+    print("  Wrote %s. The workflow commits the allow-list, and only it."
+          % _slash(NIGHT_RECORD))
+    print(LINE)
+    gated = [row for row in mrows if row[6] and not row[5]]
+    print("%s CLEAN -- orrery %s pulled and matched, swap %s ok, run records "
+          "%s, %d of %d gating checkers passed, %d served files changed, "
+          "skipped by name: Guest book updater, %s (%.0f seconds)"
+          % (NIGHT_LINE, held_sha[:8], swap_line.get("run_id"),
+             report[0].replace("Run records: ", "", 1).rstrip("."),
+             sum(1 for row in gated if row[0] == "PASS"), len(gated),
+             len(served), ", ".join(label for label, _w in skipped),
+             (finished - started).total_seconds()))
+    return 0
 
 
 def main():
@@ -637,4 +1242,12 @@ def main():
 if __name__ == "__main__":
     if "--check" in sys.argv[1:]:
         sys.exit(check())
+    if "--allow-list" in sys.argv[1:]:
+        # For the workflow's commit step: one path a line, a folder
+        # ending in "/" (L-485).
+        _files, _folders = night_allow_list(ROOT)
+        print("\n".join(_files + _folders))
+        sys.exit(0)
+    if "--night" in sys.argv[1:]:
+        sys.exit(night_main())
     sys.exit(main())

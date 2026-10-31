@@ -11,8 +11,8 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 51  
-**Total Lines of Code (non-blank):** 27,711  
-**Total Public Functions/Classes:** 432
+**Total Lines of Code (non-blank):** 28,443  
+**Total Public Functions/Classes:** 450
 
 ## Classification Coverage
 
@@ -102,14 +102,14 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `check_cache_in_step.py` | - the served cache holds the same objects and the same shells as data/objects_config.json. (328 lines) |
 | `check_constants_links.py` | - two checks over the gallery's links into the orrery's store, sharing the mirror's own reading so one cause prints one explanation. (310 lines) |
 | `check_drawings.py` | - every stored drawing the served config names is pulled, served, and the drawing it claims to be. (667 lines) |
-| `check_horizons_confirmations.py` | - every object the website takes from the orrery's list has been confirmed against JPL Horizons, recently, and has not changed since; and each period it prints from JPL too (L-395, L-431). (244 lines) |
-| `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (577 lines) |
+| `check_horizons_confirmations.py` | - every object the website takes from the orrery's list has been confirmed against JPL Horizons, recently, and has not changed since; and each period it prints from JPL too (L-395, L-431). (259 lines) |
+| `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (1,139 lines) |
 | `debug_encke_tp.py` | - run the EXACT same live Horizons query gallery_cache_builder.py's fetch_solution_tp() makes for Encke, and print the complete raw response text. (61 lines) |
 | `fingerprint.py` | L-080 semantic fingerprint. (98 lines) |
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,211 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,460 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,512 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (555 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
@@ -117,7 +117,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (808 lines) |
 | `mirror_objects.py` | - write each served object's identity, description and NASA link into data/objects_config.json from the orrery's objects export, and name every difference it finds. (294 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (837 lines) |
-| `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (146 lines) |
+| `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (205 lines) |
 | `pull_drawings.py` | - copy the orrery's stored drawings into the gallery, and record the SHA they came from. (205 lines) |
 | `pull_objects_export.py` | - copy the orrery's objects export into the gallery, and record the SHA it came from. (105 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
@@ -127,7 +127,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (1,856 lines) |
 | `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (315 lines) |
 | `test_mirror_objects.py` | - tools/mirror_objects.py does what it says, on fixtures where each refusal and each kind of write must happen, and then on the real config. (249 lines) |
-| `test_pull_failures.py` | - a pull that cannot fetch fails by name, writes nothing, and the mirror after it does not run; and proof that this check can fail. (311 lines) |
+| `test_pull_failures.py` | - a pull that cannot fetch fails by name, writes nothing, and the mirror after it does not run; and proof that this check can fail. (355 lines) |
 
 ---
 

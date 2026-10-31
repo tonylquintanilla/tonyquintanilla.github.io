@@ -2568,6 +2568,11 @@ for _slug in _bodies:
         },
         "accuracy": ((_objs.get(_slug) or {}).get("position_accuracy")
                      or _rec.get("position_uncertainty")),
+        # L-484, 2026-10-31: why the builder served no uncertainty, in its
+        # own words, from the index; the text box says the true reason
+        # (gallery/solar_system_figures.js, noSourceSentence).
+        "uncertainty_missing": (((_cov.get("position_uncertainty") or {})
+                                 .get("missing") or {}).get(_slug)),
         # L-395: what the body is and where to read more, written into
         # the config by tools/mirror_objects.py from the orrery's own
         # object list. The panel shows both; the hover does not.
@@ -3152,7 +3157,8 @@ const EXHIBITS = {
                     } else {
                         const dist = SolarSystemFigures.distanceLine(
                             { x: t.x[0], y: t.y[0], z: t.z[0] }, b.trust,
-                            epochJd, b.accuracy, GalleryFeatures._KM_PER_AU);
+                            epochJd, b.accuracy, GalleryFeatures._KM_PER_AU,
+                            b.uncertainty_missing);
                         if (dist.line) {
                             lines.push(bullet(dist.line));
                             if (dist.note) {

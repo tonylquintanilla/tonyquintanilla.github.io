@@ -44,6 +44,28 @@ THE SCHEMA IT NEEDS
     older export FAILS by name and nothing is written, so the mirror
     never runs on numbers whose citations it cannot check. Raised from 2.
 
+SIGNED IN ON GITHUB'S COMPUTERS (L-485, the website's nightly run)
+
+    The three pulls read the orrery's newest commit from GitHub's REST
+    interface, api.github.com, through fetch() here, which the objects
+    and drawings pulls import. GitHub's page "Rate limits for the REST
+    API", read 2026-10-31: "The primary rate limit for unauthenticated
+    requests is 60 requests per hour", and "Unauthenticated requests are
+    associated with the originating IP address, not with the user or
+    application that made the request." GitHub's own computers share
+    their addresses among many people's jobs, so an unsigned question may
+    be refused on a night the address has spent its sixty. The same page:
+    "The rate limit for GITHUB_TOKEN is 1,000 requests per hour per
+    repository." So when the environment carries GITHUB_TOKEN -- the
+    website's workflow hands it to the night's step, since GitHub does
+    not put it there by itself -- the question to api.github.com is asked
+    with it, as "Authorization: Bearer <token>" (GitHub's "Authenticating
+    to the REST API"). On Tony's machine the variable does not exist and
+    the pulls ask as they always have. The file itself, at the commit, is
+    fetched from raw.githubusercontent.com with no token in either place.
+    A refusal prints GitHub's own message and x-ratelimit-remaining in
+    the FAIL line, so a rate limit is named, not read as "HTTP 403".
+
 Role: devtool
 Domain: gallery
 
@@ -55,6 +77,10 @@ where it printed N-A and exited 0.)
 Module updated: October 16, 2026 with Anthropic's Claude Opus 5.5
 (L-421 part 3: SCHEMA_WANTED 2 -> 7, the export that carries each row's
 citation.)
+Module updated: October 31, 2026 with Anthropic's Claude Opus 5.5
+(L-485, the gallery half: fetch() asks GitHub's REST interface with the
+run's GITHUB_TOKEN where the environment carries one, and a refusal
+prints GitHub's own words.)
 """
 
 import json
@@ -71,16 +97,59 @@ TIMEOUT_SECONDS = 20
 SCHEMA_WANTED = 7
 
 
+TOKEN_ENV = "GITHUB_TOKEN"
+API_ADDRESS = "https://api.github.com/"
+
+
+def request_headers(url, environ=None):
+    """The headers a pull asks with. The run's own token goes ONLY to
+    GitHub's REST interface, and only when the environment carries one
+    (see SIGNED IN ON GITHUB'S COMPUTERS); raw.githubusercontent.com and
+    Tony's machine get none."""
+    environ = os.environ if environ is None else environ
+    headers = {"User-Agent": "palomas-orrery-gallery-pull"}
+    token = environ.get(TOKEN_ENV)
+    if token and url.startswith(API_ADDRESS):
+        headers["Authorization"] = "Bearer " + token
+    return headers
+
+
+def asked_as(environ=None):
+    """How the pulls ask GitHub's interface, in words for the log."""
+    environ = os.environ if environ is None else environ
+    return ("with the run's GITHUB_TOKEN" if environ.get(TOKEN_ENV)
+            else "without signing in")
+
+
+def http_refusal(exc, url):
+    """GitHub's own words for a refused request: the status, how it was
+    asked, its message, and x-ratelimit-remaining where it sends it, so a
+    rate-limit refusal is named in the FAIL line, not just 'HTTP 403'."""
+    words = "HTTP %s" % exc.code
+    if url.startswith(API_ADDRESS):
+        words += ", asked %s" % asked_as()
+    try:
+        message = json.loads(exc.read().decode("utf-8")).get("message")
+    except Exception:
+        message = None
+    if message:
+        words += ": %s" % message
+    remaining = exc.headers.get("x-ratelimit-remaining") if exc.headers else None
+    if remaining is not None:
+        words += " (x-ratelimit-remaining %s)" % remaining
+    return words
+
+
 def fetch(url):
-    """(status, body, error). status is None when unreachable."""
-    request = urllib.request.Request(
-        url, headers={"User-Agent": "palomas-orrery-gallery-pull"})
+    """(status, body, error). status is None when unreachable; error is
+    GitHub's own words when it refused (L-485)."""
+    request = urllib.request.Request(url, headers=request_headers(url))
     try:
         with urllib.request.urlopen(request,
                                     timeout=TIMEOUT_SECONDS) as response:
             return response.getcode(), response.read(), None
     except urllib.error.HTTPError as exc:
-        return exc.code, b"", None
+        return exc.code, b"", http_refusal(exc, url)
     except Exception as exc:                  # network, DNS, TLS, proxy
         return None, b"", str(exc)
 

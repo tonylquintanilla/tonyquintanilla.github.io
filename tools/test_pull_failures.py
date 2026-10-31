@@ -46,11 +46,24 @@ PROOF THAT IT CAN FAIL
     pull that writes a file before it fails, and a run whose mirror is
     no longer held back after its pull failed.
 
+THE RUN'S TOKEN (L-485, October 31, 2026)
+
+    On GitHub's computers the pulls ask GitHub's REST interface with the
+    run's GITHUB_TOKEN, since an unsigned question is limited by an
+    address GitHub's runners share (pull_constants_export.py, SIGNED IN
+    ON GITHUB'S COMPUTERS). It checks request_headers: the token goes to
+    api.github.com when the environment carries one, never to
+    raw.githubusercontent.com, and no header is sent without one. Two
+    more planted faults: a pull that never sends it, and one that sends
+    it to every address.
+
 Role: devtool
 Domain: gallery
 
 Module created: October 15, 2026 with Anthropic's Claude Opus 5.5 (L-446,
 with L-388).
+Module updated: October 31, 2026 with Anthropic's Claude Opus 5.5 (L-485,
+the gallery half: the run's token, and two planted faults.)
 """
 
 import contextlib
@@ -209,6 +222,24 @@ def check_pulls(tree, results):
             results.append(("%s, %s" % (name, way), problems))
 
 
+def header_problems(headers_of):
+    """L-485: the run's token goes to GitHub's REST interface when the
+    environment carries it, and nowhere else; with no token, no header.
+    headers_of(url, environ) is pull_constants_export.request_headers."""
+    api = "https://api.github.com/repos/o/r/commits/main"
+    raw = "https://raw.githubusercontent.com/o/r/0123/data/x.json"
+    problems = []
+    got = headers_of(api, {"GITHUB_TOKEN": "planted-token"})
+    if got.get("Authorization") != "Bearer planted-token":
+        problems.append("the interface was asked without the run's token: %r"
+                        % got.get("Authorization"))
+    if "Authorization" in headers_of(raw, {"GITHUB_TOKEN": "planted-token"}):
+        problems.append("the token was sent to raw.githubusercontent.com")
+    if "Authorization" in headers_of(api, {}):
+        problems.append("a token header was sent with no GITHUB_TOKEN set")
+    return problems
+
+
 def fake_tool(fail):
     """A run_tool stand-in. Records what ran; fails the labels' scripts
     named in `fail`."""
@@ -325,6 +356,21 @@ def planted(tree, gmr):
 
     out.append(("a mirror no longer held back after its pull failed",
                 bool(runner_problems(gmr, hold_back=False))))
+
+    # L-485: the token never sent, and the token sent everywhere.
+    def never(url, environ=None):
+        return {"User-Agent": "planted"}
+
+    def everywhere(url, environ=None):
+        env = {} if environ is None else environ
+        h = {"User-Agent": "planted"}
+        if env.get("GITHUB_TOKEN"):
+            h["Authorization"] = "Bearer " + env["GITHUB_TOKEN"]
+        return h
+    out.append(("a pull that never sends the run's token",
+                bool(header_problems(never))))
+    out.append(("a pull that sends the token to every address",
+                bool(header_problems(everywhere))))
     return out
 
 
@@ -346,13 +392,16 @@ def main():
         check_pulls(tree, results)
         results.append(("the maintenance run after a failed pull",
                         runner_problems(gmr)))
+        results.append(("the run's token, to GitHub's interface only",
+                        header_problems(
+                            load(tree, "pull_constants_export").request_headers)))
         for label, problems in results:
             print("  %s   %s" % ("ok  " if not problems else "FAIL", label))
             for problem in problems:
                 print("         %s" % problem)
             if problems:
                 failures += 1
-        total = len(results) + 3
+        total = len(results) + 5
     finally:
         remove_tree(tree)
     print("")
@@ -360,7 +409,8 @@ def main():
         print("PULL FAILURES: %d of %d checks FAILED" % (failures, total))
         return 1
     print("PULL FAILURES: all %d checks passed (3 pulls x 3 ways to fail, "
-          "the run after a failed pull, and 3 planted faults caught)"
+          "the run after a failed pull, the run's token to GitHub's "
+          "interface only, and 5 planted faults caught)"
           % total)
     return 0
 

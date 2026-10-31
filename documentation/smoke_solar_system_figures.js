@@ -96,7 +96,21 @@
 // latitude table's last entry; and its cross must sit just past the far
 // end, off every axis line. Two planted faults first: the class bounds
 // printed without their trailing zero, and the cross placed at the 95th
-// entry.
+// entry. (Since 2026-10-31, L-503: the nearest and farthest distances and
+// the two heights carry the export's served kilometres, "about N million
+// km", and each km agrees with its AU; two more faults, the kilometres
+// dropped and the farthest converted from its rounded AU.)
+// Updated October 31, 2026 with Anthropic's Claude Opus 5.5 (L-484, L-485
+// gallery half): the sentence for a body with no figure says the true
+// reason, read from the builder's own words in the index's
+// position_uncertainty.missing -- "JPL states no accuracy for this
+// position." where JPL gives none, a refused answer said as refused, and
+// Tony's "not yet included" only where JPL's figure was not fetched or
+// not asked. Part 8 gains six worked reasons and three planted faults
+// (the old slant, and the two true sentences each in the other's place);
+// part 3 holds every served reason to one the page knows and every
+// reason the page knows to the builder's source, and prints which
+// sentence each body prints. Part 4 holds the page passing the reason.
 
 "use strict";
 const fs = require("fs");
@@ -321,6 +335,34 @@ function uncertaintyWorked(lib) {
   if (r.note !== lib.NO_SOURCE_ACCURACY || !r.accuracyWhy) {
     out.push("an uncertainty with no figure was not reported with the sentence");
   }
+  // L-484, 2026-10-31: the sentence says the true reason. The builder's
+  // reasons, in its own words (build_position_uncertainty).
+  const reasons = [
+    ["JPL gives no range uncertainty (R_s) for it", lib.JPL_STATES_NONE],
+    ["JPL's 2xr answer for 3200 sits 0.004 AU from the served point, " +
+     "beyond its tolerance", lib.JPL_ANSWER_REFUSED],
+    ["JPL's answer has an empty position column", lib.JPL_ANSWER_REFUSED],
+    ["could not reach JPL (timed out)", lib.NO_SOURCE_ACCURACY],
+    ['no "you are here" point is served to ask it at', lib.NO_SOURCE_ACCURACY],
+    [undefined, lib.NO_SOURCE_ACCURACY]
+  ];
+  reasons.forEach(function (c) {
+    const n = lib.distanceLine({ x: 2, y: 0, z: 0 }, STILL, 2461314.5,
+                               null, KM_PER_AU_TEST, c[0]);
+    if (n.note !== c[1]) {
+      out.push("no figure because " + JSON.stringify(c[0]) + " printed " +
+               JSON.stringify(n.note));
+    }
+  });
+  // A body with a figure prints no sentence whatever reason is passed.
+  r = lib.distanceLine({ x: 2, y: 0, z: 0 }, STILL, 2461314.5,
+                       { range_3sigma_km: 3000 }, KM_PER_AU_TEST,
+                       "JPL gives no range uncertainty (R_s) for it");
+  if (r.note !== null) { out.push("a body with its uncertainty printed a reason"); }
+  if (lib.JPL_STATES_NONE === lib.NO_SOURCE_ACCURACY ||
+      lib.JPL_ANSWER_REFUSED === lib.NO_SOURCE_ACCURACY) {
+    out.push("the three sentences are not three");
+  }
   return out;
 }
 
@@ -348,7 +390,7 @@ const selfFailures = [];
    "var sourceKm = src.errKm;",
    "var sourceKm = 0;"],
   ["the sentence printed for a body with a row",
-   "note: (src.km === null) ? NO_SOURCE_ACCURACY : null,",
+   "note: (src.km === null) ? noSourceSentence(missingWhy) : null,",
    "note: NO_SOURCE_ACCURACY,"]
 ].forEach(function (fault) {
   if (worked(loadWith(fault[1], fault[2])).length === 0) {
@@ -361,12 +403,22 @@ const selfFailures = [];
   ["a 3-sigma uncertainty halved as if it were a place",
    "return { km: u, errKm: u, kind:", "return { km: u, errKm: u / 2, kind:"],
   ["the sentence printed for a body with its uncertainty",
-   "note: (src.km === null) ? NO_SOURCE_ACCURACY : null,",
+   "note: (src.km === null) ? noSourceSentence(missingWhy) : null,",
    "note: (src.kind === 'uncertainty' || src.km === null) ? NO_SOURCE_ACCURACY : null,"],
   // Tony, 2026-10-29: a body JPL gave no uncertainty for (Halley,
   // Ikeya-Seki and Bennu on that day's build) must still say so.
   ["the sentence dropped for a body JPL gave no uncertainty for",
-   "note: (src.km === null) ? NO_SOURCE_ACCURACY : null,", "note: null,"]
+   "note: (src.km === null) ? noSourceSentence(missingWhy) : null,", "note: null,"],
+  // L-484, 2026-10-31: the old slant, "not yet included" for every
+  // reason, and the two true sentences said in each other's place.
+  ["'not yet included' printed where JPL states none",
+   'if (kind === "none") { return JPL_STATES_NONE; }', "if (false) { }"],
+  ["the refused sentence printed where JPL states none",
+   'if (kind === "none") { return JPL_STATES_NONE; }',
+   'if (kind === "none") { return JPL_ANSWER_REFUSED; }'],
+  ["'JPL states none' printed for a refused answer",
+   'if (kind === "refused") { return JPL_ANSWER_REFUSED; }',
+   'if (kind === "refused") { return JPL_STATES_NONE; }']
 ].forEach(function (fault) {
   if (uncertaintyWorked(loadWith(fault[1], fault[2])).length === 0) {
     selfFailures.push(fault[0] + " passed the uncertainty's worked cases");
@@ -425,7 +477,10 @@ console.log("Self-test: the worked cases fail on a Report test one place " +
             "orbit printed; a spacecraft's on its error ignored and on " +
             "the sentence dropped; a small body's uncertainty on its " +
             "3-sigma halved, on the sentence printed beside it, and on " +
-            "the sentence dropped where JPL gave none.");
+            "the sentence dropped where JPL gave none; and the reason's " +
+            "sentence on 'not yet included' where JPL states none, and " +
+            "on the refused and the none sentences each in the other's " +
+            "place.");
 
 // ---- 1. worked cases ----------------------------------------------
 const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF),
@@ -494,7 +549,16 @@ const table = [];
 // it could not serve is missing. A cache built before L-399 has no such
 // list, and its small bodies print with the sentence until the next build.
 const uncAsked = cov.position_uncertainty || null;
-const uncServed = [], uncMissing = [];
+const uncServed = [], uncMissing = [], missingTable = [];
+// L-484: each reason the page sorts must be the builder's own words, so a
+// rewording in the builder cannot leave the page sorting nothing.
+const builderSrc = fs.readFileSync(path.join(root, "tools",
+                                             "gallery_cache_builder.py"), "utf8");
+SSF.MISSING_KINDS.forEach(function (k) {
+  if (builderSrc.indexOf(k[0]) < 0) {
+    failures.push("the page sorts a reason the builder no longer gives: " + k[0]);
+  }
+});
 rows.forEach(function (slug) {
   if (slug === "sun") { return; }
   const rec = (cov.objects || {})[slug];
@@ -503,12 +567,13 @@ rows.forEach(function (slug) {
     return;
   }
   const p = rec.as_of_today;
+  const missingWhy = uncAsked && (uncAsked.missing || {})[slug];
   const r = SSF.distanceLine(
     { x: p.x / kmPerAu, y: p.y / kmPerAu, z: p.z / kmPerAu },
     { rate_deg_per_day: rec.trust.error_rate_deg_per_day,
       element_epoch_jd: rec.trust.element_epoch_jd },
     p.t, (objs[slug] || {}).position_accuracy || rec.position_uncertainty || null,
-    kmPerAu);
+    kmPerAu, missingWhy);
   if (!r.line) { failures.push(slug + ": no line -- " + r.why); return; }
   table.push([slug, r.line, r.governs, r.note ? "+ sentence" : ""]);
   const unc = rec.position_uncertainty;
@@ -526,6 +591,13 @@ rows.forEach(function (slug) {
       if (uncAsked && !why) {
         failures.push(slug + ": the builder neither served its uncertainty nor said why");
       }
+      // L-484: a reason the page cannot sort would print Tony's "not
+      // yet included" by default, which may be untrue; it fails by name.
+      if (why && !SSF.missingKind(why)) {
+        failures.push(slug + ": the builder's reason is not one the page " +
+                      "knows, so its sentence cannot be chosen: " + why);
+      }
+      if (why) { missingTable.push(slug + " (" + SSF.missingKind(why) + "): " + r.note); }
     }
   }
   if (OUTER.indexOf(slug) >= 0 &&
@@ -533,8 +605,8 @@ rows.forEach(function (slug) {
     failures.push(slug + ": expected JPL's accuracy at the ten-thousands " +
                   "place, got " + r.governs + " at 10^" + r.kmPlace + " km");
   }
-  if (NO_ROW[slug] && !unc && r.note !== SSF.NO_SOURCE_ACCURACY) {
-    failures.push(slug + ": the sentence is missing");
+  if (NO_ROW[slug] && !unc && r.note !== SSF.noSourceSentence(missingWhy)) {
+    failures.push(slug + ": the sentence is missing or not the true one");
   }
   if ((objs[slug] || {}).position_accuracy && r.note) {
     failures.push(slug + ": prints the sentence but has a row");
@@ -549,7 +621,10 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
   ["SolarSystemFigures.distanceLine(", "the page does not call the file"],
   ["position_accuracy", "the page's driver does not pass position_accuracy"],
   ['_rec.get("position_uncertainty")',
-   "the page's driver does not pass a small body's position_uncertainty"]
+   "the page's driver does not pass a small body's position_uncertainty"],
+  ['"uncertainty_missing"',
+   "the page's driver does not pass why a small body has no uncertainty"],
+  ["b.uncertainty_missing", "the page does not hand the reason to the file"]
 ].forEach(function (pair) {
   if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
 });
@@ -723,6 +798,33 @@ function beltIssues(GF) {
   };
   const D = f.distance || {}, H = f.height || {}, L = f.latitude || {};
   const au = function (node, k) { return g(node.value[k], node.figures) + " AU"; };
+  // L-503 (2026-10-31): the kilometres the orrery prints beside four of
+  // them, read from the export's served "in" km entry at its own figure
+  // count -- never worked out from the rounded AU.
+  const kmText = function (node, k) {
+    const e = (((node["in"] || {})[k]) || {}).km;
+    if (!e || !(e.value > 0)) { out.push("the belt's " + k + "th entry serves no km"); return "?"; }
+    const dec = Math.max(0, Number(e.figures) - 1 - (Math.floor(Math.log10(e.value)) - 6));
+    return "about " + (e.value / 1e6).toLocaleString("en-US", {
+      minimumFractionDigits: dec, maximumFractionDigits: dec }) + " million km";
+  };
+  const auKm = function (node, k) { return au(node, k) + " (" + kmText(node, k) + ")"; };
+  // And each served km agrees with its AU, to the AU's own rounding, so a
+  // km entry served against the wrong percentile is seen.
+  const kmpa = kmRow && kmRow.value;
+  if (!(kmpa > 0)) { out.push("the served cache serves no KM_PER_AU to hold the belt's km to"); }
+  [[D, "0"], [D, "100"], [H, "90"], [H, "50"]].forEach(function (c) {
+    const e = (((c[0]["in"] || {})[c[1]]) || {}).km;
+    const v = c[0].value[c[1]];
+    if (!e || !(kmpa > 0)) { return; }
+    // Each was rounded once from the same full digits, so they may sit
+    // apart by both roundings together, and no further.
+    const halfAu = 0.5 * Math.pow(10, Math.floor(Math.log10(v)) - Number(c[0].figures) + 1);
+    const halfKm = 0.5 * Math.pow(10, Math.floor(Math.log10(e.value)) - Number(e.figures) + 1);
+    if (Math.abs(e.value / kmpa - v) > (halfAu + halfKm / kmpa) * 1.01) {
+      out.push("the belt's " + c[1] + "th entry serves " + e.value + " km against " + v + " AU");
+    }
+  });
   const want = "This cloud shows how far the main asteroid belt reaches, measured from " +
     commas(f.sample_orbits.value) + " of JPL's main-belt orbits. The dots are not asteroids: " +
     "they are placed at random inside that measured spread, so the cloud is the same on every " +
@@ -730,10 +832,10 @@ function beltIssues(GF) {
     "average distance from the Sun, is between " + f.a_inner.value.toFixed(1) + " and " +
     f.a_outer.value.toFixed(1) + " AU, and its perihelion, its nearest point to the Sun, is " +
     "beyond " + g(f.q_min.value, f.q_min.figures) + " AU. Following those orbits all the way " +
-    "round, the asteroids come as near as " + au(D, "0") + " and go as far as " + au(D, "100") +
+    "round, the asteroids come as near as " + auKm(D, "0") + " and go as far as " + auKm(D, "100") +
     ". Nine tenths of the time they are between " + au(D, "5") + " and " + au(D, "95") +
-    " from the Sun, and within " + au(H, "90") + " of the plane of Earth's orbit; half the " +
-    "time within " + au(H, "50") + ". The " + commas(f.sample_orbits.value) + " are the " +
+    " from the Sun, and within " + auKm(H, "90") + " of the plane of Earth's orbit; half the " +
+    "time within " + auKm(H, "50") + ". The " + commas(f.sample_orbits.value) + " are the " +
     "brightest of JPL's " + commas(f.jpl_count.value) + " main-belt asteroids, absolute " +
     "magnitude " + g(f.h_max.value, 6) + " or brighter, which are roughly the larger ones. " +
     "Which asteroids to measure was our choice, made to keep the cloud readable; it is not a " +
@@ -743,8 +845,8 @@ function beltIssues(GF) {
   if (about !== want) {
     out.push("the belt's words are not the orrery's: " + JSON.stringify(about).slice(0, 200));
   }
-  if (/million km|\{/.test(String(cross.text[0]))) {
-    out.push("the belt's text box prints kilometres or an unfilled name");
+  if (/\{/.test(String(cross.text[0]))) {
+    out.push("the belt's text box prints an unfilled name");
   }
   // The drawing's ends, against its rows, allowing the tables' rounding.
   const lo = D.value["0"], hi = D.value["100"], latHi = L.value["100"];
@@ -782,14 +884,23 @@ function beltIssues(GF) {
   beltLine = c.x.length + " dots, " + rMin.toFixed(3) + " to " + rMax.toFixed(3) + " AU from the " +
     "Sun (rows " + lo + " to " + hi + "), within " + latMax.toFixed(1) + " degrees of the " +
     "ecliptic (row " + latHi + "); cross at " + cr.toFixed(3) + " AU, " + off.toFixed(0) +
-    " degrees off the nearest axis line; " + (cross.meta.source_items || []).length + " citations";
+    " degrees off the nearest axis line; " + (cross.meta.source_items || []).length + " citations" +
+    "; kilometres " + [[D, "0"], [D, "100"], [H, "90"], [H, "50"]].map(function (c) {
+      return c[1] + "th " + kmText(c[0], c[1]); }).join(", ");
   return out;
 }
 [
   ["the class bounds printed without their trailing zero",
    "a_inner: cloudFigures(cfg.a_inner, fixedFigures),", "a_inner: cloudFigures(cfg.a_inner, pyG),"],
   ["the belt's cross placed at the 95th entry",
-   "var R = far.value * 1.02;", "var R = d95.value * 1.02;"]
+   "var R = far.value * 1.02;", "var R = d95.value * 1.02;"],
+  // L-503, 2026-10-31: the kilometres dropped, and the farthest worked
+  // out from its rounded AU (637 million where the export serves 638).
+  ["the belt's kilometres dropped",
+   'return entry.text + " (" + km + ")";', "return entry.text;"],
+  ["the farthest distance's kilometres converted from its rounded AU",
+   'far: withKm(far, cfg.distance, "100", where, warn),',
+   'far: far.text + " (about " + Math.round(far.value * 149.5978707) + " million km)",']
 ].forEach(function (fault) {
   if (beltIssues(loadRenderers(fault[1], fault[2])).length === 0) {
     failures.push("SELF-TEST: the belt's checks stayed green with " + fault[0]);
@@ -815,6 +926,8 @@ console.log("Small bodies' own uncertainty (L-399): " +
                         "served yet; ") +
             "printed with the sentence, " + uncMissing.length + ": " +
             (uncMissing.join(", ") || "none") + ".");
+// L-484: which sentence each one prints, and the reason it was chosen by.
+missingTable.forEach(function (line) { console.log("  " + line); });
 console.log("");
 console.log("Orbital periods as each body's hover prints them (data/" +
             "objects_config.json), " + periods.length + " bodies:");
@@ -829,7 +942,9 @@ orbits.forEach(function (t) {
 });
 console.log("");
 console.log("The belt's cloud (L-503): " + beltLine + ". Self-test: red on the class " +
-            "bounds printed without their trailing zero and on the cross at the 95th entry.");
+            "bounds printed without their trailing zero, on the cross at the 95th entry, " +
+            "on the kilometres dropped, and on the farthest's kilometres converted " +
+            "from its rounded AU.");
 console.log("");
 console.log("Path distances at each one's served minute, " +
             craftTable.length + " paths (spacecraft and comets on open paths):");

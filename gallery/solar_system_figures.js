@@ -51,6 +51,23 @@
 // printed exactly when no source error is served, so the words and the
 // data cannot disagree.
 //
+// WHY NO FIGURE, IN TRUE WORDS (L-484, October 31, 2026). "Not yet
+// included" is true only when JPL's figure was not fetched or not asked.
+// When JPL answered and its uncertainty column reads "n.a." (Bennu,
+// Halley and Ikeya-Seki), JPL states none, and the box prints the
+// orrery's sentence, "JPL states no accuracy for this position."; when
+// JPL answered and the builder refused the answer, it says so. The
+// builder's reason is served in the index's position_uncertainty.missing
+// and the room's driver passes it here (provenance-discipline 2.36: a
+// sentence saying why a figure is missing says the true reason). The
+// digits are unchanged: a body with no source error prints to what its
+// drift earns, never finer than whole kilometres -- whole kilometres on
+// the elements' own day, then coarser as the days since grow (tens of
+// kilometres for those three within a day or two). The orrery prints
+// the whole kilometre for them because it asks JPL for the moment drawn
+// and has no drift; the website works the position out from elements
+// and does. Updated October 31, 2026 with Anthropic's Claude Opus 5.5.
+//
 // Written October 1, 2026 with Anthropic's Claude Opus 5.5, from the
 // functions L-363 step 3a built inside interactive.html on 2026-09-30.
 //
@@ -110,9 +127,53 @@
   // Half a kilometre: the room prints whole kilometres at most.
   var FINEST_KM = 0.5;
 
-  // Tony's words, 2026-10-01 (L-399).
+  // Tony's words, 2026-10-01 (L-399). Printed when JPL's figure was not
+  // fetched or not asked (a question that failed, a body never asked).
   var NO_SOURCE_ACCURACY =
     "JPL's own uncertainty for this position is not yet included.";
+
+  // L-484, October 31, 2026: a sentence saying why a figure is missing
+  // says the TRUE reason (provenance-discipline 2.36). JPL answered and
+  // its uncertainty column reads "n.a." (Bennu, Halley, Ikeya-Seki): the
+  // orrery's own sentence since 2026-10-29 (position_accuracy._side).
+  var JPL_STATES_NONE = "JPL states no accuracy for this position.";
+  // JPL answered, and the answer could not be matched to this position,
+  // so it was refused (the builder's match rule, or an empty column).
+  var JPL_ANSWER_REFUSED =
+    "JPL was asked for its own uncertainty for this position, but its " +
+    "answer did not match this position, so it is not included.";
+
+  // The builder's reason (tools/gallery_cache_builder.py,
+  // build_position_uncertainty), served in the index's
+  // position_uncertainty.missing, sorted into the three. Each prefix is
+  // the builder's own words; documentation/smoke_solar_system_figures.js
+  // finds every one in the builder and fails on a served reason none of
+  // them matches, so a new reason cannot fall silently to the default.
+  var MISSING_KINDS = [
+    ["JPL gives no range uncertainty", "none"],
+    ["JPL's 2xr answer for", "refused"],
+    ["JPL's answer has an empty position column", "refused"],
+    ["could not reach JPL", "not fetched"],
+    ['no "you are here" point is served', "not asked"],
+    ["it is not served measured from the Sun", "not asked"]
+  ];
+
+  function missingKind(why) {
+    if (typeof why !== "string" || !why) { return null; }
+    for (var i = 0; i < MISSING_KINDS.length; i++) {
+      if (why.indexOf(MISSING_KINDS[i][0]) === 0) { return MISSING_KINDS[i][1]; }
+    }
+    return null;
+  }
+
+  // The sentence for a body with no source error, from the builder's
+  // reason. No reason, or one not known here, keeps Tony's sentence.
+  function noSourceSentence(why) {
+    var kind = missingKind(why);
+    if (kind === "none") { return JPL_STATES_NONE; }
+    if (kind === "refused") { return JPL_ANSWER_REFUSED; }
+    return NO_SOURCE_ACCURACY;
+  }
 
   // The Report test: the place whose half unit is nearest the error on
   // a log scale, a tie going to the coarser place.
@@ -177,8 +238,10 @@
   // trust: {rate_deg_per_day, element_epoch_jd} from the served cache.
   // epochJd: the minute drawn. accuracy: the served node -- a planet's
   // "position_accuracy" or a small body's "position_uncertainty" -- or null.
-  // kmPerAu: from the served cache's frame constants.
-  function distanceLine(pos, trust, epochJd, accuracy, kmPerAu) {
+  // kmPerAu: from the served cache's frame constants. missingWhy: the
+  // builder's reason no uncertainty is served, from the index (L-484),
+  // or nothing; it chooses the sentence printed when no source error is.
+  function distanceLine(pos, trust, epochJd, accuracy, kmPerAu, missingWhy) {
     if (!(typeof kmPerAu === "number" && kmPerAu > 0)) {
       return { line: null, why: "kilometres per AU is not served" };
     }
@@ -210,7 +273,8 @@
                               : withCommas(au.value);
     return {
       line: auText + " AU from the Sun (" + withCommas(km.value) + " km)",
-      note: (src.km === null) ? NO_SOURCE_ACCURACY : null,
+      note: (src.km === null) ? noSourceSentence(missingWhy) : null,
+      missingKind: (src.km === null) ? missingKind(missingWhy) : null,
       accuracyWhy: src.why,
       governs: governs,
       kmPlace: km.place,
@@ -382,6 +446,11 @@
     periodAroundSun: periodAroundSun,
     FINEST_KM: FINEST_KM,
     NO_SOURCE_ACCURACY: NO_SOURCE_ACCURACY,
+    JPL_STATES_NONE: JPL_STATES_NONE,
+    JPL_ANSWER_REFUSED: JPL_ANSWER_REFUSED,
+    MISSING_KINDS: MISSING_KINDS,
+    missingKind: missingKind,
+    noSourceSentence: noSourceSentence,
     reportPlace: reportPlace,
     roundTo: roundTo,
     withCommas: withCommas,

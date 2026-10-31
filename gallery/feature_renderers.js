@@ -243,6 +243,11 @@
  *   distances in AU only, since the tables are served rounded and with no
  *   kilometres. L-502: the three outer clouds' crosses turn off the x axis
  *   by their drawings' served info_polar_deg.)
+ * Module updated: October 31, 2026 with Anthropic's Claude Opus 5.5
+ *   (L-503 closing, L-485's gallery half: the belt's nearest and farthest
+ *   distances and its two heights print their kilometres as the orrery
+ *   prints them, "1.67 AU (about 250 million km)", from the export's
+ *   served "in" km entries, never converted here.)
  */
 
 (function (global) {
@@ -2642,13 +2647,17 @@
    * printed from its served row (written by tools/mirror_constants.py) by
    * the orrery's own rule: a count with separators, the class bounds and
    * a table entry at their declared figures (Python's %g, trailing zeros
-   * dropped). The orrery also prints each distance in kilometres, worked
-   * out from its store's full digits; the website is served the tables
-   * rounded to their declared figures and with no kilometres, and working
-   * kilometres out of a rounded number prints 637 million where the
-   * orrery prints 638 (interactive-exhibit: a hover never converts a
-   * served number to print it). So the website prints the AU alone,
-   * until the orrery's export serves the kilometres (L-503).
+   * dropped). The orrery also prints the nearest and farthest distances
+   * and the two heights in kilometres, worked out from its store's full
+   * digits. Working kilometres out of a served, rounded number would
+   * print 637 million where the orrery prints 638 (interactive-exhibit: a
+   * hover never converts a served number to print it), so the website
+   * waited until the export served them. Since 2026-10-29 it does (L-503:
+   * each table entry's "in", worked out from the full digits and rounded
+   * once), and since 2026-10-31 the page prints them in the orrery's form,
+   * "1.67 AU (about 250 million km)", at the served km entry's own figure
+   * count (cloudKm). An entry served with no km prints its AU alone and
+   * the room's notes say so.
    *
    * THE CROSS sits just past the farthest drawn point, the distance
    * table's 100th entry times 1.02, turned info_azimuth_deg round from
@@ -2689,6 +2698,36 @@
       ? node.figures : null;
     return f === null ? null : { value: v, text: pyG(v, f) + " AU" };
   }
+  // L-503: an entry's served kilometres, "about N million km", at the km
+  // entry's own figure count; null when the export serves none for it.
+  function cloudKm(node, pct) {
+    var e = isDict(node) && isDict(node["in"]) && isDict(node["in"][pct]) &&
+      isDict(node["in"][pct].km) ? node["in"][pct].km : null;
+    if (!e || typeof e.value !== "number" || !isFinite(e.value) || e.value <= 0) {
+      return null;
+    }
+    var n = Math.max(1, Math.min(21, Math.round(Number(e.figures))));
+    if (!isFinite(n)) return null;
+    var lead = Math.floor(Math.log10(e.value));
+    if (e.value < 1e6) {
+      return "about " + cloudCommas(e.value) + " km";
+    }
+    var decimals = Math.max(0, n - 1 - (lead - 6));
+    var m = (e.value / 1e6).toFixed(decimals);
+    var parts = m.split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return "about " + parts.join(".") + " million km";
+  }
+  function withKm(entry, node, pct, where, warn) {
+    if (entry === null) return null;
+    var km = cloudKm(node, pct);
+    if (km === null) {
+      warn(where + ": its " + pct + "th entry is served with no kilometres, " +
+           "so it prints in AU alone");
+      return entry.text;
+    }
+    return entry.text + " (" + km + ")";
+  }
   function buildRoomCloud(cfg, label, key, warn) {
     var where = "the room's row " + key;
     if (!isDict(cfg) || !isDict(cfg.drawing)) {
@@ -2710,9 +2749,13 @@
       a_inner: cloudFigures(cfg.a_inner, fixedFigures),
       a_outer: cloudFigures(cfg.a_outer, fixedFigures),
       q_min: cloudFigures(cfg.q_min, pyG),
-      near: near && near.text, far: far && far.text,
+      // L-503: the four the orrery prints with kilometres, from the
+      // served "in"; the 5th and 95th it prints in AU alone.
+      near: withKm(near, cfg.distance, "0", where, warn),
+      far: withKm(far, cfg.distance, "100", where, warn),
       d5: d5 && d5.text, d95: d95 && d95.text,
-      h90: h90 && h90.text, h50: h50 && h50.text
+      h90: withKm(h90, cfg.height, "90", where, warn),
+      h50: withKm(h50, cfg.height, "50", where, warn)
     };
     Object.keys(vals).forEach(function (k) { if (vals[k] === null) delete vals[k]; });
     var words = servedSentence(cfg.hover, vals, where, warn);
