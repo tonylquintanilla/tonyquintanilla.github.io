@@ -2815,7 +2815,7 @@
                 "prints": null
               },
               "km": {
-                "value": 96000.0,
+                "value": 100000.0,
                 "figures": 2,
                 "prints": null
               },
@@ -4007,7 +4007,7 @@
               "prints": null
             },
             "km": {
-              "value": 9600.0,
+              "value": 10000.0,
               "figures": 2,
               "prints": null
             },

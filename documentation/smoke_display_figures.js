@@ -285,9 +285,19 @@ const SOFT_BR = "<br soft>";
 // new, "sun/Sun: Corona#2" gone -- and the other 44 byte for byte. Until
 // the Daily Run rebuilds the cache, this check fails on those, by name.
 // The L-494 one is left in place, unreferenced.
-const FIXTURE_AT = "7a4a03a8";
+// L-484 (2026-11-01): the orrery's export now rounds a conversion that
+// carries into a new leading digit at the place the carry reaches, so
+// Earth's inner belt's peak, 1.5 Earth radii, is served as 10,000 km where
+// it was 9,600; the AU, 0.00006, did not change. Re-recorded as
+// fixture_hovers_L484_on_c1c578f5.json, from the cache the Daily Run of
+// 2026-11-01 built from orrery 6b70a53a's export: the L-497 one with
+// "earth/Earth: Inner Radiation Belt" alone different, as expected, and
+// the other 46 byte for byte. The L-497 one is left in place,
+// unreferenced.
+// Module updated: November 1, 2026 with Anthropic's Claude Opus 5.5.
+const FIXTURE_AT = "c1c578f5";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L497_on_7a4a03a8.json");
+                          "fixture_hovers_L484_on_c1c578f5.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }
@@ -614,9 +624,13 @@ const ACCEPTANCE_LINES = {
     lines: ["Thickest at 1.5 Earth radii from Earth's centre, at the " +
             "magnetic equator: near where the measured flux of trapped " +
             "protons is greatest.",
-            "= 9,600 km (0.00006 AU)",       // L-345
+            // L-345; L-484 (2026-11-01): the orrery's export rounds the km
+            // at the place a carry reaches, so 9,567 km at two figures is
+            // 10,000, not 9,600. Read from the built hover before pinning.
+            "= 10,000 km (0.00006 AU)",
             "Measured extent: 1.1 to 2 Earth radii"],
-    absent: ["9,567", "2.0 Earth radii", "9.6 degrees", "2020-2025",
+    // L-484: "9,600" is the old rounding; its return fails by name.
+    absent: ["9,600", "9,567", "2.0 Earth radii", "9.6 degrees", "2020-2025",
              "a width chosen for the picture", "0.000064",
              "particle flux peaks", "That tilt is for 2020",
              "evenly spaced rings", "The field lines are drawn around"] },
