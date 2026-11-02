@@ -407,6 +407,18 @@
         drawer button, and the triad is drawn at three quarters, 78 by 90
         px, its letters still printing at 11 px; its top edge comes down
         from 178 to 138 px. Every room.)
+     Updated: November 1, 2026 with Anthropic's Claude Opus 5.5
+       (L-505, Tony's rulings R1 to R4 of October 31: in every room a dot
+        on each axis line at every grid step, twice the size at every
+        second step, in the axis colour (sunOriginTickPoints, installed
+        and restyled with the axis lines); the grid chip's content is a
+        short white ruler keying those dots, its two steps labelled with
+        the unit, no pill, a thin dark halo (sunGridChipUpdate); Plotly's
+        numbers on the box edges are off in the rooms (buildSunLayout).
+        Mode 5 knobs: ?tick=<minor>,<major>, ?ruler=<px>, ?halo=<px>. The
+        frame note says what the dots and the ruler are. The Explorer is
+        unchanged: it has no axis lines and no HUD, so it keeps its
+        numbers.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -705,16 +717,27 @@
             fill: var(--accent);
         }
         .sun-triad .aries:hover, .sun-triad:hover .aries { fill: #ffd97a; }
+        /* L-505 (Tony's ruling R3, 2026-10-31): the grid chip is a RULER
+           now, a key to the dots on the axis lines, drawn by
+           sunGridChipUpdate. No pill: the background and the border are
+           gone ("so it does not obscure the website url"), and the
+           labels carry a thin dark halo instead, set from ?halo=. The
+           element keeps its id, its place at the HUD row's right end and
+           its tap, which opens the AU note; the padding keeps a finger's
+           target round it. */
         .sun-grid-chip {
-            pointer-events: auto;
-            background: rgba(17,24,39,0.94); border: 1px solid var(--border);
-            border-radius: 20px; padding: 5px 11px;
+            pointer-events: auto; cursor: pointer;
+            background: transparent; border: 0; padding: 6px 2px 2px 6px;
             font: 500 11px 'DM Sans', system-ui, sans-serif;
-            color: var(--text-secondary); letter-spacing: 0.3px; white-space: nowrap;
+            color: var(--text-primary); letter-spacing: 0.3px; white-space: nowrap;
         }
-        .sun-grid-chip b { color: var(--text-primary); font-weight: 600; }
-        .sun-grid-chip { cursor: pointer; }
-        .sun-grid-chip:hover { border-color: var(--accent); }
+        .sun-ruler { position: relative; display: block; }
+        .sun-ruler svg { display: block; overflow: visible; }
+        .sun-ruler-label {
+            position: absolute; transform: translateX(-50%);
+            line-height: 14px; text-align: center; white-space: nowrap;
+        }
+        .sun-grid-chip:hover .sun-ruler-label { color: var(--accent); }
         /* L-472 (Tony, 2026-10-23, "The count line"): how many ticked
            bodies lie outside the view, in the grid chip's own type.
            Hidden at zero. L-478 (Tony, 2026-10-24): at the lower left,
@@ -1511,6 +1534,10 @@
                 <b>ecliptic</b>, the plane of Earth's orbit, and <b>z</b>
                 stands up from it. The frame is fixed to the stars at epoch
                 J2000; it does not turn with the page.</p>
+                <p>The dots on the three axis lines mark the grid: a small
+                dot at every grid step, a larger one at every second step.
+                The ruler at the right shows those two steps with their
+                values.</p>
                 <p class="src">Source: NASA/JPL NAIF, Frames and Coordinate
                 Systems tutorial (J2000 x axis at the equator-ecliptic
                 intersection, the vernal equinox; the ecliptic frame shares
@@ -3927,9 +3954,15 @@ function buildSunLayout(halfRangeAu) {
         // AU at the Oort cloud's edge.
         ticksuffix: " AU",
         exponentformat: "none",
-        // L-289 (rebuilt 2026-09-05): Plotly's tick numbers are back
-        // on. The frame HUD (triad + grid chip) carries direction and
-        // spacing; per-axis gridcolor below matches the triad.
+        // L-505 (Tony's ruling R4, 2026-10-31, 17:54: "with a ruler, the
+        // edge labels are actually obstructive so remove"): Plotly's
+        // numbers on the box edges are off, in every room at once, in the
+        // same build that gives every room the dots on the axis lines and
+        // the ruler, so no room has a grid and no scale. The grid lines
+        // stay, and so does each axis's coloured edge line below, which is
+        // not a number. From 2026-09-05 (L-289) to this build the numbers
+        // were on, and the triad and the grid chip carried the rest.
+        showticklabels: false,
         showspikes: false,
     };
 
@@ -3942,7 +3975,7 @@ function buildSunLayout(halfRangeAu) {
     // L-289, 2026-09-05: the names travel on the frame HUD's triad
     // (page chrome, always in view), so the Plotly title is blank
     // here rather than drawn once on an edge the phone cannot see.
-    // The unit is on the grid chip ("grid 0.2 AU").
+    // The unit is on the ruler ("0.2 AU", "0.4 AU"; L-505).
     const axisTitle = function (label) {
         return { text: "", font: { size: 10, color: "#7a7a8a" } };
     };
@@ -4046,9 +4079,10 @@ function sunPhonePortrait() {
 // since 2026-10-16, #9a9a9a grey before) on every screen:
 // first everywhere but a portrait phone, then, from Tony's own phone,
 // the portrait phone too, where they show along the left and bottom
-// edges beside the triad and the grid chip. One function still serves
-// the Explorer and the rooms, and a room still re-reads it when the
-// window turns, so a later change needs one edit here.
+// edges beside the triad and the grid chip. Since L-505 (2026-11-01) the
+// rooms print no edge numbers (showticklabels off in buildSunLayout), so
+// this font is the Explorer's alone, through buildLayout; the rooms'
+// template still names it, where it sets nothing a visitor sees.
 function axisTickFont() {
     return { size: 12, color: "#a3b8de" };
 }
@@ -4431,8 +4465,11 @@ const SUN_HIDDEN = "legendonly";
 //   - a GRID CHIP naming the uniform grid spacing once ("grid 0.2 AU"),
 //     updated when the frame zooms;
 //   - grid lines coloured per axis to match the arrows (buildSunLayout).
-// Plotly's own tick numbers are back on. Its axis titles stay blank;
-// the triad carries the names. The HUD only READS the camera and
+// Plotly's own tick numbers were back on until L-505 (2026-11-01, Tony's
+// rulings R1 to R4 of 2026-10-31): now dots on the three axis lines mark
+// the grid steps, the grid chip is a short RULER keying them, and the box
+// edges carry no numbers. Its axis titles stay blank; the triad carries
+// the names. The HUD only READS the camera and
 // redraws an SVG; it never calls into Plotly, so the click-deferral
 // hazard above does not apply.
 const SUN_AXIS_COLORS = { x: "#e06c6c", y: "#5dbb7a", z: "#6fa8ff" };
@@ -4463,6 +4500,69 @@ const SUN_ORIGIN_AXES = (function () {
 })();
 let sunOriginAxisIdx = null;   // trace indices, set once after newPlot
 
+// The tick DOTS on those lines (L-505; Tony's rulings R1 and R2 of
+// 2026-10-31, documentation/DESIGN_axis_ticks_and_ruler_rulings_20261031.md
+// in the orrery): a small dot at every grid step, a dot twice its size at
+// every second step, in the axis's hue. Dots, not line segments (R1 as
+// refined at 20:20): a marker faces the screen at a fixed pixel size, so
+// it never vanishes edge-on and never shrinks with zoom. Their sizes in
+// pixels, ?tick=<minor>,<major> for one load (Mode 5), as ?edge= above;
+// the brief's starting values are 3 and 6, well under the bodies' markers.
+// A major given alone, or none, is twice the minor.
+const SUN_TICK_SIZES = (function () {
+    const v = (new URLSearchParams(window.location.search).get("tick") || "").split(",");
+    const a = parseFloat(v[0]), b = parseFloat(v[1]);
+    const minor = (a > 0 && a <= 20) ? a : 3;
+    const major = (b > 0 && b <= 30) ? b : 2 * minor;
+    return { minor: minor, major: major };
+})();
+// The ruler's line length in pixels (R3), ?ruler=<width>, 56 to start.
+// It is a key to the dots, not a screen length: a perspective view has no
+// one length. It grows past this only when its two labels need the room.
+const SUN_RULER_PX = (function () {
+    const n = parseFloat(new URLSearchParams(window.location.search).get("ruler"));
+    return (n >= 20 && n <= 240) ? n : 56;
+})();
+// The thin dark halo under the ruler's labels and marks, so they read
+// over the corona and the belt's cloud now the pill is gone (Gemini's
+// note, Oct 31). ?halo=<px>, 0 for none; 2 to start.
+const SUN_RULER_HALO_PX = (function () {
+    const p = new URLSearchParams(window.location.search).get("halo");
+    const n = parseFloat(p);
+    return (p !== null && n >= 0 && n <= 6) ? n : 2;
+})();
+let sunOriginTickIdx = null;   // the three dot traces, beside the lines
+
+// The grid step the scene shows now: the dtick every frame change writes
+// on the axes, or, before the first is written, the same rule from the x
+// range. The dots and the ruler both read it here, so the dots, the
+// ruler's numbers and the grid lines cannot part.
+function sunGridStep(gd) {
+    const ax = (gd && gd.layout && gd.layout.scene && gd.layout.scene.xaxis) || {};
+    let d = ax.dtick;
+    if (!(d > 0) && ax.range) { d = sunGridDtick(Math.abs(ax.range[1] - ax.range[0])); }
+    return d > 0 ? d : 0;
+}
+
+// The dots along one axis at half-range r and grid step d: one at every
+// multiple of d out to r, none at 0, where the room's centre body sits;
+// the major size at an even multiple, the minor at an odd one (R2).
+// Separated from the drawing so it can be exercised without a browser.
+function sunOriginTickPoints(axis, r, d, form) {
+    const out = { x: [], y: [], z: [], size: [] };
+    if (form === "off" || !(r > 0) || !(d > 0)) { return out; }
+    const n = Math.min(Math.floor(r / d + 1e-9), 500);
+    for (let k = (form === "pos") ? 1 : -n; k <= n; k++) {
+        if (k === 0) { continue; }
+        const v = k * d;
+        out.x.push(axis === "x" ? v : 0);
+        out.y.push(axis === "y" ? v : 0);
+        out.z.push(axis === "z" ? v : 0);
+        out.size.push(k % 2 === 0 ? SUN_TICK_SIZES.major : SUN_TICK_SIZES.minor);
+    }
+    return out;
+}
+
 // Endpoints for one axis line at the current half-range. Separated
 // from the drawing so it can be exercised without a browser.
 function sunOriginAxisPoints(axis, r, form) {
@@ -4485,13 +4585,26 @@ function sunCurrentHalfRange(gd) {
 
 // Added ONCE, after buildSunDrawer, so the drawer never gets a row for
 // them and the arrival extent (measured before newPlot) never counted
-// them. No legendgroup, no hover.
+// them. No legendgroup, no hover. The tick dots go in the same call,
+// installed and restyled the same way, so they are frame, not feature,
+// to every check that reads the renderers (L-505).
 function sunOriginAxesInstall(gd) {
     if (!gd || sunOriginAxisIdx || SUN_ORIGIN_AXES === "off") { return Promise.resolve(); }
     const r = sunCurrentHalfRange(gd);
     if (!(r > 0)) { return Promise.resolve(); }
     const axes = ["x", "y", "z"];
     const base = (gd.data || []).length;
+    const d = sunGridStep(gd);
+    const dots = axes.map(function (a) {
+        const t = sunOriginTickPoints(a, r, d, SUN_ORIGIN_AXES);
+        return {
+            type: "scatter3d", mode: "markers",
+            x: t.x, y: t.y, z: t.z,
+            marker: { size: t.size, color: SUN_AXIS_COLORS[a], symbol: "circle", opacity: 1 },
+            hoverinfo: "skip", showlegend: false,
+            name: "ticks " + a,
+        };
+    });
     const add = axes.map(function (a) {
         const p = sunOriginAxisPoints(a, r, SUN_ORIGIN_AXES);
         return {
@@ -4506,13 +4619,15 @@ function sunOriginAxesInstall(gd) {
         };
     });
     sunOriginAxisIdx = [base, base + 1, base + 2];
-    return Plotly.addTraces(gd, add);
+    sunOriginTickIdx = [base + 3, base + 4, base + 5];
+    return Plotly.addTraces(gd, add.concat(dots));
 }
 
 // Rebuilt at the end of every frame change, from the range the frame
 // just took. Called from sunHudUpdate, which is a then() continuation
 // of a relayout and not an event handler, so the L-278 re-entry
-// hazard does not apply.
+// hazard does not apply. The dots re-space with the grid (R1), from
+// the same step the ruler prints.
 function sunOriginAxesUpdate() {
     const gd = sunPlotDiv;
     if (!gd || !sunOriginAxisIdx || !window.Plotly) { return Promise.resolve(); }
@@ -4524,7 +4639,16 @@ function sunOriginAxesUpdate() {
         const p = sunOriginAxisPoints(axes[i], r, SUN_ORIGIN_AXES);
         xs.push(p.x); ys.push(p.y); zs.push(p.z);
     }
-    return Plotly.restyle(gd, { x: xs, y: ys, z: zs }, sunOriginAxisIdx);
+    const d = sunGridStep(gd);
+    const tx = [], ty = [], tz = [], ts = [];
+    for (let i = 0; i < 3; i++) {
+        const t = sunOriginTickPoints(axes[i], r, d, SUN_ORIGIN_AXES);
+        tx.push(t.x); ty.push(t.y); tz.push(t.z); ts.push(t.size);
+    }
+    return Plotly.restyle(gd, { x: xs, y: ys, z: zs }, sunOriginAxisIdx).then(function () {
+        if (!sunOriginTickIdx) { return; }
+        return Plotly.restyle(gd, { x: tx, y: ty, z: tz, "marker.size": ts }, sunOriginTickIdx);
+    });
 }
 let sunHudBound = false;
 let sunHudFrame = 0;   // requestAnimationFrame handle
@@ -4534,23 +4658,106 @@ function sunDot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
 function sunCross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
 function sunNorm(a) { const n = Math.sqrt(sunDot(a, a)) || 1; return [a[0] / n, a[1] / n, a[2] / n]; }
 
+// One length as the ruler and the AU note print it: the decimals from
+// its own magnitude (0.5 AU, 1 AU; 0.2 AU, 0.4 AU; 50 AU, 100 AU, as Tony
+// wrote them, R2). Below a thousandth of an AU the number stops meaning
+// anything to a visitor, so the km follow in brackets -- the hover
+// convention -- decided by the grid STEP, so both labels carry them or
+// neither does. Earth's arrival grid is 2e-5 AU. Returns the two parts.
+function sunGridLength(v, step) {
+    const dec = Math.max(0, -Math.floor(Math.log10(v) + 1e-9));
+    const au = v.toFixed(dec) + " AU";
+    let km = "";
+    if (step < 1e-3 && window.GalleryFeatures && GalleryFeatures._KM_PER_AU) {
+        km = "(" + (v * GalleryFeatures._KM_PER_AU).toLocaleString("en-US",
+              { maximumFractionDigits: 0 }) + " km)";
+    }
+    return { au: au, km: km };
+}
+
+// A label's width in pixels at the ruler's type, measured in a span of
+// its own, unseen, outside the HUD, so it is right while the HUD is
+// hidden behind the open drawer. 0 where nothing is laid out (the
+// headless harness); the ruler then keeps its length.
+let sunRulerMeasure = null;
+function sunRulerTextWidth(s) {
+    if (!s) { return 0; }
+    try {
+        if (!sunRulerMeasure) {
+            sunRulerMeasure = document.createElement("span");
+            sunRulerMeasure.setAttribute("aria-hidden", "true");
+            sunRulerMeasure.style.cssText = "position:absolute; left:-9999px; top:0; visibility:hidden;" +
+                " white-space:nowrap; font:500 11px 'DM Sans', system-ui, sans-serif; letter-spacing:0.3px";
+            document.body.appendChild(sunRulerMeasure);
+        }
+        sunRulerMeasure.textContent = s;
+        return sunRulerMeasure.getBoundingClientRect().width || 0;
+    } catch (e) {
+        return 0;
+    }
+}
+
+// THE RULER (L-505; Tony's ruling R3 of 2026-10-31, refined at 20:22,
+// "shouldn't the ruler use the same style"). The grid chip's element
+// keeps its id, its tap and its place; its content is a short key to the
+// dots on the axes: a line in neutral white, since it stands for all
+// three axes, its 0 end unmarked, a small dot at one grid step and a
+// larger one at two, the same symbols and sizes as the axes' dots, each
+// labelled with its value and the unit (R2). Transparent, with a thin
+// dark halo, so it no longer covers the site's address (Tony, 17:50).
+// Its values come from the same step the dots are placed at.
 function sunGridChipUpdate() {
     const gd = sunPlotDiv, chip = document.getElementById("sun-grid-chip");
     if (!gd || !chip || !gd.layout || !gd.layout.scene) { return; }
-    const ax = gd.layout.scene.xaxis || {};
-    let d = ax.dtick;
-    if (!(d > 0) && ax.range) { d = sunGridDtick(Math.abs(ax.range[1] - ax.range[0])); }
-    if (!(d > 0)) { chip.textContent = ""; return; }
-    const dec = Math.max(0, -Math.floor(Math.log10(d)));
-    // Below a thousandth of an AU the number stops meaning anything to
-    // a visitor, so the chip gives km too -- the hover convention, on
-    // the one surface that lacked it. Earth's arrival grid is 2e-5 AU.
-    let label = d.toFixed(dec) + " AU";
-    if (d < 1e-3 && GalleryFeatures._KM_PER_AU) {
-        const km = d * GalleryFeatures._KM_PER_AU;
-        label += " (" + km.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km)";
+    const d = sunGridStep(gd);
+    if (!(d > 0)) { chip.textContent = ""; chip.removeAttribute("data-spacing"); return; }
+    const one = sunGridLength(d, d), two = sunGridLength(2 * d, d);
+    const label = one.au + (one.km ? " " + one.km : "");
+    const wOf = function (p) { return Math.max(sunRulerTextWidth(p.au), sunRulerTextWidth(p.km)); };
+    const w1 = wOf(one), w2 = wOf(two), gap = 10;
+    const rMinor = SUN_TICK_SIZES.minor / 2, rMajor = SUN_TICK_SIZES.major / 2;
+    const halo = SUN_RULER_HALO_PX;
+    // The labels sit centred under their dots, so the two dots stand far
+    // enough apart for both: the line grows past ?ruler= only to make room,
+    // and never past twice it. Where the two would need more -- Earth's
+    // grid, with the kilometres -- the one-step label goes ABOVE its dot
+    // instead and the line keeps its length, so the ruler stays clear of
+    // the triad on a phone (read on a 375 px view, 2026-11-01).
+    const wantRow = Math.max(SUN_RULER_PX, w1 + w2 + 2 * gap);
+    const stack = wantRow > 2 * SUN_RULER_PX;
+    const W = stack ? SUN_RULER_PX : wantRow;
+    const x0 = Math.max(rMajor + halo, w1 / 2 - W / 2) + 1;
+    const x1 = x0 + W / 2, x2 = x0 + W;
+    const total = Math.ceil(x2 + Math.max(rMajor + halo, w2 / 2) + 1);
+    const h = Math.ceil(2 * (rMajor + halo)) + 2, cy = h / 2;
+    const shade = "rgba(0,0,0,0.8)";
+    let svg = '<svg width="' + total + '" height="' + h + '" viewBox="0 0 ' + total + " " + h +
+              '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
+    if (halo > 0) {
+        svg += '<line x1="' + x0.toFixed(1) + '" y1="' + cy + '" x2="' + x2.toFixed(1) + '" y2="' + cy +
+               '" stroke="' + shade + '" stroke-width="' + (1.5 + 2 * halo) + '" stroke-linecap="round"/>';
+        svg += '<circle cx="' + x1.toFixed(1) + '" cy="' + cy + '" r="' + (rMinor + halo) + '" fill="' + shade + '"/>';
+        svg += '<circle cx="' + x2.toFixed(1) + '" cy="' + cy + '" r="' + (rMajor + halo) + '" fill="' + shade + '"/>';
     }
-    chip.innerHTML = "grid <b>" + label + "</b>";
+    svg += '<line x1="' + x0.toFixed(1) + '" y1="' + cy + '" x2="' + x2.toFixed(1) + '" y2="' + cy +
+           '" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>';
+    svg += '<circle cx="' + x1.toFixed(1) + '" cy="' + cy + '" r="' + rMinor + '" fill="#ffffff"/>';
+    svg += '<circle cx="' + x2.toFixed(1) + '" cy="' + cy + '" r="' + rMajor + '" fill="#ffffff"/>';
+    svg += "</svg>";
+    const lines = one.km ? 2 : 1, block = 14 * lines + 2;
+    const top = stack ? block : 0;   // the svg's top: under the raised label
+    const shadow = halo > 0 ? ' style="text-shadow: 0 0 ' + halo + "px #000, 0 0 " + halo + 'px #000"' : "";
+    const text = function (p, x, y) {
+        return '<span class="sun-ruler-label" style="left:' + x.toFixed(1) + 'px; top:' + y + 'px"' +
+               '><span' + shadow + ">" + p.au + (p.km ? "<br>" + p.km : "") + "</span></span>";
+    };
+    // The page sizes boxes border-box, so the height holds the padding.
+    chip.innerHTML = '<span class="sun-ruler" style="width:' + total + "px; height:" + (top + h + block) +
+                     "px; padding-top:" + top + 'px">' + svg +
+                     text(one, x1, stack ? 0 : top + h + 2) + text(two, x2, top + h + 2) + "</span>";
+    // The spacing in full, for the AU note and for the headless walk,
+    // which reads it here now the chip's text is two labels.
+    chip.setAttribute("data-spacing", label);
     sunGridLabel = label;
     sunAuNoteFill();
 }
@@ -4668,7 +4875,8 @@ function sunHudUpdate() {
     if (sunPlotDiv && sunHudBound) { sunGridChipUpdate(); sunTriadUpdate(); }
     ssOutsideUpdate();   // L-472: every frame change ends here
     // The interior axes are scene geometry, so unlike the chip and the
-    // triad they have to be re-cut to the new range (L-289, 2026-09-06).
+    // triad they have to be re-cut to the new range (L-289, 2026-09-06),
+    // and their dots re-spaced to the new grid (L-505).
     return sunOriginAxesUpdate();
 }
 
@@ -6410,12 +6618,10 @@ function onSunResize() {
             sunMeasureDrawer();
         }
         if (sunPlotDiv && window.Plotly) {
-            const tf = axisTickFont();
+            // The edge numbers' font is no longer re-read here: the rooms
+            // print none since L-505 (2026-11-01).
             Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv, {
-                margin: sunMargins(),
-                "scene.xaxis.tickfont": tf,
-                "scene.yaxis.tickfont": tf,
-                "scene.zaxis.tickfont": tf
+                margin: sunMargins()
             }));
         }
         navPlaceCross();

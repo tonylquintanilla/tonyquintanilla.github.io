@@ -37,6 +37,9 @@
 #
 # Written October 31, 2026 with Anthropic's Claude Opus 5.5 (L-485, the
 # gallery half), modelled on the orrery's .github/workflows/nightly.yml.
+# Updated November 1, 2026 with Anthropic's Claude Opus 5.5 (L-485: the
+# second scheduled line, 12:17 UTC, the backstop for a night GitHub
+# drops).
 
 name: Nightly run
 
@@ -49,6 +52,25 @@ on:
     # include the start of every hour" and "schedule your workflow to run
     # at a different time of the hour".
     - cron: '17 8 * * *'
+    # 12:17 UTC, the backstop (L-485; Tony's ruling of 2026-11-01, 12:04
+    # Chicago), as the orrery's 11:17 line. GitHub's page "Events that
+    # trigger workflows", read 2026-11-01: "The schedule event can be
+    # delayed during periods of high loads of GitHub Actions workflow
+    # runs" and "If the load is sufficiently high enough, some queued jobs
+    # may be dropped." This 08:17 run started 6 h 58 min late on
+    # 2026-11-01 (15:15 UTC); the orrery's started 6 h 22 min late on
+    # 2026-10-31 and 7 h 0 min late on 2026-11-01. A dropped night and a
+    # late one look the same until it arrives, so this second line
+    # catches a dropped night the same day. The 08:17 time stays: the lag
+    # is GitHub's, not the clock's.
+    # A second firing is harmless: the concurrency group below queues it
+    # behind a run still going, and it passes the same gate. Unlike the
+    # orrery's, a clean second run here is a whole night again: the
+    # builder asks JPL afresh and replaces the served cache every run, so
+    # it commits a fresh build (about a hundred files), not only its
+    # record -- as the night of 2026-11-01 did at 16:11 UTC, six minutes
+    # after Tony's Daily Run (b6574a0f after f2f4425c).
+    - cron: '17 12 * * *'
   workflow_dispatch:
 
 # A run by hand and the scheduled run must never overlap, since both

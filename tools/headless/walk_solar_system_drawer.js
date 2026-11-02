@@ -76,6 +76,11 @@
 // line runs (Earth and Venus counterclockwise, Halley and Ikeya-Seki
 // clockwise), keeping its size through a zoom; the whole triad opens the
 // frame note.
+// Updated November 1, 2026 with Anthropic's Claude Opus 5.5 (L-505): the
+// grid chip is a ruler, so section 23 reads the spacing from its
+// data-spacing attribute; section 25 holds the dots on the axis lines,
+// the ruler's two labels and its dots' sizes, the box edges without
+// numbers, and all of it through a zoom.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -657,7 +662,9 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     ok(au && au.hidden, "the AU note is open before the chip is tapped");
     await click(chip);
     const said = au.textContent.replace(/\s+/g, " ");
-    const spacing = chip.textContent.replace(/^grid\s*/, "");
+    // L-505: the chip is a ruler of two labels now, so the spacing is
+    // read from the attribute it sets, the same full text as before.
+    const spacing = chip.getAttribute("data-spacing") || "(none)";
     ok(!au.hidden && said.indexOf("fixed at exactly 149,597,870.7 km.") >= 0 &&
        said.indexOf("Here the grid lines are " + spacing + " apart.") >= 0,
        "tapping the grid chip did not open the AU note, filled: " + said.slice(0, 200));
@@ -739,6 +746,64 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     ok(!fnote.hidden, "a tap on the triad did not open the frame note");
     await click(d.getElementById("sun-triad"));
     ok(fnote.hidden, "a second tap on the triad did not close the frame note");
+  }
+  // 25. L-505 (Tony's rulings R1 to R4, 2026-10-31): a dot on each axis
+  // line at every grid step, none at the centre, the larger at every
+  // second step, in the axis's hue, with no hover and no drawer row; the
+  // ruler's two labels are one step and two, with the unit; the box
+  // edges print no numbers; and through a zoom the dots re-space with the
+  // grid and the ruler re-labels. Each value is worked out here from the
+  // layout's dtick, not by the page's helpers.
+  {
+    const DOT = { x: "#e06c6c", y: "#5dbb7a", z: "#6fa8ff" };
+    const fmt = (v) => v.toFixed(Math.max(0, -Math.floor(Math.log10(v) + 1e-9))) + " AU";
+    const dotsOk = () => {
+      const tr = E("sunPlotDiv.data"), sc = E("sunPlotDiv.layout.scene");
+      const dt = sc.xaxis.dtick, r = Math.abs(sc.xaxis.range[1] - sc.xaxis.range[0]) / 2;
+      const bad = [];
+      ["x", "y", "z"].forEach((a, i) => {
+        const t = tr.find(q => q.name === "ticks " + a);
+        if (!t) { bad.push("no trace ticks " + a); return; }
+        if (t.hoverinfo !== "skip" || t.legendgroup || t.showlegend !== false) { bad.push(a + " is not frame: hover or legend"); }
+        if (!t.marker || t.marker.color !== DOT[a] || t.marker.symbol !== "circle") { bad.push(a + " not a dot in its hue"); }
+        const vals = t[a], sizes = t["marker.size"] || t.marker.size;
+        const n = Math.floor(r / dt + 1e-9);
+        if (!vals || vals.length !== 2 * n) { bad.push(a + ": " + (vals || []).length + " dots, want " + 2 * n); return; }
+        vals.forEach((v, j) => {
+          const k = Math.round(v / dt);
+          if (k === 0 || Math.abs(v - k * dt) > 1e-9 * dt) { bad.push(a + " dot off the grid at " + v); }
+          const want = (k % 2 === 0) ? E("SUN_TICK_SIZES.major") : E("SUN_TICK_SIZES.minor");
+          if (sizes[j] !== want) { bad.push(a + " dot at step " + k + " size " + sizes[j]); }
+          const other = ["x", "y", "z"].filter(b => b !== a);
+          if (other.some(b => t[b][j] !== 0)) { bad.push(a + " dot off its axis"); }
+        });
+      });
+      if (E("SUN_TICK_SIZES.major") !== 2 * E("SUN_TICK_SIZES.minor")) { bad.push("the major dot is not twice the minor"); }
+      const chip = d.getElementById("sun-grid-chip");
+      const labels = Array.from(chip.querySelectorAll(".sun-ruler-label")).map(l => l.textContent);
+      const want = [fmt(dt), fmt(2 * dt)];
+      if (JSON.stringify(labels) !== JSON.stringify(want)) { bad.push("ruler reads " + JSON.stringify(labels) + ", want " + JSON.stringify(want)); }
+      if (chip.getAttribute("data-spacing") !== fmt(dt)) { bad.push("ruler spacing " + chip.getAttribute("data-spacing")); }
+      const circles = chip.querySelectorAll("svg circle[fill='#ffffff']");
+      if (circles.length !== 2 || Number(circles[0].getAttribute("r")) * 2 !== E("SUN_TICK_SIZES.minor") ||
+          Number(circles[1].getAttribute("r")) * 2 !== E("SUN_TICK_SIZES.major")) { bad.push("the ruler's dots are not the axes' sizes"); }
+      ["xaxis", "yaxis", "zaxis"].forEach(k => { if (sc[k].showticklabels !== false) { bad.push(k + " prints its edge numbers"); } });
+      return { bad: bad, dt: dt };
+    };
+    await click(d.getElementById("sun-drawer-all")); await h.done();
+    const a0 = dotsOk();
+    ok(a0.bad.length === 0, "the dots, the ruler or the edge numbers are wrong at the opening: " + a0.bad.slice(0, 6).join("; "));
+    await E("navFrameZoom(-1)"); await h.done();
+    await E("navFrameZoom(-1)"); await h.done();
+    const a1 = dotsOk();
+    ok(a1.dt !== a0.dt && a1.bad.length === 0,
+       "after a zoom the dots or the ruler did not follow the grid (" + a0.dt + " then " + a1.dt + "): " + a1.bad.slice(0, 6).join("; "));
+    const drawerKeys = Array.from(d.querySelectorAll("[data-k]")).map(e => e.getAttribute("data-k"));
+    ok(!drawerKeys.some(k => /^(ticks|axis) /.test(k)), "the drawer has a row for the frame's dots or lines");
+    const fsay = d.getElementById("sun-frame-note").textContent.replace(/\s+/g, " ");
+    ok(fsay.indexOf("The dots on the three axis lines mark the grid") >= 0 && fsay.indexOf("The ruler at the right") >= 0,
+       "the frame note does not say what the dots and the ruler are");
+    await click(d.getElementById("sun-drawer-all")); await h.done();
   }
   // 18. L-475: the i panel's last line opens the lobby's About card.
   const last = d.getElementById("info-panel").lastElementChild;
