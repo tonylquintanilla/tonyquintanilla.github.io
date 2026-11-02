@@ -1,10 +1,10 @@
 {
   "_comment": "Written by daily_run.py --night on a clean night only (L-485), so this is the website's last clean run. A red night writes nothing: its record is the run's log on GitHub.",
   "schema": 1,
-  "clean_run_utc": "2026-11-01T16:15:25.778894+00:00",
-  "started_utc": "2026-11-01T16:11:36.329548+00:00",
+  "clean_run_utc": "2026-11-02T15:09:22.408645+00:00",
+  "started_utc": "2026-11-02T15:05:40.846628+00:00",
   "where": "GitHub Actions",
-  "orrery_pulled": "15d7f7e219e540c3e3de6a936e5417421c4d1261",
+  "orrery_pulled": "fd3551cce1d5052ccd6679d0f26d1a7024eff22f",
   "pulls_asked": "with the run's GITHUB_TOKEN",
   "swap_log_line": {
     "attempts": {
@@ -15,11 +15,11 @@
     "mode": "nightly",
     "outcome": "ok",
     "reached": "staging_to_live",
-    "run_id": "20261101T161141Z",
-    "time": "2026-11-01T16:14:29.793918+00:00"
+    "run_id": "20261102T150545Z",
+    "time": "2026-11-02T15:08:16.199929+00:00"
   },
-  "run_records": "Run records: carried 122 of 122, plus tonight's: 20261101T161141Z.json.",
-  "served_files_changed": 96,
+  "run_records": "Run records: carried 123 of 123, plus tonight's: 20261102T150545Z.json.",
+  "served_files_changed": 190,
   "steps": [
     {
       "step": "Guest book updater",
@@ -29,7 +29,7 @@
     {
       "step": "Pulls from the orrery",
       "result": "ok",
-      "seconds": 3.5
+      "seconds": 3.4
     },
     {
       "step": "Pull matches push (runner)",
@@ -39,7 +39,7 @@
     {
       "step": "Cache builder",
       "result": "exit 0",
-      "seconds": 169.8
+      "seconds": 151.7
     },
     {
       "step": "Run records",
@@ -49,7 +49,7 @@
     {
       "step": "Maintenance run, night pass",
       "result": "exit 0",
-      "seconds": 55.5
+      "seconds": 64.9
     }
   ],
   "rows": [
@@ -58,7 +58,7 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/constants_export.json, data/constants_export.sha",
-      "seconds": 0.7
+      "seconds": 0.6
     },
     {
       "row": "Config mirror",
@@ -72,7 +72,7 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/objects_export.json, data/objects_export.sha",
-      "seconds": 0.6
+      "seconds": 0.7
     },
     {
       "row": "Objects mirror",
@@ -86,14 +86,14 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/drawings/hills_cloud.json, data/drawings/van_allen_belts.json, data/drawings/earth_exosphere.json, data/drawings/pulled_at.sha",
-      "seconds": 1.3
+      "seconds": 1.2
     },
     {
       "row": "Cache builder suite",
       "kind": "checker",
       "verdict": "PASS",
       "note": "PASS (498 checks, 0 failures)",
-      "seconds": 18.6
+      "seconds": 22.1
     },
     {
       "row": "Pole of date",
@@ -114,14 +114,14 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "All 469 store-writer checks passed: an allow list that lets through only a shell's words, a belt's words and the arrival settings, the rooms section's included; a no-edit round trip; one line per change; empty words handled; a refused batch writing nothing; awkward text; and the shell list matching the cache check's rule.",
-      "seconds": 28.2
+      "seconds": 33.8
     },
     {
       "row": "Store editor suite",
       "kind": "checker",
       "verdict": "PASS",
       "note": "All 377 store-editor checks passed: every box the form offers is one the writer allows; the word list and the tick list differ by the belts, on purpose; nothing typed saves nothing; the save message does not promise a visitor sees what they cannot yet; and a red Cache in step is explained rather than just shown.",
-      "seconds": 0.2
+      "seconds": 0.3
     },
     {
       "row": "Objects mirror suite",
@@ -162,7 +162,7 @@
       "row": "Pointer join",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "Every link is accounted for: 182 link(s) against orrery 15d7f7e2, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
+      "note": "Every link is accounted for: 182 link(s) against orrery fd3551cc, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
       "seconds": 0.1
     },
     {
@@ -183,8 +183,8 @@
       "row": "Drawings",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery 15d7f7e2; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
-      "seconds": 0.6
+      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery fd3551cc; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
+      "seconds": 0.7
     },
     {
       "row": "Collapsed features",
@@ -198,7 +198,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.5
+      "seconds": 0.3
     },
     {
       "row": "Page framing",
@@ -226,7 +226,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "row": "Typed facts",
@@ -261,7 +261,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: 8 worked cases, 64 drawer rows matched to their accuracy rows, 63 served distances; Uranus, Neptune and Pluto print to JPL's ten-thousands place; 6 period cases and 63 served periods printed as the orrery printed them; 5 orbit-line cases and 63 served orbit lines; 3 path cases and 26 served paths, spacecraft and comets ===",
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "row": "Far lines",
@@ -275,7 +275,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: the arrows point the way the points run, sit ahead of the body, stay in the view, and the page places them ===",
-      "seconds": 0.0
+      "seconds": 0.1
     },
     {
       "row": "Solar System drawer",
@@ -289,7 +289,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: the i panel's sources are a list, every address a link, and its words are one sentence to a bullet ===",
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "row": "Drawer order",
@@ -358,5 +358,5 @@
       "why": "writes MODULE_ATLAS.md and MODULE_INDEX.md, which are documents; the night commits no page or word (Tony's R1, 2026-10-25)"
     }
   ],
-  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/41324962141"
+  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/41467982653"
 }
