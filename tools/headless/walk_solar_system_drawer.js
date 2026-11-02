@@ -80,7 +80,10 @@
 // grid chip is a ruler, so section 23 reads the spacing from its
 // data-spacing attribute; section 25 holds the dots on the axis lines,
 // the ruler's two labels and its dots' sizes, the box edges without
-// numbers, and all of it through a zoom.
+// numbers, and all of it through a zoom. Updated November 2, 2026 with
+// Anthropic's Claude Fable 5.1 (L-505 correction): the ticks are x marks
+// (Tony's ruling of Oct 31, 20:43), so section 25 expects symbol "x" and
+// reads the ruler's two x marks by data-mark and data-extent.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -765,7 +768,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
         const t = tr.find(q => q.name === "ticks " + a);
         if (!t) { bad.push("no trace ticks " + a); return; }
         if (t.hoverinfo !== "skip" || t.legendgroup || t.showlegend !== false) { bad.push(a + " is not frame: hover or legend"); }
-        if (!t.marker || t.marker.color !== DOT[a] || t.marker.symbol !== "circle") { bad.push(a + " not a dot in its hue"); }
+        if (!t.marker || t.marker.color !== DOT[a] || t.marker.symbol !== "x") { bad.push(a + " not an x in its hue"); }
         const vals = t[a], sizes = t["marker.size"] || t.marker.size;
         const n = Math.floor(r / dt + 1e-9);
         if (!vals || vals.length !== 2 * n) { bad.push(a + ": " + (vals || []).length + " dots, want " + 2 * n); return; }
@@ -784,9 +787,11 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
       const want = [fmt(dt), fmt(2 * dt)];
       if (JSON.stringify(labels) !== JSON.stringify(want)) { bad.push("ruler reads " + JSON.stringify(labels) + ", want " + JSON.stringify(want)); }
       if (chip.getAttribute("data-spacing") !== fmt(dt)) { bad.push("ruler spacing " + chip.getAttribute("data-spacing")); }
-      const circles = chip.querySelectorAll("svg circle[fill='#ffffff']");
-      if (circles.length !== 2 || Number(circles[0].getAttribute("r")) * 2 !== E("SUN_TICK_SIZES.minor") ||
-          Number(circles[1].getAttribute("r")) * 2 !== E("SUN_TICK_SIZES.major")) { bad.push("the ruler's dots are not the axes' sizes"); }
+      const marks = Array.from(chip.querySelectorAll("svg line[data-mark]"));
+      const ext = (m) => marks.filter(l => l.getAttribute("data-mark") === m).map(l => Number(l.getAttribute("data-extent")));
+      if (marks.length !== 4 || ext("minor").length !== 2 || ext("major").length !== 2 ||
+          ext("minor").some(v => v !== E("SUN_TICK_SIZES.minor")) ||
+          ext("major").some(v => v !== E("SUN_TICK_SIZES.major"))) { bad.push("the ruler's x marks are not the axes' sizes"); }
       ["xaxis", "yaxis", "zaxis"].forEach(k => { if (sc[k].showticklabels !== false) { bad.push(k + " prints its edge numbers"); } });
       return { bad: bad, dt: dt };
     };
