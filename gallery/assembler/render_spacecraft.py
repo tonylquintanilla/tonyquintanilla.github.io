@@ -43,6 +43,11 @@ ahead; the marker worked out between the served points, with its error.)
 Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 build B part 2: a comet on an open path is drawn here too, by the same
 rule, its marker the orrery's comet symbol, diamond (symbol_for).)
+Module updated: November 2, 2026 with Anthropic's Claude Opus 5.5 (L-507,
+historical missions: a minute past the served path is an ended mission's,
+drawn whole and solid with its marker on the last served point, where it
+was on its last day, the same diamond-open (orrery-coding-conventions),
+its meta marked ended with no error; before, it had no marker.)
 
 Role: rendering
 Domain: assembler
@@ -145,8 +150,11 @@ def build_spacecraft_traces(name: str, payload: Dict[str, Any],
                             legendgroup: str,
                             symbol: str = MARKER_SYMBOL) -> Tuple[List[Tuple[str, Dict[str, Any]]], List[str]]:
     """([(part, trace)], warnings). part is 'flown', 'predicted', 'marker' or
-    'label'. A minute outside the served span draws the whole path solid
-    (it has all been flown) or dashed (none of it has), with no marker, and
+    'label'. A minute after the served span is an ended mission's: the
+    whole path solid, the marker on its last served point, where it was on
+    its last day (L-507, Tony's ruling of 2026-11-02), its meta marked
+    'ended' with no error, since nothing is worked out between points. A
+    minute before the span draws the whole path dashed with no marker, and
     says so."""
     rows = _series(payload)
     warnings: List[str] = []
@@ -156,30 +164,35 @@ def build_spacecraft_traces(name: str, payload: Dict[str, Any],
     au = [(r[0], r[1] / AU_KM, r[2] / AU_KM, r[3] / AU_KM) for r in rows]
     at = position_at(rows, epoch_jd)
     out: List[Tuple[str, Dict[str, Any]]] = []
-    if at is None:
-        flown = epoch_jd > rows[-1][0]
-        part, dash = ("flown", "solid") if flown else ("predicted", "dash")
-        out.append((part, _line(name, [p[1] for p in au], [p[2] for p in au],
-                                [p[3] for p in au], color, legendgroup, dash,
-                                part)))
-        warnings.append("%s: the minute shown is %s the %s point served for "
-                        "it, so it has no marker" % (
-                            name, "after" if flown else "before",
-                            "last" if flown else "first"))
+    ended = at is None and epoch_jd > rows[-1][0]
+    if at is None and not ended:
+        out.append(("predicted", _line(name, [p[1] for p in au],
+                                       [p[2] for p in au], [p[3] for p in au],
+                                       color, legendgroup, "dash",
+                                       "predicted")))
+        warnings.append("%s: the minute shown is before the first point "
+                        "served for it, so it has no marker" % name)
         return out, warnings
-    m = tuple(c / AU_KM for c in at["km"])
-    i = at["index"]
-    past = au[:i + 1]
-    ahead = au[i + 1:]
-    out.append(("flown", _line(name, [p[1] for p in past] + [m[0]],
-                               [p[2] for p in past] + [m[1]],
-                               [p[3] for p in past] + [m[2]],
-                               color, legendgroup, "solid", "flown")))
-    if ahead:
-        out.append(("predicted", _line(name, [m[0]] + [p[1] for p in ahead],
-                                     [m[1]] + [p[2] for p in ahead],
-                                     [m[2]] + [p[3] for p in ahead],
-                                     color, legendgroup, "dash", "predicted")))
+    if ended:
+        m = au[-1][1:]
+        out.append(("flown", _line(name, [p[1] for p in au],
+                                   [p[2] for p in au], [p[3] for p in au],
+                                   color, legendgroup, "solid", "flown")))
+    else:
+        m = tuple(c / AU_KM for c in at["km"])
+        i = at["index"]
+        past = au[:i + 1]
+        ahead = au[i + 1:]
+        out.append(("flown", _line(name, [p[1] for p in past] + [m[0]],
+                                   [p[2] for p in past] + [m[1]],
+                                   [p[3] for p in past] + [m[2]],
+                                   color, legendgroup, "solid", "flown")))
+        if ahead:
+            out.append(("predicted", _line(name, [m[0]] + [p[1] for p in ahead],
+                                         [m[1]] + [p[2] for p in ahead],
+                                         [m[2]] + [p[3] for p in ahead],
+                                         color, legendgroup, "dash",
+                                         "predicted")))
     out.append(("marker", {
         "type": "scatter3d",
         "mode": "markers",
@@ -191,9 +204,10 @@ def build_spacecraft_traces(name: str, payload: Dict[str, Any],
         "text": [name],
         "hovertemplate": "%{text}<extra></extra>",
         "meta": {"spacecraft": True,
-                 "interp_err_km": at["err_km"],
+                 "interp_err_km": 0.0 if ended else at["err_km"],
                  "path_start_jd": rows[0][0],
-                 "path_end_jd": rows[-1][0]},
+                 "path_end_jd": rows[-1][0],
+                 "ended": ended},
     }))
     out.append(("label", {
         "type": "scatter3d",

@@ -2792,6 +2792,23 @@ const SPACECRAFT_PATH_WORDS = "Its path is solid where it has already " +
 // choices, and the second sentence says so.
 const COMET_PATH_WORDS = "Its path is solid where it has already " +
     "travelled, and dashed where JPL predicts it will go, as far as ";
+// L-507, historical missions: Tony's words of 2026-11-02
+// (documentation/WORDS_L507_historical_missions_20261102.md in the
+// orrery). An ended mission's box opens with the day it ended, as he
+// ruled; its marker is the path's last served point, and the orrery's
+// path plan ends the path on the mission's end day (mission_end, from
+// NASA's mission page), so that day is the path's last. Its path is all
+// flown, so solid; and every spacecraft's box says the planets are
+// today's while the path is the mission's own.
+const ENDED_OPENING = function (day) {
+    return "This mission ended on " + day + ". The marker is where it was that day.";
+};
+const ENDED_DISTANCE_WORDS = " on its last day";
+const ENDED_PATH_WORDS = "Its path is solid all the way, since all of it " +
+    "was flown, from ";
+const SPACECRAFT_DATES_WORDS = "Its path covers the mission's own dates, " +
+    "but the planets are drawn where they are today, so a flyby bends the " +
+    "line where the planet was then, not where it is now.";
 const COMET_SPAN_WORDS = "It is drawn from a year before its perihelion, " +
     "its closest point to the Sun, to a year after today, or less where " +
     "JPL's path stops sooner; those two years are our choice for the " +
@@ -2818,8 +2835,12 @@ function spacecraftSourceLine(b, meta) {
     const comet = b.kind === "comet_path";
     return "JPL Horizons (" + JPL_HORIZONS_URL + "), Horizons id: " +
         src.query_target + ". Positions " + centre +
+        // L-507: an ended mission's path stops on the day it ended
+        // (mission_end), which for Galileo is before JPL's data stops.
         (from && to ? ", from " + from + " UTC to " + to + " UTC" +
-                      (comet ? "" : ", as far as JPL's data runs") : "") +
+                      (comet ? "" : meta.ended === true
+                          ? ", to the day the mission ended"
+                          : ", as far as JPL's data runs") : "") +
         (got ? ", retrieved " + got + " UTC" : "") + "." +
         (step ? " " + step + (comet ? ", closer together around its " +
                                        "perihelion" :
@@ -3163,24 +3184,36 @@ const EXHIBITS = {
                         // uncertainty for it is not served, which the text
                         // box says; it has no period and no orbit line.
                         const sc = t.meta || {};
+                        const ends = solarSystemJdDay(sc.path_end_jd);
+                        const comet = b.kind === "comet_path";
+                        // L-507: a mission whose served path ended before
+                        // the minute shown (render_spacecraft marks it).
+                        const ended = sc.ended === true && !comet;
+                        if (ended && ends) {
+                            lines.push(bullet(solarSystemSoftWrap(ENDED_OPENING(ends), 60)));
+                        }
                         const dist = SolarSystemFigures.pathDistanceLine(
                             { x: t.x[0], y: t.y[0], z: t.z[0] },
                             sc.interp_err_km, GalleryFeatures._KM_PER_AU);
                         if (dist.line) {
-                            lines.push(bullet(dist.line));
+                            lines.push(bullet(solarSystemSoftWrap(
+                                dist.line + (ended ? ENDED_DISTANCE_WORDS : ""), 60)));
                             lines.push(bullet(solarSystemSoftWrap(dist.note, 60)));
                         } else {
                             warnings.push(label + ": no distance shown -- " + dist.why);
                         }
-                        const ends = solarSystemJdDay(sc.path_end_jd);
-                        const comet = b.kind === "comet_path";
                         if (ends) {
+                            const starts = solarSystemJdDay(sc.path_start_jd);
                             lines.push(bullet(solarSystemSoftWrap(
+                                ended ? ENDED_PATH_WORDS + starts + " to " + ends + "." :
                                 (comet ? COMET_PATH_WORDS : SPACECRAFT_PATH_WORDS) +
                                 ends + ".", 60)));
                             if (comet) {
                                 lines.push(bullet(solarSystemSoftWrap(
                                     COMET_SPAN_WORDS, 60)));
+                            } else {
+                                lines.push(bullet(solarSystemSoftWrap(
+                                    SPACECRAFT_DATES_WORDS, 60)));
                             }
                         } else {
                             warnings.push(label + ": the end of its served path " +

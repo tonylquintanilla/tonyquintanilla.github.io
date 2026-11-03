@@ -77,6 +77,13 @@
 // orbit line reads "perihelion q AU, its closest to the Sun, to aphelion
 // Q AU, its farthest" (Tony, 2026-10-26: keep JPL's words and explain
 // them).
+// Updated November 2, 2026 with Anthropic's Claude Opus 5.5 (L-507,
+// historical missions): part 7 holds an ended mission -- its plan's span
+// ended before the cache was built, so it serves no as_of_today -- by its
+// last served point, which must be on its span's last day, and prints its
+// distance there "on its last day"; the check is shown failing on two
+// planted cases (a path running past its end, one stopped short), and the
+// page is held to its ended text box.
 // Updated October 29, 2026 with Anthropic's Claude Opus 5.5 (L-399): a
 // small body's own uncertainty, JPL's 3-sigma from the vector table 2xr,
 // served by the cache builder as "position_uncertainty" on its cached
@@ -721,6 +728,23 @@ if (page.indexOf("inventor's") >= 0) {
 }
 
 // ---- 7. the spacecraft (L-443 build B) ------------------------------
+// L-507: an ended mission's last served point (the served cache's
+// positions end) on its span's last day, or what is wrong.
+function endedIssue(pos, span) {
+  if (!pos.end) { return "the served cache names no end for its positions"; }
+  if (String(pos.end).slice(0, 10) !== span.end) {
+    return "its last served point is " + pos.end + ", not its last day, " + span.end +
+           " (the builder's fetch_path_last_day)";
+  }
+  return null;
+}
+// Shown failing once: Galileo's path as JPL serves it, nine days past its
+// impact, and one stopped short at the backbone's 7-day step.
+if (!endedIssue({ end: "2003-09-30 12:00" }, { end: "2003-09-21" }) ||
+    !endedIssue({ end: "2003-09-17 00:00" }, { end: "2003-09-21" }) ||
+    endedIssue({ end: "2003-09-21 00:01" }, { end: "2003-09-21" })) {
+  failures.push("the ended mission's check cannot fail, or fails a right one");
+}
 const craftTable = [];
 crafts.forEach(function (slug) {
   const o = objs[slug] || {};
@@ -739,6 +763,27 @@ crafts.forEach(function (slug) {
     failures.push(slug + ": the served cache names no positions file on disk");
   }
   const p = rec.as_of_today;
+  // L-507: an ended mission serves no as_of_today; its marker is its last
+  // served point, which must be on its span's last day, the day it ended.
+  const span = (o.path || {}).span || {};
+  const built = String(cov.generated || "").slice(0, 10);
+  if (!p && span.end && span.end < built) {
+    const why = endedIssue(rec.positions || {}, span);
+    if (why) { failures.push(slug + ": " + why); return; }
+    const served = JSON.parse(fs.readFileSync(path.join(root, "data", "solar-system", file), "utf8"));
+    const d = served.data || {}, k = (d.t || []).length - 1;
+    // The file itself, read beside the index's end: its last point's day
+    // (a TDB Julian date, printed as the page prints a served day).
+    const fileEnd = k < 0 ? "" :
+      new Date((d.t[k] - 2440587.5) * 86400000).toISOString().slice(0, 16).replace("T", " ");
+    const whyFile = k < 0 ? null : endedIssue({ end: fileEnd }, span);
+    if (whyFile) { failures.push(slug + ": its positions file: " + whyFile); return; }
+    const r = k < 0 ? { why: "its positions file is empty" } :
+      SSF.pathDistanceLine({ x: d.x[k] / kmPerAu, y: d.y[k] / kmPerAu, z: d.z[k] / kmPerAu }, 0, kmPerAu);
+    if (!r.line) { failures.push(slug + ": no line -- " + r.why); return; }
+    craftTable.push([slug, r.line + " on its last day, " + span.end + " (ended)"]);
+    return;
+  }
   if (!p) { failures.push(slug + ": the served cache has no as_of_today for it"); return; }
   // At a served point the working-out has nothing to bridge.
   const r = SSF.pathDistanceLine({ x: p.x / kmPerAu, y: p.y / kmPerAu,
@@ -752,7 +797,11 @@ crafts.forEach(function (slug) {
   ['"kind": ("spacecraft" if _rec.get("category") == "spacecraft"',
    "the page's driver does not mark a spacecraft"],
   ['else "comet_path" if _rec.get("open_path") else None),',
-   "the page's driver does not mark a comet on an open path"]
+   "the page's driver does not mark a comet on an open path"],
+  ["const ended = sc.ended === true && !comet;",
+   "the page does not give an ended mission its own text box (L-507)"],
+  ["dist.line + (ended ? ENDED_DISTANCE_WORDS : \"\"), 60)));",
+   "the page does not say an ended mission's distance is on its last day (L-507)"]
 ].forEach(function (pair) {
   if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
 });

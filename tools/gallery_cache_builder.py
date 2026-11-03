@@ -144,6 +144,11 @@ same-day rebuild the earlier build's orbit and points for 2026 ED138.)
 
 Role: cache
 Domain: cache_builder
+Module updated: November 2, 2026 with Anthropic's Claude Opus 5.5 (L-507,
+historical missions: a path whose span ended before today is also asked
+for the first minutes of its last day (fetch_path_last_day), so its last
+served point, where the room puts an ended mission's marker, is on the
+day the mission ended, not up to six days short at the 7-day backbone.)
 """
 
 import argparse
@@ -1421,7 +1426,30 @@ def fetch_path_by_plan(obj, plan, today, freeze, warn):
                 got, float(ev['dist_km']) * WINDOW_THIN_FRACTION / KM_PER_AU)
         new.update(got)
     new.update(fetch_path_tail(obj, plan, today, freeze))
+    new.update(fetch_path_last_day(obj, plan, today))
     return new
+
+
+def fetch_path_last_day(obj, plan, today):
+    """An ended mission's last point (L-507): a path whose span ended
+    before today gets the first two minutes of its last day by UTC, 00:00
+    and 00:01, so its last served point -- where the room puts an ended
+    mission's marker, and the day its text box says it ended -- is on that
+    day. The span's end is a day: the orrery's path plan ends an ended
+    mission's path on the day NASA says it ended (mission_end), and JPL
+    has positions into that day (path_plan.jpl_limit takes a whole day
+    inside JPL's data, never one ending in its first five minutes). The
+    backbone alone, at its 7-day step from the launch, can stop up to six
+    days short of that day. Asked as 00:00 and 00:01 UTC, the points come
+    back a minute later on JPL's clock (TDB), which labels them, so both
+    are inside the day. {} for a path still running."""
+    last_day = _parse_calendar((plan.get('span') or {})['end'])
+    if last_day + timedelta(days=1) > today:
+        return {}
+    return fetch_vectors_range(obj['horizons_id'], obj['id_type'],
+                               obj['canonical_center'], last_day,
+                               last_day + timedelta(minutes=1), '1m',
+                               key_fmt=MINUTE_KEY)
 
 
 def douglas_peucker(points_dict, tol_au):

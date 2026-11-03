@@ -24,6 +24,9 @@ Module updated: October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 build B part 2: the fourteen comets on open paths' colours, the orrery's;
 then ATLAS (C/2024 G3) goldenrod, the one white comet, by Tony's ruling:
 "change all white comets to gold for contrast".)
+Module updated: November 2, 2026 with Anthropic's Claude Opus 5.5 (L-507,
+historical missions: Galileo's and Cassini's colours, the orrery's, with
+Galileo's white made goldenrod by the same rule.)
 
 Role: rendering
 Domain: assembler
@@ -91,6 +94,13 @@ _COLORS = {
     "juice": "blue",
     "psyche_spacecraft": "green",
     "europa_clipper": "red",
+    # L-507, 2026-11-02: the first two historical missions, in the
+    # orrery's own colours (color_map in constants_new.py, by each entry's
+    # color_key, orrery 15dc8e34): Cassini green; Galileo goldenrod, not
+    # the orrery's white, by Tony's rule of 2026-10-26 that a white path
+    # is gold for contrast. A first choice for Tony's phone look.
+    "galileo": "goldenrod",
+    "cassini": "green",
     # L-443 build B part 2, 2026-10-26: the fourteen comets on open paths,
     # in the orrery's own colours (color_map in constants_new.py, by each
     # entry's color_key, orrery 5398439). ATLAS (C/2024 G3) was the

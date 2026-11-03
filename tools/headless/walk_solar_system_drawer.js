@@ -84,12 +84,24 @@
 // Anthropic's Claude Fable 5.1 (L-505 correction): the ticks are x marks
 // (Tony's ruling of Oct 31, 20:43), so section 25 expects symbol "x" and
 // reads the ruler's two x marks by data-mark and data-extent.
+// Updated November 2, 2026 with Anthropic's Claude Opus 5.5 (L-507,
+// historical missions): section 20 finds the dates sentence on Juno's
+// and Voyager 1's boxes, Juno's now four lines; section 20b walks the
+// Historical missions group after the twelve, Galileo drawn whole and
+// solid with its marker on its last served point, its five-line box
+// opening with the day it ended, its source line, its companions and
+// Cassini's, and Reset; section 21 finds the new group in its place.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
   return dd.getUTCDate() + " " + ["January","February","March","April","May","June","July",
     "August","September","October","November","December"][dd.getUTCMonth()] + " " + dd.getUTCFullYear();
 }
+// L-507: the sentence every spacecraft's text box carries, Tony's words
+// of 2026-11-02, as the page writes it.
+const DATES_WORDS = "Its path covers the mission's own dates, but the planets are drawn " +
+  "where they are today, so a flyby bends the line where the planet was then, not where " +
+  "it is now.";
 const fails = []; let n = 0;
 function ok(c, m) { n++; if (!c) { fails.push(m); } }
 (async () => {
@@ -470,12 +482,13 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     const jl = mk.text[0].split(/<br[^>]*>/);
     const endDay = solarDay(mk.meta.path_end_jd);
     const joined = jl.join(" ").replace(/<br soft>/g, " ");
-    ok(jl[0] === "Juno" && jl.filter(l => l.indexOf("&#8226; ") === 0).length === 3 &&
-       / AU from the Sun \([0-9,]+ km\)/.test(jl[1]) &&
+    ok(jl[0] === "Juno" && jl.filter(l => l.indexOf("&#8226; ") === 0).length === 4 &&
+       / AU from the Sun \([0-9,]+ km\)$/.test(jl[1]) &&
        joined.indexOf("JPL's own uncertainty for this position is not yet included.") >= 0 &&
        joined.indexOf("dashed where JPL's predicted path takes it next, as far as " + endDay + ".") >= 0 &&
+       joined.indexOf(DATES_WORDS) >= 0 && joined.indexOf("This mission ended") < 0 &&
        joined.indexOf("Orbital period") < 0 && joined.indexOf("Orbit:") < 0,
-       "Juno's text box is not its three lines: " + joined.slice(0, 260));
+       "Juno's text box is not its four lines: " + joined.slice(0, 320));
     ok(mk.meta.source.indexOf("JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), Horizons id: -61. " +
        "Positions measured from the Sun's centre, from ") === 0 &&
        mk.meta.source.indexOf("A point every 7 days, closer together around each flyby") > 0,
@@ -485,6 +498,10 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     E("setSunDrawer(true)");
     await click(row("voyager_1").querySelector(".go"));
     ok(near(range(), wholeR("voyager_1")), "GO Voyager 1 frame " + range() + " vs its whole path " + wholeR("voyager_1"));
+    // L-507: Voyager 1's box carries the dates sentence too.
+    const v1mk = E("sunPlotDiv.data").find(t => t.legendgroup === "voyager_1" && t.meta && t.meta.label_target === true);
+    ok(v1mk && v1mk.text[0].replace(/<br soft>/g, " ").indexOf(DATES_WORDS) >= 0,
+       "Voyager 1's text box lacks the dates sentence");
     const v1Lists = Array.from(d.querySelectorAll("#sun-info-focus ul.info-sources"));
     const v1Want = E("GallerySources.sentences(" + JSON.stringify(data.bodies.voyager_1.description) + ").length");
     ok(v1Lists.length && v1Want === 2 && v1Lists[0].querySelectorAll("li").length === 2,
@@ -500,6 +517,59 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     ok(order() === "earth" && !E("ssDrawer.folds.spacecraft"),
        "Reset did not put back the opening and fold the Spacecraft group");
   }
+  // 20b. L-507, historical missions: their group right after the
+  // Spacecraft group's twelve, folded, Galileo then Cassini; an ended
+  // mission drawn whole and solid, its marker on the path's last served
+  // point, where it was on its last day; its text box opening with the
+  // day it ended; its companions by its plan. Run only on a payload that
+  // serves Galileo.
+  if (data.bodies.galileo && data.bodies.galileo.kind === "spacecraft") {
+    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"));
+    ok(rowsDom[rowsDom.indexOf(row("europa_clipper")) + 1] === head("historical_missions") &&
+       !head("historical_missions").hidden && !E("ssDrawer.folds.historical_missions"),
+       "the Historical missions group is not listed, folded, right after the twelve spacecraft");
+    await fold("historical_missions");
+    const past = E("ssDrawer.rows.filter(r => r.group === 'historical_missions' && !SolarSystemDrawer.isGroup(r)).map(r => r.key).join(',')");
+    ok(past === "galileo,cassini", "the historical missions are not Galileo then Cassini: " + past);
+    await pick("galileo");
+    const gt = E("sunPlotDiv.data").filter(t => t.legendgroup === "galileo");
+    const flown = gt.filter(t => t.meta && t.meta.path_part === "flown");
+    const ahead = gt.filter(t => t.meta && t.meta.path_part === "predicted");
+    const mk = gt.find(t => t.meta && t.meta.label_target === true);
+    ok(flown.length === 1 && !ahead.length && flown[0].line.dash === "solid",
+       "Galileo's path is not drawn whole and solid");
+    const f = flown[0] || { x: [], y: [], z: [] }, last = f.x.length - 1;
+    ok(mk && mk.meta.ended === true && mk.marker && mk.marker.symbol === "diamond-open" &&
+       mk.x[0] === f.x[last] && mk.y[0] === f.y[last] && mk.z[0] === f.z[last],
+       "Galileo's marker is not a spacecraft's, on its path's last served point");
+    const endDay = mk ? solarDay(mk.meta.path_end_jd) : "?";
+    const fromDay = mk ? solarDay(mk.meta.path_start_jd) : "?";
+    const gl = mk ? mk.text[0].split(/<br[^>]*>/) : [];
+    const joined = gl.join(" ").replace(/<br soft>/g, " ");
+    ok(endDay === "21 September 2003" && gl[0] === "Galileo" &&
+       gl.filter(l => l.indexOf("&#8226; ") === 0).length === 5 &&
+       joined.indexOf("&#8226; This mission ended on 21 September 2003. The marker is where it was that day.") >= 0 &&
+       / AU from the Sun \([0-9,]+ km\) on its last day &#8226; /.test(joined) &&
+       joined.indexOf("JPL's own uncertainty for this position is not yet included.") >= 0 &&
+       joined.indexOf("Its path is solid all the way, since all of it was flown, from " + fromDay +
+                      " to " + endDay + ".") >= 0 &&
+       joined.indexOf(DATES_WORDS) >= 0 && joined.indexOf("dashed") < 0,
+       "Galileo's text box is not its five lines, opening with its end: " + joined.slice(0, 400));
+    ok(mk && mk.meta.source.indexOf("to the day the mission ended") > 0 &&
+       mk.meta.source.indexOf("as far as JPL's data runs") < 0,
+       "Galileo's source line: " + (mk ? mk.meta.source.slice(0, 220) : "no marker"));
+    // Its companions, by its plan: Venus and Earth (flybys) and Jupiter
+    // (its arrival, and the farthest it reaches).
+    ok(E("JSON.stringify(ssDrawer.companions.galileo)") === '["venus","earth","jupiter"]',
+       "Galileo's companions: " + E("JSON.stringify(ssDrawer.companions.galileo)"));
+    if (data.bodies.cassini) {
+      ok(E("JSON.stringify(ssDrawer.companions.cassini)") === '["venus","earth","jupiter","saturn"]',
+         "Cassini's companions: " + E("JSON.stringify(ssDrawer.companions.cassini)"));
+    }
+    await click(d.getElementById("sun-drawer-all"));
+    ok(order() === "earth" && !E("ssDrawer.folds.historical_missions"),
+       "Reset did not put back the opening and fold the Historical missions group");
+  }
   // 21. L-443 build B part 2: the comets on open paths. The hyperbolic
   // comets a group after the Comets, the interstellar objects after them,
   // each folded; a comet drawn from its served positions, solid to the
@@ -513,7 +583,8 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
        !head("interstellar").hidden && !E("ssDrawer.folds.interstellar"),
        "the hyperbolic and interstellar groups are not listed, folded");
     const groupsInOrder = E("ssDrawer.rows.filter(r => SolarSystemDrawer.isGroup(r)).map(r => r.group).join(',')");
-    ok(groupsInOrder.indexOf("comets_etc,comets_jfc,comets_htc,comets,comets_hyp,interstellar,aten,spacecraft,apollo,amor,belt") === 0,
+    ok(groupsInOrder.indexOf("comets_etc,comets_jfc,comets_htc,comets,comets_hyp,interstellar,aten,spacecraft," +
+       (data.bodies.galileo ? "historical_missions," : "") + "apollo,amor,belt") === 0,
        "the groups are not in their places: " + groupsInOrder);
     ok(after("aten") === row("venus") && after("apollo") !== undefined,
        "the Aten asteroids are not right after Venus");
@@ -806,8 +877,9 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     const drawerKeys = Array.from(d.querySelectorAll("[data-k]")).map(e => e.getAttribute("data-k"));
     ok(!drawerKeys.some(k => /^(ticks|axis) /.test(k)), "the drawer has a row for the frame's dots or lines");
     const fsay = d.getElementById("sun-frame-note").textContent.replace(/\s+/g, " ");
-    ok(fsay.indexOf("The dots on the three axis lines mark the grid") >= 0 && fsay.indexOf("The ruler at the right") >= 0,
-       "the frame note does not say what the dots and the ruler are");
+    // The x marks restored Nov 2 (L-505); the note says "x marks" since.
+    ok(fsay.indexOf("The x marks on the three axis lines mark the grid") >= 0 && fsay.indexOf("The ruler at the right") >= 0,
+       "the frame note does not say what the x marks and the ruler are");
     await click(d.getElementById("sun-drawer-all")); await h.done();
   }
   // 18. L-475: the i panel's last line opens the lobby's About card.

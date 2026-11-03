@@ -103,6 +103,9 @@ one beyond the 1e-3 AU cap is refused, and served with the cap switched
 off; a refusal's fields read back from the run record; and every one of
 the builder's astroquery questions asks JPL afresh, cache=False, called
 against a recorder, with the setting turned on as a planted fault.)
+Module updated: November 2, 2026 with Anthropic's Claude Opus 5.5 (L-507:
+an ended mission's last served point is on its span's last day, with a
+planted fault, the last day not asked.)
 """
 import contextlib
 import io
@@ -1808,6 +1811,28 @@ def path_by_plan_checks(cfg, check):
                   "L-443 build B: a path whose JPL data ended years ago "
                   "serves no as_of_today, and passes #T (%s)"
                   % rm5['structural_validation'])
+            # L-507: an ended mission's last served point is on its span's
+            # last day, where the room puts its marker. The 7-day backbone
+            # from 1977-09-06 stops at 2003-09-23, six days short, so the
+            # planted fault (the last day not asked) must fail.
+            c7 = _plan_cfg(cfg, '2026-08-12', events=False, end='2003-09-29')
+            rm7 = b.run_build(c7, out, mode='nightly', do_commit=False)
+            k7 = sorted(b.load_raw_vectors(out, 'voyager_1')['points'])
+            check(rm7['structural_validation'] == 'pass'
+                  and k7[-1][:10] == '2003-09-29',
+                  "L-507: an ended mission's last served point is on its "
+                  "span's last day (%s)" % k7[-1])
+            real_last = b.fetch_path_last_day
+            b.fetch_path_last_day = lambda obj, plan, today: {}
+            try:
+                c8 = _plan_cfg(cfg, '2026-08-19', events=False, end='2003-09-29')
+                b.run_build(c8, out, mode='nightly', do_commit=False)
+                k8 = sorted(b.load_raw_vectors(out, 'voyager_1')['points'])
+            finally:
+                b.fetch_path_last_day = real_last
+            check(k8[-1][:10] != '2003-09-29',
+                  "L-507: planted fault caught -- without the last day asked, "
+                  "the 7-day backbone stops short of it (%s)" % k8[-1])
     finally:
         b.fetch_vectors_range = real
 

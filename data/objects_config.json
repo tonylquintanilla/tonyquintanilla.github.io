@@ -1751,6 +1751,28 @@
       "notes": "A spacecraft path (L-443 slice 2, build B). Its name, horizons_id and id_type come from the orrery's list (celestial_objects.py) through the objects mirror, as do its description, link and path plan: the plan the orrery's path_plan.py makes from JPL's own positions -- its span, launch to where JPL's data ends; a point every 7 days, thinned where the path runs straight; and a window of finer steps around each flyby, arrival, departure or pass of the Sun. The cache builder fetches the path by that plan, whole again whenever the orrery makes a new one (every 30 days), and the room draws it solid to the minute shown and dashed after, JPL's predicted part. No date is typed here."
     },
     {
+      "slug": "galileo", "name": "Galileo", "horizons_id": "-77", "id_type": "id",
+      "description": "Galileo studied Jupiter and its moons from 1995 to 2003.",
+      "info_url": "https://science.nasa.gov/mission/galileo/",
+      "path": {"made": "2026-11-03", "span": {"end": "2003-09-21", "start": "1989-10-20"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Venus", "kind": "flyby", "stays": false, "closest": "1990-02-10 06:00", "dist_km": 22175.4, "window": ["1990-02-10 01:29", "1990-02-10 10:30"], "step": "5m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "1990-02-25 10:14", "dist_km": 104503063.3, "window": ["1989-08-30 11:55", "1990-08-23 08:32"], "step": "3d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "1990-12-08 20:36", "dist_km": 7341.6, "window": ["1990-12-08 19:42", "1990-12-08 21:29"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "1991-01-11 05:33", "dist_km": 135337718.8, "window": ["1990-05-05 06:41", "1991-09-19 04:24"], "step": "4d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "1992-12-08 15:10", "dist_km": 6680.6, "window": ["1992-12-08 14:22", "1992-12-08 15:57"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "1992-12-13 08:26", "dist_km": 146974692.3, "window": ["1992-03-26 20:20", "1993-08-31 20:31"], "step": "4d"}, {"body": "Jupiter", "kind": "arrival", "stays": true, "closest": "1995-12-07 21:55", "dist_km": 286030.3, "window": ["1995-12-07 06:05", "1995-12-08 13:44"], "step": "30m"}]},
+      "horizons_name": "Galileo (spacecraft)",
+      "category": "spacecraft", "availability": "spacecraft", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "arc-natural",
+      "trajectory_of": null, "trace_policy": "full-arc", "features": {},
+      "notes": "A historical mission's path (L-507, slice 1), drawn as a spacecraft's is. Its name, horizons_id and id_type come from the orrery's list (celestial_objects.py) through the objects mirror, as do its description, link and path plan: the plan the orrery's path_plan.py makes from JPL's own positions, its span from launch to the day the mission ended (the list's mission_end, from NASA's mission page), and a window of finer steps around each flyby and its arrival. The room draws the whole path solid, the marker on its last served point, where it was on its last day. No date is typed here."
+    },
+    {
+      "slug": "cassini", "name": "Cassini", "horizons_id": "-82", "id_type": "id",
+      "description": "Cassini-Huygens studied Saturn and its moons. The Saturn system was its home for 13 years.",
+      "info_url": "https://science.nasa.gov/mission/cassini/",
+      "path": {"made": "2026-11-03", "span": {"end": "2017-09-15", "start": "1997-10-16"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "1998-03-27 06:48", "dist_km": 100715416.1, "window": ["1997-10-02 10:54", "1998-09-19 02:41"], "step": "3d"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "1998-04-26 13:46", "dist_km": 6337.3, "window": ["1998-04-26 12:52", "1998-04-26 14:39"], "step": "1m"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "1999-06-24 20:31", "dist_km": 6654.4, "window": ["1999-06-24 19:42", "1999-06-24 21:19"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "1999-06-29 11:35", "dist_km": 107875471.5, "window": ["1999-01-09 20:41", "1999-12-17 02:28"], "step": "2d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "1999-08-18 03:29", "dist_km": 7567.8, "window": ["1999-08-18 02:49", "1999-08-18 04:08"], "step": "1m"}, {"body": "Jupiter", "kind": "flyby", "stays": false, "closest": "2000-12-30 10:05", "dist_km": 9794457.0, "window": ["2000-11-01 18:56", "2001-02-27 01:13"], "step": "1d"}, {"body": "Saturn", "kind": "arrival", "stays": true, "closest": "2004-07-01 02:40", "dist_km": 80230.2, "window": ["2004-06-30 22:18", "2004-07-01 07:01"], "step": "5m"}]},
+      "horizons_name": "Cassini (spacecraft)",
+      "category": "spacecraft", "availability": "spacecraft", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "arc-natural",
+      "trajectory_of": null, "trace_policy": "full-arc", "features": {},
+      "notes": "A historical mission's path (L-507, slice 1), drawn as a spacecraft's is. Its name, horizons_id and id_type come from the orrery's list (celestial_objects.py) through the objects mirror, as do its description, link and path plan: the plan the orrery's path_plan.py makes from JPL's own positions, its span from launch to the day the mission ended (the list's mission_end, from NASA's mission page), and a window of finer steps around each flyby and its arrival. The room draws the whole path solid, the marker on its last served point, where it was on its last day. No date is typed here."
+    },
+    {
       "slug": "encke", "name": "Encke", "horizons_id": "90000091", "id_type": "smallbody",
       "horizons_name": "2P/Encke",
       "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000091", "target_label": null, "open_orbit": false, "fetched": "2026-10-13", "words": null, "years": {"value": 3.303, "figures": 4, "text": "3.303"}, "days": {"value": 1206.3, "figures": 5, "text": "1206.3"}},
@@ -2524,6 +2546,9 @@
           { "slug": "juice", "in": "spacecraft" },
           { "slug": "psyche_spacecraft", "in": "spacecraft", "label": "Psyche spacecraft" },
           { "slug": "europa_clipper", "in": "spacecraft", "label": "Europa Clipper" },
+          { "group": "historical_missions", "find": ["probe", "mission", "ended"], "label": "Historical missions" },
+          { "slug": "galileo", "in": "historical_missions" },
+          { "slug": "cassini", "in": "historical_missions" },
           { "group": "apollo", "find": ["APO", "asteroid", "near-Earth"], "label": "Apollo asteroids", "order": "a", "about": "Apollo: a near-Earth asteroid whose orbit is larger than Earth's and crosses it." },
           { "slug": "bennu", "in": "apollo" },
           { "slug": "ryugu", "in": "apollo" },
