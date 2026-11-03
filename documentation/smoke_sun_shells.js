@@ -148,7 +148,7 @@ check("no Oort cloud sphere drawn",
       !byName["Sun: Outer Oort Cloud"] && !byName["Sun: Inner Oort Cloud"] &&
       !byName["Sun: Inner Limit of Oort Cloud"]);
 check("chromosphere is ABOVE the photosphere",
-      radiusOf(byName["Sun: Chromosphere (2,000 km skin)"]) >
+      radiusOf(byName["Sun: Chromosphere"]) >
       radiusOf(byName["Sun: Photosphere"]));
 
 // legendonly split
@@ -160,7 +160,7 @@ console.log("       hidden: " + hidden.join(", "));
 
 // marker separation: photosphere vs chromosphere markers must not coincide
 function markerOf(name){ return info.find(t => t.legendgroup === name); }
-const mp = markerOf("Sun: Photosphere"), mc = markerOf("Sun: Chromosphere (2,000 km skin)");
+const mp = markerOf("Sun: Photosphere"), mc = markerOf("Sun: Chromosphere");
 const sep = Math.hypot(mp.x[0]-mc.x[0], mp.y[0]-mc.y[0], mp.z[0]-mc.z[0]);
 check("photosphere/chromosphere markers separated",
       sep > 0.2 * RSUN_KM/AU, "sep " + (sep*AU).toFixed(0) + " km");

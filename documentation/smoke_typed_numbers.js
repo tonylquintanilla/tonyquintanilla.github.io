@@ -115,41 +115,22 @@ const DATES = [
   // L-465 (2026-10-27): Tony's Carrington bullet, the same words as the
   // orrery's axis hover; the date is on the Carrington row's citation.
   ["sun", "Sun: Rotation Axis", "November 9, 1853", "Differential Rotation of the Sun",
-   "when the Carrington count starts, from NASA SOHO's Differential Rotation of the Sun on the Source line"]
+   "when the Carrington count starts, from NASA SOHO's Differential Rotation of the Sun on the Source line"],
+  // L-411 (2026-11-02): the date the paper on the Source line gives,
+  // 28 April 2021 09:33 UT, in its abstract.
+  ["sun", "Sun: Alfven Surface", "April 2021", "Parker Solar Probe Enters the Magnetically Dominated Solar Corona",
+   "Parker Solar Probe's first crossing, from Kasper et al. (2021) on the Source line"]
 ];
 
 // Findings on a ledger row, waiting their turn there. [room, feature
 // group, where, sentence as printed with the standing digits in
-// brackets, handle]. The Sun's are L-411's: its bulk, left for later
-// sessions by Tony's ruling of 2026-10-17, met by this check's first run
-// (2026-10-18). The core, radiative zone and chromosphere temperatures
-// were kept as words, converted to kelvin, in the approved wording of
-// that evening; a number in a feature's name, and the two years, were
-// left on L-411 the same night.
-const HELD = [
-  ["sun", "Sun: Core", "panel about",
-   "It is about [15] million kelvin at the very center, where the gas is about [150] times as dense as water under the weight of the layers above.",
-   "L-411"],
-  ["sun", "Sun: Radiative Zone", "panel about",
-   "Temperatures fall from about [7] million kelvin near the core to about [2] million at the top of the zone.",
-   "L-411"],
-  ["sun", "Sun: Chromosphere (2,000 km skin)", "name",
-   "Sun: Chromosphere ([2,000] km skin)", "L-411"],
-  ["sun", "Sun: Chromosphere (2,000 km skin)", "hover",
-   "Sun: Chromosphere ([2,000] km skin)", "L-411"],
-  ["sun", "Sun: Chromosphere (2,000 km skin)", "panel about",
-   "It is far less dense than the surface, and its temperature rises with height, from about [6,000] kelvin at the bottom to about [20,000] at the top.",
-   "L-411"],
-  ["sun", "Sun: Alfven Surface", "panel about",
-   "NASA's Parker Solar Probe crossed this boundary in April [2021], the first spacecraft to fly inside the corona.",
-   "L-411"],
-  ["sun", "Sun: Hills Cloud (tilted disk)", "panel about",
-   "A [2025] computer model finds instead a slightly warped disk tilted about 30 degrees to the ecliptic, nearly at right angles to the plane of the Milky Way.",
-   "L-411"],
-  ["sun", "Sun: Hills Cloud (tilted disk)", "hover",
-   "A [2025] computer model (Nesvorny and others) finds the disk tilted about 30 degrees to the ecliptic, the plane of Earth's orbit, with two spiral arms.",
-   "L-411"]
-];
+// brackets, handle]. The Sun's eight, L-411's, held here from this
+// check's first run (2026-10-18), went on 2026-11-02: five numbers
+// print from rows, the chromosphere's name lost its depth, which
+// prints from its row in the same hover, "7 million" was removed for
+// want of a source anyone could open, the Hills cloud's year moved into
+// its citation's brackets, and Parker's April 2021 joined DATES.
+const HELD = [];
 
 // ---------------------------------------------------------------------
 let failures = 0;

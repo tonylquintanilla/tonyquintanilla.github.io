@@ -294,10 +294,19 @@ const SOFT_BR = "<br soft>";
 // "earth/Earth: Inner Radiation Belt" alone different, as expected, and
 // the other 46 byte for byte. The L-497 one is left in place,
 // unreferenced.
-// Module updated: November 1, 2026 with Anthropic's Claude Opus 5.5.
-const FIXTURE_AT = "c1c578f5";
+// L-411 (2026-11-02): the Sun's eight. The chromosphere's name is "Sun:
+// Chromosphere" (its depth prints from its row in the same hover), and
+// the Hills cloud's hover reads "A computer model (Nesvorny and others,
+// 2025)". Re-recorded as fixture_hovers_L411_8_on_8c3947c1.json, from
+// the cache built by hand from this config after orrery 25e42515's
+// export was mirrored: the L-484 one with "sun/Sun: Chromosphere (2,000
+// km skin)" gone, "sun/Sun: Chromosphere" new, "sun/Sun: Hills Cloud
+// (tilted disk)" different, and the others byte for byte. The L-484 one
+// is left in place, unreferenced.
+// Module updated: November 2, 2026 with Anthropic's Claude Opus 5.5.
+const FIXTURE_AT = "8c3947c1";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L484_on_c1c578f5.json");
+                          "fixture_hovers_L411_8_on_8c3947c1.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }
@@ -563,7 +572,7 @@ const ACCEPTANCE = {
    number moved and why. */
 /* L-345: the Sun room's two hovers that move, graded the same way. */
 const SUN_LINES = {
-  "Sun: Chromosphere (2,000 km skin)": {
+  "Sun: Chromosphere": {
     lines: ["Radius: 1.003 solar radii", "= 698,000 km (0.00466 AU)"],
     absent: ["1.002874802357338", "697,700", "0.00467"] },
   "Sun: Photosphere": {
