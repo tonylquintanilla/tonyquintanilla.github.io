@@ -149,6 +149,12 @@ historical missions: a path whose span ended before today is also asked
 for the first minutes of its last day (fetch_path_last_day), so its last
 served point, where the room puts an ended mission's marker, is on the
 day the mission ended, not up to six days short at the 7-day backbone.)
+Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5 (L-510:
+a body that is not drawn as a path keeps no saved position after today;
+one left from its days as a path is dropped and named, with its old
+plan's stamps. Piece C of C/2025 K1, drawn as an orbit by JPL's
+database e since Nov 4, had stopped the night on #T.
+patch_L510_2_orbit_body_drops_future_points.py.)
 """
 
 import argparse
@@ -1318,6 +1324,23 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
         points.update(new)  # overwrite-by-date on the refresh window; past frozen
         run_manifest['objects'][slug] = ('backfilled(%d)' % len(new)
                                          if mode == 'first-build' else 'nightly(%d)' % len(new))
+        # L-510 (2026-11-05): a body that is not drawn as a path keeps no
+        # saved position after today. One that was a path (piece C of
+        # C/2025 K1, drawn as an orbit by JPL's database e since Nov 4)
+        # still held its plan's predicted future, its newest point was
+        # taken as today's, and #T stopped the night. Dropped by rule
+        # and named, never by hand.
+        upto_jd = _dt_to_jd(today) + 0.5
+        future = [day for day, pt in points.items() if pt['jd'] > upto_jd]
+        for day in future:
+            del points[day]
+        stamps = [s for s in ('plan_made', 'plan_span') if s in raw]
+        for stamp in stamps:   # not k: guard_monitor below needs it
+            del raw[stamp]
+        if future or stamps:
+            warn("%s: drawn as an orbit, not a path; %d saved position(s) "
+                 "after today dropped%s" % (slug, len(future),
+                 ", and its old plan's stamps" if stamps else ""))
 
     # --- Guard v2 monitor (warn, keep) ---
     a = result.get('_els', {}).get('a') if not is_spacecraft else None

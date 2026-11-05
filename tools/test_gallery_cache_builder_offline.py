@@ -110,6 +110,10 @@ Module updated: November 4, 2026, night, with Anthropic's Claude Opus
 5.5 (L-510: piece C of C/2025 K1 is drawn as an orbit by JPL's database
 e, as the orrery draws it; a stand-in orbit for it, and the comets on
 open paths 13, named. patch_L510_1_piece_c_orbit_website.py.)
+Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5
+(L-510: a saved position a year ahead and an old plan's stamp planted
+in Hale-Bopp's file before the nightly re-run; both dropped and named.
+patch_L510_2_orbit_body_drops_future_points.py.)
 """
 import contextlib
 import io
@@ -1188,6 +1192,16 @@ def main():
         earth_before = json.load(open(out / 'raw' / 'vectors' / 'earth.json'))['points']
         old_date = sorted(earth_before)[0]
         old_pt = earth_before[old_date]
+        # L-510 (2026-11-05): an orbit body left with a saved position
+        # a year ahead, and an old plan's stamp, as piece C of C/2025 K1
+        # was. The nightly drops both and names it; without that the
+        # planted point is taken as today's and #T stops the re-run.
+        _hb_path = out / 'raw' / 'vectors' / 'hale_bopp.json'
+        _hb = json.load(open(_hb_path))
+        _hb_last = _hb['points'][sorted(_hb['points'])[-1]]
+        _hb['points']['2099-01-01'] = dict(_hb_last, jd=_hb_last['jd'] + 365.0)
+        _hb['plan_made'] = '2026-10-26'
+        json.dump(_hb, open(_hb_path, 'w'))
         _said_449 = io.StringIO()
         with contextlib.redirect_stdout(_said_449):
             rm2 = b.run_build(cfg, out, mode='nightly', do_commit=False)
@@ -1196,6 +1210,14 @@ def main():
         earth_after = json.load(open(out / 'raw' / 'vectors' / 'earth.json'))['points']
         check(len(earth_after) >= len(earth_before), "nightly did not shrink earth")
         check(earth_after.get(old_date) == old_pt, "frozen past point unchanged byte-for-byte")
+        _hb_after = json.load(open(_hb_path))
+        check('2099-01-01' not in _hb_after['points']
+              and 'plan_made' not in _hb_after,
+              "L-510: an orbit body's saved position after today, and its "
+              "old plan's stamp, are dropped (hale_bopp, planted)")
+        check("hale_bopp: drawn as an orbit, not a path; 1 saved position(s) "
+              "after today dropped" in _said_449.getvalue(),
+              "L-510: the drop is named (hale_bopp)")
 
         # L-449 (2026-10-17): the run records. The builder says what its
         # copy carried, and the Daily Run's comparison, run here on this
