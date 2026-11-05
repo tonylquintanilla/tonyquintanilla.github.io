@@ -29,6 +29,10 @@ Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 build B: a spacecraft's path is copied without the orrery's bookkeeping,
 none for another body, and a planted mirror that drops the events is
 caught.)
+Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5 (L-510:
+a body moved across e = 1 is followed both ways, on fixtures and on the
+real config, with three planted faults; a side change over a hand-set
+entry is refused. patch_L510_3_mirror_follows_e_rule.py.)
 """
 
 import json
@@ -226,6 +230,167 @@ def cases():
           "an export older than schema 2 was not refused")
 
 
+# L-510: a comet on an open path and a comet drawn as an orbit, as the
+# real config holds them (one member per line, the side's three fields on
+# shared lines), for the side-change cases.
+SIDE_CONFIG = """{
+  "objects": [
+    {
+      "slug": "west", "name": "West", "horizons_id": "C/1975 V1-A", "id_type": "smallbody",
+      "horizons_name": "West (C/1975 V1-A)",
+      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "1975-02-25"}, "events": []},
+      "description": "A comet.",
+      "open_path": true,
+      "category": "comet", "availability": "path", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "arc-natural",
+      "trajectory_of": null, "trace_policy": "full-arc", "features": {},
+      "notes": "A comet on an open path (L-443 slice 2, build B part 2). Old words."
+    },
+    {
+      "slug": "hale_bopp", "name": "Hale-Bopp", "horizons_id": "C/1995 O1", "id_type": "smallbody",
+      "period": {"kind": "fetched", "center": "@0", "days": 900000.0},
+      "description": "Another comet.",
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {},
+      "notes": "A person's words about Hale-Bopp."
+    }
+  ],
+  "rooms": {"solar-system": {"drawer": {"rows": [
+    {"slug": "west", "in": "comets_hyp"}, {"slug": "hale_bopp", "in": "comets"}]}}}
+}
+"""
+
+SIDE_PLAN = {"made": "2026-11-05", "span": {"start": "2025-01-01",
+                                            "end": "2027-11-05"},
+             "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": []}
+
+
+def side_export():
+    """The export after JPL moved both across e = 1: West to an orbit, with
+    a fetched period; Hale-Bopp to a path, with a plan and no period."""
+    west = obj("West", "C/1975 V1-A", "smallbody", "A comet.")
+    west["horizons_name"] = "West (C/1975 V1-A)"
+    west["period"] = {"kind": "fetched", "center": "@sun", "days": 5.0e8}
+    west["path"] = None
+    hale = obj("Hale-Bopp", "C/1995 O1", "smallbody", "Another comet.")
+    hale["period"] = None
+    hale["path"] = SIDE_PLAN
+    hale["open_path"] = True
+    return export_of(west=west, hale_bopp=hale)
+
+
+def side_problems(mirror_plan):
+    """What is wrong with mirror_plan's handling of both side changes; an
+    empty list when it is right. Run on the real mirror, and on planted
+    faults that must give a non-empty list."""
+    problems = []
+    ex = side_export()
+    edits, changes, failures, _l = mirror_plan(SIDE_CONFIG, ex,
+                                               today="2026-11-05")
+    if failures:
+        problems.append("a side change was refused: %s" % failures)
+    out = mo.apply(SIDE_CONFIG, edits)
+    by = {o["slug"]: o for o in json.loads(out)["objects"]}
+    w, h = by["west"], by["hale_bopp"]
+    if not ("path" not in w and "open_path" not in w
+            and w.get("period", {}).get("center") == "@sun"
+            and (w.get("availability"), w.get("canonical_frame"),
+                 w.get("trace_policy")) == ("analytic", "heliocentric",
+                                            "none")):
+        problems.append("West was not turned into an orbit: %s" % {
+            k: w.get(k) for k in ("availability", "canonical_frame",
+                                  "trace_policy", "open_path", "period")})
+    if not (h.get("open_path") is True and h.get("path") == SIDE_PLAN
+            and "period" not in h
+            and (h.get("availability"), h.get("canonical_frame"),
+                 h.get("trace_policy")) == ("path", "arc-natural",
+                                            "full-arc")):
+        problems.append("Hale-Bopp was not turned into a path: %s" % {
+            k: h.get(k) for k in ("availability", "canonical_frame",
+                                  "trace_policy", "open_path", "period")})
+    if not (w.get("notes", "").startswith("A small body drawn as an orbit")
+            and "Until 2026-11-05 it was drawn as a path" in w["notes"]
+            and "Old words" not in w["notes"]):
+        problems.append("West's note does not say it is an orbit now, or "
+                        "kept the old side's words: %r" % w.get("notes"))
+    if not (h.get("notes", "").startswith("A small body on an open path")
+            and h["notes"].endswith(
+                "Earlier note: A person's words about Hale-Bopp.")):
+        problems.append("Hale-Bopp's note does not say it is a path now, or "
+                        "lost a person's words: %r" % h.get("notes"))
+    if not (any(c.startswith("west: drawn as an orbit now") and
+                "stays in comets_hyp" in c for c in changes)
+            and any(c.startswith("hale_bopp: drawn as a path now") and
+                    "stays in comets" in c for c in changes)
+            and any(c.startswith("west.path: removed") for c in changes)
+            and any(c.startswith("hale_bopp.period: removed")
+                    for c in changes)):
+        problems.append("the side changes were not each printed, with the "
+                        "drawer row's group: %s" % changes)
+    rows = json.loads(out)["rooms"]["solar-system"]["drawer"]["rows"]
+    if rows != [{"slug": "west", "in": "comets_hyp"},
+                {"slug": "hale_bopp", "in": "comets"}]:
+        problems.append("a drawer row was moved: %s" % rows)
+    again = mirror_plan(out, ex, today="2026-11-06")
+    if again[0] or again[2]:
+        problems.append("a second run still moves or refuses: %s %s"
+                        % (again[1], again[2]))
+    return problems
+
+
+def side_cases():
+    # L-510: both ways, on the real mirror.
+    for p in side_problems(mo.plan):
+        check(False, "L-510: " + p)
+
+    # Planted faults: each must be caught by the same cases.
+    def no_removal(text, ex, today=None):
+        keep = mo.SIDE_FIELDS
+        mo.SIDE_FIELDS = ("open_path",)
+        try:
+            return mo.plan(text, ex, today=today)
+        finally:
+            mo.SIDE_FIELDS = keep
+
+    def no_side_fields(text, ex, today=None):
+        keep = mo.PATH_SIDE, mo.ORBIT_SIDE
+        mo.PATH_SIDE = mo.ORBIT_SIDE = (("availability", "path"),)
+        try:
+            return mo.plan(text, ex, today=today)
+        finally:
+            mo.PATH_SIDE, mo.ORBIT_SIDE = keep
+
+    def refuses_like_before(text, ex, today=None):
+        keep = mo.side_change
+        mo.side_change = lambda members, want: None
+        try:
+            return mo.plan(text, ex, today=today)
+        finally:
+            mo.side_change = keep
+
+    for name, fault in (("a mirror that removes only the mark",
+                         no_removal),
+                        ("a mirror that leaves the frame and trace",
+                         no_side_fields),
+                        ("the mirror before L-510, which refused",
+                         refuses_like_before)):
+        check(side_problems(fault),
+              "L-510: planted fault not caught: %s" % name)
+
+    # A side change over an entry set by hand is refused, and nothing in
+    # that entry is written.
+    hand = SIDE_CONFIG.replace('"trace_policy": "full-arc"',
+                               '"trace_policy": "recent"', 1)
+    edits, _c, failures, _l = mo.plan(hand, side_export(), today="2026-11-05")
+    by = {o["slug"]: o for o in json.loads(mo.apply(hand, edits))["objects"]}
+    check(any(f.startswith("west: the orrery's export draws it as an orbit")
+              for f in failures) and by["west"].get("open_path") is True
+          and by["west"].get("availability") == "path",
+          "L-510: a side change over a hand-set entry was not refused, or "
+          "wrote to it: %s" % failures)
+
+
 def real():
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     path = os.path.join(root, mo.EXPORT)
@@ -247,9 +412,40 @@ def real():
           "%d refusal(s)." % (len(linked), ", ".join(linked), len(changes),
                               len(failures)))
 
+    # L-510: on the real config too, West moved to an orbit and Hale-Bopp
+    # to a path in a copy of the export, and the result read back.
+    if "west" in export.get("objects", {}) and \
+            "hale_bopp" in export.get("objects", {}):
+        x = json.loads(json.dumps(export))
+        west, hale = x["objects"]["west"], x["objects"]["hale_bopp"]
+        plan_copy = west.get("path")
+        west.pop("open_path", None)
+        west["path"] = None
+        west["period"] = {"kind": "fetched", "center": "@sun", "days": 5.0e8}
+        hale["open_path"] = True
+        hale["path"] = plan_copy
+        hale["period"] = None
+        e2, c2, f2, _l2 = mo.plan(out, x, today="2026-11-05")
+        out2 = mo.apply(out, e2)
+        by2 = {o["slug"]: o for o in json.loads(out2)["objects"]}
+        check(not f2 and by2["west"].get("availability") == "analytic"
+              and "open_path" not in by2["west"]
+              and by2["hale_bopp"].get("availability") == "path"
+              and "period" not in by2["hale_bopp"]
+              and not mo.plan(out2, x, today="2026-11-06")[0],
+              "L-510: the real config did not follow West to an orbit and "
+              "Hale-Bopp to a path, or a second run still moved it: %s" % f2)
+        print("Real config, both side changes planted (West to an orbit, "
+              "Hale-Bopp to a path): %d field(s) moved, %d refusal(s)."
+              % (len(c2), len(f2)))
+    else:
+        check(False, "L-510: the real export has no West or Hale-Bopp to "
+              "plant the side changes on")
+
 
 def main():
     cases()
+    side_cases()
     real()
     if FAILS:
         print("MIRROR OBJECTS SUITE: FAIL")
@@ -267,7 +463,11 @@ def main():
           "for a body that is not one, and a mirror that drops the events "
           "caught (L-443); a comet's open_path mark copied, and written for "
           "no other body (slice 2's comets); JPL's name copied, and written "
-          "for no body without one (L-493).")
+          "for no body without one (L-493); a body the orrery moves across "
+          "e = 1 followed both ways, its note rewritten and a person's words "
+          "kept, its drawer row left and named, a second run quiet, a "
+          "side change over a hand-set entry refused, and three planted "
+          "faults caught (L-510).")
     print("MIRROR OBJECTS SUITE: pass")
     return 0
 

@@ -69,6 +69,35 @@ WHAT IT WRITES, PER LINKED OBJECT
     value, so a fix is reported and not only made (Tony's ruling,
     2026-10-01: simple errors are fixed and reported).
 
+WHEN A BODY CHANGES SIDE (L-510)
+
+    The orrery draws a small body as a path when the e of its orbit
+    solution in JPL's small-body database is at or above 1, and as an
+    orbit below it (path_or_orbit.py), and the website follows the same
+    rule (Tony, 2026-11-04, 23:47 Chicago: "the website should follow the
+    same rule as the orrery, based on eccentricity"). When JPL's new
+    solution moves a body across 1, the export's open_path tells this
+    tool, which follows by itself:
+
+    to an orbit   the config holds open_path true and the export serves
+                  none. path and open_path are removed; availability
+                  "path" -> "analytic", canonical_frame "arc-natural" ->
+                  "heliocentric", trace_policy "full-arc" -> "none"; the
+                  period the export now serves is inserted.
+    to a path     the export serves open_path true and the config holds
+                  an orbit's entry (availability "analytic"). The period
+                  is removed; the three fields the other way; the path
+                  plan and open_path inserted.
+
+    Either way the entry's notes say what happened and when (a note that
+    only described the old side is replaced; any other is kept after the
+    new one), and every change is printed. Its drawer row is NOT moved:
+    the drawer groups by JPL's class, which the export does not carry, so
+    the change line names the row's group for a person to check. The
+    builder then serves the body on its new side; the comet that first
+    did this, piece C of C/2025 K1, stopped three nights at this tool
+    while it refused, before this rule (L-510's note of 2026-11-05).
+
 WHAT IT REFUSES (named, and the run exits 1)
 
     - the export or the config is missing or unreadable
@@ -76,7 +105,11 @@ WHAT IT REFUSES (named, and the run exits 1)
       export: the room would show a body with no description or link
     - a key in the export with no object of that slug in the config
     - a field the export serves as null while the config holds one: the
-      tool does not delete a person's words, so a person decides
+      tool does not delete a person's words, so a person decides. The one
+      exception is a side change, below
+    - a side change whose entry does not hold the old side's
+      availability, frame and trace: it was set by hand, so a person
+      decides
     - an export older than schema 2, which carries no periods: the
       website's rooms print a period from this copy, so the orrery's
       export must be pulled again after the orrery has pushed (L-431)
@@ -119,13 +152,18 @@ Module updated: October 26, 2026, evening, with Anthropic's Claude Opus
 5.5 (L-493: JPL's name for each body, the export's horizons_name, which
 the Horizons check confirms, is copied, for the Solar System room's
 search box to look in.)
+Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5 (L-510:
+a body the orrery moves across e = 1 follows by itself, both ways; see
+WHEN A BODY CHANGES SIDE. patch_L510_3_mirror_follows_e_rule.py.)
 """
 
 import json
 import os
 import sys
+from datetime import datetime, timezone
 
-from mirror_constants import member_separator, parse_with_spans, render
+from mirror_constants import (anchor_separator, member_separator,
+                              parse_with_spans, render)
 
 CONFIG = os.path.join("data", "objects_config.json")
 EXPORT = os.path.join("data", "objects_export.json")
@@ -182,12 +220,114 @@ class Edit(object):
         self.text = text
 
 
-def plan(config_text, export):
+# L-510: the two sides a small body is drawn on, by the e of its orbit
+# solution in JPL's small-body database (the orrery's path_or_orbit.py;
+# the website follows the same rule, Tony's ruling of 2026-11-04, 23:47
+# Chicago). What an entry of each side holds here, as Hale-Bopp's and the
+# comets on open paths' entries hold it.
+ORBIT_SIDE = (("availability", "analytic"),
+              ("canonical_frame", "heliocentric"),
+              ("trace_policy", "none"))
+PATH_SIDE = (("availability", "path"),
+             ("canonical_frame", "arc-natural"),
+             ("trace_policy", "full-arc"))
+# What a side change removes when the export stops serving it: a path's
+# plan and mark (to an orbit), an orbit's period (to a path). Any other
+# field the export serves as null is still refused for a person.
+SIDE_FIELDS = ("path", "open_path", "period")
+# A note that only describes the old side is replaced; any other note is
+# a person's words and is kept after the new one.
+SIDE_NOTE_STARTS = ("A comet on an open path (L-443",
+                    "A comet drawn as an orbit, by the e",
+                    "A small body drawn as an orbit, by the e",
+                    "A small body on an open path, by the e")
+ORBIT_NOTE = (
+    "A small body drawn as an orbit, by the e of its orbit solution in "
+    "JPL's small-body database, which is below 1 (L-510; the website "
+    "follows the orrery's rule, Tony's ruling of 2026-11-04). Its name, "
+    "horizons_id, id_type, description, link and period come from the "
+    "orrery's list (celestial_objects.py) through the objects mirror. "
+    "Until %s it was drawn as a path; that day the objects mirror removed "
+    "its path plan and open_path mark, which the orrery's export no longer "
+    "served, and set its availability, frame and trace as an orbit's. No "
+    "date is typed here.")
+PATH_NOTE = (
+    "A small body on an open path, by the e of its orbit solution in JPL's "
+    "small-body database, which is at or above 1 (L-510; the website "
+    "follows the orrery's rule, Tony's ruling of 2026-11-04). Its name, "
+    "horizons_id, id_type, description, link, open_path mark and path plan "
+    "come from the orrery's list (celestial_objects.py) through the objects "
+    "mirror: the plan the orrery's path_plan.py makes from JPL's own "
+    "positions. The cache builder fetches the path by that plan, as it "
+    "fetches a spacecraft's, and the room draws it solid to the minute "
+    "shown and dashed after. Until %s it was drawn as an orbit; that day "
+    "the objects mirror removed its period, which the orrery's export no "
+    "longer served, and set its availability, frame and trace as a path's. "
+    "No date is typed here.")
+
+
+def side_change(members, want):
+    """L-510: "orbit" or "path" when the orrery's export moves this entry
+    to the other side, else None.
+
+    To an orbit: the config holds open_path true and the export serves
+    none. To a path: the export serves open_path true and the config
+    holds an orbit's entry (availability "analytic"); an entry with no
+    availability yet is a body being keyed, and its mark is inserted as
+    before (L-443).
+    """
+    held = members.get("open_path")
+    held_path = held is not None and held[0].value is True
+    served_path = want.get("open_path") is True
+    if held_path and not served_path:
+        return "orbit"
+    if served_path and not held_path:
+        avail = members.get("availability")
+        if avail is not None and avail[0].value == "analytic":
+            return "path"
+    return None
+
+
+def removal(text, members, field):
+    """An Edit removing one member and the comma before it, or None when
+    the member is its object's first (none is, in this config)."""
+    child, key_start = members[field]
+    i = key_start - 1
+    while i >= 0 and text[i] in " \t\r\n":
+        i -= 1
+    if i < 0 or text[i] != ",":
+        return None
+    return Edit(i, child.end, "")
+
+
+def short(value):
+    """A value as a change line prints it: a path plan by its span, a
+    period by its kind, anything else in full."""
+    if isinstance(value, dict) and "span" in value:
+        return "a path plan, span %s" % render(value.get("span"))
+    if isinstance(value, dict) and "kind" in value:
+        return "a %s period" % value.get("kind")
+    return render(value)
+
+
+def drawer_group(root, slug):
+    rooms = root.value.get("rooms") or {}
+    rows = ((rooms.get(ROOM) or {}).get("drawer") or {}).get("rows") or []
+    for row in rows:
+        if isinstance(row, dict) and row.get("slug") == slug:
+            return row.get("in")
+    return None
+
+
+def plan(config_text, export, today=None):
     """(edits, changes, failures, linked) for this config and export.
 
     changes are printed lines naming each field that would move; failures
-    are refusals, each named.
+    are refusals, each named. today (YYYY-MM-DD, UTC) dates the note a side
+    change writes; the run passes none and today's UTC date is used.
     """
+    if today is None:
+        today = datetime.now(timezone.utc).date().isoformat()
     root = parse_with_spans(config_text)
     edits, changes, failures, linked = [], [], [], []
     served = export.get("objects") or {}
@@ -246,11 +386,66 @@ def plan(config_text, export):
             failures.append("%s.period: fetched from JPL with no centre; "
                             "refused rather than copied" % slug)
             continue
+        # L-510: a body the orrery now draws on the other side of e = 1.
+        side = side_change(members, want)
+        if side is not None:
+            old_side, new_side = ((PATH_SIDE, ORBIT_SIDE) if side == "orbit"
+                                  else (ORBIT_SIDE, PATH_SIDE))
+            held = dict((f, members[f][0].value if f in members else None)
+                        for f, _v in old_side)
+            if held != dict(old_side):
+                failures.append(
+                    "%s: the orrery's export draws it as %s, but the config's "
+                    "%s are not a %s's (%s); a person decides"
+                    % (slug, "an orbit" if side == "orbit" else "a path",
+                       "availability, frame and trace",
+                       "path" if side == "orbit" else "orbit",
+                       ", ".join("%s %s" % (f, render(v))
+                                 for f, v in sorted(held.items()))))
+                continue
+            group = drawer_group(root, slug)
+            changes.append(
+                "%s: drawn as %s now, as the orrery draws it (the e of its "
+                "orbit solution in JPL's small-body database is %s 1, "
+                "L-510)%s" % (
+                    slug, "an orbit" if side == "orbit" else "a path",
+                    "below" if side == "orbit" else "at or above",
+                    "" if group is None else
+                    "; its drawer row stays in %s, since JPL's class is not "
+                    "in the export: a person checks it" % group))
+            for (field, old), (_f, new) in zip(old_side, new_side):
+                child, _ = members[field]
+                changes.append("%s.%s: %s -> %s" % (slug, field, render(old),
+                                                    render(new)))
+                edits.append(Edit(child.start, child.end, render(new)))
+            note = (ORBIT_NOTE if side == "orbit" else PATH_NOTE) % today
+            if "notes" in members:
+                child, _ = members["notes"]
+                old_note = child.value or ""
+                if old_note and not old_note.startswith(SIDE_NOTE_STARTS):
+                    note += " Earlier note: " + old_note
+                changes.append("%s.notes: rewritten for its new side" % slug)
+                edits.append(Edit(child.start, child.end, render(note)))
+            else:
+                last, _ = max(members.values(), key=lambda m: m[0].end)
+                changes.append("%s.notes: added for its new side" % slug)
+                edits.append(Edit(last.end, last.end, '%s"notes": %s' % (
+                    anchor_separator(config_text, last.end), render(note))))
         for field in INSERTED:
             new = wanted(want, field)
             if field in members:
                 child, _ = members[field]
-                if new is None:
+                if new is None and side is not None and field in SIDE_FIELDS:
+                    gone = removal(config_text, members, field)
+                    if gone is None:
+                        failures.append("%s.%s: the first member of its "
+                                        "entry, so it cannot be removed; a "
+                                        "person decides" % (slug, field))
+                        continue
+                    changes.append("%s.%s: removed (%s)" % (
+                        slug, field, short(child.value)))
+                    edits.append(gone)
+                elif new is None:
                     failures.append("%s.%s: the export serves none and the "
                                     "config holds %s; a person decides"
                                     % (slug, field, render(child.value)))
@@ -271,7 +466,11 @@ def plan(config_text, export):
 
 
 def apply(text, edits):
-    for edit in sorted(edits, key=lambda e: e.start, reverse=True):
+    # L-510: a removed member and a member inserted at the same anchor can
+    # share a start (the period removed from just after id_type, the path
+    # inserted there). Sorted by (start, end), last first, the removal is
+    # applied before the insertion, so it never removes what was inserted.
+    for edit in sorted(edits, key=lambda e: (e.start, e.end), reverse=True):
         text = text[:edit.start] + edit.text + text[edit.end:]
     return text
 

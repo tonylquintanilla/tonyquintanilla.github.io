@@ -364,7 +364,28 @@ def run_build_with_stand_ins(config, out_dir, *args, **kwargs):
     not depend on a pull: in the config as committed, a spacecraft's plan
     arrives only when the objects mirror copies it from the pulled export."""
     stand_in_drawings(config, Path(out_dir).parent)
+    stand_in_orbits(config)
     return REAL_RUN_BUILD(stand_in_plans(config), out_dir, *args, **kwargs)
+
+
+# L-510, 2026-11-05: a small body the objects mirror has just moved to an
+# orbit (the e of its orbit solution in JPL's small-body database below 1)
+# is asked its elements before anyone adds it to ELEMS above. It gets this
+# stand-in, never served, and is named in STAND_IN_ORBITS_USED, so the
+# night's run of this suite does not stop on a KeyError, as it would have
+# for piece C of C/2025 K1 without a hand-made entry.
+STAND_IN_ORBIT = (100.0, 0.9)
+STAND_IN_ORBITS_USED = set()
+
+
+def stand_in_orbits(cfg):
+    for o in cfg.get('objects', []):
+        hid = o.get('horizons_id')
+        if (o.get('availability') == 'analytic' and not o.get('open_path')
+                and o.get('category') in ('comet', 'asteroid', 'dwarf_planet')
+                and hid and hid not in ELEMS):
+            ELEMS[hid] = STAND_IN_ORBIT
+            STAND_IN_ORBITS_USED.add(hid)
 
 
 STAND_IN_PLAN = {'made': '2026-07-01',
@@ -542,11 +563,22 @@ def main():
 
         # --- L-443 build B part 2: a comet on an open path is a path ---
         paths = [s for s, o in cfg_by_slug(cfg).items() if o.get('open_path')]
-        # L-510, 2026-11-04: 13 since piece C of C/2025 K1 is drawn as
-        # an orbit by JPL's database e. The count moves whenever a
-        # comet changes side, so the check names them.
-        check(len(paths) == 13, "L-443 part 2: the config serves 13 comets on "
-              "open paths (%d: %s)" % (len(paths), ", ".join(sorted(paths))))
+        # L-510, 2026-11-05: was a fixed count (14, then 13 when piece C
+        # of C/2025 K1 became an orbit by JPL's database e). Since the
+        # objects mirror follows a body across e = 1 by itself, a fixed
+        # count would turn the night red on the next one, so the config's
+        # comets on open paths are compared with the orrery's export, by
+        # name.
+        export_path = cfg_path.parent / 'objects_export.json'
+        exported = sorted(
+            s for s, o in (json.load(open(export_path, encoding='utf-8'))
+                           .get('objects') or {}).items()
+            if o.get('open_path')) if export_path.exists() else None
+        check(paths and sorted(paths) == exported,
+              "L-443 part 2, L-510: the config serves as open paths exactly "
+              "the comets the orrery's export does (%d: %s; export: %s)"
+              % (len(paths), ", ".join(sorted(paths)),
+                 "not found" if exported is None else ", ".join(exported)))
         bad = [s for s in paths if not (objs.get(s, {}).get('osculating') is None
                                         and objs.get(s, {}).get('positions')
                                         and objs.get(s, {}).get('open_path') is True
@@ -1681,6 +1713,7 @@ def main():
     path_by_plan_checks(cfg, check)
     uncertainty_checks(cfg, check)
     fresh_answer_checks(check)
+    side_change_checks(cfg_path, check)
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
@@ -2047,6 +2080,84 @@ class _AskRecorder:
 
     def ephemerides(self, **kw):
         self._ask('ephemerides', kw)
+
+
+def served_side(o):
+    """L-510: how a built index serves one body: 'path' (positions, no
+    elements, open_path), 'orbit' (elements, no open_path), else None."""
+    if not o:
+        return None
+    if o.get('osculating') is None and o.get('positions') and \
+            o.get('open_path') is True:
+        return 'path'
+    if o.get('osculating') and not o.get('open_path'):
+        return 'orbit'
+    return None
+
+
+def side_change_checks(cfg_path, check):
+    """L-510: the night survives a body moving across e = 1 both ways. The
+    orrery's export is changed as JPL's new solutions would change it (West
+    to an orbit, Hale-Bopp to a path), the objects mirror writes the
+    config from it, and that config is built and read back."""
+    import mirror_objects as mo
+    export_path = cfg_path.parent / 'objects_export.json'
+    if not export_path.exists():
+        check(False, "L-510: no data/objects_export.json to plant the side "
+              "changes on")
+        return
+    text = cfg_path.read_text(encoding='utf-8')
+    export = json.load(open(export_path, encoding='utf-8'))
+    west, hale = export['objects']['west'], export['objects']['hale_bopp']
+    plan_copy = west.get('path')
+    west.pop('open_path', None)
+    west['path'] = None
+    west['period'] = {'kind': 'fetched', 'center': '@sun', 'days': 5.0e8}
+    hale['open_path'] = True
+    hale['path'] = plan_copy
+    hale['period'] = None
+    edits, changes, failures, _l = mo.plan(text, export, today='2026-11-05')
+    check(not failures and any(c.startswith('west: drawn as an orbit now')
+                               for c in changes)
+          and any(c.startswith('hale_bopp: drawn as a path now')
+                  for c in changes),
+          "L-510: the objects mirror follows West to an orbit and Hale-Bopp "
+          "to a path, refusing nothing (%s)" % (failures or 'none refused'))
+    with tempfile.TemporaryDirectory() as td:
+        data = Path(td) / 'data'
+        out = data / 'solar-system'
+        out.mkdir(parents=True)
+        flipped = data / 'objects_config.json'
+        flipped.write_text(mo.apply(text, edits), encoding='utf-8')
+        cfg2 = b.load_config(str(flipped))
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf):
+                rm = b.run_build(cfg2, out, mode='first-build',
+                                 do_commit=False)
+            idx = json.load(open(out / 'coverage_index.json'))
+            objs = idx['objects']
+            why = rm['structural_validation']
+        except Exception as exc:  # the build's own words, for the reader
+            print(buf.getvalue()[-2000:])
+            objs, why = {}, 'raised %s' % exc
+        sides = (served_side(objs.get('west')),
+                 served_side(objs.get('hale_bopp')))
+        check(why == 'pass' and sides == ('orbit', 'path'),
+              "L-510: a config the mirror has flipped builds and passes, West "
+              "served as an orbit and Hale-Bopp as a path (%s; %s, %s)"
+              % (why, sides[0], sides[1]))
+    # The contrast, so the reading above can fail: the same test on bodies
+    # served on the other side gives the other answer.
+    check(served_side({'osculating': None, 'positions': {'2026-07-09': {}},
+                       'open_path': True}) == 'path'
+          and served_side({'osculating': {'a': 1.0}}) == 'orbit'
+          and served_side({'osculating': {'a': 1.0}, 'open_path': True})
+          is None,
+          "L-510: the served-side reading tells a path from an orbit, and "
+          "names a half-moved body neither")
+    print("  L-510: stand-in orbits used for bodies with none in ELEMS: %s"
+          % (", ".join(sorted(STAND_IN_ORBITS_USED)) or "none"))
 
 
 def fresh_answer_checks(check):
