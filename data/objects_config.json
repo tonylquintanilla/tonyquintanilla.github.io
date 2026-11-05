@@ -2401,14 +2401,12 @@
     {
       "slug": "c2025_k1_c", "name": "C/2025_K1-C", "horizons_id": "C/2025 K1-C", "id_type": "smallbody",
       "horizons_name": "ATLAS (C/2025 K1-C)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:33", "dist_km": 49948760.3, "window": ["2025-08-21 20:33", "2025-11-25 00:32"], "step": "6h"}]},
       "description": "Piece C of comet C/2025 K1 (ATLAS), one of at least four pieces Hubble saw in November 2025. Its path is worked out from sightings after the break-up, so the part drawn before then is traced backwards. Near-parabolic: its orbit is so close to the line between an ellipse and an open curve that JPL's numbers cannot yet tell which it is. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://science.nasa.gov/asset/hubble/fragmenting-comet-c-2025-k1/",
-      "open_path": true,
-      "category": "comet", "availability": "path", "parent": "sun",
-      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "arc-natural",
-      "trajectory_of": null, "trace_policy": "full-arc", "features": {},
-      "notes": "A comet on an open path (L-443 slice 2, build B part 2). Its name, horizons_id and id_type come from the orrery's list (celestial_objects.py) through the objects mirror, as do its description, link, open_path mark and path plan: the plan the orrery's path_plan.py makes from JPL's own positions -- from a year before its perihelion to a year after today, both ends inside JPL's data (Tony's ruling of 2026-10-24); a point every 7 days, thinned where the path runs straight; and a window of finer steps around its perihelion. The cache builder fetches the path by that plan, as it fetches a spacecraft's, and the room draws it solid to the minute shown and dashed after. No date is typed here."
+      "category": "comet", "availability": "analytic", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
+      "trajectory_of": null, "trace_policy": "none", "features": {},
+      "notes": "A comet drawn as an orbit, by the e of its orbit solution in JPL's small-body database, which is below 1 (L-510; Tony's rulings of 2026-11-03 and 2026-11-04). The website follows the orrery's rule (Tony, 2026-11-04, 23:47 Chicago: \"the website should follow the same rule as the orrery, based on eccentricity\"). Its name, horizons_id, id_type, description, link and period come from the orrery's list (celestial_objects.py) through the objects mirror. Until 2026-11-04 it was a comet on an open path (L-443 slice 2, build B part 2); patch_L510_1_piece_c_orbit_website.py removed its path plan and open_path mark, which the mirror does not delete on its own, and set its availability, frame and trace as Hale-Bopp's. No date is typed here."
     },
     {
       "slug": "c2025_k1_d", "name": "C/2025_K1-D", "horizons_id": "C/2025 K1-D", "id_type": "smallbody",

@@ -106,6 +106,10 @@ against a recorder, with the setting turned on as a planted fault.)
 Module updated: November 2, 2026 with Anthropic's Claude Opus 5.5 (L-507:
 an ended mission's last served point is on its span's last day, with a
 planted fault, the last day not asked.)
+Module updated: November 4, 2026, night, with Anthropic's Claude Opus
+5.5 (L-510: piece C of C/2025 K1 is drawn as an orbit by JPL's database
+e, as the orrery draws it; a stand-in orbit for it, and the comets on
+open paths 13, named. patch_L510_1_piece_c_orbit_website.py.)
 """
 import contextlib
 import io
@@ -201,6 +205,11 @@ ELEMS = {
     # 2026-10-28 (documentation/COORD_2026_ED138_words_20261028.md in the
     # orrery). A stand-in for the fake Horizons, never served.
     '2026 ED138': (42.948, 0.14174),
+    # L-510, 2026-11-04: piece C of C/2025 K1, drawn as an orbit by
+    # JPL's database e since that day. a from the orrery's period
+    # (100,000 years), e from that a and its plan's perihelion
+    # distance (49,948,760 km). A stand-in, never served.
+    'C/2025 K1-C': (2154.0, 0.99984),
 }
 
 
@@ -529,8 +538,11 @@ def main():
 
         # --- L-443 build B part 2: a comet on an open path is a path ---
         paths = [s for s, o in cfg_by_slug(cfg).items() if o.get('open_path')]
-        check(len(paths) == 14, "L-443 part 2: the config serves 14 comets on "
-              "open paths (%d)" % len(paths))
+        # L-510, 2026-11-04: 13 since piece C of C/2025 K1 is drawn as
+        # an orbit by JPL's database e. The count moves whenever a
+        # comet changes side, so the check names them.
+        check(len(paths) == 13, "L-443 part 2: the config serves 13 comets on "
+              "open paths (%d: %s)" % (len(paths), ", ".join(sorted(paths))))
         bad = [s for s in paths if not (objs.get(s, {}).get('osculating') is None
                                         and objs.get(s, {}).get('positions')
                                         and objs.get(s, {}).get('open_path') is True
