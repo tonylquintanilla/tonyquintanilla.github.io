@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** November 03, 2026 by `module_atlas.py`  
+**Generated:** November 05, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -11,8 +11,8 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 51  
-**Total Lines of Code (non-blank):** 28,518  
-**Total Public Functions/Classes:** 451
+**Total Lines of Code (non-blank):** 29,098  
+**Total Public Functions/Classes:** 461
 
 ## Classification Coverage
 
@@ -43,7 +43,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `presentation.py` | Layout, axes, colors, title, and layer ordering. (229 lines) |
+| `presentation.py` | Layout, axes, colors, title, and layer ordering. (243 lines) |
 | `render_events.py` | Perihelion and event_link markers. (20 lines) |
 | `render_objects.py` | Object markers, center marker, and labels. (63 lines) |
 | `render_orbits.py` | Osculating (and mean-elements) conics. (207 lines) |
@@ -74,7 +74,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `cache_reader.py` | Reads the served gallery cache. (73 lines) |
-| `gallery_cache_builder.py` | - standalone nightly builder for the Paloma's Orrery web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool. (2,782 lines) |
+| `gallery_cache_builder.py` | - standalone nightly builder for the Paloma's Orrery web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool. (2,805 lines) |
 
 ---
 
@@ -115,7 +115,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (871 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (808 lines) |
-| `mirror_objects.py` | - write each served object's identity, description and NASA link into data/objects_config.json from the orrery's objects export, and name every difference it finds. (294 lines) |
+| `mirror_objects.py` | - write each served object's identity, description and NASA link into data/objects_config.json from the orrery's objects export, and name every difference it finds. (494 lines) |
 | `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (837 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (205 lines) |
 | `pull_drawings.py` | - copy the orrery's stored drawings into the gallery, and record the SHA they came from. (205 lines) |
@@ -124,9 +124,9 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (131 lines) |
 | `test_drawn_orbit.py` | - an orbit whose period is taken around the solar system's barycentre is drawn around the barycentre, moved to where the barycentre sits seen from the Sun; and every way of getting that wrong is caught (L-431, build 3). (244 lines) |
-| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (1,881 lines) |
+| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (2,018 lines) |
 | `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (315 lines) |
-| `test_mirror_objects.py` | - tools/mirror_objects.py does what it says, on fixtures where each refusal and each kind of write must happen, and then on the real config. (249 lines) |
+| `test_mirror_objects.py` | - tools/mirror_objects.py does what it says, on fixtures where each refusal and each kind of write must happen, and then on the real config. (455 lines) |
 | `test_pull_failures.py` | - a pull that cannot fetch fails by name, writes nothing, and the mirror after it does not run; and proof that this check can fail. (355 lines) |
 
 ---

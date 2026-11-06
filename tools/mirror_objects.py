@@ -64,6 +64,19 @@ WHAT IT WRITES, PER LINKED OBJECT
                   fetches it as it fetches a spacecraft. Absent from the
                   export for every other body, and nothing is written then.
                   Inserted likewise
+    mission_end   an ended mission's end day, 'YYYY-MM-DD', the day the
+                  agency's own page says it ended (L-507, more voyages):
+                  the room's text box prints it. Absent from the export
+                  for every other body, and nothing is written then.
+                  Inserted likewise
+    end_note      an ended mission's sentence on what became of the craft
+                  (the Pioneers still fly), which the text box prints after
+                  its opening (L-507). Absent likewise; inserted likewise
+    cutoff_note   where the orrery cuts a path short of JPL's data
+                  (Akatsuki: cut on 2024-04-26, the last day JPL's
+                  solution is fitted to tracking), the words after the
+                  box's end day saying where the path is drawn to and why
+                  (L-507). Absent likewise; inserted likewise
 
     Every change is printed, field by field, with the old and the new
     value, so a fix is reported and not only made (Tony's ruling,
@@ -155,6 +168,9 @@ search box to look in.)
 Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5 (L-510:
 a body the orrery moves across e = 1 follows by itself, both ways; see
 WHEN A BODY CHANGES SIDE. patch_L510_3_mirror_follows_e_rule.py.)
+Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5 (L-507,
+more voyages: an ended mission's mission_end, end_note and cutoff_note
+are copied.)
 """
 
 import json
@@ -170,7 +186,7 @@ EXPORT = os.path.join("data", "objects_export.json")
 ROOM = "solar-system"
 REPLACED = ("name", "horizons_id", "id_type")
 INSERTED = ("description", "info_url", "period", "path", "open_path",
-            "horizons_name")
+            "horizons_name", "mission_end", "end_note", "cutoff_note")
 MIN_SCHEMA = 2
 
 # L-443 build B: what the config holds of a spacecraft's path plan -- what

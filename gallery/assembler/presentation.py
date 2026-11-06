@@ -27,6 +27,9 @@ then ATLAS (C/2024 G3) goldenrod, the one white comet, by Tony's ruling:
 Module updated: November 2, 2026 with Anthropic's Claude Opus 5.5 (L-507,
 historical missions: Galileo's and Cassini's colours, the orrery's, with
 Galileo's white made goldenrod by the same rule.)
+Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5 (L-507,
+more voyages: Pioneer 10's, Pioneer 11's, Rosetta's, Akatsuki's and
+DART's colours, the orrery's, with Rosetta's white made goldenrod.)
 
 Role: rendering
 Domain: assembler
@@ -101,6 +104,17 @@ _COLORS = {
     # is gold for contrast. A first choice for Tony's phone look.
     "galileo": "goldenrod",
     "cassini": "green",
+    # L-507, more voyages, 2026-11-05: the next five, the orrery's own
+    # colours by the same method (color_map in constants_new.py, by each
+    # entry's color_key, orrery fb0a8dce): Pioneer 10 red, Pioneer 11
+    # green, Akatsuki cyan, DART magenta; Rosetta goldenrod, not the
+    # orrery's white, by the same rule of 2026-10-26. A first choice for
+    # Tony's phone look.
+    "pioneer_10": "red",
+    "pioneer_11": "green",
+    "rosetta": "goldenrod",
+    "akatsuki": "cyan",
+    "dart": "magenta",
     # L-443 build B part 2, 2026-10-26: the fourteen comets on open paths,
     # in the orrery's own colours (color_map in constants_new.py, by each
     # entry's color_key, orrery 5398439). ATLAS (C/2024 G3) was the

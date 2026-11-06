@@ -33,6 +33,9 @@ Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5 (L-510:
 a body moved across e = 1 is followed both ways, on fixtures and on the
 real config, with three planted faults; a side change over a hand-set
 entry is refused. patch_L510_3_mirror_follows_e_rule.py.)
+Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5 (L-507,
+more voyages: an ended mission's mission_end and end_note are copied, and
+written for no body without them.)
 """
 
 import json
@@ -221,6 +224,23 @@ def cases():
     check(not failures10 and by10["apophis"].get("horizons_name") == "99942 Apophis"
           and "horizons_name" not in by10["mars"],
           "JPL's name was not copied, or was written for a body without one")
+
+    # L-507, more voyages: an ended mission's end day and its end_note are
+    # copied, for the text box, and written for no body the export gives
+    # none.
+    ex11 = json.loads(json.dumps(ex8))
+    ex11["objects"]["apophis"]["mission_end"] = "2025-09-18"
+    ex11["objects"]["apophis"]["end_note"] = "Lost in April 2024."
+    ex11["objects"]["apophis"]["cutoff_note"] = "Cut on 23 July."
+    edits11, _c11, failures11, _l11 = mo.plan(cfg4, ex11)
+    by11 = {o["slug"]: o for o in json.loads(mo.apply(cfg4, edits11))["objects"]}
+    check(not failures11 and by11["apophis"].get("mission_end") == "2025-09-18"
+          and by11["apophis"].get("end_note") == "Lost in April 2024."
+          and by11["apophis"].get("cutoff_note") == "Cut on 23 July."
+          and not any(f in by11["mars"] for f in
+                      ("mission_end", "end_note", "cutoff_note")),
+          "an ended mission's mission_end, end_note or cutoff_note was not "
+          "copied, or was written for a body without one")
 
     # An export older than schema 2 is refused.
     ex7 = json.loads(json.dumps(ex5))
@@ -467,7 +487,9 @@ def main():
           "e = 1 followed both ways, its note rewritten and a person's words "
           "kept, its drawer row left and named, a second run quiet, a "
           "side change over a hand-set entry refused, and three planted "
-          "faults caught (L-510).")
+          "faults caught (L-510); an ended mission's mission_end, end_note "
+          "and cutoff_note copied, and written for no body without them "
+          "(L-507).")
     print("MIRROR OBJECTS SUITE: pass")
     return 0
 

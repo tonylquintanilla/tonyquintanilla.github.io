@@ -2645,6 +2645,12 @@ for _slug in _bodies:
         # label and the name: JPL's (copied by the mirror from the orrery's
         # export) and the Horizons id.
         "horizons_name": (_objs.get(_slug) or {}).get("horizons_name"),
+        # L-507, more voyages: an ended mission's end day and its sentence
+        # on what became of the craft, copied by the mirror from the
+        # orrery's export; the text box prints both.
+        "mission_end": (_objs.get(_slug) or {}).get("mission_end"),
+        "end_note": (_objs.get(_slug) or {}).get("end_note"),
+        "cutoff_note": (_objs.get(_slug) or {}).get("cutoff_note"),
         # 2026-10-26 (Tony: "only spacecraft and comets"): a comet on a
         # closed orbit ticks its farthest planet too, so the page needs to
         # know which bodies are comets.
@@ -2804,6 +2810,48 @@ const ENDED_OPENING = function (day) {
     return "This mission ended on " + day + ". The marker is where it was that day.";
 };
 const ENDED_DISTANCE_WORDS = " on its last day";
+// L-507, more voyages: Tony's ruling of 2026-11-05 for a mission that
+// ended after JPL's positions stop (Akatsuki: JAXA ended it on 18
+// September 2025, JPL's data stops on 24 August): "The path is clipped to
+// JPL's last day (Aug 24, 2025) and the marker goes there. The box's end
+// date comes from mission_end and says JPL's positions stop earlier."
+// Words in documentation/WORDS_L507_more_voyages_20261105.md in the
+// orrery, his to approve.
+// Tony, 2026-11-05, on Akatsuki's cutoff: "Box wording that describes
+// what is drawn and does not certify JPL's accuracy". Where the orrery
+// cuts the path (path_cutoff), its cutoff_note says where the path is
+// drawn to and why, in Tony's words, and follows the end day in the same
+// bullet; without one, the sentence names the last day drawn.
+const ENDED_EARLY_OPENING = function (day, last, note) {
+    return "This mission ended on " + day + ". " + (note ? note :
+        "The path is drawn to " + last + ", and the marker is where it " +
+        "was that day.");
+};
+const ENDED_EARLY_DISTANCE_WORDS = " on the last day drawn";
+
+// L-507, more voyages: an ended mission's end day, from the orrery's
+// mission_end ('YYYY-MM-DD', copied by the objects mirror), as the box
+// prints a day; null where the orrery sets none.
+function solarSystemMissionEndDay(b) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String((b || {}).mission_end || ""));
+    if (!m) { return null; }
+    return solarSystemDay(new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])));
+}
+
+// L-507, more voyages: true where the mission ended after the served
+// path's last day -- the path stops before the mission did (Akatsuki: the
+// orrery cuts it where JPL's solution ends), so the marker is on the last
+// day drawn and not on the day the mission ended.
+// Galileo's and Cassini's paths end on their mission_end day, so false.
+function solarSystemEndedEarly(b, meta) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String((b || {}).mission_end || ""));
+    const jd = (meta || {}).path_end_jd;
+    if (!m || typeof jd !== "number" || !isFinite(jd)) { return false; }
+    const last = new Date(Math.round((jd - 2440587.5) * 86400000));
+    const lastDay = Date.UTC(last.getUTCFullYear(), last.getUTCMonth(),
+                             last.getUTCDate());
+    return Date.UTC(+m[1], +m[2] - 1, +m[3]) > lastDay;
+}
 const ENDED_PATH_WORDS = "Its path is solid all the way, since all of it " +
     "was flown, from ";
 const SPACECRAFT_DATES_WORDS = "Its path covers the mission's own dates, " +
@@ -2837,10 +2885,14 @@ function spacecraftSourceLine(b, meta) {
         src.query_target + ". Positions " + centre +
         // L-507: an ended mission's path stops on the day it ended
         // (mission_end), which for Galileo is before JPL's data stops.
+        // Akatsuki's path stops before its mission did, so its line says
+        // only that it is the last day drawn.
         (from && to ? ", from " + from + " UTC to " + to + " UTC" +
-                      (comet ? "" : meta.ended === true
-                          ? ", to the day the mission ended"
-                          : ", as far as JPL's data runs") : "") +
+                      (comet ? "" : meta.ended !== true
+                          ? ", as far as JPL's data runs"
+                          : solarSystemEndedEarly(b, meta)
+                          ? ", to the last day drawn"
+                          : ", to the day the mission ended") : "") +
         (got ? ", retrieved " + got + " UTC" : "") + "." +
         (step ? " " + step + (comet ? ", closer together around its " +
                                        "perihelion" :
@@ -3189,15 +3241,29 @@ const EXHIBITS = {
                         // L-507: a mission whose served path ended before
                         // the minute shown (render_spacecraft marks it).
                         const ended = sc.ended === true && !comet;
+                        // L-507, more voyages: the day the mission ended is
+                        // its mission_end where the orrery sets one; where
+                        // that is after JPL's last day (Akatsuki), the
+                        // marker is on JPL's last day and the box says so
+                        // (solarSystemEndedEarly).
+                        const early = ended && solarSystemEndedEarly(b, sc);
+                        const endDay = (ended && solarSystemMissionEndDay(b)) || ends;
                         if (ended && ends) {
-                            lines.push(bullet(solarSystemSoftWrap(ENDED_OPENING(ends), 60)));
+                            lines.push(bullet(solarSystemSoftWrap(
+                                early ? ENDED_EARLY_OPENING(endDay, ends,
+                                            typeof b.cutoff_note === "string" ? b.cutoff_note : "")
+                                      : ENDED_OPENING(endDay), 60)));
+                            if (typeof b.end_note === "string" && b.end_note) {
+                                lines.push(bullet(solarSystemSoftWrap(b.end_note, 60)));
+                            }
                         }
                         const dist = SolarSystemFigures.pathDistanceLine(
                             { x: t.x[0], y: t.y[0], z: t.z[0] },
                             sc.interp_err_km, GalleryFeatures._KM_PER_AU);
                         if (dist.line) {
                             lines.push(bullet(solarSystemSoftWrap(
-                                dist.line + (ended ? ENDED_DISTANCE_WORDS : ""), 60)));
+                                dist.line + (early ? ENDED_EARLY_DISTANCE_WORDS :
+                                             ended ? ENDED_DISTANCE_WORDS : ""), 60)));
                             lines.push(bullet(solarSystemSoftWrap(dist.note, 60)));
                         } else {
                             warnings.push(label + ": no distance shown -- " + dist.why);

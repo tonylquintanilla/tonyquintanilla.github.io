@@ -91,6 +91,14 @@
 // solid with its marker on its last served point, its five-line box
 // opening with the day it ended, its source line, its companions and
 // Cassini's, and Reset; section 21 finds the new group in its place.
+// Updated November 5, 2026 with Anthropic's Claude Opus 5.5 (L-507, more
+// voyages): section 20b finds the seven historical missions in launch
+// order, those served; Pioneer 10's six-line box with its still-flying
+// sentence after the opening; Akatsuki's, cut on the last day JPL's
+// solution is fitted to tracking, opening with its own end day and its
+// cutoff sentence (which names the marker's day), then its end sentence,
+// its distance "on the last day drawn" and its source line "to the last
+// day drawn"; and each one's companion by its plan.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -530,7 +538,12 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
        "the Historical missions group is not listed, folded, right after the twelve spacecraft");
     await fold("historical_missions");
     const past = E("ssDrawer.rows.filter(r => r.group === 'historical_missions' && !SolarSystemDrawer.isGroup(r)).map(r => r.key).join(',')");
-    ok(past === "galileo,cassini", "the historical missions are not Galileo then Cassini: " + past);
+    // L-507, more voyages: the seven in launch order, those the payload
+    // serves (a row the cache does not hold yet is left out by the room).
+    const launchOrder = ["pioneer_10", "pioneer_11", "galileo", "cassini",
+                         "rosetta", "akatsuki", "dart"].filter(s => data.bodies[s]);
+    ok(past === launchOrder.join(","),
+       "the historical missions are not in launch order: " + past);
     await pick("galileo");
     const gt = E("sunPlotDiv.data").filter(t => t.legendgroup === "galileo");
     const flown = gt.filter(t => t.meta && t.meta.path_part === "flown");
@@ -565,6 +578,64 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     if (data.bodies.cassini) {
       ok(E("JSON.stringify(ssDrawer.companions.cassini)") === '["venus","earth","jupiter","saturn"]',
          "Cassini's companions: " + E("JSON.stringify(ssDrawer.companions.cassini)"));
+    }
+    // L-507, more voyages: an ended mission's box, read from its marker.
+    // [box lines joined, source line, the marker's last-day, mission_end]
+    const endedBox = function (slug) {
+      const m = E("sunPlotDiv.data").find(t => t.legendgroup === slug && t.meta &&
+                                                t.meta.label_target === true);
+      if (!m) { return null; }
+      const ls = m.text[0].split(/<br[^>]*>/);
+      return { lines: ls, joined: ls.join(" ").replace(/<br soft>/g, " "),
+               bullets: ls.filter(l => l.indexOf("&#8226; ") === 0).length,
+               source: m.meta.source || "", ended: m.meta.ended === true,
+               last: solarDay(m.meta.path_end_jd) };
+    };
+    // A craft that flew on (Tony, 2026-11-05: "A. but indicate the craft
+    // is still flying but not tracked"): its end_note right after the
+    // opening, so six bullets; its source line "to the day the mission
+    // ended". The sentence is read from the payload, the orrery's.
+    if (data.bodies.pioneer_10 && data.bodies.pioneer_10.end_note) {
+      await pick("pioneer_10");
+      const p = endedBox("pioneer_10");
+      const note = "&#8226; " + data.bodies.pioneer_10.end_note;
+      ok(p && p.ended && p.bullets === 6 &&
+         p.joined.indexOf("&#8226; This mission ended on " + p.last +
+                          ". The marker is where it was that day. " + note) >= 0 &&
+         / on its last day &#8226; /.test(p.joined) &&
+         p.source.indexOf("to the day the mission ended") > 0,
+         "Pioneer 10's box does not open with its end and say it still flies: " +
+         (p ? p.joined.slice(0, 400) : "no marker"));
+      ok(E("JSON.stringify(ssDrawer.companions.pioneer_10)").indexOf('"jupiter"') >= 0,
+         "Pioneer 10's companions do not include Jupiter, its flyby: " +
+         E("JSON.stringify(ssDrawer.companions.pioneer_10)"));
+    }
+    // A mission whose path stops before it ended (Akatsuki, cut on the
+    // last day JPL's solution is fitted to tracking; Tony, 2026-11-05):
+    // the opening is its mission_end day and then the orrery's cutoff_note,
+    // which names the marker's day; then its end_note, so six bullets; the
+    // distance is "on the last day drawn", and the source line says "to
+    // the last day drawn", neither "to the day the mission ended" nor "as
+    // far as JPL's data runs".
+    if (data.bodies.akatsuki && data.bodies.akatsuki.mission_end) {
+      await pick("akatsuki");
+      const a = endedBox("akatsuki");
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data.bodies.akatsuki.mission_end);
+      const endDay = m ? solarDay(Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000 + 2440587.5) : "?";
+      ok(a && a.ended && a.bullets === 6 && endDay !== a.last &&
+         data.bodies.akatsuki.cutoff_note.indexOf(a.last) >= 0 &&
+         a.joined.indexOf("&#8226; This mission ended on " + endDay + ". " +
+                          data.bodies.akatsuki.cutoff_note + " &#8226; " +
+                          data.bodies.akatsuki.end_note) >= 0 &&
+         / on the last day drawn &#8226; /.test(a.joined) &&
+         a.source.indexOf(", to the last day drawn") > 0 &&
+         a.source.indexOf("as far as JPL's data runs") < 0 &&
+         a.source.indexOf("to the day the mission ended") < 0,
+         "Akatsuki's box does not give its end, its cutoff and its note: " +
+         (a ? a.joined.slice(0, 420) + " | " + a.source.slice(0, 200) : "no marker"));
+      ok(E("JSON.stringify(ssDrawer.companions.akatsuki)").indexOf('"venus"') >= 0,
+         "Akatsuki's companions do not include Venus, its arrival: " +
+         E("JSON.stringify(ssDrawer.companions.akatsuki)"));
     }
     await click(d.getElementById("sun-drawer-all"));
     ok(order() === "earth" && !E("ssDrawer.folds.historical_missions"),

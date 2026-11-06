@@ -84,6 +84,15 @@
 // distance there "on its last day"; the check is shown failing on two
 // planted cases (a path running past its end, one stopped short), and the
 // page is held to its ended text box.
+// Updated November 5, 2026 with Anthropic's Claude Opus 5.5 (L-507, more
+// voyages): part 7 holds an ended mission's mission_end and end_note -- the
+// path never past mission_end; a mission that ended after JPL's positions
+// stop (Akatsuki, cut where JPL's solution ends) printed "on the last day
+// drawn" with its end day; a cutoff_note only on a path cut short, and
+// naming the path's last day as the room prints it; a still-flying
+// mission serving none of the three -- shown failing on five planted
+// cases, and the page held to its early opening, its cutoff_note and its
+// end_note.
 // Updated October 29, 2026 with Anthropic's Claude Opus 5.5 (L-399): a
 // small body's own uncertainty, JPL's 3-sigma from the vector table 2xr,
 // served by the cache builder as "position_uncertainty" on its cached
@@ -745,6 +754,62 @@ if (!endedIssue({ end: "2003-09-30 12:00" }, { end: "2003-09-21" }) ||
     endedIssue({ end: "2003-09-21 00:01" }, { end: "2003-09-21" })) {
   failures.push("the ended mission's check cannot fail, or fails a right one");
 }
+// L-507, more voyages: an ended mission's mission_end and end_note, as
+// the mirror copies them. The path never runs past mission_end; where it
+// stops short (JPL's positions stop sooner: Akatsuki) the box must say so,
+// which the page does when the day is later (solarSystemEndedEarly); an
+// end_note is a sentence. Returns [what is wrong, early or not].
+// A 'YYYY-MM-DD' day as the room prints it ("26 April 2024").
+function printedDay(ymd) {
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+                  "August", "September", "October", "November", "December"];
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd));
+  return m ? (+m[3]) + " " + MONTHS[+m[2] - 1] + " " + m[1] : String(ymd);
+}
+function missionEndIssue(o, span) {
+  const me = o.mission_end;
+  if (me === undefined) {
+    return [o.end_note === undefined ? null :
+            "it serves an end_note with no mission_end", false];
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(me))) {
+    return ["its mission_end " + JSON.stringify(me) + " is not YYYY-MM-DD", false];
+  }
+  if (o.end_note !== undefined && (typeof o.end_note !== "string" || !o.end_note.trim())) {
+    return ["its end_note is not a sentence", false];
+  }
+  if (span.end > me) {
+    return ["its path runs to " + span.end + ", past its mission_end, " + me, false];
+  }
+  // A cutoff_note says where a path is drawn to before its mission ended,
+  // and why, so it belongs only to such a path (Akatsuki), and the day it
+  // names must be the path's last day as the room prints it.
+  if (o.cutoff_note !== undefined && !(span.end < me)) {
+    return ["it serves a cutoff_note but its path reaches its mission_end", false];
+  }
+  if (o.cutoff_note !== undefined && o.cutoff_note.indexOf(printedDay(span.end)) < 0) {
+    return ["its cutoff_note does not name its path's last day, " + printedDay(span.end), false];
+  }
+  return [null, span.end < me];
+}
+// Shown failing once: a path running past its mission_end, a typed
+// string that is not a day, and an end_note with no mission_end; and
+// Akatsuki's case (JPL's positions stop before the mission did) read as
+// early, Galileo's as not.
+if (!missionEndIssue({ mission_end: "2003-09-21" }, { end: "2003-09-30" })[0] ||
+    !missionEndIssue({ mission_end: "Sept 2003" }, { end: "2003-09-21" })[0] ||
+    !missionEndIssue({ end_note: "Still flying." }, { end: "2003-09-21" })[0] ||
+    !missionEndIssue({ mission_end: "2003-09-21", cutoff_note: "Cut." },
+                     { end: "2003-09-21" })[0] ||
+    !missionEndIssue({ mission_end: "2025-09-18", cutoff_note: "Drawn to 23 July 2025." },
+                     { end: "2024-04-26" })[0] ||
+    missionEndIssue({ mission_end: "2025-09-18", cutoff_note: "Drawn to 26 April 2024." },
+                    { end: "2024-04-26" }).join() !== ",true" ||
+    missionEndIssue({ mission_end: "2003-09-21" }, { end: "2003-09-21" }).join() !== ",false" ||
+    missionEndIssue({ mission_end: "2025-09-18", end_note: "Lost." },
+                    { end: "2025-08-23" }).join() !== ",true") {
+  failures.push("the mission_end check cannot fail, or fails a right one (L-507)");
+}
 const craftTable = [];
 crafts.forEach(function (slug) {
   const o = objs[slug] || {};
@@ -781,8 +846,17 @@ crafts.forEach(function (slug) {
     const r = k < 0 ? { why: "its positions file is empty" } :
       SSF.pathDistanceLine({ x: d.x[k] / kmPerAu, y: d.y[k] / kmPerAu, z: d.z[k] / kmPerAu }, 0, kmPerAu);
     if (!r.line) { failures.push(slug + ": no line -- " + r.why); return; }
-    craftTable.push([slug, r.line + " on its last day, " + span.end + " (ended)"]);
+    const me = missionEndIssue(o, span);
+    if (me[0]) { failures.push(slug + ": " + me[0]); return; }
+    craftTable.push([slug, r.line + (me[1]
+      ? " on the last day drawn, " + span.end + " (ended " + o.mission_end + ")"
+      : " on its last day, " + span.end + " (ended)") +
+      (o.end_note ? "; then: " + o.end_note : "")]);
     return;
+  }
+  // A mission still flying serves no mission_end or end_note.
+  if (o.mission_end !== undefined || o.end_note !== undefined || o.cutoff_note !== undefined) {
+    failures.push(slug + ": serves a mission_end, end_note or cutoff_note but its path has not ended");
   }
   if (!p) { failures.push(slug + ": the served cache has no as_of_today for it"); return; }
   // At a served point the working-out has nothing to bridge.
@@ -800,8 +874,22 @@ crafts.forEach(function (slug) {
    "the page's driver does not mark a comet on an open path"],
   ["const ended = sc.ended === true && !comet;",
    "the page does not give an ended mission its own text box (L-507)"],
-  ["dist.line + (ended ? ENDED_DISTANCE_WORDS : \"\"), 60)));",
-   "the page does not say an ended mission's distance is on its last day (L-507)"]
+  ["ended ? ENDED_DISTANCE_WORDS : \"\"), 60)));",
+   "the page does not say an ended mission's distance is on its last day (L-507)"],
+  ["const early = ended && solarSystemEndedEarly(b, sc);",
+   "the page does not tell a mission that ended after JPL's data stops (L-507, more voyages)"],
+  ["early ? ENDED_EARLY_OPENING(endDay, ends,",
+   "the page does not open such a mission's box with its own end day and the last day drawn (L-507, more voyages)"],
+  ["lines.push(bullet(solarSystemSoftWrap(b.end_note, 60)));",
+   "the page does not print an ended mission's end_note (L-507, more voyages)"],
+  ['typeof b.cutoff_note === "string" ? b.cutoff_note : "")',
+   "the page does not print a cut path's cutoff_note in its opening (L-507, more voyages)"],
+  ['"cutoff_note": (_objs.get(_slug) or {}).get("cutoff_note"),',
+   "the page's driver does not read the cutoff_note (L-507, more voyages)"],
+  ['"end_note": (_objs.get(_slug) or {}).get("end_note"),',
+   "the page's driver does not read the end_note (L-507, more voyages)"],
+  ['"mission_end": (_objs.get(_slug) or {}).get("mission_end"),',
+   "the page's driver does not read the mission_end (L-507, more voyages)"]
 ].forEach(function (pair) {
   if (page.indexOf(pair[0]) < 0) { failures.push(pair[1]); }
 });
