@@ -207,6 +207,13 @@ Module updated: October 31, 2026 with Anthropic's Claude Opus 5.5
 (L-485, the gallery half: --night and night_pass(), the offline pass with
 the Module atlas skipped by name and UNREACHABLE counted red, for the
 night form of the Daily Run.)
+Module updated: November 6, 2026 with Anthropic's Claude Opus 5.5
+(L-423, the website's checks: the live check's positions files are read
+from data/objects_config.json by the cache builder's is_path_body() --
+every spacecraft and every comet on an open path -- instead of typed,
+so a body that crosses e = 1 changes the list by itself; a config that
+cannot give the list turns the check red; the "Served list" checker
+runs tools/test_served_list.py and gates, with five planted faults.)
 """
 
 import hashlib
@@ -618,6 +625,15 @@ OFFLINE_CHECKERS = [
     ("Daily run steps", "python",
      ["daily_run.py", "--check"], ".", None, False),
 
+    # L-423 (2026-11-06): the live check's positions files are read from
+    # the config, not typed. This holds that list to the config, holds
+    # the typed list free of positions files, and plants five faults --
+    # a comet joining and one leaving, two configs that cannot give a
+    # list, and a 404 on Pioneer 10's file -- each of which must be
+    # caught. Fetches nothing. Gates.
+    ("Served list", "python",
+     ["tools/test_served_list.py"], ".", None, False),
+
     # L-237: this used to call the test directly and print FAIL every
     # run, which made a real regression indistinguishable from the known
     # one. The pin runs the same test and compares its five verdicts, and
@@ -647,7 +663,6 @@ SERVED_FILES = [
     "gallery/assembler/__init__.py",
     "data/solar-system/coverage_index.json",
     "data/solar-system/feature_configs.json",
-    "data/solar-system/positions/voyager_1.json",
     # L-339 (2026-09-18): three files the browser fetches that nothing
     # compared against the working copy. The page loads nav_cluster.js
     # and arrival.js with script tags and reads objects_config.json at
@@ -690,39 +705,60 @@ SERVED_FILES = [
     "gallery/drawer_order.js",
     # L-497 (2026-10-27): likewise, the one text box's words.
     "gallery/text_box.js",
-    # L-443 build B (2026-10-25): the Solar System room fetches each
-    # spacecraft's positions file before it draws (Voyager 1's above).
-    "data/solar-system/positions/voyager_2.json",
-    "data/solar-system/positions/new_horizons.json",
-    "data/solar-system/positions/juno.json",
-    "data/solar-system/positions/osiris_apex.json",
-    "data/solar-system/positions/parker_solar_probe.json",
-    "data/solar-system/positions/bepicolombo.json",
-    "data/solar-system/positions/solar_orbiter.json",
-    "data/solar-system/positions/lucy.json",
-    "data/solar-system/positions/juice.json",
-    "data/solar-system/positions/psyche_spacecraft.json",
-    "data/solar-system/positions/europa_clipper.json",
-    # L-443 build B part 2 (2026-10-26): and each comet on an open path's.
-    "data/solar-system/positions/wierzchos.json",
-    "data/solar-system/positions/west.json",
-    "data/solar-system/positions/mcnaught.json",
-    "data/solar-system/positions/tsuchinshan_atlas.json",
-    "data/solar-system/positions/atlas_2024_g3.json",
-    "data/solar-system/positions/c2025_k1.json",
-    "data/solar-system/positions/c2025_k1_b.json",
-    "data/solar-system/positions/c2025_k1_c.json",
-    "data/solar-system/positions/c2025_k1_d.json",
-    "data/solar-system/positions/panstarrs_2025_r3.json",
-    "data/solar-system/positions/borisov_2025_v1.json",
-    "data/solar-system/positions/oumuamua.json",
-    "data/solar-system/positions/borisov_2i.json",
-    "data/solar-system/positions/atlas_3i.json",
+    # The positions files are not typed here (L-423, 2026-11-06).
+    # positions_files() below reads them from the config. The typed list
+    # had kept piece C of C/2025 K1's file after the comet became an
+    # orbit on 2026-11-04 (a false "not served" on 2026-11-05) and had
+    # left out the seven ended missions' files.
 ]
 
 # A served .py or .json that comes back as an HTML page is a 404 wearing
 # a 200, which is what a Jekyll-shaped failure looks like from outside.
 HTML_TELLS = (b"<!DOCTYPE html", b"<!doctype html", b"<html")
+
+
+def positions_files(root):
+    """(files, problem) -- the positions files the Solar System room
+    fetches, read from the config rather than typed (L-423, 2026-11-06).
+
+    Which bodies are drawn from a positions file is a rule with one home,
+    the cache builder's is_path_body(): a spacecraft, or a comet the
+    config marks open_path (by JPL's database e, L-510). The builder
+    writes each such body's file as positions/<slug>.json, and the page
+    asks the same question before it draws (solarSystemPositionFiles in
+    interactive.html). So a body that crosses e = 1 changes this list
+    by itself.
+
+    files is in the config's order. problem is None, or says why no
+    list could be made: a config that cannot be read, a builder that
+    cannot be imported, or a config naming no such body. A list that
+    cannot be made is a blind spot, and check_served turns red on it
+    rather than fetching the typed files alone and passing."""
+    try:
+        with open(os.path.join(root, PROBE), "rb") as handle:
+            config = json.loads(handle.read().decode("utf-8"))
+    except (OSError, ValueError) as exc:
+        return [], "could not read %s: %s" % (PROBE, exc)
+    tools = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         "tools")
+    if tools not in sys.path:
+        sys.path.insert(0, tools)
+    try:
+        from gallery_cache_builder import is_path_body
+    except Exception as exc:                      # a missing dependency
+        return [], ("could not import the cache builder's is_path_body: "
+                    "%s" % exc)
+    objects = config.get("objects") if isinstance(config, dict) else None
+    if isinstance(objects, dict):
+        objects = list(objects.values())
+    files = ["data/solar-system/positions/%s.json" % obj["slug"]
+             for obj in (objects or [])
+             if isinstance(obj, dict) and obj.get("slug")
+             and is_path_body(obj)]
+    if not files:
+        return [], ("%s names no spacecraft and no comet on an open "
+                    "path" % PROBE)
+    return files, None
 
 
 # ============================================================
@@ -854,15 +890,31 @@ def same_content(left, right):
                                                             b"\n")
 
 
-def check_served(root):
-    """Fetch each critical-path file from the live site and judge it."""
+def check_served(root, fetch_one=None):
+    """Fetch each critical-path file from the live site and judge it.
+
+    The files are SERVED_FILES, typed, and the positions files, read
+    from the config (positions_files, L-423). fetch_one stands in for
+    fetch() in tools/test_served_list.py's planted cases; the live run
+    passes nothing."""
+    fetch_one = fetch_one or fetch
+    positions, problem = positions_files(root)
+    if problem:
+        print("")
+        print("  the positions files: %s" % problem)
+        return ("FAIL", "no list of positions files could be made: %s. "
+                "A list that cannot be made is not a short list, so "
+                "nothing was fetched." % problem)
+    names = SERVED_FILES + positions
     print("")
-    print("  fetching %d files from %s" % (len(SERVED_FILES), SITE))
+    print("  fetching %d files from %s (%d typed, %d positions files "
+          "read from %s)" % (len(names), SITE, len(SERVED_FILES),
+                              len(positions), PROBE))
 
     results = []
     unreachable = 0
-    for relative in SERVED_FILES:
-        status, body, error = fetch(SITE + relative)
+    for relative in names:
+        status, body, error = fetch_one(SITE + relative)
         local_path = os.path.join(root, relative.replace("/", os.sep))
         local = None
         if os.path.isfile(local_path):

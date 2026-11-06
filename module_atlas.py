@@ -150,6 +150,7 @@ ROLE_MAP = {
     'test_guestbook_updater':              'devtool',
     'test_mirror_objects':                 'devtool',
     'test_pull_failures':                  'devtool',
+    'test_served_list':                    'devtool',
 }
 # ROLE-MAP:END
 
