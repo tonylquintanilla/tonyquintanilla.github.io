@@ -1611,13 +1611,13 @@
     },
     {
       "slug": "pluto", "name": "Pluto", "horizons_id": "999", "id_type": "majorbody",
-      "category": "dwarf_planet", "availability": "analytic", "parent": "sun",
+      "category": "dwarf_planet", "availability": "analytic", "parent": "pluto_barycenter",
       "canonical_center": "@9", "center_slug": "pluto_barycenter", "canonical_frame": "barycenter-relative",
       "trajectory_of": null, "trace_policy": "none", "features": {}
     },
     {
       "slug": "charon", "name": "Charon", "horizons_id": "901", "id_type": "majorbody",
-      "category": "moon", "availability": "analytic", "parent": "pluto",
+      "category": "moon", "availability": "analytic", "parent": "pluto_barycenter",
       "canonical_center": "@9", "center_slug": "pluto_barycenter", "canonical_frame": "barycenter-relative",
       "trajectory_of": null, "trace_policy": "none", "features": {}
     },

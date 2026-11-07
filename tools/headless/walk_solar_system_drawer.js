@@ -99,6 +99,12 @@
 // cutoff sentence (which names the marker's day), then its end sentence,
 // its distance "on the last day drawn" and its source line "to the last
 // day drawn"; and each one's companion by its plan.
+// Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
+// 2a, one drawer): "Centre on <name>" where the room button read "Enter
+// the <name> room"; section 26 walks Not built yet on the tree's centres
+// with none built, the root with no trail line, the Sun's fixed row
+// opening its text box, and the root's ticks kept on leaving by Centre on
+// and put back once on its next opening, Reset then starting fresh.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -176,7 +182,8 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   const expanded = (key) => row(key).getAttribute("aria-expanded") === "true";
   // L-429: a room's button is on its row from the start, no tap needed.
   ok(!inl("center").hidden && !inl("earth").hidden, "a room's button is not on its row on arrival");
-  ok(inl("center").textContent === "Enter the Sun room" && inl("earth").textContent === "Enter the Earth room", "enter words");
+  // L-515 (Tony's ruling 2): "Centre on <name>" where "Enter the <name> room" stood.
+  ok(inl("center").textContent === "Centre on Sun" && inl("earth").textContent === "Centre on Earth", "enter words");
   ok(inl("earth").previousElementSibling === row("earth").querySelector(".go"), "Earth's button not after Go To");
   ok(row("earth").querySelector(".go").textContent === "go to", "the button's word is not go to");
   ok(inl("center").querySelector("a").getAttribute("href") === "interactive.html?exhibit=sun", "Sun room link");
@@ -305,7 +312,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   E("renderSunDrawer()");
   ok(panel("earth").hidden && !inl("earth").hidden, "sideways: the button not on the name's line");
   ok(inl("earth").previousElementSibling === row("earth").querySelector(".go"), "sideways: the button not after Go To");
-  ok(inl("earth").textContent === "Enter the Earth room", "sideways words " + inl("earth").textContent);
+  ok(inl("earth").textContent === "Centre on Earth", "sideways words " + inl("earth").textContent);
   ok(inl("mercury").hidden, "sideways: a closed row shows its button");
   await E("ssSelect(ssIndex('mercury'), true)"); await h.done();
   ok(!inl("earth").hidden && !inl("mercury").hidden && inl("mercury").textContent === "No room or cards yet", "sideways: Mercury's opened row");
@@ -952,6 +959,64 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     ok(fsay.indexOf("The x marks on the three axis lines mark the grid") >= 0 && fsay.indexOf("The ruler at the right") >= 0,
        "the frame note does not say what the x marks and the ruler are");
     await click(d.getElementById("sun-drawer-all")); await h.done();
+  }
+  // 26. L-515 step 2a (one drawer; Tony's rulings 2 and 10 of 2026-11-07).
+  // The root has no trail line. A body that is a centre in the tree with
+  // none built -- worked out here from the config, an object fetched
+  // around it or features of its own -- reads "Not built yet" on its row,
+  // words and no link; a body that is no centre shows nothing there. The
+  // Sun's fixed row opens its text box. Leaving by Centre on keeps what is
+  // ticked and its order, and the root's next opening in the tab puts it
+  // back, once; Reset then puts back the served opening.
+  {
+    const cfg = JSON.parse(fs.readFileSync(path.join(root, "data", "objects_config.json"), "utf8"));
+    const around = {};
+    cfg.objects.forEach(o => { if (o.center_slug && o.center_slug !== o.slug) around[o.center_slug] = true; });
+    const isCentre = (o) => !!around[o.slug] || !!(o.features && Object.keys(o.features).length);
+    const rooms = E("Object.keys(EXHIBITS)");
+    const rowKeys = E("ssDrawer.rows.filter(r => r.slug && ssIndex(r.key) >= 0).map(r => r.slug)");
+    const notBuilt = cfg.objects.filter(o => isCentre(o) && rooms.indexOf(o.slug) < 0 &&
+                                            rowKeys.indexOf(o.slug) >= 0).map(o => o.slug);
+    ok(notBuilt.length > 0, "the config names no centre without a room, so Not built yet is not walked");
+    notBuilt.forEach(s => {
+      const el = inl(s);
+      ok(!el.hidden && el.textContent === "Not built yet" && !el.querySelector("a"),
+         s + ": a centre not built yet does not read Not built yet on its row: " + el.textContent);
+    });
+    console.log("  Not built yet: " + notBuilt.join(", "));
+    ok(inl("mars").hidden, "Mars, no centre in the tree, shows something on its row");
+    const trailEl = d.getElementById("sun-trail");
+    ok(!trailEl || trailEl.hidden, "the root shows a trail line");
+    await click(d.getElementById("sun-drawer-all"));
+    await name("center");
+    ok(E("sunLabelGroup") === idx("center") && focus() === "center",
+       "the Sun's fixed row's name does not open its text box");
+    await pick("mars"); await pick("jupiter");
+    const keptOrder = order();
+    const a = inl("earth").querySelector("a");
+    a.addEventListener("click", ev => ev.preventDefault());
+    await click(a);
+    const kept = w.sessionStorage.getItem("po_root_ticks");
+    const keptObj = kept ? JSON.parse(kept) : {};
+    ok(!!kept && keptObj.order.join(",") === keptOrder &&
+       keptObj.ticked.slice().sort().join(",") === keptOrder.split(",").sort().join(","),
+       "Centre on did not keep the root's ticks and their order: " + kept + " vs " + keptOrder);
+    const w2 = await h.boot(root, "solar-system", payload, { session: { po_root_ticks: kept } });
+    const E2 = (s) => w2.eval(s);
+    ok(E2("sunGroups.filter(g => g.shown && g.key !== 'center').map(g => g.key).sort().join(',')") ===
+       keptOrder.split(",").sort().join(","),
+       "the root's next opening did not put back what was ticked: " +
+       E2("sunGroups.filter(g => g.shown).map(g => g.key).join(',')"));
+    ok(E2("ssDrawer.order.join(',')") === keptOrder, "the tick order was not put back: " + E2("ssDrawer.order.join(',')"));
+    ok(w2.document.getElementById("sun-drawer-label").textContent === "Jupiter",
+       "the handle does not name the last body ticked on the return");
+    ok(w2.sessionStorage.getItem("po_root_ticks") === null, "the kept ticks were not taken, once");
+    w2.document.getElementById("sun-drawer-all").dispatchEvent(new w2.MouseEvent("click", { bubbles: true }));
+    await h.done();
+    ok(E2("sunGroups.filter(g => g.shown && g.key !== 'center').map(g => g.key).join(',')") === "earth",
+       "Reset after a return does not start fresh: " + E2("sunGroups.filter(g => g.shown).map(g => g.key).join(',')"));
+    // The walk's own page again, as it was.
+    await click(d.getElementById("sun-drawer-all"));
   }
   // 18. L-475: the i panel's last line opens the lobby's About card.
   const last = d.getElementById("info-panel").lastElementChild;

@@ -163,13 +163,24 @@ const rCrust = earthParams.earth_interior.crust.radius.value * R_E_KM / K;
 check("no warnings: every served group has a renderer", out.warnings.length === 0,
       out.warnings.join(" | "));
 check("nothing is named absent", out.absent.length === 0, JSON.stringify(out.absent));
-check("no scene-centre marker survives", !T.some(t => t.legendgroup === "center"));
+// L-515 step 2a (one drawer): the scene-centre marker is kept, once and
+// first, as Earth's fixed row, its box and panel the orrery's words.
+const centreT = T.filter(t => t.legendgroup === "center");
+check("the scene-centre marker is kept once, first, as Earth's fixed row (L-515)",
+      centreT.length === 1 && T[0] === centreT[0] && centreT[0].name === "Earth" &&
+      centreT[0].visible !== "legendonly" && centreT[0].visible !== false,
+      centreT.length + " centre trace(s); first trace " + (T[0] && T[0].legendgroup));
+check("Earth's fixed row carries the orrery's description and link (L-515)",
+      centreT.length === 1 && !!(centreT[0].meta || {}).about &&
+      !!(centreT[0].meta || {}).info_url && (centreT[0].meta || {}).label_target === true &&
+      /Earth/.test(String((centreT[0].text || [""])[0])),
+      JSON.stringify((centreT[0] || {}).meta || {}).slice(0, 200));
 
 const groups = {};
 T.forEach(t => { if (t.legendgroup) (groups[t.legendgroup] = groups[t.legendgroup] || []).push(t); });
 const names = Object.keys(groups);
-check("drawer rows: 17 served (the magnetotail since gallery patch 3) + axis + Sun + terminator + Moon = 21 groups",
-      names.length === 21, names.length + ": " + names.join(", "));
+check("drawer rows: Earth (fixed, L-515) + 17 served (the magnetotail since gallery patch 3) + axis + Sun + terminator + Moon = 22 groups",
+      names.length === 22, names.length + ": " + names.join(", "));
 
 // Arrival policy: what is lit.
 const lit = names.filter(k => groups[k].some(t => t.showlegend === true && t.visible !== "legendonly" && t.visible !== false));

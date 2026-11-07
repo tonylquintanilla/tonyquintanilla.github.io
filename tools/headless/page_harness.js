@@ -13,6 +13,10 @@
 // walk_solar_system_drawer.js require it.
 //
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5.
+// Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
+// 2a: boot's fourth argument, {session}, opens the page with
+// sessionStorage already holding those items, as a tab would after an
+// earlier page kept them.)
 const fs = require("fs"), path = require("path");
 const { JSDOM, ResourceLoader, VirtualConsole } = require("jsdom");
 
@@ -64,7 +68,7 @@ class Loader extends ResourceLoader {
 function done() {
   return new Promise(function (res) { setTimeout(res, 30); });
 }
-async function boot(ROOT, EXHIBIT, PAYLOAD) {
+async function boot(ROOT, EXHIBIT, PAYLOAD, OPTS) {
 errors.length = 0;
 const vc = new VirtualConsole();
 vc.on("jsdomError", function (e) { errors.push("jsdomError: " + (e.stack || e.message)); });
@@ -78,6 +82,10 @@ const dom = new JSDOM(html, {
   pretendToBeVisual: true,
   beforeParse: function (win) {
     const payload = fs.readFileSync(PAYLOAD, "utf8");
+    // L-515 step 2a: a walk may open the page with sessionStorage already
+    // holding what an earlier page in the same tab kept (the root's ticks).
+    const session = (OPTS && OPTS.session) || {};
+    Object.keys(session).forEach(function (k) { win.sessionStorage.setItem(k, session[k]); });
     win.fetch = function (url) {
       const rel = String(url).replace("https://palomasorrery.com/", "").split("?")[0];
       const p = path.join(ROOT, rel);

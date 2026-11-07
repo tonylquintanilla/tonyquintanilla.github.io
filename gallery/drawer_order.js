@@ -48,9 +48,11 @@
 //     shell drawn at the surface or inside it.
 //   - Two shells that begin at the same distance keep their present
 //     order (the order the renderers emit them, which is the config's).
-//   - A row that is not a shell -- the centre body, the Moon, the axis,
-//     the Sun direction, the terminator, a frame shape -- keeps its place
-//     in the list, and the shells fill the other places in order.
+//   - A row that is not a shell -- the axis, the Sun direction, the
+//     terminator, a frame shape -- keeps its place in the list, and the
+//     shells fill the other places in order. Since L-515 step 2a two do
+//     not: the centre's own row goes first, and its children (the Moon)
+//     go after the last shell (placeCentreAndChildren, below).
 //   - A shell whose distance cannot be read keeps its place too, and is
 //     reported by name; it is never guessed.
 //
@@ -65,6 +67,11 @@
 // served radius, so Earth's magnetotail, whose drawn_radius is its width,
 // is placed where it begins as drawn, 30.6 Earth radii, not at 30. The
 // order is unchanged.)
+//
+// Module updated: November 7, 2026 with Anthropic's Claude Opus 5.5
+// (L-515 step 2a, one drawer: a centre's own row first and its children
+// after its shells, placeCentreAndChildren. The shells' order is
+// unchanged.)
 //
 // Role: renderer
 // Domain: gallery
@@ -198,6 +205,36 @@
     return groups;
   }
 
+  // L-515 step 2a (one nested tree; Tony's ruling 2 of 2026-11-07, for
+  // Mars: "Mars, fixed; its shells when built; Phobos; Deimos"). In a
+  // centre's drawer the centre's own row comes first, its shells next in
+  // the order above, then its children -- the bodies fetched around it,
+  // the Moon in Earth's -- in the order opts.children gives, right after
+  // the last shell; any other row keeps its place among them. A child is
+  // not a shell and is not placed by distance: the tree puts it under its
+  // centre, after the centre's own features. opts.centreKey is the
+  // centre's row (the assembler's centre marker, "center"); either may be
+  // absent, and then nothing moves.
+  function placeCentreAndChildren(ordered, opts) {
+    var centreKey = typeof opts.centreKey === "string" ? opts.centreKey : null;
+    var children = Array.isArray(opts.children) ? opts.children : [];
+    var out = ordered.slice();
+    var c = -1;
+    for (var i = 0; i < out.length; i++) { if (out[i].key === centreKey) { c = i; } }
+    if (c > 0) { out.unshift(out.splice(c, 1)[0]); }
+    var kids = [];
+    children.forEach(function (key) {
+      for (var j = 0; j < out.length; j++) {
+        if (out[j].key === key) { kids.push(out.splice(j, 1)[0]); return; }
+      }
+    });
+    if (!kids.length) { return out; }
+    var at = (out.length && out[0].key === centreKey) ? 1 : 0;
+    for (var k = 0; k < out.length; k++) { if (!out[k].keeps_place) { at = k + 1; } }
+    kids.forEach(function (row) { row.child = true; });
+    return out.slice(0, at).concat(kids, out.slice(at));
+  }
+
   // The plan for one room. traces: as the room composed them, before any
   // are cut to the view. features: the payload's served features.
   // Returns:
@@ -277,6 +314,7 @@
     for (var i = 0; i < rows.length; i++) {
       ordered.push(rows[i].keeps_place ? rows[i] : shells[s++]);
     }
+    ordered = placeCentreAndChildren(ordered, opts || {});
     return {
       order: ordered.map(function (r) { return r.key; }),
       rows: ordered,

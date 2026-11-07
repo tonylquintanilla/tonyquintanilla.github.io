@@ -95,6 +95,13 @@
 // search finds groups, section 8b, and two breaks).
 // Updated October 29, 2026 with Anthropic's Claude Opus 5.5 (L-503: a
 // drawing row, the belt's cloud, section 9, and two breaks).
+// Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
+// 2a, one drawer: section 10 -- the plan, the centres, Centre on and Not
+// built yet, the kept ticks -- with four breaks, and the page's wiring).
+//  10. (L-515, Tony's rulings 2 and 10 of 2026-11-07) One drawer: the
+//      centre's fixed row first, groups, bodies or shells by the centre's
+//      kind; Centre on and Not built yet read from the tree; a centre's
+//      children; the root's ticks kept and put back.
 
 "use strict";
 const fs = require("fs");
@@ -124,6 +131,89 @@ const DRAWN = [
   { drawing: "main_belt", "in": "belt", label: "The belt's cloud", find: ["cloud"] },
   { slug: "vesta", "in": "belt" }, { slug: "jupiter" }
 ];
+// 10. L-515 step 2a (one nested tree; Tony's rulings 2 and 10 of
+// 2026-11-07): ONE drawer for every centre. Its plan puts the centre's
+// fixed row first and lists groups, bodies or shells by the centre's kind;
+// a row offers Centre on where a centre is built and Not built yet where a
+// body is a centre in the tree with none built, both read from the config;
+// a centre's children are the objects fetched around it; and the root's
+// ticks are kept and put back, dropping any key that is no row now.
+const TREE_CFG = { objects: [
+  { slug: "sun", center_slug: "sun", features: { a: {} } },
+  { slug: "earth", center_slug: "sun", features: { b: {} } },
+  { slug: "moon", center_slug: "earth" },
+  { slug: "mars", center_slug: "sun" },
+  { slug: "jupiter", center_slug: "sun" },
+  { slug: "io", center_slug: "jupiter" },
+  { slug: "pluto_barycenter", center_slug: "sun" },
+  { slug: "pluto", center_slug: "pluto_barycenter" },
+  { slug: "charon", center_slug: "pluto_barycenter" }
+] };
+function treeCases(SSD) {
+  const fails = [];
+  const want = function (cond, what) { if (!cond) { fails.push(what); } };
+  const keysOf = function (plan) {
+    return plan.map(function (e) { return e.kind + ":" + e.key; }).join();
+  };
+  want(SSD.WORDS.enter("Earth") === "Centre on Earth" &&
+       SSD.WORDS.notBuilt === "Not built yet" &&
+       SSD.WORDS.trailRoot === "Solar system" && SSD.WORDS.trailSep === " > ",
+       "the one drawer's words are not Tony's (L-515): " + SSD.WORDS.enter("Earth"));
+  // A centre of shells: its fixed row first, whatever order it came in.
+  want(keysOf(SSD.rowPlan(null, ["crust", "center", "moon", "axis"])) ===
+       "fixed:center,shell:crust,shell:moon,shell:axis",
+       "a centre of shells does not list its fixed row first, then its shells: " +
+       keysOf(SSD.rowPlan(null, ["crust", "center", "moon", "axis"])));
+  // The root: the Sun fixed, group rows and bodies in served order, a body
+  // the scene did not draw left out, and a drawn group no row names last.
+  const served = SSD.rowsFromServed(GROUPED);
+  const rootPlan = SSD.rowPlan(served, ["center", "earth", "bennu", "eros", "extra"]);
+  want(keysOf(rootPlan) ===
+       "fixed:center,group:group:neo,body:bennu,body:eros,body:earth,body:extra",
+       "the root's plan is not the served rows with the Sun fixed: " + keysOf(rootPlan));
+  const memberOf = function (k) {
+    const e = rootPlan.filter(function (x) { return x.key === k; })[0];
+    return e ? e.member : undefined;
+  };
+  want(memberOf("bennu") === true && memberOf("earth") === false,
+       "a group's member is not marked as one");
+  want(keysOf(SSD.rowPlan(null, ["a", "b"])) === "shell:a,shell:b",
+       "a scene with no centre marker gains a fixed row");
+  // Centres, read from the config.
+  const centres = SSD.centresOf(TREE_CFG);
+  want(centres.join() === "sun,earth,jupiter,pluto_barycenter",
+       "the tree's centres are not the bodies with something served around them: " +
+       centres.join());
+  want(SSD.childrenOf(TREE_CFG, "earth").join() === "moon" &&
+       SSD.childrenOf(TREE_CFG, "pluto_barycenter").join() === "pluto,charon" &&
+       SSD.childrenOf(TREE_CFG, "mars").length === 0 &&
+       SSD.childrenOf(TREE_CFG, "sun").indexOf("sun") < 0,
+       "a centre's children are not the objects fetched around it");
+  const rooms = ["sun", "earth", "solar-system"];
+  want(SSD.centreOffer({ slug: "earth" }, rooms, centres) === "room" &&
+       SSD.centreOffer({ slug: "jupiter" }, rooms, centres) === "notBuilt" &&
+       SSD.centreOffer({ slug: "pluto_barycenter" }, rooms, centres) === "notBuilt" &&
+       SSD.centreOffer({ slug: "mars" }, rooms, centres) === null &&
+       SSD.centreOffer({ key: "group:x" }, rooms, centres) === null,
+       "Centre on and Not built yet are not offered by the tree");
+  // The root's ticks, kept and put back.
+  const rows = SSD.rowsFromServed(ROWS);
+  const kept = SSD.tickMemory({ center: true, earth: true, mars: true, mercury: false },
+                              ["mars", "earth", "mercury"]);
+  const back = SSD.tickRestore(kept, rows);
+  want(!!back && back.ticked.slice().sort().join() === "earth,mars" &&
+       back.order.join() === "mars,earth",
+       "the root's ticks are not put back as kept: " + JSON.stringify(back));
+  const gone = SSD.tickRestore(JSON.stringify({ ticked: ["earth", "ganymede"],
+                                                order: ["ganymede", "earth"] }), rows);
+  want(!!gone && gone.ticked.join() === "earth" && gone.order.join() === "earth",
+       "a kept key that is no row now is not dropped");
+  want(SSD.tickRestore("not json", rows) === null && SSD.tickRestore(null, rows) === null &&
+       SSD.tickRestore(JSON.stringify({ ticked: "earth" }), rows) === null,
+       "text the root did not write is not refused");
+  return fails;
+}
+
 function drawingCases(SSD) {
   const fails = [];
   const want = function (cond, what) { if (!cond) { fails.push(what); } };
@@ -394,11 +484,13 @@ function cases(SSD) {
        SSD.roomFor(rows[2], ["sun", "earth"]) === "earth" &&
        SSD.roomFor(rows[4], ["sun", "earth"]) === null,
        "a room is offered where none exists, or missed where one does");
-  want(SSD.WORDS.enter("Sun") === "Enter the Sun room" &&
+  // L-515 (Tony's ruling 2): "Enter the <name> room" became "Centre on
+  // <name>"; "No room or cards yet" stays for a body that is no centre.
+  want(SSD.WORDS.enter("Sun") === "Centre on Sun" &&
        SSD.WORDS.noRoom === "No room or cards yet",
        "the visitor's words are not Tony's");
   return fails.concat(groupCases(SSD), outsideCases(SSD), companionCases(SSD),
-                      findCases(SSD), drawingCases(SSD));
+                      findCases(SSD), drawingCases(SSD), treeCases(SSD));
 }
 
 function broken(changes) {
@@ -477,6 +569,27 @@ const breaks = [
   ["a drawing row not tickable (L-503)",
    broken({ tickable: function (k) {
      return REAL.tickable(k) && String(k).indexOf("drawing:") !== 0;
+   } })],
+  ["the fixed row listed where it came, not first (L-515)",
+   broken({ rowPlan: function (served, keys) {
+     const plan = REAL.rowPlan(served, keys);
+     const fixed = plan.filter(function (e) { return e.kind === "fixed"; });
+     return plan.filter(function (e) { return e.kind !== "fixed"; }).concat(fixed);
+   } })],
+  ["Not built yet offered on every body with no room (L-515)",
+   broken({ centreOffer: function (row, rooms) {
+     return !row || !row.slug ? null : (REAL.roomFor(row, rooms) ? "room" : "notBuilt");
+   } })],
+  ["a centre read from its own features alone, not from what is fetched around it (L-515)",
+   broken({ centresOf: function (cfg) {
+     return ((cfg && cfg.objects) || []).filter(function (o) {
+       return o.features && Object.keys(o.features).length;
+     }).map(function (o) { return o.slug; });
+   } })],
+  ["the root's ticks put back with a key no row has (L-515)",
+   broken({ tickRestore: function (text) {
+     try { const s = JSON.parse(text); return (s && Array.isArray(s.ticked)) ? s : null; }
+     catch (e) { return null; }
    } })],
   ["the count line reading only the x axis",
    broken({ outsideCount: function (points, lo, hi) {
@@ -559,7 +672,10 @@ if (page.indexOf('<script src="gallery/solar_system_drawer.js"></script>') < 0) 
  "WORDS.enter", "WORDS.noRoom", "isGroup", "members", "groupCount", "groupArrow",
  "groupReset", "groupResetOffered", "orderGroups", "WORDS.groupReset",
  "outsideCount", "WORDS.outside", "companions", "searchNames", "searchHits",
- "searchVisible", "searchGroupCount", "searchVia", "WORDS.found"].forEach(function (fn) {
+ "searchVisible", "searchGroupCount", "searchVia", "WORDS.found",
+ // L-515 step 2a: the one drawer.
+ "rowPlan", "centreOffer", "tickRestore", "tickMemory", "WORDS.notBuilt",
+ "WORDS.trailRoot", "WORDS.trailSep"].forEach(function (fn) {
   if (page.indexOf("SSD." + fn) < 0) {
     failures.push("interactive.html never calls SolarSystemDrawer's " + fn);
   }
@@ -588,7 +704,18 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
   ["        ssTickCompanions(grp.key);\n        ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);\n        sunFocusIdx = k;\n        setSunDrawer(false);",
    "Go To on an unticked spacecraft does not tick its companions (L-443)"],
   ["companions: companions,", "compose does not hand the drawer each spacecraft's companions (L-443)"],
-  ["names: names } };", "compose does not hand the drawer each body's names (L-493)"],
+  ["names: names,", "compose does not hand the drawer each body's names (L-493)"],
+  // L-515 step 2a: the one drawer's wiring.
+  ["drawerBuildRows(list, makeRow);", "the drawer is not built by its one builder (L-515)"],
+  ["const plan = SSD.rowPlan(ssDrawer ? ssDrawer.rows : null,", "the one builder does not ask the plan (L-515)"],
+  ['else if (entry.kind === "fixed") { drawerWireFixed(', "a centre of shells has no fixed row (L-515)"],
+  ["payload.centres = SSD0.centresOf(cfgTree);", "the page does not read the tree's centres from the config (L-515)"],
+  ["payload.restoreText = treeTickMemoryTake();", "the root does not take back its kept ticks (L-515)"],
+  ['if (at("a.enter")) { treeTickMemoryKeep(); return; }', "Centre on does not keep the root's ticks (L-515)"],
+  ["drawerTrailMount();", "the trail line is never mounted (L-515)"],
+  ['<div class="sun-trail" id="sun-trail" hidden></div>', "the drawer has no trail line (L-515)"],
+  ["{ centreKey: SSD0.SUN_KEY, children: SSD0.childrenOf(cfgTree, EXHIBIT) }",
+   "a centre's drawer is not ordered centre, shells, then children (L-515)"],
   ['id="sun-find-input" placeholder="Find a body"', "the drawer has no search box (L-493)"],
   ["ssFindMount();", "the search box is never wired (L-493)"],
   ["if (reset) { ssFindSet(\"\"); }", "Reset does not clear the search (L-493)"],

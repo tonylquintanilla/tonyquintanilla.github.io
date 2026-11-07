@@ -361,6 +361,9 @@ const ROOMS = {
       // and its accuracy's citation (the constants mirror) -- masked by
       // the same served-word vocabulary, numbers scaled in the scaled pass.
       if (p.moon) { p.moon = masked(p.moon, mode === "scaled", false); }
+      // L-515 step 2a: Earth's fixed row's words -- its name, description
+      // and link, the orrery's, on its config entry -- masked the same way.
+      if (p.earth) { p.earth = masked(p.earth, mode === "scaled", false); }
     }
     return EG.composeScene(p, { GF: GF, halfRangeAu: 6.155e-5,
       epochIso: new Date((p.epochJd - 2440587.5) * 86400000).toISOString().slice(0, 10)

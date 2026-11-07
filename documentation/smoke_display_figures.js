@@ -322,9 +322,20 @@ const SOFT_BR = "<br soft>";
 // period line now reads "Orbital period: 27 days, around Earth, ...". The
 // old fixture failed on exactly that one, by name, and every other hover
 // is byte for byte. The 6c93d0a2 one is left in place, unreferenced.
-const FIXTURE_AT = "0f99f2b5";
+// L-515 step 2a (one drawer), November 7, 2026: re-recorded as
+// fixture_hovers_L515_on_9c6093af.json, from the Earth scene re-recorded
+// with the room's driver, which now hands over Earth's words for its fixed
+// row (tools/record_earth_scene.py). Four hovers moved, each on purpose:
+// "scene/center" is new, Earth's fixed row (its name and the orrery's
+// description); "scene/Earth: Sun Direction", "scene/moon#2" and
+// "scene/moon#4" follow the re-recorded scene's date and positions. The
+// old fixture failed on exactly these four, by name, before the re-record;
+// every other hover is byte for byte. The 0f99f2b5 one is left in place,
+// unreferenced.
+// Module updated: November 7, 2026 with Anthropic's Claude Opus 5.5.
+const FIXTURE_AT = "9c6093af";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L513b_on_0f99f2b5.json");
+                          "fixture_hovers_L515_on_9c6093af.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

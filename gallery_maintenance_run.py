@@ -214,6 +214,10 @@ every spacecraft and every comet on an open path -- instead of typed,
 so a body that crosses e = 1 changes the list by itself; a config that
 cannot give the list turns the check red; the "Served list" checker
 runs tools/test_served_list.py and gates, with five planted faults.)
+Module updated: November 7, 2026 with Anthropic's Claude Opus 5.5
+(L-515 step 1, one nested tree: the "Tree parents" checker runs
+tools/check_tree_parents.py and gates -- every object's parent is the
+centre JPL serves it around, with four planted faults.)
 """
 
 import hashlib
@@ -377,6 +381,16 @@ OFFLINE_CHECKERS = [
 
     ("Pointer join", "python",
      ["tools/check_constants_links.py", "--join"], ".", None, False),
+
+    # L-515 step 1 (2026-11-07, Tony's ruling 6: "What is the fetched
+    # center should rule"): the website's rooms are one tree, and each
+    # object sits under the centre JPL is asked around for it. Every
+    # object's parent must be its center_slug, the Sun's null the one
+    # root, and every parent an object the config lists. Four faults are
+    # planted on copies first. It found Pluto and Charon, both served
+    # around pluto_barycenter, filed under the Sun and Pluto. Gates.
+    ("Tree parents", "python",
+     ["tools/check_tree_parents.py"], ".", "TREE PARENTS:", False),
 
     # 2026-09-17: the rooms draw their shells from the served cache, not
     # from data/objects_config.json, and the cache only follows the config

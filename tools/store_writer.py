@@ -59,6 +59,9 @@ So the editable surface is exactly:
     the arrival block                 drawn, moon
     a room in the "rooms" section     its arrival block's drawn and
                                       highlight
+    an object's place in the tree     its `parent`, and only to the
+                                      centre it is served around, its
+                                      own `center_slug` (L-515, below)
 Numbers, their units, their figure counts, their `orrery_constant`
 links, `_declared`, `_comment`, slugs, colours, opacities, point counts
 and everything else are outside it, and a refusal says so.
@@ -71,6 +74,17 @@ on a hand edit. So this writer refuses it, and says where the words go
 instead: the citation changes in constants_new.py; the website's own
 words about it are the shell's `source_note`, which this writer writes.
 A shell with no link keeps its `source` as an ordinary word.
+
+AN OBJECT'S PARENT IS ITS FETCHED CENTRE (L-515, one nested tree;
+Tony's ruling 6 of 2026-11-07: "What is the fetched center should
+rule."). The website's rooms are one tree, and a thing sits under the
+body JPL is asked around for it. So `parent` is on the allow list for
+every object that has one, and the one value this writer will put
+there is that object's own `center_slug`; anything else is refused,
+saying so. The root (the Sun, served around itself) has a null parent
+and is not offered. tools/check_tree_parents.py holds the whole config
+to the rule. A changed parent reaches the coverage index only when the
+cache builder runs, so Cache in step is red until it has.
 
 A SOURCE NOTE MAY BE REMOVED (L-452, Tony's rulings of 2026-10-17). A
 `source_note` holds only a drawing choice beside a citation; wording
@@ -137,6 +151,9 @@ hover to its i panel for the 17-line ceiling, is a shell's word).
 Updated October 22, 2026 with Anthropic's Claude Opus 5.5 (L-454: `dash`,
 a line's dash style in a drawing block, is a served setting, never a
 word: the Alfven surface's usual range is drawn as dashed circles).
+Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step 1:
+an object's `parent` is on the allow list, and may be written only as
+that object's `center_slug`, the centre it is fetched around).
 """
 
 import json
@@ -230,6 +247,10 @@ SERVED_SETTINGS = ("color", "colors", "info_border", "info_borders", "shape",
                    "dots", "unit", "figures", "uncertainty",
                    "orrery_constant", "frame", "_comment", "_declared",
                    "_frame", "drawn_with", "dash")
+
+# An object's place in the tree (L-515). Not a word: plan() accepts only
+# the object's own center_slug for it.
+TREE_FIELD = "parent"
 
 # A word that must not be emptied: the shell list is keyed off it, and
 # the renderers fall back to the raw key without it.
@@ -346,6 +367,13 @@ def editable_paths(config_value):
     """
     out = {}
     for index, entry in enumerate(config_value.get("objects", [])):
+        # L-515: every object's place in the tree, whether it is a room
+        # or not. Only an object with a parent and a fetched centre; the
+        # root's null parent is not offered. plan() accepts only the
+        # object's own center_slug here.
+        if (isinstance(entry.get("parent"), str)
+                and isinstance(entry.get("center_slug"), str)):
+            out["/objects/%d/%s" % (index, TREE_FIELD)] = "string"
         if not isinstance(entry.get("arrival"), dict):
             continue
         base = "/objects/%d" % index
@@ -502,6 +530,16 @@ def plan(text, changes):
                     "%s names %s, which %s does not draw -- the Arrival "
                     "check would go red on it"
                     % (path, ", ".join(repr(u) for u in unknown), room))
+        if (kind == "string" and steps[0] == "objects" and len(steps) == 3
+                and field == TREE_FIELD):
+            centre = config_value["objects"][int(steps[1])].get("center_slug")
+            if new != centre:
+                raise WriteRefused(
+                    "%s may only be %r, the centre %s is fetched around: "
+                    "the fetched centre rules the tree (L-515, ruling 6). "
+                    "To move it in the tree, change what JPL is asked "
+                    "around for it" % (path, centre,
+                                       _slug_at(config_value, steps)))
         if kind == "string" and steps[0] == ROOMS and field == "highlight":
             room = steps[1]
             if new not in drawable_keys(config_value, room):
@@ -563,7 +601,8 @@ def _not_editable(path, field):
                 % path)
     return ("%s is not something this editor changes. It writes a served "
             "shell's words (%s), a belt's parallel words, an arrival "
-            "block's drawn and moon, and a room's highlight. Everything "
+            "block's drawn and moon, a room's highlight, and an object's "
+            "parent, as its fetched centre. Everything "
             "else in this file -- "
             "slugs, colours, opacities, point counts, numbers and their "
             "links -- is outside it."

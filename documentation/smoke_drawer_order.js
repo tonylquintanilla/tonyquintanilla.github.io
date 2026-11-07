@@ -44,6 +44,11 @@
 //
 // Module written: October 21, 2026 with Anthropic's Claude Opus 5.5 (new,
 // L-460).
+// Module updated: November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515
+// step 2a, one drawer: the order wanted puts the centre's fixed row first
+// and its children -- the bodies fetched around it, read from the config
+// -- after its last shell; a third self-test breaks the file so the Moon
+// keeps its old place, and must go red.)
 //
 // Role: devtool
 // Domain: dev_tools
@@ -77,6 +82,14 @@ const DRAWINGS = {};
 GF.setDrawings(DRAWINGS);
 
 const config = JSON.parse(read("data/objects_config.json"));
+// L-515 step 2a (one drawer): the page hands the plan the centre's own
+// row and its children, read from the config; so does this check, by its
+// own reading of the config, not by asking the drawer file.
+function treeOpts(slug) {
+  return { centreKey: "center",
+           children: (config.objects || []).filter(o => o && o.center_slug === slug &&
+                                                    o.slug !== slug).map(o => o.slug) };
+}
 function featuresOf(slug) {
   const o = (config.objects || []).find(x => x && x.slug === slug);
   if (!o || !o.features) { fail("data/objects_config.json has no " + slug + " features"); return []; }
@@ -85,7 +98,8 @@ function featuresOf(slug) {
 
 // Each room as the page composes it: the Sun room puts the assembler's
 // centre marker first (one trace, legend group "center"); the Earth room's
-// composeScene returns its whole list.
+// composeScene returns its whole list, its own centre marker first since
+// L-515 step 2a.
 const ROOMS = {
   sun: function () {
     const f = featuresOf("sun");
@@ -154,7 +168,7 @@ function drawnNearestAu(traces, indices) {
   return best;
 }
 
-function expected(DO, traces, features) {
+function expected(DO, traces, features, opts) {
   const groups = [], byKey = {};
   traces.forEach((t, i) => {
     const g = t && t.legendgroup;
@@ -193,13 +207,28 @@ function expected(DO, traces, features) {
   const shells = rows.filter(r => !r.fixed).sort((a, b) =>
     (a.au - b.au) || ((a.surface ? 1 : 0) - (b.surface ? 1 : 0)) || (a.present - b.present));
   let s = 0;
-  return rows.map(r => r.fixed ? r : shells[s++]);
+  const ordered = rows.map(r => r.fixed ? r : shells[s++]);
+  // L-515 step 2a (Tony's ruling 2 of 2026-11-07, for Mars: "Mars, fixed;
+  // its shells when built; Phobos; Deimos"): the centre's row first, its
+  // children right after its last shell, every other row in its place.
+  if (!opts) return ordered;
+  const centre = ordered.filter(r => r.key === opts.centreKey);
+  const rest = ordered.filter(r => r.key !== opts.centreKey);
+  const kids = [];
+  (opts.children || []).forEach(k => {
+    const i = rest.findIndex(r => r.key === k);
+    if (i >= 0) { const r = rest.splice(i, 1)[0]; r.how = "a child of the centre, after its shells"; kids.push(r); }
+  });
+  let at = 0;
+  rest.forEach((r, i) => { if (!r.fixed) at = i + 1; });
+  centre.forEach(r => { r.how = "the centre's fixed row, first"; });
+  return centre.concat(rest.slice(0, at), kids, rest.slice(at));
 }
 
 function compare(room, DO, built, features) {
   const bad = [];
-  const want = expected(DO, built.traces, built.features);
-  const got = DO.plan(built.traces, features || built.features, KM_PER_AU);
+  const want = expected(DO, built.traces, built.features, treeOpts(room));
+  const got = DO.plan(built.traces, features || built.features, KM_PER_AU, treeOpts(room));
   for (const w of got.warnings) bad.push(room + ": the plan warns: " + w);
   const n = Math.max(want.length, got.rows.length);
   for (let i = 0; i < n; i++) {
@@ -216,7 +245,7 @@ function compare(room, DO, built, features) {
 // When required by tools/headless/walk_drawer_order.js, this file hands
 // over its own reading of the order and runs nothing.
 module.exports = { expected: expected, loadOrder: loadOrder, SRC: SRC,
-                   KM_PER_AU: KM_PER_AU, featuresOf: featuresOf };
+                   KM_PER_AU: KM_PER_AU, featuresOf: featuresOf, treeOpts: treeOpts };
 if (require.main === module) {
 
 // --- self-test: break it twice and require red ----------------------------
@@ -239,6 +268,14 @@ if (require.main === module) {
   const r2 = compare("sun", broken, ROOMS.sun());
   if (!r2.bad.length) fail("self-test: the check stayed green with the file ignoring distance");
   else console.log("  self-test: the file ignoring distance -- red: " + r2.bad[0]);
+
+  // 3. L-515: the real file broken so the centre and its children keep
+  // their places, as before the step. Earth's Moon must then be named.
+  const tree = "ordered = placeCentreAndChildren(ordered, opts || {});";
+  if (SRC.split(tree).length !== 2) { fail("self-test could not break drawer_order.js: the tree line moved"); return; }
+  const r3 = compare("earth", loadOrder(SRC.replace(tree, "")), ROOMS.earth());
+  if (!r3.bad.length) fail("self-test: the check stayed green with the Moon kept in its old place");
+  else console.log("  self-test: the centre and its children kept in their old places -- red: " + r3.bad[0]);
 })();
 
 // --- 1 and 2: the rooms ---------------------------------------------------
@@ -267,6 +304,9 @@ if (!/built\.drawer \? null : DrawerOrder\.plan\(/.test(html)) {
 if (html.indexOf("buildSunDrawer(traces, drawerPlan ? drawerPlan.order : null)") < 0) {
   fail("interactive.html does not hand the planned order to the drawer");
 }
+if (html.indexOf("{ centreKey: SSD0.SUN_KEY, children: SSD0.childrenOf(cfgTree, EXHIBIT) }") < 0) {
+  fail("interactive.html does not hand the plan the centre's row and its children (L-515)");
+}
 
 console.log("");
 if (failures.length) {
@@ -274,6 +314,6 @@ if (failures.length) {
   failures.forEach(f => console.log("  FAIL " + f));
   process.exit(1);
 }
-console.log("=== DRAWER ORDER: both rooms list their shells where each begins; " +
-            "self-test red twice");
+console.log("=== DRAWER ORDER: both rooms list their shells where each begins, " +
+            "the centre first and its children after its shells; self-test red three times");
 }

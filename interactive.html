@@ -424,6 +424,17 @@
         dots -- Tony's ruling of October 31, 20:43, which the committed
         design record did not carry on Nov 1; marker symbol "x" on the
         tick traces, sunRulerX for the key, the frame note's sentence.)
+     Updated: November 7, 2026 with Anthropic's Claude Opus 5.5
+       (L-515 step 2a, one nested tree: ONE drawer builder for every
+        centre (drawerBuildRows, from solar_system_drawer.js's rowPlan);
+        a fixed centre row in every centre -- the Sun's in the Sun room,
+        Earth's in the Earth room, new -- no tick box, always drawn, its
+        name opening its text box and panel; the trail line "Solar system
+        > Earth" at the top of a centre's drawer; "Centre on <name>" where
+        "Enter the <name> room" stood, and "Not built yet" on a centre in
+        the tree with none built; the root's ticks kept on leaving by
+        Centre on and put back once on its next opening in the tab, Reset
+        still fresh; a centre's children listed after its shells.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1019,6 +1030,21 @@
             text-decoration: none; font-weight: 500; font-size: 13px;
         }
         .sun-row .open-inline[hidden] { display: none; }
+        /* L-515 (Tony's ruling 10): a centre not built yet, where Centre
+           on would be -- words, not a button. */
+        .sun-row .open-inline .not-built { color: var(--text-dim); font-size: 12px; }
+        /* L-515 step 2a: the trail line at the top of a centre's drawer,
+           "Solar system > Earth"; its first part returns to the root. */
+        .sun-trail {
+            flex-shrink: 0; padding: 10px 16px; border-bottom: 1px solid var(--border);
+            font: 400 13px 'DM Sans', system-ui, sans-serif; color: var(--text-secondary);
+        }
+        .sun-trail[hidden] { display: none; }
+        .sun-trail a {
+            display: inline-block; min-height: 32px; line-height: 32px;
+            color: var(--accent); text-decoration: none; font-weight: 500;
+        }
+        .sun-trail a:hover { text-decoration: underline; }
         /* L-443, Tony's ruling of 2026-10-22 (mock-up B): a group row
            folds open to list its bodies under it. Its bodies sit indented
            under it; its count, and the arrow saying folded or open, are on
@@ -1498,6 +1524,10 @@
                         <span id="sun-drawer-count"></span></span>
                     <button type="button" id="sun-drawer-all">Reset</button>
                 </div>
+                <!-- L-515 step 2a: the trail line, "Solar system > Earth",
+                     in every centre but the root; its first part returns
+                     to the root (drawerTrailMount). -->
+                <div class="sun-trail" id="sun-trail" hidden></div>
                 <!-- L-493: find a body (the Solar System room only). -->
                 <div class="sun-find" id="sun-find" hidden>
                     <div class="sun-find-box">
@@ -2400,9 +2430,15 @@ except Exception as _e:
 # config by tools/mirror_objects.py; printed in the Sun Direction's hover.
 _earth_period = None
 _moon_cfg = {}
+# L-515 step 2a (one drawer): Earth's fixed row's words, the orrery's,
+# copied into the config by tools/mirror_objects.py, as the Moon's are.
+_earth_words = None
 for _o in (_cfg.get("objects") or []):
     if isinstance(_o, dict) and _o.get("slug") == "earth":
         _earth_period = _o.get("period")
+        _earth_words = {"name": _o.get("name"),
+                        "description": _o.get("description"),
+                        "info_url": _o.get("info_url")}
     if isinstance(_o, dict) and _o.get("slug") == "moon":
         _moon_cfg = _o
 
@@ -2434,6 +2470,7 @@ json.dumps({
     "features": result.report["features"],
     "warnings": list(result.report["warnings"]) + _notes,
     "earthPeriod": _earth_period,
+    "earth": _earth_words,
     "sun": _sun,
     "moonArc": _arc,
     "moon": _moon,
@@ -3040,6 +3077,10 @@ function sunCentreWords(traces, payload) {
     } else {
         warnings.push("the Sun's pole was served with no citation");
     }
+    // L-515 step 2a (one drawer): the Sun's row is the room's fixed row,
+    // and its name opens its text box -- the marker's own words, as the
+    // Solar System room's Sun marker opens its box.
+    words.label_target = true;
     let found = 0;
     for (const t of traces) {
         if (t.legendgroup === "center") {
@@ -3199,8 +3240,14 @@ const EXHIBITS = {
                 .map(function (p) { return p.t; });
             // What the room opens on: the Sun is the centre and always
             // drawn; every other body is drawn only if arrival names it.
+            // L-515 (Tony's ruling 10 of 2026-11-07): coming back to the
+            // root after centring on a body, what the visitor had ticked
+            // here is put back instead; Reset still puts back the served
+            // opening, which the drawer keeps as before.
+            const restored = SSD.tickRestore(payload.restoreText,
+                                             SSD.rowsFromServed(served));
             const drawn = {};
-            (arrival.drawn || []).forEach(function (s) { drawn[s] = true; });
+            ((restored ? restored.ticked : arrival.drawn) || []).forEach(function (s) { drawn[s] = true; });
             const epochJd = payload.epoch_jd;
             for (const row of rows) {
                 const slug = row.slug;
@@ -3508,17 +3555,25 @@ const EXHIBITS = {
             if (!stamp) {
                 warnings.push("the scene's date was not reported by the assembler");
             }
+            // L-515: a restored opening names the last body ticked, as Home
+            // does; with nothing ticked, the served highlight.
+            const restoredFocus = (restored && restored.order.length)
+                ? restored.order[restored.order.length - 1] : null;
             return { traces: traces, warnings: warnings, absent: [],
                      subtitle: stamp,
-                     focusGroup: (typeof arrival.highlight === "string")
-                         ? arrival.highlight : null,
+                     focusGroup: restoredFocus ||
+                         ((typeof arrival.highlight === "string") ? arrival.highlight : null),
                      // L-363 step 3b: the rows as served, and what the
                      // room opens on, for this room's drawer.
                      drawer: { rows: allRows,
                                drawn: (arrival.drawn || []).slice(),
                                highlight: arrival.highlight,
                                companions: companions,
-                               names: names } };
+                               names: names,
+                               // L-515: the restored tick order, if any,
+                               // and the tree's centres for each row.
+                               order: restored ? restored.order : null,
+                               centres: payload.centres || [] } };
         }
     }
 };
@@ -4316,6 +4371,17 @@ async function initSunExhibit() {
         }
         GalleryFeatures.setDrawings(drawings);
 
+        // L-515 step 2a (one drawer): the tree, read from the served
+        // config. Which bodies are centres (a row offers Centre on or Not
+        // built yet), and, in the root, what the visitor had ticked before
+        // centring on a body in this tab, put back once (Tony's ruling 10).
+        const SSD0 = window.SolarSystemDrawer;
+        const cfgTree = JSON.parse(cfg);
+        payload.centres = SSD0.centresOf(cfgTree);
+        if (EXHIBIT === SSD0.ROOT_EXHIBIT) {
+            payload.restoreText = treeTickMemoryTake();
+        }
+
         // Per room: how the payload becomes traces (the EXHIBITS table).
         const built = EX.compose(payload);
         // A room may put a line under its title (the Solar System room's
@@ -4328,8 +4394,11 @@ async function initSunExhibit() {
         // shell lands in place by itself. Planned here, from the traces
         // as composed, before anything is cut to the view. Not for a
         // room whose drawer is bodies (the Solar System room, L-363).
+        // L-515 step 2a: the centre's own row first, its children (the
+        // bodies fetched around it, read from the config) after its shells.
         const drawerPlan = built.drawer ? null : DrawerOrder.plan(
-            built.traces, payload.features || [], GalleryFeatures._KM_PER_AU);
+            built.traces, payload.features || [], GalleryFeatures._KM_PER_AU,
+            { centreKey: SSD0.SUN_KEY, children: SSD0.childrenOf(cfgTree, EXHIBIT) });
 
         const notes = frameNotes.concat(positionNotes, payload.warnings || [], drawingNotes,
                                         built.warnings || [],
@@ -5723,13 +5792,67 @@ function ssDrawerState(served) {
         byKey: byKey,
         opening: { drawn: (served.drawn || []).slice(),
                    highlight: served.highlight },
-        order: SSD.openingOrder(rows, served.drawn, served.highlight),
+        // L-515: the tick order put back on a return to the root, else the
+        // served opening's.
+        order: Array.isArray(served.order) ? served.order.slice()
+            : SSD.openingOrder(rows, served.drawn, served.highlight),
+        centres: served.centres || [],         // L-515: the tree's centres
         companions: served.companions || {},   // L-443: {spacecraft: [rows]}
         names: served.names || {},             // L-493: {key: [names]}
         query: "",                             // L-493: the search box
         open: null,       // the key of the opened row, or null
         folds: {}         // L-443: {group: true} for each group folded open
     };
+}
+
+// L-515 step 2a (Tony's ruling 2 of 2026-11-07): the trail line at the top
+// of a centre's drawer, "Solar system > Earth", its first part a link back
+// to the root. The root shows none. The centre's name is its fixed row's,
+// read from the scene, never typed.
+function drawerTrailMount() {
+    const SSD = window.SolarSystemDrawer;
+    const el = document.getElementById("sun-trail");
+    if (!el) { return; }
+    const centre = sunGroups.filter(function (g) { return g.key === SSD.SUN_KEY; })[0];
+    if (EXHIBIT === SSD.ROOT_EXHIBIT || !centre) {
+        el.hidden = true;
+        el.textContent = "";
+        return;
+    }
+    el.textContent = "";
+    const a = document.createElement("a");
+    a.href = "interactive.html?exhibit=" + encodeURIComponent(SSD.ROOT_EXHIBIT);
+    a.textContent = SSD.WORDS.trailRoot;
+    el.appendChild(a);
+    el.appendChild(document.createTextNode(SSD.WORDS.trailSep + centre.name));
+    el.hidden = false;
+}
+
+// L-515 (Tony's ruling 10 of 2026-11-07): "returning to the root restores
+// what the visitor had ticked there; Reset still starts fresh." When the
+// visitor leaves the root by a Centre on button, what is ticked there and
+// in what order is kept for this tab only (sessionStorage, which the
+// browser empties when the tab closes: no stored information between
+// sessions, Tony, 2026-09-30); the root's next opening in this tab takes
+// it, once, by the trail line or by Back. A browser that refuses the
+// storage keeps nothing, and the root opens as served.
+function treeTickMemoryKeep() {
+    const SSD = window.SolarSystemDrawer;
+    if (!ssDrawer || EXHIBIT !== SSD.ROOT_EXHIBIT) { return; }
+    try {
+        window.sessionStorage.setItem(SSD.TICK_MEMORY_KEY,
+            SSD.tickMemory(ssShownByKey(), ssDrawer.order));
+    } catch (e) { /* nothing kept; the root opens as served */ }
+}
+
+function treeTickMemoryTake() {
+    const SSD = window.SolarSystemDrawer;
+    let text = null;
+    try {
+        text = window.sessionStorage.getItem(SSD.TICK_MEMORY_KEY);
+        window.sessionStorage.removeItem(SSD.TICK_MEMORY_KEY);
+    } catch (e) { text = null; }
+    return text;
 }
 
 // L-493 (Tony's approval of 2026-10-26): the drawer's search box, in this
@@ -5789,10 +5912,13 @@ function ssWireRow(row, grp, k, list) {
         const at = function (sel) {
             return !!(t && typeof t.closest === "function" && t.closest(sel));
         };
-        if (at("a.enter")) { return; }   // the sideways button: let it go
+        if (at("a.enter")) { treeTickMemoryKeep(); return; }   // Centre on: let it go
         if (at(".go")) { ssGo(k); return; }
         if (at(".pick") && SSD.tickable(grp.key)) { ssTick(k, !grp.shown); return; }
         ssSelect(k, true);
+        // L-515 step 2a: the fixed centre row's name opens its text box
+        // and its panel, in every centre.
+        if (!SSD.tickable(grp.key)) { sunLabelShow(k); }
     };
     list.appendChild(row);
     // The opened row: hidden until this row is opened. Upright and on the
@@ -5809,9 +5935,13 @@ function ssWireRow(row, grp, k, list) {
     inline.setAttribute("data-open-for", grp.key);
     inline.hidden = true;
     const room = SSD.roomFor(served, Object.keys(EXHIBITS));
+    // L-515 (Tony's ruling 10): a body that is a centre in the tree with
+    // none built reads "Not built yet" where Centre on would be, on its
+    // row always, as the button is.
+    const offer = SSD.centreOffer(served, Object.keys(EXHIBITS), ssDrawer.centres);
     // L-429: ssRender reads this to keep a room's button on its row.
-    panel.setAttribute("data-room", room ? "yes" : "no");
-    inline.setAttribute("data-room", room ? "yes" : "no");
+    panel.setAttribute("data-room", offer ? "yes" : "no");
+    inline.setAttribute("data-room", offer ? "yes" : "no");
     [panel, inline].forEach(function (holder) {
         if (room) {
             const a = document.createElement("a");
@@ -5819,6 +5949,11 @@ function ssWireRow(row, grp, k, list) {
             a.href = "interactive.html?exhibit=" + encodeURIComponent(room);
             a.textContent = SSD.WORDS.enter(grp.name);
             holder.appendChild(a);
+        } else if (offer === "notBuilt") {
+            const s = document.createElement("span");
+            s.className = "not-built";
+            s.textContent = SSD.WORDS.notBuilt;
+            holder.appendChild(s);
         } else {
             holder.textContent = SSD.WORDS.noRoom;
         }
@@ -6082,49 +6217,74 @@ function ssFold(g) {
     sunMeasureDrawer();
 }
 
-// The rows of this room's drawer, in served order (L-443): each group row
-// before its bodies, then any group the scene drew that no row names.
-function ssBuildRows(list, makeRow) {
+// L-515 step 2a (one nested tree): ONE drawer builder for every centre.
+// The plan is gallery/solar_system_drawer.js's rowPlan: the centre's fixed
+// row first; then, in a centre that serves rows (the root), its group rows
+// and body rows in served order (L-443), each group row before its bodies,
+// then any group the scene drew that no row names; in a centre of shells
+// (the Sun, Earth), its legend groups in drawer_order.js's order. Each
+// kind of row is wired by its own function; the list is one.
+function drawerBuildRows(list, makeRow) {
     const SSD = window.SolarSystemDrawer;
-    const placed = {};
-    ssDrawer.rows.forEach(function (served) {
-        if (SSD.isGroup(served)) {
-            const g = served.group;
-            const head = document.createElement("button");
-            head.type = "button";
-            head.className = "sun-row sun-group";
-            head.setAttribute("data-g", g);
-            head.setAttribute("aria-expanded", "false");
-            // L-477: the row's whole width folds it; its left end holds
-            // the fold arrow where a body row has its tick box.
-            head.innerHTML =
-                '<span class="pick"><span class="fold"></span>' +
-                '<span class="swatch" style="background:transparent"></span></span>' +
-                '<span class="rname"></span><span class="gcount"></span>';
-            head.querySelector(".rname").textContent = served.label;
-            head.onclick = function () { ssFold(g); };
-            list.appendChild(head);
-            const reset = document.createElement("button");
-            reset.type = "button";
-            reset.className = "sun-group-reset";
-            reset.setAttribute("data-g", g);
-            reset.hidden = true;
-            reset.textContent = SSD.WORDS.groupReset(served.label);
-            reset.onclick = function () { ssGroupReset(g); };
-            list.appendChild(reset);
+    const plan = SSD.rowPlan(ssDrawer ? ssDrawer.rows : null,
+                             sunGroups.map(function (g) { return g.key; }));
+    plan.forEach(function (entry) {
+        if (entry.kind === "group") {
+            ssGroupHead(list, ssDrawer.byKey[entry.key]);
             return;
         }
-        const k = ssIndex(served.key);
+        const k = ssIndex(entry.key);
         if (k < 0) { return; }
-        placed[k] = true;
         const row = makeRow(sunGroups[k], k);
-        if (served.group) { row.classList.add("member"); }
-        ssWireRow(row, sunGroups[k], k, list);
+        if (entry.member) { row.classList.add("member"); }
+        if (ssDrawer) { ssWireRow(row, sunGroups[k], k, list); }
+        else if (entry.kind === "fixed") { drawerWireFixed(row, sunGroups[k], k, list); }
+        else { drawerWireShell(row, sunGroups[k], k, list); }
     });
-    sunGroups.forEach(function (grp, k) {
-        if (placed[k]) { return; }
-        ssWireRow(makeRow(grp, k), grp, k, list);
-    });
+}
+
+// L-515 step 2a: a centre's fixed row, in a centre of shells. No tick box
+// and no Go To (.fixed, as the root's Sun row); always drawn, so Reset
+// and every tick leave it alone; its name, or anywhere on the row, opens
+// its text box and its panel, and moves nothing.
+function drawerWireFixed(row, grp, k, list) {
+    row.classList.add("fixed");
+    grp.shown = true;
+    row.onclick = function () {
+        sunFocusIdx = k;
+        renderSunDrawer();
+        sunLabelShow(k);
+    };
+    list.appendChild(row);
+}
+
+// A group row and its Reset, in a centre that serves rows (L-443, L-477).
+function ssGroupHead(list, served) {
+    const SSD = window.SolarSystemDrawer;
+    if (!served) { return; }
+    const g = served.group;
+    const head = document.createElement("button");
+    head.type = "button";
+    head.className = "sun-row sun-group";
+    head.setAttribute("data-g", g);
+    head.setAttribute("aria-expanded", "false");
+    // L-477: the row's whole width folds it; its left end holds
+    // the fold arrow where a body row has its tick box.
+    head.innerHTML =
+        '<span class="pick"><span class="fold"></span>' +
+        '<span class="swatch" style="background:transparent"></span></span>' +
+        '<span class="rname"></span><span class="gcount"></span>';
+    head.querySelector(".rname").textContent = served.label;
+    head.onclick = function () { ssFold(g); };
+    list.appendChild(head);
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "sun-group-reset";
+    reset.setAttribute("data-g", g);
+    reset.hidden = true;
+    reset.textContent = SSD.WORDS.groupReset(served.label);
+    reset.onclick = function () { ssGroupReset(g); };
+    list.appendChild(reset);
 }
 
 // L-477 (Tony, 2026-10-24): Reset, in the top bar where the other rooms
@@ -6294,52 +6454,10 @@ function buildSunDrawer(traces, order) {
         row.dataset.k = String(k);
         return row;
     };
-    // L-443: the Solar System room lists its rows in served order, its
-    // group rows among them.
-    if (ssDrawer) { ssBuildRows(list, makeRow); }
-    sunGroups.forEach(function (grp, k) {
-        if (ssDrawer) { return; }
-        const row = makeRow(grp, k);
-        // L-267 Stage B. ONE JOB PER CONTROL. The box decides whether a
-        // shell is drawn; everything else on the row moves the camera to
-        // it. Before this, clicking anywhere toggled the shell, so
-        // reaching for a name made the object vanish. Tony's G2 ruling,
-        // 2026-08-30: "let the row selection just identify the object
-        // being targeted, with the box selecting the object and the go
-        // moving the camera separately."
-        // AMENDED by L-318, Tony 2026-09-10: naming a shell also opens its
-        // hover text as a label pinned to its marker -- the name still
-        // never switches a shell on or off, and a shell that is not drawn
-        // gets no label. Markers are hard to tap inside a dense mesh.
-        // AMENDED AGAIN by L-318 round 3, Tony's Mode 5 of 2026-09-15: the
-        // box was an 18 px target, so a near miss landed on the name and
-        // sent the camera to a shell that was not drawn -- a tap that read
-        // as doing nothing. Two changes. The row's whole left end (.pick:
-        // its edge, the box and the colour dot, full height) ticks and
-        // unticks. And the name or GO on a shell that is not ticked now
-        // ticks it before going there. That is the one case where G2 is
-        // amended: GO still never HIDES anything, and ticking still never
-        // closes the drawer, so several shells can be ticked and then one
-        // of them gone to. GO frames on the shell, in or out, as before.
-        row.onclick = function (ev) {
-            const t = ev.target;
-            const onPick = !!(t && typeof t.closest === "function"
-                && t.closest(".pick"));
-            if (onPick) {
-                grp.shown = !grp.shown;
-                sunApplyVisibility(false);
-            } else if (!grp.shown) {
-                grp.shown = true;
-                sunFocusIdx = k;
-                setSunDrawer(false);
-                sunApplyVisibility(true)
-                    .then(function () { return sunLabelShow(k); });
-            } else {
-                sunFocusOn(k).then(function () { return sunLabelShow(k); });
-            }
-        };
-        list.appendChild(row);
-    });
+    // L-515 step 2a: one builder for every centre's rows (drawerBuildRows):
+    // the root's served rows and groups, a centre's shells, and the fixed
+    // centre row in each.
+    drawerBuildRows(list, makeRow);
     // L-291 step 3: served groups with no renderer yet are listed, not
     // omitted. Not a button: nothing to toggle, nothing to focus.
     // renderSunDrawer walks sunGroups by index, so these sit after them.
@@ -6358,7 +6476,51 @@ function buildSunDrawer(traces, order) {
         row.querySelector(".rname").textContent = what + " -- not yet drawn";
         list.appendChild(row);
     }
+    drawerTrailMount();
     renderSunDrawer();
+}
+
+// A shell's row, in a centre of shells (the Sun, Earth).
+function drawerWireShell(row, grp, k, list) {
+    // L-267 Stage B. ONE JOB PER CONTROL. The box decides whether a
+    // shell is drawn; everything else on the row moves the camera to
+    // it. Before this, clicking anywhere toggled the shell, so
+    // reaching for a name made the object vanish. Tony's G2 ruling,
+    // 2026-08-30: "let the row selection just identify the object
+    // being targeted, with the box selecting the object and the go
+    // moving the camera separately."
+    // AMENDED by L-318, Tony 2026-09-10: naming a shell also opens its
+    // hover text as a label pinned to its marker -- the name still
+    // never switches a shell on or off, and a shell that is not drawn
+    // gets no label. Markers are hard to tap inside a dense mesh.
+    // AMENDED AGAIN by L-318 round 3, Tony's Mode 5 of 2026-09-15: the
+    // box was an 18 px target, so a near miss landed on the name and
+    // sent the camera to a shell that was not drawn -- a tap that read
+    // as doing nothing. Two changes. The row's whole left end (.pick:
+    // its edge, the box and the colour dot, full height) ticks and
+    // unticks. And the name or GO on a shell that is not ticked now
+    // ticks it before going there. That is the one case where G2 is
+    // amended: GO still never HIDES anything, and ticking still never
+    // closes the drawer, so several shells can be ticked and then one
+    // of them gone to. GO frames on the shell, in or out, as before.
+    row.onclick = function (ev) {
+        const t = ev.target;
+        const onPick = !!(t && typeof t.closest === "function"
+            && t.closest(".pick"));
+        if (onPick) {
+            grp.shown = !grp.shown;
+            sunApplyVisibility(false);
+        } else if (!grp.shown) {
+            grp.shown = true;
+            sunFocusIdx = k;
+            setSunDrawer(false);
+            sunApplyVisibility(true)
+                .then(function () { return sunLabelShow(k); });
+        } else {
+            sunFocusOn(k).then(function () { return sunLabelShow(k); });
+        }
+    };
+    list.appendChild(row);
 }
 
 function renderSunDrawer() {
@@ -6376,10 +6538,14 @@ function renderSunDrawer() {
         rows[r].classList.toggle("on", on);
         rows[r].classList.toggle("focused", i === sunFocusIdx);
         rows[r].querySelector(".box").innerHTML = on ? "&#10003;" : "";
-        if (on) { n++; }
+        // L-515 step 2a: the fixed centre row is not a tick, so it is not
+        // counted, as the root's Sun row never was.
+        if (on && sunGroups[i].key !== window.SolarSystemDrawer.SUN_KEY) { n++; }
     }
+    const ticks = sunGroups.filter(function (g) {
+        return g.key !== window.SolarSystemDrawer.SUN_KEY; }).length;
     document.getElementById("sun-drawer-count").textContent =
-        ssDrawer ? ssRender() : n + " of " + sunGroups.length;
+        ssDrawer ? ssRender() : n + " of " + ticks;
 
     // L-267 Stage B. The handle stops reporting the count -- the drawer
     // head above already does -- and names where the camera is. The

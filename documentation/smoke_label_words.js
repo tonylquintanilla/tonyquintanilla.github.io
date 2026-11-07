@@ -53,6 +53,10 @@
 // each one's place. A second self-test takes the Hills cloud's served
 // info_polar_deg off a copy of the config, which puts its cross back on
 // the x axis, and must go red.
+// Module updated: November 7, 2026 with Anthropic's Claude Opus 5.5
+// (L-515 step 2a, one drawer: a centre's fixed row -- Earth's, the
+// assembler's centre marker, kept since the step -- must open words that
+// begin with its own name; a third self-test gives it the Moon's words.)
 //
 // Role: devtool
 // Domain: dev_tools
@@ -124,7 +128,19 @@ function judge(built) {
     for (const row of rowsOf(traces)) {
       const i = GF.labelTraceIndex(traces, row.indices);
       const words = i >= 0 ? plain(traces[i].text[0]) : null;
-      seen.push([room, row.name, row.shell, words]);
+      seen.push([room, row.name, row.shell, words, row.key]);
+      // L-515 step 2a: a centre's fixed row (the assembler's centre
+      // marker, Earth's since the step) opens its own words too: its
+      // name, first.
+      if (row.key === "center") {
+        if (words === null) {
+          bad.push(room + ": the fixed row " + JSON.stringify(row.name) + " opens no words");
+        } else if (words.indexOf(row.name) !== 0) {
+          bad.push(room + ": the fixed row " + JSON.stringify(row.name) +
+                   " opens another's words: " + JSON.stringify(words.slice(0, 60)));
+        }
+        continue;
+      }
       if (!row.shell) continue;
       const crosses = row.indices.filter(j => {
         const t = traces[j];
@@ -237,6 +253,18 @@ function judgeCrosses(crosses) {
 })();
 
 // --- the rooms -----------------------------------------------------------
+// L-515 step 2a: planted, Earth's fixed row carrying the Moon's words.
+(function selfTestCentre() {
+  const real = build();
+  const c = real.earth.find(t => t.legendgroup === "center");
+  const m = real.earth.find(t => t.legendgroup === "moon" && Array.isArray(t.text) &&
+                                 /^Moon/.test(String(t.text[0])));
+  if (!c || !m) { fail("self-test: Earth's fixed row or the Moon's box is not in the scene"); return; }
+  c.text = m.text.slice();
+  const r = judge(real).bad.filter(b => /fixed row "Earth"/.test(b));
+  if (!r.length) fail("self-test: Earth's fixed row opened the Moon's words and stayed green");
+  else console.log("  self-test: Earth's fixed row given the Moon's words -- red: " + r[0]);
+})();
 const built = build();
 const res = judge(built);
 res.bad.forEach(fail);
@@ -255,7 +283,8 @@ if (!rowsOf(built.sun).some(r => r.shell && r.name === "Sun: Streamer Belt (helm
 let shells = 0;
 res.seen.forEach(s => {
   if (s[2]) shells += 1;
-  console.log("  " + s[0] + " / " + s[1] + (s[2] ? "" : " (not a shell, not judged)") +
+  console.log("  " + s[0] + " / " + s[1] +
+              (s[2] ? "" : s[4] === "center" ? " (the fixed row, judged)" : " (not a shell, not judged)") +
               ": " + (s[3] === null ? "(no words)" : s[3].slice(0, 70)));
 });
 console.log("");
@@ -266,4 +295,5 @@ if (failures.length) {
 }
 console.log("=== LABEL WORDS: all " + shells + " shell rows in both rooms open " +
             "their own feature's words; " + crosses.length + " stored drawings' " +
-            "crosses stand off the axis lines; self-test red twice");
+            "crosses stand off the axis lines; Earth's fixed row opens its own words; " +
+            "self-test red three times");

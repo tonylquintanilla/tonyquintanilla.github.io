@@ -39,6 +39,11 @@ editor manifest's section 6.
      from the list -- the bug of 2026-10-01, when the editor offered
      only the Sun and Earth -- or if a row's slug, the Sun or an unknown
      row gets through.
+ 11. An object's parent is its fetched centre (L-515, Tony's ruling 6
+     of 2026-11-07). `parent` is on the allow list for an object that
+     has one, the root's null is not, and the only value that writes is
+     the object's own center_slug. Fails if another value lands or the
+     refusal does not say why.
  10. A LINKED shell's citation is the orrery's (L-421 part 3, Tony's
      option A of 2026-10-16). On a shell carrying an orrery_constant,
      `source` is not in the allow list and a write to it refuses, saying
@@ -63,6 +68,9 @@ Updated October 17, 2026 with Anthropic's Claude Opus 5.5 (L-452: a served
 number's source_note is on the allow list, is added after its link, and a
 source_note is removed, comma and all, giving back the file byte for byte;
 removing any other word, or a note not served, is refused.)
+Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step 1:
+check 11, an object's parent written only as its fetched centre; the
+real config's "nothing outside a room" sweep sets the tree field aside.)
 """
 
 import difflib
@@ -510,6 +518,29 @@ def fixture_checks():
           json.loads(out)["objects"][0]["features"]["interior"]["crust"]
           .get("source_note") == "What the number is for.")
 
+    # 11. An object's parent is its fetched centre (L-515, ruling 6).
+    tree_cfg = json.loads(FIXTURE)
+    tree_cfg["objects"][0]["parent"] = "farbody"
+    tree_cfg["objects"][0]["center_slug"] = "farbody"
+    tree_cfg["objects"][1]["parent"] = None
+    tree_cfg["objects"][1]["center_slug"] = "farbody"
+    tree = json.dumps(tree_cfg, indent=2)
+    tree_allowed = W.editable_paths(tree_cfg)
+    check("11: an object's parent is in the allow list",
+          "/objects/0/parent" in tree_allowed)
+    check("11: the root's null parent is not offered",
+          "/objects/1/parent" not in tree_allowed)
+    tree_cfg["objects"][0]["center_slug"] = "testbody_centre"
+    moved = json.dumps(tree_cfg, indent=2)
+    out = W.edit(moved, [("/objects/0/parent", "testbody_centre")])
+    check("11: the fetched centre is accepted as the parent, and reads back",
+          json.loads(out)["objects"][0]["parent"] == "testbody_centre")
+    refuses("11: any parent but the fetched centre refuses, saying so",
+            lambda: W.edit(tree, [("/objects/0/parent", "sun")]),
+            expect_in="the fetched centre rules the tree")
+    refuses("11: the root's parent refuses",
+            lambda: W.edit(tree, [("/objects/1/parent", "farbody")]))
+
     # Nothing above touched the fixture text itself.
     check("the fixture text is unchanged by all of that", text == FIXTURE)
 
@@ -655,6 +686,7 @@ def real_config_checks():
              ", ".join(W.room_ids(cfg))))
     check("real config: nothing outside a room is editable",
           not any(p.startswith("/objects/%d/" % W.object_index(cfg, other))
+                  and not p.endswith("/" + W.TREE_FIELD)
                   for other in others for p in real_allowed),
           "a non-room path is in the allow list")
 

@@ -34,6 +34,9 @@
 //
 // Written September 2026 with Anthropic's Claude Opus 5, from the
 // version written September 17, 2026 with Claude Fable 5.1.
+// Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
+// 2a: Earth's fixed centre row is expected drawn on arrival, with a
+// planted centre stamped as a shell.)
 // Updated October 22, 2026 with Anthropic's Claude Opus 5.5 (L-465: the
 // Sun's rotation axis, a frame element the renderers mark, is drawn on
 // arrival and must carry no shell key).
@@ -233,10 +236,16 @@ function checkStamps(slug, sceneTraces, shellOnly) {
 
 // L-465 (2026-10-22): the Sun's rotation axis is a frame element, always
 // drawn, as Earth's axis is.
+// L-515 step 2a (2026-11-07, one drawer): every centre has a fixed row,
+// always drawn. Earth's is the assembler's centre marker, legend group
+// "center", which earth_geometry.js now keeps; the Sun's comes from the
+// Sun room's driver, which this check does not run (its Sun traces are the
+// renderers' alone), so only Earth's is held here.
 const EXPECTED = {
   sun: ["Sun: Photosphere", "Sun: Rotation Axis"],
   earth: ["Earth: Crust", "Earth: Rotation Axis and Equator",
-          "Earth: Sun Direction", "Earth: Terminator (day-night line)"]
+          "Earth: Sun Direction", "Earth: Terminator (day-night line)",
+          "center"]
 };
 
 function room(slug, build) {
@@ -376,6 +385,27 @@ const earthStamp = checkStamps("earth", earthTraces(), earthShellTraces());
 console.log("");
 room("sun", sunTraces);
 room("earth", earthTraces);
+
+// L-515 step 2a: the fixed row is drawn whatever the block names, because
+// it carries no shell key. Planted: Earth's centre stamped as a shell. The
+// arrival rule must then hide it, and the expected list above must see it
+// gone -- so a green run has shown the list can catch a hidden centre.
+(function () {
+  const traces = earthTraces();
+  traces.forEach(function (t) {
+    if (t.legendgroup === "center") {
+      t.meta = Object.assign({}, t.meta || {}, { shell_key: "planted_centre" });
+    }
+  });
+  applyArrival(traces, cfgText, "earth");
+  if (groupsShown(traces).indexOf("center") >= 0) {
+    fail("planted: Earth's fixed row stamped as a shell stayed drawn, so " +
+         "this check could not see a hidden centre");
+  } else {
+    console.log("  planted: Earth's fixed row stamped as a shell is hidden " +
+                "by the arrival rule, and the expected list would name it");
+  }
+})();
 
 console.log("");
 if (failures.length) {

@@ -108,6 +108,10 @@
  * from payload.moon (moonBox). The orbit's cross names the orbit and its
  * centre. Before this the Moon's two boxes printed only the assembler's
  * position line.)
+ * Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
+ * 2a, one drawer: the assembler's centre marker is kept, first, as Earth's
+ * fixed row, its box and panel the orrery's name, description and link
+ * from payload.earth (earthBox); until then it was dropped.)
  */
 (function (global) {
   "use strict";
@@ -673,6 +677,34 @@
       f(os, "center") + ", in the " + f(os, "refplane") + " plane.";
   }
 
+  /* L-515 step 2a (one drawer), 2026-11-07: Earth's fixed row's text box
+     and panel words. earth is the driver's payload.earth: the orrery's
+     name, description and info_url, copied into the config by the objects
+     mirror, as the Moon's are. Its name and description in the box, both
+     in the panel with the link. Returns {name, lines, meta, warnings};
+     with nothing served the row still reads "Earth" and says why in the
+     room's notes. */
+  function earthBox(earth) {
+    if (!isDict(earth)) {
+      return { name: "Earth", lines: ["Earth"], meta: {},
+               warnings: ["earth: no text box words served by the driver"] };
+    }
+    var name = (typeof earth.name === "string" && earth.name) ? earth.name : "Earth";
+    var lines = [name], meta = {}, warnings = [];
+    if (typeof earth.description === "string" && earth.description) {
+      lines.push(wrapSB(earth.description, 60));
+      meta.about = earth.description;
+    } else {
+      warnings.push("earth: no description served");
+    }
+    if (typeof earth.info_url === "string" && earth.info_url) {
+      meta.info_url = earth.info_url;
+    } else {
+      warnings.push("earth: no info link served");
+    }
+    return { name: name, lines: lines, meta: meta, warnings: warnings };
+  }
+
   /* L-513 (the Moon's standards), 2026-11-06: the Moon's text box and
      panel words. moon is the driver's payload.moon: the orrery's name,
      description, info_url and period, copied into the config by the
@@ -861,10 +893,30 @@
     } : null;
 
     // The assembler's traces: the Moon group, faint ellipse, all hidden on
-    // arrival; the centre marker dropped.
+    // arrival; the centre marker kept as Earth's fixed row (L-515 step 2a,
+    // one drawer: every centre has a fixed row, no tick box, always drawn,
+    // its name opening its text box and panel; until then it was dropped,
+    // and the Earth room had no row for Earth). It goes first in the
+    // scene, so the drawer lists it first.
     var scene = [];
     var moonColor = null;
     var fig = (payload.figure && payload.figure.data) || [];
+    for (var c = 0; c < fig.length; c++) {
+      if (fig[c].legendgroup !== "center") continue;
+      var centreBox = earthBox(payload.earth);
+      warnings = warnings.concat(centreBox.warnings);
+      var ct = {};
+      for (var ck in fig[c]) { if (fig[c].hasOwnProperty(ck)) ct[ck] = fig[c][ck]; }
+      ct.name = centreBox.name;
+      ct.text = [centreBox.lines.join("<br>")];
+      var cm = {};
+      for (var cmk in (ct.meta || {})) { if (ct.meta.hasOwnProperty(cmk)) cm[cmk] = ct.meta[cmk]; }
+      for (var cbk in centreBox.meta) { if (centreBox.meta.hasOwnProperty(cbk)) cm[cbk] = centreBox.meta[cbk]; }
+      cm.label_target = true;
+      ct.meta = cm;
+      scene.push(ct);
+      break;
+    }
     for (var t = 0; t < fig.length; t++) {
       var tr = fig[t];
       if (tr.legendgroup === "center") continue;

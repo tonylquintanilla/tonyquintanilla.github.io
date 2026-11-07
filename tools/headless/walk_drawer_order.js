@@ -13,6 +13,9 @@
 // "DRAWER WALK: ok" only when both rooms match and the fault was caught.
 //
 // Written October 21, 2026 with Anthropic's Claude Opus 5.5 (new, L-460).
+// Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
+// 2a: the order wanted is the centre's row first and its children after
+// its shells, as the check reads the config.)
 "use strict";
 const fs = require("fs"), path = require("path"), os = require("os");
 const ROOT = path.join(__dirname, "..", "..");
@@ -25,7 +28,9 @@ async function walk(room, payloadPath, rowsFeatures) {
   const dom = [...w.document.querySelectorAll("#sun-drawer-list .sun-row[data-k]")]
     .map(r => r.querySelector(".rname").textContent);
   const traces = JSON.parse(JSON.stringify(w.eval("sunPlotDiv.data")));
-  const want = S.expected(S.loadOrder(S.SRC), traces, rowsFeatures).map(r => r.name);
+  // L-515 step 2a: the centre first and its children after its shells,
+  // by the check's own reading of the config.
+  const want = S.expected(S.loadOrder(S.SRC), traces, rowsFeatures, S.treeOpts(room)).map(r => r.name);
   const bad = [];
   for (let i = 0; i < Math.max(dom.length, want.length); i++) {
     if (dom[i] !== want[i]) {

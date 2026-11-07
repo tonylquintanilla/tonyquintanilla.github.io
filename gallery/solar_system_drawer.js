@@ -126,6 +126,31 @@
 // Everything that counted or ticked bodies counts and ticks bodies only;
 // a group row is never a body.
 //
+// ONE DRAWER (L-515 step 2a, one nested tree; Tony's rulings 2 and 10 of
+// 2026-11-07). Every centre -- the root (the Solar System room) and the
+// Sun and Earth -- builds its drawer through one plan, rowPlan(): a fixed
+// row for the centre, then group rows and body rows where a centre serves
+// rows, and shell rows where it draws shells. Since the step:
+//   FIXED ROW  every centre has one: no tick box, no Go To, always drawn;
+//              its name opens its text box and its panel. Its trace group
+//              is the assembler's centre marker, "center", in every room.
+//   CENTRE ON  where "Enter the <name> room" stood, "Centre on <name>"
+//              (WORDS.enter) on the row of a body whose centre is built.
+//              A body that is a centre in the tree but has none built --
+//              something is served around it, an object fetched around it
+//              or features of its own (centresOf, read from the config,
+//              never typed) -- reads "Not built yet" there (WORDS.notBuilt).
+//              Any other body opens to "No room or cards yet" as before.
+//   TRAIL      a centre other than the root shows "Solar system > <name>"
+//              at the top of its drawer, its first part a link back to
+//              the root (WORDS.trailRoot, ROOT_EXHIBIT).
+//   TICKS KEPT leaving the root by Centre on keeps what was ticked there,
+//              for the open tab only (sessionStorage), and the root's next
+//              opening in that tab puts it back, once (tickMemory,
+//              tickRestore). Reset still starts fresh.
+// Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
+// 2a: ONE DRAWER, above).
+//
 // A DRAWING ROW (L-503, Tony's ruling of 2026-10-29). The belt's cloud is
 // a row of its own, first inside the Main asteroid belt group, "ticked and
 // reset like a body, Go To fitting the cloud". It is served as
@@ -142,12 +167,23 @@
 
   const SUN_KEY = "center";     // the Sun's trace group in this room
   const SUN_SLUG = "sun";       // the Sun's slug in the served rows
+  // L-515: the root of the tree, the room every trail line returns to.
+  const ROOT_EXHIBIT = "solar-system";
+  // L-515: where the root keeps what was ticked when a visitor centres
+  // on a body, for this tab only.
+  const TICK_MEMORY_KEY = "po_root_ticks";
 
   // The visitor's words. noRoom and enter are Tony's, 2026-09-30; the
   // two resets are his, 2026-10-24 (L-477).
   const WORDS = {
     noRoom: "No room or cards yet",
-    enter: function (name) { return "Enter the " + name + " room"; },
+    // L-515 (Tony's rulings 2 and 10 of 2026-11-07): the room button reads
+    // "Centre on <name>"; a centre not built yet reads "Not built yet";
+    // the trail line's first part is the root.
+    enter: function (name) { return "Centre on " + name; },
+    notBuilt: "Not built yet",
+    trailRoot: "Solar system",
+    trailSep: " > ",
     reset: "Reset",
     groupReset: function (label) { return "Reset " + label; },
     // L-472, Tony's approval of 2026-10-23.
@@ -248,6 +284,112 @@
   function roomFor(row, roomKeys) {
     if (!row) { return null; }
     return (roomKeys || []).indexOf(row.slug) >= 0 ? row.slug : null;
+  }
+
+  // L-515 (ruling 10): what a body's row offers where the room button
+  // sits -- "room" (its centre is built: Centre on), "notBuilt" (it is a
+  // centre in the tree with none built), or null. centres is centresOf().
+  function centreOffer(row, roomKeys, centres) {
+    if (!row || !row.slug) { return null; }
+    if (roomFor(row, roomKeys)) { return "room"; }
+    return (centres || []).indexOf(row.slug) >= 0 ? "notBuilt" : null;
+  }
+
+  // L-515 (rulings 6 and 9): the bodies that are centres in the tree,
+  // read from the served config: each with an object fetched around it
+  // (another object's center_slug), or features served on its own entry.
+  // The root is one. In config order.
+  function centresOf(config) {
+    const objs = (config && Array.isArray(config.objects)) ? config.objects : [];
+    const around = {};
+    objs.forEach(function (o) {
+      if (o && typeof o.center_slug === "string" && o.center_slug !== o.slug) {
+        around[o.center_slug] = true;
+      }
+    });
+    return objs.filter(function (o) {
+      if (!o || typeof o.slug !== "string") { return false; }
+      const f = o.features;
+      return !!around[o.slug] ||
+        !!(f && typeof f === "object" && Object.keys(f).length);
+    }).map(function (o) { return o.slug; });
+  }
+
+  // L-515 (ruling 2): the slugs fetched around one centre -- its children
+  // in the tree -- in config order. A centre's drawer lists them after its
+  // shells (drawer_order.js).
+  function childrenOf(config, centre) {
+    const objs = (config && Array.isArray(config.objects)) ? config.objects : [];
+    return objs.filter(function (o) {
+      return o && typeof o.slug === "string" && o.center_slug === centre &&
+             o.slug !== centre;
+    }).map(function (o) { return o.slug; });
+  }
+
+  // L-515 step 2a: ONE drawer for every centre. The rows in the order the
+  // drawer lists them, each with its kind:
+  //   fixed  the centre (SUN_KEY, the assembler's centre marker);
+  //   group  a served group row;
+  //   body   a served body or drawing row, or a group the scene drew that
+  //          no row names, in a centre that serves rows;
+  //   shell  a legend group in a centre that serves no rows.
+  // served is the centre's rowsFromServed() list, or null; groupKeys is
+  // the scene's legend groups in the drawer's order (drawer_order.js for
+  // a centre of shells). A served row the scene did not draw is left out;
+  // compose has reported it. The fixed row is always first.
+  function rowPlan(served, groupKeys) {
+    const keys = groupKeys || [];
+    const drawnKey = {};
+    keys.forEach(function (k) { drawnKey[k] = true; });
+    const out = [];
+    const placed = {};
+    if (drawnKey[SUN_KEY]) {
+      out.push({ kind: "fixed", key: SUN_KEY });
+      placed[SUN_KEY] = true;
+    }
+    if (served) {
+      served.forEach(function (r) {
+        if (isGroup(r)) { out.push({ kind: "group", key: r.key, group: r.group }); return; }
+        if (!drawnKey[r.key] || placed[r.key]) { return; }
+        placed[r.key] = true;
+        out.push({ kind: "body", key: r.key, member: !!r.group });
+      });
+    }
+    keys.forEach(function (k) {
+      if (placed[k]) { return; }
+      placed[k] = true;
+      out.push({ kind: served ? "body" : "shell", key: k });
+    });
+    return out;
+  }
+
+  // L-515 (ruling 10): what the root keeps when a visitor centres on a
+  // body -- the rows ticked and the order they were ticked in -- as the
+  // text sessionStorage holds. Only tickable keys are kept.
+  function tickMemory(shownByKey, order) {
+    const ticked = Object.keys(shownByKey || {}).filter(function (k) {
+      return shownByKey[k] && tickable(k);
+    });
+    const kept = (order || []).filter(function (k) { return ticked.indexOf(k) >= 0; });
+    return JSON.stringify({ ticked: ticked, order: kept });
+  }
+
+  // The root's ticks put back from that text, or null. A key that is no
+  // tickable row of the root now is dropped, never guessed; text that is
+  // not what tickMemory wrote gives null, and the root opens as served.
+  function tickRestore(text, rows) {
+    if (typeof text !== "string" || !text) { return null; }
+    let saved;
+    try { saved = JSON.parse(text); } catch (e) { return null; }
+    if (!saved || !Array.isArray(saved.ticked) || !Array.isArray(saved.order)) { return null; }
+    const known = {};
+    (rows || []).forEach(function (r) {
+      if (r && !isGroup(r) && tickable(r.key)) { known[r.key] = true; }
+    });
+    const ticked = saved.ticked.filter(function (k) { return typeof k === "string" && known[k]; });
+    const order = saved.order.filter(function (k) { return ticked.indexOf(k) >= 0; });
+    ticked.forEach(function (k) { if (order.indexOf(k) < 0) { order.push(k); } });
+    return { ticked: ticked, order: order };
   }
 
   // How many of a group's bodies are ticked.
@@ -537,6 +679,15 @@
     orderGroups: orderGroups,
     tickable: tickable,
     roomFor: roomFor,
+    // L-515 step 2a: one drawer for every centre.
+    ROOT_EXHIBIT: ROOT_EXHIBIT,
+    TICK_MEMORY_KEY: TICK_MEMORY_KEY,
+    centreOffer: centreOffer,
+    centresOf: centresOf,
+    childrenOf: childrenOf,
+    rowPlan: rowPlan,
+    tickMemory: tickMemory,
+    tickRestore: tickRestore,
     orderAdd: orderAdd,
     orderRemove: orderRemove,
     homeTarget: homeTarget,
