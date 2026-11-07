@@ -1,10 +1,10 @@
 {
   "_comment": "Written by daily_run.py --night on a clean night only (L-485), so this is the website's last clean run. A red night writes nothing: its record is the run's log on GitHub.",
   "schema": 1,
-  "clean_run_utc": "2026-11-07T14:58:53.701139+00:00",
-  "started_utc": "2026-11-07T14:55:47.387067+00:00",
+  "clean_run_utc": "2026-11-07T17:49:46.751515+00:00",
+  "started_utc": "2026-11-07T17:46:49.558115+00:00",
   "where": "GitHub Actions",
-  "orrery_pulled": "27f6f5bdc34616f2eecd19e290a51a0eaa059c08",
+  "orrery_pulled": "18b70f0830a5ab4a37319e1270cea7a42d9f268d",
   "pulls_asked": "with the run's GITHUB_TOKEN",
   "swap_log_line": {
     "attempts": {
@@ -15,11 +15,11 @@
     "mode": "nightly",
     "outcome": "ok",
     "reached": "staging_to_live",
-    "run_id": "20261107T145552Z",
-    "time": "2026-11-07T14:57:43.693566+00:00"
+    "run_id": "20261107T174655Z",
+    "time": "2026-11-07T17:48:35.515372+00:00"
   },
-  "run_records": "Run records: carried 135 of 135, plus tonight's: 20261107T145552Z.json.",
-  "served_files_changed": 196,
+  "run_records": "Run records: carried 136 of 136, plus tonight's: 20261107T174655Z.json.",
+  "served_files_changed": 103,
   "steps": [
     {
       "step": "Guest book updater",
@@ -29,7 +29,7 @@
     {
       "step": "Pulls from the orrery",
       "result": "ok",
-      "seconds": 3.4
+      "seconds": 3.9
     },
     {
       "step": "Pull matches push (runner)",
@@ -39,7 +39,7 @@
     {
       "step": "Cache builder",
       "result": "exit 0",
-      "seconds": 112.7
+      "seconds": 101.8
     },
     {
       "step": "Run records",
@@ -49,7 +49,7 @@
     {
       "step": "Maintenance run, night pass",
       "result": "exit 0",
-      "seconds": 69.0
+      "seconds": 69.2
     }
   ],
   "rows": [
@@ -58,7 +58,7 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/constants_export.json, data/constants_export.sha",
-      "seconds": 0.5
+      "seconds": 0.7
     },
     {
       "row": "Config mirror",
@@ -72,7 +72,7 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/objects_export.json, data/objects_export.sha",
-      "seconds": 0.5
+      "seconds": 0.8
     },
     {
       "row": "Objects mirror",
@@ -86,14 +86,14 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/drawings/hills_cloud.json, data/drawings/van_allen_belts.json, data/drawings/earth_exosphere.json, data/drawings/pulled_at.sha",
-      "seconds": 1.0
+      "seconds": 1.3
     },
     {
       "row": "Cache builder suite",
       "kind": "checker",
       "verdict": "PASS",
       "note": "PASS (526 checks, 0 failures)",
-      "seconds": 24.5
+      "seconds": 24.3
     },
     {
       "row": "Pole of date",
@@ -162,7 +162,7 @@
       "row": "Pointer join",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "Every link is accounted for: 188 link(s) against orrery 27f6f5bd, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
+      "note": "Every link is accounted for: 188 link(s) against orrery 18b70f08, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
       "seconds": 0.1
     },
     {
@@ -183,8 +183,8 @@
       "row": "Drawings",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery 27f6f5bd; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
-      "seconds": 0.6
+      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery 18b70f08; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
+      "seconds": 0.7
     },
     {
       "row": "Collapsed features",
@@ -198,7 +198,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.5
+      "seconds": 0.3
     },
     {
       "row": "Page framing",
@@ -365,5 +365,5 @@
       "why": "writes MODULE_ATLAS.md and MODULE_INDEX.md, which are documents; the night commits no page or word (Tony's R1, 2026-10-25)"
     }
   ],
-  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/42383812531"
+  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/42397906601"
 }
