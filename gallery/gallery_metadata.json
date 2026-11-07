@@ -182,42 +182,6 @@
       "sibling": "solar_system_20250318_1901"
     },
     {
-      "id": "solar_system_20260907_earth_shells_moon_gallery",
-      "title": "Earth and Moon",
-      "description": "Earth and Moon",
-      "room": "solar_system/earth",
-      "shape": "16:9",
-      "files": {
-        "landscape": "solar_system_20260907_earth_shells_moon_gallery.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
-      "converted": "2026-09-07 17:51",
-      "size_kb": {
-        "landscape": 618.5
-      },
-      "sibling": "solar_system_20260907_earth_shells_moon_mobile"
-    },
-    {
-      "id": "solar_system_20260907_earth_shells_moon_mobile",
-      "title": "Earth and Moon",
-      "description": "Earth and Moon",
-      "room": "solar_system/earth",
-      "shape": "9:16",
-      "files": {
-        "portrait": "solar_system_20260907_earth_shells_moon_mobile.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
-      "converted": "2026-09-07 17:51",
-      "size_kb": {
-        "portrait": 626.4
-      },
-      "sibling": "solar_system_20260907_earth_shells_moon_gallery"
-    },
-    {
       "id": "earth_barycenter_shells_20260207_1635",
       "title": "Earth Barycenter Shells 20260207 1635",
       "description": "Plot of Earth-Moon system with barycenter. Shows Earth's geological, atmospheric and magnetic structure.",
@@ -355,26 +319,6 @@
       "size_kb": {}
     },
     {
-      "id": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy",
-      "title": "Inner Solar System Animation",
-      "description": "Animation of the inner solar system from February 4, 2005 for 21 years.",
-      "room": "solar_system",
-      "shape": "16:9",
-      "files": {
-        "landscape": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [
-        "JPL Horizons"
-      ],
-      "converted": "2026-02-17 23:25",
-      "size_kb": {
-        "landscape": 10082.0
-      },
-      "sibling": "inner_solar_system_animation_2-4-2005_21_years_social_copy2"
-    },
-    {
       "id": "3iatlas_jupiter_20260316_1222",
       "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
@@ -411,23 +355,6 @@
       "sibling": "3iatlas_jupiter_20260316_1222"
     },
     {
-      "id": "current_comets_social_view_20260210_2331",
-      "title": "Current Comets on 2-10-2026",
-      "description": "Current comets and the inner solar system.",
-      "room": "solar_system/comets",
-      "shape": "9:16",
-      "files": {
-        "portrait": "current_comets_social_view_20260210_2331.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
-      "converted": "2026-02-10 23:40",
-      "size_kb": {
-        "portrait": 33130.3
-      }
-    },
-    {
       "id": "c2024_e1_wierzchos_20260225_0236_landscape",
       "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
       "description": "Comet Wierzchos, perihelion 1-20-2026.",
@@ -462,23 +389,6 @@
         "portrait": 2510.0
       },
       "sibling": "c2024_e1_wierzchos_20260225_0236_landscape"
-    },
-    {
-      "id": "earth_moon_shells_social_view_20260210_1643",
-      "title": "Earth-Moon System on 2026 02 10 16:43",
-      "description": "Earth-Moon system with crust, atmosphere, magenetosphere and gravitational shells.",
-      "room": "solar_system/earth/moon",
-      "shape": "9:16",
-      "files": {
-        "portrait": "earth_moon_shells_social_view_20260210_1643.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
-      "converted": "2026-02-10 16:46",
-      "size_kb": {
-        "portrait": 4036.5
-      }
     },
     {
       "id": "near_earth_asteroids_20260207_2114",
@@ -1666,23 +1576,6 @@
       }
     },
     {
-      "id": "jupiter_system_social_view_20260211_0035",
-      "title": "Jupiter System on 2026 02 11 00:35",
-      "description": "Jupiter system.",
-      "room": "solar_system/jupiter",
-      "shape": "9:16",
-      "files": {
-        "portrait": "jupiter_system_social_view_20260211_0035.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
-      "converted": "2026-02-11 00:37",
-      "size_kb": {
-        "portrait": 22690.9
-      }
-    },
-    {
       "id": "pluto_barycenter_system_20260208_1957",
       "title": "Pluto Barycenter System 20260208 1957",
       "description": "Plot of Pluto system centered on the barycenter.",
@@ -2356,23 +2249,6 @@
       "sibling": "artemis_moon_animation_20260406_gallery"
     },
     {
-      "id": "voyager1_2_social_view_20260210_2337",
-      "title": "Voyager 1 and 2 Missions on 2026 02 10 23:37",
-      "description": "Voyager 1 and 2 mission from launch through the present.",
-      "room": "solar_system/space_missions",
-      "shape": "9:16",
-      "files": {
-        "portrait": "voyager1_2_social_view_20260210_2337.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [],
-      "converted": "2026-02-10 23:40",
-      "size_kb": {
-        "portrait": 1469.3
-      }
-    },
-    {
       "id": "new_horizons_full_mission_20060120_20200101",
       "title": "New Horizons mission 2006 to 2020",
       "description": "New Horizons mission 2006 to 2020",
@@ -2606,28 +2482,8 @@
       ],
       "converted": "2026-09-10 09:44",
       "size_kb": {}
-    },
-    {
-      "id": "inner_solar_system_animation_2-4-2005_21_years_social_copy2",
-      "title": "Inner Solar System Animation",
-      "description": "Animation of the inner solar system from February 4, 2005 for 21 years.",
-      "room": "solar_system",
-      "shape": "9:16",
-      "files": {
-        "portrait": "inner_solar_system_animation_2-4-2005_21_years_social.json"
-      },
-      "live": null,
-      "featured": false,
-      "sources": [
-        "JPL Horizons"
-      ],
-      "converted": "2026-02-17 23:24",
-      "size_kb": {
-        "portrait": 10857.8
-      },
-      "sibling": "inner_solar_system_animation_2-4-2005_21_years_gallery_landscape_copy"
     }
   ],
-  "last_updated": "2026-10-01 22:13",
-  "total_count": 142
+  "last_updated": "2026-11-06 23:04",
+  "total_count": 134
 }
