@@ -304,9 +304,21 @@ const SOFT_BR = "<br soft>";
 // (tilted disk)" different, and the others byte for byte. The L-484 one
 // is left in place, unreferenced.
 // Module updated: November 2, 2026 with Anthropic's Claude Opus 5.5.
-const FIXTURE_AT = "8c3947c1";
+// L-513 (the Moon's standards), November 6, 2026: re-recorded as
+// fixture_hovers_L513_on_6c93d0a2.json, from the Earth scene re-recorded
+// with the room's new driver (tools/record_earth_scene.py) and this
+// config after orrery 67662596's export was mirrored. Four hovers moved,
+// each on purpose: "scene/moon" (the orbit's cross now names the orbit
+// and its centre), "scene/moon#2" (the Moon's text box: NASA's words, its
+// distance from Earth, the sentence on accuracy, its period), and
+// "scene/earth" and "scene/moon#4", whose dates and Earth's period date
+// follow the re-recorded scene; every other hover byte for byte. The old
+// fixture failed on exactly these four, by name, before the re-record.
+// The L411_8 one is left in place, unreferenced.
+// Module updated: November 6, 2026 with Anthropic's Claude Opus 5.5.
+const FIXTURE_AT = "6c93d0a2";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L411_8_on_8c3947c1.json");
+                          "fixture_hovers_L513_on_6c93d0a2.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

@@ -2399,9 +2399,35 @@ except Exception as _e:
 # L-431 build 3: Earth's orbital period, the orrery's, copied into the
 # config by tools/mirror_objects.py; printed in the Sun Direction's hover.
 _earth_period = None
+_moon_cfg = {}
 for _o in (_cfg.get("objects") or []):
     if isinstance(_o, dict) and _o.get("slug") == "earth":
         _earth_period = _o.get("period")
+    if isinstance(_o, dict) and _o.get("slug") == "moon":
+        _moon_cfg = _o
+
+# L-513 (the Moon's standards): the Moon's text box. Its words, link and
+# period are the orrery's, copied into the config by tools/mirror_objects.py;
+# its accuracy is the config's position_accuracy link to the orrery's DE430
+# Moon row, written by tools/mirror_constants.py; its drift is the served
+# trust rate -- read as the Solar System room reads each body's.
+_moon = None
+try:
+    _mrec2 = _cache.record("moon")
+    _mtrust = _mrec2.get("trust") or {}
+    _moon = {
+        "name": _moon_cfg.get("name") or _mrec2.get("name"),
+        "description": _moon_cfg.get("description"),
+        "info_url": _moon_cfg.get("info_url"),
+        "period": _moon_cfg.get("period"),
+        "accuracy": _moon_cfg.get("position_accuracy"),
+        "trust": {
+            "rate_deg_per_day": _mtrust.get("error_rate_deg_per_day"),
+            "element_epoch_jd": _mtrust.get("element_epoch_jd"),
+        },
+    }
+except Exception as _e:
+    _notes.append("moon: text box words not read (%s)" % _e)
 
 json.dumps({
     "figure": result.figure,
@@ -2410,6 +2436,7 @@ json.dumps({
     "earthPeriod": _earth_period,
     "sun": _sun,
     "moonArc": _arc,
+    "moon": _moon,
     "epochJd": _jd,
     "poleOfDate": _pod,
 })

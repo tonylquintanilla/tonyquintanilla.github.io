@@ -100,6 +100,14 @@
  * the i panel makes a link; Tony, 2026-10-24.)
  * Updated October 26, 2026 with Anthropic's Claude Opus 5.5 (L-494: the
  * four hovers end with no pointer sentence, as every hover now does.)
+ * Updated November 6, 2026 with Anthropic's Claude Opus 5.5 (L-513, the
+ * Moon's standards: the Moon's marker carries its text box -- the
+ * orrery's words, its distance from Earth to the digits the larger of its
+ * drift and JPL's published accuracy earns, a sentence saying which, and
+ * its period around Earth -- and its panel the link and the two sources,
+ * from payload.moon (moonBox). The orbit's cross names the orbit and its
+ * centre. Before this the Moon's two boxes printed only the assembler's
+ * position line.)
  */
 (function (global) {
   "use strict";
@@ -107,6 +115,12 @@
   // L-481: JPL Horizons' address, read live on 2026-10-24 (the page titled
   // "Horizons System"); a source line naming Horizons carries it.
   var HORIZONS_URL = "https://ssd.jpl.nasa.gov/horizons/";
+  // The Moon's elements, as a source line. One home since L-513: the
+  // trusted arc's panel and the Moon's own panel print the same words.
+  var MOON_ELEMENTS_SOURCE = "JPL Horizons (" + HORIZONS_URL + ") osculating " +
+    "elements for the Moon about Earth, served in coverage_index.json with " +
+    "its measured trust window (two-body rate check against Horizons, " +
+    "gallery-cache-builder).";
 
   var AXIS_COLOR = "rgb(255, 209, 102)";     // orrery _AXIS_COLOR, warm gold
   var SUN_COLOR = "yellow";                  // orrery sun direction indicator
@@ -583,9 +597,9 @@
         tail();
       traces.push(infoMarker(pm, arc.color || "rgb(200, 200, 200)", hArc, gMoon, { meta: {
         info_url: guideLink("moon_arc"),
-        source: "JPL Horizons (" + HORIZONS_URL + ") osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder). The drift outside the arc: " + guideSource("moon_arc"),
+        source: MOON_ELEMENTS_SOURCE + " The drift outside the arc: " + guideSource("moon_arc"),
         source_items: [
-          { label: null, text: "JPL Horizons (" + HORIZONS_URL + ") osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder)." },
+          { label: null, text: MOON_ELEMENTS_SOURCE },
           { label: "The drift outside the arc", text: guideSource("moon_arc") }
         ]
       } }));
@@ -657,6 +671,93 @@
         ? pod.tilt.derived : "not described") +
       "; that orbit is target " + f(os, "query_target") + " about " +
       f(os, "center") + ", in the " + f(os, "refplane") + " plane.";
+  }
+
+  /* L-513 (the Moon's standards), 2026-11-06: the Moon's text box and
+     panel words. moon is the driver's payload.moon: the orrery's name,
+     description, info_url and period, copied into the config by the
+     objects mirror; the config's position_accuracy (the orrery's DE430
+     Moon row, by the constants mirror); and the served trust rate. pos is the Moon's marker, in AU from Earth.
+     The distance prints by the Solar System room's rule, the larger of
+     the drift and JPL's published accuracy, never finer than whole
+     kilometres (SolarSystemFigures.distanceLine); the period in that
+     room's sentence (periodLine). The sentence on accuracy follows the
+     orrery's words for the Moon (position_accuracy._distance_sentence,
+     "JPL's published accuracy for the Moon's orbit around Earth"), saying
+     which error set the digits. Returns {lines, meta, warnings}; lines is
+     null when the Moon is not served. */
+  function moonBox(moon, pos, epochJd, kmPerAu, centreName) {
+    var SSF = global.SolarSystemFigures;
+    var warnings = [];
+    if (!isDict(moon)) {
+      return { lines: null, meta: null,
+               warnings: ["moon: no text box words served by the driver"] };
+    }
+    var name = (typeof moon.name === "string" && moon.name) ? moon.name : "Moon";
+    var lines = [name];
+    var meta = {};
+    if (typeof moon.description === "string" && moon.description) {
+      lines.push(wrapSB(moon.description, 60));
+      meta.about = moon.description;
+    } else {
+      warnings.push("moon: no description served");
+    }
+    if (typeof moon.info_url === "string" && moon.info_url) {
+      meta.info_url = moon.info_url;
+    } else {
+      warnings.push("moon: no info link served");
+    }
+    if (!SSF) {
+      warnings.push("moon: solar_system_figures.js is not loaded, so no " +
+                    "distance or period is shown");
+      return { lines: lines, meta: meta, warnings: warnings };
+    }
+    var dist = SSF.distanceLine({ x: pos[0], y: pos[1], z: pos[2] },
+                                moon.trust, epochJd, moon.accuracy, kmPerAu,
+                                null, centreName);
+    if (dist.line) {
+      lines.push(dist.line + ".");
+      var orbit = "the " + name + "'s orbit around " + centreName;
+      if (dist.note) {
+        lines.push(wrapSB(dist.note, 60));
+      } else if (dist.governs === "drift") {
+        lines.push(wrapSB("This distance is rounded to how far this page's " +
+          "working-out from JPL's orbit may have drifted by the minute " +
+          "shown. JPL's published accuracy for " + orbit + " is finer.", 60));
+      } else if (dist.governs === "whole kilometres") {
+        lines.push(wrapSB("This distance is shown to the whole kilometer. " +
+          "JPL's published accuracy for " + orbit + " is finer.", 60));
+      } else {
+        lines.push(wrapSB("This distance is rounded to JPL's published " +
+          "accuracy for " + orbit + ".", 60));
+      }
+      if (dist.accuracyWhy) { warnings.push("moon: " + dist.accuracyWhy); }
+    } else {
+      warnings.push("moon: no distance shown -- " + dist.why);
+    }
+    var per = SSF.periodLine(moon.period);
+    if (per.line) {
+      lines.push(wrapSB(per.line, 60));
+    } else if (per.warning) {
+      warnings.push("moon: " + per.warning);
+    } else {
+      warnings.push("moon: no period served");
+    }
+    // The panel's sources, one to a line (L-456): the elements' source
+    // line, the trusted arc's own words, then the accuracy's served
+    // citation.
+    var items = [{ label: null, text: MOON_ELEMENTS_SOURCE }];
+    var acc = moon.accuracy;
+    if (isDict(acc) && typeof acc.source === "string" && acc.source) {
+      items.push({ label: "JPL's published accuracy", text: acc.source });
+    }
+    if (items.length) {
+      meta.source = items.map(function (it) {
+        return (it.label ? it.label + ": " : "") + it.text;
+      }).join(" ");
+      meta.source_items = items;
+    }
+    return { lines: lines, meta: meta, warnings: warnings };
   }
 
   function composeScene(payload, ctx) {
@@ -779,6 +880,25 @@
           tr.name = "Moon (orbit and position)";
         }
         if (tr.mode === "markers" && tr.marker && !moonColor) moonColor = tr.marker.color;
+        // L-513: the orbit's cross names the orbit and its centre, as the
+        // Solar System room's do; the Moon's own marker carries its box.
+        if (tr.mode === "markers" && /osculating orbit info$/.test(tr.name || "")) {
+          var mp = (isDict(payload.moon) && isDict(payload.moon.period)) ? payload.moon.period : null;
+          tr.text = [((isDict(payload.moon) && payload.moon.name) || "Moon") +
+                     "'s orbit, drawn around" + SB +
+                     ((mp && mp.center_label) || "Earth")];
+        } else if (tr.mode === "markers" && Array.isArray(tr.x) && tr.x.length === 1) {
+          var box = moonBox(payload.moon, [tr.x[0], tr.y[0], tr.z[0]],
+                            payload.epochJd, K, "Earth");
+          warnings = warnings.concat(box.warnings);
+          if (box.lines) {
+            tr.text = [box.lines.join("<br>")];
+            var mm = {};
+            for (var mk in (tr.meta || {})) { if (tr.meta.hasOwnProperty(mk)) mm[mk] = tr.meta[mk]; }
+            for (var bk in box.meta) { if (box.meta.hasOwnProperty(bk)) mm[bk] = box.meta[bk]; }
+            tr.meta = mm;
+          }
+        }
         tr.visible = "legendonly";
       }
       scene.push(tr);

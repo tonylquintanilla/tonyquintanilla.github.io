@@ -1,8 +1,8 @@
 {
   "schema": 4,
-  "source_sha256": "aacf3de0db66acc4ad9333a1984cc9462b533f7bbe16d8668a75738be05e91c6",
-  "period_inputs_sha256": "0ff77f387816cf1d474d80e5bb5e4e6b15edced7ac51710513b35c37f3e4e625",
-  "confirmations_sha256": "59c53acb02498cf58ad641f51fc4bdd3b537db0c3cac41cab1bfb1efda51426a",
+  "source_sha256": "c62f261841d2a682629b6fccb5ab5894707e81ea0027976d113e47a374b8859a",
+  "period_inputs_sha256": "b44eecc08ae3c625218cf1473b9e042a1f90c8a474a8984e5653207b7eb318f2",
+  "confirmations_sha256": "42da1b06c86aec4f3ae74b9d0e848adf809f61ba4b7a397ada7efb50da63c759",
   "paths_sha256": "c8fd046d767f68aa97c46b5765e71fae6cdab7127fd6f04ebbc181b37be771df",
   "cadence_days": 30,
   "objects": {
@@ -174,7 +174,7 @@
         "target": "3",
         "target_label": "the Earth-Moon center of mass",
         "open_orbit": false,
-        "fetched": "2026-10-28",
+        "fetched": "2026-11-06",
         "words": null,
         "years": {
           "value": 1.0,
@@ -187,22 +187,22 @@
           "text": "365.25"
         },
         "record": {
-          "days": 365.2498770507308,
-          "error_days": 0.004099075940587227,
+          "days": 365.2506251782538,
+          "error_days": 0.0023893369036613876,
           "error_from": "year_change",
           "sbdb_status": "not a small body; SBDB not asked",
-          "epoch": "2026-10-28 23:02",
+          "epoch": "2026-11-06 20:07",
           "elements": {
-            "a": 0.9999881981929077,
-            "e": 0.01666534971924718,
-            "i": 0.003578713484288009,
-            "omega": 288.1100613331521,
-            "Omega": 174.9865390523067,
-            "TP": 2461409.591382199,
-            "MA": 293.8332492085932,
-            "TA": 292.0718442576858,
-            "q": 0.9833230451549031,
-            "epoch": "2026-10-28 23:02 osc."
+            "a": 0.9999895636844709,
+            "e": 0.01667149395100916,
+            "i": 0.003593006355457907,
+            "omega": 287.894963688731,
+            "Omega": 175.2076519942275,
+            "TP": 2461409.596889203,
+            "MA": 302.578797495749,
+            "TA": 300.9509439628074,
+            "q": 0.9833182437224333,
+            "epoch": "2026-11-06 20:07 osc."
           }
         }
       },
@@ -214,12 +214,80 @@
           "horizons_name": "Earth"
         },
         "period": {
-          "confirmed": "2026-10-31",
+          "confirmed": "2026-11-06",
           "center": "@sun",
-          "epoch": "2026-10-28 23:02",
-          "days": 365.2498770507308,
-          "jpl_days": 365.2498770507308,
-          "error_days": 0.004099075940587227
+          "epoch": "2026-11-06 20:07",
+          "days": 365.2506251782538,
+          "jpl_days": 365.2506251782538,
+          "error_days": 0.0023893369036613876
+        },
+        "hold": null
+      }
+    },
+    "moon": {
+      "name": "Moon",
+      "horizons_id": "301",
+      "horizons_name": "Moon",
+      "id_type": "majorbody",
+      "object_type": "satellite",
+      "description": "NASA: \"The Moon makes a complete orbit around Earth in 27 Earth days and rotates or spins at that same rate, or in that same amount of time.\"",
+      "info_url": "https://science.nasa.gov/moon/facts/",
+      "period": {
+        "kind": "fetched",
+        "typed": false,
+        "center": "@399",
+        "center_label": "Earth",
+        "target": "301",
+        "target_label": null,
+        "open_orbit": false,
+        "fetched": "2026-11-06",
+        "words": null,
+        "years": {
+          "value": 0.08,
+          "figures": 1,
+          "text": "0.08"
+        },
+        "days": {
+          "value": 27.0,
+          "figures": 2,
+          "text": "27"
+        },
+        "record": {
+          "days": 27.42568868369487,
+          "error_days": 0.6199933502843287,
+          "error_from": "year_change",
+          "sbdb_status": "not a small body; SBDB not asked",
+          "epoch": "2026-11-06 23:47",
+          "elements": {
+            "a": 0.002578405422484208,
+            "e": 0.04037427243226854,
+            "i": 5.010316315093197,
+            "omega": 121.5210812185545,
+            "Omega": 326.2757607411543,
+            "TP": 2461343.462008743,
+            "MA": 105.3912222969847,
+            "TA": 109.7885444896174,
+            "q": 0.002474304179515993,
+            "epoch": "2026-11-06 23:47 osc."
+          },
+          "paired": false,
+          "not_paired": "the cache holds no Sun-centred elements for this body"
+        }
+      },
+      "confirmation": {
+        "identity": {
+          "confirmed": "2026-11-07",
+          "horizons_id": "301",
+          "id_type": "majorbody",
+          "horizons_name": "Moon"
+        },
+        "period": {
+          "confirmed": "2026-11-07",
+          "center": "@399",
+          "epoch": "2026-11-06 23:47",
+          "days": 27.42568868369487,
+          "jpl_days": 27.42568868369487,
+          "error_days": 0.6199933502843287
         },
         "hold": null
       }
@@ -240,7 +308,7 @@
         "target": "499",
         "target_label": null,
         "open_orbit": false,
-        "fetched": "2026-11-05",
+        "fetched": "2026-11-06",
         "words": null,
         "years": {
           "value": 1.881,
@@ -253,22 +321,22 @@
           "text": "687.0"
         },
         "record": {
-          "days": 687.0050030500715,
-          "error_days": 0.06004392617296617,
+          "days": 687.006996722792,
+          "error_days": 0.06141750428059822,
           "error_from": "year_change",
           "sbdb_status": "not a small body; SBDB not asked",
-          "epoch": "2026-11-05 04:31",
+          "epoch": "2026-11-06 20:07",
           "elements": {
-            "a": 1.523728867004401,
-            "e": 0.0934003296543734,
-            "i": 1.847437285417082,
-            "omega": 286.6628616572445,
-            "Omega": 49.48037570234247,
-            "TP": 2461125.854188603,
-            "MA": 117.2920746503914,
-            "TA": 126.2825547283166,
-            "q": 1.381412088522306,
-            "epoch": "2026-11-05 04:31 osc."
+            "a": 1.523731814887064,
+            "e": 0.09339934810022872,
+            "i": 1.847436321741758,
+            "omega": 286.663984166981,
+            "Omega": 49.48033552116668,
+            "TP": 2461125.855636265,
+            "MA": 118.1555956953026,
+            "TA": 127.0625215258996,
+            "q": 1.381416256697034,
+            "epoch": "2026-11-06 20:07 osc."
           }
         }
       },
@@ -280,12 +348,12 @@
           "horizons_name": "Mars"
         },
         "period": {
-          "confirmed": "2026-11-05",
+          "confirmed": "2026-11-06",
           "center": "@sun",
-          "epoch": "2026-11-05 04:31",
-          "days": 687.0050030500715,
-          "jpl_days": 687.0050030500715,
-          "error_days": 0.06004392617296617
+          "epoch": "2026-11-06 20:07",
+          "days": 687.006996722792,
+          "jpl_days": 687.006996722792,
+          "error_days": 0.06141750428059822
         },
         "hold": null
       }
@@ -306,35 +374,35 @@
         "target": "599",
         "target_label": null,
         "open_orbit": false,
-        "fetched": "2026-11-05",
+        "fetched": "2026-11-06",
         "words": null,
         "years": {
-          "value": 11.86,
+          "value": 11.87,
           "figures": 4,
-          "text": "11.86"
+          "text": "11.87"
         },
         "days": {
-          "value": 4333.0,
+          "value": 4335.0,
           "figures": 4,
-          "text": "4333"
+          "text": "4335"
         },
         "record": {
-          "days": 4333.453560194256,
-          "error_days": 1.5055221156280822,
+          "days": 4334.845308827874,
+          "error_days": 0.752878956760469,
           "error_from": "year_change",
           "sbdb_status": "not a small body; SBDB not asked",
-          "epoch": "2026-11-05 00:02",
+          "epoch": "2000-11-06 22:12",
           "elements": {
-            "a": 5.20349656680277,
-            "e": 0.0481476350846907,
-            "i": 1.303380872130158,
-            "omega": 273.7420828937977,
-            "Omega": 100.5116837797129,
-            "TP": 2459967.755035747,
-            "MA": 114.7880507363004,
-            "TA": 119.6677408961176,
-            "q": 4.952960512939909,
-            "epoch": "2026-11-05 00:02 osc."
+            "a": 5.204610623839732,
+            "e": 0.04887277686457209,
+            "i": 1.304205405702662,
+            "omega": 274.9716507412894,
+            "Omega": 100.5105161853708,
+            "TP": 2451317.623329461,
+            "MA": 44.66332420210723,
+            "TA": 48.7750032258641,
+            "q": 4.950246850153832,
+            "epoch": "2000-11-06 22:12 osc."
           }
         }
       },
@@ -346,12 +414,12 @@
           "horizons_name": "Jupiter"
         },
         "period": {
-          "confirmed": "2026-11-05",
+          "confirmed": "2026-11-07",
           "center": "@sun",
-          "epoch": "2026-11-05 00:02",
-          "days": 4333.453560194256,
-          "jpl_days": 4333.453560194256,
-          "error_days": 1.5055221156280822
+          "epoch": "2000-11-06 22:12",
+          "days": 4334.845308827874,
+          "jpl_days": 4334.845308827874,
+          "error_days": 0.752878956760469
         },
         "hold": null
       }
@@ -9940,6 +10008,9 @@
     }
   },
   "numbers": {
+    "moon": [
+      "27"
+    ],
     "eurybates": [
       "11",
       "2027"

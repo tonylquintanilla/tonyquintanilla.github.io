@@ -147,6 +147,24 @@ const ALLOWED = [
   // page's number came from.
   ["Orbital period: # years (# days), for the Earth-Moon center of mass, around the Sun, from JPL Horizons, fetched ###.",
    "the page's own account of its data: the served period, for the served body and centre, with its source and fetch date"],
+  // L-513 (the Moon's standards), 2026-11-06: the Moon's text box in the
+  // Earth room. Its period line, the Solar System room's sentence with the
+  // served centre; its distance from Earth, worked out on the page; and one
+  // sentence saying which error set the distance's digits, in the orrery's
+  // words for the Moon (position_accuracy._distance_sentence). Typed, about
+  // the page's own figures; Tony's look at the box is their ruling.
+  ["Orbital period: # years (# days), around Earth, from JPL Horizons, fetched ###.",
+   "the page's own account of its data: the served period, around the served centre, with its source and fetch date"],
+  ["# AU from Earth (# km).", "the scene: the Moon's propagated distance"],
+  ["This distance is rounded to how far this page's working-out from JPL's orbit may have drifted by the minute shown.",
+   "how the page works: which error set the distance's digits (L-513)"],
+  ["This distance is shown to the whole kilometer.",
+   "how the page works: which error set the distance's digits (L-513)"],
+  ["This distance is rounded to JPL's published accuracy for the Moon's orbit around Earth.",
+   "how the page works: which error set the distance's digits (L-513)"],
+  ["JPL's published accuracy for the Moon's orbit around Earth is finer.",
+   "the page's own account of its data: the served accuracy row is finer than the digits printed (L-513)"],
+  ["Moon's orbit, drawn around Earth", "the picture: the drawn orbit's name and its served centre"],
   // Since 2026-10-29 its two dates say UTC, the retrieved moment to the
   // minute (Tony's phone look of 2026-10-28, 23:39: every date the i
   // panel's source lines print says UTC).
@@ -336,6 +354,11 @@ const ROOMS = {
         if (p.poleOfDate) { p.poleOfDate = masked(p.poleOfDate, true, false); }
         if (p.earthPeriod) { p.earthPeriod = masked(p.earthPeriod, true, false); }
       }
+      // L-513: the Moon's text box words, served on its config entry --
+      // its name, description and link (the objects mirror), its period,
+      // and its accuracy's citation (the constants mirror) -- masked by
+      // the same served-word vocabulary, numbers scaled in the scaled pass.
+      if (p.moon) { p.moon = masked(p.moon, mode === "scaled", false); }
     }
     return EG.composeScene(p, { GF: GF, halfRangeAu: 6.155e-5,
       epochIso: new Date((p.epochJd - 2440587.5) * 86400000).toISOString().slice(0, 10)

@@ -567,7 +567,7 @@
       "horizons_id": "399",
       "id_type": "majorbody",
       "horizons_name": "Earth",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "3", "target_label": "the Earth-Moon center of mass", "open_orbit": false, "fetched": "2026-10-28", "words": null, "years": {"value": 1.0, "figures": 6, "text": "1.00000"}, "days": {"value": 365.25, "figures": 5, "text": "365.25"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "3", "target_label": "the Earth-Moon center of mass", "open_orbit": false, "fetched": "2026-11-06", "words": null, "years": {"value": 1.0, "figures": 6, "text": "1.00000"}, "days": {"value": 365.25, "figures": 5, "text": "365.25"}},
       "description": "Our home planet.",
       "info_url": "https://science.nasa.gov/earth/",
       "category": "planet",
@@ -1389,7 +1389,7 @@
     {
       "slug": "jupiter", "name": "Jupiter", "horizons_id": "599", "id_type": "majorbody",
       "horizons_name": "Jupiter",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "599", "target_label": null, "open_orbit": false, "fetched": "2026-11-05", "words": null, "years": {"value": 11.86, "figures": 4, "text": "11.86"}, "days": {"value": 4333.0, "figures": 4, "text": "4333"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "599", "target_label": null, "open_orbit": false, "fetched": "2026-11-06", "words": null, "years": {"value": 11.87, "figures": 4, "text": "11.87"}, "days": {"value": 4335.0, "figures": 4, "text": "4335"}},
       "description": "NASA: \"Jupiter is the largest and oldest planet in our solar system.\"",
       "info_url": "https://science.nasa.gov/jupiter/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1508,7 +1508,7 @@
     {
       "slug": "mars", "name": "Mars", "horizons_id": "499", "id_type": "majorbody",
       "horizons_name": "Mars",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "499", "target_label": null, "open_orbit": false, "fetched": "2026-11-05", "words": null, "years": {"value": 1.881, "figures": 4, "text": "1.881"}, "days": {"value": 687.0, "figures": 4, "text": "687.0"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "499", "target_label": null, "open_orbit": false, "fetched": "2026-11-06", "words": null, "years": {"value": 1.881, "figures": 4, "text": "1.881"}, "days": {"value": 687.0, "figures": 4, "text": "687.0"}},
       "description": "NASA: \"Mars is one of the easiest planets to spot in the night sky -- it looks like a bright red point of light.\"",
       "info_url": "https://science.nasa.gov/mars/",
       "category": "planet", "availability": "analytic", "parent": "sun",
@@ -1561,9 +1561,22 @@
     },
     {
       "slug": "moon", "name": "Moon", "horizons_id": "301", "id_type": "majorbody",
+      "description": "NASA: \"The Moon makes a complete orbit around Earth in 27 Earth days and rotates or spins at that same rate, or in that same amount of time.\"",
+      "info_url": "https://science.nasa.gov/moon/facts/",
+      "period": {"kind": "fetched", "typed": false, "center": "@399", "center_label": "Earth", "target": "301", "target_label": null, "open_orbit": false, "fetched": "2026-11-06", "words": null, "years": {"value": 0.08, "figures": 1, "text": "0.08"}, "days": {"value": 27.0, "figures": 2, "text": "27"}},
+      "horizons_name": "Moon",
       "category": "moon", "availability": "analytic", "parent": "earth",
       "canonical_center": "@399", "center_slug": "earth", "canonical_frame": "parent-relative",
-      "trajectory_of": null, "trace_policy": "none", "features": {}
+      "trajectory_of": null, "trace_policy": "none",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where the Moon is around Earth: the place its distance prints to at the finest, by JPL's 2014 ephemeris report. The value, its units and its citation are written by tools/mirror_constants.py from the orrery row named below, never by hand (L-513). The Earth room prints the Moon's distance by the larger of this and the measured drift.",
+        "value": 0.001, "unit": "km",
+        "in": {"au": {"value": 6.684587122268446e-12, "figures": "exact", "prints": null}, "km": {"value": 0.001, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443705e-17, "figures": "exact", "prints": null}, "r_earth": {"value": 1.5678560412142946e-07, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689666e-09, "figures": "exact", "prints": null}},
+        "figures": "exact",
+        "orrery_constant": "constants_new.py::DE430_MOON_POSITION_PLACE_KM",
+        "source": "Folkner, W. M., Williams, J. G., Boggs, D. H., Park, R. S. & Kuchynka, P. (2014), \"The Planetary and Lunar Ephemerides DE430 and DE431\", IPN Progress Report 42-196, https://ipnpr.jpl.nasa.gov/progress_report/42-196/196C.pdf -- abstract: the present-day lunar orbit is known to submeter accuracy through fitting lunar laser ranging data."
+      },
+      "features": {}
     },
     {
       "slug": "io", "name": "Io", "horizons_id": "501", "id_type": "majorbody",

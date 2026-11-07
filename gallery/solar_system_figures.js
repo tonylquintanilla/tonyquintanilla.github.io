@@ -121,6 +121,12 @@
 // always with Tony's sentence of 2026-10-01: JPL's own uncertainty for a
 // spacecraft is not served.
 
+// FROM ANOTHER CENTRE (L-513, November 6, 2026). The Earth room prints the
+// Moon's distance from Earth by the same rule. distanceLine takes an
+// optional seventh argument, the words for the centre ("Earth"); without
+// it the line reads "from the Sun", exactly as before. Written with
+// Anthropic's Claude Opus 5.5.
+
 (function (global) {
   "use strict";
 
@@ -241,7 +247,11 @@
   // kmPerAu: from the served cache's frame constants. missingWhy: the
   // builder's reason no uncertainty is served, from the index (L-484),
   // or nothing; it chooses the sentence printed when no source error is.
-  function distanceLine(pos, trust, epochJd, accuracy, kmPerAu, missingWhy) {
+  function distanceLine(pos, trust, epochJd, accuracy, kmPerAu, missingWhy,
+                        fromWords) {
+    // L-513: the centre the distance is from; the Sun unless one is given.
+    var from = (typeof fromWords === "string" && fromWords) ? fromWords
+                                                             : "the Sun";
     if (!(typeof kmPerAu === "number" && kmPerAu > 0)) {
       return { line: null, why: "kilometres per AU is not served" };
     }
@@ -272,7 +282,7 @@
     var auText = au.place < 0 ? au.value.toFixed(-au.place)
                               : withCommas(au.value);
     return {
-      line: auText + " AU from the Sun (" + withCommas(km.value) + " km)",
+      line: auText + " AU from " + from + " (" + withCommas(km.value) + " km)",
       note: (src.km === null) ? noSourceSentence(missingWhy) : null,
       missingKind: (src.km === null) ? missingKind(missingWhy) : null,
       accuracyWhy: src.why,
