@@ -153,7 +153,9 @@ const ALLOWED = [
   // sentence saying which error set the distance's digits, in the orrery's
   // words for the Moon (position_accuracy._distance_sentence). Typed, about
   // the page's own figures; Tony's look at the box is their ruling.
-  ["Orbital period: # years (# days), around Earth, from JPL Horizons, fetched ###.",
+  // L-513, the same evening: Tony's ruling that a period under a year
+  // prints in days only, so the Moon's line has no years figure.
+  ["Orbital period: # days, around Earth, from JPL Horizons, fetched ###.",
    "the page's own account of its data: the served period, around the served centre, with its source and fetch date"],
   ["# AU from Earth (# km).", "the scene: the Moon's propagated distance"],
   ["This distance is rounded to how far this page's working-out from JPL's orbit may have drifted by the minute shown.",

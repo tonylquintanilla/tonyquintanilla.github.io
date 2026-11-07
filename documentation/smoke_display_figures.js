@@ -316,9 +316,15 @@ const SOFT_BR = "<br soft>";
 // fixture failed on exactly these four, by name, before the re-record.
 // The L411_8 one is left in place, unreferenced.
 // Module updated: November 6, 2026 with Anthropic's Claude Opus 5.5.
-const FIXTURE_AT = "6c93d0a2";
+// L-513, the same night: re-recorded as fixture_hovers_L513b_on_0f99f2b5.json
+// after Tony's ruling that a period under a year prints in days only. One
+// hover moved, on purpose: "scene/moon#2", the Moon's text box, whose
+// period line now reads "Orbital period: 27 days, around Earth, ...". The
+// old fixture failed on exactly that one, by name, and every other hover
+// is byte for byte. The 6c93d0a2 one is left in place, unreferenced.
+const FIXTURE_AT = "0f99f2b5";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L513_on_6c93d0a2.json");
+                          "fixture_hovers_L513b_on_0f99f2b5.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

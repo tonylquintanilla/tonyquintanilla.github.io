@@ -264,6 +264,25 @@ function periodWorked(lib) {
     "Orbital period: 1.00000 years (365.25 days), for the Earth-Moon " +
     "center of mass, around the Sun, from JPL Horizons, fetched " +
     "2026-10-15.");
+  // L-513 (Tony's ruling of 2026-11-06): a period under a year prints in
+  // days only, as the orrery serves it; the Moon's fetched period, and
+  // Mercury's typed one. Served days_only with no days is not shown.
+  want("a period under a year", lib.periodLine({
+    kind: "fetched", center: "@399", center_label: "Earth",
+    fetched: "2026-11-06", days_only: true, years: null,
+    days: { value: 27, figures: 2, text: "27" } }),
+    "Orbital period: 27 days, around Earth, from JPL Horizons, fetched " +
+    "2026-11-06.");
+  want("a typed period under a year", lib.periodLine({
+    kind: "typed", typed: true, words: "Typed value, not fetched from JPL.",
+    days_only: true, years: null,
+    days: { value: 87.969, figures: 5, text: "87.969" } }),
+    "Orbital period: 87.969 days. Typed value, not fetched from JPL.");
+  if (lib.periodLine({ kind: "fetched", center: "@sun", center_label:
+        "the Sun", fetched: "2026-11-06", days_only: true, years: null,
+        days: null }).line !== null) {
+    out.push("a days-only period served with no days was shown");
+  }
   want("no period", lib.periodLine({ kind: "none",
                                      words: "Not yet fetched from JPL." }),
        "Orbital period: not yet fetched from JPL.");
@@ -663,8 +682,15 @@ rows.forEach(function (slug) {
   const r = SSF.periodLine(o.period);
   if (!r.line) { failures.push(slug + ": no period line -- " + r.warning); return; }
   const p = o.period;
-  if (p.years && p.days) {
-    ["years", "days"].forEach(function (unit) {
+  // L-513: a period under a year is served days_only, its years null,
+  // and must print no years figure.
+  if (p.days_only === true && / years? \(/.test(r.line)) {
+    failures.push(slug + ": its period is served in days only and prints " +
+                  "a years figure: " + r.line);
+  }
+  if (p.days) {
+    ["years", "days"].filter(function (unit) { return p[unit]; })
+                     .forEach(function (unit) {
       const shown = r.line.indexOf(p[unit].text + " " + unit) >= 0;
       if (!shown) {
         failures.push(slug + ": its " + unit + " do not print as the orrery " +

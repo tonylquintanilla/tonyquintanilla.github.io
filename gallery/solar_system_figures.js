@@ -127,6 +127,15 @@
 // it the line reads "from the Sun", exactly as before. Written with
 // Anthropic's Claude Opus 5.5.
 
+// A PERIOD UNDER A YEAR PRINTS IN DAYS ONLY (L-513, Tony's ruling of
+// November 6, 2026: "print them in days only, with no years figure, for
+// every moon, in the orrery and on the website"). The orrery decides
+// (orbital_period.days_only) and serves the choice as the period's
+// "days_only", with "years" null; periodLine prints "M days" for it and
+// decides nothing itself. The Moon reads "Orbital period: 27 days, around
+// Earth, ...", Mercury "87.969 days". Written with Anthropic's Claude
+// Opus 5.5.
+
 (function (global) {
   "use strict";
 
@@ -406,14 +415,26 @@
     } else {
       // Separators for JPL's period only, as the orrery prints it; a
       // typed value prints as typed (orbital_period._typed_strings).
-      var years = servedFigures(period.years, kind === "fetched");
       var days = servedFigures(period.days, kind === "fetched");
-      if (years === null || days === null) {
-        return { line: null,
-                 warning: "its period is served without a value and figure " +
-                          "count for both years and days, so it is not shown" };
+      if (period.days_only === true) {
+        // L-513: under a year, the orrery serves the days alone.
+        if (days === null) {
+          return { line: null,
+                   warning: "its period is served in days only without a " +
+                            "value and figure count for the days, so it is " +
+                            "not shown" };
+        }
+        shown = days + " days";
+      } else {
+        var years = servedFigures(period.years, kind === "fetched");
+        if (years === null || days === null) {
+          return { line: null,
+                   warning: "its period is served without a value and " +
+                            "figure count for both years and days, so it " +
+                            "is not shown" };
+        }
+        shown = years + " years (" + days + " days)";
       }
-      shown = years + " years (" + days + " days)";
     }
     if (kind === "typed") {
       return { line: "Orbital period: " + shown + ". " +
