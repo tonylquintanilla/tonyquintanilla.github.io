@@ -112,6 +112,13 @@
 // distance, a served {shell} row, an opening naming a shell by its key,
 // with three breaks; and the page's wiring for the shells, ?exhibit=sun
 // and the frame.
+// Updated November 7, 2026, night, with Anthropic's Claude Opus 5.5 (Tony:
+// one group over the groups that sit together): section 12, parent groups
+// -- a sub-group's parent, its depth, a parent's bodies, count and Reset
+// through its sub-groups, a sub-group shown only under its open parent,
+// Find listing the outermost group and opening a found sub-group with its
+// parent, and no shell placed among a parent's sub-groups -- with four
+// breaks; each served sub-group's parent; the page's wiring.
 //  11. (L-515 part 3) The Sun's shells in the root.
 
 "use strict";
@@ -509,6 +516,75 @@ function groupFindCases(SSD) {
   return fails;
 }
 
+// 12. Tony, 2026-11-07, night: "one "Comets" group that opens to the six
+// comet sub-groups. The same for spacecraft and asteroids where several
+// groups sit together." A group row names its parent in "in"; a sub-group
+// shows only under its open parent; a parent's bodies, count and Reset
+// reach through its sub-groups; Find lists only the outermost group that
+// matches and opens a found sub-group with its parent; and a shell is
+// never placed among a parent's sub-groups.
+const PARENT_ROWS = [
+  { slug: "sun" }, { slug: "mercury" },
+  { group: "all", label: "Comets", find: ["comet"] },
+  { group: "jfc", "in": "all", label: "JF comets", find: ["JFc", "comet"] },
+  { slug: "tempel", "in": "jfc" }, { slug: "wild", "in": "jfc" },
+  { group: "htc", "in": "all", label: "HT comets", find: ["HTC", "comet"] },
+  { slug: "halley", "in": "htc" },
+  { group: "self", "in": "self", label: "Loop" }, { slug: "lone", "in": "self" }
+];
+const PARENT_A = { mercury: 0.39, tempel: 3.1, wild: 3.4, halley: 17.8 };
+function parentCases(SSD) {
+  const fails = [];
+  const want = function (cond, what) { if (!cond) { fails.push(what); } };
+  const rows = SSD.rowsFromServed(PARENT_ROWS);
+  const g = function (k) { return rows.filter(function (r) { return SSD.isGroup(r) && r.group === k; })[0]; };
+  const b = function (k) { return rows.filter(function (r) { return r.key === k; })[0]; };
+  want(g("jfc").parent === "all" && g("htc").parent === "all" && g("all").parent === null &&
+       g("self").parent === null, "a sub-group's parent is not read from its \"in\", or a group is its own parent");
+  want((SSD.ancestors(rows, "jfc") || []).join() === "all" && (SSD.ancestors(rows, "all") || []).length === 0,
+       "a sub-group's parents are not [its parent]");
+  want(SSD.depthOf(rows, g("all")) === 0 && SSD.depthOf(rows, g("jfc")) === 1 &&
+       SSD.depthOf(rows, b("tempel")) === 2 && SSD.depthOf(rows, b("mercury")) === 0,
+       "a row's depth is not 0 at the top, 1 for a sub-group, 2 for its bodies");
+  want(SSD.members(rows, "all").map(function (r) { return r.key; }).join() === "tempel,wild,halley" &&
+       SSD.members(rows, "jfc").map(function (r) { return r.key; }).join() === "tempel,wild",
+       "a parent's bodies do not reach through its sub-groups");
+  const vis = function (row, folds) { return SSD.rowVisible(row, rows, {}, folds); };
+  want(vis(g("all"), {}) && !vis(g("jfc"), {}) && !vis(b("tempel"), {}),
+       "a folded parent shows a sub-group or a body");
+  want(!vis(g("jfc"), { jfc: true }) && !vis(b("tempel"), { jfc: true }),
+       "an open sub-group shows under a folded parent");
+  want(vis(g("jfc"), { all: true }) && !vis(b("tempel"), { all: true }) &&
+       vis(b("tempel"), { all: true, jfc: true }),
+       "an open parent does not list its sub-groups folded, or an open sub-group hides its bodies");
+  want(SSD.groupCount(rows, "all", { halley: true }) === "1 of 3" &&
+       SSD.groupCount(rows, "jfc", { halley: true }) === "2",
+       "a parent's count does not reach its sub-groups' bodies");
+  const r = SSD.groupReset(rows, "all", { tempel: true, halley: true, mercury: true }, ["tempel", "mercury", "halley"]);
+  want(r.shown.tempel === false && r.shown.halley === false && r.shown.mercury === true &&
+       r.order.join() === "mercury", "Reset on a parent does not untick every body under it, and only those");
+  want(SSD.groupResetOffered(rows, "all", { halley: true }, { all: true }) &&
+       !SSD.groupResetOffered(rows, "all", { halley: true }, {}),
+       "Reset on a parent is not offered while it is open with a body under it ticked");
+  const plan = SSD.rowPlan(rows, ["center", "mercury", "tempel", "wild", "halley", "lone"]);
+  const pe = function (k) { return plan.filter(function (e) { return e.key === k; })[0] || {}; };
+  want(pe("group:jfc").member === true && pe("group:jfc").depth === 1 && pe("group:all").member === false &&
+       pe("tempel").depth === 2, "the plan does not mark a sub-group and its bodies by their depth");
+  const hc = SSD.searchHits(rows, "comet", {});
+  want(hc && hc.opened === "all" && Object.keys(hc.listed).length === 0 && hc.g === 1,
+       "a search matching a parent and its sub-groups does not find the parent alone");
+  const hj = SSD.searchHits(rows, "JFc", {});
+  want(hj && hj.opened === "jfc" && SSD.searchOpen("all", hj) && SSD.searchVisible(g("all"), hj) &&
+       SSD.searchVisible(b("tempel"), hj) && !SSD.searchVisible(g("htc"), hj),
+       "a found sub-group does not open with its parent, or a sibling shows");
+  const placed = SSD.placeShells(rows, [{ key: "Sun: Far", au: 3.5 }], PARENT_A, {});
+  const at = placed.map(function (x) { return x.key; }).indexOf("Sun: Far");
+  want(at === placed.map(function (x) { return x.key; }).indexOf("halley") + 1,
+       "a shell is placed among a parent's sub-groups, not after the parent's last row: " +
+       placed.map(function (x) { return x.key; }).join(","));
+  return fails;
+}
+
 function cases(SSD) {
   const fails = [];
   const want = function (cond, what) { if (!cond) { fails.push(what); } };
@@ -546,7 +622,7 @@ function cases(SSD) {
        "the visitor's words are not Tony's");
   return fails.concat(groupCases(SSD), outsideCases(SSD), companionCases(SSD),
                       findCases(SSD), drawingCases(SSD), treeCases(SSD),
-                      shellCases(SSD));
+                      shellCases(SSD), parentCases(SSD));
 }
 
 function broken(changes) {
@@ -670,6 +746,34 @@ const breaks = [
   ["the count line reading only the x axis",
    broken({ outsideCount: function (points, lo, hi) {
      return (points || []).filter(function (p) { return p[0] < lo[0] || p[0] > hi[0]; }).length;
+   } })],
+  // 12. Tony, 2026-11-07, night: parent groups.
+  ["a sub-group listed while its parent is folded (2026-11-07)",
+   broken({ rowVisible: function (row, rows, s, folds) {
+     if (REAL.isGroup(row)) { return true; }
+     return row.group ? !!(folds && folds[row.group]) : true;
+   } })],
+  ["a parent's count and bodies stopping at its own rows (2026-11-07)",
+   broken({ members: function (rows, group) {
+     return (rows || []).filter(function (r) { return !REAL.isGroup(r) && r.group === group; });
+   }, groupCount: function (rows, group, shown) {
+     const m = (rows || []).filter(function (r) { return !REAL.isGroup(r) && r.group === group; });
+     const on = m.filter(function (r) { return shown[r.key]; }).length;
+     return on ? on + " of " + m.length : String(m.length);
+   } })],
+  ["a sub-group found again under its found parent (2026-11-07)",
+   broken({ searchHits: function (rows, q, names) {
+     const h = REAL.searchHits(rows, q, names);
+     if (!h) { return h; }
+     (rows || []).filter(function (r) { return REAL.isGroup(r) && r.parent; })
+       .forEach(function (r) { if ((r.find || []).some(function (w) { return REAL.searchKey(w).indexOf(REAL.searchKey(q)) >= 0; })) { h.listed[r.group] = true; h.opened = null; } });
+     return h;
+   } })],
+  ["a shell placed among a parent's sub-groups (2026-11-07)",
+   broken({ placeShells: function (rows, shells, a, labels) {
+     return REAL.placeShells((rows || []).map(function (r) {
+       return REAL.isGroup(r) ? Object.assign({}, r, { parent: null }) : r;
+     }), shells, a, labels);
    } })]
 ];
 const caught = [];
@@ -729,6 +833,19 @@ if (!rows.length) {
       failures.push(r.slug + " names the group \"" + r["in"] + "\", which the room does not serve");
     }
   });
+  // 12. (2026-11-07) Each sub-group names a parent the room serves.
+  ((room.drawer || {}).rows || []).forEach(function (r) {
+    if (r && typeof r.group === "string" && typeof r["in"] === "string" &&
+        !rows.some(function (g) { return REAL.isGroup(g) && g.group === r["in"] && g.group !== r.group; })) {
+      failures.push("the group " + r.group + " names the parent \"" + r["in"] + "\", which the room does not serve");
+    }
+  });
+  console.log("Parent groups: " + (rows.filter(function (g) {
+    return REAL.isGroup(g) && !g.parent && rows.some(function (s) { return REAL.isGroup(s) && s.parent === g.group; });
+  }).map(function (g) {
+    return g.label + " over " + rows.filter(function (s) { return REAL.isGroup(s) && s.parent === g.group; })
+      .map(function (s) { return s.label; }).join(", ");
+  }).join("; ") || "none") + ".");
   console.log("Served see_more: " + (flagged.join(", ") || "none") + ".");
   console.log("Opens on: " + ((arrival.drawn || []).join(", ") || "nothing") +
               "; highlighted: " + (arrival.highlight || "none") +
@@ -823,6 +940,16 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
  ["SSD.inOpening(row, want)", "Reset does not put back a shell the opening ticked"]
 ].forEach(function (c) {
   if (page.indexOf(c[0]) < 0) { failures.push(c[1] + " (L-515 part 3)"); }
+});
+// 12. (Tony, 2026-11-07, night) Parent groups on the page.
+[["!SSD.rowVisible(served, ssDrawer.rows, shown, ssDrawer.folds));", "a sub-group's row shows while its parent is folded"],
+ ["SSD.rowVisible(gServed, ssDrawer.rows, shown, ssDrawer.folds) &&", "a sub-group's Reset shows while its parent is folded"],
+ ['if (served.parent) { head.classList.add("member"); }', "a sub-group's row is not indented under its parent"],
+ ['if (entry.depth > 1) { row.classList.add("deep"); }', "a sub-group's bodies are not indented one step further"],
+ [".sun-row.member.deep .pick { padding-left: 60px; }", "the page has no style for a sub-group's bodies"],
+ ["window.SolarSystemDrawer.ancestors(ssDrawer.rows, g)", "a sub-group chosen from a search does not open its parent"]
+].forEach(function (c) {
+  if (page.indexOf(c[0]) < 0) { failures.push(c[1] + " (2026-11-07)"); }
 });
 if (/\n    sun: \{/.test(page.slice(page.indexOf("const EXHIBITS = {")))) {
   failures.push("the Sun room's row is still in EXHIBITS (L-515 part 3)");

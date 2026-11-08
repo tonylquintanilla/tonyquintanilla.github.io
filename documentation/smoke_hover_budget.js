@@ -408,6 +408,50 @@ if (pagePath) {
               textBoxCases(sandbox.GalleryTextBox).length > 0,
               textBoxCases(sandbox.GalleryTextBox).join("; ") || "it passed");
     })();
+    // Tony, 2026-11-07, night: "Text box background: fully opaque, so the
+    // triad and axes don't show through the words." The box is opaque; the
+    // HUD row (page chrome stacked above the plot) hides while the open
+    // box covers its triad or ruler, by GalleryTextBox.overlaps, checked
+    // each frame. Five worked cases, the page's wiring, and a copy of the
+    // file whose test always says no, which must fail.
+    function overlapCases(TB) {
+        const bad = [];
+        const R = function (l, t, w, h) { return { left: l, top: t, right: l + w, bottom: t + h, width: w, height: h }; };
+        const hud = R(150, 700, 80, 90);
+        const want = function (name, got, exp) { if (got !== exp) { bad.push(name + ": got " + got); } };
+        want("a box over the triad", TB.overlaps(R(40, 500, 300, 260), hud), true);
+        want("a box above the triad", TB.overlaps(R(40, 100, 300, 300), hud), false);
+        want("a box touching only its top edge", TB.overlaps(R(40, 400, 300, 300), hud), false);
+        want("a box beside it", TB.overlaps(R(240, 650, 100, 200), hud), false);
+        want("an empty rectangle", TB.overlaps(R(150, 700, 0, 0), hud), false);
+        return bad;
+    }
+    const ovCases = overlapCases(global.GalleryTextBox);
+    check("the box covers what is behind it: opaque, and the HUD row hidden " +
+          "while the box overlaps its triad or ruler (five cases)",
+          ovCases.length === 0, ovCases.join("; ") || "five cases");
+    check("the page draws the box opaque and hides the HUD row under it, " +
+          "every frame, the site credit passed over",
+          page.indexOf('align: "left", bgcolor: "rgb(17, 24, 39)",') >= 0 &&
+          page.indexOf("body.sun-exhibit.sun-box-over-hud .sun-hud { visibility: hidden; }") >= 0 &&
+          /function sunHudWatch\(\) \{\s*if \(!sunHudBound \|\| !sunPlotDiv\) \{ return; \}\s*sunHudBoxCheck\(\);/.test(page) &&
+          page.indexOf('over = parts.some(function (p) { return GalleryTextBox.overlaps(r, p); });') >= 0 &&
+          page.indexOf('=== "palomasorrery.com") { continue; }') >= 0,
+          pagePath);
+    (function () {
+        const src = fs.readFileSync(path.join(__dirname, "..", "gallery", "text_box.js"), "utf8");
+        const from = "return a.left < b.right && b.left < a.right &&";
+        if (src.split(from).length !== 2) {
+            check("self-test: the overlap test was found to break", false,
+                  "the line to break was not found in gallery/text_box.js");
+            return;
+        }
+        const sandbox = {};
+        new Function("window", "globalThis", src.replace(from, "return false && a.left < b.right && b.left < a.right &&"))(sandbox, sandbox);
+        const caught = overlapCases(sandbox.GalleryTextBox).length > 0;
+        check("self-test: the overlap cases fail on a copy whose test always says no",
+              caught, caught ? "caught" : "the broken copy passed");
+    })();
     if (wrapFn && widthM) {
         const W = Number(widthM[1]);
         check("the label joins a soft break and keeps a hard one",

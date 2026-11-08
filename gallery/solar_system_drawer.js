@@ -159,7 +159,20 @@
 // Anthropic's Claude Opus 5.5 (L-515 part 3, Tony's ruling 7: the Sun's
 // shells are rows in the root -- a served row {shell, label} read by
 // rowsFromServed, placed among the bodies by distance by placeShells, in
-// an opening by its key, inOpening).
+// an opening by its key, inOpening). Updated November 7, 2026, night, with
+// Anthropic's Claude Opus 5.5: PARENT GROUPS, below.
+//
+// PARENT GROUPS (Tony, 2026-11-07, night: "one "Comets" group that opens
+// to the six comet sub-groups. The same for spacecraft and asteroids where
+// several groups sit together."). A group row may name a parent group in
+// its "in", as a body names its group, and is then listed under it,
+// indented, while the parent is folded open (ancestors, depthOf). A
+// group's bodies are every body under it at any depth (members), so its
+// count, its Reset and where a shell is placed beside it all reach through
+// its sub-groups. Find lists only the outermost group that matches: a
+// sub-group whose parent matches too is not listed again; a found group
+// opens with its parents open (searchOpen). A parent serves no "about":
+// a body's first bullet is its own group's class.
 //
 // A DRAWING ROW (L-503, Tony's ruling of 2026-10-29). The belt's cloud is
 // a row of its own, first inside the Main asteroid belt group, "ticked and
@@ -236,12 +249,16 @@
     (served || []).forEach(function (r) {
       if (!r) { return; }
       if (typeof r.group === "string" && r.group) {
+        const parent = r["in"];
         out.push({
           key: GROUP_PREFIX + r.group,
           group: r.group,
           label: (typeof r.label === "string" && r.label) ? r.label : r.group,
           order: r.order === "a" ? "a" : null,
           find: findWords(r.find),
+          // PARENT GROUPS: the group this one is listed under, if any.
+          parent: (typeof parent === "string" && groups[parent] && parent !== r.group)
+            ? parent : null,
           isGroup: true
         });
         return;
@@ -288,11 +305,33 @@
   function isGroup(row) { return !!(row && row.isGroup); }
   function isDrawing(row) { return !!(row && row.isDrawing); }
   function bodies(rows) { return (rows || []).filter(function (r) { return !isGroup(r); }); }
-  function members(rows, group) {
-    return (rows || []).filter(function (r) { return !isGroup(r) && r.group === group; });
-  }
   function groupRow(rows, group) {
     return (rows || []).filter(function (r) { return isGroup(r) && r.group === group; })[0] || null;
+  }
+  // PARENT GROUPS: the groups a group sits under, nearest first. A loop
+  // in the served rows stops at the first repeat.
+  function ancestors(rows, group) {
+    const out = [];
+    let g = groupRow(rows, group);
+    while (g && g.parent && out.indexOf(g.parent) < 0 && g.parent !== group) {
+      out.push(g.parent);
+      g = groupRow(rows, g.parent);
+    }
+    return out;
+  }
+  // How far a row is indented: 0 for a top-level row, 1 for a body in a
+  // group or a sub-group, and one more for each parent above that.
+  function depthOf(rows, row) {
+    if (!row) { return 0; }
+    if (isGroup(row)) { return ancestors(rows, row.group).length; }
+    return row.group ? 1 + ancestors(rows, row.group).length : 0;
+  }
+  // A group's bodies, at any depth under it.
+  function members(rows, group) {
+    return (rows || []).filter(function (r) {
+      return !isGroup(r) && !!r.group &&
+        (r.group === group || ancestors(rows, r.group).indexOf(group) >= 0);
+    });
   }
 
   function tickable(key) {
@@ -368,10 +407,15 @@
     }
     if (served) {
       served.forEach(function (r) {
-        if (isGroup(r)) { out.push({ kind: "group", key: r.key, group: r.group }); return; }
+        if (isGroup(r)) {
+          out.push({ kind: "group", key: r.key, group: r.group,
+                     member: !!r.parent, depth: depthOf(served, r) });
+          return;
+        }
         if (!drawnKey[r.key] || placed[r.key]) { return; }
         placed[r.key] = true;
-        out.push({ kind: "body", key: r.key, member: !!r.group });
+        out.push({ kind: "body", key: r.key, member: !!r.group,
+                   depth: depthOf(served, r) });
       });
     }
     keys.forEach(function (k) {
@@ -420,9 +464,11 @@
   // always. A body in a group: only while its group is folded open. Any
   // other row: always. folds is {group: true} for the open groups.
   function rowVisible(row, rows, shownByKey, folds) {
-    if (isGroup(row)) { return true; }
+    // PARENT GROUPS: a row shows while every group above it is open.
+    const open = function (g) { return !!(groupRow(rows, g) && folds && folds[g]); };
+    if (isGroup(row)) { return ancestors(rows, row.group).every(open); }
     if (row.group) {
-      return !!(groupRow(rows, row.group) && folds && folds[row.group]);
+      return open(row.group) && ancestors(rows, row.group).every(open);
     }
     return true;
   }
@@ -536,13 +582,15 @@
           continue;
         }
         if (out[i].group && !isGroup(out[i])) { continue; }   // a group's body
+        if (isGroup(out[i]) && out[i].parent) { continue; }    // a sub-group
         const d = dist(out[i]);
         if (d !== null && d < at) { after = i; }
         else if (d !== null && d === 0 && at === 0) { after = i; }
       }
       // A group's bodies follow their group row: step past them.
-      while (after + 1 < out.length && out[after + 1].group && !isShell(out[after + 1]) &&
-             !isGroup(out[after + 1])) { after += 1; }
+      while (after + 1 < out.length && !isShell(out[after + 1]) &&
+             ((out[after + 1].group && !isGroup(out[after + 1])) ||
+              (isGroup(out[after + 1]) && out[after + 1].parent))) { after += 1; }
       out.splice(after + 1, 0, {
         key: s.key, slug: null, shell: s.key,
         label: (labels && labels[s.key]) || s.key,
@@ -694,18 +742,31 @@
       keys[r.key] = true;
       via[r.key] = i;
       n++;
-      if (r.group) { groups[r.group] = (groups[r.group] || 0) + 1; }
+      if (r.group) {
+        // PARENT GROUPS: a found body counts in its group and every
+        // group above it.
+        [r.group].concat(ancestors(rows, r.group)).forEach(function (g) {
+          groups[g] = (groups[g] || 0) + 1;
+        });
+      }
     });
-    const matched = (rows || []).filter(function (r) {
+    const anc = {};
+    (rows || []).forEach(function (r) { if (isGroup(r)) { anc[r.group] = ancestors(rows, r.group); } });
+    const all = (rows || []).filter(function (r) {
       return isGroup(r) && (holds(r.label) || (r.find || []).some(holds));
     }).map(function (r) { return r.group; });
+    // PARENT GROUPS: only the outermost group that matches is listed.
+    const matched = all.filter(function (g) {
+      return !(anc[g] || []).some(function (a) { return all.indexOf(a) >= 0; });
+    });
     const listed = {};
     let opened = null;
     // One group found, and no body found outside it: that group opens
     // whole ("probe" finds the Spacecraft and, inside it, Parker Solar
     // Probe; the group shows with all twelve).
+    const inside = matched.length === 1 ? members(rows, matched[0]) : [];
     const outside = bodies(rows).filter(function (r) {
-      return keys[r.key] && r.group !== matched[0];
+      return keys[r.key] && inside.indexOf(r) < 0;
     }).length;
     if (matched.length === 1 && outside === 0) {
       opened = matched[0];
@@ -713,22 +774,37 @@
       matched.forEach(function (g) { if (!groups[g]) { listed[g] = true; } });
     }
     return { keys: keys, groups: groups, via: via, n: n,
-             listed: listed, opened: opened, g: matched.length };
+             listed: listed, opened: opened, g: matched.length, anc: anc };
+  }
+
+  // PARENT GROUPS: whether a group sits (at any depth) under the one group
+  // found, or holds it.
+  function underOpened(group, hits) {
+    return !!hits.opened && ((hits.anc && hits.anc[group]) || []).indexOf(hits.opened) >= 0;
+  }
+  function aboveOpened(group, hits) {
+    return !!hits.opened && ((hits.anc && hits.anc[hits.opened]) || []).indexOf(group) >= 0;
   }
 
   function searchVisible(row, hits) {
     if (!hits) { return null; }
     if (isGroup(row)) {
       return !!hits.groups[row.group] || !!(hits.listed && hits.listed[row.group]) ||
-        hits.opened === row.group;
+        hits.opened === row.group || aboveOpened(row.group, hits) ||
+        // a sub-group of the one group found shows, folded, when the
+        // found group is open whole
+        (!!row.parent && (row.parent === hits.opened || underOpened(row.parent, hits)) &&
+         searchOpen(row.parent, hits));
     }
     return !!hits.keys[row.key] || (!!row.group && hits.opened === row.group);
   }
 
   // L-496: whether a group shows open while searching: it holds a body
-  // found by its names, or it is the one group found.
+  // found by its names, or it is the one group found. PARENT GROUPS: or
+  // it holds the one group found.
   function searchOpen(group, hits) {
-    return !!hits && (!!hits.groups[group] || hits.opened === group);
+    return !!hits && (!!hits.groups[group] || hits.opened === group ||
+                      aboveOpened(group, hits));
   }
 
   function searchGroupCount(rows, group, hits) {
@@ -765,6 +841,8 @@
     isGroup: isGroup,
     bodies: bodies,
     members: members,
+    ancestors: ancestors,
+    depthOf: depthOf,
     rowVisible: rowVisible,
     groupCount: groupCount,
     groupArrow: groupArrow,

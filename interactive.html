@@ -732,6 +732,11 @@
         .sun-hud .sun-grid-chip { position: absolute; right: 0; bottom: 0;
                                   line-height: normal; }
         body.sun-exhibit.sun-drawer-open .sun-hud { display: none; }
+        /* Tony, 2026-11-07, night: the triad must not show through the
+           text box's words. The HUD sits above the plot, so while the open
+           box covers the triad or the ruler the row is hidden
+           (sunHudBoxCheck); visibility keeps its place, so nothing moves. */
+        body.sun-exhibit.sun-box-over-hud .sun-hud { visibility: hidden; }
         /* Tony, 2026-10-26: the whole triad opens the frame note, not
            only the Aries glyph, which is a small target for a finger.
            L-502 (2026-10-29): drawn at three quarters, 78 by 90 px over
@@ -1077,6 +1082,12 @@
         }
         .sun-row.member .pick { padding-left: 36px; }
         .sun-row.member .rname { padding-left: 69px; }
+        /* Tony, 2026-11-07, night: one group over the groups that sit
+           together (Comets over the six comet groups). A sub-group row is
+           indented as a body is; its bodies one step (24 px) further. */
+        .sun-row.member.deep .pick { padding-left: 60px; }
+        .sun-row.member.deep .rname { padding-left: 93px; }
+        .sun-group-reset.member { margin-left: 109px; }
         /* L-477: "Reset <group>", under an open group's row, once one of
            its bodies is ticked. It replaced the group's All / none, and
            the room's See more, whose style it keeps. */
@@ -3408,8 +3419,12 @@ const EXHIBITS = {
                             // window's last minute, "today" is not the day shown.
                             const frozen = !!(sceneMomentAsked && sceneMomentAsked.frozen);
                             if (comet) {
+                                // The day the comet's path was fetched, as its source
+                                // line prints it (Tony, 2026-11-07, night).
+                                const fetched = solarSystemDay(new Date(String(
+                                    (b.path_source || {}).retrieved)));
                                 lines.push(bullet(solarSystemSoftWrap(
-                                    SceneMoment.todayWords(COMET_SPAN_WORDS, frozen), 60)));
+                                    SceneMoment.todayWords(COMET_SPAN_WORDS, frozen, fetched), 60)));
                             } else {
                                 lines.push(bullet(solarSystemSoftWrap(
                                     SceneMoment.todayWords(SPACECRAFT_DATES_WORDS, frozen), 60)));
@@ -5569,7 +5584,9 @@ function sunLabelRefresh() {
         ? window.GalleryTextBox.bullets(m.text[0]) : m.text[0];
     const box = {
         text: sunLabelWrap(words, SUN_LABEL_WRAP_CHARS),
-        align: "left", bgcolor: "rgba(17, 24, 39, 0.95)",
+        // Fully opaque (Tony, 2026-11-07, night): the axes drawn behind
+        // no longer show through the words. It was 0.95.
+        align: "left", bgcolor: "rgb(17, 24, 39)",
         bordercolor: color, borderwidth: SUN_LABEL_BORDER_PX, borderpad: 6,
         font: { size: SUN_LABEL_FONT_PX, color: "#e6edf3" },
         captureevents: false
@@ -5920,9 +5937,33 @@ function sunFarLinesInstall(gd) {
     });
 }
 
+// Tony, 2026-11-07, night: the open text box hides the HUD row while it
+// covers the triad or the ruler (GalleryTextBox.overlaps). The box is the
+// annotation-text-g Plotly draws for it in its info layer, page or scene
+// annotation alike (read from plotly.js 2.35.2); the site credit, always
+// drawn by the ruler, is not a box and is passed over. Checked every frame
+// by sunHudWatch, since a scene box moves with the camera.
+function sunHudBoxCheck() {
+    let over = false;
+    if (sunLabelGroup >= 0 && sunPlotDiv && window.GalleryTextBox) {
+        const parts = ["sun-triad", "sun-grid-chip"]
+            .map(function (id) { return document.getElementById(id); })
+            .filter(Boolean)
+            .map(function (el) { return el.getBoundingClientRect(); });
+        const boxes = sunPlotDiv.querySelectorAll(".annotation-text-g");
+        for (let i = 0; i < boxes.length && !over; i++) {
+            if ((boxes[i].textContent || "").trim() === "palomasorrery.com") { continue; }
+            const r = boxes[i].getBoundingClientRect();
+            over = parts.some(function (p) { return GalleryTextBox.overlaps(r, p); });
+        }
+    }
+    document.body.classList.toggle("sun-box-over-hud", over);
+}
+
 let sunHudLastCam = "";
 function sunHudWatch() {
     if (!sunHudBound || !sunPlotDiv) { return; }
+    sunHudBoxCheck();
     if (document.visibilityState === "visible") {
         const cam = sunLiveCamera(sunPlotDiv);
         if (cam && cam.eye) {
@@ -6306,7 +6347,10 @@ function ssRender() {
         // "k of n shown", or not at all. L-496: or closed with its count,
         // found by its own label or words; or open whole, the one found.
         const looks = hits ? SSD.searchOpen(g, hits) : open;
-        heads[h].hidden = !served || (!!hits && !SSD.searchVisible(served, hits));
+        // Tony, 2026-11-07, night: a sub-group shows only while the groups
+        // above it are open (rowVisible), as a body does.
+        heads[h].hidden = !served || (hits ? !SSD.searchVisible(served, hits) :
+            !SSD.rowVisible(served, ssDrawer.rows, shown, ssDrawer.folds));
         heads[h].setAttribute("aria-expanded", (served && looks) ? "true" : "false");
         heads[h].classList.toggle("on", on > 0);
         heads[h].querySelector(".fold").textContent = SSD.groupArrow(looks);
@@ -6317,7 +6361,9 @@ function ssRender() {
     const resets = list.querySelectorAll(".sun-group-reset[data-g]");
     for (let a = 0; a < resets.length; a++) {
         const g = resets[a].getAttribute("data-g");
-        resets[a].hidden = !!hits || !(ssDrawer.byKey[SSD.GROUP_PREFIX + g] &&
+        const gServed = ssDrawer.byKey[SSD.GROUP_PREFIX + g];
+        resets[a].hidden = !!hits || !(gServed &&
+            SSD.rowVisible(gServed, ssDrawer.rows, shown, ssDrawer.folds) &&
             SSD.groupResetOffered(ssDrawer.rows, g, shown, ssDrawer.folds));
     }
     const findCount = document.getElementById("sun-find-count");
@@ -6435,6 +6481,9 @@ function ssFold(g) {
     if (ssDrawer.query) {
         ssFindSet("");
         ssDrawer.folds[g] = true;
+        // A sub-group chosen opens with the groups above it.
+        window.SolarSystemDrawer.ancestors(ssDrawer.rows, g)
+            .forEach(function (a) { ssDrawer.folds[a] = true; });
         renderSunDrawer();
         sunMeasureDrawer();
         const head = document.querySelector('.sun-row.sun-group[data-g="' + g + '"]');
@@ -6468,6 +6517,9 @@ function drawerBuildRows(list, makeRow) {
         if (k < 0) { return; }
         const row = makeRow(sunGroups[k], k);
         if (entry.member) { row.classList.add("member"); }
+        // Tony, 2026-11-07, night: a body in a sub-group (the Jupiter-family
+        // comets under Comets) sits one step further in.
+        if (entry.depth > 1) { row.classList.add("deep"); }
         if (ssDrawer) { ssWireRow(row, sunGroups[k], k, list); }
         else if (entry.kind === "fixed") { drawerWireFixed(row, sunGroups[k], k, list); }
         else { drawerWireShell(row, sunGroups[k], k, list); }
@@ -6507,10 +6559,13 @@ function ssGroupHead(list, served) {
         '<span class="rname"></span><span class="gcount"></span>';
     head.querySelector(".rname").textContent = served.label;
     head.onclick = function () { ssFold(g); };
+    // Tony, 2026-11-07, night: a sub-group sits under its parent, as a
+    // body sits under its group, and its Reset with it.
+    if (served.parent) { head.classList.add("member"); }
     list.appendChild(head);
     const reset = document.createElement("button");
     reset.type = "button";
-    reset.className = "sun-group-reset";
+    reset.className = "sun-group-reset" + (served.parent ? " member" : "");
     reset.setAttribute("data-g", g);
     reset.hidden = true;
     reset.textContent = SSD.WORDS.groupReset(served.label);

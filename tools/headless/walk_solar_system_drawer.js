@@ -35,6 +35,12 @@
 // section 19 has Go To fit Sedna's whole orbit and a zoom-out after Go
 // To on Hyakutake never shrink the view.
 //
+// Section 28 (2026-11-07, night, Tony): one group over the groups that
+// sit together -- Comets, Spacecraft, Apollo and Amor asteroids -- folded,
+// indented, counted and reset through their sub-groups, and found by Find
+// as the outermost group. Since then fold() opens a folded parent first,
+// as a visitor taps it.
+//
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5. Updated
 // October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443). Updated
 // October 23, 2026 with Anthropic's Claude Opus 5.5 (L-472, L-474,
@@ -171,7 +177,14 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   const N = E("ssDrawer.rows.filter(r => !SolarSystemDrawer.isGroup(r) && SolarSystemDrawer.tickable(r.key) && ssIndex(r.key) >= 0).length");
   const head = (g) => d.querySelector('#sun-drawer-list .sun-row.sun-group[data-g="' + g + '"]');
   const groupReset = (g) => d.querySelector('#sun-drawer-list .sun-group-reset[data-g="' + g + '"]');
-  const fold = (g) => click(head(g).querySelector(".rname"));
+  // A visitor opens a folded parent before its sub-group (2026-11-07).
+  const fold = async (g) => {
+    const up = E("SolarSystemDrawer.ancestors(ssDrawer.rows, '" + g + "').reverse()");
+    for (const a of Array.from(up || [])) {
+      if (!E("ssDrawer.folds['" + a + "']")) { await click(head(a).querySelector(".rname")); }
+    }
+    return click(head(g).querySelector(".rname"));
+  };
   // L-479: a body's whole drawn group -- its orbit -- measured here, as
   // the widest coordinate of any of its traces, independent of the page.
   const wholeR = (key) => w.eval("sunPlotDiv.data").filter(t => t.legendgroup === key)
@@ -193,7 +206,9 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(row("center").classList.contains("fixed"), "Sun row not fixed");
   ok(row("apophis").hidden && !head("aten").hidden && !E("ssDrawer.folds.aten"), "the Aten asteroids are not listed, folded");
   ok(!d.getElementById("sun-see-more") && !d.querySelector(".sun-see-more"), "See more is still on the page (L-477)");
-  ok(Array.from(d.querySelectorAll(".sun-row.sun-group[data-g]")).every(h => !h.hidden && h.getAttribute("aria-expanded") === "false" && h.querySelector(".fold").textContent === "\u25b8" && !h.querySelector(".box")),
+  // Since 2026-11-07: a sub-group (under Comets, say) is listed only
+  // under its open parent, so on opening only the top-level groups show.
+  ok(Array.from(d.querySelectorAll(".sun-row.sun-group[data-g]")).every(h => h.hidden === h.classList.contains("member") && h.getAttribute("aria-expanded") === "false" && h.querySelector(".fold").textContent === "\u25b8" && !h.querySelector(".box")),
      "a group is hidden, open, shows no fold arrow, or still has a box");
   ok(d.getElementById("sun-drawer-all").textContent === "Reset", "the top bar's button does not read Reset (L-477)");
   const inl = (key) => row(key).querySelector(".open-inline") ||
@@ -476,9 +491,12 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     await click(d.getElementById("sun-drawer-all"));
     const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"));
     const at = rowsDom.indexOf(row("earth"));
-    ok(rowsDom[at + 1] === head("spacecraft") && !head("spacecraft").hidden &&
-       !E("ssDrawer.folds.spacecraft"),
-       "the Spacecraft group is not listed, folded, right after Earth's row");
+    // Since 2026-11-07 the row after Earth is Spacecraft, the parent, and
+    // the twelve are its Active missions, listed under it.
+    ok(rowsDom[at + 1] === head("spacecraft_all") && !head("spacecraft_all").hidden &&
+       !E("ssDrawer.folds.spacecraft_all") && rowsDom[at + 2] === head("spacecraft") &&
+       head("spacecraft").hidden && !E("ssDrawer.folds.spacecraft"),
+       "the Spacecraft group is not listed, folded, right after Earth's row, Active missions under it");
     ok(row("juno").hidden, "Juno is shown with its group folded");
     await fold("spacecraft");
     const crafts = E("ssDrawer.rows.filter(r => r.group === 'spacecraft' && !SolarSystemDrawer.isGroup(r)).map(r => r.key).join(',')");
@@ -564,8 +582,9 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   if (data.bodies.galileo && data.bodies.galileo.kind === "spacecraft") {
     const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"));
     ok(rowsDom[rowsDom.indexOf(row("europa_clipper")) + 1] === head("historical_missions") &&
-       !head("historical_missions").hidden && !E("ssDrawer.folds.historical_missions"),
-       "the Historical missions group is not listed, folded, right after the twelve spacecraft");
+       head("historical_missions").hidden === !E("ssDrawer.folds.spacecraft_all") &&
+       !E("ssDrawer.folds.historical_missions"),
+       "the Historical missions group is not listed, folded, right after the twelve spacecraft, under Spacecraft");
     await fold("historical_missions");
     const past = E("ssDrawer.rows.filter(r => r.group === 'historical_missions' && !SolarSystemDrawer.isGroup(r)).map(r => r.key).join(',')");
     // L-507, more voyages: the seven in launch order, those the payload
@@ -680,12 +699,13 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   if (data.bodies.west && data.bodies.west.kind === "comet_path") {
     const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"));
     const after = (g) => rowsDom[rowsDom.indexOf(head(g)) - 1];
-    ok(!head("comets_hyp").hidden && !E("ssDrawer.folds.comets_hyp") &&
-       !head("interstellar").hidden && !E("ssDrawer.folds.interstellar"),
-       "the hyperbolic and interstellar groups are not listed, folded");
+    ok(head("comets_hyp").hidden === !E("ssDrawer.folds.comets_all") && !E("ssDrawer.folds.comets_hyp") &&
+       head("interstellar").hidden === !E("ssDrawer.folds.comets_all") && !E("ssDrawer.folds.interstellar"),
+       "the hyperbolic and interstellar groups are not listed, folded, under Comets");
     const groupsInOrder = E("ssDrawer.rows.filter(r => SolarSystemDrawer.isGroup(r)).map(r => r.group).join(',')");
-    ok(groupsInOrder.indexOf("comets_etc,comets_jfc,comets_htc,comets,comets_hyp,interstellar,aten,spacecraft," +
-       (data.bodies.galileo ? "historical_missions," : "") + "apollo,amor,belt") === 0,
+    ok(groupsInOrder.indexOf("comets_all,comets_etc,comets_jfc,comets_htc,comets,comets_hyp,interstellar,aten," +
+       "spacecraft_all,spacecraft," + (data.bodies.galileo ? "historical_missions," : "") +
+       "apollo_amor,apollo,amor,belt") === 0,
        "the groups are not in their places: " + groupsInOrder);
     ok(after("aten") === row("venus") && after("apollo") !== undefined,
        "the Aten asteroids are not right after Venus");
@@ -787,14 +807,15 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
        "the drawer has no search box reading Find a body");
     const foldsBefore = E("JSON.stringify(ssDrawer.folds)");
     await type("yr4");
-    ok(shownRows() === "asteroid_2024_yr4" && shownHeads() === "apollo" &&
+    ok(shownRows() === "asteroid_2024_yr4" && shownHeads() === "apollo_amor,apollo" &&
        head("apollo").querySelector(".gcount").textContent === "1 of 10 shown" &&
+       head("apollo_amor").querySelector(".gcount").textContent === "1 of 11 shown" &&
        foundLine().textContent === "1 body matches" && !foundLine().hidden,
        "'yr4' did not find 2024 YR4 alone in its open group: rows " + shownRows() +
        ", groups " + shownHeads() + ", " + foundLine().textContent);
     await type("atlas");
     ok(shownRows() === "atlas_2024_g3,atlas_3i,c2025_k1,c2025_k1_b,c2025_k1_c,c2025_k1_d,tsuchinshan_atlas" &&
-       shownHeads() === "comets,comets_hyp,interstellar" &&
+       shownHeads() === "comets_all,comets,comets_hyp,interstellar" &&
        foundLine().textContent === "7 bodies match",
        "'atlas' did not find its seven in three groups: rows " + shownRows() + ", groups " + shownHeads());
     const via = row("c2025_k1").querySelector(".rname .via");
@@ -809,7 +830,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     await click(d.getElementById("sun-find-clear"));
     ok(find.value === "" && foundLine().hidden &&
        E("JSON.stringify(ssDrawer.folds)") === foldsBefore &&
-       Array.from(d.querySelectorAll("#sun-drawer-list .sun-row.sun-group[data-g]")).every(r => !r.hidden) &&
+       Array.from(d.querySelectorAll("#sun-drawer-list .sun-row.sun-group[data-g]")).every(r => r.hidden === r.classList.contains("member")) &&
        !row("earth").hidden && row("apophis").hidden === !E("ssDrawer.folds.aten"),
        "clearing the search did not put the list back as it was");
     await type("earth");
@@ -1133,6 +1154,124 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     ok(near(frame3, far3), "?exhibit=sun does not open at the Sun room's frame: " + frame3 + " vs " + far3);
     console.log("  27: shells " + shellKeys.length + "; ?exhibit=sun opens on " + isOn.join(", ") +
                 " at +/-" + far3.toPrecision(4) + " AU");
+  }
+  // 28. Tony, 2026-11-07, night: one group over the groups that sit
+  // together -- Comets over the six comet groups, Spacecraft over Active
+  // missions and Historical missions, Apollo and Amor asteroids over those
+  // two. A sub-group shows only under its open parent, indented; a
+  // parent's count and Reset reach every body under it; Find lists only
+  // the outermost group that matches and opens a found sub-group with its
+  // parent; Reset folds them all. Values worked here from the served rows.
+  {
+    await click(d.getElementById("sun-drawer-all"));
+    const served = data.room.drawer.rows;
+    const subOf = (p) => served.filter(r => r.group && r["in"] === p).map(r => r.group);
+    const bodiesUnder = (p) => {
+      const gs = [p].concat(subOf(p));
+      return served.filter(r => r.slug && gs.indexOf(r["in"]) >= 0 && idx(r.slug) >= 0).map(r => r.slug);
+    };
+    const parents = served.filter(r => r.group && !r["in"] && subOf(r.group).length).map(r => r.group);
+    ok(parents.join(",") === "comets_all,spacecraft_all,apollo_amor",
+       "the parent groups are not Comets, Spacecraft, and Apollo and Amor: " + parents.join(","));
+    ok(subOf("comets_all").join(",") === "comets_etc,comets_jfc,comets_htc,comets,comets_hyp,interstellar",
+       "Comets does not hold the six comet groups: " + subOf("comets_all").join(","));
+    const lbl = (g) => head(g).querySelector(".rname").textContent;
+    ok(lbl("comets_all") === "Comets" && lbl("comets") === "Other comets" &&
+       lbl("spacecraft_all") === "Spacecraft" && lbl("spacecraft") === "Active missions" &&
+       lbl("apollo_amor") === "Apollo and Amor asteroids",
+       "a parent or a renamed group reads otherwise: " +
+       ["comets_all", "comets", "spacecraft_all", "spacecraft", "apollo_amor"].map(lbl).join(" | "));
+    // Folded on opening: each parent listed, its sub-groups and bodies not.
+    ok(parents.every(p => !head(p).hidden && head(p).getAttribute("aria-expanded") === "false" &&
+                          subOf(p).every(s => head(s).hidden) &&
+                          bodiesUnder(p).every(k => row(k).hidden)),
+       "a parent opens unfolded, or shows a sub-group or a body while folded");
+    ok(head("comets_all").querySelector(".gcount").textContent === String(bodiesUnder("comets_all").length),
+       "Comets does not count every comet under it: " + head("comets_all").querySelector(".gcount").textContent +
+       " against " + bodiesUnder("comets_all").length);
+    // Open Comets: the six show, folded and indented; no comet shows yet.
+    await click(head("comets_all").querySelector(".rname"));
+    ok(subOf("comets_all").every(s => !head(s).hidden && head(s).classList.contains("member") &&
+                                      head(s).getAttribute("aria-expanded") === "false") &&
+       bodiesUnder("comets_all").every(k => row(k).hidden),
+       "opening Comets does not list its six groups folded and indented, comets hidden");
+    // Open the Jupiter-family comets: its bodies show, one step further in.
+    await click(head("comets_jfc").querySelector(".rname"));
+    const jfc = bodiesUnder("comets_jfc").filter(k => served.some(r => r.slug === k && r["in"] === "comets_jfc"));
+    ok(jfc.length > 0 && jfc.every(k => !row(k).hidden && row(k).classList.contains("member") &&
+                                        row(k).classList.contains("deep")),
+       "the Jupiter-family comets do not show their bodies one step further in");
+    // Tick one: both counts follow; both Resets are offered.
+    await click(row(jfc[0]).querySelector(".pick"));
+    const reset = (g) => d.querySelector('#sun-drawer-list .sun-group-reset[data-g="' + g + '"]');
+    ok(head("comets_jfc").querySelector(".gcount").textContent === "1 of " + jfc.length &&
+       head("comets_all").querySelector(".gcount").textContent === "1 of " + bodiesUnder("comets_all").length,
+       "a ticked comet is not counted in its group and in Comets: " +
+       head("comets_jfc").querySelector(".gcount").textContent + ", " +
+       head("comets_all").querySelector(".gcount").textContent);
+    ok(!reset("comets_all").hidden && !reset("comets_jfc").hidden && reset("comets_jfc").classList.contains("member"),
+       "Reset Comets or Reset Jupiter-family comets is not offered, or not indented");
+    // Fold Comets shut: everything under it hides, ticks kept.
+    await click(head("comets_all").querySelector(".rname"));
+    ok(subOf("comets_all").every(s => head(s).hidden) && jfc.every(k => row(k).hidden) &&
+       reset("comets_jfc").hidden && reset("comets_all").hidden &&
+       E("sunGroups[" + idx(jfc[0]) + "].shown") === true,
+       "folding Comets does not hide what is under it, or unticks a comet");
+    // Open it again: the Jupiter-family comets are still open.
+    await click(head("comets_all").querySelector(".rname"));
+    ok(jfc.every(k => !row(k).hidden), "reopening Comets does not keep the Jupiter-family comets open");
+    // Reset Comets: unticks every comet under it, nothing else.
+    const earthOn = E("sunGroups[" + idx("earth") + "].shown");
+    await click(reset("comets_all"));
+    ok(bodiesUnder("comets_all").every(k => E("sunGroups[" + idx(k) + "].shown") !== true) &&
+       E("sunGroups[" + idx("earth") + "].shown") === earthOn,
+       "Reset Comets left a comet ticked, or touched Earth");
+    // Spacecraft holds Active missions and Historical missions.
+    ok(subOf("spacecraft_all").join(",") === "spacecraft,historical_missions" &&
+       subOf("apollo_amor").join(",") === "apollo,amor",
+       "Spacecraft or Apollo and Amor does not hold its two: " +
+       subOf("spacecraft_all").join(",") + "; " + subOf("apollo_amor").join(","));
+    // Find: "comet" lists Comets alone, closed, not its six again (the
+    // Roche limit's row, "(Comets)", is found too, so no group opens
+    // whole); choosing Comets opens it, its six listed folded.
+    const find = d.getElementById("sun-find-input");
+    const type = async (s) => { find.value = s; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done(); };
+    const shownHeads = () => Array.from(d.querySelectorAll("#sun-drawer-list .sun-row.sun-group[data-g]"))
+      .filter(r => !r.hidden).map(r => r.getAttribute("data-g")).join(",");
+    await click(d.getElementById("sun-drawer-all"));
+    await type("comet");
+    ok(shownHeads() === "comets_all" && head("comets_all").getAttribute("aria-expanded") === "false" &&
+       head("comets_all").querySelector(".gcount").textContent === bodiesUnder("comets_all").length + " bodies",
+       "'comet' does not list Comets alone, closed, with its count: " + shownHeads() + ", " +
+       head("comets_all").querySelector(".gcount").textContent);
+    await click(head("comets_all").querySelector(".rname"));
+    ok(find.value === "" && subOf("comets_all").every(s => !head(s).hidden) &&
+       head("comets_all").getAttribute("aria-expanded") === "true",
+       "choosing Comets from the search does not open it with its six groups");
+    // "JFc" finds that one group, open, with Comets open above it.
+    await type("JFc");
+    ok(shownHeads() === "comets_all,comets_jfc" && head("comets_jfc").getAttribute("aria-expanded") === "true" &&
+       head("comets_all").getAttribute("aria-expanded") === "true" && jfc.every(k => !row(k).hidden),
+       "'JFc' does not open the Jupiter-family comets under Comets: " + shownHeads());
+    // "near-Earth": Aten, and Apollo and Amor (not its two again), listed.
+    await type("near-Earth");
+    ok(shownHeads() === "aten,apollo_amor" && head("apollo_amor").querySelector(".gcount").textContent ===
+       bodiesUnder("apollo_amor").length + " bodies",
+       "'near-Earth' does not list Aten and the Apollo and Amor group alone: " + shownHeads() + ", " +
+       head("apollo_amor").querySelector(".gcount").textContent);
+    // Choosing Historical missions from a search opens Spacecraft too.
+    await type("ended");
+    await click(head("historical_missions").querySelector(".rname"));
+    ok(find.value === "" && E("ssDrawer.folds.spacecraft_all") === true &&
+       E("ssDrawer.folds.historical_missions") === true && !head("historical_missions").hidden,
+       "choosing Historical missions from a search does not open it under Spacecraft");
+    // Reset folds everything shut.
+    await click(d.getElementById("sun-drawer-all"));
+    ok(Object.keys(E("JSON.parse(JSON.stringify(ssDrawer.folds))")).filter(g => E("ssDrawer.folds['" + g + "']")).length === 0 &&
+       parents.every(p => subOf(p).every(s => head(s).hidden)),
+       "Reset does not fold every group and sub-group shut");
+    console.log("  28: parents " + parents.map(p => p + " (" + subOf(p).length + " groups, " +
+                bodiesUnder(p).length + " bodies)").join(", "));
   }
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);

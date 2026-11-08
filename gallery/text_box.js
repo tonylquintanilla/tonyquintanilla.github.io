@@ -86,8 +86,22 @@
     return [title].concat(out).join("<br>");
   }
 
+  // Whether two screen rectangles ({left, top, right, bottom, width,
+  // height}, as getBoundingClientRect gives them) overlap. An empty one
+  // overlaps nothing. The page hides the HUD row's triad and ruler while
+  // the open box covers either (Tony, 2026-11-07, night: "so the triad
+  // and axes don't show through the words"); the HUD is page chrome
+  // stacked above the plot, so no box colour can cover it.
+  function overlaps(a, b) {
+    if (!a || !b || !(a.width > 0) || !(a.height > 0) ||
+        !(b.width > 0) || !(b.height > 0)) { return false; }
+    return a.left < b.right && b.left < a.right &&
+           a.top < b.bottom && b.top < a.bottom;
+  }
+
   global.GalleryTextBox = {
     BULLET: BULLET,
-    bullets: bullets
+    bullets: bullets,
+    overlaps: overlaps
   };
 })(typeof window !== "undefined" ? window : this);

@@ -28,7 +28,9 @@
 //      sentence, a comet's span sentence), read from interactive.html:
 //      each swap's approved phrase is found in its sentence, so a
 //      reworded sentence cannot leave the frozen room saying "today";
-//      frozen, neither says "today"; not frozen, both are as approved.
+//      frozen, neither says "today", and the comet's names the day its
+//      data was fetched where the page has it (Tony, 2026-11-07, night);
+//      not frozen, both are as approved.
 //   4. interactive.html loads the file, asks it for EPOCH_ISO from the
 //      served window, reads the ?freeze=1 knob, puts the frozen words
 //      under the title and at the top of the i panel, and passes the
@@ -36,11 +38,15 @@
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and breaks the
-//   real file three ways -- the freeze taken out (the minute asked as it
-//   is), the frozen minute set one minute AFTER the window's end, and the
-//   "today" swap turned off -- so a green run has shown it can go red.
+//   real file four ways -- the freeze taken out (the minute asked as it
+//   is), the frozen minute set one minute AFTER the window's end, the
+//   "today" swap turned off, and the day fetched dropped from the comet's
+//   sentence -- so a green run has shown it can go red.
 //
 // Written November 7, 2026 with Anthropic's Claude Opus 5.5.
+// Updated November 7, 2026, night, with Anthropic's Claude Opus 5.5 (the
+// comet's frozen sentence names the day its data was fetched; a fourth
+// planted break).
 
 "use strict";
 const fs = require("fs");
@@ -128,6 +134,20 @@ function cases(SM) {
     if (SM.todayWords(s, false) !== s) { out.push(name + " is changed when the room is not frozen"); }
     if (/\btoday\b/.test(SM.todayWords(s, true))) { out.push(name + " still says \"today\" in a frozen room"); }
   }
+  // The comet's frozen sentence names the day its data was fetched, when
+  // the page has one (Tony, 2026-11-07, night), and stands without it.
+  const comet = SENTENCES.COMET_SPAN_WORDS || "";
+  const withDay = SM.todayWords(comet, true, "7 November 2026");
+  if (withDay.indexOf("to a year after 7 November 2026, the day its data was fetched") < 0) {
+    out.push("a frozen comet's sentence does not name the day fetched: " + withDay);
+  }
+  const noDay = SM.todayWords(comet, true, null);
+  if (noDay.indexOf("to a year after the day its data was fetched") < 0) {
+    out.push("a frozen comet's sentence with no day fetched reads: " + noDay);
+  }
+  if (SM.todayWords(comet, false, "7 November 2026") !== comet) {
+    out.push("the comet's sentence changes when the room is not frozen");
+  }
   for (const pair of SM.TODAY_SWAPS) {
     if (!Object.keys(SENTENCES).some((n) => (SENTENCES[n] || "").indexOf(pair[0]) >= 0)) {
       out.push("the swap's phrase \"" + pair[0] + "\" is in neither sentence");
@@ -142,7 +162,8 @@ const breaks = [
   ["the frozen minute after the end",
    "return Math.floor(msOfJd(endJd) / MS_PER_MIN - END_MARGIN_MIN) * MS_PER_MIN;",
    "return (Math.floor(msOfJd(endJd) / MS_PER_MIN) + 1) * MS_PER_MIN;"],
-  ["the today swap off", "if (!frozen || typeof text !== \"string\") { return text; }", "return text;"]
+  ["the today swap off", "if (!frozen || typeof text !== \"string\") { return text; }", "return text;"],
+  ["the day fetched dropped", "? fetchedDay + \", \" : \"\";", "? \"\" : \"\";"]
 ];
 const selfFails = [];
 for (const [name, from, to] of breaks) {
@@ -224,7 +245,8 @@ const need = [
   ['.get("freeze") === "1";', "the ?freeze=1 knob is not read"],
   ["sunSceneSubtitle = SceneMoment.subtitle(frozenStamp);", "a frozen room does not say so under its title"],
   ["reportSceneFrozen(SceneMoment.panelNote(frozenStamp));", "a frozen room does not say so in its i panel"],
-  ["SceneMoment.todayWords(COMET_SPAN_WORDS, frozen)", "a comet's span sentence ignores the freeze"],
+  ["SceneMoment.todayWords(COMET_SPAN_WORDS, frozen, fetched)", "a comet's span sentence ignores the freeze or the day fetched"],
+  ["(b.path_source || {}).retrieved)));", "a comet's span sentence is not given the day its path was fetched"],
   ["SceneMoment.todayWords(SPACECRAFT_DATES_WORDS, frozen)", "the spacecraft's dates sentence ignores the freeze"]
 ];
 for (const [s, why] of need) { if (PAGE.indexOf(s) < 0) { failures.push(why); } }

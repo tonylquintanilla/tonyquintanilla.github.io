@@ -32,8 +32,9 @@
 //       before the day comes. Null with no window.
 //   subtitle(stamp)  the line under the title when frozen.
 //   panelNote(stamp)  the sentence at the top of the i panel when frozen.
-//   todayWords(text, frozen)  two served sentences that say "today", put
-//       in the frozen room's terms; unchanged when not frozen.
+//   todayWords(text, frozen, fetchedDay)  two served sentences that say
+//       "today", put in the frozen room's terms, the comet's naming the
+//       day its data was fetched; unchanged when not frozen.
 //
 // The words are proposals for Tony's phone look (the hover rule:
 // reworded visitor words go to Tony before they ship).
@@ -100,18 +101,24 @@
             "guess beyond it.";
     }
 
-    // Each pair: the words as approved, and the frozen room's form.
+    // Each pair: the words as approved, and the frozen room's form. A
+    // form may name the day the body's data was fetched ("{fetched}"),
+    // Tony's ask of 2026-11-07, night: "It should print the fetch date,
+    // e.g. 'to a year after Nov 7, 2026, the day its data was fetched.'"
+    // Without a day it says "the day its data was fetched" alone.
     var TODAY_SWAPS = [
         ["the planets are drawn where they are today",
          "the planets are drawn where they were on the day shown"],
         ["to a year after today",
-         "to a year after the day its data was fetched"]
+         "to a year after {fetched}the day its data was fetched"]
     ];
-    function todayWords(text, frozen) {
+    function todayWords(text, frozen, fetchedDay) {
         if (!frozen || typeof text !== "string") { return text; }
+        var day = (typeof fetchedDay === "string" && fetchedDay) ? fetchedDay + ", " : "";
         var out = text;
         for (var i = 0; i < TODAY_SWAPS.length; i++) {
-            out = out.split(TODAY_SWAPS[i][0]).join(TODAY_SWAPS[i][1]);
+            out = out.split(TODAY_SWAPS[i][0])
+                .join(TODAY_SWAPS[i][1].split("{fetched}").join(day));
         }
         return out;
     }
