@@ -140,6 +140,9 @@
 //              something is served around it, an object fetched around it
 //              or features of its own (centresOf, read from the config,
 //              never typed) -- reads "Not built yet" there (WORDS.notBuilt).
+//              REMOVED by Tony's phone look of 2026-11-07: "A body with no
+//              centre shows neither label. It simply has no 'Centre on'
+//              button." Not built yet and No room or cards yet are gone.
 //              Any other body opens to "No room or cards yet" as before.
 //   TRAIL      a centre other than the root shows "Solar system > <name>"
 //              at the top of its drawer, its first part a link back to
@@ -149,7 +152,14 @@
 //              opening in that tab puts it back, once (tickMemory,
 //              tickRestore). Reset still starts fresh.
 // Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
-// 2a: ONE DRAWER, above).
+// 2a: ONE DRAWER, above). Updated November 7, 2026, later, with
+// Anthropic's Claude Opus 5.5 (L-515, Tony's phone look at part 2:
+// centreOffer, WORDS.noRoom and WORDS.notBuilt removed; a row offers
+// Centre on or nothing). Updated November 7, 2026, later still, with
+// Anthropic's Claude Opus 5.5 (L-515 part 3, Tony's ruling 7: the Sun's
+// shells are rows in the root -- a served row {shell, label} read by
+// rowsFromServed, placed among the bodies by distance by placeShells, in
+// an opening by its key, inOpening).
 //
 // A DRAWING ROW (L-503, Tony's ruling of 2026-10-29). The belt's cloud is
 // a row of its own, first inside the Main asteroid belt group, "ticked and
@@ -173,15 +183,15 @@
   // on a body, for this tab only.
   const TICK_MEMORY_KEY = "po_root_ticks";
 
-  // The visitor's words. noRoom and enter are Tony's, 2026-09-30; the
-  // two resets are his, 2026-10-24 (L-477).
+  // The visitor's words. enter is Tony's, 2026-09-30; the two resets are
+  // his, 2026-10-24 (L-477).
   const WORDS = {
-    noRoom: "No room or cards yet",
     // L-515 (Tony's rulings 2 and 10 of 2026-11-07): the room button reads
-    // "Centre on <name>"; a centre not built yet reads "Not built yet";
-    // the trail line's first part is the root.
+    // "Centre on <name>"; the trail line's first part is the root. Since
+    // his phone look of 2026-11-07 a body with no centre built shows
+    // nothing where the button would be: noRoom ("No room or cards yet")
+    // and notBuilt ("Not built yet") are gone.
     enter: function (name) { return "Centre on " + name; },
-    notBuilt: "Not built yet",
     trailRoot: "Solar system",
     trailSep: " > ",
     reset: "Reset",
@@ -248,6 +258,16 @@
         });
         return;
       }
+      // L-515 part 3: one of the Sun's shells in the root, by its legend
+      // group, which compose places (placeShells) and hands back.
+      if (typeof r.shell === "string" && r.shell) {
+        out.push({
+          key: r.shell, slug: null, shell: r.shell,
+          label: (typeof r.label === "string" && r.label) ? r.label : r.shell,
+          group: null, find: findWords(r.find), isShell: true
+        });
+        return;
+      }
       if (typeof r.slug !== "string" || !r.slug) { return; }
       out.push({
         key: r.slug === SUN_SLUG ? SUN_KEY : r.slug,
@@ -286,19 +306,18 @@
     return (roomKeys || []).indexOf(row.slug) >= 0 ? row.slug : null;
   }
 
-  // L-515 (ruling 10): what a body's row offers where the room button
-  // sits -- "room" (its centre is built: Centre on), "notBuilt" (it is a
-  // centre in the tree with none built), or null. centres is centresOf().
-  function centreOffer(row, roomKeys, centres) {
-    if (!row || !row.slug) { return null; }
-    if (roomFor(row, roomKeys)) { return "room"; }
-    return (centres || []).indexOf(row.slug) >= 0 ? "notBuilt" : null;
-  }
+  // L-515, Tony's phone look of 2026-11-07: centreOffer, which said
+  // "Not built yet" on a centre in the tree with none built, is gone with
+  // the words; a row offers Centre on where roomFor names a room, and
+  // nothing else.
 
   // L-515 (rulings 6 and 9): the bodies that are centres in the tree,
   // read from the served config: each with an object fetched around it
   // (another object's center_slug), or features served on its own entry.
-  // The root is one. In config order.
+  // The root is one. In config order. Not read by the page since the
+  // phone look of 2026-11-07, which took away "Not built yet", its one
+  // use; kept, and held by the drawer check, for the tree's next centres
+  // (step 2b, Mars in step 3), where it says which bodies may be one.
   function centresOf(config) {
     const objs = (config && Array.isArray(config.objects)) ? config.objects : [];
     const around = {};
@@ -467,6 +486,81 @@
     return out;
   }
 
+  // L-515 part 3 (Tony's ruling 7 of 2026-11-07): THE SUN'S SHELLS IN THE
+  // ROOT. shells is the Sun's rows in the Sun's own drawer order
+  // (drawer_order.js), each {key, au}: au where the shell begins, or null
+  // for a row with no distance (the rotation axis, the galactic plane).
+  // Each is placed among the root's rows by distance, the rule of Tony's
+  // phone look of 2026-11-07 ("Order everything after the fixed centre row
+  // by distance, moons included"): right after the LAST top-level row
+  // that is nearer than where the shell begins. A body row's distance is
+  // its served semi-major axis (aByKey); a group row's is the smallest of
+  // its bodies'; the Sun's is 0; a row with none (a spacecraft, an open
+  // path, a group of them) is passed over. A row with no distance takes
+  // the distance of the shell before it in the Sun's order, so it keeps
+  // its place among them. Shells never go inside a group. So the inner
+  // shells, out to the Alfven surface, sit right after the Sun, ahead of
+  // the comet groups and Mercury, and the termination shock, the
+  // heliopause and everything beyond come after the trans-Neptunian
+  // objects, as in Tony's tree of 2026-11-07. A row is served order "last
+  // nearer", not "first farther", because the served order is not
+  // monotonic: the long-period comets sit near the top. Returns the rows
+  // with each shell inserted as {key, slug: null, shell, label, group:
+  // null, find: [], isShell: true}; labels is {key: label}.
+  function placeShells(rows, shells, aByKey, labels) {
+    const out = (rows || []).slice();
+    const dist = function (r) {
+      if (r.key === SUN_KEY) { return 0; }
+      const ok = function (a) { return typeof a === "number" && isFinite(a) && a > 0; };
+      if (isGroup(r)) {
+        let best = null;
+        members(rows, r.group).forEach(function (m) {
+          const a = aByKey ? aByKey[m.key] : undefined;
+          if (ok(a) && (best === null || a < best)) { best = a; }
+        });
+        return best;
+      }
+      if (r.group || isShell(r)) { return null; }
+      const a = aByKey ? aByKey[r.key] : undefined;
+      return ok(a) ? a : null;
+    };
+    let carry = 0;
+    (shells || []).forEach(function (s) {
+      const at = (typeof s.au === "number" && isFinite(s.au)) ? s.au : carry;
+      carry = at;
+      let after = -1;
+      for (let i = 0; i < out.length; i++) {
+        if (isShell(out[i])) {
+          // Shells already placed keep the Sun's order among themselves.
+          if (out[i].at <= at) { after = i; }
+          continue;
+        }
+        if (out[i].group && !isGroup(out[i])) { continue; }   // a group's body
+        const d = dist(out[i]);
+        if (d !== null && d < at) { after = i; }
+        else if (d !== null && d === 0 && at === 0) { after = i; }
+      }
+      // A group's bodies follow their group row: step past them.
+      while (after + 1 < out.length && out[after + 1].group && !isShell(out[after + 1]) &&
+             !isGroup(out[after + 1])) { after += 1; }
+      out.splice(after + 1, 0, {
+        key: s.key, slug: null, shell: s.key,
+        label: (labels && labels[s.key]) || s.key,
+        group: null, find: [], isShell: true, at: at
+      });
+    });
+    return out;
+  }
+
+  function isShell(row) { return !!(row && row.isShell); }
+
+  // L-515 part 3: whether a row is in what the room opens on, want being
+  // {name: true}: a body by its slug, a shell (which has none) by its key.
+  function inOpening(row, want) {
+    if (!row || !want) { return false; }
+    return row.slug ? !!want[row.slug] : !!want[row.key];
+  }
+
   // The tick order. A body ticked again moves to the end.
   function orderAdd(order, key) {
     return orderRemove(order, key).concat([key]);
@@ -493,7 +587,7 @@
     (drawn || []).forEach(function (s) { want[s] = true; });
     let order = [];
     rows.forEach(function (r) {
-      if (tickable(r.key) && want[r.slug]) { order.push(r.key); }
+      if (tickable(r.key) && inOpening(r, want)) { order.push(r.key); }
     });
     const hl = rows.filter(function (r) { return r.slug === highlight; })[0];
     if (hl && order.indexOf(hl.key) >= 0) { order = orderAdd(order, hl.key); }
@@ -682,7 +776,6 @@
     // L-515 step 2a: one drawer for every centre.
     ROOT_EXHIBIT: ROOT_EXHIBIT,
     TICK_MEMORY_KEY: TICK_MEMORY_KEY,
-    centreOffer: centreOffer,
     centresOf: centresOf,
     childrenOf: childrenOf,
     rowPlan: rowPlan,
@@ -693,7 +786,11 @@
     homeTarget: homeTarget,
     openingOrder: openingOrder,
     countLine: countLine,
-    outsideCount: outsideCount
+    outsideCount: outsideCount,
+    // L-515 part 3: the Sun's shells in the root.
+    isShell: isShell,
+    placeShells: placeShells,
+    inOpening: inOpening
   };
 
 })(typeof window !== "undefined" ? window : globalThis);

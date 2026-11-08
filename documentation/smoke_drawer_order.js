@@ -49,6 +49,12 @@
 // and its children -- the bodies fetched around it, read from the config
 // -- after its last shell; a third self-test breaks the file so the Moon
 // keeps its old place, and must go red.)
+// Module updated: November 7, 2026, later, with Anthropic's Claude Opus
+// 5.5 (L-515, Tony's phone look at part 2: "Order everything after the
+// fixed centre row by distance, moons included." The order wanted places
+// a child by distance among the shells, where its orbit as drawn comes
+// nearest the centre; the third self-test breaks the file so the Moon is
+// not placed by distance, and must go red.)
 //
 // Role: devtool
 // Domain: dev_tools
@@ -178,8 +184,18 @@ function expected(DO, traces, features, opts) {
     if (t.showlegend === true && t.name) byKey[g].name = t.name;
     if (byKey[g].shell === null && t.meta && t.meta.shell_key) byKey[g].shell = t.meta.shell_key;
   });
+  const kids = (opts && opts.children) || [];
   const rows = groups.map((g, k) => {
     const r = { key: g.key, name: g.name, present: k, fixed: true, au: null, surface: false, how: "" };
+    // L-515, Tony's phone look of 2026-11-07: a child of the centre (the
+    // Moon) by distance, where its orbit as drawn comes nearest.
+    if (kids.indexOf(g.key) >= 0) {
+      const v = drawnNearestAu(traces, g.idx);
+      if (!isFinite(v)) { r.how = "a child, nearest point drawn (not readable)"; return r; }
+      r.how = "a child of the centre, nearest point drawn";
+      r.fixed = false; r.au = v;
+      return r;
+    }
     if (!g.shell) { r.how = "not a shell, keeps its place"; return r; }
     const served = DO._servedRow(features, g.shell);
     if (!served) { r.how = "no served row"; return r; }
@@ -208,21 +224,14 @@ function expected(DO, traces, features, opts) {
     (a.au - b.au) || ((a.surface ? 1 : 0) - (b.surface ? 1 : 0)) || (a.present - b.present));
   let s = 0;
   const ordered = rows.map(r => r.fixed ? r : shells[s++]);
-  // L-515 step 2a (Tony's ruling 2 of 2026-11-07, for Mars: "Mars, fixed;
-  // its shells when built; Phobos; Deimos"): the centre's row first, its
-  // children right after its last shell, every other row in its place.
+  // L-515 step 2a: the centre's row first, every other row in its place.
+  // The children were placed by distance above (Tony's phone look of
+  // 2026-11-07, "moons included").
   if (!opts) return ordered;
   const centre = ordered.filter(r => r.key === opts.centreKey);
   const rest = ordered.filter(r => r.key !== opts.centreKey);
-  const kids = [];
-  (opts.children || []).forEach(k => {
-    const i = rest.findIndex(r => r.key === k);
-    if (i >= 0) { const r = rest.splice(i, 1)[0]; r.how = "a child of the centre, after its shells"; kids.push(r); }
-  });
-  let at = 0;
-  rest.forEach((r, i) => { if (!r.fixed) at = i + 1; });
   centre.forEach(r => { r.how = "the centre's fixed row, first"; });
-  return centre.concat(rest.slice(0, at), kids, rest.slice(at));
+  return centre.concat(rest);
 }
 
 function compare(room, DO, built, features) {
@@ -269,13 +278,14 @@ if (require.main === module) {
   if (!r2.bad.length) fail("self-test: the check stayed green with the file ignoring distance");
   else console.log("  self-test: the file ignoring distance -- red: " + r2.bad[0]);
 
-  // 3. L-515: the real file broken so the centre and its children keep
-  // their places, as before the step. Earth's Moon must then be named.
-  const tree = "ordered = placeCentreAndChildren(ordered, opts || {});";
-  if (SRC.split(tree).length !== 2) { fail("self-test could not break drawer_order.js: the tree line moved"); return; }
-  const r3 = compare("earth", loadOrder(SRC.replace(tree, "")), ROOMS.earth());
-  if (!r3.bad.length) fail("self-test: the check stayed green with the Moon kept in its old place");
-  else console.log("  self-test: the centre and its children kept in their old places -- red: " + r3.bad[0]);
+  // 3. L-515, Tony's phone look of 2026-11-07: the real file broken so a
+  // centre's child is not placed by distance and keeps its place, as
+  // before the phone look. Earth's Moon must then be named.
+  const tree = "if (children.indexOf(g.key) >= 0) {";
+  if (SRC.split(tree).length !== 2) { fail("self-test could not break drawer_order.js: the child line moved"); return; }
+  const r3 = compare("earth", loadOrder(SRC.replace(tree, "if (false) {")), ROOMS.earth());
+  if (!r3.bad.length) fail("self-test: the check stayed green with the Moon not placed by distance");
+  else console.log("  self-test: the Moon not placed by distance -- red: " + r3.bad[0]);
 })();
 
 // --- 1 and 2: the rooms ---------------------------------------------------
@@ -314,6 +324,6 @@ if (failures.length) {
   failures.forEach(f => console.log("  FAIL " + f));
   process.exit(1);
 }
-console.log("=== DRAWER ORDER: both rooms list their shells where each begins, " +
-            "the centre first and its children after its shells; self-test red three times");
+console.log("=== DRAWER ORDER: both rooms list their shells and the centre's children " +
+            "where each begins, the centre first; self-test red three times");
 }

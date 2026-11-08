@@ -105,6 +105,14 @@
 // with none built, the root with no trail line, the Sun's fixed row
 // opening its text box, and the root's ticks kept on leaving by Centre on
 // and put back once on its next opening, Reset then starting fresh.
+// Updated November 7, 2026, part 3 (L-515, Tony's ruling 7): section 1
+// no longer finds Centre on on the Sun's row (the Sun is the root); section
+// 27 walks the Sun's shells as rows here and what ?exhibit=sun opens on.
+// Updated November 7, 2026, later, with Anthropic's Claude Opus 5.5
+// (L-515, Tony's phone look at part 2): Not built yet and No room or
+// cards yet are gone; sections 1, 14 and 26 hold that a body with no
+// centre built shows nothing where Centre on would be, before or after its
+// row is opened, and that the page shows neither phrase.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -135,7 +143,13 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
      "a first visit is not greeted by the note on the i button");
   const idx = (key) => E("ssIndex(" + JSON.stringify(key) + ")");
   const row = (key) => d.querySelector('#sun-drawer-list .sun-row[data-k="' + idx(key) + '"]');
-  const panel = (key) => d.querySelector('#sun-drawer-list .sun-row-open[data-open-for="' + key + '"]');
+  // L-515, Tony's phone look of 2026-11-07: a row with no centre built
+  // has no opened line now, so a missing one reads as hidden.
+  const panel = (key) => d.querySelector('#sun-drawer-list .sun-row-open[data-open-for="' + key + '"]') ||
+    { hidden: true, textContent: "", querySelector: () => null };
+  // Nothing where Centre on would be, on the row or under it.
+  const bare = (key) => !d.querySelector('#sun-drawer-list .sun-row-open[data-open-for="' + key + '"]') &&
+    !row(key).querySelector(".open-inline");
   const shown = (key) => E("sunGroups[" + idx(key) + "].shown");
   const focus = () => E("sunGroups[sunFocusIdx] && sunGroups[sunFocusIdx].key");
   const order = () => E("ssDrawer.order.join(',')");
@@ -171,6 +185,11 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(order() === "earth", "arrival order " + order());
   ok(focus() === "earth" && d.getElementById("sun-drawer-label").textContent === "Earth", "arrival handle");
   ok(count() === "1 of " + N, "arrival count " + count());
+  // L-515 part 3: the Sun's shells, rows here, are unticked on opening --
+  // read from the traces as first plotted.
+  ok(E("sunPlotDiv.data").filter(t => t.meta && (typeof t.meta.shell_key === "string" ||
+       t.meta.frame_element === true) && t.visible !== "legendonly" && t.visible !== false).length === 0,
+     "a Sun shell is drawn on the room's opening (L-515 part 3)");
   ok(row("center").classList.contains("fixed"), "Sun row not fixed");
   ok(row("apophis").hidden && !head("aten").hidden && !E("ssDrawer.folds.aten"), "the Aten asteroids are not listed, folded");
   ok(!d.getElementById("sun-see-more") && !d.querySelector(".sun-see-more"), "See more is still on the page (L-477)");
@@ -181,26 +200,29 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     { hidden: true, textContent: "", nextElementSibling: null };
   const expanded = (key) => row(key).getAttribute("aria-expanded") === "true";
   // L-429: a room's button is on its row from the start, no tap needed.
-  ok(!inl("center").hidden && !inl("earth").hidden, "a room's button is not on its row on arrival");
+  ok(!inl("earth").hidden, "a room's button is not on its row on arrival");
   // L-515 (Tony's ruling 2): "Centre on <name>" where "Enter the <name> room" stood.
-  ok(inl("center").textContent === "Centre on Sun" && inl("earth").textContent === "Centre on Earth", "enter words");
+  ok(inl("earth").textContent === "Centre on Earth", "enter words");
   ok(inl("earth").previousElementSibling === row("earth").querySelector(".go"), "Earth's button not after Go To");
   ok(row("earth").querySelector(".go").textContent === "go to", "the button's word is not go to");
-  ok(inl("center").querySelector("a").getAttribute("href") === "interactive.html?exhibit=sun", "Sun room link");
+  // L-515 part 3 (Tony's ruling 7): the Sun is the root; its row offers
+  // no Centre on, and ?exhibit=sun opens this room (section 27).
+  ok(bare("center"), "the Sun's row still offers a room");
   ok(inl("earth").querySelector("a").getAttribute("href") === "interactive.html?exhibit=earth", "Earth room link");
   ok(inl("mars").hidden, "Mars shows a button on its row");
-  ok(panel("mars").textContent === "No room or cards yet" && !panel("mars").querySelector("a"), "Mars no room");
+  // L-515, Tony's phone look of 2026-11-07: no "No room or cards yet".
+  ok(bare("mars"), "Mars, with no centre, shows a label where Centre on would be");
   ok(d.querySelectorAll(".sun-row-open:not([hidden])").length === 0, "a row is open on arrival");
   // 2. Sun cannot be ticked
   await pick("center");
   ok(shown("center") === true, "Sun's box unticked it");
-  ok(focus() === "center" && expanded("center") && panel("center").hidden && !inl("center").hidden, "Sun's left end did not name and open its row");
+  ok(focus() === "center" && expanded("center") && bare("center"), "Sun's left end did not name and open its row");
   await name("center");
-  ok(!expanded("center") && !inl("center").hidden, "second tap on the Sun did not close its row");
+  ok(!expanded("center") && bare("center"), "second tap on the Sun did not close its row");
   // 3. Tick Mercury: drawn, named, opened, frame holds everything drawn (Earth's orbit)
   let calls = E("__calls.length");
   await pick("mercury");
-  ok(shown("mercury") && focus() === "mercury" && !panel("mercury").hidden, "Mercury tick did not draw/name/open");
+  ok(shown("mercury") && focus() === "mercury" && expanded("mercury"), "Mercury tick did not draw/name/open");
   ok(order() === "earth,mercury", "order after Mercury " + order());
   ok(near(range(), radius("earth")), "frame after Mercury " + range() + " vs " + radius("earth"));
   ok(E("__calls.slice(" + calls + ").some(c => c[0] === 'restyle')"), "no restyle on tick");
@@ -209,7 +231,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   // 4. Tick Neptune: frame widens to Neptune; Mercury's row closes, Neptune's opens
   await pick("neptune");
   ok(near(range(), radius("neptune")), "frame after Neptune");
-  ok(panel("mercury").hidden && !panel("neptune").hidden, "only Neptune open");
+  ok(!expanded("mercury") && expanded("neptune"), "only Neptune open");
   // 5. Name tap on a drawn body: names and opens, camera untouched
   calls = E("__calls.length"); const r0 = range();
   await name("earth");
@@ -315,11 +337,12 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   ok(inl("earth").textContent === "Centre on Earth", "sideways words " + inl("earth").textContent);
   ok(inl("mercury").hidden, "sideways: a closed row shows its button");
   await E("ssSelect(ssIndex('mercury'), true)"); await h.done();
-  ok(!inl("earth").hidden && !inl("mercury").hidden && inl("mercury").textContent === "No room or cards yet", "sideways: Mercury's opened row");
+  // L-515, Tony's phone look of 2026-11-07: a body with no centre opens to nothing.
+  ok(!inl("earth").hidden && expanded("mercury") && bare("mercury"), "sideways: Mercury's opened row shows a label");
   Object.defineProperty(w, "innerWidth", { value: 1024, configurable: true });
   Object.defineProperty(w, "innerHeight", { value: 768, configurable: true });
   E("renderSunDrawer()");
-  ok(!panel("mercury").hidden && inl("mercury").hidden, "upright again: the row did not go back under");
+  ok(expanded("mercury") && bare("mercury"), "upright again: Mercury's opened row shows a label");
   // 15. L-443: a group. See more, fold it open; its bodies by served
   // semi-major axis; its box ticks all of them and the frame holds them;
   // its count; its box again unticks only them; folded, they hide.
@@ -975,16 +998,26 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     const isCentre = (o) => !!around[o.slug] || !!(o.features && Object.keys(o.features).length);
     const rooms = E("Object.keys(EXHIBITS)");
     const rowKeys = E("ssDrawer.rows.filter(r => r.slug && ssIndex(r.key) >= 0).map(r => r.slug)");
+    // The Sun, the root, is held in section 1 (L-515 part 3: no room row).
     const notBuilt = cfg.objects.filter(o => isCentre(o) && rooms.indexOf(o.slug) < 0 &&
+                                            o.slug !== "sun" &&
                                             rowKeys.indexOf(o.slug) >= 0).map(o => o.slug);
-    ok(notBuilt.length > 0, "the config names no centre without a room, so Not built yet is not walked");
-    notBuilt.forEach(s => {
-      const el = inl(s);
-      ok(!el.hidden && el.textContent === "Not built yet" && !el.querySelector("a"),
-         s + ": a centre not built yet does not read Not built yet on its row: " + el.textContent);
+    // Tony's phone look of 2026-11-07: "A body with no centre shows
+    // neither label. It simply has no 'Centre on' button." A centre in the
+    // tree with none built shows nothing where the button would be, as
+    // Mars, no centre, does; opening its row adds nothing either.
+    ok(notBuilt.length > 0, "the config names no centre without a room, so the case is not walked");
+    notBuilt.concat(["mars"]).forEach(s => {
+      ok(bare(s), s + ": a body with no centre built shows something where Centre on would be: " +
+         row(s).textContent);
     });
-    console.log("  Not built yet: " + notBuilt.join(", "));
-    ok(inl("mars").hidden, "Mars, no centre in the tree, shows something on its row");
+    await E("ssSelect(ssIndex('" + notBuilt[0] + "'), true)"); await h.done();
+    ok(expanded(notBuilt[0]) && bare(notBuilt[0]), notBuilt[0] + ": opening its row shows a label");
+    console.log("  no label on: " + notBuilt.concat(["mars"]).join(", "));
+    const drawerText = d.getElementById("sun-drawer").textContent;
+    ok(drawerText.indexOf("Not built yet") < 0 &&
+       drawerText.indexOf("No room or cards yet") < 0,
+       "the drawer still shows Not built yet or No room or cards yet");
     const trailEl = d.getElementById("sun-trail");
     ok(!trailEl || trailEl.hidden, "the root shows a trail line");
     await click(d.getElementById("sun-drawer-all"));
@@ -1025,6 +1058,82 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
      about.textContent === "About Paloma's Orrery",
      "the i panel does not end with the About line: " + (last ? last.outerHTML.slice(0, 120) : "nothing"));
   ok(h.errors.length === 0, "errors during the walk: " + h.errors.join("; "));
+  // 27. L-515 part 3 (Tony's ruling 7 of 2026-11-07): the Sun's shells are
+  // rows here, unticked on opening, placed among the bodies by distance;
+  // a shell ticked beside the planets is framed by its whole shape at 10
+  // percent, a body by where it is now at 20; ?exhibit=sun opens this room
+  // on the Sun's own opening, at the Sun room's opening frame. Every
+  // expectation is worked out here, from the traces and the config.
+  {
+    await click(d.getElementById("sun-drawer-all"));
+    const isShellT = (t) => !!(t && t.meta && (typeof t.meta.shell_key === "string" || t.meta.frame_element === true));
+    const all = E("sunPlotDiv.data");
+    const shellKeys = [...new Set(all.filter(isShellT).map(t => t.legendgroup))];
+    ok(shellKeys.length >= 18 && shellKeys.every(k => idx(k) >= 0),
+       "the Sun's shells are not rows in this room: " + shellKeys.length);
+    ok(shellKeys.every(k => !shown(k)), "a Sun shell is ticked after Reset to the opening");
+    const extent = (k) => all.filter(t => t.legendgroup === k).reduce((m, t) =>
+      ["x", "y", "z"].reduce((mm, a) => (t[a] || []).reduce((q, v) =>
+        (isFinite(v) && v !== null ? Math.max(q, Math.abs(v)) : q), mm), m), 0);
+    const top = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"))
+      .filter(r => !r.classList.contains("member"))
+      .map(r => r.classList.contains("sun-group") ? "group:" + r.getAttribute("data-g")
+                                                  : E("sunGroups[" + Number(r.dataset.k) + "].key"));
+    const at = (k) => top.indexOf(k);
+    const firstGroup = top.findIndex(k => k.indexOf("group:") === 0);
+    const alf = shellKeys.find(k => /Alfven Surface$/.test(k));
+    const helio = shellKeys.find(k => /Heliopause/.test(k));
+    ok(alf && at(alf) > at("center") && at(alf) < firstGroup && at(alf) < at("mercury"),
+       "the Alfven surface is not listed between the Sun and the first group: " + at(alf));
+    ok(helio && at(helio) > at("pluto") && at(helio) > at("group:tno"),
+       "the heliopause is not listed after Pluto and the trans-Neptunian objects: " + at(helio));
+    // Ticked beside Earth (the walk's opening), the Alfven surface draws
+    // and Earth, at 20 percent, still sets the frame.
+    await pick(alf);
+    ok(shown(alf) && near(range(), Math.max(radius("earth"), extent(alf) * 1.1)),
+       "the Alfven surface ticked beside Earth: frame " + range());
+    // The heliopause is framed whole, at 10 percent.
+    await pick(helio);
+    ok(near(range(), extent(helio) * 1.1), "the heliopause is not framed whole at 10 percent: " +
+       range() + " vs " + extent(helio) * 1.1);
+    ok(d.getElementById("ss-outside").hidden, "the count line counts a shell or misses Earth");
+    await pick(helio);
+    // Go To on the Alfven surface fits its whole shape and opens its box.
+    await click(row(alf).querySelector(".go"));
+    ok(near(range(), extent(alf) * 1.1) && E("sunLabelGroup") === idx(alf),
+       "Go To on the Alfven surface does not fit it at 10 percent with its box open");
+    // The search finds a shell by its name.
+    E("ssFindSet('alfven'); renderSunDrawer()");
+    ok(!row(alf).hidden && row("mercury").hidden, "the search does not find the Alfven surface");
+    E("ssFindSet(''); renderSunDrawer()");
+    // Reset: every shell unticked again, the box closed.
+    await click(d.getElementById("sun-drawer-all"));
+    ok(shellKeys.every(k => !shown(k)) && E("sunLabelGroup") === -1,
+       "Reset does not untick the Sun's shells and close the box");
+    // ?exhibit=sun: this room, on the Sun's arrival block, nothing else.
+    const cfg27 = JSON.parse(fs.readFileSync(path.join(root, "data", "objects_config.json"), "utf8"));
+    const sunArr = (cfg27.objects.find(o => o.slug === "sun").arrival || {}).drawn || [];
+    const w3 = await h.boot(root, "sun", given);
+    const E3 = (s) => w3.eval(s);
+    ok(w3.document.getElementById("loading-status").textContent === "Ready" && h.errors.length === 0,
+       "?exhibit=sun did not open: " + h.errors.join("; "));
+    const asRoot = E3("EXHIBIT") === "solar-system" && E3("!!sunPlotDiv") &&
+      w3.document.getElementById("sun-trail").hidden;
+    ok(asRoot, "?exhibit=sun did not open the Solar System room as the root");
+    const data3 = asRoot ? E3("sunPlotDiv.data") : [];
+    const wantOn = [...new Set(data3.filter(t => isShellT(t) &&
+      (t.meta.frame_element === true || sunArr.indexOf(t.meta.shell_key) >= 0)).map(t => t.legendgroup))].sort();
+    const isOn = asRoot ? E3("sunGroups.filter(g => g.shown && g.key !== 'center').map(g => g.key)").sort() : [];
+    ok(wantOn.length > 0 && isOn.join("|") === wantOn.join("|"),
+       "?exhibit=sun does not open on the Sun's arrival block alone: " + isOn.join(", "));
+    const far3 = data3.filter(t => wantOn.indexOf(t.legendgroup) >= 0).reduce((m, t) =>
+      ["x", "y", "z"].reduce((mm, a) => (t[a] || []).reduce((q, v) =>
+        (isFinite(v) && v !== null ? Math.max(q, Math.abs(v)) : q), mm), m), 0) * 1.1;
+    const frame3 = asRoot ? E3("sunPlotDiv.layout.scene.xaxis.range[1]") : NaN;
+    ok(near(frame3, far3), "?exhibit=sun does not open at the Sun room's frame: " + frame3 + " vs " + far3);
+    console.log("  27: shells " + shellKeys.length + "; ?exhibit=sun opens on " + isOn.join(", ") +
+                " at +/-" + far3.toPrecision(4) + " AU");
+  }
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);
 })();

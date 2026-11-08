@@ -435,6 +435,18 @@
         the tree with none built; the root's ticks kept on leaving by
         Centre on and put back once on its next opening in the tab, Reset
         still fresh; a centre's children listed after its shells.)
+     Updated: November 7, 2026, evening, with Anthropic's Claude Opus 5.5
+       (L-515, Tony's phone look at part 2: the Earth room's Sun line
+        reaches 10 percent past the farthest shell or orbit drawn and
+        follows the ticks (sunLinePlan, sunLineFit); a centre's children
+        by distance among its shells; no "Not built yet" and no "No room
+        or cards yet". Then part 3, Tony's ruling 7: the Sun's shells are
+        rows in the Solar System room, unticked on opening, placed among
+        the bodies by distance; ?exhibit=sun opens that room with the
+        Sun's own opening ticked, at the Sun room's opening frame
+        (EXHIBIT_ADDRESSES); the Sun room's row in EXHIBITS is gone; a
+        shell in that room frames by its whole shape at 10 percent, a
+        body by where it is now at 20 percent (sunGroupMargin).)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1014,8 +1026,9 @@
         .sun-row-open a.enter:hover { background: rgba(201,168,76,0.12); }
         /* L-363, Tony's ruling of 2026-10-03 (option 3): with the phone
            sideways the drawer shows about a row and a half, so an opened
-           row puts its button, or "No room or cards yet", on the name's
-           line, after Go To since L-429, and stays one line tall. Shown
+           row puts its button on the name's line, after Go To since
+           L-429, and stays one line tall. (Since L-515 a row with no
+           centre built shows nothing there.) Shown
            and hidden by ssRender, by ssPhoneSideways(). Since L-429
            (2026-10-10) a body WITH a room shows its button here always,
            on every screen, so one tap enters the room. */
@@ -1030,9 +1043,6 @@
             text-decoration: none; font-weight: 500; font-size: 13px;
         }
         .sun-row .open-inline[hidden] { display: none; }
-        /* L-515 (Tony's ruling 10): a centre not built yet, where Centre
-           on would be -- words, not a button. */
-        .sun-row .open-inline .not-built { color: var(--text-dim); font-size: 12px; }
         /* L-515 step 2a: the trail line at the top of a centre's drawer,
            "Solar system > Earth"; its first part returns to the root. */
         .sun-trail {
@@ -2215,8 +2225,21 @@ function buildLayout(range, dateDisplay) {
 // is the one its card links to (tools/json_converter.py reads it, so
 // Studio lists the Explorer as a scene).
 const EXPLORER_EXHIBIT = "solar-system-explorer";
-const EXHIBIT = (new URLSearchParams(window.location.search)
+// L-515 part 3 (Tony's ruling 7 of 2026-11-07): an address that opens a
+// room on another body's opening. ?exhibit=sun opens the Solar System
+// room with the Sun's own opening ticked -- its arrival block, read by
+// GalleryArrival as the Sun room read it -- at the Sun room's opening
+// frame, and nothing else ticked. The Sun room's row in EXHIBITS is gone.
+// EXHIBIT_ASKED is the address; EXHIBIT the room it opens.
+// tools/json_converter.py reads this table too, so Studio still offers
+// the address as a scene.
+const EXHIBIT_ADDRESSES = {
+    sun: "solar-system"
+};
+const EXHIBIT_ASKED = (new URLSearchParams(window.location.search)
                      .get("exhibit") || "solar-system").toLowerCase();
+const EXHIBIT = EXHIBIT_ADDRESSES.hasOwnProperty(EXHIBIT_ASKED)
+    ? EXHIBIT_ADDRESSES[EXHIBIT_ASKED] : EXHIBIT_ASKED;
 
 // Half-range of the arrival view, in AU.  Tony's ruling, 2026-08-29:
 // core through outer corona (0.2325 AU), with the whole streamer belt
@@ -2245,6 +2268,8 @@ const SUN_ASSEMBLER_MODULES = [
     "presentation.py", "assemble.py"
 ];
 
+// OBSOLETE since L-515 part 3 (2026-11-07): read by no room; kept,
+// marked (tools/headless/run_room_driver.py still runs it by name).
 const SUN_DRIVER = `
 import json
 import sys
@@ -2289,6 +2314,7 @@ json.dumps({
 // not recalled: 18 named traces plus 18 info-marker companions). A count
 // written into prose goes stale the first time a shell is added and
 // nothing watches it. The legend shows the number anyway.
+// OBSOLETE since L-515 part 3 (2026-11-07): read by no room; kept, marked.
 const SUN_INFO_HTML = [
     // L-267 Stage C. Filled by renderSunInfo on every focus change.
     "<div class=\"info-focus\" id=\"sun-info-focus\"></div>",
@@ -2734,6 +2760,11 @@ for _slug in _bodies:
 
 json.dumps({
     "figure": result.figure,
+    # L-515 part 3: the Sun's own features (the scene's centre features,
+    # which the assembler already gathers), for its shells in this room.
+    # The bodies' features are not drawn here.
+    "features": [_f for _f in result.report["features"]
+                 if isinstance(_f, dict) and _f.get("object") == "sun"],
     "bodies": _served,
     "sun": {"description": (_objs.get("sun") or {}).get("description"),
             "info_url": (_objs.get("sun") or {}).get("info_url")},
@@ -3052,6 +3083,8 @@ const SOLAR_SYSTEM_INFO_HTML = [
 // which turns the room's drawings but has no row of its own. All three
 // are served words; none is typed here. Returns warnings, by name, for
 // anything it could not find.
+// OBSOLETE since L-515 part 3 (2026-11-07): the Sun room's row is gone,
+// and nothing calls this. Kept, marked, until a talk rules (L-509).
 function sunCentreWords(traces, payload) {
     const warnings = [];
     const sun = payload.sun || {};
@@ -3093,32 +3126,13 @@ function sunCentreWords(traces, payload) {
 }
 
 const EXHIBITS = {
-    sun: {
-        title: "The Sun",
-        sceneTitle: "The Sun",
-        pngName: "palomas_orrery_sun",
-        halfRangeAu: SUN_HALF_RANGE_AU,
-        driver: SUN_DRIVER,
-        infoHtml: SUN_INFO_HTML,
-        // The Sun room's composition, unchanged: the assembler's figure,
-        // then the features around a Sun at the origin.
-        compose: function (payload) {
-            const built = GalleryFeatures.buildFeatureTraces(
-                payload.features,
-                { sun: { name: "Sun", position: [0, 0, 0] } },
-                { sceneHalfRangeAu: SUN_HALF_RANGE_AU }
-            );
-            const traces = payload.figure.data.concat(built.traces);
-            const warnings = (built.warnings || []).concat(
-                sunCentreWords(traces, payload));
-            return {
-                traces: traces,
-                warnings: warnings,
-                absent: [],
-                subtitle: SUN_DATE_LINE
-            };
-        }
-    },
+    // L-515 part 3 (Tony's ruling 7 of 2026-11-07): the Sun room's row is
+    // gone. Its shells are rows in the Solar System room, and
+    // ?exhibit=sun opens that room on the Sun's own opening
+    // (EXHIBIT_ADDRESSES). Its driver, SUN_DRIVER, its words,
+    // SUN_INFO_HTML, and sunCentreWords stay in this file, marked
+    // OBSOLETE and read by no room, until a talk rules on them (Tony's
+    // ruling of 2026-11-03: obsolete code is marked, not deleted).
     earth: {
         title: "Earth",
         sceneTitle: "Earth",
@@ -3183,7 +3197,7 @@ const EXHIBITS = {
         // (without it the row would read "Earth osculating orbit"),
         // carries its source, and is what naming the body opens as a
         // text box. A body with no marker is reported.
-        compose: function (payload) {
+        compose: function (payload, cfgText) {
             const room = payload.room || {};
             const arrival = room.arrival || {};
             const bodies = payload.bodies || {};
@@ -3206,7 +3220,30 @@ const EXHIBITS = {
             });
             const aByKey = {};
             Object.keys(bodies).forEach(function (s) { aByKey[s] = (bodies[s] || {}).a_au; });
-            const allRows = SSD.orderGroups(SSD.rowsFromServed(served), aByKey)
+            // L-515 part 3 (Tony's ruling 7 of 2026-11-07): the Sun's shells
+            // are rows here, drawn by the renderers as the Sun room drew
+            // them (the same scene half-range, so the same shapes), each
+            // placed among the bodies by distance (placeShells), in the
+            // Sun's own order among themselves (drawer_order.js). They are
+            // unticked on opening; ?exhibit=sun opens on the Sun's own
+            // opening instead, below.
+            const sunBuilt = GalleryFeatures.buildFeatureTraces(
+                payload.features || [],
+                { sun: { name: "Sun", position: [0, 0, 0] } },
+                { sceneHalfRangeAu: SUN_HALF_RANGE_AU });
+            const shellPlan = DrawerOrder.plan(sunBuilt.traces, payload.features || [],
+                                               GalleryFeatures._KM_PER_AU, {});
+            const shellLabels = {};
+            shellPlan.rows.forEach(function (r) { shellLabels[r.key] = r.name; });
+            const shellSpecs = shellPlan.rows.map(function (r) {
+                return { key: r.key, au: r.keeps_place ? null : r.au };
+            });
+            shellSpecs.forEach(function (s) {
+                rawByKey[s.key] = { shell: s.key, label: shellLabels[s.key] };
+            });
+            warnings.push.apply(warnings, (sunBuilt.warnings || []).concat(shellPlan.warnings || []));
+            const allRows = SSD.placeShells(SSD.orderGroups(SSD.rowsFromServed(served), aByKey),
+                                            shellSpecs, aByKey, shellLabels)
                 .map(function (p) { return rawByKey[p.key]; })
                 .filter(function (r) { return !!r; });
             const rows = allRows.filter(function (r) { return typeof r.slug === "string"; });
@@ -3245,9 +3282,24 @@ const EXHIBITS = {
             // here is put back instead; Reset still puts back the served
             // opening, which the drawer keeps as before.
             const restored = SSD.tickRestore(payload.restoreText,
-                                             SSD.rowsFromServed(served));
+                                             SSD.rowsFromServed(allRows));
+            // L-515 part 3: an address that opens this room on a body's
+            // own opening (?exhibit=sun, EXHIBIT_ADDRESSES): that body's
+            // arrival block, applied to its shells by GalleryArrival as
+            // its room applied it, and no body ticked.
+            const openingOf = (EXHIBIT_ASKED !== EXHIBIT) ? EXHIBIT_ASKED : null;
+            let shellOpening = null;
+            if (openingOf) {
+                shellOpening = GalleryArrival.applyArrival(sunBuilt.traces, cfgText, openingOf);
+                shellOpening.unknown.forEach(function (u) {
+                    warnings.push("the " + openingOf + " opening names \"" + u +
+                                  "\", which is not a shell this room draws");
+                });
+            }
             const drawn = {};
-            ((restored ? restored.ticked : arrival.drawn) || []).forEach(function (s) { drawn[s] = true; });
+            if (!openingOf) {
+                ((restored ? restored.ticked : arrival.drawn) || []).forEach(function (s) { drawn[s] = true; });
+            }
             const epochJd = payload.epoch_jd;
             for (const row of rows) {
                 const slug = row.slug;
@@ -3499,6 +3551,15 @@ const EXHIBITS = {
                 rank[key] = rows.length + 1;
                 names[key] = SSD.searchNames(label, null, null, null);
             }
+            // L-515 part 3: the Sun's shells, hidden unless the opening
+            // ticks them, each found by its name in the drawer's search.
+            for (const t of sunBuilt.traces) {
+                if (!openingOf) { t.visible = drawn[t.legendgroup] ? true : SUN_HIDDEN; }
+                traces.push(t);
+            }
+            shellSpecs.forEach(function (s) {
+                names[s.key] = SSD.searchNames(shellLabels[s.key], null, null, null);
+            });
             // Tony, 2026-10-26: a small arrowhead on each body's orbit or
             // path, a little ahead of the body, pointing the way it
             // travels (gallery/direction_arrows.js). One trace per body,
@@ -3559,21 +3620,23 @@ const EXHIBITS = {
             // does; with nothing ticked, the served highlight.
             const restoredFocus = (restored && restored.order.length)
                 ? restored.order[restored.order.length - 1] : null;
+            // L-515 part 3: ?exhibit=sun names no row on its handle; the
+            // drawer names the outermost thing drawn, as the Sun room did.
+            const openDrawn = openingOf ? shellOpening.drawn.slice() : (arrival.drawn || []).slice();
+            const openHighlight = openingOf ? null : arrival.highlight;
             return { traces: traces, warnings: warnings, absent: [],
                      subtitle: stamp,
                      focusGroup: restoredFocus ||
-                         ((typeof arrival.highlight === "string") ? arrival.highlight : null),
+                         ((typeof openHighlight === "string") ? openHighlight : null),
                      // L-363 step 3b: the rows as served, and what the
                      // room opens on, for this room's drawer.
                      drawer: { rows: allRows,
-                               drawn: (arrival.drawn || []).slice(),
-                               highlight: arrival.highlight,
+                               drawn: openDrawn,
+                               highlight: openHighlight,
                                companions: companions,
                                names: names,
-                               // L-515: the restored tick order, if any,
-                               // and the tree's centres for each row.
-                               order: restored ? restored.order : null,
-                               centres: payload.centres || [] } };
+                               // L-515: the restored tick order, if any.
+                               order: restored ? restored.order : null } };
         }
     }
 };
@@ -3721,7 +3784,8 @@ function sunGroupRadius(k, whole) {
     if (!grp) { return 0; }
     // A room that frames on where its bodies are NOW (the Solar System
     // room) measures the body's distance from the Sun, not its orbit.
-    if (EX && EX.frameOnPosition && !whole) {
+    // L-515 part 3: a Sun shell there has no "now"; it is measured whole.
+    if (EX && EX.frameOnPosition && !whole && !sunGroupIsShell(k)) {
         return sunPositionRadius(sunPlotDiv ? sunPlotDiv.data : null, grp.indices);
     }
     let maxR = 0;
@@ -3755,6 +3819,36 @@ function sunFrameMargin() {
     return (EX && typeof EX.frameMargin === "number") ? EX.frameMargin : 1.1;
 }
 
+// L-515 part 3 (Tony's ruling 7 of 2026-11-07; the rule is method, the
+// brief's, written here and in interactive-exhibit): HOW THE ROOT FRAMES A
+// SHELL BESIDE THE PLANETS. A body is framed by where it is now, at the
+// room's 20 percent (Tony, 2026-10-02). A shell has no "now": it is
+// framed by its whole drawn shape at 10 percent, as the Sun room framed
+// it, so the Alfven surface ticked beside the inner planets is held
+// whole, and ?exhibit=sun opens at the Sun room's opening frame. The
+// frame holds the farthest thing ticked by its own measure and margin
+// (sunOutermostShown compares the two framed), so a 120 AU heliopause
+// beside the planets frames at 133 AU: the planets are then small in the
+// middle, which is the honest picture of the two scales, and the count
+// line does not count a shell. A shell is a trace carrying a served
+// shell's key or marked a frame element (the Sun's rotation axis): the
+// Sun's features, never a body.
+const SHELL_FRAME_MARGIN = 1.1;
+function sunTraceIsShell(t) {
+    return !!(t && t.meta && (typeof t.meta.shell_key === "string" ||
+                              t.meta.frame_element === true));
+}
+function sunGroupIsShell(k) {
+    const grp = sunGroups[k];
+    const data = sunPlotDiv && Array.isArray(sunPlotDiv.data) ? sunPlotDiv.data : null;
+    if (!grp || !data) { return false; }
+    return grp.indices.some(function (i) { return sunTraceIsShell(data[i]); });
+}
+function sunGroupMargin(k) {
+    if (EX && EX.frameOnPosition && sunGroupIsShell(k)) { return SHELL_FRAME_MARGIN; }
+    return sunFrameMargin();
+}
+
 // Tick spacing, 1/2/5 per decade. Without it the grid keeps whatever
 // spacing it had when the range was six orders of magnitude different.
 function sunGridDtick(span) {
@@ -3771,7 +3865,7 @@ function sunGridDtick(span) {
 function sunFrameOn(k, whole) {
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
     const rad = sunGroupRadius(k, whole);
-    const r = rad > 0 ? rad * sunFrameMargin() : (EX ? EX.halfRangeAu : SUN_HALF_RANGE_AU);
+    const r = rad > 0 ? rad * sunGroupMargin(k) : (EX ? EX.halfRangeAu : SUN_HALF_RANGE_AU);
     const d = sunGridDtick(2 * r);
     return Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv, {
         "scene.xaxis.range": [-r, r], "scene.xaxis.dtick": d,
@@ -3781,11 +3875,100 @@ function sunFrameOn(k, whole) {
     })).then(sunHudUpdate);
 }
 
+// L-515, Tony's phone look of 2026-11-07, on the Earth room's Sun
+// direction line: "Make it reach about 10 percent past the farthest orbit
+// or shell currently drawn. It should grow and shrink as rows are ticked
+// and unticked." Its traces (the line and its cross) carry meta.sun_line
+// from gallery/earth_geometry.js: the unit direction, the centre, and the
+// crust. A shell or an orbit is a trace carrying a served shell's key, or
+// the Moon's; the guides (the axis, the terminator), the fixed centre and
+// the line itself are not. Each is measured as the frame measures it
+// (sunTraceExtentAu), so a view framed on the farthest one still holds
+// the line's end. With none drawn, the line reaches past the crust. The
+// line sets no frame and is never the outermost row (sunOutermostShown),
+// or, reaching past everything, it always would be.
+const SUN_LINE_PAST = 1.1;
+
+function sunLineOf(t) {
+    return (t && t.meta && t.meta.sun_line) ? t.meta.sun_line : null;
+}
+
+function sunLineCounts(t) {
+    if (!t || sunLineOf(t)) { return false; }
+    return !!(t.meta && typeof t.meta.shell_key === "string") ||
+        t.legendgroup === "moon";
+}
+
+// The line's new coordinates: { indices, x, y, z, len }, or null in a room
+// with no Sun line. shown(i) says whether trace i is drawn. Pure.
+function sunLinePlan(traces, shown, extents) {
+    const idx = [];
+    let line = null, reach = 0;
+    for (let i = 0; i < traces.length; i++) {
+        const sl = sunLineOf(traces[i]);
+        if (sl) { idx.push(i); line = sl; continue; }
+        if (shown(i) && sunLineCounts(traces[i]) && extents[i] > reach) {
+            reach = extents[i];
+        }
+    }
+    if (!line || !Array.isArray(line.dir) || !Array.isArray(line.centre)) {
+        return null;
+    }
+    const base = reach > 0 ? reach : (line.crust > 0 ? line.crust : 0);
+    if (!(base > 0)) { return null; }
+    const len = SUN_LINE_PAST * base;
+    const c = line.centre, d = line.dir;
+    const tip = [c[0] + d[0] * len, c[1] + d[1] * len, c[2] + d[2] * len];
+    const out = { indices: idx, x: [], y: [], z: [], len: len };
+    idx.forEach(function (i) {
+        const lines = /lines/.test(traces[i].mode || "");
+        out.x.push(lines ? [c[0], tip[0]] : [tip[0]]);
+        out.y.push(lines ? [c[1], tip[1]] : [tip[1]]);
+        out.z.push(lines ? [c[2], tip[2]] : [tip[2]]);
+    });
+    return out;
+}
+
+// After a tick, an untick or Reset: fit the line to what is drawn now.
+// Sends nothing when the length has not changed. A text box open on the
+// line's cross moves with it. Never called from a Plotly event.
+function sunLineFit() {
+    if (!sunLineTraces.length || !sunPlotDiv || !window.Plotly) {
+        return Promise.resolve();
+    }
+    const data = sunPlotDiv.data;
+    const p = sunLinePlan(data, function (i) {
+        const g = sunTraceGroup[i];
+        if (typeof g === "number" && sunGroups[g]) { return !!sunGroups[g].shown; }
+        return data[i].visible !== SUN_HIDDEN && data[i].visible !== false;
+    }, sunExtents);
+    if (!p || p.len === sunLineLen) { return Promise.resolve(); }
+    sunLineLen = p.len;
+    p.indices.forEach(function (ti, j) {
+        sunExtents[ti] = sunTraceExtentAu({ x: p.x[j], y: p.y[j], z: p.z[j] });
+    });
+    const boxOnLine = sunLabelGroup >= 0 && sunGroups[sunLabelGroup] &&
+        sunGroups[sunLabelGroup].indices.some(function (ti) {
+            return p.indices.indexOf(ti) >= 0;
+        });
+    return Plotly.restyle(sunPlotDiv, { x: p.x, y: p.y, z: p.z }, p.indices)
+        .then(function () {
+            if (!boxOnLine) { return null; }
+            sunLabelApplied = "";
+            return sunLabelRefresh();
+        });
+}
+
 function sunOutermostShown() {
     let best = -1, bestR = -1;
     for (let i = 0; i < sunGroups.length; i++) {
         if (!sunGroups[i].shown) { continue; }
-        const r = sunGroupRadius(i);
+        // L-515: the Sun line reaches past whatever is drawn; never the outermost.
+        if (sunGroups[i].indices.some(function (ti) {
+            return sunLineTraces.indexOf(ti) >= 0;
+        })) { continue; }
+        // L-515 part 3: compared as framed, each by its own margin.
+        const r = sunGroupRadius(i) * sunGroupMargin(i);
         if (r > bestR) { best = i; bestR = r; }
     }
     return best;
@@ -4372,18 +4555,19 @@ async function initSunExhibit() {
         GalleryFeatures.setDrawings(drawings);
 
         // L-515 step 2a (one drawer): the tree, read from the served
-        // config. Which bodies are centres (a row offers Centre on or Not
-        // built yet), and, in the root, what the visitor had ticked before
-        // centring on a body in this tab, put back once (Tony's ruling 10).
+        // config: in a centre, its children (the drawer's order); in the
+        // root, what the visitor had ticked before centring on a body in
+        // this tab, put back once (Tony's ruling 10).
         const SSD0 = window.SolarSystemDrawer;
         const cfgTree = JSON.parse(cfg);
-        payload.centres = SSD0.centresOf(cfgTree);
-        if (EXHIBIT === SSD0.ROOT_EXHIBIT) {
+        // L-515 part 3: not on ?exhibit=sun, which asks for the Sun's
+        // opening; what was kept stays kept for the root's own address.
+        if (EXHIBIT === SSD0.ROOT_EXHIBIT && EXHIBIT_ASKED === EXHIBIT) {
             payload.restoreText = treeTickMemoryTake();
         }
 
         // Per room: how the payload becomes traces (the EXHIBITS table).
-        const built = EX.compose(payload);
+        const built = EX.compose(payload, cfg);
         // A room may put a line under its title (the Solar System room's
         // date). The Sun and Earth rooms return none, so theirs is as it was.
         sunSceneSubtitle = built.subtitle || null;
@@ -4424,10 +4608,29 @@ async function initSunExhibit() {
         // Measure every trace once. Index i belongs to trace i, and
         // the legend never reorders traces, so the two stay aligned.
         const extents = traces.map(sunTraceExtentAu);
+        // L-515: the Earth room's Sun line reaches past the farthest shell
+        // or orbit the arrival left drawn (sunLinePlan), and sets no frame.
+        sunLineTraces = [];
+        sunLineLen = null;
+        const linePlan = sunLinePlan(traces, function (i) {
+            const v = traces[i].visible;
+            return v !== "legendonly" && v !== false;
+        }, extents);
+        if (linePlan) {
+            sunLineTraces = linePlan.indices.slice();
+            sunLineLen = linePlan.len;
+            linePlan.indices.forEach(function (ti, j) {
+                traces[ti].x = linePlan.x[j];
+                traces[ti].y = linePlan.y[j];
+                traces[ti].z = linePlan.z[j];
+                extents[ti] = sunTraceExtentAu(traces[ti]);
+            });
+        }
         let arrivalR = 0;
         for (let i = 0; i < traces.length; i++) {
             const vis = traces[i].visible;
             if (vis === "legendonly" || vis === false) { continue; }
+            if (sunLineOf(traces[i])) { continue; }   // L-515: sets no frame
             if (extents[i] > arrivalR) { arrivalR = extents[i]; }
         }
         if (EX.frameOnPosition) {
@@ -4435,13 +4638,19 @@ async function initSunExhibit() {
             // tick: the farthest body drawn, by its distance now, times
             // the room's margin (Tony, 2026-10-02). Only the Sun drawn:
             // the room's own half-range.
+            // L-515 part 3: a Sun shell drawn on opening (?exhibit=sun)
+            // is framed by its whole shape at 10 percent, as the Sun room
+            // framed it (sunGroupMargin), so that address opens at the
+            // Sun room's opening frame.
             let far = 0;
             for (let i = 0; i < traces.length; i++) {
                 const vis = traces[i].visible;
                 if (vis === "legendonly" || vis === false) { continue; }
-                far = Math.max(far, sunPositionRadius(traces, [i]));
+                far = Math.max(far, sunTraceIsShell(traces[i])
+                    ? extents[i] * SHELL_FRAME_MARGIN
+                    : sunPositionRadius(traces, [i]) * sunFrameMargin());
             }
-            arrivalR = far > 0 ? far * sunFrameMargin() : EX.halfRangeAu;
+            arrivalR = far > 0 ? far : EX.halfRangeAu;
         } else if (arrival.applied && arrivalR > 0) {
             // Fit what is drawn. A served min_half_range_au, if
             // there is one, is the only floor.
@@ -4641,6 +4850,9 @@ let sunPlotDiv = null;
 // focus. -1 means nothing is focused.
 let sunFocusIdx = -1;
 let sunExtents = [];     // trace index -> extent in AU, measured once
+                         // (the Sun line's again whenever sunLineFit moves it)
+let sunLineTraces = [];  // L-515: trace indices of the Earth room's Sun line
+let sunLineLen = null;   // its length now, in AU, so an unchanged fit sends nothing
 let sunTraceGroup = {};  // trace index -> group index, for marker clicks
 
 // "legendonly", never false. sunRefitFrame tests for exactly that string
@@ -5768,8 +5980,9 @@ function sunSwatchColor(trace) {
 // file; this part only touches the page and Plotly.
 //   - The Sun's row cannot be ticked: it is the scene's fixed centre.
 //   - "Enter the ... room" sits on the row of every body with a room in
-//     EXHIBITS, always (L-429, 2026-10-10); a row with none opens to
-//     "No room or cards yet".
+//     EXHIBITS, always (L-429, 2026-10-10); "Centre on <name>" since L-515.
+//     A row with none shows nothing there since Tony's phone look of
+//     2026-11-07 (until then "No room or cards yet" or "Not built yet").
 //   - The groups fold open; a group row ticks nothing (L-477).
 //   - Reset puts back what the room opened on; an open group's Reset
 //     unticks its bodies (L-477, Tony, 2026-10-24). No See more.
@@ -5796,7 +6009,6 @@ function ssDrawerState(served) {
         // served opening's.
         order: Array.isArray(served.order) ? served.order.slice()
             : SSD.openingOrder(rows, served.drawn, served.highlight),
-        centres: served.centres || [],         // L-515: the tree's centres
         companions: served.companions || {},   // L-443: {spacecraft: [rows]}
         names: served.names || {},             // L-493: {key: [names]}
         query: "",                             // L-493: the search box
@@ -5921,46 +6133,26 @@ function ssWireRow(row, grp, k, list) {
         if (!SSD.tickable(grp.key)) { sunLabelShow(k); }
     };
     list.appendChild(row);
-    // The opened row: hidden until this row is opened. Upright and on the
-    // desktop it is a line under the row; with the phone sideways the
-    // same words sit on the row's own line, before GO (Tony, 2026-10-03).
-    // A body with a room keeps its button on the row's line always, on
-    // every screen (L-429, 2026-10-10).
-    const panel = document.createElement("div");
-    panel.className = "sun-row-open";
-    panel.setAttribute("data-open-for", grp.key);
-    panel.hidden = true;
+    // A body whose centre is built shows "Centre on <name>" on its own
+    // row, after Go To, always and on every screen (L-429, 2026-10-10;
+    // L-515). Any other body shows nothing there: L-515, Tony's phone look
+    // of 2026-11-07, "Remove 'Not built yet' and 'No room or cards yet.' A
+    // body with no centre shows neither label. It simply has no 'Centre
+    // on' button." Until then such a row opened to one of the two, in a
+    // line under it (.sun-row-open), which is no longer made.
+    const room = SSD.roomFor(served, Object.keys(EXHIBITS));
+    if (!room) { return; }
     const inline = document.createElement("span");
     inline.className = "open-inline";
     inline.setAttribute("data-open-for", grp.key);
-    inline.hidden = true;
-    const room = SSD.roomFor(served, Object.keys(EXHIBITS));
-    // L-515 (Tony's ruling 10): a body that is a centre in the tree with
-    // none built reads "Not built yet" where Centre on would be, on its
-    // row always, as the button is.
-    const offer = SSD.centreOffer(served, Object.keys(EXHIBITS), ssDrawer.centres);
     // L-429: ssRender reads this to keep a room's button on its row.
-    panel.setAttribute("data-room", offer ? "yes" : "no");
-    inline.setAttribute("data-room", offer ? "yes" : "no");
-    [panel, inline].forEach(function (holder) {
-        if (room) {
-            const a = document.createElement("a");
-            a.className = "enter";
-            a.href = "interactive.html?exhibit=" + encodeURIComponent(room);
-            a.textContent = SSD.WORDS.enter(grp.name);
-            holder.appendChild(a);
-        } else if (offer === "notBuilt") {
-            const s = document.createElement("span");
-            s.className = "not-built";
-            s.textContent = SSD.WORDS.notBuilt;
-            holder.appendChild(s);
-        } else {
-            holder.textContent = SSD.WORDS.noRoom;
-        }
-    });
-    // After Go To since L-429 (2026-10-10): name, Go To, then the room.
+    inline.setAttribute("data-room", "yes");
+    const a = document.createElement("a");
+    a.className = "enter";
+    a.href = "interactive.html?exhibit=" + encodeURIComponent(room);
+    a.textContent = SSD.WORDS.enter(grp.name);
+    inline.appendChild(a);
     row.appendChild(inline);
-    list.appendChild(panel);
 }
 
 // A phone held sideways: wider than tall, and short. The drawer is at most
@@ -6296,7 +6488,10 @@ function ssGroupHead(list, served) {
 function ssReset() {
     const gd = navPlotDiv();
     if (!gd || !window.Plotly) { return Promise.resolve(); }
-    return ssHome(gd, true);
+    // L-515 part 3: the text box closes too, as the Sun room's Reset
+    // closed it (sunReset), now that ?exhibit=sun opens this room. A fresh
+    // start opens on no box.
+    return sunLabelClose().then(function () { return ssHome(gd, true); });
 }
 
 // Home, as Tony settled it on 2026-10-03 (option 2): the opening camera
@@ -6320,7 +6515,7 @@ function ssHome(gd, reset) {
         ssDrawer.opening.drawn.forEach(function (s) { want[s] = true; });
         sunGroups.forEach(function (g) {
             const row = ssDrawer.byKey[g.key];
-            if (row && SSD.tickable(g.key)) { g.shown = !!want[row.slug]; }
+            if (row && SSD.tickable(g.key)) { g.shown = SSD.inOpening(row, want); }
         });
         ssDrawer.order = SSD.openingOrder(ssDrawer.rows,
             ssDrawer.opening.drawn, ssDrawer.opening.highlight);
@@ -6328,8 +6523,9 @@ function ssHome(gd, reset) {
         first = sunApplyVisibility(true, sunOutermostShown());
         r = navArrivalR || EX.halfRangeAu;
     } else {
-        const rad = sunGroupRadius(sunOutermostShown());
-        r = rad > 0 ? rad * sunFrameMargin() : EX.halfRangeAu;
+        const far = sunOutermostShown();
+        const rad = sunGroupRadius(far);
+        r = rad > 0 ? rad * sunGroupMargin(far) : EX.halfRangeAu;
     }
     sunFocusIdx = (key !== null) ? ssIndex(key) : sunOutermostShown();
     ssDrawer.open = null;
@@ -6826,6 +7022,7 @@ function sunApplyVisibility(keepFocus, frameIdx, whole) {
     if (!shown) { return Promise.resolve(); }
     const focusAt = (typeof frameIdx === "number") ? frameIdx : sunFocusIdx;
     return Plotly.restyle(sunPlotDiv, { visible: shown.vis }, shown.idx)
+        .then(sunLineFit)   // L-515: the Sun line follows the ticks
         .then(function () { return sunFrameOn(focusAt, whole); })
         .then(sunLabelIfHidden);   // L-318: an unticked shell loses its label
 }
@@ -6872,6 +7069,7 @@ function sunReset() {
             if (!shown || !sunPlotDiv || !window.Plotly) { return null; }
             return Plotly.restyle(sunPlotDiv, { visible: shown.vis }, shown.idx);
         })
+        .then(sunLineFit)   // L-515: the Sun line follows what Reset drew
         .then(navHome);
 }
 

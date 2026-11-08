@@ -112,6 +112,11 @@
  * 2a, one drawer: the assembler's centre marker is kept, first, as Earth's
  * fixed row, its box and panel the orrery's name, description and link
  * from payload.earth (earthBox); until then it was dropped.)
+ * Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515, Tony's
+ * phone look at part 2: the Sun line and its cross carry meta.sun_line --
+ * the direction, the centre and the crust -- so the page can draw the
+ * line about 10 percent past the farthest shell or orbit drawn, growing
+ * and shrinking with the ticks. Its hover says so.)
  */
 (function (global) {
   "use strict";
@@ -485,7 +490,15 @@
         y: [c[1], c[1] + sunDir[1] * len],
         z: [c[2], c[2] + sunDir[2] * len]
       };
-      traces.push(lineTrace(sunLine, gSun, SUN_COLOR, 3, gSun));
+      // L-515 (Tony's phone look of 2026-11-07): the page sets the line's
+      // length, about 10 percent past the farthest shell or orbit drawn,
+      // and again whenever a row is ticked or unticked (sunLineFit in
+      // interactive.html). The line and its cross carry what it needs:
+      // the unit direction, the centre and the crust, the length to use
+      // when nothing else is drawn. The length here is only the first.
+      var sunLineMeta = { dir: sunDir.slice(), centre: c.slice(), crust: rCrust };
+      traces.push(lineTrace(sunLine, gSun, SUN_COLOR, 3, gSun,
+                            { meta: { sun_line: sunLineMeta } }));
       // The subsolar point: where the line pierces the crust. A dot in
       // the Sun group, hover skipped; the Sun hover names it.
       var sub = [c[0] + sunDir[0] * rCrust * 1.003, c[1] + sunDir[1] * rCrust * 1.003, c[2] + sunDir[2] * rCrust * 1.003];
@@ -514,9 +527,10 @@
         (isNum(opts.sun.distAu)
           ? "Earth-Sun distance: " + kmAndAu(K, opts.sun.distAu) + "<br>" : "") +
         orbitLines +
-        "Line drawn to the edge of the arrival frame; the Sun is far beyond it." +
+        "Line drawn a little past the farthest shell or orbit shown; the Sun is far beyond it." +
         tail();
       traces.push(infoMarker(tipS, SUN_COLOR, hSun, gSun, { meta: {
+        sun_line: sunLineMeta,
         info_url: guideLink("subsolar"),
         source: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons (" + HORIZONS_URL + ")" +
           (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +

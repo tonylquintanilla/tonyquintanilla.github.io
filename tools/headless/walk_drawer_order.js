@@ -5,7 +5,9 @@
 //
 // Claude-only tooling (L-405); needs jsdom (see page_harness.js). From the
 // gallery root, with payloads from run_room_driver.py:
-//   node tools/headless/walk_drawer_order.js /tmp/payload_sun.json /tmp/payload_earth.json
+//   node tools/headless/walk_drawer_order.js /tmp/payload_solar_system.json /tmp/payload_earth.json
+// (since L-515 part 3 the first is SOLAR_SYSTEM_DRIVER's payload: ?exhibit=sun
+// opens the Solar System room)
 //
 // It then plants a fault -- the Sun's Roche limit drawn at 25 solar radii
 // in the payload the page reads, the rows the check reads left as served --
@@ -16,6 +18,13 @@
 // Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
 // 2a: the order wanted is the centre's row first and its children after
 // its shells, as the check reads the config.)
+// Updated November 7, 2026, part 3 (L-515, Tony's ruling 7): the Sun room
+// is gone; "sun" boots ?exhibit=sun, the Solar System room on the Sun's
+// opening, with the Solar System room's payload, and the walk holds the
+// Sun's shell rows there to the Sun's order.
+// Updated November 7, 2026, later, with Anthropic's Claude Opus 5.5
+// (L-515, Tony's phone look: children by distance; the order is worked out
+// on the lines as served, before the page cuts far lines to the view.)
 "use strict";
 const fs = require("fs"), path = require("path"), os = require("os");
 const ROOT = path.join(__dirname, "..", "..");
@@ -25,12 +34,33 @@ const S = require(path.join(ROOT, "documentation", "smoke_drawer_order.js"));
 async function walk(room, payloadPath, rowsFeatures) {
   const w = await H.boot(ROOT, room, payloadPath);
   if (H.errors.length) { return ["the page reported errors: " + H.errors.join("; ")]; }
+  // L-515 part 3: ?exhibit=sun opens the Solar System room, where the
+  // Sun's shells are rows among the bodies. Their order among themselves
+  // is the Sun's (placeShells keeps it), so the walk reads the shell rows
+  // only, and the order wanted for the Sun's shell traces only, with no
+  // centre row.
+  const shellsOnly = room === "sun";
   const dom = [...w.document.querySelectorAll("#sun-drawer-list .sun-row[data-k]")]
+    .filter(r => !shellsOnly || w.eval("sunGroupIsShell(" + Number(r.dataset.k) + ")"))
     .map(r => r.querySelector(".rname").textContent);
-  const traces = JSON.parse(JSON.stringify(w.eval("sunPlotDiv.data")));
+  let traces = JSON.parse(JSON.stringify(w.eval("sunPlotDiv.data")));
+  // L-515, Tony's phone look of 2026-11-07: the page plans the order on
+  // the traces as composed, before a far line is cut to the view
+  // (sunFarLinesOnto, L-463). The Moon is now placed by where its orbit
+  // comes nearest, and its orbit is such a line, so the walk puts each cut
+  // line back as served (sunFarServed) before working out the order.
+  const far = JSON.parse(JSON.stringify(w.eval("sunFarServed || {}")));
+  Object.keys(far).forEach(i => {
+    traces[i].x = far[i].x; traces[i].y = far[i].y; traces[i].z = far[i].z;
+  });
   // L-515 step 2a: the centre first and its children after its shells,
   // by the check's own reading of the config.
-  const want = S.expected(S.loadOrder(S.SRC), traces, rowsFeatures, S.treeOpts(room)).map(r => r.name);
+  if (shellsOnly) {
+    traces = traces.filter(t => t && t.meta && (typeof t.meta.shell_key === "string" ||
+                                                t.meta.frame_element === true));
+  }
+  const want = S.expected(S.loadOrder(S.SRC), traces, rowsFeatures,
+                          shellsOnly ? null : S.treeOpts(room)).map(r => r.name);
   const bad = [];
   for (let i = 0; i < Math.max(dom.length, want.length); i++) {
     if (dom[i] !== want[i]) {
@@ -46,7 +76,7 @@ async function walk(room, payloadPath, rowsFeatures) {
 (async function () {
   const [sunPay, earthPay] = process.argv.slice(2);
   if (!sunPay || !earthPay) {
-    console.log("usage: walk_drawer_order.js <payload_sun.json> <payload_earth.json>");
+    console.log("usage: walk_drawer_order.js <payload_solar_system.json> <payload_earth.json>");
     process.exit(2);
   }
   const failures = [];

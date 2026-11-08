@@ -88,6 +88,9 @@
 // first met when the scene was re-recorded, is the first).
 // Updated October 26, 2026 with Anthropic's Claude Opus 5.5 (L-494: the
 // pointer line is served empty, and the run says none is served).
+// Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515, Tony's
+// phone look: the Sun line's length sentence on ALLOWED follows the line,
+// which now reaches a little past the farthest shell or orbit shown.)
 
 "use strict";
 
@@ -125,7 +128,9 @@ const ALLOWED = [
    "the picture: the Sun line's date"],
   ["Earth-Sun distance: # km (# AU)",
    "the scene: the page's own propagated distance"],
-  ["Line drawn to the edge of the arrival frame; the Sun is far beyond it.",
+  // L-515, Tony's phone look of 2026-11-07: the line now reaches about 10
+  // percent past the farthest shell or orbit drawn, so its sentence says so.
+  ["Line drawn a little past the farthest shell or orbit shown; the Sun is far beyond it.",
    "the picture: the Sun line's drawn length"],
   ["The brighter arc is the part of the Moon's orbit where this page's propagation is trusted to within # deg: # days either side of the elements' epoch.",
    "the page's own account of its data: the Moon arc's trust window"],

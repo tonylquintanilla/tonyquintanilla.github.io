@@ -51,8 +51,11 @@
 //   - A row that is not a shell -- the axis, the Sun direction, the
 //     terminator, a frame shape -- keeps its place in the list, and the
 //     shells fill the other places in order. Since L-515 step 2a two do
-//     not: the centre's own row goes first, and its children (the Moon)
-//     go after the last shell (placeCentreAndChildren, below).
+//     not: the centre's own row goes first (placeCentre, below), and its
+//     children (the Moon) are placed by distance among the shells, where
+//     the child's orbit as drawn comes nearest the centre (Tony's phone
+//     look of 2026-11-07, "moons included"; until then they went after
+//     the last shell).
 //   - A shell whose distance cannot be read keeps its place too, and is
 //     reported by name; it is never guessed.
 //
@@ -72,6 +75,13 @@
 // (L-515 step 2a, one drawer: a centre's own row first and its children
 // after its shells, placeCentreAndChildren. The shells' order is
 // unchanged.)
+//
+// Module updated: November 7, 2026, later, with Anthropic's Claude Opus
+// 5.5 (L-515, Tony's phone look at part 2: a centre's children are placed
+// by distance among its shells, where each one's orbit as drawn comes
+// nearest the centre; placeCentreAndChildren became placeCentre. Earth's
+// Moon moves from after the Hill sphere to between the magnetotail and
+// the Hill sphere.)
 //
 // Role: renderer
 // Domain: gallery
@@ -205,34 +215,21 @@
     return groups;
   }
 
-  // L-515 step 2a (one nested tree; Tony's ruling 2 of 2026-11-07, for
-  // Mars: "Mars, fixed; its shells when built; Phobos; Deimos"). In a
-  // centre's drawer the centre's own row comes first, its shells next in
-  // the order above, then its children -- the bodies fetched around it,
-  // the Moon in Earth's -- in the order opts.children gives, right after
-  // the last shell; any other row keeps its place among them. A child is
-  // not a shell and is not placed by distance: the tree puts it under its
-  // centre, after the centre's own features. opts.centreKey is the
-  // centre's row (the assembler's centre marker, "center"); either may be
-  // absent, and then nothing moves.
-  function placeCentreAndChildren(ordered, opts) {
+  // L-515 step 2a (one nested tree; Tony's ruling 2 of 2026-11-07). In a
+  // centre's drawer the centre's own row comes first; opts.centreKey names
+  // it (the assembler's centre marker, "center"), and with none nothing
+  // moves. Its CHILDREN -- the bodies fetched around it, opts.children, the
+  // Moon in Earth's -- are placed in plan() by distance, among the shells.
+  // Until Tony's phone look of 2026-11-07 they went after the last shell
+  // (placeCentreAndChildren, "shells, then moons"); his words: "Order
+  // everything after the fixed centre row by distance, moons included."
+  function placeCentre(ordered, opts) {
     var centreKey = typeof opts.centreKey === "string" ? opts.centreKey : null;
-    var children = Array.isArray(opts.children) ? opts.children : [];
     var out = ordered.slice();
     var c = -1;
     for (var i = 0; i < out.length; i++) { if (out[i].key === centreKey) { c = i; } }
     if (c > 0) { out.unshift(out.splice(c, 1)[0]); }
-    var kids = [];
-    children.forEach(function (key) {
-      for (var j = 0; j < out.length; j++) {
-        if (out[j].key === key) { kids.push(out.splice(j, 1)[0]); return; }
-      }
-    });
-    if (!kids.length) { return out; }
-    var at = (out.length && out[0].key === centreKey) ? 1 : 0;
-    for (var k = 0; k < out.length; k++) { if (!out[k].keeps_place) { at = k + 1; } }
-    kids.forEach(function (row) { row.child = true; });
-    return out.slice(0, at).concat(kids, out.slice(at));
+    return out;
   }
 
   // The plan for one room. traces: as the room composed them, before any
@@ -245,6 +242,7 @@
   //   warnings -- by name, a shell whose distance could not be read.
   function plan(traces, features, kmPerAu, opts) {
     var centre = (opts && Array.isArray(opts.centre)) ? opts.centre : [0, 0, 0];
+    var children = (opts && Array.isArray(opts.children)) ? opts.children : [];
     var warnings = [];
     var groups = groupsOf(traces || []);
     var rows = [];
@@ -254,6 +252,24 @@
                   from: null, value: null, unit: null, au: null,
                   at_surface: false, keeps_place: false, where: null };
       rows.push(row);
+      if (children.indexOf(g.key) >= 0) {
+        // L-515, Tony's phone look of 2026-11-07: a child takes its place
+        // by distance, as a shell does, where its orbit as drawn comes
+        // nearest the centre (the Moon's, about 58 Earth radii).
+        row.child = true;
+        row.from = "child";
+        var nearChild = nearestDrawn(traces, g.indices, centre);
+        if (nearChild === null) {
+          row.keeps_place = true;
+          warnings.push("drawer order: " + g.name + " drew no points to measure, " +
+                        "so it keeps its place");
+          continue;
+        }
+        row.value = nearChild;
+        row.unit = "au";
+        row.au = nearChild;
+        continue;
+      }
       if (!g.shell) {
         row.from = "not a shell";
         row.keeps_place = true;
@@ -314,7 +330,7 @@
     for (var i = 0; i < rows.length; i++) {
       ordered.push(rows[i].keeps_place ? rows[i] : shells[s++]);
     }
-    ordered = placeCentreAndChildren(ordered, opts || {});
+    ordered = placeCentre(ordered, opts || {});
     return {
       order: ordered.map(function (r) { return r.key; }),
       rows: ordered,

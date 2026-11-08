@@ -333,9 +333,16 @@ const SOFT_BR = "<br soft>";
 // every other hover is byte for byte. The 0f99f2b5 one is left in place,
 // unreferenced.
 // Module updated: November 7, 2026 with Anthropic's Claude Opus 5.5.
-const FIXTURE_AT = "9c6093af";
+// L-515, Tony's phone look at part 2, November 7, 2026: re-recorded as
+// fixture_hovers_L515b_on_49d1bae1.json. One hover moved, on purpose:
+// "scene/Earth: Sun Direction", whose length sentence now reads "Line
+// drawn a little past the farthest shell or orbit shown; the Sun is far
+// beyond it." The old fixture failed on exactly that one, by name, before
+// the re-record; every other hover is byte for byte. The 9c6093af one is
+// left in place, unreferenced.
+const FIXTURE_AT = "49d1bae1";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L515_on_9c6093af.json");
+                          "fixture_hovers_L515b_on_49d1bae1.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

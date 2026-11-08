@@ -42,6 +42,10 @@ Module updated: October 22, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 stage 10): the Solar System room is the page's default now, and
 live_scene_urls() lists the Explorer at the address interactive.html
 names in EXPLORER_EXHIBIT.
+Module updated: November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515
+part 3): live_scene_urls() also reads the page's EXHIBIT_ADDRESSES, so
+interactive.html?exhibit=sun, which now opens the Solar System room on the
+Sun's shells and is no row in EXHIBITS, is still offered as a scene.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -257,6 +261,14 @@ def live_scene_urls(repo_root):
         # the unquoted-only pattern missed that room silently.
         keys.update(re.findall(r'^    ["\']?([a-z0-9_-]+)["\']?:\s*\{',
                                table.group(1), re.M))
+    # L-515 part 3 (2026-11-07): an address that opens a room on another
+    # body's opening (?exhibit=sun opens the Solar System room on the Sun's
+    # shells) is in the page's EXHIBIT_ADDRESSES table, not in EXHIBITS;
+    # it is still a scene a card may open.
+    addr = re.search(r'const EXHIBIT_ADDRESSES\s*=\s*\{(.*?)\};', src, re.S)
+    if addr:
+        keys.update(re.findall(r'["\']?([a-z0-9_-]+)["\']?\s*:\s*["\']',
+                               addr.group(1)))
     for key in sorted(keys):
         if m and key == m.group(1):
             continue

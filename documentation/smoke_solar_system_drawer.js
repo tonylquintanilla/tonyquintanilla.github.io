@@ -102,6 +102,17 @@
 //      centre's fixed row first, groups, bodies or shells by the centre's
 //      kind; Centre on and Not built yet read from the tree; a centre's
 //      children; the root's ticks kept and put back.
+// Updated November 7, 2026, later, with Anthropic's Claude Opus 5.5 (L-515,
+// Tony's phone look at part 2: Not built yet and No room or cards yet are
+// gone. Section 10 and the words now hold that neither word is served and
+// the page writes neither; Centre on only where a centre is built. The
+// break that offered Not built yet everywhere became one that puts both
+// words back.) Updated the same evening for L-515 part 3 (Tony's ruling
+// 7): section 11, the Sun's shells placed among the root's rows by
+// distance, a served {shell} row, an opening naming a shell by its key,
+// with three breaks; and the page's wiring for the shells, ?exhibit=sun
+// and the frame.
+//  11. (L-515 part 3) The Sun's shells in the root.
 
 "use strict";
 const fs = require("fs");
@@ -134,8 +145,9 @@ const DRAWN = [
 // 10. L-515 step 2a (one nested tree; Tony's rulings 2 and 10 of
 // 2026-11-07): ONE drawer for every centre. Its plan puts the centre's
 // fixed row first and lists groups, bodies or shells by the centre's kind;
-// a row offers Centre on where a centre is built and Not built yet where a
-// body is a centre in the tree with none built, both read from the config;
+// a row offers Centre on where a centre is built, and since Tony's phone
+// look of 2026-11-07 nothing else (Not built yet is gone); which bodies
+// are centres is still read from the config;
 // a centre's children are the objects fetched around it; and the root's
 // ticks are kept and put back, dropping any key that is no row now.
 const TREE_CFG = { objects: [
@@ -149,6 +161,47 @@ const TREE_CFG = { objects: [
   { slug: "pluto", center_slug: "pluto_barycenter" },
   { slug: "charon", center_slug: "pluto_barycenter" }
 ] };
+// 11. L-515 part 3 (Tony's ruling 7 of 2026-11-07): the Sun's shells are
+// rows in the root, placed among the bodies by distance -- right after the
+// last top-level row nearer than where each begins, a group's distance its
+// nearest body's semi-major axis, a row with none passed over, a shell with
+// no distance carried at the one before it -- in the Sun's order among
+// themselves, never inside a group; a served {shell} row is read back; and
+// an opening names a shell by its key.
+const SHELL_ROOT = [
+  { slug: "sun" }, { group: "far", label: "Long comets" }, { slug: "hb", "in": "far" },
+  { slug: "mercury" }, { group: "sc", label: "Spacecraft" }, { slug: "juno", "in": "sc" },
+  { slug: "pluto" }, { group: "tno", label: "TNOs" }, { slug: "eris", "in": "tno" },
+  { slug: "sedna", "in": "tno" }
+];
+const SHELL_A = { hb: 186, mercury: 0.39, pluto: 39.5, eris: 67.9, sedna: 539 };
+const SHELLS = [
+  { key: "Sun: Rotation Axis", au: null }, { key: "Sun: Core", au: 0.001 },
+  { key: "Sun: Alfven Surface", au: 0.09 }, { key: "Sun: Heliopause", au: 121 },
+  { key: "Sun: Galactic Plane", au: null }, { key: "Sun: Gravity", au: 134000 }
+];
+function shellCases(SSD) {
+  const fails = [];
+  const want = function (cond, what) { if (!cond) { fails.push(what); } };
+  const placed = SSD.placeShells(SSD.rowsFromServed(SHELL_ROOT), SHELLS, SHELL_A, {});
+  const keys = placed.map(function (r) { return r.key; }).join();
+  want(keys === "center,Sun: Rotation Axis,Sun: Core,Sun: Alfven Surface,group:far,hb," +
+       "mercury,group:sc,juno,pluto,group:tno,eris,sedna,Sun: Heliopause," +
+       "Sun: Galactic Plane,Sun: Gravity",
+       "the Sun's shells are not placed among the root's rows by distance: " + keys);
+  want(placed.filter(function (r) { return SSD.isShell(r); }).every(function (r) {
+         return r.slug === null && r.group === null && SSD.tickable(r.key); }),
+       "a shell row has a slug, sits in a group, or cannot be ticked");
+  const back = SSD.rowsFromServed([{ slug: "sun" }, { shell: "Sun: Core", label: "Sun: Core" }]);
+  want(back.length === 2 && SSD.isShell(back[1]) && back[1].key === "Sun: Core",
+       "a served {shell} row is not read back as a shell row");
+  want(SSD.inOpening(back[1], { "Sun: Core": true }) &&
+       !SSD.inOpening(back[1], { sun: true }) &&
+       SSD.openingOrder(back, ["Sun: Core"], null).join() === "Sun: Core",
+       "an opening does not name a shell by its key");
+  return fails;
+}
+
 function treeCases(SSD) {
   const fails = [];
   const want = function (cond, what) { if (!cond) { fails.push(what); } };
@@ -156,7 +209,7 @@ function treeCases(SSD) {
     return plan.map(function (e) { return e.kind + ":" + e.key; }).join();
   };
   want(SSD.WORDS.enter("Earth") === "Centre on Earth" &&
-       SSD.WORDS.notBuilt === "Not built yet" &&
+       !Object.prototype.hasOwnProperty.call(SSD.WORDS, "notBuilt") &&
        SSD.WORDS.trailRoot === "Solar system" && SSD.WORDS.trailSep === " > ",
        "the one drawer's words are not Tony's (L-515): " + SSD.WORDS.enter("Earth"));
   // A centre of shells: its fixed row first, whatever order it came in.
@@ -189,13 +242,14 @@ function treeCases(SSD) {
        SSD.childrenOf(TREE_CFG, "mars").length === 0 &&
        SSD.childrenOf(TREE_CFG, "sun").indexOf("sun") < 0,
        "a centre's children are not the objects fetched around it");
+  // Tony's phone look of 2026-11-07: Centre on where a centre is built,
+  // and nothing else -- no "Not built yet" on a centre in the tree.
   const rooms = ["sun", "earth", "solar-system"];
-  want(SSD.centreOffer({ slug: "earth" }, rooms, centres) === "room" &&
-       SSD.centreOffer({ slug: "jupiter" }, rooms, centres) === "notBuilt" &&
-       SSD.centreOffer({ slug: "pluto_barycenter" }, rooms, centres) === "notBuilt" &&
-       SSD.centreOffer({ slug: "mars" }, rooms, centres) === null &&
-       SSD.centreOffer({ key: "group:x" }, rooms, centres) === null,
-       "Centre on and Not built yet are not offered by the tree");
+  want(SSD.roomFor({ slug: "earth" }, rooms) === "earth" &&
+       SSD.roomFor({ slug: "jupiter" }, rooms) === null &&
+       SSD.roomFor({ slug: "pluto_barycenter" }, rooms) === null &&
+       SSD.roomFor({ slug: "mars" }, rooms) === null,
+       "Centre on is offered where no centre is built, or missed where one is");
   // The root's ticks, kept and put back.
   const rows = SSD.rowsFromServed(ROWS);
   const kept = SSD.tickMemory({ center: true, earth: true, mars: true, mercury: false },
@@ -485,12 +539,14 @@ function cases(SSD) {
        SSD.roomFor(rows[4], ["sun", "earth"]) === null,
        "a room is offered where none exists, or missed where one does");
   // L-515 (Tony's ruling 2): "Enter the <name> room" became "Centre on
-  // <name>"; "No room or cards yet" stays for a body that is no centre.
+  // <name>"; since his phone look of 2026-11-07 a body with no centre
+  // built shows nothing there, so "No room or cards yet" is gone.
   want(SSD.WORDS.enter("Sun") === "Centre on Sun" &&
-       SSD.WORDS.noRoom === "No room or cards yet",
+       !Object.prototype.hasOwnProperty.call(SSD.WORDS, "noRoom"),
        "the visitor's words are not Tony's");
   return fails.concat(groupCases(SSD), outsideCases(SSD), companionCases(SSD),
-                      findCases(SSD), drawingCases(SSD), treeCases(SSD));
+                      findCases(SSD), drawingCases(SSD), treeCases(SSD),
+                      shellCases(SSD));
 }
 
 function broken(changes) {
@@ -576,10 +632,9 @@ const breaks = [
      const fixed = plan.filter(function (e) { return e.kind === "fixed"; });
      return plan.filter(function (e) { return e.kind !== "fixed"; }).concat(fixed);
    } })],
-  ["Not built yet offered on every body with no room (L-515)",
-   broken({ centreOffer: function (row, rooms) {
-     return !row || !row.slug ? null : (REAL.roomFor(row, rooms) ? "room" : "notBuilt");
-   } })],
+  ["Not built yet and No room or cards yet back among the words (L-515)",
+   broken({ WORDS: Object.assign({}, REAL.WORDS,
+     { notBuilt: "Not built yet", noRoom: "No room or cards yet" }) })],
   ["a centre read from its own features alone, not from what is fetched around it (L-515)",
    broken({ centresOf: function (cfg) {
      return ((cfg && cfg.objects) || []).filter(function (o) {
@@ -591,6 +646,27 @@ const breaks = [
      try { const s = JSON.parse(text); return (s && Array.isArray(s.ticked)) ? s : null; }
      catch (e) { return null; }
    } })],
+  ["the Sun's shells placed before the first row farther, not after the last nearer (L-515 part 3)",
+   broken({ placeShells: function (rows, shells, a, labels) {
+     const out = rows.slice();
+     shells.forEach(function (s) {
+       let at = out.length;
+       for (let i = 1; i < out.length; i++) {
+         const d = a[out[i].key];
+         if (typeof d === "number" && d > (s.au || 0)) { at = i; break; }
+       }
+       out.splice(at, 0, { key: s.key, slug: null, group: null, isShell: true });
+     });
+     return out;
+   } })],
+  ["a group row passed over as a place for a shell (L-515 part 3)",
+   broken({ placeShells: function (rows, shells, a, labels) {
+     return REAL.placeShells(rows.filter(function (r) { return !REAL.isGroup(r); }),
+                             shells, a, labels).concat(
+       rows.filter(function (r) { return REAL.isGroup(r); }));
+   } })],
+  ["an opening reading a shell by a slug it does not have (L-515 part 3)",
+   broken({ inOpening: function (row, want) { return !!(row && want && want[row.slug]); } })],
   ["the count line reading only the x axis",
    broken({ outsideCount: function (points, lo, hi) {
      return (points || []).filter(function (p) { return p[0] < lo[0] || p[0] > hi[0]; }).length;
@@ -669,12 +745,12 @@ if (page.indexOf('<script src="gallery/solar_system_drawer.js"></script>') < 0) 
 }
 ["rowsFromServed", "openingOrder", "homeTarget", "orderAdd", "orderRemove",
  "rowVisible", "countLine", "roomFor", "tickable",
- "WORDS.enter", "WORDS.noRoom", "isGroup", "members", "groupCount", "groupArrow",
+ "WORDS.enter", "isGroup", "members", "groupCount", "groupArrow",
  "groupReset", "groupResetOffered", "orderGroups", "WORDS.groupReset",
  "outsideCount", "WORDS.outside", "companions", "searchNames", "searchHits",
  "searchVisible", "searchGroupCount", "searchVia", "WORDS.found",
  // L-515 step 2a: the one drawer.
- "rowPlan", "centreOffer", "tickRestore", "tickMemory", "WORDS.notBuilt",
+ "rowPlan", "tickRestore", "tickMemory",
  "WORDS.trailRoot", "WORDS.trailSep"].forEach(function (fn) {
   if (page.indexOf("SSD." + fn) < 0) {
     failures.push("interactive.html never calls SolarSystemDrawer's " + fn);
@@ -709,7 +785,6 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
   ["drawerBuildRows(list, makeRow);", "the drawer is not built by its one builder (L-515)"],
   ["const plan = SSD.rowPlan(ssDrawer ? ssDrawer.rows : null,", "the one builder does not ask the plan (L-515)"],
   ['else if (entry.kind === "fixed") { drawerWireFixed(', "a centre of shells has no fixed row (L-515)"],
-  ["payload.centres = SSD0.centresOf(cfgTree);", "the page does not read the tree's centres from the config (L-515)"],
   ["payload.restoreText = treeTickMemoryTake();", "the root does not take back its kept ticks (L-515)"],
   ['if (at("a.enter")) { treeTickMemoryKeep(); return; }', "Centre on does not keep the root's ticks (L-515)"],
   ["drawerTrailMount();", "the trail line is never mounted (L-515)"],
@@ -733,6 +808,33 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
  ["ssToggleAll", "All / none still ticks every body in this room"]
 ].forEach(function (c) {
   if (page.indexOf(c[0]) >= 0) { failures.push(c[1] + " (L-477)"); }
+});
+// L-515 part 3 (Tony's ruling 7 of 2026-11-07): the Sun's shells in the
+// root, and ?exhibit=sun opening the root on the Sun's own opening.
+[['const EXHIBIT_ADDRESSES = {\n    sun: "solar-system"\n};', "?exhibit=sun does not open the Solar System room"],
+ ["const shellPlan = DrawerOrder.plan(sunBuilt.traces,", "the root does not order the Sun's shells as the Sun's drawer did"],
+ ["const allRows = SSD.placeShells(", "the root does not place the Sun's shells among its rows"],
+ ["shellOpening = GalleryArrival.applyArrival(sunBuilt.traces, cfgText, openingOf);", "?exhibit=sun does not open on the Sun's arrival block"],
+ ["if (!openingOf) { t.visible = drawn[t.legendgroup] ? true : SUN_HIDDEN; }", "the Sun's shells are not unticked on the root's opening"],
+ ['"features": [_f for _f in result.report["features"]', "the root's driver does not hand over the Sun's features"],
+ ["const r = rad > 0 ? rad * sunGroupMargin(k) :", "a shell in the root is not framed at its own margin"],
+ ["if (EX && EX.frameOnPosition && !whole && !sunGroupIsShell(k)) {", "a shell in the root is framed by a position it does not have"],
+ ["return sunLabelClose().then(function () { return ssHome(gd, true); });", "the root's Reset leaves a text box open"],
+ ["SSD.inOpening(row, want)", "Reset does not put back a shell the opening ticked"]
+].forEach(function (c) {
+  if (page.indexOf(c[0]) < 0) { failures.push(c[1] + " (L-515 part 3)"); }
+});
+if (/\n    sun: \{/.test(page.slice(page.indexOf("const EXHIBITS = {")))) {
+  failures.push("the Sun room's row is still in EXHIBITS (L-515 part 3)");
+}
+// L-515, Tony's phone look of 2026-11-07: "Remove 'Not built yet' and 'No
+// room or cards yet.'" The page writes neither, and asks for no offer.
+[["SSD.WORDS.noRoom", "the page still writes No room or cards yet"],
+ ["SSD.WORDS.notBuilt", "the page still writes Not built yet"],
+ ["SSD.centreOffer", "the page still asks what a row offers besides Centre on"],
+ ["payload.centres", "the page still hands the drawer the tree's centres, which nothing reads"]
+].forEach(function (c) {
+  if (page.indexOf(c[0]) >= 0) { failures.push(c[1] + " (L-515)"); }
 });
 const lobby = fs.readFileSync(path.join(root, "index.html"), "utf8");
 if (lobby.indexOf("if (hash === 'about') {") < 0) {

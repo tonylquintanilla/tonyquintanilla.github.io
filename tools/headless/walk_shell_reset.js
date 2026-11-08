@@ -13,10 +13,14 @@
 // presses it again and requires nothing to change.
 //
 // Claude-only tooling (L-405); needs jsdom (see page_harness.js).
-//   node tools/headless/walk_shell_reset.js . sun /tmp/payload_sun.json
+//   node tools/headless/walk_shell_reset.js . sun /tmp/payload_solar_system.json
 //   node tools/headless/walk_shell_reset.js . earth /tmp/payload_earth.json
 // prints "<room> reset: N checks, all pass", or each failure. Run it once
 // against a copy of the page from before L-482 to see it fail.
+// Since L-515 part 3 (2026-11-07) "sun" is the address ?exhibit=sun, which
+// opens the Solar System room on the Sun's opening, so it takes that
+// room's payload (SOLAR_SYSTEM_DRIVER); its Reset puts back the Sun's
+// opening and closes the text box, as the Sun room's did. Unchanged here.
 //
 // Written October 24, 2026 with Anthropic's Claude Opus 5.5.
 const h = require("./page_harness.js");
