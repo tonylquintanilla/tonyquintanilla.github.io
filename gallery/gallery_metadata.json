@@ -9,7 +9,7 @@
       "shape": "9:16",
       "files": {},
       "live": "interactive.html?exhibit=solar-system",
-      "featured": true,
+      "featured": false,
       "wide": true,
       "kicker": "Start here",
       "picture": "gallery/pictures/solar_system_room.jpg",
@@ -1952,7 +1952,7 @@
       "shape": "9:16",
       "files": {},
       "live": "interactive.html?exhibit=sun",
-      "featured": true,
+      "featured": false,
       "sources": [
         "See details in hovertext."
       ],
@@ -2476,7 +2476,7 @@
       "shape": "9:16",
       "files": {},
       "live": "interactive.html?exhibit=earth",
-      "featured": true,
+      "featured": false,
       "sources": [
         "See references in the hover text."
       ],
@@ -2484,6 +2484,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-11-06 23:04",
+  "last_updated": "2026-11-08 13:05",
   "total_count": 134
 }
