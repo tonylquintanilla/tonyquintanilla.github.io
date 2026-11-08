@@ -25,6 +25,7 @@
       "title": "Comet PanSTARRS at Perigee 4-26-26",
       "description": "Comet PanSTARRS at Perigee 4-26-26",
       "room": "solar_system/comets",
+      "drawer_row": "panstarrs_2025_r3",
       "shape": "16:9",
       "files": {
         "landscape": "panstarrs_perigee_geocentric_gallery.json"
@@ -43,6 +44,7 @@
       "title": "Comet PanSTARRS at Perigee 4-26-26",
       "description": "Comet PanSTARRS at Perigee 4-26-26",
       "room": "solar_system/comets",
+      "drawer_row": "panstarrs_2025_r3",
       "shape": "9:16",
       "files": {
         "portrait": "panstarrs_perigee_geocentric_mobile.json"
@@ -61,6 +63,7 @@
       "title": "Orbital Transformation of Mercury 2-8-2026",
       "description": "Mercury's orbital elements in the Ecliptic Frame",
       "room": "solar_system/orbital_mechanics",
+      "drawer_row": "mercury",
       "shape": "none",
       "files": {
         "landscape": "orbital_transformation_mercury_20260208.json"
@@ -78,6 +81,7 @@
       "title": "Comet PANSTARRS near perihelion 4-19-2026",
       "description": "Comet PANSTARRS near perihelion",
       "room": "solar_system/comets",
+      "drawer_row": "panstarrs_2025_r3",
       "shape": "16:9",
       "files": {
         "landscape": "panstarrs_20260417_gallery.json"
@@ -96,6 +100,7 @@
       "title": "Comet PANSTARRS near perihelion 4-19-2026",
       "description": "Comet PANSTARRS near perihelion",
       "room": "solar_system/comets",
+      "drawer_row": "panstarrs_2025_r3",
       "shape": "9:16",
       "files": {
         "portrait": "panstarrs_20260417_portrait.json"
@@ -114,6 +119,7 @@
       "title": "MAPS Disintegration April 4, 2026",
       "description": "MAPS Disintegration April 4, 2026",
       "room": "solar_system/comets",
+      "drawer_row": "maps",
       "shape": "16:9",
       "files": {
         "landscape": "maps_disintegration_20260403_07_structures_gallery.json"
@@ -132,6 +138,7 @@
       "title": "MAPS Disintegration April 4, 2026",
       "description": "MAPS Disintegration April 4, 2026",
       "room": "solar_system/comets",
+      "drawer_row": "maps",
       "shape": "9:16",
       "files": {
         "portrait": "maps_disintegration_20260403_07_structures_mobile.json"
@@ -150,6 +157,7 @@
       "title": "3I/ATLAS March 2025 to March 2026",
       "description": "3I/ATLAS March 2025 to March 2026",
       "room": "solar_system/comets",
+      "drawer_row": "atlas_3i",
       "shape": "16:9",
       "files": {
         "landscape": "solar_system_20250318_1901.json"
@@ -168,6 +176,7 @@
       "title": "3I/ATLAS March 2025 to March 2026",
       "description": "3I/ATLAS March 2025 to March 2026",
       "room": "solar_system/comets",
+      "drawer_row": "atlas_3i",
       "shape": "9:16",
       "files": {
         "portrait": "3iatlas_20250318_20260318_mobile.json"
@@ -186,6 +195,7 @@
       "title": "Earth Barycenter Shells 20260207 1635",
       "description": "Plot of Earth-Moon system with barycenter. Shows Earth's geological, atmospheric and magnetic structure.",
       "room": "solar_system/earth",
+      "drawer_row": "earth",
       "shape": "none",
       "files": {
         "landscape": "earth_barycenter_shells_20260207_1635.json"
@@ -307,6 +317,7 @@
       "title": "Solar System Explorer",
       "description": "Premade simulation of the solar system.",
       "room": "solar_system",
+      "drawer_row": "sun",
       "shape": "9:16",
       "files": {},
       "live": "interactive.html?exhibit=solar-system-explorer",
@@ -323,6 +334,7 @@
       "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "room": "solar_system/comets",
+      "drawer_row": "atlas_3i",
       "shape": "16:9",
       "files": {
         "landscape": "3iatlas_jupiter_20260316_1222.json"
@@ -341,6 +353,7 @@
       "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "room": "solar_system/comets",
+      "drawer_row": "atlas_3i",
       "shape": "9:16",
       "files": {
         "portrait": "3iatlas_jupiter_20260316_1222_mobile.json"
@@ -359,6 +372,7 @@
       "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
       "description": "Comet Wierzchos, perihelion 1-20-2026.",
       "room": "solar_system/comets",
+      "drawer_row": "wierzchos",
       "shape": "16:9",
       "files": {
         "landscape": "c2024_e1_wierzchos_20260225_0236_landscape.json"
@@ -377,6 +391,7 @@
       "title": "Comet C2024 E1 Wierzchos Perihelion, 1-20-2026",
       "description": "Comet Wierzchos, perihelion 1-20-2026.",
       "room": "solar_system/comets",
+      "drawer_row": "wierzchos",
       "shape": "9:16",
       "files": {
         "portrait": "c2024_e1_wierzchos_20260225_0236_portrait.json"
@@ -395,6 +410,7 @@
       "title": "Near Earth Asteroids 20260207 2114",
       "description": "Plot of near-Earth asteroids between Venus and Mars.",
       "room": "solar_system/earth",
+      "drawer_row": "apollo_amor",
       "shape": "none",
       "files": {
         "landscape": "near_earth_asteroids_20260207_2114.json"
@@ -1580,6 +1596,7 @@
       "title": "Pluto Barycenter System 20260208 1957",
       "description": "Plot of Pluto system centered on the barycenter.",
       "room": "solar_system/pluto",
+      "drawer_row": "pluto_barycenter",
       "shape": "16:9",
       "files": {
         "landscape": "pluto_barycenter_system_20260208_1957.json"
@@ -1597,6 +1614,7 @@
       "title": "Psyche Mission to 16 Psyche 2023 - 2029 static",
       "description": "Psyche Mission to 16 Psyche",
       "room": "solar_system/asteroids",
+      "drawer_row": "psyche_spacecraft",
       "shape": "16:9",
       "files": {
         "landscape": "16_psyche_20231014_0000_gallery.json"
@@ -1615,6 +1633,7 @@
       "title": "Psyche Mission to 16 Psyche 2023 - 2029 static",
       "description": "Psyche Mission to 16 Psyche",
       "room": "solar_system/asteroids",
+      "drawer_row": "psyche_spacecraft",
       "shape": "9:16",
       "files": {
         "portrait": "16_psyche_20231014_0000_mobile.json"
@@ -1633,6 +1652,7 @@
       "title": "Psyche Mission to 16 Psyche 2023 - 2029 animated",
       "description": "Psyche Mission to 16 Psyche",
       "room": "solar_system/asteroids",
+      "drawer_row": "psyche_spacecraft",
       "shape": "16:9",
       "files": {
         "landscape": "16_psyche_20231014_animated_months_gallery.json"
@@ -1651,6 +1671,7 @@
       "title": "Psyche Mission to 16 Psyche 2023 - 2029 animated",
       "description": "Psyche Mission to 16 Psyche",
       "room": "solar_system/asteroids",
+      "drawer_row": "psyche_spacecraft",
       "shape": "9:16",
       "files": {
         "portrait": "16_psyche_20231014_animated_months_mobile.json"
@@ -1669,6 +1690,7 @@
       "title": "Psyche - Mars Gravitational Assist 5-15-26 static",
       "description": "Psyche - Mars Gravitational Assist 5-15-26",
       "room": "solar_system/asteroids",
+      "drawer_row": "psyche_spacecraft",
       "shape": "16:9",
       "files": {
         "landscape": "mars_system_static_psyche_gravitational_assist_gallery.json"
@@ -1687,6 +1709,7 @@
       "title": "Psyche - Mars Gravitational Assist 5-15-26 static",
       "description": "Psyche - Mars Gravitational Assist 5-15-26",
       "room": "solar_system/asteroids",
+      "drawer_row": "psyche_spacecraft",
       "shape": "9:16",
       "files": {
         "portrait": "mars_system_static_psyche_gravitational_assist_mobile.json"
@@ -1705,6 +1728,7 @@
       "title": "Pluto System - Barycenter View on 2026 02 11 00:31",
       "description": "Pluto barycenter system.",
       "room": "solar_system/pluto",
+      "drawer_row": "pluto_barycenter",
       "shape": "9:16",
       "files": {
         "portrait": "pluto_barycenter_social_view_20260211_0031.json"
@@ -1913,6 +1937,7 @@
       "title": "3I/ATLAS Perihelion 10-29-2025",
       "description": "3I/ATLAS Perihelion 10-29-2025",
       "room": "solar_system/comets",
+      "drawer_row": "atlas_3i",
       "shape": "16:9",
       "files": {
         "landscape": "3iatlas_perihelion_20251029.json"
@@ -1931,6 +1956,7 @@
       "title": "3I/ATLAS Perihelion 10-29-2025",
       "description": "3I/ATLAS Perihelion 10-29-2025",
       "room": "solar_system/comets",
+      "drawer_row": "atlas_3i",
       "shape": "9:16",
       "files": {
         "portrait": "3iatlas_perihelion_20251029_mobile.json"
@@ -1964,6 +1990,7 @@
       "title": "Psyche - Phobos Flyby 5-15-26 animated",
       "description": "Psyche - Mars Gravitational Assist 5-15-26",
       "room": "solar_system/asteroids",
+      "drawer_row": "psyche_spacecraft",
       "shape": "16:9",
       "files": {
         "landscape": "mars_system_animation_psyche_phobos_flyby_gallery.json"
@@ -1982,6 +2009,7 @@
       "title": "Psyche - Phobos Flyby 5-15-26 animated",
       "description": "Psyche - Mars Gravitational Assist 5-15-26",
       "room": "solar_system/asteroids",
+      "drawer_row": "psyche_spacecraft",
       "shape": "9:16",
       "files": {
         "portrait": "mars_system_animation_psyche_phobos_flyby_mobile.json"
@@ -2000,6 +2028,7 @@
       "title": "Artemis II Mission April 6, 2026",
       "description": "Artemis II Mission March 6, 2026",
       "room": "solar_system/earth/moon",
+      "drawer_row": "earth",
       "shape": "16:9",
       "files": {
         "landscape": "artemis_ii_20260402-0411_mission_gallery.json"
@@ -2018,6 +2047,7 @@
       "title": "Artemis II Mission April 6, 2026",
       "description": "Artemis II Mission March 6, 2026",
       "room": "solar_system/earth/moon",
+      "drawer_row": "earth",
       "shape": "9:16",
       "files": {
         "portrait": "artemis_ii_20260402-0411_mission_mobile.json"
@@ -2036,6 +2066,7 @@
       "title": "Artemis II - Mission April 2-11, 2026",
       "description": "Artemis II - Mission April 2-11, 2026",
       "room": "solar_system/earth/moon",
+      "drawer_row": "earth",
       "shape": "16:9",
       "files": {
         "landscape": "artemis_ii_20260407_moon_2306_close_encounter2_gallery.json"
@@ -2054,6 +2085,7 @@
       "title": "Artemis II - Mission April 2-11, 2026",
       "description": "Artemis II - Mission April 2-11, 2026",
       "room": "solar_system/earth/moon",
+      "drawer_row": "earth",
       "shape": "9:16",
       "files": {
         "portrait": "artemis_ii_20260407_moon_2306_close_encounter2_mobile.json"
@@ -2072,6 +2104,7 @@
       "title": "Artemis II - Moon Flyby April 6, 2026",
       "description": "Artemis II - Moon Flyby April 6, 2026",
       "room": "solar_system/earth/moon",
+      "drawer_row": "earth",
       "shape": "16:9",
       "files": {
         "landscape": "artemis_ii_20260407_moon_2306_close_encounter_gallery.json"
@@ -2090,6 +2123,7 @@
       "title": "Artemis II - Moon Flyby April 6, 2026",
       "description": "Artemis II - Moon Flyby April 6, 2026",
       "room": "solar_system/earth/moon",
+      "drawer_row": "earth",
       "shape": "9:16",
       "files": {
         "portrait": "artemis_ii_20260407_moon_2306_close_encounter_mobile.json"
@@ -2127,6 +2161,7 @@
       "title": "Comet C/2025 K1 Breakup 10-16-2025",
       "description": "Comet C/2025 K1 Breakup",
       "room": "solar_system/comets",
+      "drawer_row": "c2025_k1",
       "shape": "9:16",
       "files": {
         "portrait": "c2025k1bcd_perihelion_20251008_mobile.json"
@@ -2145,6 +2180,7 @@
       "title": "Comet Halley Perihelion 2-8-1986",
       "description": "Comet Halley Perihelion 2-8-1986",
       "room": "solar_system/comets",
+      "drawer_row": "halley",
       "shape": "16:9",
       "files": {
         "landscape": "halley_perihelion_19860208.json"
@@ -2163,6 +2199,7 @@
       "title": "Comet Halley Perihelion 2-8-1986",
       "description": "Comet Halley Perihelion 2-8-1986",
       "room": "solar_system/comets",
+      "drawer_row": "halley",
       "shape": "9:16",
       "files": {
         "portrait": "halley_perihelion_19860208_mobile.json"
@@ -2181,6 +2218,7 @@
       "title": "Artemis II Moon Flyby April 6, 2026",
       "description": "Artemis II Moon Flyby March 6, 2026",
       "room": "solar_system/earth/moon",
+      "drawer_row": "earth",
       "shape": "16:9",
       "files": {
         "landscape": "artemis_ii_20260402-0411_mission_moon_center2_gallery.json"
@@ -2199,6 +2237,7 @@
       "title": "Artemis II Moon Flyby April 6, 2026",
       "description": "Artemis II Moon Flyby March 6, 2026",
       "room": "solar_system/earth/moon",
+      "drawer_row": "earth",
       "shape": "9:16",
       "files": {
         "portrait": "artemis_ii_20260402-0411_mission_moon_center2_mobile.json"
@@ -2217,6 +2256,7 @@
       "title": "Artemis II - Moon Flyby April 2-11, 2026, animated",
       "description": "Artemis II - Moon Flyby April 2-11, 2026",
       "room": "solar_system/earth/moon",
+      "drawer_row": "earth",
       "shape": "16:9",
       "files": {
         "landscape": "artemis_moon_animation_20260406_gallery.json"
@@ -2235,6 +2275,7 @@
       "title": "Artemis II - Moon Flyby April 2-11, 2026, animated",
       "description": "Artemis II - Moon Flyby April 2-11, 2026",
       "room": "solar_system/earth/moon",
+      "drawer_row": "earth",
       "shape": "9:16",
       "files": {
         "portrait": "artemis_moon_animation_20260406_mobile.json"
@@ -2253,6 +2294,7 @@
       "title": "New Horizons mission 2006 to 2020",
       "description": "New Horizons mission 2006 to 2020",
       "room": "solar_system/space_missions",
+      "drawer_row": "new_horizons",
       "shape": "16:9",
       "files": {
         "landscape": "new_horizons_full_mission_20060120_20200101.json"
@@ -2271,6 +2313,7 @@
       "title": "New Horizons mission 2006 to 2020",
       "description": "New Horizons mission 2006 to 2020",
       "room": "solar_system/space_missions",
+      "drawer_row": "new_horizons",
       "shape": "9:16",
       "files": {
         "portrait": "new_horizons_full_mission_20060120_20200101_mobile.json"
@@ -2289,6 +2332,7 @@
       "title": "New Horizons Jupiter Gravity Assist 2-28-2007",
       "description": "New Horizons Jupiter Gravity Assist 2-28-2007",
       "room": "solar_system/jupiter",
+      "drawer_row": "jupiter",
       "shape": "16:9",
       "files": {
         "landscape": "new_horizons_jupiter__20070220_20070307.json"
@@ -2307,6 +2351,7 @@
       "title": "New Horizons Jupiter Gravity Assist 2-28-2007",
       "description": "New Horizons Jupiter Gravity Assist 2-28-2007",
       "room": "solar_system/jupiter",
+      "drawer_row": "jupiter",
       "shape": "9:16",
       "files": {
         "portrait": "new_horizons_jupiter__20070220_20070307_mobile.json"
@@ -2437,6 +2482,7 @@
       "title": "Apophis Closest Approach, 4-13-2029",
       "description": "Apophis Closest Approach, 4-13-2029",
       "room": "solar_system/earth",
+      "drawer_row": "earth",
       "shape": "16:9",
       "files": {
         "landscape": "earth-apophis_20290401_29.json"
@@ -2455,6 +2501,7 @@
       "title": "Apophis Closest Approach, 4-13-2029",
       "description": "Apophis Closest Approach, 4-13-2029",
       "room": "solar_system/earth",
+      "drawer_row": "earth",
       "shape": "9:16",
       "files": {
         "portrait": "earth-apophis_20290401_29_mobile.json"

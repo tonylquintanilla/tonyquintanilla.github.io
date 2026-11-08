@@ -21,6 +21,9 @@
 // part 4: boot's {query} adds to the address, "&freeze=1" say, and what
 // the page hands Pyodide -- EPOCH_ISO among it -- is kept on
 // window.__pyGlobals for a walk to read.)
+// Updated November 8, 2026 with Anthropic's Claude Opus 5.5 (L-517 part 1:
+// boot's {page} opens a planted copy of interactive.html in place of the
+// real one, and {width} gives the window a phone's width.)
 const fs = require("fs"), path = require("path");
 const { JSDOM, ResourceLoader, VirtualConsole } = require("jsdom");
 
@@ -79,7 +82,9 @@ vc.on("jsdomError", function (e) { errors.push("jsdomError: " + (e.stack || e.me
 vc.on("error", function (e) { errors.push("console.error: " + e); });
 vc.on("warn", function (m) { if (String(m).indexOf(EXHIBIT) === 0) { errors.push("warn: " + m); } });
 
-const html = fs.readFileSync(path.join(ROOT, "interactive.html"), "utf8");
+// L-517: a walk may boot a planted copy of the page ({page}) to show it
+// can fail, and a phone's width ({width}).
+const html = fs.readFileSync((OPTS && OPTS.page) || path.join(ROOT, "interactive.html"), "utf8");
 const dom = new JSDOM(html, {
   url: "https://palomasorrery.com/interactive.html?exhibit=" + EXHIBIT + ((OPTS && OPTS.query) || ""),
   runScripts: "dangerously", resources: new Loader(ROOT), virtualConsole: vc,
@@ -88,6 +93,9 @@ const dom = new JSDOM(html, {
     const payload = fs.readFileSync(PAYLOAD, "utf8");
     // L-515 step 2a: a walk may open the page with sessionStorage already
     // holding what an earlier page in the same tab kept (the root's ticks).
+    if (OPTS && OPTS.width) {
+      Object.defineProperty(win, "innerWidth", { value: OPTS.width, configurable: true });
+    }
     const session = (OPTS && OPTS.session) || {};
     Object.keys(session).forEach(function (k) { win.sessionStorage.setItem(k, session[k]); });
     win.fetch = function (url) {

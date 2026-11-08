@@ -184,6 +184,16 @@
 // opens no room. In an "order": "a" group it stays first, ahead of the
 // bodies sorted by their semi-major axis. Updated October 29, 2026 with
 // Anthropic's Claude Opus 5.5.
+//
+// SAVED PICTURES (L-517 part 1, Tony's rulings 4 and 5 of 2026-11-08).
+// The Solar System pictures sit in folds beside their bodies' rows; which
+// and where is gallery/picture_folds.js's. Find takes their titles
+// (searchHits' fourth argument): a picture whose title holds the letters
+// is found, so a row shown in the search opens its fold with it; and when
+// no body or group matches by its own words, a picture's words alone bring
+// its row into view, with the groups above it open, counted as saved
+// pictures (WORDS.found's third argument). Updated November 8, 2026 with
+// Anthropic's Claude Opus 5.5.
 
 (function (global) {
   "use strict";
@@ -217,7 +227,11 @@
     // L-493: the search box's words (the approved mock-up).
     find: "Find a body",
     clear: "Clear the search",
-    found: function (n, g) {
+    found: function (n, g, p) {
+      // L-517: found by a saved picture's words alone.
+      if (n === 0 && !g && p) {
+        return p === 1 ? "1 saved picture matches" : p + " saved pictures match";
+      }
       const groups = g === 1 ? "1 group" : g + " groups";
       if (g > 0) {
         return n === 0 ? groups + (g === 1 ? " matches" : " match") :
@@ -725,7 +739,14 @@
     return [label || null, name || null, jplName || null, id];
   }
 
-  function searchHits(rows, query, namesByKey) {
+  // L-517: pictureWords ({rowKey: [{id, words}]}, gallery/picture_folds.js's
+  // searchWords) are the saved pictures' titles. A picture whose title holds
+  // the letters is found (picIds), so a row shown in the search opens its
+  // fold with it. When no body and no group matches by its own words, a
+  // picture's words alone bring its row into view (picRows), with every
+  // group above it open (picOpen); p counts those pictures. A body found
+  // that way gets no line under its name.
+  function searchHits(rows, query, namesByKey, pictureWords) {
     const q = searchKey(query);
     if (!q) { return null; }
     const keys = {}, groups = {}, via = {};
@@ -773,8 +794,31 @@
     } else {
       matched.forEach(function (g) { if (!groups[g]) { listed[g] = true; } });
     }
+    // L-517: the saved pictures.
+    const picIds = {}, picRows = {}, picOpen = {};
+    let p = 0;
+    const alone = n === 0 && all.length === 0;
+    Object.keys(pictureWords || {}).forEach(function (rk) {
+      const hit = (pictureWords[rk] || []).filter(function (e) { return e && holds(e.words); });
+      if (!hit.length) { return; }
+      hit.forEach(function (e) { picIds[e.id] = true; });
+      if (!alone) { return; }
+      const row = (rows || []).filter(function (r) { return r.key === rk; })[0];
+      if (!row) { return; }
+      p += hit.length;
+      picRows[rk] = true;
+      const up = isGroup(row) ? ancestors(rows, row.group)
+        : (row.group ? [row.group].concat(ancestors(rows, row.group)) : []);
+      up.forEach(function (g) { picOpen[g] = true; });
+      if (!isGroup(row)) {
+        keys[rk] = true;
+        via[rk] = ((namesByKey && namesByKey[rk]) || []).length;
+        up.forEach(function (g) { groups[g] = (groups[g] || 0) + 1; });
+      }
+    });
     return { keys: keys, groups: groups, via: via, n: n,
-             listed: listed, opened: opened, g: matched.length, anc: anc };
+             listed: listed, opened: opened, g: matched.length, anc: anc,
+             picIds: picIds, picRows: picRows, picOpen: picOpen, p: p };
   }
 
   // PARENT GROUPS: whether a group sits (at any depth) under the one group
@@ -791,6 +835,9 @@
     if (isGroup(row)) {
       return !!hits.groups[row.group] || !!(hits.listed && hits.listed[row.group]) ||
         hits.opened === row.group || aboveOpened(row.group, hits) ||
+        // L-517: a group whose saved pictures were found, or one above it
+        !!(hits.picRows && hits.picRows[row.key]) ||
+        !!(hits.picOpen && hits.picOpen[row.group]) ||
         // a sub-group of the one group found shows, folded, when the
         // found group is open whole
         (!!row.parent && (row.parent === hits.opened || underOpened(row.parent, hits)) &&
@@ -804,7 +851,8 @@
   // it holds the one group found.
   function searchOpen(group, hits) {
     return !!hits && (!!hits.groups[group] || hits.opened === group ||
-                      aboveOpened(group, hits));
+                      aboveOpened(group, hits) ||
+                      !!(hits.picOpen && hits.picOpen[group]));   // L-517
   }
 
   function searchGroupCount(rows, group, hits) {

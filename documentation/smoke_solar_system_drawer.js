@@ -119,6 +119,10 @@
 // Find listing the outermost group and opening a found sub-group with its
 // parent, and no shell placed among a parent's sub-groups -- with four
 // breaks; each served sub-group's parent; the page's wiring.
+// Updated November 8, 2026 with Anthropic's Claude Opus 5.5 (L-517 part
+// 1): the page's search call now hands over the saved pictures' words, so
+// the wiring check reads the call's first line. The pictures themselves
+// are documentation/smoke_picture_folds.js's.
 //  11. (L-515 part 3) The Sun's shells in the root.
 
 "use strict";
@@ -911,7 +915,7 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
   ['id="sun-find-input" placeholder="Find a body"', "the drawer has no search box (L-493)"],
   ["ssFindMount();", "the search box is never wired (L-493)"],
   ["if (reset) { ssFindSet(\"\"); }", "Reset does not clear the search (L-493)"],
-  ["const hits = SSD.searchHits(ssDrawer.rows, ssDrawer.query, ssDrawer.names);", "the drawer does not search (L-493)"],
+  ["const hits = SSD.searchHits(ssDrawer.rows, ssDrawer.query, ssDrawer.names,", "the drawer does not search (L-493)"],
  ['const ABOUT_HREF = "index.html#about";', "the About line does not open the lobby's About card"],
   ["GalleryFeatures.buildRoomCloud(row.feature, label, key,", "the page does not draw a drawing row (L-503)"],
   ['typeof r.drawing === "string");', "the page does not keep a drawing row among its rows (L-503)"],

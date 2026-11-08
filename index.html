@@ -164,7 +164,17 @@
        - Closing the About card that a room's i panel opened steps back
          to that room, as the room's Gallery button steps back to the
          lobby. Arriving at #about any other way, closing it stays in the
-         lobby, as before (Tony's phone look, 2026-10-23). -->
+         lobby, as before (Tony's phone look, 2026-10-23).
+     Updated: November 8, 2026 with Anthropic's Claude Opus 5.5 (L-517,
+       part 1)
+       - A card opened from the Solar System room's drawer (its saved
+         pictures, interactive.html, which keeps sessionStorage
+         "po_room_return") shows one way back in the header, "Back to
+         the live solar system", in place of its room chain, and the
+         turn card's back button goes there too. It steps back through
+         the browser's history, so the room opens as the visitor left it,
+         the drawer at that picture's fold. The other direction of
+         "po_gallery_from". Any other card is as before. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1965,6 +1975,8 @@
         }
         .site-chain .chain-colon { color: var(--text-dim); }
         .site-chain .chain-here { color: var(--text-primary); font-weight: 500; }
+        /* L-517: a card the Solar System room opened goes back to it. */
+        .site-chain .chain-back-room { color: #c9a44a; font-weight: 500; }
         .site-right { display: flex; align-items: center; flex-shrink: 0; }
         .site-header .mode-toggle { padding: 0; border-bottom: none; }
         .site-header .mode-btn { flex: none; padding: 6px 14px; }
@@ -2595,6 +2607,8 @@
             welcomeState.style.display = 'flex';
             var back = document.getElementById('turnCardBack');
             if (back) back.addEventListener('click', function () {
+                // L-517: a card the Solar System room opened goes back there.
+                if (openedFromRoom(viz)) { backToRoom(); return; }
                 if (ROOM_NODES[viz.room]) showRoom(viz.room, true); else goHome();
             });
             window.scrollTo(0, 0);
@@ -3304,6 +3318,19 @@
             if (!header || !chainEl) return;
             var chain = room ? roomChain(room) : [];
             var html = '';
+            // L-517: a card the Solar System room opened shows one way
+            // back, to the room, in place of its room chain.
+            if (viz && openedFromRoom(viz)) {
+                chainEl.innerHTML = '<button type="button" class="chain-back-room">' +
+                    'Back to the live solar system</button>';
+                chainEl.querySelector('.chain-back-room').addEventListener('click', backToRoom);
+                header.classList.remove('at-lobby');
+                header.classList.remove('no-chain');
+                header.classList.add('on-card');
+                document.body.setAttribute('data-screen', 'card');
+                if (titleEl) titleEl.textContent = viz.title || 'Untitled';
+                return;
+            }
             for (var i = 0; i < chain.length; i++) {
                 var here = (i === chain.length - 1) && !viz;
                 if (i) html += '<span class="chain-colon">:</span>';
@@ -4894,6 +4921,33 @@
                 /\/interactive\.html$/.test(aboutRef.pathname) &&
                 window.location.hash === '#about');
         } catch (e) { aboutFromRoom = false; }
+        // L-517 (part 1): did the Solar System room's drawer open this
+        // card? interactive.html keeps sessionStorage "po_room_return",
+        // {exhibit, fold, card, url}, when a saved picture is tapped, and
+        // the page behind us is that room. The card it named then shows
+        // "Back to the live solar system", which steps back through the
+        // browser's history, so the room opens as it was left (the drawer
+        // at that picture's fold); with no history to step back through
+        // it goes to the room's address. The other direction of
+        // "po_gallery_from" (L-286).
+        var roomReturn = null;
+        try {
+            var roomRef = document.referrer ? new URL(document.referrer) : null;
+            var kept = JSON.parse(sessionStorage.getItem('po_room_return') || 'null');
+            if (kept && typeof kept.card === 'string' && typeof kept.url === 'string' &&
+                    roomRef && roomRef.origin === window.location.origin &&
+                    /\/interactive\.html$/.test(roomRef.pathname)) {
+                roomReturn = kept;
+            }
+        } catch (e) { roomReturn = null; }
+        function openedFromRoom(viz) {
+            return !!(roomReturn && viz && viz.id === roomReturn.card);
+        }
+        function backToRoom() {
+            if (window.history.length > 1) { window.history.back(); return; }
+            window.location.href = roomReturn.url;
+        }
+
         // L-475: closing the card that #about opened leaves the lobby's
         // own address, so a reload does not open it again.
         function closeAbout() {

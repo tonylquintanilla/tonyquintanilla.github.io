@@ -119,6 +119,14 @@
 // cards yet are gone; sections 1, 14 and 26 hold that a body with no
 // centre built shows nothing where Centre on would be, before or after its
 // row is opened, and that the page shows neither phrase.
+// Updated November 8, 2026 with Anthropic's Claude Opus 5.5 (L-517 part 1):
+// the row lists skip the saved pictures' rows; section 29 walks the picture
+// folds -- closed on opening with their count and picture mark, an arrow and
+// no tick box on each picture, Earth's fold after Earth's row and the
+// Explorer after the Sun's, a desktop's landscape twins and a phone's
+// portrait ones, Find on "Artemis" and "Halley", Reset, the fold and ticks
+// kept for Back and put back once -- and, given a planted copy of the page
+// as a third argument, walks section 29 alone, which must fail.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -132,13 +140,146 @@ const DATES_WORDS = "Its path covers the mission's own dates, but the planets ar
   "it is now.";
 const fails = []; let n = 0;
 function ok(c, m) { n++; if (!c) { fails.push(m); } }
+// 29. L-517 (the lobby for a first-time phone visitor), part 1: the saved
+// pictures, each in a fold beside its body's row. What is expected is
+// worked out here from gallery/gallery_metadata.json and the gallery's own
+// twin rule, not by the page's helpers. With a planted page as the walk's
+// third argument, only this section runs, and it must fail.
+async function pictures(w, root, payload, page) {
+  const fs = require("fs"), path = require("path");
+  const d = w.document, E = (s) => w.eval(s);
+  const meta = JSON.parse(fs.readFileSync(path.join(root, "gallery", "gallery_metadata.json"), "utf8"));
+  const byId = {};
+  meta.visualizations.forEach(v => { byId[v.id] = v; });
+  // The gallery's rule, written out again: a phone takes no "none" card
+  // and no landscape card whose twin has a portrait file; a desktop no
+  // portrait card whose twin has a landscape file.
+  const offered = (v, phone) => {
+    const f = v.files || {}, t = (v.sibling && byId[v.sibling]) || null, tf = (t && t.files) || {};
+    if (phone) { return v.shape !== "none" && !(f.landscape && !f.portrait && tf.portrait); }
+    return !(!f.landscape && f.portrait && tf.landscape);
+  };
+  const want = (place, phone) => meta.visualizations
+    .filter(v => v.drawer_row === place && offered(v, phone)).map(v => v.id);
+  const click = async (el) => { el.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true })); await h.done(); };
+  const idx = (key) => E("ssIndex(" + JSON.stringify(key) + ")");
+  const row = (key) => d.querySelector('#sun-drawer-list .sun-row[data-k="' + idx(key) + '"]');
+  const fold = (key) => d.querySelector('#sun-drawer-list .sun-pics[data-pf="' + key + '"]');
+  const lineOf = (key) => d.querySelector('#sun-drawer-list .sun-pics-line[data-pf="' + key + '"]');
+  const pics = (key) => Array.from(d.querySelectorAll('#sun-drawer-list a.sun-pic[data-pf="' + key + '"]'));
+  const shownPics = (key) => pics(key).filter(a => !a.hidden).map(a => a.getAttribute("data-card"));
+  const allFolds = () => Array.from(d.querySelectorAll("#sun-drawer-list .sun-pics"));
+  const LINE = "Saved pictures: each opens on its own page.";
+  // 29a. Closed when the room opens, each with its count and its picture
+  // mark, and no tick box anywhere in a fold.
+  ok(allFolds().length >= 10, "too few picture folds in the drawer: " + allFolds().length);
+  ok(allFolds().every(f => f.getAttribute("aria-expanded") === "false"),
+     "a picture fold is open when the room opens: " +
+     allFolds().filter(f => f.getAttribute("aria-expanded") !== "false").map(f => f.getAttribute("data-pf")).join(","));
+  ok(Array.from(d.querySelectorAll("#sun-drawer-list a.sun-pic")).every(a => a.hidden) &&
+     Array.from(d.querySelectorAll("#sun-drawer-list .sun-pics-line")).every(l => l.hidden),
+     "a saved picture or a fold's line shows when the room opens");
+  ok(allFolds().every(f => f.querySelector("svg.picmark") && !f.querySelector(".box") &&
+                         f.querySelector(".gcount").textContent === String(pics(f.getAttribute("data-pf")).length)),
+     "a picture fold lacks its picture mark or its count, or carries a tick box");
+  ok(Array.from(d.querySelectorAll("#sun-drawer-list a.sun-pic")).every(a =>
+       a.querySelector(".parrow") && !a.querySelector(".box") && !a.querySelector(".go")),
+     "a saved picture has a tick box or Go To, or no arrow where the box would be");
+  // 29b. Earth's fold is right after Earth's row, and the Sun's after the
+  // Sun's; a desktop is offered the landscape twins, in the metadata's order.
+  ok(!!fold("earth") && row("earth").nextElementSibling === fold("earth") && !fold("earth").hidden,
+     "Earth's pictures are not in a fold right after Earth's row");
+  ok(!!fold("center") && row("center").nextElementSibling === fold("center") &&
+     pics("center").map(a => a.getAttribute("href")).join() === "interactive.html?exhibit=solar-system-explorer",
+     "the Solar System Explorer is not beside the Sun's row, opening its own address");
+  ok(pics("earth").map(a => a.getAttribute("data-card")).join() === want("earth", false).join() &&
+     pics("earth").every(a => a.getAttribute("href") === "index.html#" + a.getAttribute("data-card")),
+     "Earth's fold on a desktop is not its landscape cards in order: " + pics("earth").map(a => a.getAttribute("data-card")).join());
+  // 29c. A comet's fold is hidden until its groups are open.
+  ok(!!fold("halley") && fold("halley").hidden && row("halley").hidden, "Halley's fold shows while its group is folded");
+  if (!fold("earth") || !fold("halley")) { return; }
+  // 29d. Tapping the fold opens it: its line, every picture; again, shut.
+  await click(fold("earth").querySelector(".rname"));
+  ok(fold("earth").getAttribute("aria-expanded") === "true" && !lineOf("earth").hidden &&
+     lineOf("earth").textContent === LINE && shownPics("earth").join() === want("earth", false).join(),
+     "tapping Earth's fold does not open it with its line and every picture");
+  await click(fold("earth").querySelector(".rname"));
+  ok(fold("earth").getAttribute("aria-expanded") === "false" && shownPics("earth").length === 0,
+     "tapping Earth's open fold does not shut it");
+  // 29e. Find: "Artemis" opens Earth's fold with the Artemis pictures alone.
+  const find = d.getElementById("sun-find-input");
+  const type = async (q) => { find.value = q; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done(); };
+  const artemis = want("earth", false).filter(id => /artemis/i.test(byId[id].title));
+  await type("Artemis");
+  ok(!row("earth").hidden && fold("earth").getAttribute("aria-expanded") === "true" &&
+     shownPics("earth").join() === artemis.join() &&
+     fold("earth").querySelector(".gcount").textContent === artemis.length + " of " + want("earth", false).length &&
+     d.getElementById("sun-find-count").textContent === artemis.length + " saved pictures match",
+     "'Artemis' does not open Earth's fold with its Artemis pictures alone: " + shownPics("earth").join() + " | " +
+     d.getElementById("sun-find-count").textContent);
+  // A body found by its own name opens its fold where a picture matches.
+  await type("Halley");
+  ok(!row("halley").hidden && !fold("halley").hidden && shownPics("halley").join() === want("halley", false).join(),
+     "'Halley' does not show Halley with its picture's fold open");
+  // Choosing a fold from the search clears it and leaves the fold open.
+  await click(fold("halley").querySelector(".rname"));
+  ok(find.value === "" && !row("halley").hidden && fold("halley").getAttribute("aria-expanded") === "true",
+     "choosing Halley's fold from a search does not open it in the list");
+  await click(d.getElementById("sun-drawer-all"));   // Reset
+  ok(allFolds().every(f => f.getAttribute("aria-expanded") === "false"), "Reset leaves a picture fold open");
+  // 29f. Opening a picture keeps the fold and the ticks for Back.
+  await click(row("mars").querySelector(".pick"));
+  await click(fold("earth").querySelector(".rname"));
+  const first = pics("earth")[0];
+  d.addEventListener("click", (ev) => ev.preventDefault());   // stay on the page
+  await click(first);
+  const kept = w.sessionStorage.getItem("po_room_return");
+  const k = kept ? JSON.parse(kept) : {};
+  const ticks = w.sessionStorage.getItem("po_root_ticks");
+  ok(k.fold === "earth" && k.card === first.getAttribute("data-card") && k.exhibit === "solar-system" &&
+     !!ticks && JSON.parse(ticks).ticked.indexOf("mars") >= 0,
+     "opening a picture does not keep its fold and the ticks: " + kept + " | " + ticks);
+  // 29g. Back: the room opens again with the drawer at that fold, the
+  // ticks as left, and what was kept taken.
+  const opts = (more) => Object.assign(page ? { page: page } : {}, more || {});
+  const w2 = await h.boot(root, "solar-system", payload, opts({ session: { po_room_return: kept || "", po_root_ticks: ticks || "" } }));
+  const d2 = w2.document;
+  const f2 = d2.querySelector('#sun-drawer-list .sun-pics[data-pf="earth"]');
+  ok(d2.getElementById("sun-drawer").classList.contains("open") && !!f2 && f2.getAttribute("aria-expanded") === "true" &&
+     !d2.querySelector('#sun-drawer-list a.sun-pic[data-pf="earth"]').hidden &&
+     w2.eval("sunGroups[ssIndex('mars')].shown") === true && w2.sessionStorage.getItem("po_room_return") === null,
+     "Back does not open the room with the drawer at Earth's fold and Mars ticked, or keeps what it took");
+  // Opened plainly, every fold is shut and the drawer closed.
+  const w3 = await h.boot(root, "solar-system", payload, opts());
+  ok(!w3.document.getElementById("sun-drawer").classList.contains("open") &&
+     Array.from(w3.document.querySelectorAll("#sun-drawer-list .sun-pics")).every(f => f.getAttribute("aria-expanded") === "false"),
+     "a plain opening is not shut");
+  // 29h. A phone is offered the portrait twins, and no "none" card.
+  const w4 = await h.boot(root, "solar-system", payload, opts({ width: 390 }));
+  const phoneEarth = Array.from(w4.document.querySelectorAll('#sun-drawer-list a.sun-pic[data-pf="earth"]')).map(a => a.getAttribute("data-card"));
+  ok(phoneEarth.join() === want("earth", true).join() && phoneEarth.every(id => byId[id].shape !== "none"),
+     "a phone is not offered Earth's portrait twins alone: " + phoneEarth.join());
+  ok(!w4.document.querySelector('#sun-drawer-list .sun-pics[data-pf="mercury"]'),
+     "a phone is offered Mercury's \"none\" card");
+  console.log("  29: " + allFolds().length + " folds on a desktop; Earth " + want("earth", false).length +
+              " on a desktop, " + phoneEarth.length + " on a phone; Artemis " + artemis.length);
+}
+
 (async () => {
-  const [root, given] = process.argv.slice(2);
+  const [root, given, planted] = process.argv.slice(2);
   const fs = require("fs"), os = require("os"), path = require("path");
   const data = JSON.parse(fs.readFileSync(given, "utf8"));
   data.room = Object.assign({}, data.room, { arrival: { drawn: ["earth"], highlight: "earth" } });
   const payload = path.join(os.tmpdir(), "walk_solar_system_payload.json");
   fs.writeFileSync(payload, JSON.stringify(data));
+  // L-517: a planted copy of the page walks section 29 alone.
+  if (planted) {
+    const wp = await h.boot(root, "solar-system", payload, { page: planted });
+    await pictures(wp, root, payload, planted);
+    console.log(fails.length ? "FAIL " + fails.length + " of " + n + " (planted " + planted + "):\n  " + fails.join("\n  ")
+                             : "PASS: " + n + " checks on the planted page -- it should have failed");
+    process.exit(fails.length ? 1 : 0);
+  }
   const w = await h.boot(root, "solar-system", payload);
   const d = w.document, E = (s) => w.eval(s);
   // 22a. L-494: a first visit is greeted by the note on the i button,
@@ -489,7 +630,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   // fits its whole path. Run only on a payload that serves them.
   if (data.bodies.juno && data.bodies.juno.kind === "spacecraft") {
     await click(d.getElementById("sun-drawer-all"));
-    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"));
+    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row:not(.sun-pics):not(.sun-pic)"));
     const at = rowsDom.indexOf(row("earth"));
     // Since 2026-11-07 the row after Earth is Spacecraft, the parent, and
     // the twelve are its Active missions, listed under it.
@@ -580,7 +721,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   // day it ended; its companions by its plan. Run only on a payload that
   // serves Galileo.
   if (data.bodies.galileo && data.bodies.galileo.kind === "spacecraft") {
-    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"));
+    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row:not(.sun-pics):not(.sun-pic)"));
     ok(rowsDom[rowsDom.indexOf(row("europa_clipper")) + 1] === head("historical_missions") &&
        head("historical_missions").hidden === !E("ssDrawer.folds.spacecraft_all") &&
        !E("ssDrawer.folds.historical_missions"),
@@ -697,7 +838,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
   // source line; Go To fits its whole path. Run only on a payload that
   // serves them.
   if (data.bodies.west && data.bodies.west.kind === "comet_path") {
-    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"));
+    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row:not(.sun-pics):not(.sun-pic)"));
     const after = (g) => rowsDom[rowsDom.indexOf(head(g)) - 1];
     ok(head("comets_hyp").hidden === !E("ssDrawer.folds.comets_all") && !E("ssDrawer.folds.comets_hyp") &&
        head("interstellar").hidden === !E("ssDrawer.folds.comets_all") && !E("ssDrawer.folds.interstellar"),
@@ -1096,7 +1237,7 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     const extent = (k) => all.filter(t => t.legendgroup === k).reduce((m, t) =>
       ["x", "y", "z"].reduce((mm, a) => (t[a] || []).reduce((q, v) =>
         (isFinite(v) && v !== null ? Math.max(q, Math.abs(v)) : q), mm), m), 0);
-    const top = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row"))
+    const top = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row:not(.sun-pics):not(.sun-pic)"))
       .filter(r => !r.classList.contains("member"))
       .map(r => r.classList.contains("sun-group") ? "group:" + r.getAttribute("data-g")
                                                   : E("sunGroups[" + Number(r.dataset.k) + "].key"));
@@ -1273,6 +1414,8 @@ function ok(c, m) { n++; if (!c) { fails.push(m); } }
     console.log("  28: parents " + parents.map(p => p + " (" + subOf(p).length + " groups, " +
                 bodiesUnder(p).length + " bodies)").join(", "));
   }
+  // 29. L-517: the saved pictures, last, since it boots the page again.
+  await pictures(w, root, payload, null);
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);
 })();

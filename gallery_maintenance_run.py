@@ -224,6 +224,13 @@ checker runs documentation/smoke_scene_moment.js and gates; every tool
 runs with PO_PYTHON set to this run's Python, which that check uses to
 ask the real resolver; the live check also fetches
 gallery/scene_moment.js, which the page loads with a script tag.)
+Module updated: November 8, 2026 with Anthropic's Claude Opus 5.5
+(L-517 part 1, the Solar System pictures beside their rows: the
+"Picture folds" checker runs documentation/smoke_picture_folds.js and
+gates, its self-test breaking two files five ways; the live check also
+fetches gallery/picture_folds.js, which the page loads with a script
+tag, and gallery/gallery_metadata.json, which the Solar System room now
+reads to place the pictures.)
 """
 
 import hashlib
@@ -574,6 +581,18 @@ OFFLINE_CHECKERS = [
     ("Solar System drawer", "node",
      ["documentation/smoke_solar_system_drawer.js"], ".", "===", False),
 
+    # L-517 part 1 (2026-11-08): the saved Solar System pictures, each in a
+    # fold beside its body's row in that drawer. It requires the real
+    # gallery/picture_folds.js and solar_system_drawer.js, works which twin
+    # a phone and a desktop are offered, where a picture is placed and Find
+    # on a small list; holds every Solar System card in the real metadata
+    # to a place naming a row the room serves, twins together, and prints
+    # every fold by row for a phone and a desktop; and fails if either page
+    # stops wiring the folds or the way back. Its self-test breaks the two
+    # files five ways first. Gates.
+    ("Picture folds", "node",
+     ["documentation/smoke_picture_folds.js"], ".", "===", False),
+
     # L-456 (2026-10-20): the i panel lists its sources one to a line,
     # each web address a link. It requires the real gallery/source_list.js,
     # works where an address ends and what the list holds, builds the Sun
@@ -739,6 +758,10 @@ SERVED_FILES = [
     "gallery/text_box.js",
     # L-515 part 4 (2026-11-07): likewise, the moment a room opens on.
     "gallery/scene_moment.js",
+    # L-517 (2026-11-08): likewise, the saved pictures' folds; and the
+    # metadata, which the Solar System room now reads to place them.
+    "gallery/picture_folds.js",
+    "gallery/gallery_metadata.json",
     # The positions files are not typed here (L-423, 2026-11-06).
     # positions_files() below reads them from the config. The typed list
     # had kept piece C of C/2025 K1's file after the comet became an
