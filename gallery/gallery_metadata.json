@@ -3,8 +3,8 @@
   "visualizations": [
     {
       "id": "solar_system",
-      "title": "The Solar System, live",
-      "description": "Today's planets in 3D. Turn it with your finger, tap a planet, step into the Sun and Earth.",
+      "title": "Today's sky, live",
+      "description": "The Sun, the planets, Earth and its Moon. Turn it with your finger.",
       "room": "solar_system",
       "shape": "9:16",
       "files": {},
@@ -1597,7 +1597,7 @@
       "description": "Plot of Pluto system centered on the barycenter.",
       "room": "solar_system/pluto",
       "drawer_row": "pluto_barycenter",
-      "shape": "16:9",
+      "shape": "none",
       "files": {
         "landscape": "pluto_barycenter_system_20260208_1957.json"
       },

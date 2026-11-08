@@ -174,7 +174,28 @@
          turn card's back button goes there too. It steps back through
          the browser's history, so the room opens as the visitor left it,
          the drawer at that picture's fold. The other direction of
-         "po_gallery_from". Any other card is as before. -->
+         "po_gallery_from". Any other card is as before.
+     Updated: November 8, 2026 with Anthropic's Claude Opus 5.5 (L-517,
+       part 2, the lobby for a first-time phone visitor; board D)
+       - The lobby asks one thing first: the name, gold, with the About
+         button beside it, and one line (the served "sentence", now
+         "The solar system, Earth and the nearby stars in 3D, from real
+         science data."); the live solar system's picture; the kicker
+         "Solar System", "Today's sky, live", the card's sentence and one
+         Explore button. Then "More to explore": a picture strip each for
+         Earth System Science and Stars, one tap to the subject's page
+         (LOBBY_MORE; pictures by tools/headless/draw_lobby_strips.py).
+         The Solar System's subject row is not drawn in the lobby. Then
+         Featured, as before; the line about Paloma ("name_note"), moved
+         from under the title to just above the guest book; the guest
+         book; the footer's icons.
+       - The subject pages: a room with no card in this tab is not
+         listed, and no page counts rooms under construction. The words
+         read "views" and "topics" for "exhibits" and "rooms", and "live
+         in 3D" is gone. The Solar System page keeps its live card first
+         and then reads "Solar System pictures and animations", with a
+         line saying they are moments saved from the desktop orrery
+         (ROOM_PICTURES_HEADING). -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -183,7 +204,7 @@
 
     <!-- Open Graph / Social Sharing -->
     <meta property="og:title" content="Paloma's Orrery">
-    <meta property="og:description" content="Explore the solar system, the Earth and the nearby stars in 3D, built from real science data such as NASA JPL's Horizons.">
+    <meta property="og:description" content="The solar system, Earth and the nearby stars in 3D, from real science data.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://tonyquintanilla.github.io/">
     <!-- <meta property="og:image" content="https://tonyquintanilla.github.io/preview.png"> -->
@@ -191,7 +212,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Paloma's Orrery">
-    <meta name="twitter:description" content="Explore the solar system, the Earth and the nearby stars in 3D, built from real science data such as NASA JPL's Horizons.">
+    <meta name="twitter:description" content="The solar system, Earth and the nearby stars in 3D, from real science data.">
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-X7HYWBWNG8"></script>
@@ -1148,6 +1169,70 @@
                 border-radius: 12px;
                 overflow: hidden;
             }
+        }
+        /* L-517 (board D): the start card's kicker; the name with the
+           About button; the "More to explore" strips, a subject's
+           picture over its name and sentence, its colour on the left
+           edge; the line about Paloma above the guest book; the Solar
+           System page's heading over its saved pictures. */
+        .lobby-start-kicker {
+            font-size: 0.68rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #e2c46a;
+        }
+        .lobby-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        .lobby .lobby-title-row .welcome-title { margin: 0; }
+        .lobby .lobby-title-row .footer-about-btn { margin: 0; flex: 0 0 auto; }
+        .lobby-strip {
+            border: 1px solid var(--border);
+            border-left: 5px solid var(--border);
+            border-radius: 8px;
+            background: rgba(9, 20, 38, 0.78);
+            overflow: hidden;
+            cursor: pointer;
+            margin-bottom: 10px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .lobby-strip:hover { border-color: var(--accent-dim); }
+        .lobby-strip-picture {
+            display: block;
+            width: 100%;
+            aspect-ratio: 3 / 1;
+            object-fit: cover;
+            background: #000;
+        }
+        .lobby-strip-body {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px 12px;
+        }
+        .lobby-strip-words { flex: 1; min-width: 0; }
+        .lobby-strip-sentence {
+            font-size: 0.84rem;
+            color: #d6d4d0;
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+        .lobby .welcome-note.lobby-note { margin: 26px auto 0; }
+        .room-pictures-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-weight: 600;
+            font-size: 1.3rem;
+            line-height: 1.2;
+        }
+        .room-pictures-line {
+            font-size: 0.84rem;
+            line-height: 1.45;
+            color: var(--text-secondary);
+            margin-top: 4px;
         }
         .lobby-row {
             display: flex;
@@ -2274,7 +2359,7 @@
                 <!-- Filled by renderLobby() (L-282); this is the no-script fallback -->
                 <div class="welcome-title">Paloma's Orrery</div>
                 <div class="welcome-text">
-                    Explore the solar system, the Earth and the nearby stars in 3D, built from real science data such as NASA JPL's Horizons.
+                    The solar system, Earth and the nearby stars in 3D, from real science data.
                 </div>
                 <div class="welcome-version" id="welcomeVersion"></div>
             </div>
@@ -2947,8 +3032,33 @@
         // The first screen. One writer for the home view; goHome() and the
         // initial load both call this. Doors open the existing menu at that
         // door until L-286 gives each door its own rooms page.
-        var LOBBY_DEFAULT_SENTENCE = 'Explore the solar system, the Earth and the nearby ' +
-            'stars in 3D, built from real science data such as NASA JPL\'s Horizons.';
+        var LOBBY_DEFAULT_SENTENCE = 'The solar system, Earth and the nearby stars in 3D, ' +
+            'from real science data.';
+        // More to explore (L-517, board D): one strip per subject, in
+        // this order. The pictures are drawn from the site's own cards by
+        // tools/headless/draw_lobby_strips.py, and carry no numbers; each
+        // alt names the card it comes from. The colour is the subject's.
+        var LOBBY_MORE = [
+            { door: 'earth_system',
+              picture: 'gallery/pictures/lobby_earth_system.jpg',
+              alt: 'Drawn from the card "Warming Stripes (Ed Hawkins)": one stripe ' +
+                   'for each year, blue for cooler years and red for warmer.',
+              sentence: 'Our changing climate, from measured data.' },
+            { door: 'stars',
+              picture: 'gallery/pictures/lobby_stars.jpg',
+              alt: 'Drawn from the card "3D Stars to 20 light years": the nearest ' +
+                   'stars seen from above in their own colours, the Sun in green.',
+              sentence: 'Our nearest stars and their planets, in 3D.' }
+        ];
+        // A subject page with its own heading over its pictures (L-517
+        // ruling 3, relabel: the live view and the saved pictures are
+        // named so they cannot be taken for each other).
+        var ROOM_PICTURES_HEADING = {
+            solar_system: {
+                heading: 'Solar System pictures and animations',
+                line: 'Moments saved from the desktop orrery, each on its own date. ' +
+                      'For where everything is today, open the live sky.' }
+        };
         var LOBBY_FOOTER_ICONS =
             '<a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener" title="Instagram @palomas_orrery">' +
             '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg></a>' +
@@ -3004,27 +3114,8 @@
             return !(twin && (twin.files || {})[want]);
         }
 
-        // Rooms under a door with no card anywhere in their subtree.
-        function countEmptyRooms(door, roomCards) {
-            var empty = 0;
-            function subtreeHas(r, path) {
-                var has = !!roomCards[path];
-                var kids = r.rooms || [];
-                for (var i = 0; i < kids.length; i++) {
-                    if (subtreeHas(kids[i], path + '/' + kids[i].key)) has = true;
-                }
-                return has;
-            }
-            function walk(list, prefix) {
-                for (var i = 0; i < list.length; i++) {
-                    var path = prefix + '/' + list[i].key;
-                    if (!subtreeHas(list[i], path)) empty++;
-                    walk(list[i].rooms || [], path);
-                }
-            }
-            walk(door.rooms || [], door.key);
-            return empty;
-        }
+        // countEmptyRooms() went with L-517: no page counts rooms under
+        // construction, and a room with no card is not listed.
 
         function plural(n, word) {
             return n + ' ' + word + (n === 1 ? '' : 's');
@@ -3065,13 +3156,16 @@
         // lobby opens on one card, drawn once, before the subjects. The
         // picture and the sentence are the card's own, from
         // gallery_metadata.json (picture, picture_alt, description); the
-        // title and the button's word are typed here, because the card's
-        // served title also heads its door's page and the menu, where
-        // "Start with ..." would read wrong. LOBBY_START_ID names the
-        // card the title is written for; if it is not served in this
-        // tab, the lobby opens on the subjects as before.
+        // kicker, the title and the button's word are typed here.
+        // LOBBY_START_ID names the card the title is written for; if it
+        // is not served in this tab, the lobby opens on the subjects.
+        // L-517 (board D): the kicker "Solar System", the title "Today's
+        // sky, live" (also the card's served title since then, so its
+        // door's page and the menu read the same), the button "Explore".
         var LOBBY_START_ID = 'solar_system';
-        var LOBBY_START_TITLE = 'Start with the Solar System, live';
+        var LOBBY_START_KICKER = 'Solar System';
+        var LOBBY_START_TITLE = 'Today\'s sky, live';
+        var LOBBY_START_BUTTON = 'Explore';
         function startCardHtml(item) {
             var h = '<div class="lobby-start" data-viz-id="' + escapeHtml(item.id) + '">';
             if (item.picture) {
@@ -3080,11 +3174,12 @@
                      '" onerror="this.style.display=\'none\'">';
             }
             h += '<div class="lobby-start-body">';
+            h += '<div class="lobby-start-kicker">' + escapeHtml(LOBBY_START_KICKER) + '</div>';
             h += '<div class="lobby-start-title">' + escapeHtml(LOBBY_START_TITLE) + '</div>';
             if (item.description) {
                 h += '<div class="lobby-start-desc">' + escapeHtml(item.description) + '</div>';
             }
-            h += '<button type="button" class="lobby-start-enter">Enter ' +
+            h += '<button type="button" class="lobby-start-enter">' + escapeHtml(LOBBY_START_BUTTON) + ' ' +
                  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
                  'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                  '<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></button>';
@@ -3102,12 +3197,11 @@
 
             var cfgSentence = (window.__galleryConfig && window.__galleryConfig.sentence) || '';
             var html = '<div class="lobby">';
-            html += '<div class="welcome-title">Paloma\'s Orrery</div>';
+            // The name, gold, with the About button beside it (L-517,
+            // board D); the one line under it is the served sentence.
+            html += '<div class="lobby-title-row"><div class="welcome-title">Paloma\'s Orrery</div>' +
+                    '<button class="footer-about-btn" id="lobby-about-btn" title="About Paloma\'s Orrery">i</button></div>';
             html += '<div class="welcome-text">' + escapeHtml(cfgSentence || LOBBY_DEFAULT_SENTENCE) + '</div>';
-            // L-447: what an orrery is and who Paloma is, served beside
-            // the sentence; nothing is printed when the config has none.
-            var cfgNote = (window.__galleryConfig && window.__galleryConfig.name_note) || '';
-            if (cfgNote) html += '<div class="welcome-note">' + escapeHtml(cfgNote) + '</div>';
 
             // The way in (L-428): the start card, once, first.
             var startItem = null;
@@ -3116,35 +3210,38 @@
             }
             if (startItem) html += startCardHtml(startItem);
 
-            // The subjects (the doors). "Doors" left the page on
-            // 2026-10-09 (L-428): a first-time visitor cannot know what a
-            // door is.
-            html += '<div class="lobby-heading">' +
-                    (startItem ? 'Or explore by subject' : 'Explore by subject') + '</div>';
-            for (var d = 0; d < DOORS.length; d++) {
-                var door = DOORS[d];
-                var color = door.color || CATEGORY_COLORS[door.key] || CATEGORY_COLORS.other;
-                var count = 0, live = 0;
+            // More to explore (L-517, board D): a picture strip for each
+            // other subject, one tap to its page. The Solar System's
+            // subject row is not drawn here; its page stays for old links.
+            // A subject with no card in this tab is left out.
+            var strips = '';
+            for (var d = 0; d < LOBBY_MORE.length; d++) {
+                var more = LOBBY_MORE[d];
+                var door = null;
+                for (var dd = 0; dd < DOORS.length; dd++) {
+                    if (DOORS[dd].key === more.door) { door = DOORS[dd]; break; }
+                }
+                if (!door) continue;
+                var count = 0;
                 for (var j = 0; j < shown.length; j++) {
                     var room = shown[j].room || '';
-                    if (room === door.key || room.indexOf(door.key + '/') === 0) {
-                        count++;
-                        if (shown[j].live) live++;
-                    }
+                    if (room === door.key || room.indexOf(door.key + '/') === 0) count++;
                 }
-                // No "rooms under construction" on a lobby door (Tony,
-                // 2026-10-04, all three doors). The door's own page keeps it.
-                var meta = [plural(count, 'exhibit')];
-                if (live) meta.push(live + ' live in 3D');
-                html += '<div class="lobby-door" data-door="' + escapeHtml(door.key) + '">';
-                html += '<div class="lobby-door-bar" style="background: ' + color + ';"></div>';
-                html += '<div class="lobby-door-body">';
-                html += '<div class="lobby-door-name" style="color: ' + color + ';">' + escapeHtml(door.label || door.key) + '</div>';
-                if (door.sentence) {
-                    html += '<div class="lobby-door-sentence">' + escapeHtml(door.sentence) + '</div>';
-                }
-                html += '<div class="lobby-door-meta">' + escapeHtml(meta.join(' \u00b7 ')) + '</div>';
-                html += '</div><div class="lobby-door-chevron">&#9654;</div></div>';
+                if (!count) continue;
+                var color = door.color || CATEGORY_COLORS[door.key] || CATEGORY_COLORS.other;
+                strips += '<div class="lobby-strip" data-door="' + escapeHtml(door.key) +
+                          '" style="border-left-color: ' + color + ';">';
+                strips += '<img class="lobby-strip-picture" src="' + escapeHtml(more.picture) +
+                          '" alt="' + escapeHtml(more.alt) + '" loading="lazy" onerror="this.style.display=\'none\'">';
+                strips += '<div class="lobby-strip-body"><div class="lobby-strip-words">';
+                strips += '<div class="lobby-door-name" style="color: ' + color + ';">' +
+                          escapeHtml(door.label || door.key) + '</div>';
+                strips += '<div class="lobby-strip-sentence">' + escapeHtml(more.sentence) + '</div>';
+                strips += '</div><div class="lobby-door-chevron">&#9654;</div></div></div>';
+            }
+            if (strips) {
+                html += '<div class="lobby-section"><div class="lobby-heading">More to explore</div>' +
+                        strips + '</div>';
             }
 
             // Featured: the flag the editor sets (Tony's ruling 2026-09-05)
@@ -3189,14 +3286,19 @@
                 html += '</div>';
             }
 
+            // L-447: what an orrery is and who Paloma is, served beside
+            // the sentence; nothing is printed when the config has none.
+            // Since L-517 it stands just above the guest book.
+            var cfgNote = (window.__galleryConfig && window.__galleryConfig.name_note) || '';
+            if (cfgNote) html += '<div class="welcome-note lobby-note">' + escapeHtml(cfgNote) + '</div>';
+
             // Guest book (L-281): fillGuestbook() draws the entries into
             // this box once data/guestbook.json has arrived.
             html += '<div class="lobby-section"><div class="lobby-heading">Guest book</div>';
             html += '<div id="guestbook"></div></div>';
 
-            // Footer
+            // Footer (the About button moved up beside the name, L-517)
             html += '<div class="lobby-footer">';
-            html += '<button class="footer-about-btn" id="lobby-about-btn" title="About Paloma\'s Orrery">i</button>';
             html += LOBBY_FOOTER_ICONS + '</div>';
             html += '<div class="welcome-version" id="welcomeVersion"></div>';
             html += '</div>';
@@ -3208,8 +3310,9 @@
             fillGuestbook();
 
             // A door opens its own screen (L-286, 2026-09-24), where it
-            // opened the side menu before.
-            var doorEls = welcomeState.querySelectorAll('.lobby-door');
+            // opened the side menu before; since L-517 the doors are the
+            // "More to explore" strips.
+            var doorEls = welcomeState.querySelectorAll('.lobby-strip');
             for (var e = 0; e < doorEls.length; e++) {
                 doorEls[e].addEventListener('click', function () {
                     showRoom(this.getAttribute('data-door'), true);
@@ -3422,9 +3525,6 @@
             for (var i = 0; i < vizs.length; i++) {
                 if (inCurrentMode(vizs[i])) shown.push(vizs[i]);
             }
-            var roomCards = {};
-            for (var s = 0; s < shown.length; s++) roomCards[shown[s].room || 'other'] = true;
-
             var here = [], live = 0;
             for (var h = 0; h < shown.length; h++) {
                 if ((shown[h].room || '') === path) {
@@ -3449,15 +3549,14 @@
                 if (n) { kidsWithCards++; lastKidWithCards = kp; }
                 kidRows.push({ path: kp, node: kids[k], count: n, live: nLive });
             }
-            var empty = countEmptyRooms({ key: path, rooms: kids }, roomCards);
-
-            var meta = [plural(here.length, 'exhibit') + (kids.length ? ' here' : '')];
-            if (live) meta.push(live + ' live in 3D');
+            // Plain words (L-517): no "exhibits", "rooms", "live in 3D",
+            // and no count of rooms under construction.
+            var meta = [];
+            if (here.length) meta.push(plural(here.length, 'view') + (kidsWithCards ? ' here' : ''));
             if (deeper) {
                 meta.push(deeper + ' more in ' + (kidsWithCards === 1 ?
-                          (ROOM_LABELS[lastKidWithCards] || '') : kidsWithCards + ' rooms'));
+                          (ROOM_LABELS[lastKidWithCards] || '') : kidsWithCards + ' topics'));
             }
-            if (empty) meta.push(plural(empty, 'room') + ' under construction');
 
             var html = '<div class="room">';
             html += '<div class="room-title" style="color: ' + color + ';">' +
@@ -3465,10 +3564,33 @@
             if (node.sentence) {
                 html += '<div class="room-sentence">' + escapeHtml(node.sentence) + '</div>';
             }
-            html += '<div class="room-meta">' + escapeHtml(meta.join(' \u00b7 ')) + '</div>';
+            if (meta.length) {
+                html += '<div class="room-meta">' + escapeHtml(meta.join(' \u00b7 ')) + '</div>';
+            }
 
+            // A page with its own heading (L-517 ruling 3, relabel): the
+            // wide card stays first, above it, and the heading and its
+            // line name what follows -- the cards here and the topics.
+            var pics = ROOM_PICTURES_HEADING[path];
+            if (pics) {
+                var hereRest = [];
+                for (var hp = 0; hp < here.length; hp++) {
+                    if (here[hp].wide) {
+                        html += '<div class="room-section">' +
+                                wideCardHtml(here[hp], ROOM_LABELS[here[hp].room] || '', 'room-card') + '</div>';
+                    } else {
+                        hereRest.push(here[hp]);
+                    }
+                }
+                here = hereRest;
+                html += '<div class="room-section room-pictures-head">' +
+                        '<div class="room-pictures-title" style="color: ' + color + ';">' +
+                        escapeHtml(pics.heading) + '</div>' +
+                        '<div class="room-pictures-line">' + escapeHtml(pics.line) + '</div></div>';
+            }
             if (here.length) {
-                html += '<div class="room-section"><div class="lobby-heading">Exhibits here</div>';
+                html += '<div class="room-section">' +
+                        (pics ? '' : '<div class="lobby-heading">Views</div>');
                 // A wide card first, full width (L-363, Tony 2026-10-03:
                 // "Yes, exactly"); the rest in the grid as before.
                 var hereNarrow = [];
@@ -3499,23 +3621,26 @@
                 html += '</div></div>';
             }
 
-            if (kidRows.length) {
-                html += '<div class="room-section"><div class="lobby-heading">Rooms</div>';
+            // L-517 ruling 3: a room with no card in this tab is not
+            // listed; it comes back by itself when it gets one.
+            var listed = [];
+            for (var r0 = 0; r0 < kidRows.length; r0++) {
+                if (kidRows[r0].count) listed.push(kidRows[r0]);
+            }
+            if (listed.length) {
+                html += '<div class="room-section"><div class="lobby-heading">Topics</div>';
                 html += '<div class="room-rows">';
-                for (var r = 0; r < kidRows.length; r++) {
-                    var row = kidRows[r];
-                    var rMeta = row.count ? [plural(row.count, 'exhibit')] : ['under construction'];
-                    if (row.live) rMeta.push(row.live + ' live in 3D');
-                    html += '<div class="lobby-door' + (row.count ? '' : ' empty') +
-                            '" data-room="' + escapeHtml(row.path) + '">';
+                for (var r = 0; r < listed.length; r++) {
+                    var row = listed[r];
+                    html += '<div class="lobby-door" data-room="' + escapeHtml(row.path) + '">';
                     html += '<div class="lobby-door-bar" style="background: ' + color + ';"></div>';
                     html += '<div class="lobby-door-body">';
                     html += '<div class="lobby-door-name">' + escapeHtml(row.node.label || row.node.key);
-                    if (row.node.special) html += '<span class="room-special">special exhibit</span>';
+                    if (row.node.special) html += '<span class="room-special">special topic</span>';
                     html += '</div>';
-                    html += '<div class="lobby-door-meta">' + escapeHtml(rMeta.join(' \u00b7 ')) + '</div>';
+                    html += '<div class="lobby-door-meta">' + escapeHtml(plural(row.count, 'view')) + '</div>';
                     html += '</div>';
-                    if (row.count) html += '<div class="lobby-door-chevron">&#9654;</div>';
+                    html += '<div class="lobby-door-chevron">&#9654;</div>';
                     html += '</div>';
                 }
                 html += '</div></div>';
@@ -3551,7 +3676,7 @@
             for (var i = 0; i < vizs.length; i++) {
                 if (inCurrentMode(vizs[i])) count++;
             }
-            el.textContent = count + ' exhibits \u00b7 Updated ' + metadata.last_updated;
+            el.textContent = count + ' views \u00b7 Updated ' + metadata.last_updated;
         }
 
         // ---- Render navigation list ----
