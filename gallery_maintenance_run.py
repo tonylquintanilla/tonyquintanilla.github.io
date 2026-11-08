@@ -218,6 +218,12 @@ Module updated: November 7, 2026 with Anthropic's Claude Opus 5.5
 (L-515 step 1, one nested tree: the "Tree parents" checker runs
 tools/check_tree_parents.py and gates -- every object's parent is the
 centre JPL serves it around, with four planted faults.)
+Module updated: November 7, 2026, night, with Anthropic's Claude Opus 5.5
+(L-515 part 4, the freeze past the served window: the "Scene moment"
+checker runs documentation/smoke_scene_moment.js and gates; every tool
+runs with PO_PYTHON set to this run's Python, which that check uses to
+ask the real resolver; the live check also fetches
+gallery/scene_moment.js, which the page loads with a script tag.)
 """
 
 import hashlib
@@ -612,6 +618,18 @@ OFFLINE_CHECKERS = [
     ("Label words", "node",
      ["documentation/smoke_label_words.js"], ".", "===", False),
 
+    # L-515 part 4, with L-165 (2026-11-07, Tony's ruling: past the
+    # served window a room draws at the last day its data covers and says
+    # so plainly). It requires the real gallery/scene_moment.js, works
+    # nine cases by hand, hands the frozen moment and the moment asked to
+    # the real resolver on the served cache (the first must be accepted,
+    # the second refused), holds the two sentences that say "today", and
+    # checks the page asks the file for EPOCH_ISO and says so under the
+    # title and in the i panel. Its self-test breaks the real file three
+    # ways first. Gates.
+    ("Scene moment", "node",
+     ["documentation/smoke_scene_moment.js"], ".", "===", False),
+
     # L-281 (2026-09-26): the lobby's guest book. It renders the real
     # data/guestbook.json with the real gallery/guestbook.js and fails
     # on a missing time, name or text, or a link the page would drop;
@@ -719,6 +737,8 @@ SERVED_FILES = [
     "gallery/drawer_order.js",
     # L-497 (2026-10-27): likewise, the one text box's words.
     "gallery/text_box.js",
+    # L-515 part 4 (2026-11-07): likewise, the moment a room opens on.
+    "gallery/scene_moment.js",
     # The positions files are not typed here (L-423, 2026-11-06).
     # positions_files() below reads them from the config. The typed list
     # had kept piece C of C/2025 K1's file after the comet became an
@@ -854,9 +874,12 @@ def run_tool(root, runner, argv_tail, cwd):
 
     started = time.time()
     try:
+        # L-515 part 4: a node check that asks the real assembler in
+        # Python (Scene moment) runs it under this run's own Python.
         completed = subprocess.run(
             argv, cwd=workdir, stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, timeout=TOOL_TIMEOUT_SECONDS)
+            stderr=subprocess.STDOUT, timeout=TOOL_TIMEOUT_SECONDS,
+            env=dict(os.environ, PO_PYTHON=sys.executable))
     except subprocess.TimeoutExpired:
         return ("FAIL", time.time() - started,
                 "timed out after %d seconds" % TOOL_TIMEOUT_SECONDS)

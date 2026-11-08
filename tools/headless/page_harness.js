@@ -17,6 +17,10 @@
 // 2a: boot's fourth argument, {session}, opens the page with
 // sessionStorage already holding those items, as a tab would after an
 // earlier page kept them.)
+// Updated November 7, 2026, night, with Anthropic's Claude Opus 5.5 (L-515
+// part 4: boot's {query} adds to the address, "&freeze=1" say, and what
+// the page hands Pyodide -- EPOCH_ISO among it -- is kept on
+// window.__pyGlobals for a walk to read.)
 const fs = require("fs"), path = require("path");
 const { JSDOM, ResourceLoader, VirtualConsole } = require("jsdom");
 
@@ -77,7 +81,7 @@ vc.on("warn", function (m) { if (String(m).indexOf(EXHIBIT) === 0) { errors.push
 
 const html = fs.readFileSync(path.join(ROOT, "interactive.html"), "utf8");
 const dom = new JSDOM(html, {
-  url: "https://palomasorrery.com/interactive.html?exhibit=" + EXHIBIT,
+  url: "https://palomasorrery.com/interactive.html?exhibit=" + EXHIBIT + ((OPTS && OPTS.query) || ""),
   runScripts: "dangerously", resources: new Loader(ROOT), virtualConsole: vc,
   pretendToBeVisual: true,
   beforeParse: function (win) {
@@ -96,7 +100,7 @@ const dom = new JSDOM(html, {
     win.loadPyodide = function () {
       return Promise.resolve({
         FS: { mkdirTree: function () {}, writeFile: function () {} },
-        globals: { set: function () {} },
+        globals: { set: function (k, v) { (win.__pyGlobals = win.__pyGlobals || {})[k] = v; } },
         runPythonAsync: function () { return Promise.resolve(payload); }
       });
     };

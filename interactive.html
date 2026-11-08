@@ -499,6 +499,10 @@
     <!-- The drawer's order: each shell at the distance where it begins
          (L-460). Its own file so that a check can require it. -->
     <script src="gallery/drawer_order.js"></script>
+    <!-- The moment a room opens on, and what it says past the served
+         window (L-515 part 4, L-165). Its own file so that a check can
+         require it. -->
+    <script src="gallery/scene_moment.js"></script>
 
     <!-- Fonts -- match gallery viewer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3400,12 +3404,15 @@ const EXHIBITS = {
                                 ended ? ENDED_PATH_WORDS + starts + " to " + ends + "." :
                                 (comet ? COMET_PATH_WORDS : SPACECRAFT_PATH_WORDS) +
                                 ends + ".", 60)));
+                            // L-515 part 4: in a room drawn at the served
+                            // window's last minute, "today" is not the day shown.
+                            const frozen = !!(sceneMomentAsked && sceneMomentAsked.frozen);
                             if (comet) {
                                 lines.push(bullet(solarSystemSoftWrap(
-                                    COMET_SPAN_WORDS, 60)));
+                                    SceneMoment.todayWords(COMET_SPAN_WORDS, frozen), 60)));
                             } else {
                                 lines.push(bullet(solarSystemSoftWrap(
-                                    SPACECRAFT_DATES_WORDS, 60)));
+                                    SceneMoment.todayWords(SPACECRAFT_DATES_WORDS, frozen), 60)));
                             }
                         } else {
                             warnings.push(label + ": the end of its served path " +
@@ -3643,6 +3650,9 @@ const EXHIBITS = {
 // The room this page is showing, or null for the Explorer.
 const EX = EXHIBITS.hasOwnProperty(EXHIBIT) ? EXHIBITS[EXHIBIT] : null;
 let sunAbsent = [];   // named absences for the drawer, set by init
+// L-515 part 4: the moment the page asked the driver for, and whether it
+// is the served window's last minute (SceneMoment.askFor), set by init.
+let sceneMomentAsked = null;
 
 // Chrome changes that do not need Pyodide, so they run immediately.
 function applySunChrome() {
@@ -3712,6 +3722,20 @@ function reportSunNotes(notes) {
     box.innerHTML = html;
     // The About line stays last (L-475).
     info.insertBefore(box, document.getElementById("info-about"));
+}
+
+// L-515 part 4 (L-165): a room drawn at the served window's last minute
+// says so at the top of its i panel, right under the room's heading, in
+// the words SceneMoment.panelNote gives.
+function reportSceneFrozen(text) {
+    const info = document.getElementById("info-panel");
+    if (!info) { return; }
+    const box = document.createElement("div");
+    box.className = "info-note scene-frozen";
+    box.id = "scene-frozen";
+    box.textContent = text;
+    const heading = info.querySelector("h3");
+    info.insertBefore(box, heading ? heading.nextSibling : info.firstChild);
 }
 
 // L-475 (Tony, at his phone look of 2026-10-22: "this should be on every
@@ -4514,12 +4538,19 @@ async function initSunExhibit() {
             pyodide.globals.set("POS_JSON", JSON.stringify(posFiles));
         }
         // Today at 00:00 UTC, or, for a room that asks, the current
-        // minute (the Solar System room, epochNow).
-        pyodide.globals.set(
-            "EPOCH_ISO",
-            EX.epochNow
-                ? new Date().toISOString().slice(0, 16) + ":00Z"
-                : new Date().toISOString().slice(0, 10) + "T00:00:00Z");
+        // minute (the Solar System room, epochNow). L-515 part 4 (L-165,
+        // Tony's ruling of 2026-11-07): past the served window's end, the
+        // window's last whole minute instead, and the room says so
+        // (gallery/scene_moment.js); the resolver still refuses anything
+        // outside the window. ?freeze=1 (a Mode 5 knob) sets the clock a
+        // day past the window, so the frozen room can be seen early.
+        const servedWindow = JSON.parse(cov).served_window;
+        const freezeKnob = new URLSearchParams(window.location.search)
+            .get("freeze") === "1";
+        const clockMs = (freezeKnob && SceneMoment.pastWindowMs(servedWindow) !== null)
+            ? SceneMoment.pastWindowMs(servedWindow) : Date.now();
+        sceneMomentAsked = SceneMoment.askFor(clockMs, servedWindow, EX.epochNow);
+        pyodide.globals.set("EPOCH_ISO", sceneMomentAsked.iso);
         // A room's own inputs to its driver, if it has any.
         const pyGlobals = EX.pyGlobals || {};
         for (const name of Object.keys(pyGlobals)) {
@@ -4571,6 +4602,14 @@ async function initSunExhibit() {
         // A room may put a line under its title (the Solar System room's
         // date). The Sun and Earth rooms return none, so theirs is as it was.
         sunSceneSubtitle = built.subtitle || null;
+        // L-515 part 4: a room drawn at the window's last minute says so,
+        // under its title and at the top of its i panel.
+        if (sceneMomentAsked && sceneMomentAsked.frozen) {
+            const frozenStamp = sunSceneSubtitle ||
+                sceneMomentStamp(SceneMoment._jdOfMs(Date.parse(sceneMomentAsked.iso)));
+            sunSceneSubtitle = SceneMoment.subtitle(frozenStamp);
+            reportSceneFrozen(SceneMoment.panelNote(frozenStamp));
+        }
         sunAbsent = built.absent || [];
 
         // L-460 (Tony, 2026-10-20): the drawer lists each shell at the
