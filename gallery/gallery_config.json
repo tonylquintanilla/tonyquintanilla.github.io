@@ -8,6 +8,7 @@
       "label": "Solar System",
       "short": "Solar",
       "color": "#c9a44a",
+      "opens": "solar_system",
       "sentence": "",
       "rooms": [
         {

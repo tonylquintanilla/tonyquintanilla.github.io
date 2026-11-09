@@ -32,6 +32,14 @@
 //      fold after each row, folds them all shut on Reset, keeps the fold
 //      for Back and takes it once; index.html offers the way back on a
 //      card the room opened.
+//   5. Part 3 (the Solar System subject page gone, and Back): index.html
+//      sends a room address under a door with "opens" to that card's
+//      live room, in the old address's place; offers one way to the room
+//      on any card under such a door; answers popstate as well as
+//      hashchange, and draws nothing twice; interactive.html draws no
+//      chain in a room under such a door; and every door's "opens" in
+//      gallery/gallery_config.json names a live card. The doors with no
+//      page are printed.
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and breaks the
@@ -42,6 +50,9 @@
 //   it can go red.
 //
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
+// Updated November 8, 2026, evening, with Anthropic's Claude Opus 5.5
+// (L-517 part 3: section 5; the header's way back is now one line for a
+// card the room opened and for any card under a door with no page).
 
 "use strict";
 const fs = require("fs");
@@ -262,10 +273,35 @@ if (/sun-pic[^"]*"[^\n]*class="box"/.test(page)) { failures.push("a picture row 
 const lobby = fs.readFileSync(path.join(root, "index.html"), "utf8");
 [["sessionStorage.getItem('po_room_return')", "index.html does not read what the room kept"],
  ["/\\/interactive\\.html$/.test(roomRef.pathname)", "index.html does not check that the room sent the visitor"],
- ["if (viz && openedFromRoom(viz)) {", "a card the room opened shows no way back to it"],
+ ["var toRoom = viz ? (openedFromRoom(viz) ? 'back' : (liveRoomFor(viz.room) ? 'open' : '')) : '';",
+  "a card the room opened shows no way back to it"],
+ ["toRoom === 'back' ? backToRoom : function () { showRoom(viz.room, true); });",
+  "the header's way to the room is not wired"],
  ["if (openedFromRoom(viz)) { backToRoom(); return; }", "the turn card's back does not go to the room"],
- ["if (window.history.length > 1) { window.history.back(); return; }", "the way back does not step back through history"]
+ ["if (window.history.length > 1) { window.history.back(); return; }", "the way back does not step back through history"],
+ // Part 3: the Solar System subject page gone, and Back.
+ ["var live = liveRoomFor(path);\n            if (live) {", "a room address under a door with no page is not sent to its live room"],
+ ["else window.location.replace(live);", "an old address is not replaced by the room, so Back would land on it again"],
+ ["if (DOORS[d].key !== key || !DOORS[d].opens) continue;", "the page does not read the door's \"opens\""],
+ ["window.addEventListener('popstate', routeFromHistory);", "the page does not answer popstate, so Back can leave a page drawn"],
+ ["window.addEventListener('hashchange', routeFromHistory);", "the page does not answer hashchange"],
+ ["if (!currentVizId && currentRoom && hash === 'room=' + currentRoom) return;",
+  "the second of Back's two signals draws the screen again"]
 ].forEach(function (c) { if (lobby.indexOf(c[0]) < 0) { failures.push(c[1] + " (L-517)"); } });
+if (page.indexOf("if (door && door.opens) { return; }") < 0) {
+  failures.push("a room under a door with no page still draws its chain (\"Solar\") in the top bar (L-517)");
+}
+// The door that has no page names a card that is a live room.
+const config = JSON.parse(fs.readFileSync(path.join(root, "gallery", "gallery_config.json"), "utf8"));
+const opening = (config.doors || []).filter(function (d) { return d.opens; });
+opening.forEach(function (d) {
+  const card = (meta.visualizations || []).find(function (v) { return v.id === d.opens; });
+  if (!card || !card.live) {
+    failures.push("door " + d.key + " opens \"" + d.opens + "\", which is not a live card (L-517)");
+  }
+});
+console.log("Doors with no page of their own: " + (opening.length ? opening.map(function (d) {
+  return d.key + " -> " + d.opens; }).join(", ") : "none"));
 
 if (failures.length) {
   console.log("=== FAIL: " + failures.length + " ===");
@@ -275,4 +311,5 @@ if (failures.length) {
 console.log("=== PASS: a phone is offered the portrait twins and a desktop the landscape " +
             "ones, never a \"none\" card on a phone; every Solar System picture has a " +
             "place naming a row the room serves; Find finds a picture's words; and both " +
-            "pages wire the folds and the way back ===");
+            "pages wire the folds and the way back; the Solar System's addresses open " +
+            "its live room, and Back answers both of its signals ===");

@@ -195,7 +195,23 @@
          in 3D" is gone. The Solar System page keeps its live card first
          and then reads "Solar System pictures and animations", with a
          line saying they are moments saved from the desktop orrery
-         (ROOM_PICTURES_HEADING). -->
+         (ROOM_PICTURES_HEADING; gone in part 3, below).
+     Updated: November 8, 2026, evening, with Anthropic's Claude Opus 5.5
+       (L-517, part 3, from Tony's phone look at part 2)
+       - The Solar System subject page is gone (Tony: "i think we can
+         delete this page. all of these options are available from the
+         tree itself"). A door whose config entry names a card in
+         "opens" has no page: #room=solar_system and any
+         #room=solar_system/... open that card's live room, in the old
+         address's place (liveRoomFor, showRoom). A saved picture under
+         it shows one way to the room in its header and on its turn
+         card: "Back to the live solar system" when the room opened it,
+         "Open the live solar system" otherwise. Earth System and Stars
+         keep their pages.
+       - Back and Forward: the page answers popstate as well as
+         hashchange (routeFromHistory), and the second of the two finds
+         the screen already drawn. Tony's phone look: "from the stars
+         page, the back button does not bring us back to the lobby." -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1222,18 +1238,6 @@
             line-height: 1.4;
         }
         .lobby .welcome-note.lobby-note { margin: 26px auto 0; }
-        .room-pictures-title {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-weight: 600;
-            font-size: 1.3rem;
-            line-height: 1.2;
-        }
-        .room-pictures-line {
-            font-size: 0.84rem;
-            line-height: 1.45;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
         .lobby-row {
             display: flex;
             align-items: center;
@@ -2686,8 +2690,10 @@
                 '<div class="turn-card-title">' + escapeHtml(viz.title || 'Untitled') + '</div>' +
                 '<div class="turn-card-text">Turn your phone to landscape to view this card.</div>' +
                 '<button type="button" class="turn-card-back" id="turnCardBack">' +
-                escapeHtml(ROOM_NODES[viz.room] ? 'Back to ' + (ROOM_LABELS[viz.room] || 'the room')
-                                                : 'Back to the gallery') + '</button>' +
+                escapeHtml(openedFromRoom(viz) ? 'Back to the live solar system'
+                           : liveRoomFor(viz.room) ? 'Open the live solar system'
+                           : ROOM_NODES[viz.room] ? 'Back to ' + (ROOM_LABELS[viz.room] || 'the room')
+                           : 'Back to the gallery') + '</button>' +
                 '</div>';
             welcomeState.style.display = 'flex';
             var back = document.getElementById('turnCardBack');
@@ -3050,15 +3056,6 @@
                    'stars seen from above in their own colours, the Sun in green.',
               sentence: 'Our nearest stars and their planets, in 3D.' }
         ];
-        // A subject page with its own heading over its pictures (L-517
-        // ruling 3, relabel: the live view and the saved pictures are
-        // named so they cannot be taken for each other).
-        var ROOM_PICTURES_HEADING = {
-            solar_system: {
-                heading: 'Solar System pictures and animations',
-                line: 'Moments saved from the desktop orrery, each on its own date. ' +
-                      'For where everything is today, open the live sky.' }
-        };
         var LOBBY_FOOTER_ICONS =
             '<a href="https://www.instagram.com/palomas_orrery/" target="_blank" rel="noopener" title="Instagram @palomas_orrery">' +
             '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg></a>' +
@@ -3212,7 +3209,8 @@
 
             // More to explore (L-517, board D): a picture strip for each
             // other subject, one tap to its page. The Solar System's
-            // subject row is not drawn here; its page stays for old links.
+            // subject row is not drawn here, and since part 3 it has no
+            // page: its addresses open the live room (liveRoomFor).
             // A subject with no card in this tab is left out.
             var strips = '';
             for (var d = 0; d < LOBBY_MORE.length; d++) {
@@ -3422,11 +3420,18 @@
             var chain = room ? roomChain(room) : [];
             var html = '';
             // L-517: a card the Solar System room opened shows one way
-            // back, to the room, in place of its room chain.
-            if (viz && openedFromRoom(viz)) {
+            // back, to the room, in place of its room chain. Since part 3
+            // any card under a door with no page (liveRoomFor) shows one
+            // way to the room too, so a picture opened from an old link or
+            // from Featured keeps its way to the room; its chain named
+            // pages that are gone.
+            var toRoom = viz ? (openedFromRoom(viz) ? 'back' : (liveRoomFor(viz.room) ? 'open' : '')) : '';
+            if (toRoom) {
                 chainEl.innerHTML = '<button type="button" class="chain-back-room">' +
-                    'Back to the live solar system</button>';
-                chainEl.querySelector('.chain-back-room').addEventListener('click', backToRoom);
+                    (toRoom === 'back' ? 'Back to the live solar system'
+                                       : 'Open the live solar system') + '</button>';
+                chainEl.querySelector('.chain-back-room').addEventListener('click',
+                    toRoom === 'back' ? backToRoom : function () { showRoom(viz.room, true); });
                 header.classList.remove('at-lobby');
                 header.classList.remove('no-chain');
                 header.classList.add('on-card');
@@ -3508,7 +3513,39 @@
             if (kmz) kmz.style.display = 'none';
         }
 
+        // A door with no page of its own (L-517 part 3; Tony, Nov 8: "i
+        // think we can delete this page. all of these options are
+        // available from the tree itself"). The door's "opens" in
+        // gallery_config.json names the card whose live room every
+        // address under it opens: #room=solar_system, and any
+        // #room=solar_system/..., go to the live Solar System room, its
+        // saved pictures in the room's drawer (L-165, an old link still
+        // lands somewhere). Returns the live address, or null.
+        function liveRoomFor(path) {
+            var key = (path || '').split('/')[0];
+            for (var d = 0; d < DOORS.length; d++) {
+                if (DOORS[d].key !== key || !DOORS[d].opens) continue;
+                var card = vizLookup[DOORS[d].opens];
+                return (card && card.live) ? card.live : null;
+            }
+            return null;
+        }
+
         function showRoom(path, push) {
+            var live = liveRoomFor(path);
+            if (live) {
+                // From a tap, a step forward, so Back comes back here, as a
+                // live card does (openCard). From an address, the room takes
+                // the address's place, so Back never lands on it again, and
+                // the room's own "Paloma's Orrery" goes forward to the lobby.
+                try {
+                    if (push) sessionStorage.setItem('po_gallery_from', window.location.hash);
+                    else sessionStorage.removeItem('po_gallery_from');
+                } catch (e) {}
+                if (push) window.location.href = live;
+                else window.location.replace(live);
+                return;
+            }
             if (!ROOM_NODES[path]) { goHome(); return; }
             leaveCard();
             currentRoom = path;
@@ -3568,29 +3605,11 @@
                 html += '<div class="room-meta">' + escapeHtml(meta.join(' \u00b7 ')) + '</div>';
             }
 
-            // A page with its own heading (L-517 ruling 3, relabel): the
-            // wide card stays first, above it, and the heading and its
-            // line name what follows -- the cards here and the topics.
-            var pics = ROOM_PICTURES_HEADING[path];
-            if (pics) {
-                var hereRest = [];
-                for (var hp = 0; hp < here.length; hp++) {
-                    if (here[hp].wide) {
-                        html += '<div class="room-section">' +
-                                wideCardHtml(here[hp], ROOM_LABELS[here[hp].room] || '', 'room-card') + '</div>';
-                    } else {
-                        hereRest.push(here[hp]);
-                    }
-                }
-                here = hereRest;
-                html += '<div class="room-section room-pictures-head">' +
-                        '<div class="room-pictures-title" style="color: ' + color + ';">' +
-                        escapeHtml(pics.heading) + '</div>' +
-                        '<div class="room-pictures-line">' + escapeHtml(pics.line) + '</div></div>';
-            }
+            // (The Solar System page's own heading, part 2's "Solar System
+            // pictures and animations", went with that page in part 3.)
             if (here.length) {
                 html += '<div class="room-section">' +
-                        (pics ? '' : '<div class="lobby-heading">Views</div>');
+                        '<div class="lobby-heading">Views</div>';
                 // A wide card first, full width (L-363, Tony 2026-10-03:
                 // "Yes, exactly"); the rest in the grid as before.
                 var hereNarrow = [];
@@ -4829,8 +4848,14 @@
                 doToggleAnnotations();
             });
 
-            // Hash changes (browser back/forward)
-            window.addEventListener('hashchange', handleHash);
+            // The browser's Back and Forward (L-517 part 3). A step back
+            // between two of this page's own addresses is announced twice,
+            // popstate then hashchange; the page answers whichever comes,
+            // and the second finds the screen already drawn. Until Nov 8
+            // it listened for hashchange alone, and on Tony's phone Back
+            // from the Stars page left the page where it was.
+            window.addEventListener('popstate', routeFromHistory);
+            window.addEventListener('hashchange', routeFromHistory);
 
             // Window resize -> Plotly resize + recalculate min-height
             window.addEventListener('resize', function() {
@@ -5223,6 +5248,16 @@
             if (hash && vizLookup[hash]) {
                 loadVisualization(hash);
             }
+        }
+
+        // Back and Forward arrive here, once or twice (setupEvents). The
+        // screen already showing the address is left as it is.
+        function routeFromHistory() {
+            var hash = window.location.hash.replace('#', '');
+            if (hash && !vizLookup[hash] && hiddenSibling[hash]) hash = hiddenSibling[hash];
+            if (hash && hash === currentVizId) return;
+            if (!currentVizId && currentRoom && hash === 'room=' + currentRoom) return;
+            handleHash();
         }
 
         // ---- Home navigation ----

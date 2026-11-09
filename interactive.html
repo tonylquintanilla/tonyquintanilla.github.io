@@ -460,6 +460,10 @@
         and the ticks, so Back returns to the room as it was left
         (gallery/picture_folds.js; ssPictureFold, ssPicsRender,
         ssPicFold, ssPicOpen, ssPicReturn).)
+     Updated: November 8, 2026, evening, with Anthropic's Claude Opus 5.5
+       (L-517 part 3: the Solar System subject page is gone, so a room
+        under a door with "opens" in gallery_config.json draws no chain
+        in its top bar, only "Paloma's Orrery"; "Solar" leaves the top.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1793,6 +1797,14 @@ let computing = false;
             v.live && /^interactive\.html(\?|$)/.test(v.live) &&
             exhibitOf(v.live.split("?")[1] || "") === here);
         if (!card || !card.room) { return; }
+        // L-517 part 3 (Tony, Nov 8: "remove the 'Solar' option at the
+        // top"): a door whose config entry names a card in "opens" has no
+        // subject page -- index.html sends its addresses to that card's
+        // live room -- so a room under it draws no chain, only "Paloma's
+        // Orrery". The Solar System room, the Explorer, the Sun's and
+        // Earth's addresses; the tree is in the drawer.
+        const door = ((config && config.doors) || []).find((d) => d.key === card.room.split("/")[0]);
+        if (door && door.opens) { return; }
         let level = (config && config.doors) || [];
         let path = "";
         let color = null;
