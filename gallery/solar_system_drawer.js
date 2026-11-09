@@ -241,6 +241,15 @@
         return p === 1 ? "1 saved picture matches" : pics + " match";
       }
       const groups = g === 1 ? "1 group" : g + " groups";
+      // L-519: scenes found beside bodies or groups: "1 body and 1 scene
+      // match".
+      if (s) {
+        const parts = [];
+        if (n) { parts.push(n === 1 ? "1 body" : n + " bodies"); }
+        if (g) { parts.push(groups); }
+        parts.push(s === 1 ? "1 scene" : s + " scenes");
+        return parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1] + " match";
+      }
       if (g > 0) {
         return n === 0 ? groups + (g === 1 ? " matches" : " match") :
                (n === 1 ? "1 body" : n + " bodies") + " and " + groups + " match";
@@ -753,7 +762,8 @@
   // fold with it. When no body and no group matches by its own words, a
   // picture's words alone bring its row into view (picRows), with every
   // group above it open (picOpen); p counts those pictures. A body found
-  // that way gets no line under its name.
+  // that way gets no line under its name. L-519: a scene's name brings the
+  // Sun's row whatever else matches; s counts the scenes.
   function searchHits(rows, query, namesByKey, pictureWords) {
     const q = searchKey(query);
     if (!q) { return null; }
@@ -810,11 +820,16 @@
       const hit = (pictureWords[rk] || []).filter(function (e) { return e && holds(e.words); });
       if (!hit.length) { return; }
       hit.forEach(function (e) { picIds[e.id] = true; });
-      if (!alone) { return; }
+      // L-519, Tony's phone look of 2026-11-09 ("find ed138 only finds the
+      // object not the scene"): a scene sits under the Sun, not beside the
+      // bodies it names, so its name brings the Sun's row even when a body
+      // or a group also matches. A saved picture still does only alone.
+      const shows = alone ? hit : hit.filter(function (e) { return e.scene; });
+      if (!shows.length) { return; }
       const row = (rows || []).filter(function (r) { return r.key === rk; })[0];
       if (!row) { return; }
       // L-519: a scene found is counted apart from a picture.
-      hit.forEach(function (e) { if (e.scene) { s++; } else { p++; } });
+      shows.forEach(function (e) { if (e.scene) { s++; } else { p++; } });
       picRows[rk] = true;
       const up = isGroup(row) ? ancestors(rows, row.group)
         : (row.group ? [row.group].concat(ancestors(rows, row.group)) : []);

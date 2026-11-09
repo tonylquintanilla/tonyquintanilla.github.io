@@ -43,7 +43,8 @@
 //   6. L-519 (Scenes): a card marked "scene": true sits in the one Scenes
 //      fold under the Sun's row, ahead of that row's saved pictures, and
 //      never among the pictures even with a drawer_row; it opens its own
-//      link; Find finds its name and counts it as a scene; what the room
+//      link; Find finds its name and counts it as a scene, even when a
+//      body also matches (Tony's phone look of Nov 9); what the room
 //      keeps when a scene is opened is kept through the scene's own
 //      opening, taken by the room as it was left, and dropped by anything
 //      else. In the real metadata no scene is placed as a picture, and the
@@ -53,11 +54,12 @@
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and breaks the
-//   logic seven ways -- a phone offered a landscape card with a portrait
+//   logic eight ways -- a phone offered a landscape card with a portrait
 //   twin, a "none" card offered on a phone, a place naming no row
 //   dropped without a word, a picture's words not found, a picture's
 //   words adding rows while a group matches, a scene listed among the
-//   saved pictures, and a scene's own opening taking what was kept -- so
+//   saved pictures, a scene's own opening taking what was kept, and a
+//   scene hidden while a body matches -- so
 //   a green run has shown it can go red.
 //
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
@@ -65,7 +67,8 @@
 // (L-517 part 3: section 5; the header's way back is now one line for a
 // card the room opened and for any card under a door with no page).
 // Updated November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519:
-// section 6, the Scenes fold; two more breaks).
+// section 6, the Scenes fold; two more breaks). Same day, after Tony's
+// phone look: a scene found beside a body; one more break.
 
 "use strict";
 const fs = require("fs");
@@ -195,6 +198,15 @@ function cases(P, S) {
   want(sc && sc.picIds.scene_mars && sc.s === 1 && sc.p === 0, "a scene's name is not found, or is counted as a picture");
   want(S.WORDS.found(sc.n, sc.g, sc.p, sc.s) === "1 scene matches", "the count line for a scene found: " + S.WORDS.found(sc.n, sc.g, sc.p, sc.s));
   want(S.WORDS.found(0, 0, 2, 1) === "2 saved pictures and 1 scene match", "the count line for pictures and a scene: " + S.WORDS.found(0, 0, 2, 1));
+  // Tony's phone look of 2026-11-09: a scene is found by its name even
+  // when a body also matches; a saved picture still is not.
+  const beside = S.searchHits(ROWS, "earth", NAMES, words);
+  want(beside && beside.keys.earth && beside.n === 1 && beside.picIds.scene_mars && beside.picRows.center &&
+       beside.s === 1 && beside.p === 0 && !beside.picRows.earth,
+       "a scene whose name holds a body's name is not found beside the body, or a picture adds its row");
+  want(S.WORDS.found(beside.n, beside.g, beside.p, beside.s) === "1 body and 1 scene match",
+       "the count line for a body and a scene: " + S.WORDS.found(beside.n, beside.g, beside.p, beside.s));
+  want(S.WORDS.found(2, 1, 0, 2) === "2 bodies, 1 group and 2 scenes match", "the count line for bodies, a group and scenes: " + S.WORDS.found(2, 1, 0, 2));
   const to = "https://x/interactive.html?exhibit=solar-system&show=mars,earth";
   const room = "https://x/interactive.html?exhibit=solar-system&show=jupiter&at=2026-11-09T15:00Z";
   const keptS = P.readReturn(P.returnState("solar-system", P.SCENES_FOLD, "scene_mars", room, to));
@@ -241,7 +253,9 @@ const breaks = [
   ["a scene listed among the saved pictures",
    brokenPF("      if (isScene(v)) { return; }\n", "")],
   ["a scene's own opening taking what was kept",
-   brokenPF("if (back.to === openedHref) { return \"keep\"; }", "")]
+   brokenPF("if (back.to === openedHref) { return \"keep\"; }", "")],
+  ["a scene hidden while a body matches",
+   brokenSSD("const shows = alone ? hit : hit.filter(function (e) { return e.scene; });", "const shows = alone ? hit : [];")]
 ];
 const caught = [];
 breaks.forEach(function (b) {

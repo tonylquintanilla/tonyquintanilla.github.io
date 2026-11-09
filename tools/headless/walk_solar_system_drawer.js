@@ -198,7 +198,10 @@ async function pictures(w, root, payload, page) {
   // Sun's; a desktop is offered the landscape twins, in the metadata's order.
   ok(!!fold("earth") && row("earth").nextElementSibling === fold("earth") && !fold("earth").hidden,
      "Earth's pictures are not in a fold right after Earth's row");
-  ok(!!fold("center") && row("center").nextElementSibling === fold("center") &&
+  // L-519: the Scenes fold, when the metadata holds a scene, comes first.
+  let afterSun = row("center").nextElementSibling;
+  while (afterSun && afterSun.getAttribute("data-pf") === "scenes") { afterSun = afterSun.nextElementSibling; }
+  ok(!!fold("center") && afterSun === fold("center") &&
      pics("center").map(a => a.getAttribute("href")).join() === "interactive.html?exhibit=solar-system-explorer",
      "the Solar System Explorer is not beside the Sun's row, opening its own address");
   ok(pics("earth").map(a => a.getAttribute("data-card")).join() === want("earth", false).join() &&
@@ -275,12 +278,15 @@ async function pictures(w, root, payload, page) {
 }
 
 // 30. L-519 (Featured's rethink): the Scenes fold under the Sun's row.
-// The real metadata holds no scene yet, so the page is served a copy with
-// two added (the harness's {serve}): one in the root, one in Earth. What
-// is expected is worked out here, not by the page's helpers.
+// The page is served a copy of the real metadata (the harness's {serve})
+// with its own scenes taken out and two added: one in the root, one in
+// Earth. What is expected is worked out here, not by the page's helpers.
+// (Tony's first scene, 2026-11-09, broke the walk's counts while the
+// copy kept it.)
 async function scenes(root, payload, page) {
   const fs = require("fs"), os = require("os"), path = require("path");
   const meta = JSON.parse(fs.readFileSync(path.join(root, "gallery", "gallery_metadata.json"), "utf8"));
+  meta.visualizations = meta.visualizations.filter(v => v.scene !== true);
   const ROOT_LINK = "interactive.html?exhibit=solar-system&show=mars,jupiter";
   const EARTH_LINK = "interactive.html?exhibit=earth&show=crust,moon";
   meta.visualizations.push(
@@ -327,6 +333,13 @@ async function scenes(root, payload, page) {
      links("scenes").filter(a => !a.hidden).map(a => a.getAttribute("data-card")).join() === "scene_walk_mars" &&
      d.getElementById("sun-find-count").textContent === "1 scene matches",
      "Find does not find a scene by its name, counted as a scene: " + d.getElementById("sun-find-count").textContent);
+  // Tony's phone look of 2026-11-09 ("find ed138 only finds the object not
+  // the scene"): a body's name that a scene's name also holds finds both.
+  find.value = "jupiter"; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done();
+  ok(!row("jupiter").hidden && !row("center").hidden && !sc.hidden && sc.getAttribute("aria-expanded") === "true" &&
+     links("scenes").filter(a => !a.hidden).map(a => a.getAttribute("data-card")).join() === "scene_walk_mars" &&
+     / and 1 scene match$/.test(d.getElementById("sun-find-count").textContent),
+     "Find does not show a scene beside the body its name holds: " + d.getElementById("sun-find-count").textContent);
   find.value = ""; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done();
   // Reset folds it shut.
   await click(d.getElementById("sun-drawer-all"));
