@@ -53,8 +53,25 @@
 //              pictures whose titles match; and when no body or group
 //              matches by its own words, a picture's words alone bring
 //              its row into view ("Artemis" opens Earth's fold).
+//   SCENES     (L-519, Featured's rethink; Tony's design of 2026-11-09,
+//              09:44: "the card functions just like a shared link but is
+//              permanent through the tree. In a sun drawer called
+//              'Scenes'"). A card marked "scene": true is a SCENE: a
+//              shared link kept as a card, made by the gallery editor's
+//              New Scene window (tools/scene_card.py). Its live address is
+//              the link, with no minute, so it opens at the visitor's now.
+//              Every scene sits in ONE fold named Scenes under the Sun's
+//              row, ahead of that row's saved pictures, never among them.
+//              A fold has an id of its own (the row's key for its saved
+//              pictures, SCENES_FOLD for the scenes) and the row it sits
+//              under (rowOf). A scene opens the room itself, so what the
+//              room keeps for Back names the scene's address ("to"): the
+//              scene's own opening leaves it for the opening Back brings
+//              (returnFor).
 //
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
+// Updated November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519: the
+// Scenes fold under the Sun's row; folds keyed by their own id).
 
 (function (global) {
   "use strict";
@@ -65,13 +82,22 @@
   // the card came from the room.
   const RETURN_KEY = "po_room_return";
   const FOLD_PREFIX = "pictures:";
+  // L-519: a scene card, and the one fold the scenes sit in.
+  const SCENE_FIELD = "scene";
+  const SCENES_FOLD = "scenes";
+  const SCENES_ROW = "sun";
 
   // The visitor's words (L-517, the brief's board F). Words for Tony's
   // phone look.
   const WORDS = {
     fold: "Saved pictures",
-    line: "Saved pictures: each opens on its own page."
+    line: "Saved pictures: each opens on its own page.",
+    // L-519: words for Tony's phone look.
+    scenes: "Scenes",
+    scenesLine: "Each scene opens with its bodies ticked, at today's date."
   };
+
+  function isScene(v) { return !!v && v[SCENE_FIELD] === true; }
 
   // A phone, by index.html's own test: narrower than 768 px, or a touch
   // screen whose short side is a phone's (a phone held sideways).
@@ -121,28 +147,58 @@
     return null;
   }
 
-  // {byKey: {rowKey: [{id, title, href, room}]}, keys: [rowKey, ...] in
-  // first-seen order, unplaced: [{id, place}], count}. rows is the room's
+  // {byKey: {foldId: [{id, title, href, room, scene}]}, keys: [foldId, ...]
+  // in first-seen order, rowOf: {foldId: rowKey}, kind: {foldId:
+  // "pictures" | "scenes"}, unplaced: [{id, place}], count (pictures),
+  // scenes (count)}. A picture fold's id is its row's key; the scenes'
+  // fold is SCENES_FOLD, under the Sun's row. rows is the room's
   // rowsFromServed list. Cards keep the metadata's order inside a fold.
   // A card whose place names no served row is reported, never dropped
-  // quietly.
+  // quietly; a scene is never a saved picture, whatever it carries.
   function foldsFrom(metadata, rows, phone) {
     const cards = (metadata && Array.isArray(metadata.visualizations))
       ? metadata.visualizations : [];
     const byId = {};
     cards.forEach(function (v) { if (v && v.id) { byId[v.id] = v; } });
-    const byKey = {}, keys = [], unplaced = [];
-    let count = 0;
+    const byKey = {}, keys = [], unplaced = [], rowOf = {}, kind = {};
+    let count = 0, scenes = 0;
     cards.forEach(function (v) {
+      if (!isScene(v) || !inMode(v, byId, phone)) { return; }
+      const key = rowKeyFor(SCENES_ROW, rows);
+      if (!key) { unplaced.push({ id: v.id, place: SCENES_ROW }); return; }
+      if (!byKey[SCENES_FOLD]) {
+        byKey[SCENES_FOLD] = []; keys.push(SCENES_FOLD);
+        rowOf[SCENES_FOLD] = key; kind[SCENES_FOLD] = "scenes";
+      }
+      byKey[SCENES_FOLD].push({ id: v.id, title: v.title || v.id, href: href(v),
+                                room: v.room || "", scene: true });
+      scenes++;
+    });
+    cards.forEach(function (v) {
+      if (isScene(v)) { return; }
       if (!v || typeof v[FIELD] !== "string" || !v[FIELD]) { return; }
       if (!inMode(v, byId, phone)) { return; }
       const key = rowKeyFor(v[FIELD], rows);
       if (!key) { unplaced.push({ id: v.id, place: v[FIELD] }); return; }
-      if (!byKey[key]) { byKey[key] = []; keys.push(key); }
+      if (!byKey[key]) { byKey[key] = []; keys.push(key); rowOf[key] = key; kind[key] = "pictures"; }
       byKey[key].push({ id: v.id, title: v.title || v.id, href: href(v), room: v.room || "" });
       count++;
     });
-    return { byKey: byKey, keys: keys, unplaced: unplaced, count: count };
+    return { byKey: byKey, keys: keys, rowOf: rowOf, kind: kind,
+             unplaced: unplaced, count: count, scenes: scenes };
+  }
+
+  // The folds under one row, in the order they are drawn: its scenes first
+  // (the Sun's row), then its saved pictures.
+  function foldsAt(folds, rowKey) {
+    const out = [];
+    ((folds && folds.keys) || []).forEach(function (f) {
+      if (folds.rowOf[f] === rowKey && folds.kind[f] === "scenes") { out.push(f); }
+    });
+    ((folds && folds.keys) || []).forEach(function (f) {
+      if (folds.rowOf[f] === rowKey && folds.kind[f] !== "scenes") { out.push(f); }
+    });
+    return out;
   }
 
   // The fold a row's pictures sit in, by the row's key.
@@ -157,19 +213,26 @@
     return k + " of " + n;
   }
 
-  // {rowKey: [{id, words}]}: what Find matches, for searchHits.
+  // {rowKey: [{id, words, scene}]}: what Find matches, for searchHits,
+  // by the row each fold sits under (the scenes under the Sun's).
   function searchWords(folds) {
     const out = {};
     ((folds && folds.keys) || []).forEach(function (k) {
-      out[k] = folds.byKey[k].map(function (e) { return { id: e.id, words: e.title }; });
+      const row = (folds.rowOf && folds.rowOf[k]) || k;
+      out[row] = (out[row] || []).concat(folds.byKey[k].map(function (e) {
+        return { id: e.id, words: e.title, scene: !!e.scene }; }));
     });
     return out;
   }
 
   // What the room keeps when a picture is opened, as the text
   // sessionStorage holds, and the same read back (null for anything else).
-  function returnState(exhibit, rowKey, cardId, url) {
-    return JSON.stringify({ exhibit: exhibit, fold: rowKey, card: cardId, url: url });
+  // to: for a scene, the address it opens (absolute), which is the room
+  // itself (L-519).
+  function returnState(exhibit, rowKey, cardId, url, to) {
+    const s = { exhibit: exhibit, fold: rowKey, card: cardId, url: url };
+    if (typeof to === "string" && to) { s.to = to; }
+    return JSON.stringify(s);
   }
   function readReturn(text) {
     if (typeof text !== "string" || !text) { return null; }
@@ -180,11 +243,27 @@
     return s;
   }
 
+  // What an opening of the room does with what was kept. For a scene
+  // ("to" kept): "keep" when this opening is the scene itself, so the
+  // opening Back brings takes it; "take" when this opening is the room as
+  // it was left (its address kept as "url"); otherwise "drop" (a reload of
+  // the scene, or any other opening). For a saved picture, "take", once.
+  function returnFor(back, openedHref) {
+    if (!back || typeof back.to !== "string") { return "take"; }
+    if (back.to === openedHref) { return "keep"; }
+    return back.url === openedHref ? "take" : "drop";
+  }
+
   global.PictureFolds = {
     FIELD: FIELD,
     RETURN_KEY: RETURN_KEY,
     FOLD_PREFIX: FOLD_PREFIX,
+    SCENE_FIELD: SCENE_FIELD,
+    SCENES_FOLD: SCENES_FOLD,
     WORDS: WORDS,
+    isScene: isScene,
+    foldsAt: foldsAt,
+    returnFor: returnFor,
     isPhone: isPhone,
     inMode: inMode,
     href: href,

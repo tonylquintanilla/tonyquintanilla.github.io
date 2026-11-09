@@ -27,6 +27,13 @@ WHAT THE BUTTONS DO
   Move Up/Down   reorders the selection among its siblings; the order
                  in the tree is the order on the page
   Featured       toggles the What's New flag on the selected card
+  New Scene...   keeps a shared link from the Solar System room as a
+                 SCENE (L-519): paste the link the phone's Share gives;
+                 the window takes off the website's address and the
+                 minute, names any row it cannot find, suggests a name,
+                 and refuses a link already on a card. A scene sits in
+                 the room's Scenes group under the Sun; Featured on puts
+                 it on the gallery page's Featured too. Save All writes it
   Delete         removes a card from the index (its JSON file stays;
                  gallery_cleanup.py removes orphans) or an EMPTY room
   Save All       writes both files (Ctrl+S)
@@ -80,6 +87,14 @@ nothing said so. Now any window holding an older copy stops and says to
 Reload from disk first. The status bar and the console name the file the
 editor opened, so it is plain which copy it is working on.
 
+Module updated: November 9, 2026 with Anthropic's Claude Opus 5.5
+(L-519, Featured's rethink): the New Scene window (toolbar and Card menu).
+A scene is a card marked "scene": true whose live address is a shared link
+from the Solar System room with no minute; the room lists it in its Scenes
+group under the Sun (gallery/picture_folds.js). The window's logic is
+tools/scene_card.py, checked by tools/test_scene_card.py; the tree marks a
+scene "scene" where a live card says "live".
+
 Role: devtool
 Domain: gallery_pipeline
 """
@@ -124,6 +139,8 @@ def preview_base():
 # live_scene_urls() moved to json_converter.py on 2026-09-06 (L-288) so
 # Studio and the editor read one list. Same signature, same result.
 from json_converter import live_scene_urls  # noqa: E402
+# L-519 (2026-11-09): the New Scene window's logic, which needs no window.
+import scene_card  # noqa: E402
 
 
 # ============================================================
@@ -312,6 +329,8 @@ class GalleryEditor:
         c.add_separator()
         c.add_command(label="Preview in Browser", command=lambda: self._preview(None))
         c.add_command(label="Pick Live Scene URL...", command=self._pick_live)
+        c.add_separator()
+        c.add_command(label="New Scene...", command=self._new_scene)
         menubar.add_cascade(label="Card", menu=c)
 
         self.root.bind('<Control-s>', lambda e: self._save_all())
@@ -333,6 +352,8 @@ class GalleryEditor:
         for text, cmd, tip in (
             ("Preview", lambda: self._preview(None), "Open the selected card in your browser (index.html?preview=)"),
             ("Featured", self._toggle_featured, "Toggle the What's New flag on the selected card"),
+            ("New Scene...", self._new_scene,
+             "Keep a shared link from the Solar System room as a scene (the room's Scenes group)"),
             ("Delete", self._delete_selected, "Delete a card from the index, or an empty room"),
         ):
             b = ttk.Button(tb, text=text, command=cmd)
@@ -491,7 +512,9 @@ class GalleryEditor:
         def add_card(parent_iid, c, _color):
             star = "\u2605 " if c.get('featured') else ""
             marks = []
-            if c.get('live'):
+            if c.get(scene_card.SCENE_FIELD) is True:
+                marks.append('scene')
+            elif c.get('live'):
                 marks.append('live')
             slots = [s for s in SLOTS if (c.get('files') or {}).get(s)]
             marks.append('+'.join(s[0].upper() for s in slots) if slots
@@ -1216,6 +1239,141 @@ class GalleryEditor:
             self._mark_dirty()
             self._refresh_tree(keep='card:' + c['id'])
             self.status_var.set(f"Live scene for {c['id']}: {new or 'none'}")
+
+    # --------------------------------------------------------
+    # New scene (L-519): a shared link kept as a card
+    # --------------------------------------------------------
+
+    def _new_scene(self):
+        """The New Scene window. Its logic is tools/scene_card.py, checked by
+        tools/test_scene_card.py without a window; this only shows it."""
+        self._apply_form()
+        repo_root = os.path.dirname(os.path.dirname(self.meta_path))
+        try:
+            config, earth_src, rend_src = scene_card.read_sources(repo_root)
+        except (OSError, ValueError) as e:
+            messagebox.showerror("New scene", f"Could not read the website's object list:\n{e}")
+            return
+        cards = self.data['visualizations']
+        dlg = tk.Toplevel(self.root)
+        dlg.title("New scene")
+        dlg.geometry("760x520")
+        dlg.transient(self.root)
+        dlg.grab_set()
+        pad = dict(anchor='w', padx=12)
+        ttk.Label(dlg, text="Paste the link your phone's Share gives:").pack(pady=(12, 2), **pad)
+        paste_var = tk.StringVar()
+        paste = ttk.Entry(dlg, textvariable=paste_var)
+        paste.pack(fill='x', padx=12)
+        ttk.Label(dlg, text="The scene's link (you can edit it; it is read again after each edit):").pack(
+            pady=(10, 2), **pad)
+        link_var = tk.StringVar()
+        lf = ttk.Frame(dlg)
+        lf.pack(fill='x', padx=12)
+        ttk.Entry(lf, textvariable=link_var).pack(side='left', fill='x', expand=True)
+        look = ttk.Button(lf, text="Look")
+        look.pack(side='left', padx=(6, 0))
+        lines_box = tk.Text(dlg, height=10, wrap='word', relief='flat',
+                            background=dlg.cget('background'))
+        lines_box.tag_configure('good', foreground='#1a7f37')
+        lines_box.tag_configure('bad', foreground='#c62828')
+        lines_box.tag_configure('note', foreground='#666666')
+        lines_box.pack(fill='both', expand=True, padx=12, pady=(10, 4))
+        nf = ttk.Frame(dlg)
+        nf.pack(fill='x', padx=12, pady=4)
+        ttk.Label(nf, text="Name:").pack(side='left')
+        name_var = tk.StringVar()
+        ttk.Entry(nf, textvariable=name_var).pack(side='left', fill='x', expand=True, padx=(6, 0))
+        feat_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(dlg, text="Also show on the gallery page's Featured", variable=feat_var).pack(
+            pady=4, **pad)
+        bf = ttk.Frame(dlg)
+        bf.pack(fill='x', padx=12, pady=(4, 12))
+        save = ttk.Button(bf, text="Save scene")
+        save.pack(side='right', padx=2)
+        ttk.Button(bf, text="Cancel", command=dlg.destroy).pack(side='right', padx=2)
+        state = {'cleaned': None, 'ok': False, 'missing': [], 'rows': {},
+                 'name_auto': '', 'busy': False}
+
+        def recheck(*_a):
+            c = scene_card.clean(link_var.get())
+            rows = scene_card.known_rows(config, c.exhibit, earth_src, rend_src) if c.exhibit else {}
+            lines, ok, missing = scene_card.check(c, rows, cards)
+            if not (name_var.get().strip() or c.problems):
+                lines.append(('bad', "Give the scene a name."))
+            state.update(cleaned=c, ok=ok, missing=missing, rows=rows)
+            lines_box.configure(state='normal')
+            lines_box.delete('1.0', 'end')
+            for kind, text in lines:
+                lines_box.insert('end', text + '\n', kind)
+            lines_box.configure(state='disabled')
+            # The name follows the rows until it is typed over.
+            sug = scene_card.suggest_name(c, rows)
+            if name_var.get() in ('', state['name_auto']) and sug != state['name_auto']:
+                state['name_auto'] = sug
+                state['busy'] = True
+                name_var.set(sug)
+                state['busy'] = False
+            ready = ok and bool(name_var.get().strip())
+            save.state(['!disabled'] if ready else ['disabled'])
+            look.state(['!disabled'] if c.link else ['disabled'])
+
+        def pasted(*_a):
+            c = scene_card.clean(paste_var.get())
+            link_var.set(c.link if c.link else paste_var.get().strip())
+            # Show what the paste lost, which the cleaned box no longer has.
+            recheck()
+            if c.removed and c.link:
+                lines_box.configure(state='normal')
+                for r in reversed(c.removed):
+                    lines_box.insert('1.0', "Taken off: " + r + ".\n", 'note')
+                lines_box.configure(state='disabled')
+
+        def named(*_a):
+            if not state['busy']:
+                recheck()
+
+        def do_look():
+            c = state['cleaned']
+            if c and c.link:
+                base, where = preview_base()
+                webbrowser.open(base + c.link)
+                self.status_var.set(f"Scene opened on {where}: {base}{c.link}")
+
+        def do_save():
+            recheck()
+            c = state['cleaned']
+            name = name_var.get().strip()
+            if not (state['ok'] and name and c):
+                return
+            if state['missing'] and not messagebox.askyesno(
+                    "New scene", "Not found in the website's object list: "
+                    + ", ".join(state['missing'])
+                    + ".\nThe room would say it cannot show it. Save anyway?", parent=dlg):
+                return
+            entry = scene_card.new_entry(name, c.link, feat_var.get(), cards)
+            # After the last card in the scenes' room, so the tree keeps them together.
+            at = len(cards)
+            for i, v in enumerate(cards):
+                if v.get('room') == entry['room']:
+                    at = i + 1
+            cards.insert(at, entry)
+            self._mark_dirty()
+            dlg.destroy()
+            self._refresh_tree(keep='card:' + entry['id'])
+            self.tree.selection_set('card:' + entry['id'])
+            self.status_var.set(f"New scene '{name}' ({entry['id']}) -> {c.link}. "
+                                "Save All writes it.")
+
+        paste_var.trace_add('write', pasted)
+        link_var.trace_add('write', named)
+        name_var.trace_add('write', named)
+        look.configure(command=do_look)
+        save.configure(command=do_save)
+        dlg.bind('<Escape>', lambda e: dlg.destroy())
+        recheck()
+        paste.focus_set()
+        self.root.wait_window(dlg)
 
     # --------------------------------------------------------
     # Dirty state, save, close

@@ -142,6 +142,7 @@ ROLE_MAP = {
     'pull_constants_export':               'devtool',
     'pull_drawings':                       'devtool',
     'pull_objects_export':                 'devtool',
+    'scene_card':                          'devtool',
     'serve_gallery':                       'devtool',
     'sweep_report':                        'devtool',
     'test_artifact1_earth':                'devtool',
@@ -150,6 +151,7 @@ ROLE_MAP = {
     'test_guestbook_updater':              'devtool',
     'test_mirror_objects':                 'devtool',
     'test_pull_failures':                  'devtool',
+    'test_scene_card':                     'devtool',
     'test_served_list':                    'devtool',
 }
 # ROLE-MAP:END

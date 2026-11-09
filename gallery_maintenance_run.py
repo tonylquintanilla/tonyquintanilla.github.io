@@ -236,6 +236,11 @@ Module updated: November 8, 2026, night, with Anthropic's Claude Opus 5.5
 documentation/smoke_scene_address.js and gates, its self-test breaking
 the real file three ways; the live check also fetches
 gallery/scene_address.js, which the page loads with a script tag.)
+Module updated: November 9, 2026 with Anthropic's Claude Opus 5.5
+(L-519, Featured's rethink: Scenes. The "Scene cards" checker runs
+tools/test_scene_card.py, the logic behind the gallery editor's New Scene
+window, and gates, its self-test breaking the real file three ways; the
+Picture folds checker now also holds the Scenes fold under the Sun's row.)
 """
 
 import hashlib
@@ -597,6 +602,18 @@ OFFLINE_CHECKERS = [
     # files five ways first. Gates.
     ("Picture folds", "node",
      ["documentation/smoke_picture_folds.js"], ".", "===", False),
+
+    # L-519 (2026-11-09, Featured's rethink): SCENES, a shared link kept as
+    # a card by the gallery editor's New Scene window. It checks
+    # tools/scene_card.py without the window: a pasted link cleaned to the
+    # card's address (the website's address and the minute taken off and
+    # named), a link that cannot be a scene refused, a key no row has
+    # named, a link already on a card refused; the rows each room's
+    # address may name, read from the real config; and every scene in the
+    # real metadata clean, its rows found. Its self-test breaks the real
+    # file three ways first. Gates.
+    ("Scene cards", "python",
+     ["tools/test_scene_card.py"], ".", "===", False),
 
     # L-456 (2026-10-20): the i panel lists its sources one to a line,
     # each web address a link. It requires the real gallery/source_list.js,

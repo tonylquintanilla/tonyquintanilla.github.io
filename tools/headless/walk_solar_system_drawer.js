@@ -127,6 +127,15 @@
 // portrait ones, Find on "Artemis" and "Halley", Reset, the fold and ticks
 // kept for Back and put back once -- and, given a planted copy of the page
 // as a third argument, walks section 29 alone, which must fail.
+// Updated November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519): section
+// 30 walks the Scenes fold under the Sun's row on a copy of the metadata
+// holding two scenes -- closed, named, its bookmark mark and count, ahead of
+// the Sun's saved pictures; open, its line and each scene by name with an
+// arrow and its link; Find counting a scene; Reset; a scene tapped keeping
+// the fold and its address and no ticks; the scene's own opening on its
+// rows with the drawer shut; Back opening the room as left at Scenes; a
+// reload of the scene dropping what was kept. A planted page walks 29 and
+// 30 alone.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -265,6 +274,107 @@ async function pictures(w, root, payload, page) {
               " on a desktop, " + phoneEarth.length + " on a phone; Artemis " + artemis.length);
 }
 
+// 30. L-519 (Featured's rethink): the Scenes fold under the Sun's row.
+// The real metadata holds no scene yet, so the page is served a copy with
+// two added (the harness's {serve}): one in the root, one in Earth. What
+// is expected is worked out here, not by the page's helpers.
+async function scenes(root, payload, page) {
+  const fs = require("fs"), os = require("os"), path = require("path");
+  const meta = JSON.parse(fs.readFileSync(path.join(root, "gallery", "gallery_metadata.json"), "utf8"));
+  const ROOT_LINK = "interactive.html?exhibit=solar-system&show=mars,jupiter";
+  const EARTH_LINK = "interactive.html?exhibit=earth&show=crust,moon";
+  meta.visualizations.push(
+    { id: "scene_walk_mars", title: "Mars and Jupiter", room: "solar_system", shape: "9:16", files: {},
+      live: ROOT_LINK, featured: true, scene: true },
+    { id: "scene_walk_crust", title: "Crust and Moon", room: "solar_system", shape: "9:16", files: {},
+      live: EARTH_LINK, featured: false, scene: true });
+  const copy = path.join(os.tmpdir(), "walk_scenes_metadata.json");
+  fs.writeFileSync(copy, JSON.stringify(meta));
+  const opts = (more) => Object.assign({ serve: { "gallery/gallery_metadata.json": copy } },
+                                       page ? { page: page } : {}, more || {});
+  const w = await h.boot(root, "solar-system", payload, opts());
+  const d = w.document, E = (s) => w.eval(s);
+  const click = async (el) => { el.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true })); await h.done(); };
+  const row = (key) => d.querySelector('#sun-drawer-list .sun-row[data-k="' + E("ssIndex(" + JSON.stringify(key) + ")") + '"]');
+  const fold = (id) => d.querySelector('#sun-drawer-list .sun-pics[data-pf="' + id + '"]');
+  const links = (id) => Array.from(d.querySelectorAll('#sun-drawer-list a.sun-pic[data-pf="' + id + '"]'));
+  const sc = fold("scenes");
+  // 30a. Right under the Sun's row, ahead of its saved pictures, closed,
+  // named Scenes with its own mark and its count.
+  ok(!!sc && row("center").nextElementSibling === sc, "the Scenes fold is not right under the Sun's row");
+  if (!sc) { return; }
+  const after = links("scenes").length ? links("scenes")[links("scenes").length - 1].nextElementSibling : null;
+  ok(after === fold("center"), "the Sun's saved pictures do not follow its Scenes");
+  ok(sc.querySelector(".rname").textContent === "Scenes" && sc.getAttribute("aria-expanded") === "false" &&
+     sc.querySelector(".gcount").textContent === "2" && !!sc.querySelector("svg.picmark path") &&
+     !sc.querySelector("svg.picmark rect") && !sc.querySelector(".box"),
+     "the Scenes fold is not closed, named Scenes, with its bookmark mark and its count of 2");
+  ok(links("scenes").every(a => a.hidden), "a scene shows when the room opens");
+  // 30b. Open: its line, and each scene's name with an arrow, opening its link.
+  await click(sc.querySelector(".rname"));
+  const line = d.querySelector('#sun-drawer-list .sun-pics-line[data-pf="scenes"]');
+  ok(!line.hidden && line.textContent === "Each scene opens with its bodies ticked, at today's date.",
+     "the open Scenes fold does not show its line: " + (line && line.textContent));
+  ok(links("scenes").map(a => a.getAttribute("href")).join() === ROOT_LINK + "," + EARTH_LINK &&
+     links("scenes").every(a => !a.hidden && a.querySelector(".parrow") && !a.querySelector(".box")) &&
+     links("scenes").map(a => a.querySelector(".rname").textContent).join() === "Mars and Jupiter,Crust and Moon",
+     "the scenes do not show by name with an arrow, opening their links");
+  ok(!links("center").some(a => /scene_walk/.test(a.getAttribute("data-card"))), "a scene is among the Sun's saved pictures");
+  // 30c. Find a scene by its name.
+  const find = d.getElementById("sun-find-input");
+  find.value = "Mars and J"; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done();
+  ok(!sc.hidden && sc.getAttribute("aria-expanded") === "true" &&
+     links("scenes").filter(a => !a.hidden).map(a => a.getAttribute("data-card")).join() === "scene_walk_mars" &&
+     d.getElementById("sun-find-count").textContent === "1 scene matches",
+     "Find does not find a scene by its name, counted as a scene: " + d.getElementById("sun-find-count").textContent);
+  find.value = ""; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done();
+  // Reset folds it shut.
+  await click(d.getElementById("sun-drawer-all"));
+  ok(sc.getAttribute("aria-expanded") === "false", "Reset leaves the Scenes fold open");
+  // 30d. A scene tapped keeps the fold and its own address, and no ticks.
+  await click(row("venus").querySelector(".pick"));
+  await click(sc.querySelector(".rname"));
+  d.addEventListener("click", (ev) => ev.preventDefault());   // stay on the page
+  await click(links("scenes")[0]);
+  const kept = w.sessionStorage.getItem("po_room_return");
+  const k = kept ? JSON.parse(kept) : {};
+  ok(k.fold === "scenes" && k.card === "scene_walk_mars" && k.to === "https://palomasorrery.com/" + ROOT_LINK &&
+     k.url === w.location.href && w.sessionStorage.getItem("po_root_ticks") === null,
+     "opening a scene does not keep the Scenes fold and its address, or keeps ticks: " + kept);
+  const written = w.sessionStorage.getItem("po_scene_at_written") || "";
+  // 30e. The scene's own opening: its rows, at now, the drawer shut, and
+  // what was kept left for Back.
+  const ws = await h.boot(root, "solar-system", payload,
+    opts({ query: "&show=mars,jupiter", session: { po_room_return: kept || "" } }));
+  const ticked = (win) => win.eval("sunGroups.filter(function (g) { return g.shown && g.key !== 'center'; })" +
+                                   ".map(function (g) { return g.key; }).sort().join()");
+  ok(ticked(ws) === "jupiter,mars" && !ws.document.getElementById("sun-drawer").classList.contains("open") &&
+     ws.sessionStorage.getItem("po_room_return") === kept,
+     "the scene does not open on its rows with the drawer shut, keeping what Back takes: " + ticked(ws) + " | " +
+     ws.sessionStorage.getItem("po_room_return"));
+  ok(!ws.document.getElementById("scene-update"), "a scene opens as a shared minute, with its \"Tap to update.\" line");
+  // 30f. Back: the room as it was left, the drawer open at Scenes, and
+  // what was kept taken.
+  const q = k.url ? k.url.replace("https://palomasorrery.com/interactive.html?exhibit=solar-system", "") : "";
+  const wb = await h.boot(root, "solar-system", payload,
+    opts({ query: q, session: { po_room_return: kept || "", po_scene_at_written: written } }));
+  const fb = wb.document.querySelector('#sun-drawer-list .sun-pics[data-pf="scenes"]');
+  ok(wb.document.getElementById("sun-drawer").classList.contains("open") && !!fb &&
+     fb.getAttribute("aria-expanded") === "true" && /venus/.test(ticked(wb)) &&
+     wb.sessionStorage.getItem("po_room_return") === null,
+     "Back does not open the room as left, Venus ticked, the drawer at Scenes, taking what was kept: " + ticked(wb));
+  // 30g. A reload of the scene (its address now carries the minute) drops
+  // what was kept and opens shut.
+  const wr = await h.boot(root, "solar-system", payload,
+    opts({ query: "&show=mars,jupiter&at=2026-11-09T12:00Z", session: { po_room_return: kept || "" } }));
+  ok(!wr.document.getElementById("sun-drawer").classList.contains("open") &&
+     wr.sessionStorage.getItem("po_room_return") === null,
+     "a reload of the scene opens the drawer at Scenes, or keeps what was kept");
+  // The control for 30e: a link that carries a minute does show the line.
+  ok(!!wr.document.getElementById("scene-update"), "the \"Tap to update.\" line is not where 30e looks for it");
+  console.log("  30: Scenes under the Sun, 2 scenes; Back to " + (q || "(none)"));
+}
+
 (async () => {
   const [root, given, planted] = process.argv.slice(2);
   const fs = require("fs"), os = require("os"), path = require("path");
@@ -272,10 +382,11 @@ async function pictures(w, root, payload, page) {
   data.room = Object.assign({}, data.room, { arrival: { drawn: ["earth"], highlight: "earth" } });
   const payload = path.join(os.tmpdir(), "walk_solar_system_payload.json");
   fs.writeFileSync(payload, JSON.stringify(data));
-  // L-517: a planted copy of the page walks section 29 alone.
+  // L-517: a planted copy of the page walks section 29 alone (L-519: and 30).
   if (planted) {
     const wp = await h.boot(root, "solar-system", payload, { page: planted });
     await pictures(wp, root, payload, planted);
+    await scenes(root, payload, planted);
     console.log(fails.length ? "FAIL " + fails.length + " of " + n + " (planted " + planted + "):\n  " + fails.join("\n  ")
                              : "PASS: " + n + " checks on the planted page -- it should have failed");
     process.exit(fails.length ? 1 : 0);
@@ -1416,6 +1527,8 @@ async function pictures(w, root, payload, page) {
   }
   // 29. L-517: the saved pictures, last, since it boots the page again.
   await pictures(w, root, payload, null);
+  // 30. L-519: the Scenes fold, on a copy of the metadata.
+  await scenes(root, payload, null);
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);
 })();

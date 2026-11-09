@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** November 08, 2026 by `module_atlas.py`  
+**Generated:** November 09, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,9 +10,9 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 53  
-**Total Lines of Code (non-blank):** 29,703  
-**Total Public Functions/Classes:** 476
+**Total Python Files:** 55  
+**Total Lines of Code (non-blank):** 30,356  
+**Total Public Functions/Classes:** 487
 
 ## Classification Coverage
 
@@ -109,19 +109,20 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `debug_encke_tp.py` | - run the EXACT same live Horizons query gallery_cache_builder.py's fetch_solution_tp() makes for Encke, and print the complete raw response text. (61 lines) |
 | `fingerprint.py` | L-080 semantic fingerprint. (98 lines) |
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
-| `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,211 lines) |
+| `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,360 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,633 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,649 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (555 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (883 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (808 lines) |
 | `mirror_objects.py` | - write each served object's identity, description and NASA link into data/objects_config.json from the orrery's objects export, and name every difference it finds. (494 lines) |
-| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (838 lines) |
+| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (839 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (205 lines) |
 | `pull_drawings.py` | - copy the orrery's stored drawings into the gallery, and record the SHA they came from. (205 lines) |
 | `pull_objects_export.py` | - copy the orrery's objects export into the gallery, and record the SHA it came from. (105 lines) |
+| `scene_card.py` | - a SCENE: a shared link from the Solar System room kept as a card, made by the gallery editor's New Scene window (L-519, Featured's rethink). (299 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (131 lines) |
@@ -130,6 +131,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (315 lines) |
 | `test_mirror_objects.py` | - tools/mirror_objects.py does what it says, on fixtures where each refusal and each kind of write must happen, and then on the real config. (455 lines) |
 | `test_pull_failures.py` | - a pull that cannot fetch fails by name, writes nothing, and the mirror after it does not run; and proof that this check can fail. (355 lines) |
+| `test_scene_card.py` | - checks tools/scene_card.py, the logic behind the gallery editor's New Scene window (L-519, Featured's rethink), without opening the window. (188 lines) |
 | `test_served_list.py` | - the live check's positions files come from the website's config, a body that crosses e = 1 changes the list by itself, and proof that the live check can fail. (232 lines) |
 
 ---

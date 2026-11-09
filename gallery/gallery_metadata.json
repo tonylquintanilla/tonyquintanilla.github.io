@@ -330,6 +330,22 @@
       "size_kb": {}
     },
     {
+      "id": "scene_earth_neptune_pluto_and_2026_ed138",
+      "title": "New Candidate Dwarf Planet 2026 ED138",
+      "description": "Discovered with the new Vera C. Rubin Observatory, Chile.",
+      "room": "solar_system",
+      "shape": "9:16",
+      "files": {},
+      "live": "interactive.html?exhibit=solar-system&show=earth,neptune,pluto_barycenter,tno_2026_ed138",
+      "featured": true,
+      "scene": true,
+      "sources": [
+        "In the scene."
+      ],
+      "converted": "2026-11-09 12:09",
+      "size_kb": {}
+    },
+    {
       "id": "3iatlas_jupiter_20260316_1222",
       "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
@@ -2531,6 +2547,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-11-08 13:05",
-  "total_count": 134
+  "last_updated": "2026-11-09 12:16",
+  "total_count": 135
 }

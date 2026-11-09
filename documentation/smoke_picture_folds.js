@@ -40,19 +40,32 @@
 //      chain in a room under such a door; and every door's "opens" in
 //      gallery/gallery_config.json names a live card. The doors with no
 //      page are printed.
+//   6. L-519 (Scenes): a card marked "scene": true sits in the one Scenes
+//      fold under the Sun's row, ahead of that row's saved pictures, and
+//      never among the pictures even with a drawer_row; it opens its own
+//      link; Find finds its name and counts it as a scene; what the room
+//      keeps when a scene is opened is kept through the scene's own
+//      opening, taken by the room as it was left, and dropped by anything
+//      else. In the real metadata no scene is placed as a picture, and the
+//      Scenes fold is printed. The page builds the Scenes fold first under
+//      its row, with its own words and mark, keeps no ticks for a scene,
+//      and leaves what was kept for the scene's own opening.
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and breaks the
-//   logic five ways -- a phone offered a landscape card with a portrait
+//   logic seven ways -- a phone offered a landscape card with a portrait
 //   twin, a "none" card offered on a phone, a place naming no row
-//   dropped without a word, a picture's words not found, and a picture's
-//   words adding rows while a group matches -- so a green run has shown
-//   it can go red.
+//   dropped without a word, a picture's words not found, a picture's
+//   words adding rows while a group matches, a scene listed among the
+//   saved pictures, and a scene's own opening taking what was kept -- so
+//   a green run has shown it can go red.
 //
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
 // Updated November 8, 2026, evening, with Anthropic's Claude Opus 5.5
 // (L-517 part 3: section 5; the header's way back is now one line for a
 // card the room opened and for any card under a door with no page).
+// Updated November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519:
+// section 6, the Scenes fold; two more breaks).
 
 "use strict";
 const fs = require("fs");
@@ -103,7 +116,11 @@ const META = { visualizations: [
   { id: "nh_jup_l", title: "New Horizons Jupiter Gravity Assist", room: "solar_system/jupiter",
     shape: "16:9", files: { landscape: "h.json" }, sibling: "nh_jup_p", drawer_row: "jupiter" },
   { id: "nh_jup_p", title: "New Horizons Jupiter Gravity Assist", room: "solar_system/jupiter",
-    shape: "9:16", files: { portrait: "i.json" }, sibling: "nh_jup_l", drawer_row: "jupiter" }
+    shape: "9:16", files: { portrait: "i.json" }, sibling: "nh_jup_l", drawer_row: "jupiter" },
+  { id: "scene_mars", title: "Mars and Earth", room: "solar_system", shape: "9:16", files: {},
+    live: "interactive.html?exhibit=solar-system&show=mars,earth", scene: true, featured: true },
+  { id: "scene_crust", title: "Crust and Moon", room: "solar_system", shape: "9:16", files: {},
+    live: "interactive.html?exhibit=earth&show=crust,moon", scene: true, drawer_row: "earth" }
 ] };
 
 function ids(list) { return (list || []).map(function (e) { return e.id; }).join(","); }
@@ -162,6 +179,30 @@ function cases(P, S) {
   const sub = S.searchHits(ROWS, "perihelion", NAMES, words);
   want(sub && sub.picRows.atlas_3i && S.searchOpen("comets_hyp", sub) && S.searchOpen("comets_all", sub),
        "a picture beside a body in a sub-group does not open the groups above it");
+  // 6. L-519: the scenes.
+  want(ids(phone.byKey[P.SCENES_FOLD]) === "scene_mars,scene_crust" && ids(desk.byKey[P.SCENES_FOLD]) === "scene_mars,scene_crust",
+       "the scenes are not in the Scenes fold, in order, on both screens: " + ids(phone.byKey[P.SCENES_FOLD]));
+  want(phone.rowOf && phone.rowOf[P.SCENES_FOLD] === "center" && phone.kind[P.SCENES_FOLD] === "scenes",
+       "the Scenes fold does not sit under the Sun's row");
+  want(P.foldsAt(phone, "center").join(",") === P.SCENES_FOLD + ",center",
+       "the Sun's row does not hold the Scenes fold ahead of its saved pictures: " + P.foldsAt(phone, "center").join(","));
+  want(ids(desk.byKey.earth) === "artemis_l,shells", "a scene with a drawer_row is listed among Earth's saved pictures: " + ids(desk.byKey.earth));
+  want(phone.scenes === 2 && phone.count === 5, "the scenes are counted as pictures, or not counted: " + phone.scenes + ", " + phone.count);
+  want(phone.byKey[P.SCENES_FOLD] && phone.byKey[P.SCENES_FOLD][1].href === "interactive.html?exhibit=earth&show=crust,moon" &&
+       phone.byKey[P.SCENES_FOLD][1].scene === true, "a scene does not open its own link");
+  want(P.isScene(META.visualizations[11]) && !P.isScene(META.visualizations[1]), "a scene is not told from a live card");
+  const sc = S.searchHits(ROWS, "Mars and", NAMES, words);
+  want(sc && sc.picIds.scene_mars && sc.s === 1 && sc.p === 0, "a scene's name is not found, or is counted as a picture");
+  want(S.WORDS.found(sc.n, sc.g, sc.p, sc.s) === "1 scene matches", "the count line for a scene found: " + S.WORDS.found(sc.n, sc.g, sc.p, sc.s));
+  want(S.WORDS.found(0, 0, 2, 1) === "2 saved pictures and 1 scene match", "the count line for pictures and a scene: " + S.WORDS.found(0, 0, 2, 1));
+  const to = "https://x/interactive.html?exhibit=solar-system&show=mars,earth";
+  const room = "https://x/interactive.html?exhibit=solar-system&show=jupiter&at=2026-11-09T15:00Z";
+  const keptS = P.readReturn(P.returnState("solar-system", P.SCENES_FOLD, "scene_mars", room, to));
+  want(keptS && keptS.to === to && P.returnFor(keptS, to) === "keep",
+       "the scene's own opening does not leave what was kept for Back");
+  want(P.returnFor(keptS, room) === "take", "the room as it was left does not take what was kept for a scene");
+  want(P.returnFor(keptS, to + "&at=2026-11-09T15:05Z") === "drop", "a reload of the scene does not drop what was kept");
+  want(P.returnFor(kept, "https://y/anything") === "take", "a saved picture's return is not taken, once, as before");
   return f;
 }
 
@@ -196,7 +237,11 @@ const breaks = [
   ["a picture's words not found",
    brokenSSD("return e && holds(e.words);", "return false;")],
   ["a picture's words adding rows while a group matches",
-   brokenSSD("const alone = n === 0 && all.length === 0;", "const alone = true;")]
+   brokenSSD("const alone = n === 0 && all.length === 0;", "const alone = true;")],
+  ["a scene listed among the saved pictures",
+   brokenPF("      if (isScene(v)) { return; }\n", "")],
+  ["a scene's own opening taking what was kept",
+   brokenPF("if (back.to === openedHref) { return \"keep\"; }", "")]
 ];
 const caught = [];
 breaks.forEach(function (b) {
@@ -219,10 +264,11 @@ cards.forEach(function (v) { byId[v.id] = v; });
 const roomLive = /^interactive\.html\?exhibit=(solar-system|sun|earth)$/;
 cards.forEach(function (v) {
   const ss = typeof v.room === "string" && (v.room === "solar_system" || v.room.indexOf("solar_system/") === 0);
-  if (ss && !(v.live && roomLive.test(v.live)) && !v[PF.FIELD]) {
+  if (ss && !(v.live && roomLive.test(v.live)) && !v[PF.FIELD] && !PF.isScene(v)) {
     failures.push("Solar System card " + v.id + " has no place in the drawer (" + PF.FIELD + ")");
   }
   if (v[PF.FIELD] && !ss) { failures.push("card " + v.id + " outside the Solar System has a place in its drawer"); }
+  if (PF.isScene(v) && v[PF.FIELD]) { failures.push("scene " + v.id + " also has a saved picture's place (" + PF.FIELD + ") (L-519)"); }
   const twin = v.sibling && byId[v.sibling];
   if (twin && v[PF.FIELD] !== twin[PF.FIELD]) {
     failures.push("twins " + v.id + " and " + twin.id + " are placed apart: " + v[PF.FIELD] + ", " + twin[PF.FIELD]);
@@ -230,6 +276,7 @@ cards.forEach(function (v) {
 });
 const label = {};
 rows.forEach(function (r) { label[r.key] = r.isGroup ? r.label : (r.slug === "sun" ? "Sun" : r.slug); });
+label[PF.SCENES_FOLD] = "Scenes, under the Sun";
 cfg.rooms["solar-system"].drawer.rows.forEach(function (r) { if (r.slug && r.label) { label[r.slug] = r.label; } });
 [true, false].forEach(function (phone) {
   const folds = PF.foldsFrom(meta, rows, phone);
@@ -244,7 +291,8 @@ cfg.rooms["solar-system"].drawer.rows.forEach(function (r) { if (r.slug && r.lab
       });
     });
   }
-  console.log("On a " + screen + ", " + folds.count + " pictures in " + folds.keys.length + " folds:");
+  console.log("On a " + screen + ", " + folds.count + " pictures and " + folds.scenes + " scenes in " +
+              folds.keys.length + " folds:");
   folds.keys.forEach(function (k) {
     console.log("  " + (label[k] || k) + " (" + folds.byKey[k].length + "): " +
                 folds.byKey[k].map(function (e) { return e.title + " [" + e.id + "]"; }).join("; "));
@@ -257,14 +305,23 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
  ["window.PictureFolds.foldsFrom(meta, ssDrawer.rows,", "the room does not ask the file which pictures go where"],
  ["window.PictureFolds.isPhone(window)", "the room does not ask the file which screen it is on"],
  ["window.PictureFolds.searchWords(ssDrawer.pictures)", "Find is not handed the pictures' words"],
- ["SSD.WORDS.found(hits.n, hits.g, hits.p)", "the count line does not count pictures found"],
+ ["SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s)", "the count line does not count pictures and scenes found"],
  ["ssPictureFold(list, entry.key, entry.depth || 0);\n            return;", "a group row's fold is not built after it"],
  ["ssWireRow(row, sunGroups[k], k, list);\n            // L-517: the body's saved pictures, in a fold under its row.\n            ssPictureFold(list, entry.key, entry.depth || 0);",
   "a body row's fold is not built after it"],
  ["if (reset) { ssDrawer.picFolds = {}; }", "Reset does not fold every picture fold shut"],
  ["picFolds: {}", "the room does not open with every picture fold closed"],
- ["PF.returnState(EXHIBIT_ASKED, rowKey, entry.id, window.location.href)", "opening a picture does not keep its fold for Back"],
- ["if (EXHIBIT_ASKED === EXHIBIT) { treeTickMemoryKeep(); }", "opening a picture does not keep the room's ticks"],
+ ["PF.returnState(EXHIBIT_ASKED, foldId, entry.id, window.location.href, to)", "opening a picture or a scene does not keep its fold for Back"],
+ ["if (EXHIBIT_ASKED === EXHIBIT && !entry.scene) { treeTickMemoryKeep(); }", "opening a picture does not keep the room's ticks, or a scene keeps them"],
+ ["const to = entry.scene ? new URL(entry.href, window.location.href).href : null;", "opening a scene does not keep the scene's address (L-519)"],
+ ["PF.foldsAt(pics, rowKey).forEach(function (foldId) {", "a row's folds are not built in the file's order, Scenes first (L-519)"],
+ ["head.querySelector(\".rname\").textContent = scenes ? PF.WORDS.scenes : PF.WORDS.fold;", "the Scenes fold does not carry its own name (L-519)"],
+ ["line.textContent = scenes ? PF.WORDS.scenesLine : PF.WORDS.line;", "the Scenes fold does not carry its own line (L-519)"],
+ ["(scenes ? SCENE_MARK : PICTURE_MARK)", "the Scenes fold does not carry its own mark (L-519)"],
+ ["const PAGE_OPENED_HREF = window.location.href;", "the page does not keep the address it was opened at (L-519)"],
+ ["const does = PF.returnFor(PF.readReturn(text), PAGE_OPENED_HREF);\n        if (does === \"keep\") { return false; }",
+  "a scene's own opening takes what was kept for Back (L-519)"],
+ ["const rowKey = pics.rowOf[foldId];", "a fold does not show by the row it sits under (L-519)"],
  ["if (ssDrawer) { ssPicReturn(); }", "the room does not take what was kept for Back"],
  ["window.sessionStorage.removeItem(PF.RETURN_KEY);", "what was kept for Back is not taken once"],
  ["'<span class=\"pick\"><span class=\"parrow\">\\u2192</span></span>'", "a picture has no arrow where a tick box would be"]
@@ -312,4 +369,5 @@ console.log("=== PASS: a phone is offered the portrait twins and a desktop the l
             "ones, never a \"none\" card on a phone; every Solar System picture has a " +
             "place naming a row the room serves; Find finds a picture's words; and both " +
             "pages wire the folds and the way back; the Solar System's addresses open " +
-            "its live room, and Back answers both of its signals ===");
+            "its live room, and Back answers both of its signals; and every scene sits in " +
+            "the Scenes fold under the Sun, opens its own link, and Back returns to the room ===");

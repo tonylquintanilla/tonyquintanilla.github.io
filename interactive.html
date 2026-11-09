@@ -478,6 +478,17 @@
        (L-518, Tony's phone look: Reset frames what it put back, by the
         room's own rule (sunTicksFrameR), not the frame the page opened
         on, which after a shared link or kept ticks was theirs.)
+     Updated: November 9, 2026 with Anthropic's Claude Opus 5.5
+       (L-519, Featured's rethink: SCENES. A scene is a card marked
+        "scene": true in gallery/gallery_metadata.json, a shared link
+        with no minute kept by the gallery editor's New Scene window.
+        Every scene sits in one fold, "Scenes", with a bookmark mark,
+        under the Sun's row ahead of its saved pictures; open, one line,
+        "Each scene opens with its bodies ticked, at today's date.", and
+        each scene's name with an arrow. A tap opens its link, the room
+        at now with the scene's rows; Back returns to the room as it was
+        left, the drawer open at Scenes (PictureFolds.returnFor; folds
+        keyed by their own id, ssPictureFoldOne, PAGE_OPENED_HREF).)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -6783,7 +6794,7 @@ function ssRender() {
     }
     const findCount = document.getElementById("sun-find-count");
     if (findCount) {
-        findCount.textContent = hits ? SSD.WORDS.found(hits.n, hits.g, hits.p) : "";
+        findCount.textContent = hits ? SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s) : "";
         findCount.hidden = !hits;
     }
     ssPicsRender(hits, seen);   // L-517: the saved pictures' folds
@@ -6909,42 +6920,59 @@ const PICTURE_MARK =
     '<path d="M2.5 9.5 L5.5 5.5 L7.5 7.8 L9 6.3 L11.5 9.5 Z" fill="currentColor"/>' +
     '<circle cx="9.8" cy="3.6" r="1.1" fill="currentColor"/></svg>';
 
-// The fold for one row's pictures, if it has any: its head, its line and
-// one link per picture, appended to the list right after the row.
+// L-519 (Scenes): a scene's mark, a bookmark, where a picture fold has its
+// picture mark.
+const SCENE_MARK =
+    '<svg class="picmark" viewBox="0 0 14 12" aria-hidden="true">' +
+    '<path d="M3.5 0.75 H10.5 V11.25 L7 8.4 L3.5 11.25 Z" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+
+// The folds under one row, if it has any: the Sun's Scenes first (L-519),
+// then the row's saved pictures; each its head, its line and one link per
+// card, appended to the list right after the row. A fold's id is its own
+// (data-pf): the row's key for its pictures, SCENES_FOLD for the scenes.
 function ssPictureFold(list, rowKey, depth) {
     const PF = window.PictureFolds;
     const pics = ssDrawer && ssDrawer.pictures;
-    const entries = pics && pics.byKey[rowKey];
-    if (!PF || !entries || !entries.length) { return; }
+    if (!PF || !pics) { return; }
+    PF.foldsAt(pics, rowKey).forEach(function (foldId) {
+        ssPictureFoldOne(list, foldId, depth, pics.kind[foldId] === "scenes");
+    });
+}
+
+function ssPictureFoldOne(list, foldId, depth, scenes) {
+    const PF = window.PictureFolds;
+    const entries = ssDrawer.pictures.byKey[foldId];
+    if (!entries || !entries.length) { return; }
     const pf = "pf-" + Math.min(3, (depth || 0) + 1);
     const head = document.createElement("button");
     head.type = "button";
-    head.className = "sun-row sun-pics " + pf;
-    head.setAttribute("data-pf", rowKey);
+    head.className = "sun-row sun-pics " + pf + (scenes ? " sun-scenes" : "");
+    head.setAttribute("data-pf", foldId);
     head.setAttribute("aria-expanded", "false");
     head.innerHTML =
-        '<span class="pick"><span class="fold"></span>' + PICTURE_MARK + '</span>' +
-        '<span class="rname"></span><span class="gcount"></span>';
-    head.querySelector(".rname").textContent = PF.WORDS.fold;
-    head.onclick = function () { ssPicFold(rowKey); };
+        '<span class="pick"><span class="fold"></span>' + (scenes ? SCENE_MARK : PICTURE_MARK) +
+        '</span><span class="rname"></span><span class="gcount"></span>';
+    head.querySelector(".rname").textContent = scenes ? PF.WORDS.scenes : PF.WORDS.fold;
+    head.onclick = function () { ssPicFold(foldId); };
     list.appendChild(head);
     const line = document.createElement("div");
     line.className = "sun-pics-line " + pf;
-    line.setAttribute("data-pf", rowKey);
+    line.setAttribute("data-pf", foldId);
     line.hidden = true;
-    line.textContent = PF.WORDS.line;
+    line.textContent = scenes ? PF.WORDS.scenesLine : PF.WORDS.line;
     list.appendChild(line);
     entries.forEach(function (e) {
         const a = document.createElement("a");
         a.className = "sun-row sun-pic " + pf;
-        a.setAttribute("data-pf", rowKey);
+        a.setAttribute("data-pf", foldId);
         a.setAttribute("data-card", e.id);
         a.href = e.href;
         a.hidden = true;
         a.innerHTML = '<span class="pick"><span class="parrow">\u2192</span></span>' +
             '<span class="rname"></span>';
         a.querySelector(".rname").textContent = e.title;
-        a.addEventListener("click", function () { ssPicOpen(rowKey, e); });
+        a.addEventListener("click", function () { ssPicOpen(foldId, e); });
         list.appendChild(a);
     });
 }
@@ -6958,7 +6986,9 @@ function ssPicsRender(hits, seen) {
     const pics = ssDrawer && ssDrawer.pictures;
     if (!pics) { return; }
     const list = document.getElementById("sun-drawer-list");
-    pics.keys.forEach(function (rowKey) {
+    pics.keys.forEach(function (foldId) {
+        // L-519: a fold shows while the row it sits under shows.
+        const rowKey = pics.rowOf[foldId];
         let rowShown;
         if (rowKey.indexOf(SSD.GROUP_PREFIX) === 0) {
             const g = rowKey.slice(SSD.GROUP_PREFIX.length);
@@ -6967,14 +6997,14 @@ function ssPicsRender(hits, seen) {
         } else {
             rowShown = !!seen[rowKey];
         }
-        const entries = pics.byKey[rowKey];
+        const entries = pics.byKey[foldId];
         const found = hits ? entries.filter(function (e) {
             return !!(hits.picIds && hits.picIds[e.id]); }) : null;
-        const open = hits ? (!!found && found.length > 0) : !!ssDrawer.picFolds[rowKey];
+        const open = hits ? (!!found && found.length > 0) : !!ssDrawer.picFolds[foldId];
         const shownIds = {};
         entries.forEach(function (e) { shownIds[e.id] = open && (!found || !!hits.picIds[e.id]); });
         const show = rowShown && (!hits || open);
-        list.querySelectorAll('[data-pf="' + rowKey + '"]').forEach(function (el) {
+        list.querySelectorAll('[data-pf="' + foldId + '"]').forEach(function (el) {
             if (el.classList.contains("sun-pics")) {
                 el.hidden = !show;
                 el.setAttribute("aria-expanded", (show && open) ? "true" : "false");
@@ -6993,18 +7023,18 @@ function ssPicsRender(hits, seen) {
 // A fold's head tapped: it folds open or shut. Chosen from a search's
 // results, it clears the search and opens with the groups above its row,
 // scrolled into view, as a group chosen from a search does (L-496).
-function ssPicFold(rowKey) {
+function ssPicFold(foldId) {
     if (!ssDrawer) { return; }
     if (ssDrawer.query) {
         ssFindSet("");
-        ssPicShowRow(rowKey);
-        ssDrawer.picFolds[rowKey] = true;
+        ssPicShowRow(ssDrawer.pictures.rowOf[foldId]);
+        ssDrawer.picFolds[foldId] = true;
         renderSunDrawer();
         sunMeasureDrawer();
-        ssPicScroll(rowKey);
+        ssPicScroll(foldId);
         return;
     }
-    ssDrawer.picFolds[rowKey] = !ssDrawer.picFolds[rowKey];
+    ssDrawer.picFolds[foldId] = !ssDrawer.picFolds[foldId];
     renderSunDrawer();
     sunMeasureDrawer();
 }
@@ -7019,8 +7049,8 @@ function ssPicShowRow(rowKey) {
     up.forEach(function (g) { ssDrawer.folds[g] = true; });
 }
 
-function ssPicScroll(rowKey) {
-    const head = document.querySelector('.sun-row.sun-pics[data-pf="' + rowKey + '"]');
+function ssPicScroll(foldId) {
+    const head = document.querySelector('.sun-row.sun-pics[data-pf="' + foldId + '"]');
     if (head && typeof head.scrollIntoView === "function") {
         head.scrollIntoView({ block: "start" });
     }
@@ -7030,14 +7060,24 @@ function ssPicScroll(rowKey) {
 // Back should bring back -- this fold, open, and the root's ticks (L-515's
 // tick memory) -- for this tab only. ?exhibit=sun keeps the fold only, as
 // it takes no kept ticks.
-function ssPicOpen(rowKey, entry) {
+// L-519: a SCENE opens the room itself at the scene's address, which
+// carries its own rows. So the room keeps the fold and the scene's
+// address ("to"), and no ticks: the scene's opening must draw the scene's
+// rows, and Back brings the room's own address back, which already
+// carries what was ticked (the shared scene link, L-518).
+function ssPicOpen(foldId, entry) {
     const PF = window.PictureFolds;
+    const to = entry.scene ? new URL(entry.href, window.location.href).href : null;
     try {
         window.sessionStorage.setItem(PF.RETURN_KEY,
-            PF.returnState(EXHIBIT_ASKED, rowKey, entry.id, window.location.href));
+            PF.returnState(EXHIBIT_ASKED, foldId, entry.id, window.location.href, to));
     } catch (e) { /* nothing kept; Back opens the room as served */ }
-    if (EXHIBIT_ASKED === EXHIBIT) { treeTickMemoryKeep(); }
+    if (EXHIBIT_ASKED === EXHIBIT && !entry.scene) { treeTickMemoryKeep(); }
 }
+
+// The address this page was opened at, before the room writes its own
+// (sceneAddressOpened), so a scene's own opening is known (L-519).
+const PAGE_OPENED_HREF = window.location.href;
 
 // The room opening again in this tab after a picture was opened from it:
 // the drawer opens at that fold, its row's groups open. Taken once, at
@@ -7047,12 +7087,16 @@ function ssPicReturn() {
     let text = null;
     try {
         text = window.sessionStorage.getItem(PF.RETURN_KEY);
+        // L-519: a scene's own opening leaves it for the opening Back brings.
+        const does = PF.returnFor(PF.readReturn(text), PAGE_OPENED_HREF);
+        if (does === "keep") { return false; }
         window.sessionStorage.removeItem(PF.RETURN_KEY);
+        if (does === "drop") { text = null; }
     } catch (e) { text = null; }
     const back = PF.readReturn(text);
     if (!back || !ssDrawer || !ssDrawer.pictures || back.exhibit !== EXHIBIT_ASKED ||
             !ssDrawer.pictures.byKey[back.fold]) { return false; }
-    ssPicShowRow(back.fold);
+    ssPicShowRow(ssDrawer.pictures.rowOf[back.fold] || back.fold);
     ssDrawer.picFolds[back.fold] = true;
     renderSunDrawer();
     setSunDrawer(true);

@@ -24,6 +24,9 @@
 // Updated November 8, 2026 with Anthropic's Claude Opus 5.5 (L-517 part 1:
 // boot's {page} opens a planted copy of interactive.html in place of the
 // real one, and {width} gives the window a phone's width.)
+// Updated November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519:
+// boot's {serve} hands the page another file for a path it fetches,
+// {"gallery/gallery_metadata.json": "<a copy holding scenes>"}.)
 const fs = require("fs"), path = require("path");
 const { JSDOM, ResourceLoader, VirtualConsole } = require("jsdom");
 
@@ -98,9 +101,10 @@ const dom = new JSDOM(html, {
     }
     const session = (OPTS && OPTS.session) || {};
     Object.keys(session).forEach(function (k) { win.sessionStorage.setItem(k, session[k]); });
+    const serve = (OPTS && OPTS.serve) || {};
     win.fetch = function (url) {
       const rel = String(url).replace("https://palomasorrery.com/", "").split("?")[0];
-      const p = path.join(ROOT, rel);
+      const p = serve[rel] || path.join(ROOT, rel);
       if (!fs.existsSync(p)) { return Promise.resolve({ ok: false, status: 404, text: function () { return Promise.resolve(""); }, json: function () { return Promise.resolve({}); } }); }
       const body = fs.readFileSync(p, "utf8");
       return Promise.resolve({ ok: true, status: 200, text: function () { return Promise.resolve(body); }, json: function () { return Promise.resolve(JSON.parse(body)); } });

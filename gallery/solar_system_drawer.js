@@ -160,7 +160,10 @@
 // shells are rows in the root -- a served row {shell, label} read by
 // rowsFromServed, placed among the bodies by distance by placeShells, in
 // an opening by its key, inOpening). Updated November 7, 2026, night, with
-// Anthropic's Claude Opus 5.5: PARENT GROUPS, below.
+// Anthropic's Claude Opus 5.5: PARENT GROUPS, below. Updated November 9,
+// 2026 with Anthropic's Claude Opus 5.5 (L-519, Scenes): Find counts a
+// scene found by its name apart from a saved picture (searchHits' s,
+// WORDS.found's fourth argument), since a scene is not a picture.
 //
 // PARENT GROUPS (Tony, 2026-11-07, night: "one "Comets" group that opens
 // to the six comet sub-groups. The same for spacecraft and asteroids where
@@ -227,10 +230,15 @@
     // L-493: the search box's words (the approved mock-up).
     find: "Find a body",
     clear: "Clear the search",
-    found: function (n, g, p) {
-      // L-517: found by a saved picture's words alone.
-      if (n === 0 && !g && p) {
-        return p === 1 ? "1 saved picture matches" : p + " saved pictures match";
+    found: function (n, g, p, s) {
+      // L-517: found by a saved picture's words alone; L-519, or by a
+      // scene's name.
+      if (n === 0 && !g && (p || s)) {
+        const pics = p === 1 ? "1 saved picture" : p + " saved pictures";
+        const scenes = s === 1 ? "1 scene" : s + " scenes";
+        if (p && s) { return pics + " and " + scenes + " match"; }
+        if (s) { return s === 1 ? "1 scene matches" : scenes + " match"; }
+        return p === 1 ? "1 saved picture matches" : pics + " match";
       }
       const groups = g === 1 ? "1 group" : g + " groups";
       if (g > 0) {
@@ -796,7 +804,7 @@
     }
     // L-517: the saved pictures.
     const picIds = {}, picRows = {}, picOpen = {};
-    let p = 0;
+    let p = 0, s = 0;
     const alone = n === 0 && all.length === 0;
     Object.keys(pictureWords || {}).forEach(function (rk) {
       const hit = (pictureWords[rk] || []).filter(function (e) { return e && holds(e.words); });
@@ -805,7 +813,8 @@
       if (!alone) { return; }
       const row = (rows || []).filter(function (r) { return r.key === rk; })[0];
       if (!row) { return; }
-      p += hit.length;
+      // L-519: a scene found is counted apart from a picture.
+      hit.forEach(function (e) { if (e.scene) { s++; } else { p++; } });
       picRows[rk] = true;
       const up = isGroup(row) ? ancestors(rows, row.group)
         : (row.group ? [row.group].concat(ancestors(rows, row.group)) : []);
@@ -818,7 +827,7 @@
     });
     return { keys: keys, groups: groups, via: via, n: n,
              listed: listed, opened: opened, g: matched.length, anc: anc,
-             picIds: picIds, picRows: picRows, picOpen: picOpen, p: p };
+             picIds: picIds, picRows: picRows, picOpen: picOpen, p: p, s: s };
   }
 
   // PARENT GROUPS: whether a group sits (at any depth) under the one group
