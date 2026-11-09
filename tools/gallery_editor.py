@@ -93,7 +93,9 @@ A scene is a card marked "scene": true whose live address is a shared link
 from the Solar System room with no minute; the room lists it in its Scenes
 group under the Sun (gallery/picture_folds.js). The window's logic is
 tools/scene_card.py, checked by tools/test_scene_card.py; the tree marks a
-scene "scene" where a live card says "live".
+scene "scene" where a live card says "live". Same day, on Tony's first
+try: the window's boxes have a right-click menu (Cut, Copy, Paste, Select
+all), add_edit_menu, since Tk's boxes have none.
 
 Role: devtool
 Domain: gallery_pipeline
@@ -231,6 +233,35 @@ def room_label_chain(config, path):
 def door_of(config, path):
     key = path.split('/')[0]
     return next((d for d in config['doors'] if d['key'] == key), None)
+
+
+def add_edit_menu(widget, read_only=False):
+    """A right-click menu with Cut, Copy, Paste and Select all, the one
+    Windows' own boxes have; Tk's boxes have none, so before this only
+    Ctrl+V pasted (Tony, Nov 9, 2026, L-519). A read-only box gets Copy
+    and Select all. Each item asks the box's own Tk binding, so a paste
+    writes the box's variable as Ctrl+V does."""
+    menu = tk.Menu(widget, tearoff=0)
+    items = [("Copy", "<<Copy>>"), ("Select all", "<<SelectAll>>")]
+    if not read_only:
+        items = [("Cut", "<<Cut>>"), ("Copy", "<<Copy>>"), ("Paste", "<<Paste>>"),
+                 None, ("Select all", "<<SelectAll>>")]
+    for item in items:
+        if item is None:
+            menu.add_separator()
+        else:
+            menu.add_command(label=item[0],
+                             command=lambda ev=item[1]: widget.event_generate(ev))
+
+    def show(event):
+        widget.focus_set()
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+        return 'break'
+    widget.bind('<Button-3>', show)
+    return menu
 
 
 # ============================================================
@@ -1270,7 +1301,8 @@ class GalleryEditor:
         link_var = tk.StringVar()
         lf = ttk.Frame(dlg)
         lf.pack(fill='x', padx=12)
-        ttk.Entry(lf, textvariable=link_var).pack(side='left', fill='x', expand=True)
+        link_box = ttk.Entry(lf, textvariable=link_var)
+        link_box.pack(side='left', fill='x', expand=True)
         look = ttk.Button(lf, text="Look")
         look.pack(side='left', padx=(6, 0))
         lines_box = tk.Text(dlg, height=10, wrap='word', relief='flat',
@@ -1283,7 +1315,8 @@ class GalleryEditor:
         nf.pack(fill='x', padx=12, pady=4)
         ttk.Label(nf, text="Name:").pack(side='left')
         name_var = tk.StringVar()
-        ttk.Entry(nf, textvariable=name_var).pack(side='left', fill='x', expand=True, padx=(6, 0))
+        name_box = ttk.Entry(nf, textvariable=name_var)
+        name_box.pack(side='left', fill='x', expand=True, padx=(6, 0))
         feat_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(dlg, text="Also show on the gallery page's Featured", variable=feat_var).pack(
             pady=4, **pad)
@@ -1371,6 +1404,10 @@ class GalleryEditor:
         look.configure(command=do_look)
         save.configure(command=do_save)
         dlg.bind('<Escape>', lambda e: dlg.destroy())
+        # ADDED (L-519, Tony's first try): Windows' right-click Paste.
+        for box in (paste, link_box, name_box):
+            add_edit_menu(box)
+        add_edit_menu(lines_box, read_only=True)
         recheck()
         paste.focus_set()
         self.root.wait_window(dlg)
