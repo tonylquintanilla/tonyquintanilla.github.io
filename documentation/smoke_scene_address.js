@@ -285,7 +285,9 @@ const need = [
   ["window.SceneAddress.withoutAt(window.location.search)", "the update's address keeps the minute (a plain reload)"],
   ["sunFitTitle().then(sceneUpdatePlace);", "the third line does not follow the title when the screen turns"],
   ["!!(sceneAddrState && sceneAddrState.shared);", "the two sentences that say \"today\" ignore a shared minute"],
-  [".then(sceneAddressWrite);", "Reset in a room of shells does not rewrite the address"]
+  [".then(sceneAddressWrite);", "Reset in a room of shells does not rewrite the address"],
+  ["return navHome(sunTicksFrameR());", "Reset in a room of shells frames the page's opening, not what it put back (Tony's look: \"the scale does not\" reset)"],
+  ["r = sunTicksFrameR() || navArrivalR || EX.halfRangeAu;", "the Solar System room's Reset frames the page's opening, not what it put back"]
 ];
 for (const [s, why] of need) { if (PAGE.indexOf(s) < 0) { failures.push(why); } }
 if (PAGE.indexOf("SceneAddress.subtitle") >= 0 || PAGE.indexOf("gtitle-subtitle {") >= 0) {

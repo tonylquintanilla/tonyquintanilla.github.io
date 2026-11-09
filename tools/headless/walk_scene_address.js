@@ -27,7 +27,11 @@
 //   6. A minute this tab wrote itself (a reload): now asked, not shared.
 //   7. Earth from a shared link (crust and the Moon): only those ticked,
 //      "Tap to update."; Reset puts back Earth's own opening, not the
-//      link's.
+//      link's, AT ITS OWN FRAME (Tony's phone look of 2026-11-08, night:
+//      "the scene resets but the scale does not").
+//   9. The same in the Solar System room: from a link with Ikeya-Seki,
+//      and from the ticks kept on a return from Centre on, Reset comes
+//      back to the plain opening's frame.
 //   8. A tap on "Tap to update." asks the browser to go to the address
 //      without its minute.
 // Given a planted copy of the page as its fourth argument it walks that
@@ -35,7 +39,8 @@
 //
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
 // Updated November 8, 2026, night, with Anthropic's Claude Opus 5.5
-// (Tony's first phone look: "Tap to update." in place of "as shared").
+// (Tony's first phone look: "Tap to update." in place of "as shared";
+// Reset's frame, steps 7 and 9).
 "use strict";
 const fs = require("fs"), path = require("path");
 const h = require("./page_harness.js");
@@ -68,6 +73,8 @@ function subtitle(w) {
   const t = (gd.layout && gd.layout.title) || {};
   return (t.subtitle && t.subtitle.text) || "";
 }
+function frameR(w) { return w.document.getElementById("plotly-container").layout.scene.xaxis.range[1]; }
+async function reset(w) { w.document.getElementById("sun-drawer-all").click(); await new Promise((r) => setTimeout(r, 400)); }
 function upd(w) { return w.document.getElementById("scene-update"); }
 function note(w) { const n = w.document.getElementById("scene-note"); return n ? n.textContent : null; }
 function panelNote(w) { const n = w.document.getElementById("scene-shared-note"); return n ? n.textContent : null; }
@@ -181,6 +188,7 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
   // Earth's own opening, read from a plain boot.
   const plain = await h.boot(ROOT, "earth", P_EARTH, PAGE);
   const own = ticked(plain);
+  const ownR = frameR(plain);
   w = await h.boot(ROOT, "earth", P_EARTH, Object.assign({
     query: "&show=crust,moon&at=" + atOf(shared) }, PAGE));
   await w.eval("sunReset()");
@@ -188,6 +196,24 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
   ok(same(ticked(w), own), "7: Earth's Reset does not put back its own opening: " + ticked(w) + " vs " + own);
   ok(q(w).get("show") === new plain.URLSearchParams(plain.location.search).get("show"),
      "7: after Reset Earth's address is not its opening's");
+  w = await h.boot(ROOT, "earth", P_EARTH, Object.assign({
+    query: "&show=crust,moon&at=" + atOf(shared) }, PAGE));
+  ok(frameR(w) > ownR * 10, "7: Earth from a link with the Moon does not open framed on the Moon");
+  await reset(w);
+  ok(Math.abs(frameR(w) - ownR) < ownR * 1e-9, "7: Earth's Reset keeps the link's frame: " + frameR(w) + " vs " + ownR);
+
+  // 9. The Solar System room's Reset frame.
+  const rootPlain = await h.boot(ROOT, "solar-system", P_ROOT, PAGE);
+  const rootR = frameR(rootPlain);
+  for (const [what, o] of [
+      ["a link with Ikeya-Seki", { query: "&show=ikeya_seki&at=" + atOf(shared) }],
+      ["the ticks kept on a return from Centre on",
+       { session: { po_root_ticks: JSON.stringify({ ticked: ["ikeya_seki"], order: ["ikeya_seki"] }) } }]]) {
+    w = await h.boot(ROOT, "solar-system", P_ROOT, Object.assign(o, PAGE));
+    ok(frameR(w) > rootR * 10, "9: " + what + " does not open framed on Ikeya-Seki");
+    await reset(w);
+    ok(Math.abs(frameR(w) - rootR) < rootR * 1e-9, "9: after " + what + ", Reset keeps that frame: " + frameR(w) + " vs " + rootR);
+  }
 
   console.log("walk_scene_address: " + checks + " checks" + (PLANTED ? " on the planted page " + PLANTED : ""));
   if (fails.length) { console.log("FAIL " + fails.length + ":\n  " + fails.join("\n  ")); process.exit(1); }
