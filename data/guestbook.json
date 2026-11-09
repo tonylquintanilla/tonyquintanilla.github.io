@@ -8,12 +8,7 @@
       "name": "Tony",
       "by": "host",
       "text": "Welcome to the guest book. Leave a note about what you found here, or what you would like to see next.",
-      "links": [
-        {
-          "label": "START HERE: Solar System Interactive Exhibit",
-          "href": "interactive.html?exhibit=solar-system"
-        }
-      ],
+      "links": [],
       "replies": [],
       "pinned": true
     }
