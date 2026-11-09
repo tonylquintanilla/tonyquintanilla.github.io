@@ -10,27 +10,32 @@
 // held to values worked out here, not by the page's helpers:
 //   1. The Solar System room opened plainly: the address gains
 //      exhibit, show (the served opening, the highlighted row last) and at (the
-//      minute asked), and the tab remembers that minute; no "as shared".
+//      minute asked), and the tab remembers that minute; no "Tap to
+//      update." line.
 //   2. Opened from a shared link (ED138 and Pluto at a minute inside the
 //      window): that minute asked; exactly those two ticked, the handle
-//      naming the last; "as shared" under the title; the address as
-//      shared. Ticking Mars adds it to show and leaves at; Reset puts
+//      naming the last; the line under the title the moment alone, and
+//      "Tap to update." under it, its link the address without the
+//      minute; the address as shared. Ticking Mars adds it to show and leaves at; Reset puts
 //      back the served opening and the address follows.
 //   3. A link naming a row the room does not have: the rest drawn, a box
 //      naming it, and the i panel's note.
-//   4. A minute older than the window's start: now asked, no "as
-//      shared", the box saying so, the address at now.
+//   4. A minute older than the window's start: now asked, no "Tap to
+//      update.", the box saying so, the address at now.
 //   5. A minute past the window's end: the window's last minute asked,
-//      the freeze's words under the title, not "as shared".
+//      the freeze's words under the title, no "Tap to update.".
 //   6. A minute this tab wrote itself (a reload): now asked, not shared.
 //   7. Earth from a shared link (crust and the Moon): only those ticked,
-//      "as shared"; Reset puts back Earth's own opening, not the link's.
-//   8. A tap on the line under the title asks the browser to go to the
-//      address without its minute.
+//      "Tap to update."; Reset puts back Earth's own opening, not the
+//      link's.
+//   8. A tap on "Tap to update." asks the browser to go to the address
+//      without its minute.
 // Given a planted copy of the page as its fourth argument it walks that
 // page and must fail.
 //
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
+// Updated November 8, 2026, night, with Anthropic's Claude Opus 5.5
+// (Tony's first phone look: "Tap to update." in place of "as shared").
 "use strict";
 const fs = require("fs"), path = require("path");
 const h = require("./page_harness.js");
@@ -63,6 +68,7 @@ function subtitle(w) {
   const t = (gd.layout && gd.layout.title) || {};
   return (t.subtitle && t.subtitle.text) || "";
 }
+function upd(w) { return w.document.getElementById("scene-update"); }
 function note(w) { const n = w.document.getElementById("scene-note"); return n ? n.textContent : null; }
 function panelNote(w) { const n = w.document.getElementById("scene-shared-note"); return n ? n.textContent : null; }
 async function click(w, el) { el.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true })); await h.done(); }
@@ -84,8 +90,7 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
   ok(q(w).get("at") === asked.slice(0, 16) + "Z", "1: at is not the minute asked: " + q(w).get("at"));
   ok((w.sessionStorage.getItem("po_scene_at_written") || "").indexOf(q(w).get("at")) >= 0,
      "1: the tab does not remember the minute it wrote");
-  ok(subtitle(w).indexOf("as shared") < 0, "1: a plain opening says \"as shared\"");
-  ok(!w.document.body.classList.contains("scene-shared"), "1: a plain opening takes taps on its line");
+  ok(!upd(w), "1: a plain opening shows \"Tap to update.\"");
 
   // 2. Shared: ED138 and Pluto.
   const shared = Math.floor((START + (END - START) * 0.3) / 60000) * 60000;
@@ -94,8 +99,14 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
   ok(w.__pyGlobals.EPOCH_ISO === isoOf(shared), "2: the shared minute is not the one asked: " + w.__pyGlobals.EPOCH_ISO);
   ok(same(ticked(w), ["tno_2026_ed138", "pluto_barycenter"]), "2: the link's two bodies are not exactly what is ticked: " + ticked(w));
   ok(/Pluto/.test(w.document.getElementById("sun-drawer-label").textContent), "2: the handle does not name the last body in the link");
-  ok(subtitle(w).indexOf("as shared") > 0, "2: the line under the title does not say \"as shared\": " + subtitle(w));
-  ok(w.document.body.classList.contains("scene-shared"), "2: the line does not take a tap");
+  ok(/^\d{1,2} [A-Z][a-z]{2} \d{4}, \d\d:\d\d UTC$/.test(subtitle(w)), "2: the line under the title is not the moment alone: " + subtitle(w));
+  ok(!!upd(w) && upd(w).textContent === "Tap to update.", "2: no \"Tap to update.\" line");
+  if (upd(w)) {
+    const href = new w.URL(upd(w).href);
+    ok(!href.searchParams.has("at") && href.searchParams.get("show") === "tno_2026_ed138,pluto_barycenter" &&
+       href.searchParams.get("exhibit") === "solar-system",
+       "2: \"Tap to update.\" does not open the scene without its minute: " + upd(w).href);
+  }
   ok(q(w).get("show") === "tno_2026_ed138,pluto_barycenter" && q(w).get("at") === atOf(shared),
      "2: the address is not the shared scene: " + w.location.search);
   ok(note(w) === null, "2: a link met in full shows a note");
@@ -111,14 +122,11 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
   ok(same(ticked(w), OPENING), "2: Reset does not put back the served opening: " + ticked(w));
   ok(q(w).get("show") === OPENING_ORDER.join(","), "2: after Reset the address is not the opening: " + q(w).get("show"));
 
-  // 8. The tap on the line: the browser is asked to leave for the
-  // address without its minute (jsdom reports the navigation it cannot do).
+  // 8. "Tap to update.": the browser is asked to leave for the address
+  // without its minute (jsdom reports the navigation it cannot do).
   const before = h.errors.length;
-  const t = w.document.createElementNS("http://www.w3.org/2000/svg", "text");
-  t.setAttribute("class", "gtitle-subtitle");
-  w.document.getElementById("plotly-container").appendChild(t);
-  await click(w, t);
-  ok(h.errors.slice(before).some((e) => /navigation/i.test(e)), "8: a tap on the line does not ask for the room at now");
+  if (upd(w)) { await click(w, upd(w)); }
+  ok(!!upd(w) && h.errors.slice(before).some((e) => /navigation/i.test(e)), "8: \"Tap to update.\" does not ask for the room at now");
 
   // 3. A row the room does not have.
   w = await h.boot(ROOT, "solar-system", P_ROOT, Object.assign({
@@ -135,7 +143,7 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
   const t3 = Date.now();
   asked = w.__pyGlobals.EPOCH_ISO;
   ok(asked >= isoOf(t2) && asked <= isoOf(t3), "4: a minute older than the data does not open at now: " + asked);
-  ok(subtitle(w).indexOf("as shared") < 0, "4: an old minute shown at now says \"as shared\"");
+  ok(!upd(w), "4: an old minute shown at now offers \"Tap to update.\"");
   ok(/older than the days our data covers/.test(note(w) || ""), "4: the box does not say the link is older than the data: " + note(w));
   ok(q(w).get("at") === asked.slice(0, 16) + "Z", "4: the address's minute is not now");
   ok(same(ticked(w), ["earth"]), "4: the link's rows are not drawn at now");
@@ -146,8 +154,8 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
     query: "&show=earth&at=" + atOf(late) }, PAGE));
   asked = Date.parse(w.__pyGlobals.EPOCH_ISO);
   ok(asked <= END && asked > END - 61000, "5: a minute past the window does not freeze at its last minute: " + w.__pyGlobals.EPOCH_ISO);
-  ok(/the last day our data covers/.test(subtitle(w)) && subtitle(w).indexOf("as shared") < 0,
-     "5: the frozen room does not say so in the freeze's words: " + subtitle(w));
+  ok(/the last day our data covers/.test(subtitle(w)), "5: the frozen room does not say so in the freeze's words: " + subtitle(w));
+  ok(!upd(w), "5: a frozen room offers \"Tap to update.\"");
 
   // 6. A minute this tab wrote (a reload).
   const t4 = Date.now();
@@ -157,7 +165,7 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
   const t5 = Date.now();
   asked = w.__pyGlobals.EPOCH_ISO;
   ok(asked >= isoOf(t4) && asked <= isoOf(t5), "6: a minute this tab wrote does not open at now: " + asked);
-  ok(subtitle(w).indexOf("as shared") < 0, "6: a reload says \"as shared\"");
+  ok(!upd(w), "6: a reload offers \"Tap to update.\"");
   ok(same(ticked(w), ["earth"]), "6: a reload does not keep the rows in its address");
 
   // 7. Earth from a shared link.
@@ -168,7 +176,7 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
     "})[0];return g?sceneShellKeyOf(g):null;})()");
   const asAddr = openTicked.map((k) => shellOf(k) || k);
   ok(same(asAddr, ["crust", "moon"]), "7: Earth from a link does not tick exactly the crust and the Moon: " + asAddr);
-  ok(subtitle(w).indexOf("as shared") > 0, "7: Earth's line does not say \"as shared\"");
+  ok(!!upd(w), "7: Earth from a link offers no \"Tap to update.\"");
   ok(q(w).get("exhibit") === "earth" && q(w).get("show") === "crust,moon", "7: Earth's address is not the shared scene: " + w.location.search);
   // Earth's own opening, read from a plain boot.
   const plain = await h.boot(ROOT, "earth", P_EARTH, PAGE);

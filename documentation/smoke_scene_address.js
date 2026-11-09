@@ -18,8 +18,8 @@
 //      a link ticks, its tick order and the keys no row has; the show
 //      list in tick order; the query written (exhibit, show, at first,
 //      every other parameter kept) and read back to the same scene; the
-//      minute taken out by a tap; the tab's own minutes remembered; the
-//      words.
+//      minute taken out by "Tap to update."; the tab's own minutes
+//      remembered; the words.
 //   2. THE REAL ROWS. Every row of the Solar System room's served drawer
 //      and every served shell of every object reads as itself in the
 //      address (a plain key), and no two rows of one room share a key:
@@ -30,8 +30,11 @@
 //      arrival block and before the opening view is measured; keeps the
 //      room's own opening for Reset; writes the address with
 //      replaceState after every tick and Reset, and once the room has
-//      opened; says "as shared" under the title; takes the tap; and
-//      gives the two sentences that say "today" the shared flag.
+//      opened; leaves the line under the title as it is and puts "Tap to
+//      update." under it, a link of the page's own that opens the room
+//      without the minute (not a plain reload), placed again when the
+//      screen turns; and gives the two sentences that say "today" the
+//      shared flag.
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and breaks the
@@ -40,6 +43,9 @@
 //   address is written -- so a green run has shown it can go red.
 //
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
+// Updated November 8, 2026, night, with Anthropic's Claude Opus 5.5
+// (Tony's first phone look: "Tap to update." in place of "as shared" and
+// a tap on the title's line, which did not register on his phone).
 
 "use strict";
 const fs = require("fs");
@@ -182,10 +188,7 @@ function cases(SA) {
   eq(SA.wasWritten(null, "y"), false, "no storage at all");
 
   // -- the words --
-  const sub = SA.subtitle("29 Oct 2026, 04:27 UTC");
-  if (sub.indexOf("29 Oct 2026, 04:27 UTC") !== 0 || sub.indexOf("as shared") < 0) {
-    f.push("the line under the title does not start with the moment and say \"as shared\": " + sub);
-  }
+  eq(SA.UPDATE_WORDS, "Tap to update.", "the third line's words, Tony's");
   if (SA.tooOldNote("1 Jun 2026, 00:00 UTC").indexOf("1 Jun 2026, 00:00 UTC") < 0) {
     f.push("the too-old note does not name the shared moment");
   }
@@ -193,7 +196,7 @@ function cases(SA) {
   if (SA.missingNote(["a", "b", "c"]).indexOf("a, b and c") < 0) {
     f.push("the missing note does not list its keys");
   }
-  for (const s of [sub, SA.tooOldNote("x"), SA.missingNote(["a"])]) {
+  for (const s of [SA.UPDATE_WORDS, SA.tooOldNote("x"), SA.missingNote(["a"])]) {
     if (/today|served|L-\d/.test(s)) { f.push("a visitor's sentence carries project words: " + s); }
   }
   return f;
@@ -276,12 +279,18 @@ const need = [
   ["sunOpening = sceneAddrState.servedShown;", "Reset in a room of shells would put back the link, not the room's opening"],
   ["window.history.replaceState(", "the address is not written in place"],
   ["SA.search(window.location.search, EXHIBIT_ASKED, show, st.at)", "the address is not written from the room's own ticks and minute"],
-  ["sunSceneSubtitle = SceneAddress.subtitle(sunSceneSubtitle);", "a shared minute does not say so under the title"],
-  ["document.addEventListener(\"click\", sceneAddressTapNow, true);", "a tap on the line does not bring now"],
+  ["if (st.shared && !sceneMomentAsked.frozen) { sceneUpdateMount(); }", "a shared minute gets no \"Tap to update.\" line"],
+  ["a.textContent = window.SceneAddress.UPDATE_WORDS;", "the third line does not carry the file's words"],
+  ["window.location.replace(sceneUpdateUrl());", "\"Tap to update.\" does not open the room without the minute"],
+  ["window.SceneAddress.withoutAt(window.location.search)", "the update's address keeps the minute (a plain reload)"],
+  ["sunFitTitle().then(sceneUpdatePlace);", "the third line does not follow the title when the screen turns"],
   ["!!(sceneAddrState && sceneAddrState.shared);", "the two sentences that say \"today\" ignore a shared minute"],
   [".then(sceneAddressWrite);", "Reset in a room of shells does not rewrite the address"]
 ];
 for (const [s, why] of need) { if (PAGE.indexOf(s) < 0) { failures.push(why); } }
+if (PAGE.indexOf("SceneAddress.subtitle") >= 0 || PAGE.indexOf("gtitle-subtitle {") >= 0) {
+  failures.push("the page still changes the line under the title for a shared minute");
+}
 if (PAGE.indexOf("history.pushState") >= 0) { failures.push("the page adds history entries (pushState); Back would step through ticks"); }
 const order = [
   ["sceneAddressRead(servedWindow", "SceneMoment.askFor(clockMs", "the address is not read before the moment is asked"],

@@ -42,18 +42,24 @@
 //   showOf(groups, shownByKey, order)  the show list for the address.
 //   search(current, exhibit, show, at) the query the page writes: exhibit,
 //                         show and at first, every other parameter kept.
-//   withoutAt(current)    the query with the minute taken out (tapping
-//                         "as shared" brings the visitor's now).
+//   withoutAt(current)    the query with the minute taken out ("Tap to
+//                         update." brings the visitor's now; a plain
+//                         reload would keep the minute).
 //   remember / wasWritten a minute this tab wrote, kept in the tab's
 //                         sessionStorage, so a reload or Back opens at now
-//                         and not "as shared".
-//   subtitle, tooOldNote, missingNote  the words a visitor reads; they
-//                         go to Tony's phone look before they are settled.
+//                         and not at the minute again.
+//   UPDATE_WORDS, tooOldNote, missingNote  the words a visitor reads;
+//                         they go to Tony's phone look before they are
+//                         settled.
 //
 // Checked by documentation/smoke_scene_address.js (the gallery run's
 // Scene address row), which breaks this file three ways first.
 //
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
+// Updated November 8, 2026, night, with Anthropic's Claude Opus 5.5
+// (Tony's first phone look: the line under the title stays as it was,
+// and a third line, "Tap to update.", brings now; "as shared" and "tap
+// for now" are gone).
 
 (function (root) {
     "use strict";
@@ -234,7 +240,7 @@
             var list = writtenList(storage).filter(function (x) { return x !== at; });
             list.push(at);
             storage.setItem(WRITTEN_KEY, JSON.stringify(list.slice(-WRITTEN_MAX)));
-        } catch (e) { /* nothing kept: a reload then reads as shared */ }
+        } catch (e) { /* nothing kept: a reload then keeps the minute */ }
     }
 
     function wasWritten(storage, at) {
@@ -242,10 +248,9 @@
         return writtenList(storage).indexOf(at) >= 0;
     }
 
-    // THE WORDS. Proposals for Tony's phone look.
-    function subtitle(stamp) {
-        return stamp + ", as shared \u00b7 tap for now";
-    }
+    // THE WORDS. Tony's, from his phone look of 2026-11-08, night: "keeping
+    // the original lines and adding a third line, 'Tap to update.'"
+    var UPDATE_WORDS = "Tap to update.";
 
     function tooOldNote(stamp) {
         return "This link was made for " + stamp + ", which is older " +
@@ -276,7 +281,7 @@
         withoutAt: withoutAt,
         remember: remember,
         wasWritten: wasWritten,
-        subtitle: subtitle,
+        UPDATE_WORDS: UPDATE_WORDS,
         tooOldNote: tooOldNote,
         missingNote: missingNote,
         WRITTEN_KEY: WRITTEN_KEY

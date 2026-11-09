@@ -468,8 +468,8 @@
        (L-518, the shared scene link: the room writes the rows ticked
         (?show=) and the minute shown (?at=) into its own address, so
         the browser's Share sends the scene; a room opened from such a
-        link draws those rows at that minute, "as shared" under the
-        title, a tap on that line bringing the visitor's now; a minute
+        link draws those rows at that minute, and a third line under the
+        title, "Tap to update.", brings the visitor's now; a minute
         older than the data opens at now and says so, one past it
         freezes; a row the room no longer has is named
         (gallery/scene_address.js; sceneAddressRead, sceneShowApply,
@@ -1379,14 +1379,20 @@
         .info-panel .info-note ul { margin: 0; padding-left: 16px; }
         .info-panel .info-note li { margin: 0 0 4px; }
         .info-panel .info-note a { color: var(--text-secondary); }
-        /* L-518: the shared link. The line under the title, "as shared",
-           takes a tap (Plotly's title layer takes none of its own); and
-           what a link could not show, in a box with the text box's look,
-           gone at the next tap. */
-        body.scene-shared #plotly-container .gtitle-subtitle {
-            pointer-events: all;
-            cursor: pointer;
+        /* L-518: the shared link. "Tap to update.", a third line under
+           the title's, a link of the page's own (sceneUpdatePlace sets
+           where); and what a link could not show, in a box with the text
+           box's look, gone at the next tap. */
+        .scene-update {
+            position: absolute;
+            transform: translateX(-50%);
+            padding: 4px 10px 8px;
+            font-family: "DM Sans", system-ui, sans-serif;
+            font-size: 12px;
+            color: #a3b8de;
             text-decoration: underline;
+            white-space: nowrap;
+            z-index: 5;   /* with the other chrome: under the scrim, the drawer and the i panel */
         }
         .scene-note {
             position: absolute;
@@ -3874,8 +3880,8 @@ function reportSceneFrozen(text) {
 // rows ticked (?show=) and the minute shown (?at=), and the page writes
 // both itself, so the browser's own Share sends the scene: the minute
 // once, when the room opens; the rows at every tick. A room opened from
-// such a link draws those rows at that minute, "as shared" under the
-// title, and a tap on that line brings the visitor's now. What is decided
+// such a link draws those rows at that minute, and a third line under
+// the title, "Tap to update.", brings the visitor's now. What is decided
 // lives in gallery/scene_address.js (L-338); this part reads the address,
 // touches the traces, the history entry and the page.
 let sceneAddrState = null;
@@ -3995,10 +4001,7 @@ function sceneAddressOpened() {
     st.at = SA.atText(ms);
     if (!st.shared) { SA.remember(sceneAddressStorage(), st.at); }
     st.ready = true;
-    if (st.shared && !sceneMomentAsked.frozen) {
-        document.body.classList.add("scene-shared");
-        document.addEventListener("click", sceneAddressTapNow, true);
-    }
+    if (st.shared && !sceneMomentAsked.frozen) { sceneUpdateMount(); }
     const notes = [];
     if (st.tooOld) {
         notes.push(SA.tooOldNote(sceneMomentStamp(SceneMoment._jdOfMs(st.sharedMs))));
@@ -4009,14 +4012,49 @@ function sceneAddressOpened() {
     sceneAddressWrite();
 }
 
-// A tap on the line under the title, "as shared": the room again at the
-// visitor's now, the ticks kept, the shared minute gone from the address.
-function sceneAddressTapNow(ev) {
-    const t = ev.target;
-    if (!t || !t.closest || !t.closest("#plotly-container .gtitle-subtitle")) { return; }
-    ev.preventDefault();
-    window.location.replace(window.location.pathname +
-        window.SceneAddress.withoutAt(window.location.search) + window.location.hash);
+// "Tap to update.": a third line under the title, in a room drawn at a
+// shared minute (Tony's phone look of 2026-11-08, night). A link of the
+// page's own, not the title's text: a tap on Plotly's title did not
+// register on his phone. It opens the room again at the visitor's now,
+// the ticks kept and the shared minute taken out of the address -- a
+// plain reload would keep the minute -- and the line under the title then
+// shows the time now. Placed under the title's line wherever
+// sunFitTitle put it, and again when the screen turns.
+function sceneUpdateUrl() {
+    return window.location.pathname +
+        window.SceneAddress.withoutAt(window.location.search) + window.location.hash;
+}
+function sceneUpdateMount() {
+    if (document.getElementById("scene-update")) { return; }
+    const a = document.createElement("a");
+    a.id = "scene-update";
+    a.className = "scene-update";
+    a.textContent = window.SceneAddress.UPDATE_WORDS;
+    a.href = sceneUpdateUrl();
+    a.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        window.location.replace(sceneUpdateUrl());
+    });
+    const area = document.querySelector(".viz-area") || document.body;
+    area.appendChild(a);
+    sceneUpdatePlace();
+}
+function sceneUpdatePlace() {
+    const a = document.getElementById("scene-update");
+    if (!a) { return; }
+    a.href = sceneUpdateUrl();
+    const area = a.parentNode;
+    const line = document.querySelector("#plotly-container .gtitle-subtitle") ||
+                 document.querySelector("#plotly-container .gtitle");
+    const ar = area.getBoundingClientRect();
+    const lr = line ? line.getBoundingClientRect() : null;
+    if (!lr || !lr.width) {
+        a.style.left = "50%";
+        a.style.top = "52px";
+        return;
+    }
+    a.style.left = (lr.left + lr.width / 2 - ar.left) + "px";
+    a.style.top = (lr.bottom - ar.top + 2) + "px";
 }
 
 // What a shared link could not show: in a box in the middle of the view,
@@ -4930,12 +4968,11 @@ async function initSunExhibit() {
                 sceneMomentStamp(SceneMoment._jdOfMs(Date.parse(sceneMomentAsked.iso)));
             sunSceneSubtitle = SceneMoment.subtitle(frozenStamp);
             reportSceneFrozen(SceneMoment.panelNote(frozenStamp));
-        } else if (sceneAddrState && sceneAddrState.shared && sunSceneSubtitle) {
-            // L-518: a shared minute says so under the title, and a tap
-            // on the line brings the visitor's now (sceneAddressTapNow).
-            // A frozen room keeps the freeze's words instead.
-            sunSceneSubtitle = SceneAddress.subtitle(sunSceneSubtitle);
         }
+        // L-518: a shared minute keeps the line under the title as it is
+        // (Tony's phone look of 2026-11-08, night: "keeping the original
+        // lines and adding a third line, 'Tap to update.'"); the third
+        // line is page chrome, sceneUpdateMount.
         sunAbsent = built.absent || [];
 
         // L-460 (Tony, 2026-10-20): the drawer lists each shell at the
@@ -7787,8 +7824,9 @@ function onSunResize() {
         // An opened drawer row moves to its sideways or upright place.
         if (ssDrawer) { renderSunDrawer(); }
         // The title and its line: at the top, or below the cross if the
-        // turned screen puts them under a button.
-        sunFitTitle();
+        // turned screen puts them under a button. L-518: the shared link's
+        // "Tap to update." follows them.
+        sunFitTitle().then(sceneUpdatePlace);
         sunPlaceCredit();
         sunTapPicking(sunPlotDiv);
     }, 180);
