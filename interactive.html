@@ -464,6 +464,16 @@
        (L-517 part 3: the Solar System subject page is gone, so a room
         under a door with "opens" in gallery_config.json draws no chain
         in its top bar, only "Paloma's Orrery"; "Solar" leaves the top.)
+     Updated: November 8, 2026, night, with Anthropic's Claude Opus 5.5
+       (L-518, the shared scene link: the room writes the rows ticked
+        (?show=) and the minute shown (?at=) into its own address, so
+        the browser's Share sends the scene; a room opened from such a
+        link draws those rows at that minute, "as shared" under the
+        title, a tap on that line bringing the visitor's now; a minute
+        older than the data opens at now and says so, one past it
+        freezes; a row the room no longer has is named
+        (gallery/scene_address.js; sceneAddressRead, sceneShowApply,
+        sceneAddressWrite, sceneAddressOpened).)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -524,6 +534,10 @@
          window (L-515 part 4, L-165). Its own file so that a check can
          require it. -->
     <script src="gallery/scene_moment.js"></script>
+    <!-- The shared scene link: the address carries the rows ticked and
+         the minute shown (L-518). Its own file so that a check can
+         require it. -->
+    <script src="gallery/scene_address.js"></script>
 
     <!-- Fonts -- match gallery viewer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1365,6 +1379,33 @@
         .info-panel .info-note ul { margin: 0; padding-left: 16px; }
         .info-panel .info-note li { margin: 0 0 4px; }
         .info-panel .info-note a { color: var(--text-secondary); }
+        /* L-518: the shared link. The line under the title, "as shared",
+           takes a tap (Plotly's title layer takes none of its own); and
+           what a link could not show, in a box with the text box's look,
+           gone at the next tap. */
+        body.scene-shared #plotly-container .gtitle-subtitle {
+            pointer-events: all;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .scene-note {
+            position: absolute;
+            left: 50%;
+            top: 40%;
+            transform: translate(-50%, -50%);
+            width: min(300px, calc(100% - 32px));
+            box-sizing: border-box;
+            padding: 8px 10px;
+            background: rgb(17, 24, 39);
+            border: 2px solid #a3b8de;
+            color: #e6edf3;
+            font-size: 12px;
+            line-height: 1.45;
+            text-align: left;
+            z-index: 40;
+        }
+        .scene-note ul { margin: 0; padding-left: 16px; }
+        .scene-note li { margin: 0 0 4px; }
         /* L-267 Stage C. The block at the top of the Sun panel that
            follows the focus: swatch, name, link out. Same swatch as the
            drawer handle so the two readouts visibly agree. */
@@ -3485,7 +3526,10 @@ const EXHIBITS = {
                                 ends + ".", 60)));
                             // L-515 part 4: in a room drawn at the served
                             // window's last minute, "today" is not the day shown.
-                            const frozen = !!(sceneMomentAsked && sceneMomentAsked.frozen);
+                            // L-518: a shared minute is not today either, so
+                            // the two sentences take the same words.
+                            const frozen = !!(sceneMomentAsked && sceneMomentAsked.frozen) ||
+                                !!(sceneAddrState && sceneAddrState.shared);
                             if (comet) {
                                 // The day the comet's path was fetched, as its source
                                 // line prints it (Tony, 2026-11-07, night).
@@ -3819,6 +3863,193 @@ function reportSceneFrozen(text) {
     box.textContent = text;
     const heading = info.querySelector("h3");
     info.insertBefore(box, heading ? heading.nextSibling : info.firstChild);
+}
+
+// ====================================================================
+// L-518 -- THE SHARED SCENE LINK
+// ====================================================================
+// Tony's rulings of 2026-10-29 (documentation/
+// DESIGN_shared_view_rulings_20261029.md in the orrery), read again on
+// 2026-11-08 against the one tree and the freeze. The address carries the
+// rows ticked (?show=) and the minute shown (?at=), and the page writes
+// both itself, so the browser's own Share sends the scene: the minute
+// once, when the room opens; the rows at every tick. A room opened from
+// such a link draws those rows at that minute, "as shared" under the
+// title, and a tap on that line brings the visitor's now. What is decided
+// lives in gallery/scene_address.js (L-338); this part reads the address,
+// touches the traces, the history entry and the page.
+let sceneAddrState = null;
+
+function sceneAddressStorage() {
+    try { return window.sessionStorage; } catch (e) { return null; }
+}
+
+// At boot, before the driver: the clock the room asks for.
+function sceneAddressRead(servedWindow, freezeMs) {
+    const SA = window.SceneAddress;
+    const got = SA.read(window.location.search);
+    const own = got.atText !== null && SA.wasWritten(sceneAddressStorage(), got.atText);
+    if (got.atText !== null && got.atMs === null) {
+        console.warn(EXHIBIT + " exhibit: the address's minute \"" + got.atText +
+                     "\" could not be read; the room shows now");
+    }
+    const m = SA.moment({ atMs: got.atMs, own: own, nowMs: Date.now(),
+                          freezeMs: freezeMs, window: servedWindow });
+    return { show: got.show, clockMs: m.clockMs, shared: m.shared,
+             tooOld: m.tooOld, sharedMs: m.sharedMs, missing: [],
+             servedShown: null, at: null, ready: false };
+}
+
+// The rows of a list of traces, in the drawer's sense: one per legend
+// group, its address key, whether it can be ticked, and whether its
+// first trace is drawn (the drawer reads the same, buildSunDrawer).
+function sceneAddressGroups(traces, isRoot) {
+    const SA = window.SceneAddress, SSD = window.SolarSystemDrawer;
+    const byKey = {}, out = [];
+    traces.forEach(function (t) {
+        const g = t && t.legendgroup;
+        if (!g) { return; }
+        let e = byKey[g];
+        if (!e) {
+            e = byKey[g] = {
+                key: g, shell: null,
+                tickable: isRoot ? SSD.tickable(g) : g !== SSD.SUN_KEY,
+                shownNow: t.visible !== SUN_HIDDEN && t.visible !== false
+            };
+            out.push(e);
+        }
+        if (!e.shell && t.meta && typeof t.meta.shell_key === "string") { e.shell = t.meta.shell_key; }
+    });
+    out.forEach(function (e) { e.addr = SA.rowKey(e.key, e.shell); });
+    return out;
+}
+
+// After compose and the arrival block, before the opening view is
+// measured: a shared link's rows replace what the room would open on.
+// Its Reset still puts back the room's own opening (the root keeps it in
+// its drawer; a room of shells is handed servedShown).
+function sceneShowApply(traces, built) {
+    const st = sceneAddrState;
+    if (!st || !st.show) { return; }
+    const groups = sceneAddressGroups(traces, !!built.drawer);
+    const served = {};
+    groups.forEach(function (g) { served[g.key] = g.shownNow; });
+    const r = window.SceneAddress.apply(groups, st.show);
+    traces.forEach(function (t) {
+        if (t && Object.prototype.hasOwnProperty.call(r.shown, t.legendgroup)) {
+            t.visible = r.shown[t.legendgroup] ? true : SUN_HIDDEN;
+        }
+    });
+    st.missing = r.missing;
+    st.servedShown = built.drawer ? null : served;
+    if (built.drawer) {
+        built.drawer.order = r.order.slice();
+        built.focusGroup = r.order.length ? r.order[r.order.length - 1] : null;
+    }
+    r.missing.forEach(function (k) {
+        console.warn(EXHIBIT + " exhibit: the shared link names \"" + k +
+                     "\", which is no row of this room");
+    });
+}
+
+// A drawn group's served shell key, read off its traces.
+function sceneShellKeyOf(g) {
+    const data = (sunPlotDiv && sunPlotDiv.data) || [];
+    for (let j = 0; j < g.indices.length; j++) {
+        const t = data[g.indices[j]];
+        if (t && t.meta && typeof t.meta.shell_key === "string") { return t.meta.shell_key; }
+    }
+    return null;
+}
+
+// The address mirrors the scene: called after every tick (renderSunDrawer)
+// and Reset. replaceState, so the history gains no entries and Back
+// leaves the room as before.
+function sceneAddressWrite() {
+    const st = sceneAddrState;
+    if (!st || !st.ready || !st.at || !window.history || !window.history.replaceState) { return; }
+    const SA = window.SceneAddress, SSD = window.SolarSystemDrawer;
+    const groups = sunGroups.map(function (g) {
+        return { key: g.key, addr: SA.rowKey(g.key, sceneShellKeyOf(g)),
+                 tickable: ssDrawer ? SSD.tickable(g.key) : g.key !== SSD.SUN_KEY };
+    });
+    const show = SA.showOf(groups, ssShownByKey(), ssDrawer ? ssDrawer.order : null);
+    const q = SA.search(window.location.search, EXHIBIT_ASKED, show, st.at);
+    if (q === window.location.search) { return; }
+    try {
+        window.history.replaceState(window.history.state, "",
+            window.location.pathname + q + window.location.hash);
+    } catch (e) { /* the address stays as it was */ }
+}
+
+// The room has opened: the minute shown goes into the address, once; a
+// minute that is the visitor's own is remembered for this tab, so a
+// reload or Back opens at now and not "as shared"; a shared link that
+// could not be met in full says so.
+function sceneAddressOpened() {
+    const st = sceneAddrState;
+    if (!st || !sceneMomentAsked) { return; }
+    const SA = window.SceneAddress;
+    const ms = Date.parse(sceneMomentAsked.iso);
+    if (!isFinite(ms)) { return; }
+    st.at = SA.atText(ms);
+    if (!st.shared) { SA.remember(sceneAddressStorage(), st.at); }
+    st.ready = true;
+    if (st.shared && !sceneMomentAsked.frozen) {
+        document.body.classList.add("scene-shared");
+        document.addEventListener("click", sceneAddressTapNow, true);
+    }
+    const notes = [];
+    if (st.tooOld) {
+        notes.push(SA.tooOldNote(sceneMomentStamp(SceneMoment._jdOfMs(st.sharedMs))));
+    }
+    const miss = SA.missingNote(st.missing);
+    if (miss) { notes.push(miss); }
+    if (notes.length) { sceneAddressNoteShow(notes); }
+    sceneAddressWrite();
+}
+
+// A tap on the line under the title, "as shared": the room again at the
+// visitor's now, the ticks kept, the shared minute gone from the address.
+function sceneAddressTapNow(ev) {
+    const t = ev.target;
+    if (!t || !t.closest || !t.closest("#plotly-container .gtitle-subtitle")) { return; }
+    ev.preventDefault();
+    window.location.replace(window.location.pathname +
+        window.SceneAddress.withoutAt(window.location.search) + window.location.hash);
+}
+
+// What a shared link could not show: in a box in the middle of the view,
+// in the text box's look, gone at the next tap anywhere; and kept at the
+// top of the i panel, under the room's heading, as the freeze's note is.
+function sceneAddressNoteShow(notes) {
+    const box = document.createElement("div");
+    box.className = "scene-note";
+    box.id = "scene-note";
+    box.setAttribute("role", "note");
+    const ul = document.createElement("ul");
+    notes.forEach(function (n) {
+        const li = document.createElement("li");
+        li.textContent = n;
+        ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    const area = document.querySelector(".viz-area") || document.body;
+    area.appendChild(box);
+    const close = function () {
+        box.remove();
+        document.removeEventListener("pointerdown", close, true);
+    };
+    document.addEventListener("pointerdown", close, true);
+    const info = document.getElementById("info-panel");
+    if (info) {
+        const p = document.createElement("div");
+        p.className = "info-note scene-shared-note";
+        p.id = "scene-shared-note";
+        p.textContent = notes.join(" ");
+        const heading = info.querySelector("h3");
+        info.insertBefore(p, heading ? heading.nextSibling : info.firstChild);
+    }
 }
 
 // L-475 (Tony, at his phone look of 2026-10-22: "this should be on every
@@ -4630,8 +4861,15 @@ async function initSunExhibit() {
         const servedWindow = JSON.parse(cov).served_window;
         const freezeKnob = new URLSearchParams(window.location.search)
             .get("freeze") === "1";
-        const clockMs = (freezeKnob && SceneMoment.pastWindowMs(servedWindow) !== null)
-            ? SceneMoment.pastWindowMs(servedWindow) : Date.now();
+        const freezeMs = (freezeKnob && SceneMoment.pastWindowMs(servedWindow) !== null)
+            ? SceneMoment.pastWindowMs(servedWindow) : null;
+        // L-518: a shared link's minute (?at=) is the maker's, and the room
+        // draws it; one older than the window's start opens at now and says
+        // so; one this tab wrote itself (a reload, Back) is the visitor's
+        // own and opens at now. Past the window's end askFor freezes it, as
+        // it freezes the clock.
+        sceneAddrState = sceneAddressRead(servedWindow, freezeMs);
+        const clockMs = sceneAddrState.clockMs;
         sceneMomentAsked = SceneMoment.askFor(clockMs, servedWindow, EX.epochNow);
         pyodide.globals.set("EPOCH_ISO", sceneMomentAsked.iso);
         // A room's own inputs to its driver, if it has any.
@@ -4692,6 +4930,11 @@ async function initSunExhibit() {
                 sceneMomentStamp(SceneMoment._jdOfMs(Date.parse(sceneMomentAsked.iso)));
             sunSceneSubtitle = SceneMoment.subtitle(frozenStamp);
             reportSceneFrozen(SceneMoment.panelNote(frozenStamp));
+        } else if (sceneAddrState && sceneAddrState.shared && sunSceneSubtitle) {
+            // L-518: a shared minute says so under the title, and a tap
+            // on the line brings the visitor's now (sceneAddressTapNow).
+            // A frozen room keeps the freeze's words instead.
+            sunSceneSubtitle = SceneAddress.subtitle(sunSceneSubtitle);
         }
         sunAbsent = built.absent || [];
 
@@ -4726,6 +4969,9 @@ async function initSunExhibit() {
                          arrival.unknown[u] + "\", which is not a shell " +
                          "this room draws");
         }
+        // L-518: a shared link's rows replace the opening, before the
+        // measuring below, so the opening view fits the shared scene.
+        sceneShowApply(traces, built);
 
         // Measure every trace once. Index i belongs to trace i, and
         // the legend never reorders traces, so the two stay aligned.
@@ -4927,6 +5173,13 @@ async function initSunExhibit() {
         // this same boot, so the opening has one definition and Reset
         // does not read the block a second time.
         sunOpening = ssDrawer ? null : sunOpeningState();
+        // L-518: a room opened from a shared link opens on the link's
+        // ticks, and its Reset still puts back the room's own opening, as
+        // the Solar System room's does: what the arrival block left drawn,
+        // recorded before the link's ticks were applied.
+        if (!ssDrawer && sceneAddrState && sceneAddrState.servedShown) {
+            sunOpening = sceneAddrState.servedShown;
+        }
         // L-289: the three axis lines through the origin go in AFTER the
         // drawer, so the drawer has no row for them, and after the
         // arrival extent has been measured, so they cannot widen it.
@@ -4954,6 +5207,9 @@ async function initSunExhibit() {
         // L-517: back from a saved picture opened here, the drawer opens at
         // its fold.
         if (ssDrawer) { ssPicReturn(); }
+        // L-518: the room is open; the address now mirrors the scene, and a
+        // shared link that could not be met in full says so.
+        sceneAddressOpened();
 
         bar.style.width = "100%";
         status.textContent = "Ready";
@@ -7143,6 +7399,10 @@ function renderSunDrawer() {
             : "Nothing drawn";
 
     renderSunInfo(grp);
+    // L-518: every tick and untick passes through here, so the address
+    // is rewritten here (sceneAddressWrite does nothing until the room
+    // has opened).
+    sceneAddressWrite();
 }
 
 // L-267 Stage C. The link a shell carries, read off its trace. The
@@ -7456,7 +7716,8 @@ function sunReset() {
             return Plotly.restyle(sunPlotDiv, { visible: shown.vis }, shown.idx);
         })
         .then(sunLineFit)   // L-515: the Sun line follows what Reset drew
-        .then(navHome);
+        .then(navHome)
+        .then(sceneAddressWrite);   // L-518: the address follows the ticks
 }
 
 // The drawer's rendered height, handed to the i panel as a CSS

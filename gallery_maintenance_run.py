@@ -231,6 +231,11 @@ gates, its self-test breaking two files five ways; the live check also
 fetches gallery/picture_folds.js, which the page loads with a script
 tag, and gallery/gallery_metadata.json, which the Solar System room now
 reads to place the pictures.)
+Module updated: November 8, 2026, night, with Anthropic's Claude Opus 5.5
+(L-518, the shared scene link: the "Scene address" checker runs
+documentation/smoke_scene_address.js and gates, its self-test breaking
+the real file three ways; the live check also fetches
+gallery/scene_address.js, which the page loads with a script tag.)
 """
 
 import hashlib
@@ -649,6 +654,18 @@ OFFLINE_CHECKERS = [
     ("Scene moment", "node",
      ["documentation/smoke_scene_moment.js"], ".", "===", False),
 
+    # L-518 (2026-11-08, the shared scene link): the address carries the
+    # rows ticked (?show=) and the minute shown (?at=). It requires the
+    # real gallery/scene_address.js, works its cases by hand (the minute
+    # read and written, a shared minute drawn, one older than the data
+    # opening at now, one past it frozen by SceneMoment, the rows a link
+    # ticks and the keys no row has, the address written and read back to
+    # the same scene), holds every served row and shell to a plain key,
+    # and checks the page's wiring. Its self-test breaks the real file
+    # three ways first. Gates.
+    ("Scene address", "node",
+     ["documentation/smoke_scene_address.js"], ".", "===", False),
+
     # L-281 (2026-09-26): the lobby's guest book. It renders the real
     # data/guestbook.json with the real gallery/guestbook.js and fails
     # on a missing time, name or text, or a link the page would drop;
@@ -758,6 +775,8 @@ SERVED_FILES = [
     "gallery/text_box.js",
     # L-515 part 4 (2026-11-07): likewise, the moment a room opens on.
     "gallery/scene_moment.js",
+    # L-518 (2026-11-08): likewise, the shared scene link.
+    "gallery/scene_address.js",
     # L-517 (2026-11-08): likewise, the saved pictures' folds; and the
     # metadata, which the Solar System room now reads to place them.
     "gallery/picture_folds.js",
