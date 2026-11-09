@@ -1,10 +1,10 @@
 {
   "_comment": "Written by daily_run.py --night on a clean night only (L-485), so this is the website's last clean run. A red night writes nothing: its record is the run's log on GitHub.",
   "schema": 1,
-  "clean_run_utc": "2026-11-08T18:01:51.756729+00:00",
-  "started_utc": "2026-11-08T17:58:19.119836+00:00",
+  "clean_run_utc": "2026-11-09T18:54:54.856451+00:00",
+  "started_utc": "2026-11-09T18:51:19.835384+00:00",
   "where": "GitHub Actions",
-  "orrery_pulled": "f2446869076ac9daa34353ab645d4a6ead45f743",
+  "orrery_pulled": "4d58d208bb7572287cd4f5ea5019c49b2213dd98",
   "pulls_asked": "with the run's GITHUB_TOKEN",
   "swap_log_line": {
     "attempts": {
@@ -15,11 +15,11 @@
     "mode": "nightly",
     "outcome": "ok",
     "reached": "staging_to_live",
-    "run_id": "20261108T175822Z",
-    "time": "2026-11-08T18:00:40.879032+00:00"
+    "run_id": "20261109T185123Z",
+    "time": "2026-11-09T18:53:43.881740+00:00"
   },
-  "run_records": "Run records: carried 139 of 139, plus tonight's: 20261108T175822Z.json.",
-  "served_files_changed": 103,
+  "run_records": "Run records: carried 140 of 140, plus tonight's: 20261109T185123Z.json.",
+  "served_files_changed": 197,
   "steps": [
     {
       "step": "Guest book updater",
@@ -29,7 +29,7 @@
     {
       "step": "Pulls from the orrery",
       "result": "ok",
-      "seconds": 2.1
+      "seconds": 2.5
     },
     {
       "step": "Pull matches push (runner)",
@@ -39,7 +39,7 @@
     {
       "step": "Cache builder",
       "result": "exit 0",
-      "seconds": 139.6
+      "seconds": 141.5
     },
     {
       "step": "Run records",
@@ -49,7 +49,7 @@
     {
       "step": "Maintenance run, night pass",
       "result": "exit 0",
-      "seconds": 69.0
+      "seconds": 70.6
     }
   ],
   "rows": [
@@ -58,7 +58,7 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/constants_export.json, data/constants_export.sha",
-      "seconds": 0.4
+      "seconds": 0.3
     },
     {
       "row": "Config mirror",
@@ -93,7 +93,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "PASS (526 checks, 0 failures)",
-      "seconds": 24.6
+      "seconds": 25.0
     },
     {
       "row": "Pole of date",
@@ -114,7 +114,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "All 481 store-writer checks passed: an allow list that lets through only a shell's words, a belt's words and the arrival settings, the rooms section's included; a no-edit round trip; one line per change; empty words handled; a refused batch writing nothing; awkward text; and the shell list matching the cache check's rule.",
-      "seconds": 35.8
+      "seconds": 36.3
     },
     {
       "row": "Store editor suite",
@@ -162,7 +162,7 @@
       "row": "Pointer join",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "Every link is accounted for: 188 link(s) against orrery f2446869, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
+      "note": "Every link is accounted for: 188 link(s) against orrery 4d58d208, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
       "seconds": 0.1
     },
     {
@@ -190,7 +190,7 @@
       "row": "Drawings",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery f2446869; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
+      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery 4d58d208; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
       "seconds": 0.7
     },
     {
@@ -292,6 +292,20 @@
       "seconds": 0.1
     },
     {
+      "row": "Picture folds",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: a phone is offered the portrait twins and a desktop the landscape ones, never a \"none\" card on a phone; every Solar System picture has a place naming a row the room serves; Find finds a picture's words; and both pages wire the folds and the way back; the Solar System's addresses open its live room, and Back answers both of its signals; and every scene sits in the Scenes fold under the Sun, opens its own link, and Back returns to the room ===",
+      "seconds": 0.1
+    },
+    {
+      "row": "Scene cards",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: a shared link is cleaned to a scene's address, each thing taken off named; a link that cannot be a scene is refused; a key no row has is named; a link already on a card is refused; and every scene in the metadata is clean ===",
+      "seconds": 0.4
+    },
+    {
       "row": "Source list",
       "kind": "checker",
       "verdict": "PASS",
@@ -325,6 +339,13 @@
       "verdict": "PASS",
       "note": "=== PASS: past the served window a room asks for the window's last minute, the resolver accepts it and refuses the minute asked, and the page says so ===",
       "seconds": 0.1
+    },
+    {
+      "row": "Scene address",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: the address carries the rows ticked and the minute shown, reads back to the same scene, and the page writes and reads it ===",
+      "seconds": 0.0
     },
     {
       "row": "Guest book",
@@ -379,5 +400,5 @@
       "why": "writes MODULE_ATLAS.md and MODULE_INDEX.md, which are documents; the night commits no page or word (Tony's R1, 2026-10-25)"
     }
   ],
-  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/42507517101"
+  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/42677601563"
 }
