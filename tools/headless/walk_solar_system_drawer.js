@@ -388,6 +388,71 @@ async function scenes(root, payload, page) {
   console.log("  30: Scenes under the Sun, 2 scenes; Back to " + (q || "(none)"));
 }
 
+// 31. L-519 part 2: places. A card in several places, any row of the
+// drawer: a scene beside Jupiter and the Heliopause (one of the Sun's
+// shells, named by its served key), none under the Sun; a saved picture
+// beside its comet and the belt's cloud. Served a copy of the metadata,
+// its own scenes taken out.
+async function places(root, payload, page) {
+  const fs = require("fs"), os = require("os"), path = require("path");
+  const meta = JSON.parse(fs.readFileSync(path.join(root, "gallery", "gallery_metadata.json"), "utf8"));
+  meta.visualizations = meta.visualizations.filter(v => v.scene !== true);
+  const LINK = "interactive.html?exhibit=solar-system&show=voyager_1,heliopause";
+  meta.visualizations.push({ id: "scene_walk_helio", title: "Voyager walk at the Heliopause",
+    room: "solar_system", shape: "9:16", files: {}, live: LINK, featured: false, scene: true,
+    drawer_row: ["jupiter", "heliopause"] });
+  const pic = meta.visualizations.filter(v => v.drawer_row === "atlas_3i");
+  pic.forEach(v => { v.drawer_row = ["atlas_3i", "main_belt"]; });
+  const copy = path.join(os.tmpdir(), "walk_places_metadata.json");
+  fs.writeFileSync(copy, JSON.stringify(meta));
+  const w = await h.boot(root, "solar-system", payload,
+    Object.assign({ serve: { "gallery/gallery_metadata.json": copy } }, page ? { page: page } : {}));
+  const d = w.document, E = (s) => w.eval(s);
+  const click = async (el) => { el.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true })); await h.done(); };
+  const row = (key) => d.querySelector('#sun-drawer-list .sun-row[data-k="' + E("ssIndex(" + JSON.stringify(key) + ")") + '"]');
+  const fold = (id) => d.querySelector('#sun-drawer-list .sun-pics[data-pf="' + id + '"]');
+  const links = (id) => Array.from(d.querySelectorAll('#sun-drawer-list a.sun-pic[data-pf="' + id + '"]'));
+  const helioKey = E("(ssDrawer.rows.filter(function (r) { return r.shellKey === 'heliopause'; })[0] || {}).key") || "";
+  // 31a. The scene's two folds, each right after its row, named Scenes;
+  // none under the Sun.
+  const jf = fold("scenes:jupiter"), hf = fold("scenes:" + helioKey);
+  ok(!!helioKey && !!jf && !!hf && row("jupiter").nextElementSibling === jf &&
+     row(helioKey).nextElementSibling === hf &&
+     jf.querySelector(".rname").textContent === "Scenes" && hf.querySelector(".rname").textContent === "Scenes" &&
+     links("scenes:jupiter").map(a => a.getAttribute("data-card")).join() === "scene_walk_helio" &&
+     links("scenes:" + helioKey).map(a => a.getAttribute("href")).join() === LINK,
+     "a scene placed beside Jupiter and the Heliopause is not in a Scenes fold right after each row: " + helioKey);
+  ok(!fold("scenes"), "a scene placed elsewhere is also under the Sun");
+  if (!jf || !hf) { return; }
+  // 31b. The picture beside its comet and inside the Main belt group,
+  // right after the belt's cloud.
+  const pids = pic.map(v => v.id).sort().join();
+  const inFold = (id) => links(id).map(a => a.getAttribute("data-card")).sort().join();
+  ok(pic.length > 0 && !!fold("drawing:main_belt") &&
+     row("drawing:main_belt").nextElementSibling === fold("drawing:main_belt") &&
+     inFold("drawing:main_belt").split(",").every(x => pids.split(",").indexOf(x) >= 0) &&
+     inFold("drawing:main_belt") === inFold("atlas_3i") &&
+     !!inFold("atlas_3i"),
+     "a picture placed beside its comet and the belt's cloud is not in both folds: " + inFold("atlas_3i") + " | " + inFold("drawing:main_belt"));
+  // 31c. Find counts the scene once, and shows it in both places.
+  const find = d.getElementById("sun-find-input");
+  find.value = "Voyager walk"; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done();
+  ok(d.getElementById("sun-find-count").textContent === "1 scene matches" &&
+     !jf.hidden && !hf.hidden && !links("scenes:jupiter")[0].hidden && !links("scenes:" + helioKey)[0].hidden,
+     "Find does not show the scene in both places, counted once: " + d.getElementById("sun-find-count").textContent);
+  find.value = ""; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done();
+  // 31d. Tapped from the Heliopause's fold, Back returns to that fold.
+  await click(hf.querySelector(".rname"));
+  d.addEventListener("click", (ev) => ev.preventDefault());
+  await click(links("scenes:" + helioKey)[0]);
+  const kept = w.sessionStorage.getItem("po_room_return");
+  const k = kept ? JSON.parse(kept) : {};
+  ok(k.fold === "scenes:" + helioKey && k.card === "scene_walk_helio",
+     "a scene tapped from the Heliopause's fold does not keep that fold for Back: " + kept);
+  console.log("  31: places: a scene beside Jupiter and " + helioKey + "; " + pic.length +
+              " pictures beside 3I/ATLAS and the belt's cloud");
+}
+
 (async () => {
   const [root, given, planted] = process.argv.slice(2);
   const fs = require("fs"), os = require("os"), path = require("path");
@@ -400,6 +465,7 @@ async function scenes(root, payload, page) {
     const wp = await h.boot(root, "solar-system", payload, { page: planted });
     await pictures(wp, root, payload, planted);
     await scenes(root, payload, planted);
+    await places(root, payload, planted);
     console.log(fails.length ? "FAIL " + fails.length + " of " + n + " (planted " + planted + "):\n  " + fails.join("\n  ")
                              : "PASS: " + n + " checks on the planted page -- it should have failed");
     process.exit(fails.length ? 1 : 0);
@@ -1542,6 +1608,7 @@ async function scenes(root, payload, page) {
   await pictures(w, root, payload, null);
   // 30. L-519: the Scenes fold, on a copy of the metadata.
   await scenes(root, payload, null);
+  await places(root, payload, null);
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);
 })();

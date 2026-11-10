@@ -311,6 +311,8 @@
       if (typeof r.shell === "string" && r.shell) {
         out.push({
           key: r.shell, slug: null, shell: r.shell,
+          // L-519 part 2: its served shell key, a card's place.
+          shellKey: (typeof r.shell_key === "string" && r.shell_key) ? r.shell_key : null,
           label: (typeof r.label === "string" && r.label) ? r.label : r.shell,
           group: null, find: findWords(r.find), isShell: true
         });
@@ -815,6 +817,7 @@
     // L-517: the saved pictures.
     const picIds = {}, picRows = {}, picOpen = {};
     let p = 0, s = 0;
+    const counted = {};
     const alone = n === 0 && all.length === 0;
     Object.keys(pictureWords || {}).forEach(function (rk) {
       const hit = (pictureWords[rk] || []).filter(function (e) { return e && holds(e.words); });
@@ -828,8 +831,13 @@
       if (!shows.length) { return; }
       const row = (rows || []).filter(function (r) { return r.key === rk; })[0];
       if (!row) { return; }
-      // L-519: a scene found is counted apart from a picture.
-      shows.forEach(function (e) { if (e.scene) { s++; } else { p++; } });
+      // L-519: a scene found is counted apart from a picture; part 2: a
+      // card in several places, once.
+      shows.forEach(function (e) {
+        if (counted[e.id]) { return; }
+        counted[e.id] = true;
+        if (e.scene) { s++; } else { p++; }
+      });
       picRows[rk] = true;
       const up = isGroup(row) ? ancestors(rows, row.group)
         : (row.group ? [row.group].concat(ancestors(rows, row.group)) : []);

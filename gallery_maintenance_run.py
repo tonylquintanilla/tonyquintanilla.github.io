@@ -241,6 +241,12 @@ Module updated: November 9, 2026 with Anthropic's Claude Opus 5.5
 tools/test_scene_card.py, the logic behind the gallery editor's New Scene
 window, and gates, its self-test breaking the real file three ways; the
 Picture folds checker now also holds the Scenes fold under the Sun's row.)
+Module updated: November 9, 2026, evening, with Anthropic's Claude Opus
+5.5 (L-519 part 2, places: the "Drawer places" checker runs
+tools/test_drawer_places.py, the logic behind the gallery editor's drawer
+tree and Places list, and gates; the Picture folds checker now holds a card
+in several places, beside any row, the Sun's shells and the belt's cloud
+among them.)
 """
 
 import hashlib
@@ -614,6 +620,18 @@ OFFLINE_CHECKERS = [
     # file three ways first. Gates.
     ("Scene cards", "python",
      ["tools/test_scene_card.py"], ".", "===", False),
+
+    # L-519 part 2 (2026-11-09, evening): PLACES. The gallery editor's
+    # tree for the Solar System door is the room's own drawer, and a card
+    # may sit beside one or several of its rows. It checks
+    # tools/drawer_places.py without the editor: the tree in the website's
+    # order (worked out by node from gallery/solar_system_drawer.js), the
+    # Sun's shells under the Sun, a card's places written as the website
+    # reads them, twins together, and every real card's places rows the
+    # drawer lists. Its self-test breaks the real file three ways first.
+    # Gates.
+    ("Drawer places", "python",
+     ["tools/test_drawer_places.py"], ".", "===", False),
 
     # L-456 (2026-10-20): the i panel lists its sources one to a line,
     # each web address a link. It requires the real gallery/source_list.js,

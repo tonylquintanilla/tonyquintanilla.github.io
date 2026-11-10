@@ -97,6 +97,18 @@ scene "scene" where a live card says "live". Same day, on Tony's first
 try: the window's boxes have a right-click menu (Cut, Copy, Paste, Select
 all), add_edit_menu, since Tk's boxes have none.
 
+Module updated: November 9, 2026, evening, with Anthropic's Claude Opus
+5.5 (L-519 part 2, Tony's design of that afternoon): the Solar System
+door lists the room's own drawer as the website lists it -- the Sun with
+its shells, then every group and body row, groups nested, read only from
+data/objects_config.json -- with each card under every row it is placed
+beside, and "Not in the drawer" for the room cards. A Solar System card's
+form shows "Places in the drawer" in place of its room: Add place...
+(a window with the drawer and a Find box) and Remove place; a card may
+have several, and its twin shares them. The logic is tools/drawer_places.py,
+checked by tools/test_drawer_places.py. The Earth System and the Stars
+keep the hand-curated tree.
+
 Role: devtool
 Domain: gallery_pipeline
 """
@@ -143,6 +155,11 @@ def preview_base():
 from json_converter import live_scene_urls  # noqa: E402
 # L-519 (2026-11-09): the New Scene window's logic, which needs no window.
 import scene_card  # noqa: E402
+import drawer_places  # noqa: E402
+
+# L-519 part 2: the door whose cards are listed in the Solar System room's
+# own drawer, not in the hand-curated rooms.
+DRAWER_DOOR = 'solar_system'
 
 
 # ============================================================
@@ -282,6 +299,9 @@ class GalleryEditor:
         self.snapshot = None        # deep copies at load, for the save report
         self.dirty = False
         self.selected = None        # ('room', path) | ('card', id) | None
+        self.selected_place = None  # L-519 part 2: the drawer row a card was selected under
+        self.drawer_nodes = None    # the Solar System room's drawer (drawer_places.Node list)
+        self.drawer_labels = {}
         self.form_vars = {}
         self.suspend_apply = False
 
@@ -475,6 +495,7 @@ class GalleryEditor:
             return
         self.config.setdefault('doors', [])
         self.config.setdefault('storage', {'key': STORAGE_KEY, 'label': 'Storage', 'hidden': True})
+        self._read_drawer()
         self.snapshot = (copy.deepcopy(self.config), copy.deepcopy(self.data))
         # What the two files were when loaded. Save All compares these with
         # the disk before writing, so an older copy cannot overwrite newer
@@ -498,6 +519,18 @@ class GalleryEditor:
         self.selected = None
         self._load()
         self._show_nothing()
+
+    def _read_drawer(self):
+        """The Solar System room's drawer, read only (L-519 part 2). If it
+        cannot be read, the door keeps the hand-curated tree."""
+        repo_root = os.path.dirname(os.path.dirname(self.meta_path))
+        try:
+            cfg = drawer_places.read_config(repo_root)
+            self.drawer_nodes = drawer_places.drawer_tree(cfg, drawer_places.a_by_slug(repo_root))
+        except (OSError, ValueError) as e:
+            print(f"Could not read the Solar System room's drawer, so its door shows its old rooms: {e}")
+            self.drawer_nodes = None
+        self.drawer_labels = drawer_places.place_labels(self.drawer_nodes or [])
 
     def _cards_in(self, path):
         return [c for c in self.data['visualizations'] if c.get('room', STORAGE_KEY) == path]
@@ -540,9 +573,12 @@ class GalleryEditor:
             for k in kids:
                 add_room(iid, path + '/' + k['key'], k, depth + 1)
 
-        def add_card(parent_iid, c, _color):
+        def add_card(parent_iid, c, _color, place=None):
             star = "\u2605 " if c.get('featured') else ""
             marks = []
+            n_places = len(drawer_places.places_of(c)) if place else 0
+            if n_places > 1:
+                marks.append(f"{n_places} places")
             if c.get(scene_card.SCENE_FIELD) is True:
                 marks.append('scene')
             elif c.get('live'):
@@ -551,12 +587,87 @@ class GalleryEditor:
             marks.append('+'.join(s[0].upper() for s in slots) if slots
                          else ('scene only' if c.get('live') else 'NO FILE'))
             marks.append(c.get('shape', ''))
-            self.tree.insert(parent_iid, 'end', iid='card:' + c['id'],
+            self.tree.insert(parent_iid, 'end',
+                             iid='card:' + c['id'] + ('|' + place if place else ''),
                              text=star + c.get('title', c['id']),
                              values=('  '.join(m for m in marks if m),))
 
+        def add_drawer_door(d):
+            """L-519 part 2 (Tony, 2026-11-09, 14:53: "The gallery tree as
+            shown in the gallery editor now does not match what we see in
+            the website"): the Solar System door lists the room's own
+            drawer, read only, each card under every row it is placed
+            beside (drawer_places.py)."""
+            for p, _r, _depth in walk_rooms([d]):
+                known_paths.add(p)
+            cards = [c for c in self.data['visualizations'] if drawer_places.in_drawer_door(c)]
+            by_place, loose, lost = {}, [], []
+            for c in cards:
+                ps = drawer_places.places_of(c)
+                if not ps:
+                    loose.append(c)
+                    continue
+                if drawer_places.unknown_places(c, self.drawer_labels):
+                    lost.append(c)
+                for p in ps:
+                    if p in self.drawer_labels:
+                        by_place.setdefault(p, []).append(c)
+
+            def count(n):
+                return len(by_place.get(n.place, [])) + sum(count(k) for k in n.children)
+            info = []
+            if d.get('color'):
+                info.append(d['color'])
+            info.append(f"{len(cards)} card{'s' if len(cards) != 1 else ''}")
+            info.append("the room's drawer")
+            door_iid = 'room:' + d['key']
+            self.tree.insert('', 'end', iid=door_iid, text=d.get('label', d['key']),
+                             values=('  '.join(info),), open=open_state.get(door_iid, True))
+            kind_word = {'group': 'group', 'drawing': 'drawing', 'shell': "Sun's shell"}
+
+            def add_node(parent_iid, n, depth):
+                here = by_place.get(n.place, []) if n.place else []
+                under = count(n)
+                iid = 'drow:' + (n.place if n.place else '#' + n.label)
+                info = []
+                if n.kind in kind_word:
+                    info.append(kind_word[n.kind])
+                if n.kind == 'heading':
+                    info.append(drawer_places.SHELLS_NOTE)
+                if under:
+                    info.append(f"{under} card{'s' if under != 1 else ''}")
+                self.tree.insert(parent_iid, 'end', iid=iid, text=n.label,
+                                 values=('  '.join(info),),
+                                 tags=() if under or n.kind != 'heading' else ('storage',),
+                                 open=open_state.get(iid, bool(here) and n.kind == 'body'))
+                # Scenes first, then saved pictures, as the website shows them.
+                for c in [c for c in here if drawer_places.is_scene(c)] + \
+                         [c for c in here if not drawer_places.is_scene(c)]:
+                    add_card(iid, c, None, place=n.place)
+                for k in n.children:
+                    add_node(iid, k, depth + 1)
+            for n in self.drawer_nodes:
+                add_node(door_iid, n, 0)
+            if lost:
+                lid = 'drow:#lost'
+                self.tree.insert(door_iid, 'end', iid=lid, text="Places the drawer does not list",
+                                 values=(f"{len(lost)} card{'s' if len(lost) != 1 else ''}",),
+                                 tags=('deep',), open=open_state.get(lid, True))
+                for c in lost:
+                    add_card(lid, c, None, place='#lost')
+            if loose:
+                nid = 'drow:#loose'
+                self.tree.insert(door_iid, 'end', iid=nid, text="Not in the drawer",
+                                 values=(f"{len(loose)} card{'s' if len(loose) != 1 else ''}",),
+                                 tags=('storage',), open=open_state.get(nid, False))
+                for c in loose:
+                    add_card(nid, c, None, place='#loose')
+
         for d in self.config['doors']:
-            add_room('', d['key'], d, 1)
+            if d['key'] == DRAWER_DOOR and self.drawer_nodes is not None:
+                add_drawer_door(d)
+            else:
+                add_room('', d['key'], d, 1)
 
         # Storage: the hidden room, plus any card whose room no longer exists.
         stored = [c for c in self.data['visualizations']
@@ -574,6 +685,12 @@ class GalleryEditor:
                 self.tree.item('card:' + c['id'],
                                values=(f"room missing: {c['room']}",), tags=('deep',))
 
+        # A card in the drawer is listed once per place: keep it where it
+        # was selected, else at its first place.
+        if keep and not self.tree.exists(keep) and keep.startswith('card:'):
+            cands = [i for i in self._all_iids() if i.startswith(keep + '|')]
+            pref = keep + '|' + (self.selected_place or '')
+            keep = pref if pref in cands else (cands[0] if cands else keep)
         if keep and self.tree.exists(keep):
             self.tree.selection_set(keep)
             self.tree.see(keep)
@@ -600,6 +717,13 @@ class GalleryEditor:
             return
         iid = sel[0]
         kind, _, ident = iid.partition(':')
+        self.selected_place = None
+        if kind == 'card' and '|' in ident:
+            ident, _, self.selected_place = ident.partition('|')
+        if kind == 'drow':
+            self.selected = None
+            self._show_drawer_row(ident)
+            return
         self.selected = (kind, ident)
         if kind == 'card':
             self._show_card(self._card_by_id(ident))
@@ -681,6 +805,179 @@ class GalleryEditor:
                 row=8, column=1, sticky='w', pady=(8, 0))
         f.columnconfigure(1, weight=1)
 
+    def _show_drawer_row(self, ident):
+        """A row of the Solar System room's drawer: read only here."""
+        self._clear_form()
+        f = self.form
+        label = self.drawer_labels.get(ident) or ident.lstrip('#')
+        ttk.Label(f, text=label, font=('TkDefaultFont', 11, 'bold')).pack(anchor='w')
+        if ident.startswith('#'):
+            words = {
+                "#lost": "Cards whose place names no row the drawer lists. Select one "
+                         "and remove that place, or add another.",
+                "#loose": "Solar System cards with no place in the drawer: the room "
+                          "cards, which open a room, and any picture taken out.",
+            }.get(ident, drawer_places.SHELLS_NOTE.capitalize() + ".")
+        else:
+            words = ("A row of the Solar System room's drawer, as the website lists it. "
+                     "It is read from data/objects_config.json and not changed here. "
+                     "To put a card beside it, select the card and press Add place...")
+        ttk.Label(f, text=words, wraplength=520, foreground='#555555').pack(anchor='w', pady=(6, 0))
+        if not ident.startswith('#'):
+            ttk.Label(f, text=f"Its place name: {ident}", foreground='#777777').pack(anchor='w', pady=(6, 0))
+
+    def _place_text(self, c, p):
+        label = self.drawer_labels.get(p)
+        if label is None:
+            return f"{p}  -- not a row the drawer lists"
+        if p == drawer_places.SUN and drawer_places.is_scene(c):
+            return f"{label} (Scenes under the Sun)"
+        return label
+
+    def _places_row(self, f, c, r):
+        """L-519 part 2: where a Solar System card sits in the drawer, in
+        place of the hand-curated room."""
+        places = drawer_places.places_of(c)
+        ttk.Label(f, text="Places in the drawer").grid(row=r, column=0, sticky='nw', padx=(0, 10), pady=4)
+        pf = ttk.Frame(f)
+        pf.grid(row=r, column=1, columnspan=2, sticky='ew', pady=4)
+        lb = tk.Listbox(pf, height=max(2, min(5, len(places))), exportselection=False)
+        for p in places:
+            lb.insert('end', self._place_text(c, p))
+        if places:
+            i = places.index(self.selected_place) if self.selected_place in places else 0
+            lb.selection_set(i)
+        lb.grid(row=0, column=0, rowspan=2, sticky='ew')
+        ttk.Button(pf, text="Add place...", command=lambda: self._add_place(c)).grid(
+            row=0, column=1, sticky='ew', padx=(6, 0))
+        ttk.Button(pf, text="Remove place", command=lambda: self._remove_place(c, lb)).grid(
+            row=1, column=1, sticky='ew', padx=(6, 0))
+        notes = []
+        if not places:
+            notes.append("Not in the drawer.")
+        if drawer_places.is_scene(c) and drawer_places.FIELD not in c:
+            notes.append("No place written: a scene with none sits in Scenes under the Sun.")
+        if c.get('sibling'):
+            notes.append("Its twin shares its places.")
+        room = c.get('room', STORAGE_KEY)
+        chain = "Storage (hidden)" if room == STORAGE_KEY else ": ".join(room_label_chain(self.config, room))
+        notes.append(f"Gallery room: {chain}")
+        ttk.Label(pf, text="  ".join(notes), foreground='#777777', wraplength=420).grid(
+            row=2, column=0, sticky='w', pady=(4, 0))
+        ttk.Button(pf, text="Move to Room...", command=self._move_to_room).grid(
+            row=2, column=1, sticky='ew', padx=(6, 0), pady=(4, 0))
+        pf.columnconfigure(0, weight=1)
+
+    def _add_place(self, c):
+        """Pick a row of the drawer and put the card beside it as well."""
+        self._apply_form()
+        have = drawer_places.places_of(c)
+        dlg = tk.Toplevel(self.root)
+        dlg.title("Add a place")
+        dlg.geometry("560x560")
+        dlg.transient(self.root)
+        dlg.grab_set()
+        ttk.Label(dlg, text=f"Put '{c.get('title', c['id'])}' beside which row?").pack(
+            anchor='w', padx=12, pady=(12, 2))
+        find_var = tk.StringVar()
+        ff = ttk.Frame(dlg)
+        ff.pack(fill='x', padx=12)
+        ttk.Label(ff, text="Find:").pack(side='left')
+        find = ttk.Entry(ff, textvariable=find_var)
+        find.pack(side='left', fill='x', expand=True, padx=(6, 0))
+        add_edit_menu(find)
+        tf = ttk.Frame(dlg)
+        tf.pack(fill='both', expand=True, padx=12, pady=8)
+        tv = ttk.Treeview(tf, columns=('info',), show='tree', selectmode='browse')
+        tv.column('#0', width=380)
+        tv.column('info', width=120)
+        sb = ttk.Scrollbar(tf, orient='vertical', command=tv.yview)
+        tv.configure(yscrollcommand=sb.set)
+        tv.pack(side='left', fill='both', expand=True)
+        sb.pack(side='left', fill='y')
+        tv.tag_configure('have', foreground='#999999')
+        kind_word = {'group': 'group', 'drawing': 'drawing', 'shell': "Sun's shell"}
+
+        def fill(*_a):
+            tv.delete(*tv.get_children())
+            q = find_var.get().strip().lower()
+
+            def add(parent, n, trail):
+                if q:
+                    if n.place and q in n.label.lower():
+                        tv.insert('', 'end', iid='p:' + n.place, text=' > '.join(trail + [n.label]),
+                                  values=('already here' if n.place in have else kind_word.get(n.kind, ''),),
+                                  tags=('have',) if n.place in have else ())
+                    for k in n.children:
+                        add('', k, trail + [n.label])
+                    return
+                iid = ('p:' + n.place) if n.place else ('h:' + n.label)
+                tv.insert(parent, 'end', iid=iid, text=n.label,
+                          values=('already here' if n.place in have else kind_word.get(n.kind, ''),),
+                          tags=('have',) if n.place in have else (), open=False)
+                for k in n.children:
+                    add(iid, k, trail + [n.label])
+            for n in self.drawer_nodes:
+                add('', n, [])
+
+        def ok(_e=None):
+            sel = tv.selection()
+            if not sel or not sel[0].startswith('p:'):
+                return
+            place = sel[0][2:]
+            if place in have:
+                return
+            dlg.destroy()
+            changed = drawer_places.add_place(c, place, self.data['visualizations'])
+            if changed:
+                self._mark_dirty()
+                self.selected_place = place
+                self._refresh_tree(keep='card:' + c['id'] + '|' + place)
+                twin = " and its twin" if len(changed) > 1 else ""
+                self.status_var.set(f"'{c.get('title', c['id'])}'{twin} now also beside "
+                                    f"{self.drawer_labels.get(place, place)}. Save All writes it.")
+
+        bf = ttk.Frame(dlg)
+        bf.pack(fill='x', padx=12, pady=(0, 12))
+        ttk.Button(bf, text="Add place", command=ok).pack(side='right', padx=2)
+        ttk.Button(bf, text="Cancel", command=dlg.destroy).pack(side='right', padx=2)
+        find_var.trace_add('write', fill)
+        tv.bind('<Double-1>', ok)
+        dlg.bind('<Return>', ok)
+        dlg.bind('<Escape>', lambda e: dlg.destroy())
+        fill()
+        find.focus_set()
+
+    def _remove_place(self, c, lb):
+        self._apply_form()
+        places = drawer_places.places_of(c)
+        sel = lb.curselection()
+        if not places or not sel:
+            self.status_var.set("Select a place in the list first.")
+            return
+        place = places[sel[0]]
+        title = c.get('title', c['id'])
+        scene = drawer_places.is_scene(c)
+        if scene and places == [drawer_places.SUN]:
+            messagebox.showinfo("Remove place", "A scene always has a place: with none it sits in "
+                                "Scenes under the Sun. Add another place first.", parent=self.root)
+            return
+        if len(places) == 1 and not scene:
+            if not messagebox.askyesno(
+                    "Remove place", f"Take '{title}' out of the drawer?\n\n"
+                    "It will be listed under 'Not in the drawer' until you add a place.",
+                    parent=self.root):
+                return
+        changed = drawer_places.remove_place(c, place, self.data['visualizations'])
+        if changed:
+            self._mark_dirty()
+            left = drawer_places.places_of(c)
+            self.selected_place = left[0] if left else '#loose'
+            self._refresh_tree(keep='card:' + c['id'] + '|' + self.selected_place)
+            back = " It sits in Scenes under the Sun." if scene and len(places) == 1 else ""
+            self.status_var.set(f"'{title}' no longer beside {self.drawer_labels.get(place, place)}."
+                                f"{back} Save All writes it.")
+
     def _show_storage(self):
         self._clear_form()
         n = len(self.tree.get_children('room:' + STORAGE_KEY))
@@ -708,13 +1005,16 @@ class GalleryEditor:
         txt.bind('<FocusOut>', self._on_field_leave)
         self.form_vars['description'] = txt
 
-        room = c.get('room', STORAGE_KEY)
-        chain = "Storage (hidden)" if room == STORAGE_KEY else ": ".join(room_label_chain(self.config, room))
-        ttk.Label(f, text="Room").grid(row=4, column=0, sticky='w', padx=(0, 10), pady=4)
-        rf = ttk.Frame(f)
-        rf.grid(row=4, column=1, columnspan=2, sticky='ew')
-        ttk.Label(rf, text=chain).pack(side='left')
-        ttk.Button(rf, text="Move to Room...", command=self._move_to_room).pack(side='right')
+        if drawer_places.in_drawer_door(c) and self.drawer_nodes is not None:
+            self._places_row(f, c, 4)
+        else:
+            room = c.get('room', STORAGE_KEY)
+            chain = "Storage (hidden)" if room == STORAGE_KEY else ": ".join(room_label_chain(self.config, room))
+            ttk.Label(f, text="Room").grid(row=4, column=0, sticky='w', padx=(0, 10), pady=4)
+            rf = ttk.Frame(f)
+            rf.grid(row=4, column=1, columnspan=2, sticky='ew')
+            ttk.Label(rf, text=chain).pack(side='left')
+            ttk.Button(rf, text="Move to Room...", command=self._move_to_room).pack(side='right')
 
         files = c.get('files') or {}
         for i, slot in enumerate(SLOTS):
@@ -1082,7 +1382,14 @@ class GalleryEditor:
             c = self._card_by_id(ident)
             room = c.get('room', STORAGE_KEY)
             idx = vizs.index(c)
-            sib = [i for i, v in enumerate(vizs) if v.get('room', STORAGE_KEY) == room]
+            place = self.selected_place
+            if place and not place.startswith('#') and drawer_places.in_drawer_door(c):
+                # L-519 part 2: in the drawer, among the cards at that place.
+                sib = [i for i, v in enumerate(vizs)
+                       if place in drawer_places.places_of(v)
+                       and drawer_places.is_scene(v) == drawer_places.is_scene(c)]
+            else:
+                sib = [i for i, v in enumerate(vizs) if v.get('room', STORAGE_KEY) == room]
             pos = sib.index(idx)
             if not (0 <= pos + direction < len(sib)):
                 return
@@ -1446,7 +1753,8 @@ class GalleryEditor:
         for i in sorted(set(new_cards) - set(old_cards)):
             lines.append(f"  card added    {i}")
         for i in sorted(set(old_cards) & set(new_cards)):
-            for k in ('title', 'description', 'room', 'shape', 'files', 'live', 'featured', 'sources'):
+            for k in ('title', 'description', 'room', 'shape', 'files', 'live', 'featured', 'sources',
+                      'drawer_row'):
                 a, b = old_cards[i].get(k), new_cards[i].get(k)
                 if a != b:
                     lines.append(f"  card {i}: {k} {a!r} -> {b!r}")

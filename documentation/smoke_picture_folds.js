@@ -40,26 +40,34 @@
 //      chain in a room under such a door; and every door's "opens" in
 //      gallery/gallery_config.json names a live card. The doors with no
 //      page are printed.
-//   6. L-519 (Scenes): a card marked "scene": true sits in the one Scenes
-//      fold under the Sun's row, ahead of that row's saved pictures, and
-//      never among the pictures even with a drawer_row; it opens its own
+//   6. L-519 (Scenes): a card marked "scene": true sits in a Scenes fold
+//      under its row (the Sun's when it names none), ahead of that row's
+//      saved pictures, and never among the pictures; it opens its own
 //      link; Find finds its name and counts it as a scene, even when a
 //      body also matches (Tony's phone look of Nov 9); what the room
 //      keeps when a scene is opened is kept through the scene's own
 //      opening, taken by the room as it was left, and dropped by anything
-//      else. In the real metadata no scene is placed as a picture, and the
-//      Scenes fold is printed. The page builds the Scenes fold first under
-//      its row, with its own words and mark, keeps no ticks for a scene,
-//      and leaves what was kept for the scene's own opening.
+//      else. The page builds a Scenes fold first under its row, with its
+//      own words and mark, keeps no ticks for a scene, and leaves what was
+//      kept for the scene's own opening.
+//   7. L-519 part 2 (places): a card's drawer_row is one place or a list,
+//      each read once; a place may name a body, a group, one of the Sun's
+//      shells by its served key (never its legend group) or a drawing (the
+//      belt's cloud); the card shows once in each place and is counted
+//      once, by the folds and by Find; Back keeps the fold it was opened
+//      from. In the real files the root's rows are the served rows and the
+//      Sun's served shells; every place names one of them, twins share
+//      their places, and drawer_row is a string or a list of two or more.
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and breaks the
-//   logic eight ways -- a phone offered a landscape card with a portrait
+//   logic eleven ways -- a phone offered a landscape card with a portrait
 //   twin, a "none" card offered on a phone, a place naming no row
 //   dropped without a word, a picture's words not found, a picture's
 //   words adding rows while a group matches, a scene listed among the
-//   saved pictures, a scene's own opening taking what was kept, and a
-//   scene hidden while a body matches -- so
+//   saved pictures, a card shown in its first place only, a shell refused
+//   as a place, a card counted once per place, a scene's own opening
+//   taking what was kept, and a scene hidden while a body matches -- so
 //   a green run has shown it can go red.
 //
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
@@ -68,7 +76,8 @@
 // card the room opened and for any card under a door with no page).
 // Updated November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519:
 // section 6, the Scenes fold; two more breaks). Same day, after Tony's
-// phone look: a scene found beside a body; one more break.
+// phone look: a scene found beside a body; one more break. Same day,
+// evening (L-519 part 2): section 7, places; three more breaks.
 
 "use strict";
 const fs = require("fs");
@@ -89,7 +98,12 @@ const ROWS = SSD.rowsFromServed([
   { slug: "earth", find: ["planet"] },
   { group: "apollo_amor", label: "Apollo and Amor asteroids" },
   { slug: "bennu", "in": "apollo_amor" },
-  { slug: "jupiter", find: ["planet"] }
+  { slug: "jupiter", find: ["planet"] },
+  { group: "belt", label: "Main asteroid belt" },
+  { drawing: "main_belt", "in": "belt", label: "The belt's cloud" },
+  // As the page hands a Sun's shell back: keyed by its legend group, with
+  // its served shell key (L-519 part 2).
+  { shell: "Sun: Heliopause", shell_key: "heliopause", label: "Heliopause" }
 ]);
 const NAMES = {
   center: SSD.searchNames("Sun", "Sun", null, "10"),
@@ -123,7 +137,9 @@ const META = { visualizations: [
   { id: "scene_mars", title: "Mars and Earth", room: "solar_system", shape: "9:16", files: {},
     live: "interactive.html?exhibit=solar-system&show=mars,earth", scene: true, featured: true },
   { id: "scene_crust", title: "Crust and Moon", room: "solar_system", shape: "9:16", files: {},
-    live: "interactive.html?exhibit=earth&show=crust,moon", scene: true, drawer_row: "earth" }
+    live: "interactive.html?exhibit=earth&show=crust,moon", scene: true, drawer_row: ["earth", "sun"] },
+  { id: "helio", title: "Voyager 1 at the Heliopause", room: "solar_system", shape: "9:16",
+    files: { portrait: "j.json" }, drawer_row: ["heliopause", "main_belt", "jupiter", "nowhere", "jupiter"] }
 ] };
 
 function ids(list) { return (list || []).map(function (e) { return e.id; }).join(","); }
@@ -148,9 +164,10 @@ function cases(P, S) {
   want(!Object.keys(phone.byKey).some(function (k) { return phone.byKey[k].some(function (e) { return e.id === "live_room"; }); }),
        "a card with no place is in a fold");
   // A place that names no row here is reported, not dropped.
-  want(phone.unplaced.length === 1 && phone.unplaced[0].id === "pluto_social" &&
-       phone.unplaced[0].place === "pluto_barycenter", "a place naming no row is not reported: " + JSON.stringify(phone.unplaced));
-  want(phone.count === 5 && desk.count === 6, "the counts are not 5 on a phone and 6 on a desktop: " + phone.count + ", " + desk.count);
+  want(phone.unplaced.length === 2 && phone.unplaced[0].id === "pluto_social" &&
+       phone.unplaced[0].place === "pluto_barycenter" && phone.unplaced[1].id === "helio" &&
+       phone.unplaced[1].place === "nowhere", "a place naming no row is not reported: " + JSON.stringify(phone.unplaced));
+  want(phone.count === 6 && desk.count === 7, "the counts are not 6 on a phone and 7 on a desktop, a card counted once: " + phone.count + ", " + desk.count);
   want(P.foldCount(desk.byKey.earth, null) === "2" && P.foldCount(desk.byKey.earth, { shells: true }) === "1 of 2",
        "a fold's count is not n, or k of n while searching");
   // What the room keeps for Back.
@@ -189,9 +206,9 @@ function cases(P, S) {
        "the Scenes fold does not sit under the Sun's row");
   want(P.foldsAt(phone, "center").join(",") === P.SCENES_FOLD + ",center",
        "the Sun's row does not hold the Scenes fold ahead of its saved pictures: " + P.foldsAt(phone, "center").join(","));
-  want(ids(desk.byKey.earth) === "artemis_l,shells", "a scene with a drawer_row is listed among Earth's saved pictures: " + ids(desk.byKey.earth));
-  want(phone.scenes === 2 && phone.count === 5, "the scenes are counted as pictures, or not counted: " + phone.scenes + ", " + phone.count);
-  want(phone.byKey[P.SCENES_FOLD] && phone.byKey[P.SCENES_FOLD][1].href === "interactive.html?exhibit=earth&show=crust,moon" &&
+  want(ids(desk.byKey.earth) === "artemis_l,shells", "a scene with a place is listed among Earth's saved pictures: " + ids(desk.byKey.earth));
+  want(phone.scenes === 2 && phone.count === 6, "the scenes are counted as pictures, or not counted: " + phone.scenes + ", " + phone.count);
+  want(phone.byKey[P.SCENES_FOLD] && !!phone.byKey[P.SCENES_FOLD][1] && phone.byKey[P.SCENES_FOLD][1].href === "interactive.html?exhibit=earth&show=crust,moon" &&
        phone.byKey[P.SCENES_FOLD][1].scene === true, "a scene does not open its own link");
   want(P.isScene(META.visualizations[11]) && !P.isScene(META.visualizations[1]), "a scene is not told from a live card");
   const sc = S.searchHits(ROWS, "Mars and", NAMES, words);
@@ -215,6 +232,34 @@ function cases(P, S) {
   want(P.returnFor(keptS, room) === "take", "the room as it was left does not take what was kept for a scene");
   want(P.returnFor(keptS, to + "&at=2026-11-09T15:05Z") === "drop", "a reload of the scene does not drop what was kept");
   want(P.returnFor(kept, "https://y/anything") === "take", "a saved picture's return is not taken, once, as before");
+  // 7. L-519 part 2: places. One or several, any row, each card once.
+  want(JSON.stringify(P.placesOf({ drawer_row: "earth" })) === '["earth"]' &&
+       JSON.stringify(P.placesOf({ drawer_row: ["a", "", "b", "a"] })) === '["a","b"]' &&
+       JSON.stringify(P.placesOf({ scene: true })) === '["sun"]' &&
+       JSON.stringify(P.placesOf({ id: "x" })) === "[]",
+       "a card's places are not read as one or several, each once, a scene's the Sun's by default");
+  [phone, desk].forEach(function (fs, i) {
+    const scr = i ? "desktop" : "phone";
+    want(ids(fs.byKey["Sun: Heliopause"]) === "helio" && ids(fs.byKey["drawing:main_belt"]) === "helio" &&
+         ids(fs.byKey.jupiter).split(",").filter(function (x) { return x === "helio"; }).length === 1,
+         "on a " + scr + ", a card is not shown once in each of its places, a shell's and the belt's cloud's among them");
+    want(fs.rowOf["Sun: Heliopause"] === "Sun: Heliopause" && fs.kind["drawing:main_belt"] === "pictures",
+         "on a " + scr + ", a fold under a shell or a drawing row is not that row's");
+  });
+  want(ids(phone.byKey["scenes:earth"]) === "scene_crust" && phone.rowOf["scenes:earth"] === "earth" &&
+       phone.kind["scenes:earth"] === "scenes" && P.sceneFoldFor("earth", "center") === "scenes:earth",
+       "a scene placed beside Earth is not in a Scenes fold under Earth's row");
+  want(P.foldsAt(phone, "earth").join(",") === "scenes:earth,earth",
+       "Earth's row does not hold its Scenes ahead of its saved pictures: " + P.foldsAt(phone, "earth").join(","));
+  want(ids(phone.byKey[P.SCENES_FOLD]).indexOf("scene_crust") >= 0 && phone.scenes === 2,
+       "a scene placed beside Earth and the Sun is not under both, counted once");
+  const two = S.searchHits(ROWS, "Voyager 1 at", NAMES, P.searchWords(phone));
+  want(P.rowKeyFor("heliopause", ROWS) === "Sun: Heliopause" && P.rowKeyFor("Sun: Heliopause", ROWS) === null,
+       "a shell is not named by its served key, or is named by its legend group");
+  want(two && two.p === 1 && two.picRows["Sun: Heliopause"] && two.picRows.jupiter,
+       "a picture found in three places is not counted once, or does not bring each row: " + (two && two.p));
+  const keptE = P.readReturn(P.returnState("solar-system", "scenes:earth", "scene_crust", "https://x/a", "https://x/b"));
+  want(keptE && keptE.fold === "scenes:earth", "Back does not keep the fold a card was opened from");
   return f;
 }
 
@@ -245,13 +290,19 @@ const breaks = [
   ["a \"none\" card offered on a phone",
    brokenPF("if (v.shape === \"none\") { return false; }", "")],
   ["a place naming no row dropped without a word",
-   brokenPF("if (!key) { unplaced.push({ id: v.id, place: v[FIELD] }); return; }", "if (!key) { return; }")],
+   brokenPF("if (!key) { unplaced.push({ id: v.id, place: p }); return; }", "if (!key) { return; }")],
   ["a picture's words not found",
    brokenSSD("return e && holds(e.words);", "return false;")],
   ["a picture's words adding rows while a group matches",
    brokenSSD("const alone = n === 0 && all.length === 0;", "const alone = true;")],
   ["a scene listed among the saved pictures",
-   brokenPF("      if (isScene(v)) { return; }\n", "")],
+   brokenPF("if (!v || isScene(v) || !placesOf(v).length) { return; }", "if (!v || !placesOf(v).length) { return; }")],
+  ["a card shown in its first place only",
+   brokenPF("    if (!out.length && isScene(v)) { out.push(SCENES_ROW); }\n    return out;", "    if (!out.length && isScene(v)) { out.push(SCENES_ROW); }\n    return out.slice(0, 1);")],
+  ["a shell refused as a place",
+   brokenPF("      function (r) { return !!r.isShell && (r.shellKey ? r.shellKey === place : r.shell === place); },\n", "")],
+  ["a card counted once per place",
+   brokenSSD("        if (counted[e.id]) { return; }\n", "")],
   ["a scene's own opening taking what was kept",
    brokenPF("if (back.to === openedHref) { return \"keep\"; }", "")],
   ["a scene hidden while a body matches",
@@ -271,27 +322,46 @@ failures = failures.concat(cases(PF, SSD));
 // 3. The real files.
 const meta = JSON.parse(fs.readFileSync(path.join(root, "gallery", "gallery_metadata.json"), "utf8"));
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "data", "objects_config.json"), "utf8"));
-const rows = SSD.rowsFromServed(cfg.rooms["solar-system"].drawer.rows);
+// The root's rows as the page has them: the served rows, and the Sun's
+// shells, which compose places among them (a served shell is a member
+// carrying a display name, the rule smoke_scene_address.js reads).
+const sunShells = [];
+(cfg.objects || []).filter(function (o) { return o.slug === "sun"; }).forEach(function (o) {
+  const feats = (o.features && typeof o.features === "object") ? o.features : {};
+  Object.keys(feats).forEach(function (g) {
+    const v = feats[g];
+    if (!v || typeof v !== "object") { return; }
+    if ("name" in v) { sunShells.push({ shell: g, shell_key: g, label: v.name }); }
+    Object.keys(v).forEach(function (m) {
+      if (v[m] && typeof v[m] === "object" && typeof v[m].name === "string") { sunShells.push({ shell: m, shell_key: m, label: v[m].name }); }
+    });
+  });
+});
+const rows = SSD.rowsFromServed(cfg.rooms["solar-system"].drawer.rows.concat(sunShells));
 const cards = meta.visualizations || [];
 const byId = {};
 cards.forEach(function (v) { byId[v.id] = v; });
 const roomLive = /^interactive\.html\?exhibit=(solar-system|sun|earth)$/;
 cards.forEach(function (v) {
   const ss = typeof v.room === "string" && (v.room === "solar_system" || v.room.indexOf("solar_system/") === 0);
-  if (ss && !(v.live && roomLive.test(v.live)) && !v[PF.FIELD] && !PF.isScene(v)) {
+  if (ss && !(v.live && roomLive.test(v.live)) && !PF.placesOf(v).length) {
     failures.push("Solar System card " + v.id + " has no place in the drawer (" + PF.FIELD + ")");
   }
   if (v[PF.FIELD] && !ss) { failures.push("card " + v.id + " outside the Solar System has a place in its drawer"); }
-  if (PF.isScene(v) && v[PF.FIELD]) { failures.push("scene " + v.id + " also has a saved picture's place (" + PF.FIELD + ") (L-519)"); }
+  if (v[PF.FIELD] !== undefined && typeof v[PF.FIELD] !== "string" &&
+      !(Array.isArray(v[PF.FIELD]) && v[PF.FIELD].length > 1 && v[PF.FIELD].every(function (p) { return typeof p === "string" && p; }))) {
+    failures.push("card " + v.id + "'s " + PF.FIELD + " is neither one place nor a list of two or more: " + JSON.stringify(v[PF.FIELD]));
+  }
   const twin = v.sibling && byId[v.sibling];
-  if (twin && v[PF.FIELD] !== twin[PF.FIELD]) {
-    failures.push("twins " + v.id + " and " + twin.id + " are placed apart: " + v[PF.FIELD] + ", " + twin[PF.FIELD]);
+  if (twin && JSON.stringify(PF.placesOf(v)) !== JSON.stringify(PF.placesOf(twin))) {
+    failures.push("twins " + v.id + " and " + twin.id + " are placed apart: " + JSON.stringify(v[PF.FIELD]) + ", " + JSON.stringify(twin[PF.FIELD]));
   }
 });
 const label = {};
 rows.forEach(function (r) { label[r.key] = r.isGroup ? r.label : (r.slug === "sun" ? "Sun" : r.slug); });
-label[PF.SCENES_FOLD] = "Scenes, under the Sun";
 cfg.rooms["solar-system"].drawer.rows.forEach(function (r) { if (r.slug && r.label) { label[r.slug] = r.label; } });
+rows.forEach(function (r) { if (r.isShell || r.isDrawing) { label[r.key] = r.label; } });
+Object.keys(label).forEach(function (k) { label[PF.sceneFoldFor(k, "center")] = "Scenes, under " + label[k]; });
 [true, false].forEach(function (phone) {
   const folds = PF.foldsFrom(meta, rows, phone);
   const screen = phone ? "phone" : "desktop";
@@ -320,6 +390,7 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
  ["window.PictureFolds.isPhone(window)", "the room does not ask the file which screen it is on"],
  ["window.PictureFolds.searchWords(ssDrawer.pictures)", "Find is not handed the pictures' words"],
  ["SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s)", "the count line does not count pictures and scenes found"],
+ ["shell_key: shellKeyOf[s.key] || null", "the root's shell rows do not carry their served shell key, so no card can name one as a place (L-519 part 2)"],
  ["ssPictureFold(list, entry.key, entry.depth || 0);\n            return;", "a group row's fold is not built after it"],
  ["ssWireRow(row, sunGroups[k], k, list);\n            // L-517: the body's saved pictures, in a fold under its row.\n            ssPictureFold(list, entry.key, entry.depth || 0);",
   "a body row's fold is not built after it"],

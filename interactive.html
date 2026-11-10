@@ -489,6 +489,13 @@
         at now with the scene's rows; Back returns to the room as it was
         left, the drawer open at Scenes (PictureFolds.returnFor; folds
         keyed by their own id, ssPictureFoldOne, PAGE_OPENED_HREF).)
+     Updated: November 9, 2026, evening, with Anthropic's Claude Opus 5.5
+       (L-519 part 2, PLACES: a card's drawer_row is one place or a
+        list, and a place may be any row the drawer lists, the Sun's
+        shells and the belt's cloud among them; a card shows in each
+        place, and a scene in a Scenes fold under each row it names.
+        The page's part is unchanged but for these words: every row
+        already asks for its folds, PictureFolds decides which.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -3383,8 +3390,18 @@ const EXHIBITS = {
             const shellSpecs = shellPlan.rows.map(function (r) {
                 return { key: r.key, au: r.keeps_place ? null : r.au };
             });
+            // L-519 part 2: each shell row carries its served shell key
+            // ("heliopause"), read from its traces, so a card can name it
+            // as a place; a frame element (the rotation axis) has none.
+            const shellKeyOf = {};
+            (sunBuilt.traces || []).forEach(function (t) {
+                if (t && t.legendgroup && t.meta && typeof t.meta.shell_key === "string") {
+                    shellKeyOf[t.legendgroup] = t.meta.shell_key;
+                }
+            });
             shellSpecs.forEach(function (s) {
-                rawByKey[s.key] = { shell: s.key, label: shellLabels[s.key] };
+                rawByKey[s.key] = { shell: s.key, label: shellLabels[s.key],
+                                    shell_key: shellKeyOf[s.key] || null };
             });
             warnings.push.apply(warnings, (sunBuilt.warnings || []).concat(shellPlan.warnings || []));
             const allRows = SSD.placeShells(SSD.orderGroups(SSD.rowsFromServed(served), aByKey),
@@ -6927,10 +6944,12 @@ const SCENE_MARK =
     '<path d="M3.5 0.75 H10.5 V11.25 L7 8.4 L3.5 11.25 Z" fill="none" ' +
     'stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>';
 
-// The folds under one row, if it has any: the Sun's Scenes first (L-519),
-// then the row's saved pictures; each its head, its line and one link per
-// card, appended to the list right after the row. A fold's id is its own
-// (data-pf): the row's key for its pictures, SCENES_FOLD for the scenes.
+// The folds under one row, if it has any: its Scenes first (L-519), then
+// the row's saved pictures; each its head, its line and one link per card,
+// appended to the list right after the row. A fold's id is its own
+// (data-pf): the row's key for its pictures, PictureFolds.sceneFoldFor's
+// for its scenes (SCENES_FOLD under the Sun). Any row may have folds,
+// a shell's or the belt's cloud's too (L-519 part 2).
 function ssPictureFold(list, rowKey, depth) {
     const PF = window.PictureFolds;
     const pics = ssDrawer && ssDrawer.pictures;

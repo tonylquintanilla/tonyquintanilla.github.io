@@ -60,8 +60,9 @@
 //              shared link kept as a card, made by the gallery editor's
 //              New Scene window (tools/scene_card.py). Its live address is
 //              the link, with no minute, so it opens at the visitor's now.
-//              Every scene sits in ONE fold named Scenes under the Sun's
-//              row, ahead of that row's saved pictures, never among them.
+//              A scene sits in a fold named Scenes under its row (the
+//              Sun's, unless it names others: PLACES below), ahead of that
+//              row's saved pictures, never among them.
 //              A fold has an id of its own (the row's key for its saved
 //              pictures, SCENES_FOLD for the scenes) and the row it sits
 //              under (rowOf). A scene opens the room itself, so what the
@@ -69,9 +70,21 @@
 //              scene's own opening leaves it for the opening Back brings
 //              (returnFor).
 //
+//   PLACES     (L-519 part 2; Tony, 2026-11-09, 14:53 to 15:00: "I should
+//              be able to put the ED138 scene next to the ED138 body", "can
+//              we put it next to more than one body", "B so I can decide
+//              what goes where"). drawer_row is one place or a list of
+//              them, and a place may name any row the drawer lists: a body,
+//              a group, a shell (the Sun's in the root) or a drawing (the
+//              belt's cloud). The card is one record, shown in each place;
+//              Back returns to the fold it was opened from. A scene sits in
+//              a Scenes fold under each row it names, ahead of that row's
+//              saved pictures; with no place, under the Sun, as before.
+//
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
 // Updated November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519: the
-// Scenes fold under the Sun's row; folds keyed by their own id).
+// Scenes fold under the Sun's row; folds keyed by their own id). Updated
+// the same day, evening (L-519 part 2: places, any row, several).
 
 (function (global) {
   "use strict";
@@ -131,27 +144,57 @@
     return "index.html#" + (v ? v.id : "");
   }
 
-  // The served row a place names: a body row by its slug, else a group
-  // row by its group key. Returns the row's drawer key, or null.
+  // The row a place names, among every row the drawer lists: a body row
+  // by its slug, else a group row by its group key, else a shell row (the
+  // Sun's shells in the root; a planet's features, when the root draws
+  // them) by its shell key, else a drawing row (the belt's cloud) by its
+  // drawing's name, tried in that order. Returns the row's drawer key, or
+  // null. L-519 part 2: any row may hold a fold.
   function rowKeyFor(place, rows) {
     if (typeof place !== "string" || !place) { return null; }
     const list = rows || [];
-    for (let i = 0; i < list.length; i++) {
-      const r = list[i];
-      if (r && !r.isGroup && r.slug === place) { return r.key; }
-    }
-    for (let j = 0; j < list.length; j++) {
-      const g = list[j];
-      if (g && g.isGroup && g.group === place) { return g.key; }
+    const tests = [
+      function (r) { return !r.isGroup && !r.isShell && !r.isDrawing && r.slug === place; },
+      function (r) { return !!r.isGroup && r.group === place; },
+      function (r) { return !!r.isShell && (r.shellKey ? r.shellKey === place : r.shell === place); },
+      function (r) { return !!r.isDrawing && r.drawing === place; }
+    ];
+    for (let t = 0; t < tests.length; t++) {
+      for (let i = 0; i < list.length; i++) {
+        if (list[i] && tests[t](list[i])) { return list[i].key; }
+      }
     }
     return null;
+  }
+
+  // L-519 part 2 (Tony, 2026-11-09, 14:58: "can we put it next to more
+  // than one body"): a card's places, from its drawer_row, which is one
+  // place (a string) or several (a list), in the order written, each once.
+  // A scene with none sits in Scenes under the Sun.
+  function placesOf(v) {
+    const raw = v ? v[FIELD] : null;
+    const list = Array.isArray(raw) ? raw : (typeof raw === "string" ? [raw] : []);
+    const out = [];
+    list.forEach(function (p) {
+      if (typeof p === "string" && p && out.indexOf(p) < 0) { out.push(p); }
+    });
+    if (!out.length && isScene(v)) { out.push(SCENES_ROW); }
+    return out;
+  }
+
+  // The fold a row's scenes sit in: the Sun's is SCENES_FOLD, as before;
+  // any other row's is SCENES_FOLD + ":" + its key.
+  function sceneFoldFor(rowKey, sunKey) {
+    return rowKey === sunKey ? SCENES_FOLD : SCENES_FOLD + ":" + rowKey;
   }
 
   // {byKey: {foldId: [{id, title, href, room, scene}]}, keys: [foldId, ...]
   // in first-seen order, rowOf: {foldId: rowKey}, kind: {foldId:
   // "pictures" | "scenes"}, unplaced: [{id, place}], count (pictures),
-  // scenes (count)}. A picture fold's id is its row's key; the scenes'
-  // fold is SCENES_FOLD, under the Sun's row. rows is the room's
+  // scenes (count, each card once however many its places)}. A picture
+  // fold's id is its row's key; a scenes fold's is sceneFoldFor's, the
+  // Sun's SCENES_FOLD. A card sits in a fold at each place it names
+  // (placesOf). rows is the room's
   // rowsFromServed list. Cards keep the metadata's order inside a fold.
   // A card whose place names no served row is reported, never dropped
   // quietly; a scene is never a saved picture, whatever it carries.
@@ -161,28 +204,35 @@
     const byId = {};
     cards.forEach(function (v) { if (v && v.id) { byId[v.id] = v; } });
     const byKey = {}, keys = [], unplaced = [], rowOf = {}, kind = {};
+    const sunKey = rowKeyFor(SCENES_ROW, rows);
     let count = 0, scenes = 0;
+    // L-519 part 2: a card is one record, shown in each of its places.
+    function place(v, scene) {
+      let shown = false;
+      placesOf(v).forEach(function (p) {
+        const key = rowKeyFor(p, rows);
+        if (!key) { unplaced.push({ id: v.id, place: p }); return; }
+        const fold = scene ? sceneFoldFor(key, sunKey) : key;
+        if (!byKey[fold]) {
+          byKey[fold] = []; keys.push(fold);
+          rowOf[fold] = key; kind[fold] = scene ? "scenes" : "pictures";
+        }
+        if (byKey[fold].some(function (e) { return e.id === v.id; })) { return; }
+        const e = { id: v.id, title: v.title || v.id, href: href(v), room: v.room || "" };
+        if (scene) { e.scene = true; }
+        byKey[fold].push(e);
+        shown = true;
+      });
+      return shown;
+    }
     cards.forEach(function (v) {
       if (!isScene(v) || !inMode(v, byId, phone)) { return; }
-      const key = rowKeyFor(SCENES_ROW, rows);
-      if (!key) { unplaced.push({ id: v.id, place: SCENES_ROW }); return; }
-      if (!byKey[SCENES_FOLD]) {
-        byKey[SCENES_FOLD] = []; keys.push(SCENES_FOLD);
-        rowOf[SCENES_FOLD] = key; kind[SCENES_FOLD] = "scenes";
-      }
-      byKey[SCENES_FOLD].push({ id: v.id, title: v.title || v.id, href: href(v),
-                                room: v.room || "", scene: true });
-      scenes++;
+      if (place(v, true)) { scenes++; }
     });
     cards.forEach(function (v) {
-      if (isScene(v)) { return; }
-      if (!v || typeof v[FIELD] !== "string" || !v[FIELD]) { return; }
+      if (!v || isScene(v) || !placesOf(v).length) { return; }
       if (!inMode(v, byId, phone)) { return; }
-      const key = rowKeyFor(v[FIELD], rows);
-      if (!key) { unplaced.push({ id: v.id, place: v[FIELD] }); return; }
-      if (!byKey[key]) { byKey[key] = []; keys.push(key); rowOf[key] = key; kind[key] = "pictures"; }
-      byKey[key].push({ id: v.id, title: v.title || v.id, href: href(v), room: v.room || "" });
-      count++;
+      if (place(v, false)) { count++; }
     });
     return { byKey: byKey, keys: keys, rowOf: rowOf, kind: kind,
              unplaced: unplaced, count: count, scenes: scenes };
@@ -260,7 +310,10 @@
     FOLD_PREFIX: FOLD_PREFIX,
     SCENE_FIELD: SCENE_FIELD,
     SCENES_FOLD: SCENES_FOLD,
+    SCENES_ROW: SCENES_ROW,
     WORDS: WORDS,
+    placesOf: placesOf,
+    sceneFoldFor: sceneFoldFor,
     isScene: isScene,
     foldsAt: foldsAt,
     returnFor: returnFor,
