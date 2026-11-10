@@ -176,12 +176,9 @@ const ALLOWED = [
   // past the span the cache builder checked its elements over says so, in
   // words proposed for Tony's phone look; the span is the served trust
   // block's delta_days, written in hours under a day and days above.
-  ["This page checked its working-out against JPL for # hours either side of the date of JPL's orbit.",
-   "how the page works: the span its working-out was checked over (L-515 ruling 18; words for Tony's phone look)"],
-  ["This page checked its working-out against JPL for # days either side of the date of JPL's orbit.",
-   "how the page works: the span its working-out was checked over (L-515 ruling 18; words for Tony's phone look)"],
-  ["The minute shown is outside that time.",
-   "how the page works: the minute is past that span (L-515 ruling 18; words for Tony's phone look)"],
+  // Tony's phone look of 2026-11-10 replaced the two sentences with his
+  // one, the orbit's date printed on JPL's clock (L-504): one entry per
+  // month, midnight or not, hours or days (spanWordsAllowed, below).
   // Tony's sentence of 2026-10-01 (L-399), the Solar System room's, now
   // met here: a moon with no accuracy row served (Io, Titan, Pluto, Charon).
   ["JPL's own uncertainty for this position is not yet included.",
@@ -469,6 +466,20 @@ function sentences(text) {
     .split(/\n+|(?<=[.!?])\s+(?=[A-Z])/)
     .map(s => s.replace(/\s+/g, " ").trim()).filter(Boolean);
 }
+// L-515 step 2b, Tony's words of 2026-11-10: the past-span sentence, for
+// every month the elements can be dated in, as SolarSystemFigures writes it.
+(function spanWordsAllowed() {
+  const why = "how the page works: the minute is past the span its working-out was checked " +
+    "over, the orbit's date on JPL's clock (L-515 ruling 18; Tony's words of 2026-11-10)";
+  const GSF = global.SolarSystemFigures;
+  GSF.SPAN_MONTHS.forEach(function (m) {
+    ["# " + m + " #, midnight", "# " + m + " #"].forEach(function (dated) {
+      ["# hours", "# days"].forEach(function (span) {
+        ALLOWED.push([GSF.SPAN_WORDS(span, dated), why]);
+      });
+    });
+  });
+})();
 const digits = s => s.replace(/-?\d+(\.\d+)?(e[+-]?\d+)?/gi, "#").replace(/#(,#)+/g, "#");
 const allowed = new Map(ALLOWED.map(([s, why]) => [s, why]));
 const openSet = new Map(OPEN.map(([kind, s]) => [kind + "|" + s, false]));

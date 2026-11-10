@@ -351,9 +351,11 @@ async function scenes(root, payload, page) {
      / and 1 scene match$/.test(d.getElementById("sun-find-count").textContent),
      "Find does not show a scene beside the body its name holds: " + d.getElementById("sun-find-count").textContent);
   find.value = ""; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done();
-  // Reset folds it shut.
+  // Reset folds it shut. (Since Tony's phone look of 2026-11-10, Find
+  // "jupiter" draws Jupiter's fold, which builds the drawer again, so the
+  // fold is looked up afresh.)
   await click(d.getElementById("sun-drawer-all"));
-  ok(sc.getAttribute("aria-expanded") === "false", "Reset leaves the Scenes fold open");
+  ok(fold("scenes").getAttribute("aria-expanded") === "false", "Reset leaves the Scenes fold open");
   // 30d. A scene tapped keeps the fold and its own address, and no ticks.
   await click(row("venus").querySelector(".pick"));
   await click(sc.querySelector(".rname"));
@@ -1651,12 +1653,19 @@ async function places(root, payload, page) {
        "a parent row lacks its fold arrow, folded, or its tick box: " + parents.join(","));
     ok(Object.keys(kids).every(s => row(s) && row(s).hidden && row(s).classList.contains("member")),
        "a moon's row shows on opening, or is not indented");
-    // Under its parent, right after the parent's own folds, nearest first.
+    // Under its parent, in its fold, nearest first. (Since Tony's phone look
+    // of 2026-11-10, Find "earth", above, draws Earth's fold, so Earth's
+    // shells may sit among its rows by distance: the moons are read from
+    // the rows of the fold that follow the parent.)
     const domRows = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row[data-k]"));
+    const underOf = (r) => { const g = E("sunGroups[" + r.dataset.k + "]"); const s = g && E("ssDrawer.byKey[" + JSON.stringify(g.key) + "]"); return s ? s.under : null; };
     for (const p of parents) {
       const mine = Object.keys(kids).filter(s => kids[s] === p).sort((a, b) => nearestOf(a) - nearestOf(b));
-      const after = domRows.slice(domRows.indexOf(row(p)) + 1, domRows.indexOf(row(p)) + 1 + mine.length);
-      ok(after.every((r, i) => r === row(mine[i])),
+      const start = domRows.indexOf(row(p)) + 1;
+      let end = start;
+      while (end < domRows.length && underOf(domRows[end]) === p) { end++; }
+      const inFold = domRows.slice(start, end).filter(r => mine.some(m => row(m) === r));
+      ok(inFold.length === mine.length && inFold.every((r, i) => r === row(mine[i])),
          p + "'s moons are not right under its row, nearest first: " + mine.join(","));
     }
     // Fold Jupiter open: Io shows; nothing ticks; the arrow turns.
@@ -1689,7 +1698,8 @@ async function places(root, payload, page) {
     ok(ioText[0] === "Io" && printedKm > 0 && Math.abs(printedKm - km) <= Math.max(1, km * 0.01),
        "Io's box does not open on its name and its distance from Jupiter: " + ioText.slice(0, 3).join(" | ") + " against " + km + " km");
     const past = Math.abs(data.epoch_jd - cb.io.trust.element_epoch_jd) > cb.io.trust.delta_days;
-    const spanSaid = ioText.some(s => s.indexOf("This page checked its working-out against JPL for") >= 0);
+    // Tony's words of 2026-11-10, the orbit's date on JPL's clock.
+    const spanSaid = ioText.join(" ").indexOf("but is outside that orbit's best-accuracy window of") >= 0;
     ok(spanSaid === past, "Io's box " + (spanSaid ? "says" : "does not say") + " it is past its checked span; " +
        "worked out here, it is " + (past ? "past" : "inside") + " it");
     ok(!/is served measured from/.test(E("JSON.stringify(sunAbsent)")), "a moon was warned as measured from its planet");
@@ -1922,6 +1932,69 @@ async function places(root, payload, page) {
     console.log("  35: Jupiter " + EJ("(ssFoldReport.jupiter || {}).traces") + " and Saturn " + EJ("(ssFoldReport.saturn || {}).traces") +
                 " traces in their folds, fetching nothing; the Pluto system's open square; New Horizons ticks " +
                 (EJ("ssDrawer.companions.new_horizons") || []).join(", "));
+  }
+  // 36. L-515 step 2b, Tony's phone look of 2026-11-10 (run record 12:11),
+  // on a fresh page: Find on a planet brings its whole fold ("shouldn't all
+  // the Jupiter orbital features be shown including its moons?"; "Charon
+  // should come up when searching 'Pluto'"); with Jupiter at the middle,
+  // ticking Io or a ring keeps the view on Jupiter's fold ("the view
+  // expands to the solar system view instead") and ends the trail on it
+  // ("the path only shows 'The Solar System'"); Jupiter's orbit runs
+  // through Jupiter ("the orbit line does not go precisely through the
+  // center").
+  if (data.fold_features && data.fold_features.jupiter) {
+    const wK = await h.boot(root, "solar-system", payload);
+    const dK = wK.document, EK = (s) => wK.eval(s);
+    const clk = async (el) => { el.dispatchEvent(new wK.MouseEvent("click", { bubbles: true, cancelable: true })); for (let i = 0; i < 4; i++) { await h.done(); } };
+    const rowK = (k) => dK.querySelector('#sun-drawer-list .sun-row[data-k="' + EK("ssIndex(" + JSON.stringify(k) + ")") + '"]');
+    const findK = dK.getElementById("sun-find-input");
+    const typeK = async (q) => { findK.value = q; findK.dispatchEvent(new wK.Event("input", { bubbles: true })); for (let i = 0; i < 4; i++) { await h.done(); } };
+    await typeK("Jupiter");
+    const jFold = EK("ssDrawer.rows.filter(r => r.under === 'jupiter').map(r => r.key)");
+    ok(jFold.indexOf("io") >= 0 && jFold.length >= 2 && jFold.every(k => rowK(k) && !rowK(k).hidden) &&
+       rowK("jupiter").querySelector(".bfold").textContent === "\u25be",
+       "Find 'Jupiter' does not bring its whole fold, Io and its shells, open: " +
+       jFold.filter(k => !rowK(k) || rowK(k).hidden).join(", ") + " hidden");
+    if (EK("ssIndex('charon')") >= 0) {
+      await typeK("Pluto");
+      ok(!rowK("charon").hidden && !rowK("pluto").hidden && !rowK("pluto_barycenter").hidden,
+         "Find 'Pluto' does not bring Charon with the Pluto system");
+    }
+    await typeK("");
+    await clk(rowK("jupiter").querySelector("a.enter"));
+    const r0 = EK("sunPlotDiv.layout.scene.xaxis.range[1]");
+    await clk(rowK("jupiter").querySelector(".bfold"));
+    await clk(rowK("io").querySelector(".pick"));
+    const r1 = EK("sunPlotDiv.layout.scene.xaxis.range[1]");
+    ok(EK("viewMid.key") === "jupiter" && r1 < 0.05 && r1 > 0.5 * r0 &&
+       dK.getElementById("sun-trail").textContent === "Solar system > Jupiter > Io",
+       "ticking Io with Jupiter at the middle does not keep the view on Jupiter's fold and end the trail on Io: " +
+       r0 + " -> " + r1 + " AU, " + dK.getElementById("sun-trail").textContent);
+    const ring = EK("ssDrawer.rows.filter(r => r.under === 'jupiter' && r.isShell).map(r => r.key)")[0];
+    if (ring) {
+      await clk(rowK(ring).querySelector(".pick"));
+      const r2 = EK("sunPlotDiv.layout.scene.xaxis.range[1]");
+      ok(r2 < 0.05 && dK.getElementById("sun-trail").textContent.indexOf("Solar system > Jupiter > ") === 0 &&
+         dK.getElementById("sun-trail").textContent !== "Solar system > Jupiter > Io",
+         "ticking " + ring + " with Jupiter at the middle frames past Jupiter's fold or leaves the trail: " +
+         r2 + " AU, " + dK.getElementById("sun-trail").textContent);
+    }
+    // A row outside the fold still frames on everything ticked.
+    await clk(rowK("mars").querySelector(".pick"));
+    ok(EK("sunPlotDiv.layout.scene.xaxis.range[1]") > 1, "ticking Mars with Jupiter at the middle does not frame out to Mars");
+    // Jupiter's orbit runs through Jupiter: put back, no piece of the drawn
+    // line misses the middle by more than a kilometre.
+    const missKm = EK("(function () { const g = sunGroups[ssIndex('jupiter')]; let best = Infinity;" +
+      " g.indices.forEach(function (i) { const t = sunPlotDiv.data[i]; if (!/osculating orbit$/.test(t.name || '')) { return; }" +
+      " for (let j = 0; j + 1 < t.x.length; j++) { if (t.x[j] === null || t.x[j + 1] === null) { continue; }" +
+      " const a = [t.x[j], t.y[j], t.z[j]], b = [t.x[j + 1], t.y[j + 1], t.z[j + 1]];" +
+      " const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];" +
+      " const u = Math.max(0, Math.min(1, -(a[0] * d[0] + a[1] * d[1] + a[2] * d[2]) / L));" +
+      " best = Math.min(best, Math.hypot(a[0] + u * d[0], a[1] + u * d[1], a[2] + u * d[2])); } });" +
+      " return best * GalleryFeatures._KM_PER_AU; })()");
+    ok(missKm < 1, "Jupiter's drawn orbit misses Jupiter, at the middle, by " + missKm + " km");
+    console.log("  36: Find 'Jupiter' brings " + jFold.length + " rows; Io ticked at Jupiter's middle frames at " +
+                r1.toFixed(4) + " AU; Jupiter's orbit misses it by " + missKm.toFixed(3) + " km");
   }
   // 29. L-517: the saved pictures, last, since it boots the page again.
   await pictures(w, root, payload, null);

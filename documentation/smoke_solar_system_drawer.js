@@ -641,6 +641,13 @@ function foldCases(SSD) {
   want(h && h.keys.io && h.heads && h.heads.jupiter && SSD.searchVisible(b("jupiter"), h) &&
        SSD.searchFoldOpen("jupiter", h) && !SSD.searchFoldOpen("earth", h),
        "Find on a child does not bring its parent's row with its fold open");
+  // Tony's phone look of 2026-11-10: Find on a parent brings its whole fold.
+  const hp = SSD.searchHits(rows, "jupiter", { io: [null, "Io", null, null],
+    jupiter: [null, "Jupiter", null, null], earth: [null, "Earth", null, null] });
+  want(hp && hp.keys.jupiter && !hp.keys.io && hp.kids && hp.kids.io &&
+       SSD.searchVisible(b("io"), hp) && SSD.searchFoldOpen("jupiter", hp) &&
+       !SSD.searchVisible(b("moon"), hp) && hp.n === 1 && SSD.searchVia("io", hp, {}) === "",
+       "Find on a planet does not bring its moons, its fold open, or counts them as found");
   want(SSD.countLine(rows, { io: true, jupiter: true }) === "2 of 7",
        "a child is not counted as a body");
   want(SSD.foldKey("earth") === "body:earth", "a body's fold is not keyed apart from the groups'");
@@ -850,6 +857,12 @@ const breaks = [
    } })],
   ["a tick on a moon naming no parent to tick (L-515 step 2b)",
    broken({ parentOf: function () { return null; } })],
+  ["Find on a planet leaving its moons hidden (Tony, 2026-11-10)",
+   broken({ searchHits: function (rows, q, names, pics) {
+     const h = REAL.searchHits(rows, q, names, pics);
+     if (h) { h.kids = {}; }
+     return h;
+   } })],
   ["Find on a moon leaving its parent's row hidden (L-515 step 2b)",
    broken({ searchHits: function (rows, q, names, pics) {
      const h = REAL.searchHits(rows, q, names, pics);

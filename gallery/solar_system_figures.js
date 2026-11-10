@@ -70,6 +70,9 @@
 //
 // Written October 1, 2026 with Anthropic's Claude Opus 5.5, from the
 // functions L-363 step 3a built inside interactive.html on 2026-09-30.
+// Updated November 10, 2026, afternoon, with Anthropic's Claude Opus 5.5
+// (L-515 step 2b, Tony's phone look: a moon's past-span sentence in his
+// words, the orbit's date on JPL's clock, epochText).
 //
 // THE ORBITAL PERIOD (L-431, build 3, October 14, 2026). Every body's
 // hover prints its orbital period -- Tony, 2026-10-11: "periods are
@@ -511,10 +514,32 @@
       Math.abs(epochJd - trust.element_epoch_jd) > trust.delta_days;
   }
 
-  var SPAN_WORDS = function (span) {
-    return "This page checked its working-out against JPL for " + span +
-      " either side of the date of JPL's orbit. The minute shown is " +
-      "outside that time.";
+  // L-515 step 2b, Tony's phone look of 2026-11-10 (run record 12:11, on
+  // Charon's box): "Can we replace 'the date of JPL's orbit' with the actual
+  // date ... the explanation is obscure ... Maybe, correct me as you see
+  // fit, 'The position show was worked out from JPL's orbit on 9 Nov 2026,
+  // 0:00 UTC, but is outside the 19 hour best accuracy window for that
+  // orbit.'" His words, with one correction: the orbit's date is printed
+  // on JPL's own clock, not converted to UTC, by his ruling of 2026-10-29
+  // (L-504) that the i panel's source line already follows ("dated 9
+  // November 2026, midnight on JPL's ephemeris clock"). And "either side",
+  // since the span runs both ways from that date.
+  var SPAN_MONTHS = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  // A Julian date as the source line prints it: "9 November 2026,
+  // midnight", read on JPL's clock with no conversion; null if not a date.
+  function epochText(jd) {
+    if (!(typeof jd === "number" && isFinite(jd))) { return null; }
+    var d = new Date(Math.round((jd - 2440587.5) * 86400000));
+    if (isNaN(d.getTime())) { return null; }
+    var midnight = Math.abs((jd - 0.5) - Math.round(jd - 0.5)) < 1e-9;
+    return d.getUTCDate() + " " + SPAN_MONTHS[d.getUTCMonth()] + " " +
+      d.getUTCFullYear() + (midnight ? ", midnight" : "");
+  }
+  var SPAN_WORDS = function (span, dated) {
+    return "The position shown was worked out from JPL's orbit dated " +
+      dated + " on JPL's clock, but is outside that orbit's " +
+      "best-accuracy window of " + span + " either side.";
   };
 
   // "the Moon's", "Io's": the possessive a sentence about a body's orbit
@@ -560,7 +585,8 @@
     if (dist.line) {
       lines.push(dist.line + ".");
       var span = spanText(child.trust && child.trust.delta_days);
-      if (past && span) { lines.push(SPAN_WORDS(span)); }
+      var dated = epochText(child.trust && child.trust.element_epoch_jd);
+      if (past && span && dated) { lines.push(SPAN_WORDS(span, dated)); }
       else if (past) { warnings.push(name + ": past its checked span, whose length is not served"); }
       var orbit = possessive(name) + " orbit around " + parentName;
       var finer = (dist.note === null) ? " JPL's published accuracy for " + orbit + " is finer." : "";
@@ -599,6 +625,8 @@
     spanText: spanText,
     pastSpan: pastSpan,
     SPAN_WORDS: SPAN_WORDS,
+    SPAN_MONTHS: SPAN_MONTHS,
+    epochText: epochText,
     possessive: possessive,
     childBox: childBox,
     servedFigures: servedFigures,

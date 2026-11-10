@@ -14,7 +14,12 @@
 //      but the last a link, the last bold; Centre on ticks the centre, the
 //      shells its opening names and, with them, its frame elements, and
 //      what circles it only where the opening serves moon true, and never
-//      unticks; the frame note's words.
+//      unticks; the frame note's words; and (Tony's phone look of
+//      2026-11-10) a body's own place put into its own drawn line, so the
+//      orbit runs through it: a circle of Jupiter's size in 360 pieces
+//      misses a point on it by about 27,000 km, and by none once the point
+//      is put in; a point well off the line, or on a point already, is
+//      left alone.
 //   2. THE PRECISION, measured: Math.fround on the served positions the
 //      root draws, from the Sun and from each moon's planet, printed by
 //      name every run. Fails if the shift does not take every moon's
@@ -24,19 +29,26 @@
 //      shift: Go To, Centre on, Home and Reset move the middle; the arrows
 //      and the far lines are handed the box in absolute points; the axis
 //      lines, the arrows, the far lines and the Sun line are kept out of
-//      the shifted copy; the frame note's line is on the page.
+//      the shifted copy; the frame note's line is on the page; and Tony's
+//      phone look of 2026-11-10: each body's place put into its own line,
+//      a tick in a centred view's fold framing on that fold and ending the
+//      trail on the row ticked, a name tapped there ending it too, and Find
+//      drawing a centre's fold not yet drawn.
 //   4. The real config: every centre in the tree (centresOf) is a row of
 //      the root or the Sun, and Jupiter's and Saturn's openings are the
 //      symbol alone (L-514 ruling 1's pattern).
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST first breaks the real file
-//   four ways -- a gap shifted into a number, the trail's last part a
+//   five ways -- a gap shifted into a number, the trail's last part a
 //   link, a parent left out of the trail, Centre on ticking what circles a
-//   centre whose opening says moon false -- and each must turn the worked
-//   cases red.
+//   centre whose opening says moon false, a body's place never put into
+//   its line -- and each must turn the worked cases red.
 //
 // Written November 10, 2026 with Anthropic's Claude Opus 5.5.
+// Updated November 10, 2026, afternoon, with Anthropic's Claude Opus 5.5
+// (Tony's phone look of step 2b: the orbit through its body, the frame and
+// the trail after a tick in a centred view, Find drawing a fold).
 
 "use strict";
 const fs = require("fs");
@@ -100,6 +112,35 @@ function cases(VC) {
        "an opening naming no shell row is not reported: " + bad.keys.join());
   want(VC.WORDS.cross("Jupiter") === "In this view the lines cross at Jupiter.",
        "the frame note's line is not 'In this view the lines cross at Jupiter.'");
+  // The orbit through its body: a circle of radius 5.2 AU in 360 pieces,
+  // a point on the circle half way along one piece.
+  const R = 5.2, N = 360, circ = { x: [], y: [], z: [] };
+  for (let j = 0; j <= N; j++) {
+    const a = 2 * Math.PI * j / N;
+    circ.x.push(R * Math.cos(a)); circ.y.push(R * Math.sin(a)); circ.z.push(0);
+  }
+  const half = 2 * Math.PI * 120.5 / N;
+  const onIt = [R * Math.cos(half), R * Math.sin(half), 0];
+  const missKm = function (line, p) {
+    let best = Infinity;
+    for (let j = 0; j + 1 < line.x.length; j++) {
+      const ax = line.x[j] - p[0], ay = line.y[j] - p[1], bx = line.x[j + 1] - p[0], by = line.y[j + 1] - p[1];
+      const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy;
+      const u = Math.max(0, Math.min(1, -(ax * dx + ay * dy) / L));
+      best = Math.min(best, Math.hypot(ax + u * dx, ay + u * dy));
+    }
+    return best * 149597870.7;
+  };
+  const before = missKm(circ, onIt);
+  const thru = VC.throughPoint(circ, onIt);
+  want(before > 20000 && before < 40000 && thru && thru.x.length === N + 2 &&
+       thru.x[121] === onIt[0] && missKm(thru, onIt) === 0,
+       "a body's place is not put into its own line, so the orbit misses it (" + Math.round(before) + " km)");
+  const gappy = { x: circ.x.slice(), y: circ.y.slice(), z: circ.z.slice() };
+  gappy.x[121] = null;
+  want(VC.throughPoint(gappy, onIt) === null && VC.throughPoint(circ, [R * 1.01 * Math.cos(half), R * 1.01 * Math.sin(half), 0]) === null &&
+       VC.throughPoint(circ, [R, 0, 0]) === null,
+       "a point across a gap, well off the line, or on a point already, is put into the line");
   want(Math.abs(VC.float32ErrorKm([1, 0, 0], 1) - 0) < 1e-12 &&
        VC.float32ErrorKm([1.1, 0, 0], 149597870.7) > 0, "the 32-bit error is not measured");
   return fails;
@@ -113,7 +154,9 @@ const breaks = [
    "out.push({ text: text, key: key, link: true, bold: last });"],
   ["a parent left out of the trail", "k = r && r.under ? r.under : null;", "k = null;"],
   ["what circles a centre ticked though its opening says moon false",
-   "if (arrival && arrival.moon === true) {", "if (arrival) {"]
+   "if (arrival && arrival.moon === true) {", "if (arrival) {"],
+  ["a body's place never put into its line",
+   "if (best < 0 || !(bestOff <= lim)) { return null; }", "return null;"]
 ];
 const caught = [];
 breaks.forEach(function (b) {
@@ -183,7 +226,14 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
  ["!!(t.meta && t.meta.direction_arrow)", "the arrows are shifted twice"],
  ['<p id="sun-frame-cross" hidden></p>', "the frame note has no line saying where the axis lines cross"],
  ['if (at("a.enter")) { ev.preventDefault(); ssCentreOn(k); return; }', "Centre on does not move the view in the page"],
- ["if ((ssDrawer.centres || []).indexOf(grp.key) < 0) { return; }", "Centre on is not offered by the tree's centres"]
+ ["if ((ssDrawer.centres || []).indexOf(grp.key) < 0) { return; }", "Centre on is not offered by the tree's centres"],
+ // Tony's phone look of 2026-11-10.
+ ["const n = ViewCentre.throughPoint(l, p);", "a body's place is not put into its own line, so a centred orbit misses its body"],
+ ["const inFold = mid !== SSD.SUN_KEY && viewInFold(grp.key, mid);", "a tick does not ask whether it is in the centred view's fold"],
+ ["sunApplyVisibility(true, null, false, viewFoldFrameR(mid))", "a tick in a centred view's fold frames on everything ticked, so the view jumps to the solar system"],
+ ["if (on) { ssDrawer.trailFocus = grp.key; }", "a tick in a centred view's fold does not end the trail on the row ticked"],
+ ["if (mid !== window.SolarSystemDrawer.SUN_KEY && viewInFold(grp.key, mid)) {", "a name tapped in a centred view's fold does not end the trail on it"],
+ ["if (ssFoldNeeds(h)) { setTimeout(function () { ssFoldBuild(h); }, 0); }", "Find on a centre does not draw its fold, so Earth's shells are not found with it"]
 ].forEach(function (c) { if (page.indexOf(c[0]) < 0) { failures.push(c[1]); } });
 
 // 4. The real config.

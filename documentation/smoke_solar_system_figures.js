@@ -417,8 +417,11 @@ function childWorked(lib) {
   const rel = [0.0028, 0, 0];
   const inside = lib.childBox(io, rel, 2461353.6, KM_PER_AU_TEST, "Jupiter");
   const past = lib.childBox(io, rel, 2461354.1, KM_PER_AU_TEST, "Jupiter");
-  const spanLine = "This page checked its working-out against JPL for 5 hours either side " +
-    "of the date of JPL's orbit. The minute shown is outside that time.";
+  // Tony's words of 2026-11-10, the date on JPL's clock (2461353.5 is 9
+  // November 2026, 00:00 on it).
+  const spanLine = "The position shown was worked out from JPL's orbit dated 9 November " +
+    "2026, midnight on JPL's clock, but is outside that orbit's best-accuracy window " +
+    "of 5 hours either side.";
   want(inside.lines[0] === "Io" && /^0\.0028\d* AU from Jupiter \([\d,]+ km\)\.$/.test(inside.lines[1]),
        "a moon's box does not open on its name and its distance from its parent: " + inside.lines.slice(0, 2).join(" | "));
   want(inside.lines.indexOf(spanLine) < 0 && !inside.past, "the span sentence is printed inside the checked span");
@@ -438,6 +441,9 @@ function childWorked(lib) {
        lib.spanText(1.993) === "2.0 days" && lib.spanText(3.45) === "3.5 days" &&
        lib.spanText(0.03) === "1 hour" && lib.spanText(null) === null,
        "a checked span is not written in hours under a day, days above");
+  want(lib.epochText(2461353.5) === "9 November 2026, midnight" &&
+       lib.epochText(2461353.75) === "9 November 2026" && lib.epochText(null) === null,
+       "the orbit's date is not printed as the source line prints it, on JPL's clock");
   want(lib.possessive("Moon") === "the Moon's" && lib.possessive("Io") === "Io's",
        "the possessive is not 'the Moon's' and 'Io's'");
   // The Moon with its accuracy row: the sentence names its orbit.
@@ -557,7 +563,7 @@ const selfFailures = [];
    "Math.abs(epochJd - trust.element_epoch_jd) > trust.delta_days;",
    "Math.abs(epochJd - trust.element_epoch_jd) >= 0;"],
   ["the span sentence never printed",
-   "if (past && span) { lines.push(SPAN_WORDS(span)); }", "if (false) { }"],
+   "if (past && span && dated) { lines.push(SPAN_WORDS(span, dated)); }", "if (false) { }"],
   ["a moon's distance taken from where it is drawn, not from its parent",
    "var dist = distanceLine({ x: rel[0], y: rel[1], z: rel[2] }, child.trust,",
    "var dist = distanceLine({ x: rel[0] + 5, y: rel[1], z: rel[2] }, child.trust,"]

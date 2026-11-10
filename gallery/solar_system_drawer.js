@@ -151,8 +151,10 @@
 //              for the open tab only (sessionStorage), and the root's next
 //              opening in that tab puts it back, once (tickMemory,
 //              tickRestore). Reset still starts fresh.
-// Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
-// 2a: ONE DRAWER, above). Updated November 7, 2026, later, with
+// Updated November 10, 2026, afternoon, with Anthropic's Claude Opus 5.5
+// (L-515 step 2b, Tony's phone look: Find on a body brings its whole
+// fold, open -- searchHits' kids). Updated November 7, 2026 with
+// Anthropic's Claude Opus 5.5 (L-515 step 2a: ONE DRAWER, above). Updated November 7, 2026, later, with
 // Anthropic's Claude Opus 5.5 (L-515, Tony's phone look at part 2:
 // centreOffer, WORDS.noRoom and WORDS.notBuilt removed; a row offers
 // Centre on or nothing). Updated November 7, 2026, later still, with
@@ -848,6 +850,27 @@
         });
       }
     });
+    // L-515 step 2b, Tony's phone look of 2026-11-10 (run record 12:11):
+    // "the moon should be included in the list of objects when searching
+    // for 'Earth'. this should apply to all satellites, not just shells";
+    // "shouldn't all the Jupiter orbital features be shown including its
+    // moons?"; "Charon should come up when searching 'Pluto'". A body found
+    // brings its whole fold, open: every row under it, at any depth, shown
+    // (kids) though its own names did not hold the letters. They are not
+    // counted as found, and get no line under their names.
+    const kids = {};
+    const bring = function (key, seen) {
+      if (seen[key]) { return; }
+      seen[key] = true;
+      const under = foldChildren(rows, key);
+      if (!under.length) { return; }
+      heads[key] = true;
+      under.forEach(function (c) {
+        if (!keys[c.key]) { kids[c.key] = true; }
+        bring(c.key, seen);
+      });
+    };
+    Object.keys(keys).forEach(function (k) { bring(k, {}); });
     const anc = {};
     (rows || []).forEach(function (r) { if (isGroup(r)) { anc[r.group] = ancestors(rows, r.group); } });
     const all = (rows || []).filter(function (r) {
@@ -914,7 +937,7 @@
         groups[g] = (groups[g] || 0) + 1;
       });
     });
-    return { keys: keys, groups: groups, via: via, n: n, heads: heads,
+    return { keys: keys, groups: groups, via: via, n: n, heads: heads, kids: kids,
              listed: listed, opened: opened, g: matched.length, anc: anc,
              picIds: picIds, picRows: picRows, picOpen: picOpen, p: p, s: s };
   }
@@ -942,11 +965,13 @@
          searchOpen(row.parent, hits));
     }
     return !!hits.keys[row.key] || (!!row.group && hits.opened === row.group) ||
-      !!(hits.heads && hits.heads[row.key]);
+      !!(hits.heads && hits.heads[row.key]) ||
+      !!(hits.kids && hits.kids[row.key]);   // L-515 step 2b, Tony 2026-11-10
   }
 
   // L-515 step 2b: whether a body's fold shows open while searching: a
-  // child of it was found.
+  // child of it was found, or (Tony's phone look of 2026-11-10) the body
+  // itself, which brings its whole fold.
   function searchFoldOpen(key, hits) {
     return !!(hits && hits.heads && hits.heads[key]);
   }

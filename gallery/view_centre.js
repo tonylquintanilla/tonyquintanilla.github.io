@@ -35,7 +35,10 @@
 // view's box in absolute points (absBox) and give back shifted ones
 // (shiftedParts).
 //
-// Written November 10, 2026 with Anthropic's Claude Opus 5.5.
+// Written November 10, 2026 with Anthropic's Claude Opus 5.5. Updated
+// November 10, 2026, afternoon, with Anthropic's Claude Opus 5.5 (Tony's
+// phone look of step 2b: throughPoint, a body's place put into its own
+// drawn line so a centred orbit runs through its body).
 
 (function (global) {
   "use strict";
@@ -164,7 +167,50 @@
     return { keys: keys, focus: focus || centre, unknown: unknown };
   }
 
+  // THE ORBIT THROUGH ITS BODY (Tony's phone look of 2026-11-10, run
+  // record 12:11: "centering on Jupiter, i see that the orbit line does not
+  // go precisely through the center"). A drawn orbit is 360 straight
+  // pieces (render_orbits.sweep_conic), and a straight piece cuts inside
+  // the true curve: measured on the served lines of 2026-11-10, the piece
+  // beside Jupiter passes 27,957 km from Jupiter's marker, against 27,349
+  // km for the curve's bend there worked out from the piece's ends (Earth
+  // 5,098 against 5,153; Saturn 9,780 against 11,685). The marker is on
+  // the curve; the piece is not. Seen from the Sun the gap is far under a
+  // pixel; with Jupiter at the middle, framed on Io, it is a twelfth of the
+  // view. So the body's own place is put into its own line, between the
+  // two points it lies between: the line then runs through the body, and
+  // within a centred view's box keeps to the curve (a piece half as long,
+  // its bend a quarter). A point is put in only where it lies within the
+  // piece's span, off it by under tol of the piece's length (the curve's
+  // bend is 0.2 percent of a piece's length; a mean orbit, or a path the
+  // body is not on, is left alone), and never where it is already a point.
+  // line {x, y, z} (absolute, gaps null), p [x, y, z]; returns a new line
+  // or null when nothing is put in.
+  function throughPoint(line, p, tol) {
+    if (!line || !Array.isArray(line.x) || !Array.isArray(p) || !p.every(isNum)) { return null; }
+    var lim = (isNum(tol) && tol > 0) ? tol : 0.02;
+    var best = -1, bestOff = Infinity;
+    for (var j = 0; j + 1 < line.x.length; j++) {
+      var a = [line.x[j], line.y[j], line.z[j]];
+      var b = [line.x[j + 1], line.y[j + 1], line.z[j + 1]];
+      if (!a.every(isNum) || !b.every(isNum)) { continue; }
+      var ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+      var L2 = ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2];
+      if (!(L2 > 0)) { continue; }
+      var ap = [p[0] - a[0], p[1] - a[1], p[2] - a[2]];
+      var u = (ap[0] * ab[0] + ap[1] * ab[1] + ap[2] * ab[2]) / L2;
+      if (!(u > 0 && u < 1)) { continue; }
+      var f = [a[0] + u * ab[0] - p[0], a[1] + u * ab[1] - p[1], a[2] + u * ab[2] - p[2]];
+      var off = Math.sqrt(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]) / Math.sqrt(L2);
+      if (off < bestOff) { bestOff = off; best = j; }
+    }
+    if (best < 0 || !(bestOff <= lim)) { return null; }
+    var put = function (arr, v) { return arr.slice(0, best + 1).concat([v], arr.slice(best + 1)); };
+    return { x: put(line.x, p[0]), y: put(line.y, p[1]), z: put(line.z, p[2]) };
+  }
+
   global.ViewCentre = {
+    throughPoint: throughPoint,
     ROOT_KEY: ROOT_KEY,
     WORDS: WORDS,
     shiftLine: shiftLine,

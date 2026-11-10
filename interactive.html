@@ -3949,6 +3949,26 @@ const EXHIBITS = {
             shellSpecs.forEach(function (s) {
                 names[s.key] = SSD.searchNames(shellLabels[s.key], null, null, null);
             });
+            // L-515 step 2b, Tony's phone look of 2026-11-10: each body's
+            // own line runs through the body (ViewCentre.throughPoint says
+            // why: a straight piece of the drawn orbit cuts inside the
+            // curve, 28,000 km from Jupiter). Its place, its marker's, is
+            // put into its own line once, before the arrows copy the lines
+            // and before the far-line cut and the shift keep theirs. A line
+            // carrying words point by point is left alone.
+            for (const t of traces) {
+                const k = t.legendgroup;
+                if (!k || k === "center" || !(t.meta && t.meta.label_target) ||
+                    !Array.isArray(t.x) || !isFinite(t.x[0])) { continue; }
+                const p = [t.x[0], t.y[0], t.z[0]];
+                for (const l of traces) {
+                    if (l.legendgroup !== k || String(l.mode || "") !== "lines" ||
+                        (l.x || []).length <= 3 || Array.isArray(l.text) ||
+                        Array.isArray(l.customdata) || Array.isArray(l.hovertext)) { continue; }
+                    const n = ViewCentre.throughPoint(l, p);
+                    if (n) { l.x = n.x; l.y = n.y; l.z = n.z; }
+                }
+            }
             // Tony, 2026-10-26: a small arrowhead on each body's orbit or
             // path, a little ahead of the body, pointing the way it
             // travels (gallery/direction_arrows.js). One trace per body,
@@ -4865,6 +4885,38 @@ function viewCentreFrameR(centreKey, keys, anyRow) {
         if (i >= 0) { r = Math.max(r, sunGroupRadius(i, true) * sunFrameMargin()); }
     });
     return r > 0 ? r : EX.halfRangeAu;
+}
+
+// L-515 step 2b, Tony's phone look of 2026-11-10: whether a row sits in a
+// centre's fold, at any depth (a shell, a moon, Charon under the Pluto
+// system).
+function viewInFold(key, centre) {
+    const SSD = window.SolarSystemDrawer;
+    if (!ssDrawer || !centre || key === centre) { return false; }
+    const seen = {};
+    let p = SSD.parentOf(ssDrawer.rows, key);
+    while (p && !seen[p]) {
+        if (p === centre) { return true; }
+        seen[p] = true;
+        p = SSD.parentOf(ssDrawer.rows, p);
+    }
+    return false;
+}
+
+// What a centred view frames on after a tick in its fold: the farthest
+// row ticked in the fold, each by the room's own measure and margin (a
+// moon where it is now at 20 percent, a shell whole at 10, as
+// sunOutermostShown compares them), about the middle; with nothing in the
+// fold ticked, what its opening frames on (viewCentreFrameR).
+function viewFoldFrameR(centre) {
+    let r = 0;
+    for (let i = 0; i < sunGroups.length; i++) {
+        const g = sunGroups[i];
+        if (!g.shown || !viewInFold(g.key, centre)) { continue; }
+        if (g.indices.some(function (ti) { return sunLineTraces.indexOf(ti) >= 0; })) { continue; }
+        r = Math.max(r, sunGroupRadius(i) * sunGroupMargin(i));
+    }
+    return r > 0 ? r : viewCentreFrameR(centre, [], false);
 }
 
 // Centre on <body> (Tony's rulings 15 and 16): the body in the middle, on
@@ -7368,6 +7420,15 @@ function ssRender() {
     // L-517: and the saved pictures' titles.
     const hits = SSD.searchHits(ssDrawer.rows, ssDrawer.query, ssDrawer.names,
         ssDrawer.pictures ? window.PictureFolds.searchWords(ssDrawer.pictures) : null);
+    // L-515 step 2b, Tony's phone look of 2026-11-10: a centre found by Find
+    // brings its whole fold, so a fold not drawn yet (Earth's shells) is
+    // drawn now, its stored drawings fetched, and the drawer shown again.
+    // Deferred: ssFoldBuild calls Plotly and renders the drawer itself.
+    if (hits) {
+        Object.keys(hits.heads || {}).forEach(function (h) {
+            if (ssFoldNeeds(h)) { setTimeout(function () { ssFoldBuild(h); }, 0); }
+        });
+    }
     for (let r = 0; r < rows.length; r++) {
         const grp = sunGroups[Number(rows[r].dataset.k)];
         if (!grp) { continue; }
@@ -7466,6 +7527,12 @@ function ssSelect(k, fromDrawer) {
     if (fromDrawer) {
         ssDrawer.open = (ssDrawer.open === grp.key && sunFocusIdx === k)
             ? null : grp.key;
+        // L-515 step 2b, Tony's phone look of 2026-11-10: in a centred
+        // view, a row of its fold named ends the trail on it.
+        const mid = viewMid.key;
+        if (mid !== window.SolarSystemDrawer.SUN_KEY && viewInFold(grp.key, mid)) {
+            ssDrawer.trailFocus = grp.key;
+        }
     }
     sunFocusIdx = k;
     renderSunDrawer();
@@ -7481,6 +7548,21 @@ function ssTick(k, on) {
     const SSD = window.SolarSystemDrawer;
     const grp = sunGroups[k];
     if (!grp || !SSD.tickable(grp.key)) { return Promise.resolve(); }
+    // L-515 step 2b, Tony's phone look of 2026-11-10 (run record 12:11):
+    // "when starting with earth centered and a select a shell, the view
+    // expands to the solar system view instead to the specific shell
+    // drawn. the same for Jupiter and saturn." With a body at the middle, a
+    // row in its fold ticked or unticked frames on what is ticked in that
+    // fold (viewFoldFrameR), not on the farthest thing ticked anywhere,
+    // and the trail ends on the row ticked ("centering on Jupiter with Io
+    // selected the path only shows 'The Solar System'"). A row outside the
+    // fold frames as before.
+    const mid = viewMid.key;
+    const inFold = mid !== SSD.SUN_KEY && viewInFold(grp.key, mid);
+    if (inFold) {
+        if (on) { ssDrawer.trailFocus = grp.key; }
+        else if (ssDrawer.trailFocus === grp.key) { ssDrawer.trailFocus = mid; }
+    }
     grp.shown = on;
     if (on) {
         ssTickParent(grp.key);
@@ -7492,7 +7574,8 @@ function ssTick(k, on) {
         ssDrawer.order = SSD.orderRemove(ssDrawer.order, grp.key);
         if (ssDrawer.open === grp.key) { ssDrawer.open = null; }
     }
-    const done = sunApplyVisibility(true, sunOutermostShown());
+    const done = inFold ? sunApplyVisibility(true, null, false, viewFoldFrameR(mid))
+        : sunApplyVisibility(true, sunOutermostShown());
     sunMeasureDrawer();
     return done;
 }
@@ -8707,7 +8790,9 @@ function sunReportLink(box, grp) {
 // frameIdx, if given, is the group to frame on instead of the focus:
 // the Solar System room frames everything drawn while naming the body
 // just ticked (L-363 step 3b). The Sun and Earth rooms never pass it.
-function sunApplyVisibility(keepFocus, frameIdx, whole) {
+// frameR (L-515 step 2b, 2026-11-10): a half-range to frame on about the
+// middle instead (viewFrame), the camera kept.
+function sunApplyVisibility(keepFocus, frameIdx, whole, frameR) {
     if (!keepFocus) { sunFocusIdx = sunOutermostShown(); }
     renderSunDrawer();
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
@@ -8716,7 +8801,10 @@ function sunApplyVisibility(keepFocus, frameIdx, whole) {
     const focusAt = (typeof frameIdx === "number") ? frameIdx : sunFocusIdx;
     return Plotly.restyle(sunPlotDiv, { visible: shown.vis }, shown.idx)
         .then(sunLineFit)   // L-515: the Sun line follows the ticks
-        .then(function () { return sunFrameOn(focusAt, whole); })
+        .then(function () {
+            return (typeof frameR === "number" && frameR > 0) ? viewFrame(frameR, false)
+                : sunFrameOn(focusAt, whole);
+        })
         .then(sunLabelIfHidden);   // L-318: an unticked shell loses its label
 }
 

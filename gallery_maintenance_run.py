@@ -617,7 +617,9 @@ OFFLINE_CHECKERS = [
     # ticks, the shift keeping its gaps; measures the 32-bit error on every
     # moon the root draws, from the Sun and with its planet at the middle,
     # and prints it; and checks the page hands every reader the shift. Its
-    # self-test breaks the real file four ways first. Gates.
+    # self-test breaks the real file five ways first (the fifth since
+    # Tony's phone look of 2026-11-10: a body's place left out of its own
+    # line). Gates.
     ("View centre", "node",
      ["documentation/smoke_view_centre.js"], ".", "===", False),
 
