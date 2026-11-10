@@ -154,6 +154,20 @@ word: the Alfven surface's usual range is drawn as dashed circles).
 Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step 1:
 an object's `parent` is on the allow list, and may be written only as
 that object's `center_slug`, the centre it is fetched around).
+
+A CENTRE GETS ITS OPENING (L-515 step 2b, part 2; Tony's ruling 16 of
+2026-11-09: Centre on opens a body's OWN served opening, and Jupiter's
+and Saturn's follow L-514 ruling 1's pattern, the symbol alone).
+add_arrival() gives an object that is a centre in the tree -- something
+is fetched around it, or it serves features of its own -- and carries no
+arrival block one: `_declared` (the words below), `drawn` and `moon`,
+inserted after its `trace_policy` with the file's own separator and
+indent. It refuses an object that is no centre, one that already has a
+block (edit that through plan() instead), a `drawn` naming anything the
+centre does not draw, and anything plan()'s finished-text checks would
+refuse. Once added, the block's drawn and moon are on the allow list
+like any other, so the exhibit store editor edits them. Updated November
+10, 2026 with Anthropic's Claude Opus 5.5.
 """
 
 import json
@@ -723,6 +737,84 @@ def edit(text, changes):
             raise WriteRefused(
                 "%s reads back as %r rather than what was asked for" %
                 (path, got))
+    try:
+        out.encode("ascii")
+    except UnicodeEncodeError as err:
+        raise WriteRefused(
+            "the result would put a non-ASCII byte in the file: %s" % err)
+    return out
+
+
+# L-515 step 2b, part 2: the words an added opening carries. Project words
+# about the file, as every _declared is; no visitor reads them.
+CENTRE_ARRIVAL_DECLARED = (
+    "Drawing choices for what Centre on opens, not measurements, so there "
+    "is no orrery_constant link. drawn lists this centre's own served "
+    "shells ticked when the view is centred on it, by key; moon true would "
+    "tick what circles it too. What was ticked stays ticked. Tony's rulings "
+    "of 2026-11-09 (L-515, ruling 16) and 2026-11-06 (L-514, ruling 1: the "
+    "symbol alone).")
+
+
+def is_centre(config_value, slug):
+    """True for a body something is fetched around, or that serves
+    features of its own (L-515 rulings 6 and 9; the drawer's centresOf)."""
+    objs = [o for o in config_value.get("objects", []) if isinstance(o, dict)]
+    if any(o.get("center_slug") == slug and o.get("slug") != slug for o in objs):
+        return True
+    own = [o for o in objs if o.get("slug") == slug]
+    return bool(own and isinstance(own[0].get("features"), dict)
+                and own[0]["features"])
+
+
+def add_arrival(text, slug, drawn, moon, declared=CENTRE_ARRIVAL_DECLARED):
+    """The config text with an arrival block added to a centre that has
+    none, or WriteRefused. Nothing else in the text moves."""
+    node = parse_with_spans(text)
+    config_value = node.value
+    index = object_index(config_value, slug)
+    if index is None:
+        raise WriteRefused("no object %r in the config" % slug)
+    entry = config_value["objects"][index]
+    if isinstance(entry.get("arrival"), dict):
+        raise WriteRefused("%s already has an arrival block; change its drawn "
+                           "and moon through the editor" % slug)
+    if not is_centre(config_value, slug):
+        raise WriteRefused("%s is no centre in the tree: nothing is fetched "
+                           "around it and it serves no features, so Centre on "
+                           "never opens it" % slug)
+    _check_string_list(drawn, "/objects/%d/arrival/drawn" % index)
+    _check_flag(moon, "/objects/%d/arrival/moon" % index)
+    unknown = sorted(set(drawn) - drawable_keys(config_value, slug))
+    if unknown:
+        raise WriteRefused("%s's opening names %s, which %s does not draw"
+                           % (slug, ", ".join(repr(u) for u in unknown), slug))
+    objects_node = node.members["objects"][0]
+    obj = objects_node.items[index]
+    if "trace_policy" not in obj.members:
+        raise WriteRefused("%s carries no trace_policy to place the block "
+                           "after" % slug)
+    anchor = obj.members["trace_policy"][0]
+    sep = _separator(text, anchor.end)
+    indent = sep.split("\n")[-1] if "\n" in sep else ""
+    inner = indent + "  "
+    piece = (sep + '"arrival": {\n' +
+             inner + '"_declared": ' + render(declared) + ",\n" +
+             inner + '"drawn": ' + render(list(drawn)) + ",\n" +
+             inner + '"moon": ' + render(bool(moon)) + "\n" +
+             indent + "}")
+    out = text[:anchor.end] + piece + text[anchor.end:]
+    try:
+        reread = json.loads(out)
+    except ValueError as err:
+        raise WriteRefused("the result would not parse as JSON: %s" % err)
+    got = reread["objects"][index].get("arrival")
+    if got != {"_declared": declared, "drawn": list(drawn), "moon": bool(moon)}:
+        raise WriteRefused("%s's arrival block reads back as %r" % (slug, got))
+    before = json.loads(text)
+    before["objects"][index]["arrival"] = got
+    if reread != before:
+        raise WriteRefused("adding %s's arrival block moved something else" % slug)
     try:
         out.encode("ascii")
     except UnicodeEncodeError as err:

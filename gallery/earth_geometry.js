@@ -117,6 +117,10 @@
  * the direction, the centre and the crust -- so the page can draw the
  * line about 10 percent past the farthest shell or orbit drawn, growing
  * and shrinking with the ticks. Its hover says so.)
+ * Updated November 10, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
+ * 2b, part 1, by L-514 ruling 4: the Moon's marker is marked label_target,
+ * so Go To on the Moon's row opens the Moon's own box, not its orbit's
+ * short label.)
  */
 (function (global) {
   "use strict";
@@ -962,6 +966,11 @@
             var mm = {};
             for (var mk in (tr.meta || {})) { if (tr.meta.hasOwnProperty(mk)) mm[mk] = tr.meta[mk]; }
             for (var bk in box.meta) { if (box.meta.hasOwnProperty(bk)) mm[bk] = box.meta[bk]; }
+            // L-515 step 2b (L-514 ruling 4, "B"): Go To on the Moon opens
+            // the Moon's own box, not its orbit's short label, so its
+            // marker is the row's label target (labelTraceIndex takes a
+            // trace so marked first).
+            mm.label_target = true;
             tr.meta = mm;
           }
         }

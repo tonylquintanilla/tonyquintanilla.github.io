@@ -35,6 +35,16 @@
 // section 19 has Go To fit Sedna's whole orbit and a zoom-out after Go
 // To on Hyakutake never shrink the view.
 //
+// Section 32 (2026-11-10, L-515 step 2b, part 1): the moons in the root --
+// each folded under its planet's row behind an arrow, closed on opening,
+// nearest first; ticking one ticks its planet, unticking it leaves the
+// planet; drawn at the planet's marker plus its own place; its box its
+// distance from the planet and, past its checked span, a sentence saying
+// so; Find opening the fold; Reset closing it; Go To on the Moon opening
+// the Moon's own box. Shown failing once on a page planted with the
+// parent's tick and the moon's label target taken out. Section 20 counts
+// the row after Earth's from the last of Earth's moons.
+//
 // Section 28 (2026-11-07, night, Tony): one group over the groups that
 // sit together -- Comets, Spacecraft, Apollo and Amor asteroids -- folded,
 // indented, counted and reset through their sub-groups, and found by Find
@@ -498,7 +508,12 @@ async function places(root, payload, page) {
     return Math.sqrt(t.x[0] ** 2 + t.y[0] ** 2 + t.z[0] ** 2);
   };
   const radius = (key) => dist(key) * 1.2;
-  const click = async (el) => { el.dispatchEvent(new w.MouseEvent("click", { bubbles: true })); await h.done(); };
+  // Cancelable, as a real tap is (L-515 step 2b: Centre on and the trail's
+  // links move the view in the page and prevent the click's default).
+  // Two settles: a tap that reframes hands the far lines and the arrows
+  // their re-cut on a timer of their own, which one 30 ms settle can beat
+  // once the drawer is long (2026-11-10, Go To on Sedna and Voyager 1).
+  const click = async (el) => { el.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true })); await h.done(); await h.done(); };
   const pick = (key) => click(row(key).querySelector(".pick"));
   const name = (key) => click(row(key).querySelector(".rname"));
   const count = () => d.getElementById("sun-drawer-count").textContent;
@@ -551,10 +566,14 @@ async function places(root, payload, page) {
   ok(inl("earth").textContent === "Centre on Earth", "enter words");
   ok(inl("earth").previousElementSibling === row("earth").querySelector(".go"), "Earth's button not after Go To");
   ok(row("earth").querySelector(".go").textContent === "go to", "the button's word is not go to");
-  // L-515 part 3 (Tony's ruling 7): the Sun is the root; its row offers
-  // no Centre on, and ?exhibit=sun opens this room (section 27).
-  ok(bare("center"), "the Sun's row still offers a room");
-  ok(inl("earth").querySelector("a").getAttribute("href") === "interactive.html?exhibit=earth", "Earth room link");
+  // L-515 step 2b, part 2 (Tony's ruling 16, reversing part 3's "the Sun's
+  // row offers no Centre on"): the Sun's fixed row offers "Centre on Sun",
+  // and every Centre on moves the view in this page, with no address to
+  // follow (section 33 walks it).
+  ok(inl("center").textContent === "Centre on Sun", "the Sun's row does not offer Centre on Sun");
+  ok(!inl("earth").querySelector("a").getAttribute("href") &&
+     inl("earth").querySelector("a").getAttribute("data-centre") === "earth",
+     "Centre on Earth still leads to another page");
   ok(inl("mars").hidden, "Mars shows a button on its row");
   // L-515, Tony's phone look of 2026-11-07: no "No room or cards yet".
   ok(bare("mars"), "Mars, with no centre, shows a label where Centre on would be");
@@ -562,9 +581,9 @@ async function places(root, payload, page) {
   // 2. Sun cannot be ticked
   await pick("center");
   ok(shown("center") === true, "Sun's box unticked it");
-  ok(focus() === "center" && expanded("center") && bare("center"), "Sun's left end did not name and open its row");
+  ok(focus() === "center" && expanded("center"), "Sun's left end did not name and open its row");
   await name("center");
-  ok(!expanded("center") && bare("center"), "second tap on the Sun did not close its row");
+  ok(!expanded("center"), "second tap on the Sun did not close its row");
   // 3. Tick Mercury: drawn, named, opened, frame holds everything drawn (Earth's orbit)
   let calls = E("__calls.length");
   await pick("mercury");
@@ -820,7 +839,10 @@ async function places(root, payload, page) {
   // fits its whole path. Run only on a payload that serves them.
   if (data.bodies.juno && data.bodies.juno.kind === "spacecraft") {
     await click(d.getElementById("sun-drawer-all"));
-    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row:not(.sun-pics):not(.sun-pic)"));
+    // L-515 step 2b: Earth's fold of moons (the Moon) sits under Earth's
+    // row, so the row after Earth's fold is counted from its last child.
+    const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row:not(.sun-pics):not(.sun-pic)"))
+      .filter(r => !(r.dataset.k && E("SolarSystemDrawer.isChild(ssDrawer.byKey[sunGroups[" + r.dataset.k + "].key])")));
     const at = rowsDom.indexOf(row("earth"));
     // Since 2026-11-07 the row after Earth is Spacecraft, the parent, and
     // the twelve are its Active missions, listed under it.
@@ -1348,39 +1370,41 @@ async function places(root, payload, page) {
     const around = {};
     cfg.objects.forEach(o => { if (o.center_slug && o.center_slug !== o.slug) around[o.center_slug] = true; });
     const isCentre = (o) => !!around[o.slug] || !!(o.features && Object.keys(o.features).length);
-    const rooms = E("Object.keys(EXHIBITS)");
     const rowKeys = E("ssDrawer.rows.filter(r => r.slug && ssIndex(r.key) >= 0).map(r => r.slug)");
-    // The Sun, the root, is held in section 1 (L-515 part 3: no room row).
-    const notBuilt = cfg.objects.filter(o => isCentre(o) && rooms.indexOf(o.slug) < 0 &&
-                                            o.slug !== "sun" &&
-                                            rowKeys.indexOf(o.slug) >= 0).map(o => o.slug);
-    // Tony's phone look of 2026-11-07: "A body with no centre shows
-    // neither label. It simply has no 'Centre on' button." A centre in the
-    // tree with none built shows nothing where the button would be, as
-    // Mars, no centre, does; opening its row adds nothing either.
-    ok(notBuilt.length > 0, "the config names no centre without a room, so the case is not walked");
-    notBuilt.concat(["mars"]).forEach(s => {
-      ok(bare(s), s + ": a body with no centre built shows something where Centre on would be: " +
-         row(s).textContent);
-    });
-    await E("ssSelect(ssIndex('" + notBuilt[0] + "'), true)"); await h.done();
-    ok(expanded(notBuilt[0]) && bare(notBuilt[0]), notBuilt[0] + ": opening its row shows a label");
-    console.log("  no label on: " + notBuilt.concat(["mars"]).join(", "));
+    // L-515 step 2b, part 2 (Tony's rulings 9 and 15): every centre in the
+    // tree -- worked out here from the config, the Sun among them -- offers
+    // "Centre on <name>" on its row; a body that is no centre (Mars, until
+    // its moons are served) shows nothing there, before or after its row
+    // is opened (Tony's phone look of 2026-11-07).
+    const centres = cfg.objects.filter(o => isCentre(o) &&
+                                           (o.slug === "sun" || rowKeys.indexOf(o.slug) >= 0)).map(o => o.slug);
+    const keyOf = (s) => s === "sun" ? "center" : s;
+    ok(centres.length > 1 && centres.every(s => inl(keyOf(s)).textContent === "Centre on " + E("sunGroups[ssIndex('" + keyOf(s) + "')].name")),
+       "a centre in the tree does not offer Centre on: " + centres.filter(s => !/^Centre on /.test(inl(keyOf(s)).textContent)).join(","));
+    ok(bare("mars"), "Mars, no centre, shows something where Centre on would be: " + row("mars").textContent);
+    await E("ssSelect(ssIndex('mars'), true)"); await h.done();
+    ok(expanded("mars") && bare("mars"), "mars: opening its row shows a label");
+    console.log("  Centre on: " + centres.join(", ") + "; no label on: mars");
     const drawerText = d.getElementById("sun-drawer").textContent;
     ok(drawerText.indexOf("Not built yet") < 0 &&
        drawerText.indexOf("No room or cards yet") < 0,
        "the drawer still shows Not built yet or No room or cards yet");
+    // L-515 step 2b (Tony's ruling 20): the root's trail shows always,
+    // "Solar system" alone on opening, bold, no link.
     const trailEl = d.getElementById("sun-trail");
-    ok(!trailEl || trailEl.hidden, "the root shows a trail line");
+    ok(trailEl && !trailEl.hidden && trailEl.textContent === "Solar system" &&
+       trailEl.querySelector("b") && !trailEl.querySelector("a"),
+       "the root's trail is not 'Solar system' alone: " + (trailEl ? trailEl.textContent : "none"));
     await click(d.getElementById("sun-drawer-all"));
     await name("center");
     ok(E("sunLabelGroup") === idx("center") && focus() === "center",
        "the Sun's fixed row's name does not open its text box");
     await pick("mars"); await pick("jupiter");
     const keptOrder = order();
-    const a = inl("earth").querySelector("a");
-    a.addEventListener("click", ev => ev.preventDefault());
-    await click(a);
+    // L-515 step 2b: Centre on no longer leaves the page, so the ticks stay
+    // in it; the kept-ticks path (a saved picture opened from the root
+    // keeps them, ssPicOpen) is walked through the same keeper.
+    E("treeTickMemoryKeep()");
     const kept = w.sessionStorage.getItem("po_root_ticks");
     const keptObj = kept ? JSON.parse(kept) : {};
     ok(!!kept && keptObj.order.join(",") === keptOrder &&
@@ -1469,8 +1493,10 @@ async function places(root, payload, page) {
     const E3 = (s) => w3.eval(s);
     ok(w3.document.getElementById("loading-status").textContent === "Ready" && h.errors.length === 0,
        "?exhibit=sun did not open: " + h.errors.join("; "));
+    // L-515 step 2b (Tony's ruling 20): ?exhibit=sun is the Sun's own
+    // opening, so its trail reads "Solar system > Photosphere".
     const asRoot = E3("EXHIBIT") === "solar-system" && E3("!!sunPlotDiv") &&
-      w3.document.getElementById("sun-trail").hidden;
+      w3.document.getElementById("sun-trail").textContent === "Solar system > Photosphere";
     ok(asRoot, "?exhibit=sun did not open the Solar System room as the root");
     const data3 = asRoot ? E3("sunPlotDiv.data") : [];
     const wantOn = [...new Set(data3.filter(t => isShellT(t) &&
@@ -1603,6 +1629,299 @@ async function places(root, payload, page) {
        "Reset does not fold every group and sub-group shut");
     console.log("  28: parents " + parents.map(p => p + " (" + subOf(p).length + " groups, " +
                 bodiesUnder(p).length + " bodies)").join(", "));
+  }
+  // 32. L-515 step 2b, part 1 (Tony's rulings 13, 8 and 18 of 2026-11-09;
+  // L-514 ruling 4): the moons in the root. Each child the driver drew
+  // (payload.children) is a row folded under its parent's row, behind an
+  // arrow, closed on opening, the children by where each orbit comes
+  // nearest its parent; ticking a moon ticks its parent, unticking it
+  // leaves the parent; the moon is drawn at its parent's marker plus its
+  // own position around the parent; its box prints its distance from the
+  // parent and, past its checked span, says so; Go To opens its own box.
+  // Every value is worked out here from the payload, not by the page.
+  if (data.children && Object.keys(data.children).length) {
+    await click(d.getElementById("sun-drawer-all"));
+    const kids = data.children, cb = data.child_bodies || {};
+    const parents = Array.from(new Set(Object.values(kids)));
+    const nearestOf = (s) => cb[s].a_au * (1 - cb[s].e);
+    const bf = (p) => row(p).querySelector(".bfold");
+    const marker = (k) => E("sunPlotDiv.data").find(t => t.legendgroup === k && t.meta && t.meta.label_target === true);
+    ok(parents.every(p => row(p) && row(p).classList.contains("heads") && bf(p) &&
+                          bf(p).textContent === "\u25b8" && row(p).querySelector(".box")),
+       "a parent row lacks its fold arrow, folded, or its tick box: " + parents.join(","));
+    ok(Object.keys(kids).every(s => row(s) && row(s).hidden && row(s).classList.contains("member")),
+       "a moon's row shows on opening, or is not indented");
+    // Under its parent, right after the parent's own folds, nearest first.
+    const domRows = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row[data-k]"));
+    for (const p of parents) {
+      const mine = Object.keys(kids).filter(s => kids[s] === p).sort((a, b) => nearestOf(a) - nearestOf(b));
+      const after = domRows.slice(domRows.indexOf(row(p)) + 1, domRows.indexOf(row(p)) + 1 + mine.length);
+      ok(after.every((r, i) => r === row(mine[i])),
+         p + "'s moons are not right under its row, nearest first: " + mine.join(","));
+    }
+    // Fold Jupiter open: Io shows; nothing ticks; the arrow turns.
+    const jShown = shown("jupiter");
+    await click(bf("jupiter"));
+    ok(!row("io").hidden && bf("jupiter").textContent === "\u25be" && shown("jupiter") === jShown &&
+       shown("io") === false, "Jupiter's arrow does not fold Io open, or it ticked something");
+    // Tick Io: Jupiter ticks too, before Io in Home's order.
+    await click(row("io").querySelector(".pick"));
+    ok(shown("io") === true && shown("jupiter") === true && order().split(",").slice(-2).join(",") === "jupiter,io",
+       "ticking Io did not tick Jupiter before it: " + order());
+    // Io drawn at Jupiter's marker plus its own place around Jupiter.
+    const io = E("sunPlotDiv.data").find(t => t.legendgroup === "io" && t.meta && Array.isArray(t.meta.rel_au)) ||
+      { x: [NaN], y: [NaN], z: [NaN], text: [""], meta: { rel_au: [NaN, NaN, NaN] } };
+    const jup = marker("jupiter");
+    const rel = io.meta.rel_au;
+    ok(io.meta.label_target === true, "Io's marker is not its row's label target, so Go To would not open its box");
+    ok(["x", "y", "z"].every((a, i) => Math.abs(io[a][0] - (jup[a][0] + rel[i])) <= 1e-12),
+       "Io is not drawn at Jupiter's marker plus its own position around Jupiter");
+    const ioOrbit = E("sunPlotDiv.data").find(t => t.legendgroup === "io" && t.mode === "lines" && (t.x || []).length > 3);
+    const ioOrbitR = Math.max.apply(null, ioOrbit.x.map((x, i) => Math.hypot(x - jup.x[0], ioOrbit.y[i] - jup.y[0], ioOrbit.z[i] - jup.z[0])));
+    ok(ioOrbitR > 0.9 * cb.io.a_au && ioOrbitR < 1.1 * cb.io.a_au * (1 + cb.io.e),
+       "Io's orbit is not drawn around Jupiter's marker: its widest " + ioOrbitR + " AU against a = " + cb.io.a_au);
+    // Its box: the name, its distance from Jupiter worked out here from
+    // rel, and the span sentence exactly when the minute is past its span.
+    const ioText = io.text[0].split(/<br[^>]*>/).map(s => s.replace(/<br soft>/g, " "));
+    const km = Math.round(Math.hypot(rel[0], rel[1], rel[2]) * E("GalleryFeatures._KM_PER_AU"));
+    const distLine = ioText.find(s => s.indexOf("AU from Jupiter (") >= 0) || "";
+    const printedKm = Number((/\(([\d,]+) km\)/.exec(distLine) || [0, "0"])[1].replace(/,/g, ""));
+    ok(ioText[0] === "Io" && printedKm > 0 && Math.abs(printedKm - km) <= Math.max(1, km * 0.01),
+       "Io's box does not open on its name and its distance from Jupiter: " + ioText.slice(0, 3).join(" | ") + " against " + km + " km");
+    const past = Math.abs(data.epoch_jd - cb.io.trust.element_epoch_jd) > cb.io.trust.delta_days;
+    const spanSaid = ioText.some(s => s.indexOf("This page checked its working-out against JPL for") >= 0);
+    ok(spanSaid === past, "Io's box " + (spanSaid ? "says" : "does not say") + " it is past its checked span; " +
+       "worked out here, it is " + (past ? "past" : "inside") + " it");
+    ok(!/is served measured from/.test(E("JSON.stringify(sunAbsent)")), "a moon was warned as measured from its planet");
+    // Untick Io: Jupiter stays.
+    await click(row("io").querySelector(".pick"));
+    ok(shown("io") === false && shown("jupiter") === true, "unticking Io unticked Jupiter");
+    // Find: "Titan" brings Saturn's row and Titan's, the fold open.
+    const find = d.getElementById("sun-find-input");
+    find.value = "titan"; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done();
+    ok(!row("titan").hidden && !row("saturn").hidden && bf("saturn").textContent === "\u25be",
+       "Find 'titan' does not show Titan under Saturn, the fold open");
+    // Choosing Saturn's arrow from the search clears it and keeps the fold open.
+    await click(bf("saturn"));
+    ok(find.value === "" && !row("titan").hidden && E("ssDrawer.folds['body:saturn']") === true,
+       "Saturn's arrow chosen from a search does not clear it and keep Titan shown");
+    // Reset folds every body's fold shut too.
+    await click(d.getElementById("sun-drawer-all"));
+    ok(Object.keys(kids).every(s => row(s).hidden) && parents.every(p => bf(p).textContent === "\u25b8"),
+       "Reset does not fold the moons shut");
+    // Go To on the Moon opens the Moon's own box (L-514 ruling 4), and
+    // ticks Earth with it.
+    await click(bf("earth"));
+    await click(row("moon").querySelector(".go"));
+    const mk = E("(sunLabelMarker(ssIndex('moon')) || {}).text");
+    ok(E("sunLabelGroup") === idx("moon") && Array.isArray(mk) && String(mk[0]).indexOf("Moon<br>") === 0 &&
+       String(mk[0]).indexOf("AU from Earth (") >= 0 && shown("earth") === true,
+       "Go To on the Moon does not open the Moon's own box, or does not tick Earth: " + String((mk || [""])[0]).slice(0, 60));
+    console.log("  32: moons " + parents.map(p => p + " > " + Object.keys(kids).filter(s => kids[s] === p)
+      .sort((a, b) => nearestOf(a) - nearestOf(b)).join(", ")).join("; ") + "; Io " +
+      (past ? "past" : "inside") + " its span (" + (cb.io.trust.delta_days * 24).toFixed(1) + " hours)");
+  }
+  // 33. L-515 step 2b, part 2 (Tony's rulings 15, 16, 17 and 20 of
+  // 2026-11-09): the view moved. Centre on puts the body at the middle of
+  // the scene -- the whole drawing shifted so it sits at the origin, in
+  // 64-bit numbers -- on its own opening, what was ticked kept; the axis
+  // lines cross there and the frame note says so; the count line counts
+  // what lies outside; the trail is the path down the tree, every part but
+  // the last a link; Go To on a moon puts its planet at the middle; Home
+  // and Reset return to the Sun's view. Values worked here.
+  if (data.children && data.children.io === "jupiter") {
+    await click(d.getElementById("sun-drawer-all"));
+    const trail = () => d.getElementById("sun-trail").textContent;
+    const cross = () => d.getElementById("sun-frame-cross").textContent;
+    const mid = () => E("viewMid.key");
+    const absOf = (k) => { const t = E("sunPlotDiv.data").find(t => t.legendgroup === k && t.meta && t.meta.label_target); return [t.x[0], t.y[0], t.z[0]]; };
+    const jAbs = absOf("jupiter"), ioAbs = absOf("io");
+    const before = E("sunGroups.filter(g => g.shown).map(g => g.key)");
+    ok(trail() === "Solar system" && mid() === "center" && cross() === "In this view the lines cross at the Sun.",
+       "the Sun's view does not read 'Solar system' alone, crossing at the Sun: " + trail() + " | " + cross());
+    await click(inl("jupiter").querySelector("a.enter"));
+    const jNow = absOf("jupiter"), ioNow = absOf("io");
+    ok(mid() === "jupiter" && jNow.every(v => Math.abs(v) < 1e-12),
+       "Centre on Jupiter does not put Jupiter at the scene's origin: " + jNow.join(","));
+    ok(ioNow.every((v, i) => Math.abs(v - (ioAbs[i] - jAbs[i])) < 1e-12),
+       "Io is not where it was, less Jupiter's place, in 64-bit numbers");
+    const ioErrKm = Math.hypot(...ioNow.map(v => Math.fround(v) - v)) * E("GalleryFeatures._KM_PER_AU");
+    const ioErrSun = Math.hypot(...ioAbs.map(v => Math.fround(v) - v)) * E("GalleryFeatures._KM_PER_AU");
+    ok(ioErrKm < 0.5 && ioErrSun > 1, "the shift does not take Io's 32-bit error under half a kilometre: " + ioErrKm + " (from the Sun " + ioErrSun + ")");
+    const after = E("sunGroups.filter(g => g.shown).map(g => g.key)");
+    ok(before.every(k => after.indexOf(k) >= 0) && after.indexOf("jupiter") >= 0 && after.indexOf("io") < 0,
+       "Centre on Jupiter unticked something, did not tick Jupiter, or ticked Io: " + after.join(","));
+    // Its opening, the symbol alone: framed on what circles it (Io's whole
+    // orbit, about the middle, at the room's 20 percent).
+    const ioR = E("sunPlotDiv.data").filter(t => t.legendgroup === "io" && !(t.meta && t.meta.direction_arrow))
+      .reduce((m, t) => ["x", "y", "z"].reduce((mm, a) => (t[a] || []).reduce((q, v) => (isFinite(v) && v !== null ? Math.max(q, Math.abs(v)) : q), mm), m), 0) * 1.2;
+    ok(near(range(), ioR), "Centre on Jupiter is not framed on Io's whole orbit: " + range() + " vs " + ioR);
+    ok(trail() === "Solar system > Jupiter" && d.querySelector("#sun-trail a") &&
+       d.querySelector("#sun-trail a").textContent === "Solar system" &&
+       (d.querySelector("#sun-trail b") || {}).textContent === "Jupiter",
+       "the trail is not 'Solar system > Jupiter', its first part a link, its last bold: " + trail());
+    ok(cross() === "In this view the lines cross at Jupiter.", "the frame note does not say the lines cross at Jupiter: " + cross());
+    const axis = E("sunPlotDiv.data[sunOriginAxisIdx[0]].x").filter(v => v !== null);
+    ok(Math.abs(Math.min(...axis) + range()) < 1e-12 && Math.abs(Math.max(...axis) - range()) < 1e-12,
+       "the x axis line does not run through the middle across the view: " + Math.min(...axis) + ".." + Math.max(...axis));
+    const r = range();
+    const outsideHere = after.filter(k => k !== "center" && k !== "jupiter").filter(k => {
+      const p = absOf(k); return p.some(v => Math.abs(v) > r);
+    }).length;
+    ok(d.getElementById("ss-outside").textContent === E("SolarSystemDrawer.WORDS.outside(" + outsideHere + ")"),
+       "the count line does not count the ticked bodies outside the centred view: " + d.getElementById("ss-outside").textContent + " vs " + outsideHere);
+    const arrowsOut = E("sunPlotDiv.data").filter(t => t.meta && t.meta.direction_arrow).some(t =>
+      (t.x || []).concat(t.y || [], t.z || []).some(v => v !== null && Math.abs(v) > 1.5 * r));
+    ok(!arrowsOut, "a direction arrow is placed outside the centred view: its box was not shifted");
+    // The trail's first part: back to the Sun's view, ticks kept.
+    await click(d.querySelector("#sun-trail a"));
+    ok(mid() === "center" && trail() === "Solar system" && absOf("jupiter").every((v, i) => v === jAbs[i]),
+       "the trail's 'Solar system' does not return to the Sun's view with Jupiter back in place");
+    // Centre on Sun: ?exhibit=sun's opening, the photosphere and the axis.
+    await click(inl("center").querySelector("a.enter"));
+    ok(trail() === "Solar system > Photosphere" && mid() === "center" &&
+       E("sunGroups.filter(g => g.shown).map(g => g.key)").indexOf("Sun: Photosphere") >= 0 &&
+       E("sunGroups.filter(g => g.shown).map(g => g.key)").indexOf("Sun: Rotation Axis") >= 0,
+       "Centre on Sun does not open on the photosphere and the rotation axis: " + trail());
+    // Go To on Io: Jupiter at the middle, the trail down to Io, its box.
+    await click(row("jupiter").querySelector(".bfold"));
+    await click(row("io").querySelector(".go"));
+    ok(mid() === "jupiter" && trail() === "Solar system > Jupiter > Io" &&
+       String((E("sunLabelMarker(sunLabelGroup)") || { text: [""] }).text[0]).indexOf("Io<br>") === 0,
+       "Go To on Io does not put Jupiter at the middle, trail to Io and open Io's box: " + trail());
+    // The trail's middle part opens Jupiter's own opening.
+    const jLink = Array.from(d.querySelectorAll("#sun-trail a")).find(a => a.textContent === "Jupiter");
+    ok(!!jLink, "the trail's Jupiter is not a link");
+    if (jLink) { await click(jLink); }
+    ok(trail() === "Solar system > Jupiter" && mid() === "jupiter", "the trail's Jupiter does not open Jupiter's centre: " + trail());
+    // The Pluto system: the lines cross at the barycentre.
+    await click(inl("pluto_barycenter").querySelector("a.enter"));
+    ok(mid() === "pluto_barycenter" && cross() === "In this view the lines cross at the Pluto-Charon barycenter.",
+       "Centre on Pluto does not cross at the barycentre: " + cross());
+    // Home and Reset return to the Sun's view.
+    await E("navHome()"); await h.done(); await h.done();
+    ok(mid() === "center" && trail() === "Solar system", "Home does not return to the Sun's view: " + trail());
+    await click(inl("saturn").querySelector("a.enter"));
+    await click(d.getElementById("sun-drawer-all"));
+    ok(mid() === "center" && trail() === "Solar system" && absOf("saturn").every(isFinite) &&
+       Math.hypot(...absOf("saturn")) > 5, "Reset does not return to the Sun's view");
+    console.log("  33: Io's 32-bit error " + ioErrSun.toFixed(1) + " km from the Sun, " + ioErrKm.toFixed(4) +
+                " km with Jupiter at the middle; Centre on Jupiter framed at +/-" + ioR.toPrecision(3) + " AU");
+  }
+  // 34. L-515 step 2b, part 3 (Tony's ruling 14): Earth folds into the
+  // root. Its stored drawings are not fetched on opening; the first time
+  // its fold opens, its shells and guides join the Moon in it, by distance,
+  // drawn at Earth's place; the Sun line is not drawn here; Centre on Earth
+  // opens on Earth's own opening; the address keys Earth's shells
+  // "earth.<key>"; and ?exhibit=earth opens the root centred on Earth, an
+  // Earth room link's bare keys read as Earth's. Run on a fresh page.
+  if (data.fold_features && data.fold_features.earth) {
+    const wE = await h.boot(root, "solar-system", payload);
+    const dE = wE.document, EE = (s) => wE.eval(s);
+    const clk = async (el) => { el.dispatchEvent(new wE.MouseEvent("click", { bubbles: true, cancelable: true })); for (let i = 0; i < 4; i++) { await h.done(); } };
+    const rowE = (k) => dE.querySelector('#sun-drawer-list .sun-row[data-k="' + EE("ssIndex(" + JSON.stringify(k) + ")") + '"]');
+    const earthDrawings = EE("GalleryFeatures.drawingNames(" + JSON.stringify(data.fold_features.earth.features) + ")");
+    ok(earthDrawings.length > 0 && earthDrawings.every(n => !EE("galleryDrawings[" + JSON.stringify(n) + "]")),
+       "Earth's stored drawings are fetched on the room's opening: " + earthDrawings.join(","));
+    const n0 = EE("sunPlotDiv.data.length");
+    await clk(rowE("earth").querySelector(".bfold"));
+    const rep = EE("ssFoldReport.earth") || {};
+    ok(earthDrawings.every(n => !!EE("galleryDrawings[" + JSON.stringify(n) + "]")) && rep.bytes > 0 &&
+       EE("sunPlotDiv.data.length") === n0 + rep.traces,
+       "opening Earth's fold does not fetch its drawings and draw its traces: " + JSON.stringify(rep));
+    const fold = EE("ssDrawer.rows.filter(r => r.under === 'earth').map(r => r.key)");
+    const shellRows = fold.filter(k => k !== "moon");
+    ok(shellRows.length >= 15 && fold.indexOf("moon") > fold.indexOf("Earth: Magnetotail") &&
+       fold.indexOf("moon") < fold.indexOf("Earth: Hill Sphere (gravitational dominance over the Sun)") &&
+       fold.every(k => !rowE(k).hidden && rowE(k).classList.contains("member")),
+       "Earth's fold does not list its shells and the Moon by distance, shown and indented: " + fold.join(" / "));
+    ok(!fold.some(k => /Sun Direction/.test(k)), "the Earth room's Sun line is drawn in the root");
+    const earthAt = EE("viewMarkerAbs('earth')");
+    const crust = EE("sunPlotDiv.data").filter(t => t.legendgroup === "Earth: Crust" && (t.x || []).length > 10)[0] ||
+      { x: [NaN], y: [NaN], z: [NaN] };
+    const mean = ["x", "y", "z"].map(a => crust[a].filter(v => v !== null).reduce((s, v) => s + v, 0) / crust[a].filter(v => v !== null).length);
+    ok(mean.every((v, i) => Math.abs(v - earthAt[i]) < 2e-5), "Earth's crust is not drawn at Earth's place: " + mean.join(",") + " vs " + earthAt.join(","));
+    await clk(rowE("earth").querySelector("a.enter"));
+    const ticked = EE("sunGroups.filter(g => g.shown).map(g => g.key)");
+    ok(dE.getElementById("sun-trail").textContent === "Solar system > Earth > Crust" && EE("viewMid.key") === "earth" &&
+       ticked.indexOf("Earth: Crust") >= 0 && ticked.indexOf("Earth: Rotation Axis and Equator") >= 0 &&
+       ticked.indexOf("moon") < 0,
+       "Centre on Earth does not open on Earth's own opening: " + dE.getElementById("sun-trail").textContent + " | " + ticked.join(","));
+    const crustR = EE("sunPlotDiv.data").filter(t => t.legendgroup === "Earth: Crust")
+      .reduce((m, t) => ["x", "y", "z"].reduce((mm, a) => (t[a] || []).reduce((q, v) => (isFinite(v) && v !== null ? Math.max(q, Math.abs(v)) : q), mm), m), 0);
+    ok(EE("sunPlotDiv.layout.scene.xaxis.range[1]") >= crustR, "Centre on Earth does not hold its crust");
+    const addr = wE.location.search;
+    ok(/[?&]show=[^&]*earth\.crust/.test(addr), "the address does not key Earth's crust earth.crust: " + addr);
+    // ?exhibit=earth: the root, centred on Earth, on Earth's opening.
+    const w2 = await h.boot(root, "earth", payload);
+    for (let i = 0; i < 4; i++) { await h.done(); }
+    const E2 = (s) => w2.eval(s);
+    ok(E2("EXHIBIT") === "solar-system" && E2("viewMid.key") === "earth" &&
+       w2.document.getElementById("sun-trail").textContent === "Solar system > Earth > Crust" &&
+       E2("sunGroups.filter(g => g.shown).map(g => g.key)").indexOf("mercury") < 0,
+       "?exhibit=earth does not open the root centred on Earth, on Earth's opening alone");
+    // An Earth room link's bare keys are Earth's.
+    const w3 = await h.boot(root, "earth", payload, { query: "&show=crust,moon" });
+    for (let i = 0; i < 4; i++) { await h.done(); }
+    const E3 = (s) => w3.eval(s);
+    const t3 = E3("sunGroups.filter(g => g.shown).map(g => g.key)");
+    ok(t3.indexOf("Earth: Crust") >= 0 && t3.indexOf("moon") >= 0 && t3.indexOf("earth") >= 0 &&
+       E3("viewMid.key") === "earth" && h.errors.length === 0,
+       "an Earth room link (?exhibit=earth&show=crust,moon) does not open on its rows: " + t3.join(",") + " " + h.errors.join("; "));
+    console.log("  34: Earth's fold " + rep.traces + " traces, its drawings " + rep.bytes + " bytes, " +
+                shellRows.length + " shell and guide rows with the Moon; centred at +/-" +
+                EE("sunPlotDiv.layout.scene.xaxis.range[1]").toPrecision(3) + " AU");
+  }
+  // 35. L-515 step 2b, part 4: the other folds. Jupiter's and Saturn's
+  // served shells (their rings, Jupiter's radiation belts) in their folds
+  // with Io and Titan, by distance, drawn at the planet's place, fetching
+  // nothing; Centre on still opens on the symbol alone. The Pluto system:
+  // its row reads "Pluto system" (ruling 19), its marker the open white
+  // square, Pluto and Charon in its fold; Find still finds it by "Pluto";
+  // a plan's flyby of Pluto still ticks it. Run on a fresh page.
+  if (data.fold_features && data.fold_features.jupiter && data.fold_features.saturn) {
+    const wJ = await h.boot(root, "solar-system", payload);
+    const dJ = wJ.document, EJ = (s) => wJ.eval(s);
+    const clk = async (el) => { el.dispatchEvent(new wJ.MouseEvent("click", { bubbles: true, cancelable: true })); for (let i = 0; i < 4; i++) { await h.done(); } };
+    const rowJ = (k) => dJ.querySelector('#sun-drawer-list .sun-row[data-k="' + EJ("ssIndex(" + JSON.stringify(k) + ")") + '"]');
+    for (const [p, moon] of [["jupiter", "io"], ["saturn", "titan"]]) {
+      await clk(rowJ(p).querySelector(".bfold"));
+      const rep = EJ("ssFoldReport." + p) || {};
+      const fold = EJ("ssDrawer.rows.filter(r => r.under === '" + p + "').map(r => r.key)");
+      const keys = EJ("ssDrawer.rows.filter(r => r.under === '" + p + "').map(r => r.shellKey)").filter(Boolean);
+      ok(rep.traces > 0 && rep.bytes === 0 && fold.length >= 6 && fold[fold.length - 1] === moon &&
+         keys.every(k => k.indexOf(p + ".") === 0) && fold.every(k => !rowJ(k).hidden),
+         p + "'s fold does not list its shells, then " + moon + " beyond them, fetching nothing: " +
+         fold.join(" / ") + " " + JSON.stringify(rep));
+      const pAt = EJ("viewMarkerAbs('" + p + "')");
+      const ring = EJ("sunPlotDiv.data").filter(t => t.legendgroup === fold[0] && (t.x || []).length > 10)[0] ||
+        { x: [NaN], y: [NaN], z: [NaN] };
+      const mean = ["x", "y", "z"].map(a => { const v = ring[a].filter(q => q !== null); return v.reduce((s, q) => s + q, 0) / v.length; });
+      ok(mean.every((v, i) => Math.abs(v - pAt[i]) < 1e-3), p + "'s " + fold[0] + " is not drawn at " + p + "'s place");
+    }
+    await clk(rowJ("jupiter").querySelector("a.enter"));
+    ok(EJ("sunGroups.filter(g => g.shown && /^Jupiter: /.test(g.key)).length") === 0 &&
+       dJ.getElementById("sun-trail").textContent === "Solar system > Jupiter",
+       "Centre on Jupiter, its fold drawn, does not still open on its symbol alone");
+    // The Pluto system.
+    const pl = rowJ("pluto_barycenter");
+    const mk = EJ("sunPlotDiv.data").find(t => t.legendgroup === "pluto_barycenter" && t.meta && t.meta.label_target);
+    ok(pl.querySelector(".rname").textContent.replace(/^[\u25b8\u25be]/, "") === "Pluto system" &&
+       mk.marker && mk.marker.symbol === "square-open" && mk.marker.color === "white",
+       "the Pluto row does not read 'Pluto system' with the open white square: " + pl.querySelector(".rname").textContent);
+    await clk(pl.querySelector(".bfold"));
+    await clk(rowJ("pluto").querySelector(".go"));
+    ok(dJ.getElementById("sun-trail").textContent === "Solar system > Pluto system > Pluto",
+       "Go To on Pluto does not read 'Solar system > Pluto system > Pluto': " + dJ.getElementById("sun-trail").textContent);
+    ok(EJ("SolarSystemDrawer.searchHits(ssDrawer.rows, 'Pluto', ssDrawer.names).keys.pluto_barycenter") === true,
+       "Find 'Pluto' does not find the Pluto system");
+    if (data.bodies.new_horizons) {
+      ok((EJ("ssDrawer.companions.new_horizons") || []).indexOf("pluto_barycenter") >= 0,
+         "New Horizons' flyby of Pluto no longer ticks the Pluto system");
+    }
+    console.log("  35: Jupiter " + EJ("(ssFoldReport.jupiter || {}).traces") + " and Saturn " + EJ("(ssFoldReport.saturn || {}).traces") +
+                " traces in their folds, fetching nothing; the Pluto system's open square; New Horizons ticks " +
+                (EJ("ssDrawer.companions.new_horizons") || []).join(", "));
   }
   // 29. L-517: the saved pictures, last, since it boots the page again.
   await pictures(w, root, payload, null);

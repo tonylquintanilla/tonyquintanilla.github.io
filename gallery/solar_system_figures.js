@@ -136,6 +136,13 @@
 // Earth, ...", Mercury "87.969 days". Written with Anthropic's Claude
 // Opus 5.5.
 
+// A MOON'S BOX (L-515 step 2b, part 1, November 10, 2026). childBox prints
+// a moon's box by the Moon's pattern wherever it is drawn, its distance
+// from its parent read from its own elements around the parent, and, past
+// the span the builder checked (the trust block's delta_days either side
+// of the elements' date), one sentence saying so (ruling 18). Updated
+// November 10, 2026 with Anthropic's Claude Opus 5.5.
+
 (function (global) {
   "use strict";
 
@@ -469,7 +476,131 @@
     return !c || ["@sun", "@10", "sun", "10"].indexOf(String(c).toLowerCase()) >= 0;
   }
 
+  // A MOON'S BOX (L-515 step 2b, part 1; Tony's rulings 8 and 18 of
+  // 2026-11-07 and 2026-11-09, by the Moon's pattern, L-513). Wherever a
+  // moon is drawn -- the root, where it sits at its planet's place, or a
+  // centre -- its box prints its distance from its PARENT, read from its
+  // own JPL elements around the parent (rel, in AU), never from the sum the
+  // root draws, by the larger of its drift and JPL's published accuracy
+  // (distanceLine), and one sentence saying which set the digits. The
+  // checked span is the trust block's delta_days either side of its
+  // elements' date (element_epoch_jd): the stretch the cache builder
+  // compared this page's working-out against JPL over. Past it, one more
+  // sentence says so; the digits are then set by the measured drift, as
+  // they always are once it is the larger (ruling 18: "past the checked
+  // span the moon's box says so, its distance printed only as finely as
+  // its measured drift allows"). Its words are proposals for Tony's phone
+  // look and stand on the Typed facts check's ALLOWED list.
+
+  // The span as a visitor reads it: whole hours under a day, else days to
+  // one decimal. Null for a span not served as a positive number.
+  function spanText(days) {
+    if (!(typeof days === "number" && days > 0 && isFinite(days))) { return null; }
+    if (days < 1) {
+      var h = Math.max(1, Math.round(days * 24));
+      return h === 1 ? "1 hour" : h + " hours";
+    }
+    return (Math.round(days * 10) / 10).toFixed(1) + " days";
+  }
+
+  // Whether the minute drawn lies outside the checked span.
+  function pastSpan(trust, epochJd) {
+    return !!trust && typeof trust.delta_days === "number" &&
+      typeof trust.element_epoch_jd === "number" &&
+      typeof epochJd === "number" && isFinite(epochJd) &&
+      Math.abs(epochJd - trust.element_epoch_jd) > trust.delta_days;
+  }
+
+  var SPAN_WORDS = function (span) {
+    return "This page checked its working-out against JPL for " + span +
+      " either side of the date of JPL's orbit. The minute shown is " +
+      "outside that time.";
+  };
+
+  // "the Moon's", "Io's": the possessive a sentence about a body's orbit
+  // takes. The Moon and the Sun are called "the" in English; no other.
+  var THE_NAMES = ["Moon", "Sun"];
+  function possessive(name) {
+    return (THE_NAMES.indexOf(name) >= 0 ? "the " : "") + name + "'s";
+  }
+
+  // child: {name, description, info_url, period, accuracy, trust:
+  // {rate_deg_per_day, element_epoch_jd, delta_days}}, as the room's driver
+  // serves it. rel: [x, y, z], the child around its parent, AU. Returns
+  // {lines, meta, warnings, past, unserved}: lines the box's lines, its
+  // name first; meta the panel's words (about, info_url); past whether the
+  // minute is past the checked span; unserved which of the orrery's
+  // description, link and period it has none of yet.
+  function childBox(child, rel, epochJd, kmPerAu, parentName) {
+    var warnings = [];
+    if (!child || typeof child !== "object") {
+      return { lines: null, meta: null, past: false,
+               warnings: ["no text box words served for this moon"] };
+    }
+    var name = (typeof child.name === "string" && child.name) ? child.name : "Moon";
+    var lines = [name];
+    var meta = {};
+    // The orrery's words, link and period, copied by the objects mirror;
+    // a moon the orrery does not key yet has none: listed in unserved.
+    var unserved = [];
+    if (typeof child.description === "string" && child.description) {
+      lines.push(child.description);
+      meta.about = child.description;
+    } else {
+      unserved.push("description");
+    }
+    if (typeof child.info_url === "string" && child.info_url) {
+      meta.info_url = child.info_url;
+    } else {
+      unserved.push("link");
+    }
+    var past = pastSpan(child.trust, epochJd);
+    var dist = distanceLine({ x: rel[0], y: rel[1], z: rel[2] }, child.trust,
+                            epochJd, child.accuracy, kmPerAu, null, parentName);
+    if (dist.line) {
+      lines.push(dist.line + ".");
+      var span = spanText(child.trust && child.trust.delta_days);
+      if (past && span) { lines.push(SPAN_WORDS(span)); }
+      else if (past) { warnings.push(name + ": past its checked span, whose length is not served"); }
+      var orbit = possessive(name) + " orbit around " + parentName;
+      var finer = (dist.note === null) ? " JPL's published accuracy for " + orbit + " is finer." : "";
+      if (dist.governs === "drift") {
+        lines.push("This distance is rounded to how far this page's " +
+          "working-out from JPL's orbit may have drifted by the minute " +
+          "shown." + finer);
+      } else if (dist.governs === "whole kilometres") {
+        lines.push("This distance is shown to the whole kilometer." + finer);
+      } else {
+        lines.push("This distance is rounded to JPL's published " +
+          "accuracy for " + orbit + ".");
+      }
+      if (dist.note) { lines.push(dist.note); }
+      if (dist.accuracyWhy) { warnings.push(name + ": " + dist.accuracyWhy); }
+    } else {
+      warnings.push(name + ": no distance shown -- " + dist.why);
+    }
+    var per = periodLine(child.period);
+    if (per.line) {
+      lines.push(per.line);
+    } else if (per.warning) {
+      warnings.push(name + ": " + per.warning);
+    } else {
+      unserved.push("period");
+    }
+    // Not a warning: the box is honest without them (it prints what it is
+    // given), and the room's notes are for what it could not draw. The
+    // Solar System figures check prints every moon's list each run, so
+    // the gap is seen until the orrery keys the moon (L-514's session 1).
+    return { lines: lines, meta: meta, warnings: warnings, past: past,
+             unserved: unserved };
+  }
+
   global.SolarSystemFigures = {
+    spanText: spanText,
+    pastSpan: pastSpan,
+    SPAN_WORDS: SPAN_WORDS,
+    possessive: possessive,
+    childBox: childBox,
     servedFigures: servedFigures,
     periodLine: periodLine,
     orbitLine: orbitLine,

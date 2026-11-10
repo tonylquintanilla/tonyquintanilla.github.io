@@ -21,6 +21,12 @@
 // opens the Solar System room on the Sun's opening, so it takes that
 // room's payload (SOLAR_SYSTEM_DRIVER); its Reset puts back the Sun's
 // opening and closes the text box, as the Sun room's did. Unchanged here.
+// Since L-515 step 2b, part 3 (2026-11-10) "earth" is the address
+// ?exhibit=earth too: the root centred on Earth, whose Reset returns to
+// the Sun's view on the root's served opening (Tony's ruling 16), not to
+// what it opened on. That is walked by walk_scene_address.js (section 7)
+// and walk_solar_system_drawer.js (section 34); this walk refuses it,
+// saying so, rather than holding it to a rule it no longer has.
 //
 // Written October 24, 2026 with Anthropic's Claude Opus 5.5.
 const h = require("./page_harness.js");
@@ -28,6 +34,12 @@ const fails = []; let n = 0;
 function ok(c, m) { n++; if (!c) { fails.push(m); } }
 (async () => {
   const [root, room, payload] = process.argv.slice(2);
+  if (room === "earth") {
+    console.log("earth: ?exhibit=earth opens the root centred on Earth since L-515 step 2b, part 3; " +
+                "its Reset returns to the Sun's view. Walked by walk_scene_address.js (7) and " +
+                "walk_solar_system_drawer.js (34), not here.");
+    process.exit(2);
+  }
   const w = await h.boot(root, room, payload);
   const d = w.document, E = (s) => w.eval(s);
   const click = async (el) => { el.dispatchEvent(new w.MouseEvent("click", { bubbles: true })); await h.done(); };

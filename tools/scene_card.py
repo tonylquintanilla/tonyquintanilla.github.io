@@ -47,6 +47,11 @@ Role: devtool
 Domain: gallery_pipeline
 
 Written November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519).
+Updated November 10, 2026 with Anthropic's Claude Opus 5.5 (L-515 step 2b,
+part 3: the root's known rows hold the folds -- the moons by slug, Earth's
+shells as "earth.<key>", its guides but the Sun line -- and ?exhibit=earth,
+which now opens the root centred on Earth, knows the root's rows and still
+reads an Earth room link's own keys.)
 """
 
 import json
@@ -62,6 +67,12 @@ ROOT_EXHIBIT = 'solar-system'
 # The Explorer predates the tree and draws no drawer rows.
 TREE_EXHIBITS = ('solar-system', 'sun', 'earth')
 ROOT_EXHIBITS = ('solar-system', 'sun')
+# L-515 step 2b, parts 3 and 4: the centres whose own shells the root draws
+# in their folds, and their keys, from one home (drawer_places.py); and the
+# guide the root does not draw (the Earth room's Sun line: the Sun is drawn
+# at its true place).
+from drawer_places import FOLD_CENTRES, fold_shells   # noqa: E402
+ROOT_DROPPED_GUIDES = ('Sun Direction',)
 SCENE_FIELD = 'scene'
 SCENE_ROOM = 'solar_system'
 KEPT = ('exhibit', 'show')
@@ -218,7 +229,34 @@ def known_rows(config, exhibit, earth_geometry_src='', renderers_src=''):
             if isinstance((sun.get('features') or {}).get('orientation'), dict):
                 rows.setdefault(slug_of(sun.get('name', 'Sun') + ': ' + axis),
                                 sun.get('name', 'Sun') + "'s rotation axis")
-    elif exhibit == 'earth':
+        # L-515 step 2b, part 3 (Tony's ruling 14): the folds. Every object
+        # fetched around a body row (the moons), by its slug; and a fold
+        # centre's own shells by "<centre>.<shell key>", and its guides by
+        # name, as the page keys them -- the Sun line aside, which the root
+        # does not draw.
+        body_rows = set(k for k in rows if not k.startswith('drawing:'))
+        for o in config.get('objects', []):
+            if (isinstance(o, dict) and o.get('center_slug') in body_rows
+                    and o.get('slug') != o.get('center_slug')):
+                rows.setdefault(o['slug'], names.get(o['slug'], o['slug']))
+        for centre in FOLD_CENTRES:
+            obj = _object(config, centre)
+            if not obj or centre not in body_rows:
+                continue
+            body = obj.get('name', centre)
+            for place, name in fold_shells(config, centre):
+                rows.setdefault(place, name)
+            if centre == 'earth':
+                for g in _guide_names(earth_geometry_src):
+                    if g not in ROOT_DROPPED_GUIDES:
+                        rows.setdefault(slug_of(body + ': ' + g), g)
+    if exhibit == 'earth':
+        # Since L-515 step 2b, part 3, ?exhibit=earth opens the root centred
+        # on Earth, so its link may name every row the root's may; and an
+        # Earth room link's own keys are still read, as Earth's (the page's
+        # ssFoldsAtOpening): its shells by their bare keys, the Moon, and
+        # the guides.
+        rows.update(known_rows(config, ROOT_EXHIBIT, earth_geometry_src, renderers_src))
         earth = _object(config, 'earth')
         if earth:
             body = earth.get('name', 'Earth')

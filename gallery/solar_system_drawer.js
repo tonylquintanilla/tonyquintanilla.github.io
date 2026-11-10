@@ -197,6 +197,22 @@
 // its row into view, with the groups above it open, counted as saved
 // pictures (WORDS.found's third argument). Updated November 8, 2026 with
 // Anthropic's Claude Opus 5.5.
+//
+// A BODY THAT FOLDS (L-515 step 2b, part 1; Tony's rulings 13 and 14 of
+// 2026-11-09: "yes, A" -- a moon's row folded under its planet's row,
+// behind an arrow, closed on opening, as the groups fold; ticking a moon
+// also ticks its planet; unticking the moon leaves the planet). A body row
+// may name the body row it folds under in "under" -- the room's compose
+// gives every object fetched around a drawn body such a row, read from the
+// config's tree (center_slug), never typed. The parent then heads a fold
+// AND ticks: its fold is open while folds[foldKey(parent)] is, a key of
+// its own ("body:<slug>") so it never meets a group's. A child shows only
+// while its parent shows and its fold is open (rowVisible), one step
+// further in (depthOf); it is never a group's member and never placed
+// apart from its parent (placeShells steps past it). parentOf names the
+// row a tick on a child also ticks. Find finds a child by its names, and
+// brings its parent's row into view with the fold open (searchHits'
+// heads). Updated November 10, 2026 with Anthropic's Claude Opus 5.5.
 
 (function (global) {
   "use strict";
@@ -264,6 +280,9 @@
   };
 
   const GROUP_PREFIX = "group:";   // a group row's key; never a trace group
+  // L-515 step 2b: a body's own fold, in the folds map beside the groups'.
+  const FOLD_PREFIX = "body:";
+  function foldKey(key) { return FOLD_PREFIX + key; }
   const DRAWING_PREFIX = "drawing:";   // L-503: a drawing row's trace group
 
   // [{key, slug, group}] from the room's served rows, and
@@ -274,8 +293,10 @@
   function rowsFromServed(served) {
     const out = [];
     const groups = {};
+    const bodySlugs = {};
     (served || []).forEach(function (r) {
       if (r && typeof r.group === "string" && r.group) { groups[r.group] = true; }
+      else if (r && typeof r.slug === "string" && r.slug && !r.under) { bodySlugs[r.slug] = true; }
     });
     (served || []).forEach(function (r) {
       if (!r) { return; }
@@ -314,15 +335,22 @@
           // L-519 part 2: its served shell key, a card's place.
           shellKey: (typeof r.shell_key === "string" && r.shell_key) ? r.shell_key : null,
           label: (typeof r.label === "string" && r.label) ? r.label : r.shell,
-          group: null, find: findWords(r.find), isShell: true
+          group: null, find: findWords(r.find), isShell: true,
+          // L-515 step 2b, part 3: a planet's own shell sits in its fold.
+          under: (typeof r.under === "string" && bodySlugs[r.under]) ? r.under : null
         });
         return;
       }
       if (typeof r.slug !== "string" || !r.slug) { return; }
+      // L-515 step 2b: a child names the body row it folds under.
+      const under = (typeof r.under === "string" && r.under && bodySlugs[r.under] &&
+                     r.under !== r.slug) ? r.under : null;
       out.push({
         key: r.slug === SUN_SLUG ? SUN_KEY : r.slug,
         slug: r.slug,
-        group: (typeof r["in"] === "string" && groups[r["in"]]) ? r["in"] : null,
+        group: under ? null :
+          ((typeof r["in"] === "string" && groups[r["in"]]) ? r["in"] : null),
+        under: under,
         find: findWords(r.find)
       });
     });
@@ -336,6 +364,18 @@
   }
 
   function isGroup(row) { return !!(row && row.isGroup); }
+  // L-515 step 2b: a row folded under a body's row, and that body's row.
+  function isChild(row) { return !!(row && row.under); }
+  function rowByKey(rows, key) {
+    return (rows || []).filter(function (r) { return r && r.key === key; })[0] || null;
+  }
+  function foldChildren(rows, key) {
+    return (rows || []).filter(function (r) { return r && r.under === key; });
+  }
+  function parentOf(rows, key) {
+    const r = rowByKey(rows, key);
+    return (r && r.under) ? r.under : null;
+  }
   function isDrawing(row) { return !!(row && row.isDrawing); }
   function bodies(rows) { return (rows || []).filter(function (r) { return !isGroup(r); }); }
   function groupRow(rows, group) {
@@ -357,6 +397,10 @@
   function depthOf(rows, row) {
     if (!row) { return 0; }
     if (isGroup(row)) { return ancestors(rows, row.group).length; }
+    if (isChild(row)) {
+      const p = rowByKey(rows, row.under);
+      return 1 + (p && p !== row && !isChild(p) ? depthOf(rows, p) : 0);
+    }
     return row.group ? 1 + ancestors(rows, row.group).length : 0;
   }
   // A group's bodies, at any depth under it.
@@ -447,8 +491,10 @@
         }
         if (!drawnKey[r.key] || placed[r.key]) { return; }
         placed[r.key] = true;
-        out.push({ kind: "body", key: r.key, member: !!r.group,
-                   depth: depthOf(served, r) });
+        out.push({ kind: "body", key: r.key, member: !!r.group || isChild(r),
+                   depth: depthOf(served, r),
+                   // L-515 step 2b: a body row that heads a fold of children.
+                   heads: foldChildren(served, r.key).length > 0 });
       });
     }
     keys.forEach(function (k) {
@@ -500,6 +546,13 @@
     // PARENT GROUPS: a row shows while every group above it is open.
     const open = function (g) { return !!(groupRow(rows, g) && folds && folds[g]); };
     if (isGroup(row)) { return ancestors(rows, row.group).every(open); }
+    // L-515 step 2b: a child shows while its parent's row shows and the
+    // parent's fold is open.
+    if (isChild(row)) {
+      const p = rowByKey(rows, row.under);
+      return !!p && p !== row && !isChild(p) && !!(folds && folds[foldKey(row.under)]) &&
+        rowVisible(p, rows, shownByKey, folds);
+    }
     if (row.group) {
       return open(row.group) && ancestors(rows, row.group).every(open);
     }
@@ -599,7 +652,7 @@
         });
         return best;
       }
-      if (r.group || isShell(r)) { return null; }
+      if (r.group || isShell(r) || isChild(r)) { return null; }
       const a = aByKey ? aByKey[r.key] : undefined;
       return ok(a) ? a : null;
     };
@@ -615,6 +668,7 @@
           continue;
         }
         if (out[i].group && !isGroup(out[i])) { continue; }   // a group's body
+        if (isChild(out[i])) { continue; }                    // a body's child
         if (isGroup(out[i]) && out[i].parent) { continue; }    // a sub-group
         const d = dist(out[i]);
         if (d !== null && d < at) { after = i; }
@@ -623,6 +677,7 @@
       // A group's bodies follow their group row: step past them.
       while (after + 1 < out.length && !isShell(out[after + 1]) &&
              ((out[after + 1].group && !isGroup(out[after + 1])) ||
+              isChild(out[after + 1]) ||
               (isGroup(out[after + 1]) && out[after + 1].parent))) { after += 1; }
       out.splice(after + 1, 0, {
         key: s.key, slug: null, shell: s.key,
@@ -769,7 +824,7 @@
   function searchHits(rows, query, namesByKey, pictureWords) {
     const q = searchKey(query);
     if (!q) { return null; }
-    const keys = {}, groups = {}, via = {};
+    const keys = {}, groups = {}, via = {}, heads = {};
     let n = 0;
     const holds = function (w) { return !!w && searchKey(w).indexOf(q) >= 0; };
     bodies(rows).forEach(function (r) {
@@ -783,6 +838,8 @@
       keys[r.key] = true;
       via[r.key] = i;
       n++;
+      // L-515 step 2b: a found child brings its parent's row, its fold open.
+      if (r.under) { heads[r.under] = true; }
       if (r.group) {
         // PARENT GROUPS: a found body counts in its group and every
         // group above it.
@@ -848,7 +905,16 @@
         up.forEach(function (g) { groups[g] = (groups[g] || 0) + 1; });
       }
     });
-    return { keys: keys, groups: groups, via: via, n: n,
+    // L-515 step 2b: a parent shown for its found child counts in its
+    // groups too.
+    Object.keys(heads).forEach(function (h) {
+      const p = rowByKey(rows, h);
+      if (!p || keys[h] || !p.group) { return; }
+      [p.group].concat(ancestors(rows, p.group)).forEach(function (g) {
+        groups[g] = (groups[g] || 0) + 1;
+      });
+    });
+    return { keys: keys, groups: groups, via: via, n: n, heads: heads,
              listed: listed, opened: opened, g: matched.length, anc: anc,
              picIds: picIds, picRows: picRows, picOpen: picOpen, p: p, s: s };
   }
@@ -875,7 +941,14 @@
         (!!row.parent && (row.parent === hits.opened || underOpened(row.parent, hits)) &&
          searchOpen(row.parent, hits));
     }
-    return !!hits.keys[row.key] || (!!row.group && hits.opened === row.group);
+    return !!hits.keys[row.key] || (!!row.group && hits.opened === row.group) ||
+      !!(hits.heads && hits.heads[row.key]);
+  }
+
+  // L-515 step 2b: whether a body's fold shows open while searching: a
+  // child of it was found.
+  function searchFoldOpen(key, hits) {
+    return !!(hits && hits.heads && hits.heads[key]);
   }
 
   // L-496: whether a group shows open while searching: it holds a body
@@ -919,6 +992,13 @@
     isDrawing: isDrawing,
     GROUP_PREFIX: GROUP_PREFIX,
     isGroup: isGroup,
+    // L-515 step 2b: a body that folds open to its children.
+    FOLD_PREFIX: FOLD_PREFIX,
+    foldKey: foldKey,
+    isChild: isChild,
+    foldChildren: foldChildren,
+    parentOf: parentOf,
+    searchFoldOpen: searchFoldOpen,
     bodies: bodies,
     members: members,
     ancestors: ancestors,

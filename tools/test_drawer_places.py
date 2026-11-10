@@ -164,6 +164,34 @@ def page_order(rows, a):
     return json.loads(r.stdout)
 
 
+def renderer_shell_keys(cfg, slug):
+    """The shell keys the real renderers stamp on a centre's features."""
+    obj = next(o for o in cfg['objects'] if o.get('slug') == slug)
+    feats = [{'object': slug, 'feature': k, 'params': v} for k, v in (obj.get('features') or {}).items()]
+    js = (
+        "global.window = globalThis; const fs = require('fs');"
+        "eval(fs.readFileSync(process.argv[1], 'utf8'));"
+        "const GF = globalThis.GalleryFeatures;"
+        "GF.setFrameConstants(JSON.parse(fs.readFileSync(process.argv[2], 'utf8')).frame_constants);"
+        "GF.setDrawings(new Proxy({}, { get: function (t, n) { try { return JSON.parse(fs.readFileSync(process.argv[3] + '/' + String(n) + '.json', 'utf8')); } catch (e) { return undefined; } } }));"
+        "const f = JSON.parse(fs.readFileSync(process.argv[4], 'utf8'));"
+        "const b = {}; b[f.slug] = { name: f.name, position: [0, 0, 0] };"
+        "const t = GF.buildFeatureTraces(f.features, b, { sceneHalfRangeAu: 1, sunDir: [1, 0, 0] }).traces;"
+        "console.log(JSON.stringify(Array.from(new Set(t.map(function (x) { return x.meta && x.meta.shell_key; }).filter(Boolean)))));")
+    with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False, encoding='utf-8') as tf:
+        json.dump({'slug': slug, 'name': obj.get('name', slug), 'features': feats}, tf)
+    try:
+        r = subprocess.run(['node', '-e', js, os.path.join(ROOT, 'gallery', 'feature_renderers.js'),
+                            os.path.join(ROOT, 'data', 'solar-system', 'coverage_index.json'),
+                            os.path.join(ROOT, 'data', 'solar-system', 'drawings'), tf.name],
+                           capture_output=True, text=True, timeout=60)
+    finally:
+        os.remove(tf.name)
+    if r.returncode != 0:
+        raise RuntimeError(r.stderr.strip()[-300:])
+    return json.loads(r.stdout)
+
+
 def main():
     failures = []
     breaks = [
@@ -194,12 +222,24 @@ def main():
     a = drawer_places.a_by_slug(ROOT)
     top = drawer_places.drawer_tree(cfg, a)
     rows = cfg['rooms']['solar-system']['drawer']['rows']
-    mine = [n.place for n, _d in drawer_places.walk(top) if n.kind in ('body', 'group', 'drawing')]
+    # L-515 step 2b, part 3: the folds -- what circles a body row, worked
+    # out here from the config's center_slug, under that body.
+    body_rows = set(r['slug'] for r in rows if isinstance(r, dict) and isinstance(r.get('slug'), str))
+    moons = [o['slug'] for o in cfg.get('objects', [])
+             if isinstance(o, dict) and o.get('center_slug') in body_rows - set(['sun'])
+             and o.get('slug') != o.get('center_slug')]
+    every = [n.place for n, _d in drawer_places.walk(top) if n.kind in ('body', 'group', 'drawing')]
+    mine = [p for p in every if p not in moons]
     served = [r.get('slug') or r.get('group') or r.get('drawing') for r in rows
               if isinstance(r, dict) and (r.get('slug') or r.get('group') or r.get('drawing'))]
     if sorted(mine) != sorted(served):
         failures.append("the tree does not hold every served row once: %d in the tree, %d served"
                         % (len(mine), len(served)))
+    nodes = dict((n.place, n) for n, _d in drawer_places.walk(top) if n.kind == 'body')
+    for m in moons:
+        parent = next(o['center_slug'] for o in cfg['objects'] if o.get('slug') == m)
+        if not (parent in nodes and m in [c.place for c in nodes[parent].children]):
+            failures.append("the tree does not list %s under %s, its fold (L-515 step 2b)" % (m, parent))
     try:
         page = page_order(rows, dict((k, v) for k, v in a.items()))
         if page != mine:
@@ -210,10 +250,29 @@ def main():
         failures.append("the website's order could not be worked out by node: %s" % e)
     sun_obj = next((o for o in cfg.get('objects', []) if o.get('slug') == 'sun'), {})
     known = [k for k, _n in scene_card._served_shells(sun_obj)]
-    shells = [n.place for n, _d in drawer_places.walk(top) if n.kind == 'shell']
+    sun_node = next((n for n in top if n.place == 'sun'), None)
+    shells = [n.place for n, _d in drawer_places.walk([sun_node] if sun_node else []) if n.kind == 'shell']
     if sorted(shells) != sorted(known):
         failures.append("the Sun's shells in the tree are not its served shells: %s"
                         % sorted(set(shells) ^ set(known)))
+    # L-515 step 2b, part 3: a fold centre's shells under it, each the key
+    # the New Scene window knows for the root ("earth.crust").
+    root_known = scene_card.known_rows(cfg, 'solar-system')
+    for centre in drawer_places.FOLD_CENTRES:
+        if centre not in nodes:
+            continue
+        own = [n.place for n, _d in drawer_places.walk([nodes[centre]]) if n.kind == 'shell']
+        # The renderers' own stamps, by node: each fold centre's served
+        # features built with gallery/feature_renderers.js, every trace's
+        # meta.shell_key, a Sun direction handed over so the surfaces fitted
+        # to the solar wind (Earth's magnetopause, bow shock and tail) draw.
+        want = sorted(set(centre + '.' + k for k in renderer_shell_keys(cfg, centre)))
+        if sorted(set(own)) != want or any(p not in root_known for p in own):
+            failures.append("%s's shells in the tree are not the renderers' as the root keys them: %s"
+                            % (centre, sorted(set(own) ^ set(want))))
+        print("%s's fold in the tree: %d shells (%s ...), and %s"
+              % (centre, len(own), ", ".join(own[:3]), ", ".join(c.place for c in nodes[centre].children
+                                                                  if c.kind == 'body')))
     labels = drawer_places.place_labels(top)
     with open(os.path.join(ROOT, 'gallery', 'gallery_metadata.json'), 'r', encoding='utf-8') as fh:
         cards = json.load(fh).get('visualizations', [])

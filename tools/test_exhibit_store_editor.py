@@ -64,6 +64,9 @@ Updated October 1, 2026 with Anthropic's Claude Opus 5.5 (L-404: check
 Updated October 16, 2026 with Anthropic's Claude Opus 5.5 (L-421 part 3:
 check 11; belt rows are found by their kind, since a linked shell now
 carries a locked line too.)
+Updated November 10, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
+2b: a centre whose opening is its symbol alone -- Jupiter, Saturn -- is a
+room with no word rows and no ticks yet, and keeps its moon flag.)
 """
 
 import json
@@ -114,6 +117,17 @@ def logic_checks():
     for slug in slugs:
         rows = E.word_rows(cfg, slug)
         choices, drawn, _moon = E.arrival_state(cfg, slug)
+        # L-515 step 2b: a centre whose opening is its symbol alone
+        # (Jupiter, Saturn; L-514 ruling 1's pattern) has a block and,
+        # until its shells carry served names, no word rows and no ticks;
+        # its moon flag is still there to toggle. Expected, and printed.
+        arr = (cfg["objects"][SW.object_index(cfg, slug)].get("arrival") or {})             if slug not in section_keys else {}
+        if (slug not in section_keys and not rows and not choices
+                and arr.get("drawn") == [] and SW.is_centre(cfg, slug)):
+            check("%s, a centre opening on its symbol alone, keeps its moon "
+                  "flag to toggle" % slug, isinstance(arr.get("moon"), bool))
+            print("    %s: a centre opening on its symbol alone" % slug)
+            continue
         if slug in section_keys:
             check("%s offers no shell rows -- its rows are bodies" % slug,
                   rows == [], "%d row(s)" % len(rows))

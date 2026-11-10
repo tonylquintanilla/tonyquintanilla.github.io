@@ -124,6 +124,12 @@
 // the wiring check reads the call's first line. The pictures themselves
 // are documentation/smoke_picture_folds.js's.
 //  11. (L-515 part 3) The Sun's shells in the root.
+//  13. (L-515 step 2b, part 1; Tony's rulings 13 and 14 of 2026-11-09) A
+//      body that folds: a moon's row under its planet's row, shown only
+//      with the planet's own fold open, one step in, never parted from
+//      its planet by a shell, its tick naming the planet to tick, found by
+//      Find with the planet's row; four breaks; and the page's wiring.
+//      Updated November 10, 2026 with Anthropic's Claude Opus 5.5.
 
 "use strict";
 const fs = require("fs");
@@ -589,6 +595,58 @@ function parentCases(SSD) {
   return fails;
 }
 
+// 13. L-515 step 2b, part 1 (Tony's rulings 13 and 14 of 2026-11-09): a
+// body that folds. A child row names the body row it folds under in
+// "under"; it shows only while that row shows and its fold is open (a
+// key of its own, "body:<slug>", never a group's); it sits one step in;
+// the parent's plan entry heads a fold; a shell is never placed between a
+// parent and its children; a tick on a child names its parent to tick;
+// Find on a child brings the parent's row, its fold open.
+const FOLD_ROWS = [
+  { slug: "sun" }, { slug: "earth" }, { slug: "moon", under: "earth" },
+  { slug: "mars" }, { slug: "jupiter" }, { slug: "io", under: "jupiter" },
+  { slug: "stray", under: "nosuch" }, { slug: "self", under: "self" }
+];
+const FOLD_A = { earth: 1.0, mars: 1.52, jupiter: 5.2, moon: 0.00257, io: 0.0028 };
+function foldCases(SSD) {
+  const fails = [];
+  const want = function (cond, what) { if (!cond) { fails.push(what); } };
+  const rows = SSD.rowsFromServed(FOLD_ROWS);
+  const b = function (k) { return rows.filter(function (r) { return r.key === k; })[0] || {}; };
+  want(b("moon").under === "earth" && b("io").under === "jupiter" && !b("stray").under &&
+       !b("self").under && !b("earth").under,
+       "a child's parent is not read from its \"under\", or one naming no body row is kept");
+  want(SSD.isChild(b("io")) && !SSD.isChild(b("jupiter")) && SSD.parentOf(rows, "io") === "jupiter" &&
+       SSD.parentOf(rows, "mars") === null, "a tick on a child does not name its parent to tick");
+  want(SSD.foldChildren(rows, "jupiter").map(function (r) { return r.key; }).join() === "io",
+       "a parent's children are not the rows that name it");
+  want(SSD.depthOf(rows, b("io")) === 1 && SSD.depthOf(rows, b("jupiter")) === 0,
+       "a child does not sit one step in under its parent");
+  const vis = function (k, folds) { return SSD.rowVisible(b(k), rows, {}, folds); };
+  want(!vis("io", {}) && vis("io", { "body:jupiter": true }) && !vis("io", { jupiter: true }) &&
+       !vis("moon", { "body:jupiter": true }) && vis("jupiter", {}),
+       "a child shows with its parent's fold shut, or another fold (or a group's key) opens it");
+  const plan = SSD.rowPlan(rows, ["center", "earth", "moon", "mars", "jupiter", "io"]);
+  const pe = function (k) { return plan.filter(function (e) { return e.key === k; })[0] || {}; };
+  want(pe("jupiter").heads === true && pe("earth").heads === true && pe("mars").heads === false &&
+       pe("io").member === true && pe("io").depth === 1,
+       "the plan does not mark a parent as heading a fold, or its child as one step in");
+  const placed = SSD.placeShells(rows, [{ key: "Sun: Mid", au: 1.2 }], FOLD_A, {})
+    .map(function (x) { return x.key; });
+  want(placed.indexOf("Sun: Mid") === placed.indexOf("moon") + 1 &&
+       placed.indexOf("Sun: Mid") < placed.indexOf("mars"),
+       "a shell is placed between a parent and its child, or not by distance: " + placed.join(","));
+  const h = SSD.searchHits(rows, "io", { io: [null, "Io", null, null],
+    jupiter: [null, "Jupiter", null, null], earth: [null, "Earth", null, null] });
+  want(h && h.keys.io && h.heads && h.heads.jupiter && SSD.searchVisible(b("jupiter"), h) &&
+       SSD.searchFoldOpen("jupiter", h) && !SSD.searchFoldOpen("earth", h),
+       "Find on a child does not bring its parent's row with its fold open");
+  want(SSD.countLine(rows, { io: true, jupiter: true }) === "2 of 7",
+       "a child is not counted as a body");
+  want(SSD.foldKey("earth") === "body:earth", "a body's fold is not keyed apart from the groups'");
+  return fails;
+}
+
 function cases(SSD) {
   const fails = [];
   const want = function (cond, what) { if (!cond) { fails.push(what); } };
@@ -626,7 +684,7 @@ function cases(SSD) {
        "the visitor's words are not Tony's");
   return fails.concat(groupCases(SSD), outsideCases(SSD), companionCases(SSD),
                       findCases(SSD), drawingCases(SSD), treeCases(SSD),
-                      shellCases(SSD), parentCases(SSD));
+                      shellCases(SSD), parentCases(SSD), foldCases(SSD));
 }
 
 function broken(changes) {
@@ -778,6 +836,25 @@ const breaks = [
      return REAL.placeShells((rows || []).map(function (r) {
        return REAL.isGroup(r) ? Object.assign({}, r, { parent: null }) : r;
      }), shells, a, labels);
+   } })],
+  // 13. L-515 step 2b: a body that folds.
+  ["a child shown with its parent's fold shut (L-515 step 2b)",
+   broken({ rowVisible: function (row, rows, s, folds) {
+     return REAL.isChild(row) ? true : REAL.rowVisible(row, rows, s, folds);
+   } })],
+  ["a shell placed between a parent and its child (L-515 step 2b)",
+   broken({ placeShells: function (rows, shells, a, labels) {
+     return REAL.placeShells((rows || []).map(function (r) {
+       return REAL.isChild(r) ? Object.assign({}, r, { under: null }) : r;
+     }), shells, a, labels);
+   } })],
+  ["a tick on a moon naming no parent to tick (L-515 step 2b)",
+   broken({ parentOf: function () { return null; } })],
+  ["Find on a moon leaving its parent's row hidden (L-515 step 2b)",
+   broken({ searchHits: function (rows, q, names, pics) {
+     const h = REAL.searchHits(rows, q, names, pics);
+     if (h) { h.heads = {}; }
+     return h;
    } })]
 ];
 const caught = [];
@@ -865,7 +942,9 @@ if (page.indexOf('<script src="gallery/solar_system_drawer.js"></script>') < 0) 
   failures.push("interactive.html does not load gallery/solar_system_drawer.js");
 }
 ["rowsFromServed", "openingOrder", "homeTarget", "orderAdd", "orderRemove",
- "rowVisible", "countLine", "roomFor", "tickable",
+ // L-515 step 2b, part 2: Centre on is offered by the tree's centres
+ // (centresOf), no longer by the page's own table of rooms (roomFor).
+ "rowVisible", "countLine", "centresOf", "tickable",
  "WORDS.enter", "isGroup", "members", "groupCount", "groupArrow",
  "groupReset", "groupResetOffered", "orderGroups", "WORDS.groupReset",
  "outsideCount", "WORDS.outside", "companions", "searchNames", "searchHits",
@@ -907,7 +986,10 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
   ["const plan = SSD.rowPlan(ssDrawer ? ssDrawer.rows : null,", "the one builder does not ask the plan (L-515)"],
   ['else if (entry.kind === "fixed") { drawerWireFixed(', "a centre of shells has no fixed row (L-515)"],
   ["payload.restoreText = treeTickMemoryTake();", "the root does not take back its kept ticks (L-515)"],
-  ['if (at("a.enter")) { treeTickMemoryKeep(); return; }', "Centre on does not keep the root's ticks (L-515)"],
+  // L-515 step 2b, part 2: Centre on moves the view in the page, so the
+  // ticks stay in it; the keeper still serves a saved picture's return.
+  ['if (at("a.enter")) { ev.preventDefault(); ssCentreOn(k); return; }', "Centre on does not move the view in the page (L-515 step 2b)"],
+  ["if (EXHIBIT_ASKED === EXHIBIT && !entry.scene) { treeTickMemoryKeep(); }", "a saved picture opened from the root does not keep its ticks (L-515)"],
   ["drawerTrailMount();", "the trail line is never mounted (L-515)"],
   ['<div class="sun-trail" id="sun-trail" hidden></div>', "the drawer has no trail line (L-515)"],
   ["{ centreKey: SSD0.SUN_KEY, children: SSD0.childrenOf(cfgTree, EXHIBIT) }",
@@ -932,7 +1014,12 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
 });
 // L-515 part 3 (Tony's ruling 7 of 2026-11-07): the Sun's shells in the
 // root, and ?exhibit=sun opening the root on the Sun's own opening.
-[['const EXHIBIT_ADDRESSES = {\n    sun: "solar-system"\n};', "?exhibit=sun does not open the Solar System room"],
+[['const EXHIBIT_ADDRESSES = {\n    sun: "solar-system",', "?exhibit=sun does not open the Solar System room"],
+ // L-515 step 2b, part 3 (ruling 14): and ?exhibit=earth, the root centred
+ // on Earth; Earth's fold drawn the first time it is needed.
+ ['    earth: "solar-system"\n};', "?exhibit=earth does not open the Solar System room (L-515 step 2b)"],
+ ["if (ssDrawer) { await ssFoldsAtOpening(); }", "?exhibit=earth is not centred on Earth at the room's opening (L-515 step 2b)"],
+ ["if (ssFoldNeeds(key)) { return ssFoldBuild(key).then(function () { ssBodyFold(key); }); }", "Earth's fold is not drawn when it is first opened (L-515 step 2b)"],
  ["const shellPlan = DrawerOrder.plan(sunBuilt.traces,", "the root does not order the Sun's shells as the Sun's drawer did"],
  ["const allRows = SSD.placeShells(", "the root does not place the Sun's shells among its rows"],
  ["shellOpening = GalleryArrival.applyArrival(sunBuilt.traces, cfgText, openingOf);", "?exhibit=sun does not open on the Sun's arrival block"],
@@ -957,6 +1044,26 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
 });
 if (/\n    sun: \{/.test(page.slice(page.indexOf("const EXHIBITS = {")))) {
   failures.push("the Sun room's row is still in EXHIBITS (L-515 part 3)");
+}
+// 13. (L-515 step 2b, part 1) The moons in the root, on the page: the
+// driver composes each child at its parent's place by the assembler's
+// compose_children module, the page loads that module, compose gives each
+// child a row under its parent, a moon is no companion, the tick and Go
+// To tick its parent, the arrow folds, and the arrows and Find follow.
+[["from assembler import compose_children as _cc", "the root's driver does not compose the children"],
+ ["_cc.build_child_traces(", "the root's driver does not draw a child at its parent's place"],
+ ['"compose_children.py"', "the page does not load gallery/assembler/compose_children.py"],
+ ["return { slug: s, under: p.slug };", "compose does not give each child a row under its parent"],
+ ["!r.in && !r.under && bodies[r.slug]", "a moon's row can be a spacecraft's companion"],
+ ['if (at(".bfold")) { ssBodyFold(grp.key); return; }', "a parent row's arrow does not fold its moons"],
+ ["SSD.searchFoldOpen(key, hits)", "a parent's arrow does not show open for a found moon"],
+ ["SolarSystemFigures.childBox(b, t.meta.rel_au, epochJd,", "a moon's box is not the Moon's pattern, from its own position around its parent"],
+ [".sun-row .bfold {", "the page has no style for a parent row's fold arrow"]
+].forEach(function (c) {
+  if (page.indexOf(c[0]) < 0) { failures.push(c[1] + " (L-515 step 2b)"); }
+});
+if ((page.match(/ssTickParent\(grp\.key\);/g) || []).length < 2) {
+  failures.push("ticking a moon, or Go To on one, does not tick its parent (L-515 step 2b)");
 }
 // L-515, Tony's phone look of 2026-11-07: "Remove 'Not built yet' and 'No
 // room or cards yet.'" The page writes neither, and asks for no offer.

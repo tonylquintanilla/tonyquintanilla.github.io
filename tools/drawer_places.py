@@ -42,6 +42,15 @@ Domain: gallery_pipeline
 
 Written November 9, 2026, evening, with Anthropic's Claude Opus 5.5
 (L-519 part 2).
+Updated November 10, 2026 with Anthropic's Claude Opus 5.5 (L-515 step 2b,
+part 3, Tony's ruling 14: one tree in one display). THE FOLDS: every
+object fetched around a body row of the root (the Moon, Io, Titan, Pluto,
+Charon -- read from the config's center_slug, never typed) is listed under
+that body, a place by its slug; and a centre whose own shells the root
+draws in its fold (FOLD_CENTRES: Earth, since part 3) lists them under it,
+"Earth's shells", each a place by "<centre>.<shell key>" ("earth.crust"),
+the key the page gives the row. On the website the fold lists them by
+distance among the moons, which this file does not work out a second time.
 """
 
 import json
@@ -53,6 +62,58 @@ SUN = 'sun'
 SCENE_FIELD = 'scene'
 SHELLS_LABEL = "The Sun's shells"
 SHELLS_NOTE = "on the website each sits at its distance among the rows"
+# L-515 step 2b, parts 3 and 4: the centres whose own shells the root draws
+# in their folds, each place keyed "<centre>.<shell key>" as the page keys
+# it. The one home of the list; scene_card.py reads it from here.
+FOLD_CENTRES = ('earth', 'jupiter', 'saturn')
+
+
+def _title(key):
+    return ' '.join(w.capitalize() for w in str(key).split('_'))
+
+
+def fold_shells(config, slug):
+    """[(place, name)]: a fold centre's served shells, each keyed
+    "<slug>.<key>", by the keys the renderers stamp (meta.shell_key):
+    a member carrying a display name; a group serving its members' names as
+    a list (Earth's radiation belts, one place for the two); and, where a
+    group serves no names (Jupiter's and Saturn's, L-231), a ring system's
+    rings by their keys and any other drawn group by its own key (Jupiter's
+    radiation belts). The orientation block draws no shell. Held to the
+    renderers' own stamps by tools/test_drawer_places.py, which builds each
+    fold centre's features with gallery/feature_renderers.js."""
+    out = []
+    for o in config.get('objects', []):
+        if not (isinstance(o, dict) and o.get('slug') == slug):
+            continue
+        feats = o.get('features')
+        if not isinstance(feats, dict):
+            continue
+        for g, v in feats.items():
+            if not isinstance(v, dict):
+                continue
+            named = [m for m, mv in v.items() if isinstance(mv, dict) and isinstance(mv.get('name'), str)]
+            if isinstance(v.get('name'), str):
+                out.append((slug + '.' + g, v['name']))
+            elif isinstance(v.get('names'), list) and v['names']:
+                out.append((slug + '.' + g, ' and '.join(str(n) for n in v['names'])))
+            elif not named and g == 'ring_system':
+                for m, mv in v.items():
+                    if isinstance(mv, dict):
+                        out.append((slug + '.' + m, _title(m)))
+            elif not named and g != 'orientation':
+                out.append((slug + '.' + g, _title(g)))
+            for m in named:
+                out.append((slug + '.' + m, v[m]['name']))
+    return out
+
+
+def children_of(config, slug):
+    """[slug]: the objects fetched around a body (its center_slug), in
+    config order."""
+    return [o['slug'] for o in config.get('objects', [])
+            if isinstance(o, dict) and isinstance(o.get('slug'), str)
+            and o.get('center_slug') == slug and o['slug'] != slug]
 
 
 class Node(object):
@@ -176,6 +237,18 @@ def drawer_tree(config, a=None):
             n.children.append(Node(None, SHELLS_LABEL, 'heading',
                                    [Node(k, name, 'shell') for k, name in shells]))
             break
+    # L-515 step 2b, part 3: each body's fold -- its own shells (a fold
+    # centre's), then what circles it.
+    for n, _parent, _r in order:
+        if n.kind != 'body' or n.place == SUN:
+            continue
+        if n.place in FOLD_CENTRES:
+            own = fold_shells(config, n.place)
+            if own:
+                n.children.append(Node(None, "%s's shells" % n.label, 'heading',
+                                       [Node(k, name, 'shell') for k, name in own]))
+        for c in children_of(config, n.place):
+            n.children.append(Node(c, names.get(c, c), 'body'))
     return top
 
 

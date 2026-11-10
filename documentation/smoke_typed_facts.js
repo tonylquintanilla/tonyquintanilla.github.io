@@ -172,6 +172,20 @@ const ALLOWED = [
   ["JPL's published accuracy for the Moon's orbit around Earth is finer.",
    "the page's own account of its data: the served accuracy row is finer than the digits printed (L-513)"],
   ["Moon's orbit, drawn around Earth", "the picture: the drawn orbit's name and its served centre"],
+  // L-515 step 2b, part 1 (Tony's ruling 18 of 2026-11-09): a moon's box
+  // past the span the cache builder checked its elements over says so, in
+  // words proposed for Tony's phone look; the span is the served trust
+  // block's delta_days, written in hours under a day and days above.
+  ["This page checked its working-out against JPL for # hours either side of the date of JPL's orbit.",
+   "how the page works: the span its working-out was checked over (L-515 ruling 18; words for Tony's phone look)"],
+  ["This page checked its working-out against JPL for # days either side of the date of JPL's orbit.",
+   "how the page works: the span its working-out was checked over (L-515 ruling 18; words for Tony's phone look)"],
+  ["The minute shown is outside that time.",
+   "how the page works: the minute is past that span (L-515 ruling 18; words for Tony's phone look)"],
+  // Tony's sentence of 2026-10-01 (L-399), the Solar System room's, now
+  // met here: a moon with no accuracy row served (Io, Titan, Pluto, Charon).
+  ["JPL's own uncertainty for this position is not yet included.",
+   "the page's own account of its data: no accuracy row is served for this body (Tony, 2026-10-01)"],
   // Since 2026-10-29 its two dates say UTC, the retrieved moment to the
   // minute (Tony's phone look of 2026-10-28, 23:39: every date the i
   // panel's source lines print says UTC).
@@ -346,7 +360,46 @@ function earthPayload() {
   return JSON.parse(read("documentation/payload_earth_scene.json"));
 }
 
+// L-515 step 2b, part 1: the moons the root draws at their planets' places
+// (every object fetched around a body the root lists), each box built by
+// SolarSystemFigures.childBox from its config entry and its served record,
+// at a minute past its checked span (half as far again past it, at least a
+// day), so the span sentence is met in both its forms, hours and days. Its served words (name, description, period,
+// the accuracy's citation) are masked, its distance and drift scaled.
+const COVERAGE = JSON.parse(read("data/solar-system/coverage_index.json"));
+function moonTraces(mode) {
+  const SSF = global.SolarSystemFigures;
+  const rootRows = {};
+  ((((config.rooms || {})["solar-system"] || {}).drawer || {}).rows || []).forEach(r => {
+    if (r && r.slug && r.slug !== "sun") { rootRows[r.slug] = true; }
+  });
+  const out = [];
+  for (const o of config.objects || []) {
+    const rec = o && (COVERAGE.objects || {})[o.slug];
+    if (!rec || !rec.osculating || !rootRows[o.center_slug] || o.center_slug === o.slug) { continue; }
+    const t = rec.trust || {};
+    let words = { name: rec.name, description: o.description, info_url: o.info_url,
+                  period: o.period, accuracy: o.position_accuracy };
+    let parent = ((COVERAGE.objects || {})[o.center_slug] || {}).name || o.center_slug;
+    const k = mode === "scaled" ? SCALE : 1;
+    if (mode) {
+      words = masked(Object.assign({}, words, { description: words.description }), mode === "scaled", false);
+      words.name = MARKER; parent = MARKER;
+      if (typeof words.description === "string") { words.description = MARKER; }
+    }
+    words.trust = { rate_deg_per_day: t.error_rate_deg_per_day * k,
+                    element_epoch_jd: t.element_epoch_jd, delta_days: t.delta_days };
+    const box = SSF.childBox(words, [rec.osculating.a_au * k, 0, 0],
+                             t.element_epoch_jd + Math.max(1, 1.5 * (t.delta_days || 0)),
+                             GF._KM_PER_AU, parent);
+    out.push({ legendgroup: o.slug, name: words.name, mode: "markers",
+               text: [(box.lines || []).join("<br>")], meta: box.meta || {} });
+  }
+  return out;
+}
+
 const ROOMS = {
+  moons: moonTraces,
   sun: function (mode) {
     let f = sunFeatures();
     if (mode) { f = masked(f, mode === "scaled", false); }

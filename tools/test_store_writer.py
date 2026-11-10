@@ -541,6 +541,34 @@ def fixture_checks():
     refuses("11: the root's parent refuses",
             lambda: W.edit(tree, [("/objects/1/parent", "farbody")]))
 
+    # 12. A centre gets its opening (L-515 step 2b, part 2; ruling 16).
+    centre_cfg = {"objects": [
+        {"slug": "giant", "trace_policy": "none", "features": {}},
+        {"slug": "littlemoon", "center_slug": "giant", "trace_policy": "none"},
+        {"slug": "rock", "center_slug": "sun", "trace_policy": "none"}]}
+    ctext = json.dumps(centre_cfg, indent=2) + "\n"
+    out = W.add_arrival(ctext, "giant", [], False)
+    got = json.loads(out)["objects"][0].get("arrival")
+    check("12: a centre with none is given its opening, and it reads back",
+          got == {"_declared": W.CENTRE_ARRIVAL_DECLARED, "drawn": [], "moon": False},
+          repr(got))
+    check("12: only the block is added, after trace_policy",
+          out.replace(out[out.index('"trace_policy": "none",\n      "arrival"') + 23:
+                          out.index("},", out.index('"arrival"')) + 2], "") == ctext,
+          "something else moved")
+    check("12: the added block's drawn and moon are then on the allow list",
+          "/objects/0/arrival/drawn" in W.editable_paths(json.loads(out)) and
+          "/objects/0/arrival/moon" in W.editable_paths(json.loads(out)))
+    refuses("12: a body that is no centre is refused, saying so",
+            lambda: W.add_arrival(ctext, "rock", [], False), expect_in="no centre")
+    refuses("12: a centre that has a block is refused",
+            lambda: W.add_arrival(out, "giant", [], False), expect_in="already has")
+    refuses("12: an opening naming a shell the centre does not draw is refused",
+            lambda: W.add_arrival(ctext, "giant", ["rings"], False),
+            expect_in="does not draw")
+    refuses("12: a moon flag that is not true or false is refused",
+            lambda: W.add_arrival(ctext, "giant", [], 0))
+
     # Nothing above touched the fixture text itself.
     check("the fixture text is unchanged by all of that", text == FIXTURE)
 
@@ -630,6 +658,14 @@ def real_config_checks():
 
     for slug in rooms:
         shells = W.shell_fields(cfg, slug)
+        # L-515 step 2b: a centre whose opening is its symbol alone (Jupiter,
+        # Saturn) has a block and, until its shells carry served names, none
+        # to edit; that is expected, and printed.
+        arr = cfg["objects"][W.object_index(cfg, slug)].get("arrival") or {}
+        if not shells and arr.get("drawn") == [] and W.is_centre(cfg, slug):
+            print("    %s: a centre opening on its symbol alone, no named "
+                  "shells to edit yet" % slug)
+            continue
         check("real config: %s has shells to edit" % slug, bool(shells))
         if not shells:
             continue

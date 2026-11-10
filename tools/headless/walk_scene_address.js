@@ -175,32 +175,36 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
   ok(!upd(w), "6: a reload offers \"Tap to update.\"");
   ok(same(ticked(w), ["earth"]), "6: a reload does not keep the rows in its address");
 
-  // 7. Earth from a shared link.
-  w = await h.boot(ROOT, "earth", P_EARTH, Object.assign({
+  // 7. Earth from a shared link. Since L-515 step 2b, part 3, ?exhibit=earth
+  // opens the root centred on Earth (its payload is the root's), its fold
+  // drawn at the opening; an Earth room link's bare keys are Earth's, and
+  // the page writes them back as the root keys them ("earth.crust"). Reset
+  // returns to the Sun's view on the root's served opening (ruling 16).
+  const settle = async () => { for (let i = 0; i < 6; i++) { await h.done(); } };
+  w = await h.boot(ROOT, "earth", P_ROOT, Object.assign({
     query: "&show=crust,moon&at=" + atOf(shared) }, PAGE));
+  await settle();
   const openTicked = ticked(w);
   const shellOf = (key) => w.eval("(function(){var g=sunGroups.filter(function(x){return x.key===" + JSON.stringify(key) +
     "})[0];return g?sceneShellKeyOf(g):null;})()");
   const asAddr = openTicked.map((k) => shellOf(k) || k);
-  ok(same(asAddr, ["crust", "moon"]), "7: Earth from a link does not tick exactly the crust and the Moon: " + asAddr);
+  ok(same(asAddr, ["earth.crust", "moon", "earth"]), "7: Earth from a link does not tick exactly Earth, its crust and the Moon: " + asAddr);
   ok(!!upd(w), "7: Earth from a link offers no \"Tap to update.\"");
-  ok(q(w).get("exhibit") === "earth" && q(w).get("show") === "crust,moon", "7: Earth's address is not the shared scene: " + w.location.search);
-  // Earth's own opening, read from a plain boot.
-  const plain = await h.boot(ROOT, "earth", P_EARTH, PAGE);
-  const own = ticked(plain);
+  ok(q(w).get("exhibit") === "earth" && same((q(w).get("show") || "").split(","), ["earth.crust", "moon", "earth"]),
+     "7: Earth's address is not the shared scene, as the root keys it: " + w.location.search);
+  // Earth's own opening, read from a plain boot: centred on Earth, its crust.
+  const plain = await h.boot(ROOT, "earth", P_ROOT, PAGE);
+  await settle();
   const ownR = frameR(plain);
-  w = await h.boot(ROOT, "earth", P_EARTH, Object.assign({
+  ok(plain.eval("viewMid.key") === "earth" && ticked(plain).indexOf("Earth: Crust") >= 0,
+     "7: a plain ?exhibit=earth does not open centred on Earth, on its crust: " + ticked(plain));
+  w = await h.boot(ROOT, "earth", P_ROOT, Object.assign({
     query: "&show=crust,moon&at=" + atOf(shared) }, PAGE));
-  await w.eval("sunReset()");
-  await h.done();
-  ok(same(ticked(w), own), "7: Earth's Reset does not put back its own opening: " + ticked(w) + " vs " + own);
-  ok(q(w).get("show") === new plain.URLSearchParams(plain.location.search).get("show"),
-     "7: after Reset Earth's address is not its opening's");
-  w = await h.boot(ROOT, "earth", P_EARTH, Object.assign({
-    query: "&show=crust,moon&at=" + atOf(shared) }, PAGE));
-  ok(frameR(w) > ownR * 10, "7: Earth from a link with the Moon does not open framed on the Moon");
+  await settle();
+  ok(frameR(w) > ownR * 10, "7: Earth from a link with the Moon does not open framed on the Moon: " + frameR(w) + " vs " + ownR);
   await reset(w);
-  ok(Math.abs(frameR(w) - ownR) < ownR * 1e-9, "7: Earth's Reset keeps the link's frame: " + frameR(w) + " vs " + ownR);
+  ok(w.eval("viewMid.key") === "center" && same(ticked(w), OPENING),
+     "7: Earth's Reset does not return to the Sun's view on the root's opening: " + ticked(w));
 
   // 9. The Solar System room's Reset frame.
   const rootPlain = await h.boot(ROOT, "solar-system", P_ROOT, PAGE);

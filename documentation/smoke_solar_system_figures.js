@@ -401,6 +401,60 @@ function uncertaintyWorked(lib) {
   return out;
 }
 
+// ---- L-515 step 2b, part 1: a moon's box -----------------------------
+// childBox, by the Moon's pattern (L-513) and Tony's rulings 8 and 18: the
+// distance from the PARENT, from the child's own position around it; past
+// the checked span (delta_days either side of the elements' date) one
+// sentence saying so; the sentence on which error set the digits; the
+// period; and what the orrery serves no words for listed, not warned.
+// Worked by hand: a moon 0.0028 AU from its parent (418,874 km), drift
+// 0.026 deg/day, span 0.221 days (5 hours).
+function childWorked(lib) {
+  const fails = [];
+  const want = function (c, w) { if (!c) { fails.push(w); } };
+  const io = { name: "Io", trust: { rate_deg_per_day: 0.026, element_epoch_jd: 2461353.5,
+                                    delta_days: 0.221 } };
+  const rel = [0.0028, 0, 0];
+  const inside = lib.childBox(io, rel, 2461353.6, KM_PER_AU_TEST, "Jupiter");
+  const past = lib.childBox(io, rel, 2461354.1, KM_PER_AU_TEST, "Jupiter");
+  const spanLine = "This page checked its working-out against JPL for 5 hours either side " +
+    "of the date of JPL's orbit. The minute shown is outside that time.";
+  want(inside.lines[0] === "Io" && /^0\.0028\d* AU from Jupiter \([\d,]+ km\)\.$/.test(inside.lines[1]),
+       "a moon's box does not open on its name and its distance from its parent: " + inside.lines.slice(0, 2).join(" | "));
+  want(inside.lines.indexOf(spanLine) < 0 && !inside.past, "the span sentence is printed inside the checked span");
+  want(past.lines.indexOf(spanLine) === 2 && past.past, "the span sentence is not printed past the checked span: " +
+       past.lines.join(" | "));
+  // Past it, the drift sets the digits: 0.6 days at 0.026 deg/day, at
+  // 418,874 km, is about 114 km, so hundreds of km.
+  const km = Number((/\(([\d,]+) km\)/.exec(past.lines[1]) || [0, "0"])[1].replace(/,/g, ""));
+  want(km === 418900, "past its span the distance is not set by its drift: " + past.lines[1]);
+  want(past.lines.indexOf("This distance is rounded to how far this page's working-out from JPL's " +
+       "orbit may have drifted by the minute shown.") >= 0 &&
+       past.lines.indexOf(lib.NO_SOURCE_ACCURACY) >= 0,
+       "a moon with no accuracy row does not say the drift set its digits and JPL's own is not included");
+  want(past.unserved.join() === "description,link,period", "what the orrery serves no words for is not listed");
+  want(past.warnings.length === 0, "a moon with no words warns: " + past.warnings.join("; "));
+  want(lib.spanText(0.221) === "5 hours" && lib.spanText(0.798) === "19 hours" &&
+       lib.spanText(1.993) === "2.0 days" && lib.spanText(3.45) === "3.5 days" &&
+       lib.spanText(0.03) === "1 hour" && lib.spanText(null) === null,
+       "a checked span is not written in hours under a day, days above");
+  want(lib.possessive("Moon") === "the Moon's" && lib.possessive("Io") === "Io's",
+       "the possessive is not 'the Moon's' and 'Io's'");
+  // The Moon with its accuracy row: the sentence names its orbit.
+  const moon = { name: "Moon", description: "Earth's moon.", info_url: "https://x",
+                 trust: { rate_deg_per_day: 0.048, element_epoch_jd: 2461353.5, delta_days: 3.45 },
+                 accuracy: { unit: "km", value: 0.001 },
+                 period: { kind: "fetched", center: "@399", center_label: "Earth", fetched: "2026-11-06",
+                           days_only: true, years: null, days: { value: 27, figures: 2, text: "27" } } };
+  const mb = lib.childBox(moon, [0.00257, 0, 0], 2461353.5, KM_PER_AU_TEST, "Earth");
+  want(mb.lines[1] === "Earth's moon." && mb.meta.about === "Earth's moon." && mb.meta.info_url === "https://x" &&
+       mb.lines.indexOf("This distance is shown to the whole kilometer. JPL's published accuracy for " +
+                        "the Moon's orbit around Earth is finer.") >= 0 &&
+       /^Orbital period: 27 days, around Earth/.test(mb.lines[mb.lines.length - 1]) && mb.unserved.length === 0,
+       "the Moon's box is not the Moon's pattern: " + mb.lines.join(" | "));
+  return fails;
+}
+
 // ---- self-test: the checks must be able to fail -------------------
 // Three copies of the REAL file, each with one deliberate fault, loaded
 // in a sandbox. Each must fail the worked cases.
@@ -497,6 +551,21 @@ const selfFailures = [];
     selfFailures.push(fault[0] + " passed the spacecraft's worked cases");
   }
 });
+// L-515 step 2b, part 1: a moon's box (childBox), three breaks.
+[
+  ["the span sentence printed inside the checked span",
+   "Math.abs(epochJd - trust.element_epoch_jd) > trust.delta_days;",
+   "Math.abs(epochJd - trust.element_epoch_jd) >= 0;"],
+  ["the span sentence never printed",
+   "if (past && span) { lines.push(SPAN_WORDS(span)); }", "if (false) { }"],
+  ["a moon's distance taken from where it is drawn, not from its parent",
+   "var dist = distanceLine({ x: rel[0], y: rel[1], z: rel[2] }, child.trust,",
+   "var dist = distanceLine({ x: rel[0] + 5, y: rel[1], z: rel[2] }, child.trust,"]
+].forEach(function (fault) {
+  if (childWorked(loadWith(fault[1], fault[2])).length === 0) {
+    selfFailures.push(fault[0] + " passed the moon box's worked cases");
+  }
+});
 if (selfFailures.length) {
   console.log("SELF-TEST FAILED -- the checks below cannot fail:");
   selfFailures.forEach(function (f) { console.log("  " + f); });
@@ -515,11 +584,14 @@ console.log("Self-test: the worked cases fail on a Report test one place " +
             "the sentence dropped where JPL gave none; and the reason's " +
             "sentence on 'not yet included' where JPL states none, and " +
             "on the refused and the none sentences each in the other's " +
-            "place.");
+            "place; and a moon's box on the span sentence printed inside " +
+            "its span, on it never printed, and on the distance taken from " +
+            "where the moon is drawn rather than from its parent.");
 
 // ---- 1. worked cases ----------------------------------------------
 const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF),
-                                    pathWorked(SSF), uncertaintyWorked(SSF));
+                                    pathWorked(SSF), uncertaintyWorked(SSF),
+                                    childWorked(SSF));
 
 // ---- 2. the real config -------------------------------------------
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "data",
@@ -1114,6 +1186,36 @@ console.log("Path distances at each one's served minute, " +
 craftTable.forEach(function (t) {
   console.log("  " + (t[0] + "                  ").slice(0, 18) + t[1]);
 });
+// L-515 step 2b, part 1: the moons the root draws at their parents'
+// places, each with its checked span and what the orrery serves no words
+// for yet, printed every run so the gap is seen (L-514's session 1 keys
+// them in the orrery).
+(function () {
+  const rootRows = {};
+  ((room.drawer || {}).rows || []).forEach(function (r) { if (r && r.slug && r.slug !== "sun") { rootRows[r.slug] = true; } });
+  const kids = (cfg.objects || []).filter(function (o) {
+    return o && o.center_slug && o.center_slug !== o.slug && rootRows[o.center_slug] &&
+      ((cov.objects || {})[o.slug] || {}).osculating;
+  });
+  console.log("Moons drawn at their parents' places, " + kids.length + ":");
+  kids.forEach(function (o) {
+    const rec = cov.objects[o.slug];
+    const t = rec.trust || {};
+    const box = SSF.childBox({ name: rec.name, description: o.description, info_url: o.info_url,
+                               period: o.period, accuracy: o.position_accuracy,
+                               trust: { rate_deg_per_day: t.error_rate_deg_per_day,
+                                        element_epoch_jd: t.element_epoch_jd,
+                                        delta_days: t.delta_days } },
+                             [rec.osculating.a_au, 0, 0], t.element_epoch_jd + 1, kmPerAu, o.center_slug);
+    if (!box.lines || box.warnings.length) {
+      failures.push(o.slug + "'s box cannot be built: " + box.warnings.join("; "));
+    }
+    console.log("  " + (o.slug + " around " + o.center_slug + "                    ").slice(0, 36) +
+                "checked " + SSF.spanText(t.delta_days) + " either side; " +
+                (box.unserved.length ? "the orrery serves no " + box.unserved.join(", ") + " yet"
+                                     : "the orrery's words, link and period served"));
+  });
+})();
 console.log("");
 if (failures.length) {
   console.log("=== FAIL: " + failures.length + " problem(s)");

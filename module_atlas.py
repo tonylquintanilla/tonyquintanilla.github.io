@@ -102,6 +102,7 @@ ROLE_MAP = {
     'render_spacecraft':                   'rendering',
 
     # computation
+    'compose_children':                    'computation',
     'resolver':                            'computation',
 
     # data

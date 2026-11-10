@@ -534,6 +534,11 @@
          Its words (WORDS.reset) serve every room's top bar (L-482). Its own file
          so that a check can require it. -->
     <script src="gallery/solar_system_drawer.js"></script>
+    <!-- L-515 step 2b, part 2: where the Solar System room's view is
+         centred -- the shift that puts the middle at the scene's origin,
+         the trail's path down the tree, what Centre on ticks. Its own
+         file so that a check can require it (smoke_view_centre.js). -->
+    <script src="gallery/view_centre.js"></script>
     <!-- The saved pictures in that drawer, each in a fold beside its
          body's row (L-517). Its own file so that a check can require
          it (documentation/smoke_picture_folds.js). -->
@@ -1121,6 +1126,9 @@
             color: var(--accent); text-decoration: none; font-weight: 500;
         }
         .sun-trail a:hover { text-decoration: underline; }
+        /* L-515 step 2b (Tony's ruling 20): the last part is what is in
+           focus, bold, no link. */
+        .sun-trail b { color: var(--text); font-weight: 600; }
         /* L-443, Tony's ruling of 2026-10-22 (mock-up B): a group row
            folds open to list its bodies under it. Its bodies sit indented
            under it; its count, and the arrow saying folded or open, are on
@@ -1139,6 +1147,14 @@
         }
         .sun-row.member .pick { padding-left: 36px; }
         .sun-row.member .rname { padding-left: 69px; }
+        /* L-515 step 2b (Tony's ruling 13): a body row that heads a fold of
+           moons keeps its tick box; its fold arrow opens its name, a 32 px
+           target of its own (it never ticks; the box at the left does). */
+        .sun-row .bfold {
+            display: inline-block; min-width: 32px; margin: -10px 2px -10px -8px;
+            padding: 10px 6px 10px 8px; text-align: center; cursor: pointer;
+            color: var(--text-dim); font-size: 13px; line-height: 1;
+        }
         /* Tony, 2026-11-07, night: one group over the groups that sit
            together (Comets over the six comet groups). A sub-group row is
            indented as a body is; its bodies one step (24 px) further. */
@@ -1723,6 +1739,9 @@
                 <b>ecliptic</b>, the plane of Earth's orbit, and <b>z</b>
                 stands up from it. The frame is fixed to the stars at epoch
                 J2000; it does not turn with the page.</p>
+                <!-- L-515 step 2b (Tony's ruling 17): where the axis
+                     lines cross in this view, filled by viewCrossFill. -->
+                <p id="sun-frame-cross" hidden></p>
                 <p>The x marks on the three axis lines mark the grid: a small
                 x at every grid step, a larger one at every second step.
                 The ruler at the right shows those two steps with their
@@ -2386,7 +2405,11 @@ const EXPLORER_EXHIBIT = "solar-system-explorer";
 // tools/json_converter.py reads this table too, so Studio still offers
 // the address as a scene.
 const EXHIBIT_ADDRESSES = {
-    sun: "solar-system"
+    sun: "solar-system",
+    // L-515 step 2b, part 3 (Tony's ruling 14): the Earth room folds into
+    // the root as the Sun room did. ?exhibit=earth opens the root centred
+    // on Earth, on Earth's own opening (ssCentreOn, at the end of boot).
+    earth: "solar-system"
 };
 const EXHIBIT_ASKED = (new URLSearchParams(window.location.search)
                      .get("exhibit") || "solar-system").toLowerCase();
@@ -2417,7 +2440,9 @@ const SUN_ASSEMBLER_MODULES = [
     "__init__.py", "errors.py", "models.py", "catalog.py",
     "cache_reader.py", "render_orbits.py", "render_objects.py",
     "render_spacecraft.py", "render_events.py", "resolver.py",
-    "presentation.py", "assemble.py"
+    "presentation.py", "assemble.py",
+    // L-515 step 2b: a child drawn at its parent's place in the root.
+    "compose_children.py"
 ];
 
 // OBSOLETE since L-515 part 3 (2026-11-07): read by no room; kept,
@@ -2513,6 +2538,8 @@ const SUN_INFO_HTML = [
 const EARTH_HALF_RANGE_AU = 6.155e-5;
 
 // Same modules as the Sun; the driver differs.
+// OBSOLETE since L-515 step 2b, part 3 (2026-11-10): read by no room; kept,
+// marked (tools/headless/run_room_driver.py still runs it by name).
 const EARTH_DRIVER = `
 import json
 import math
@@ -2910,6 +2937,50 @@ for _slug in _bodies:
                           if _rec.get("open_path") else None),
     }
 
+# L-515 step 2b, part 1 (Tony's rulings 13 and 14 of 2026-11-09): each
+# object fetched around a body this scene drew -- the Moon, Io, Titan,
+# Pluto and Charon -- drawn at its parent's place: its own JPL elements
+# around the parent PLUS the parent's position for the same minute
+# (gallery/assembler/compose_children.py, which says why adding is not the
+# retired subtraction). Read from the config's tree, never typed; each is a
+# row folded under its parent's row.
+from assembler import compose_children as _cc
+from assembler.presentation import color_for as _color_for
+_drawn_parents = set(_s for _s in _bodies
+                     if (_cache.record(_s) or {}).get("osculating"))
+_kids, _kid_notes = _cc.children_to_draw(_cfg.get("objects"), _cache, _drawn_parents)
+_children = {}
+for _slug, _parent in _kids:
+    _crec = _cache.record(_slug)
+    _prec = _cache.record(_parent)
+    try:
+        _parts, _rel = _cc.build_child_traces(
+            _crec.get("name") or _slug, _crec.get("osculating"),
+            _prec.get("osculating"), _parent,
+            result.context.resolved_epoch_jd, _color_for(_slug), _slug)
+    except (ValueError, KeyError, TypeError) as _exc:
+        _kid_notes.append("%s: not drawn at %s's place (%s)" % (_slug, _parent, _exc))
+        continue
+    result.figure["data"].extend(_t for _role, _t in _parts)
+    _children[_slug] = _parent
+
+# L-515 step 2b, part 3 (Tony's ruling 14): each centre's OWN features --
+# Earth's shells and guides, Jupiter's and Saturn's rings and belts --
+# handed to the page, which draws them at the centre's place, in the
+# centre's fold, the first time the fold or the centre needs them (the
+# page fetches a fold's stored drawings only then). Read from the served
+# record, as the Earth room's driver read Earth's.
+_fold_features = {}
+for _s in sorted(_drawn_parents):
+    _fr = _cache.record(_s) or {}
+    _ff = _fr.get("features") or {}
+    if isinstance(_ff, dict) and _ff:
+        _fold_features[_s] = {
+            "features": [{"object": _s, "feature": _k, "params": _v}
+                         for _k, _v in _ff.items()],
+            "pole_of_date": _fr.get("pole_of_date"),
+        }
+
 json.dumps({
     "figure": result.figure,
     # L-515 part 3: the Sun's own features (the scene's centre features,
@@ -2921,10 +2992,36 @@ json.dumps({
     "sun": {"description": (_objs.get("sun") or {}).get("description"),
             "info_url": (_objs.get("sun") or {}).get("info_url")},
     "room": _room,
+    # L-515 step 2b: {child slug: parent slug} for every child drawn, and
+    # each child's served words beside the bodies'.
+    "children": _children,
+    "fold_features": _fold_features,
+    "child_bodies": {_s: {
+        "name": (_cache.record(_s) or {}).get("name"),
+        "parent": _p,
+        "parent_name": (_cache.record(_p) or {}).get("name"),
+        "source": ((_cache.record(_s) or {}).get("osculating") or {}).get("source"),
+        # Ruling 18: the checked span (delta_days around element_epoch_jd)
+        # and the measured drift, from the served trust block.
+        "trust": {
+            "rate_deg_per_day": ((_cache.record(_s) or {}).get("trust") or {}).get("error_rate_deg_per_day"),
+            "element_epoch_jd": ((_cache.record(_s) or {}).get("trust") or {}).get("element_epoch_jd"),
+            "delta_days": ((_cache.record(_s) or {}).get("trust") or {}).get("delta_days"),
+        },
+        "accuracy": (_objs.get(_s) or {}).get("position_accuracy"),
+        "description": (_objs.get(_s) or {}).get("description"),
+        "info_url": (_objs.get(_s) or {}).get("info_url"),
+        "period": (_objs.get(_s) or {}).get("period"),
+        "a_au": ((_cache.record(_s) or {}).get("osculating") or {}).get("a_au"),
+        "e": ((_cache.record(_s) or {}).get("osculating") or {}).get("e"),
+        "category": (_cache.record(_s) or {}).get("category"),
+        "horizons_name": (_objs.get(_s) or {}).get("horizons_name"),
+        "horizons_id": (_objs.get(_s) or {}).get("horizons_id"),
+    } for _s, _p in _children.items()},
     "epoch_jd": result.context.resolved_epoch_jd,
     "warnings": result.report["warnings"] + [
         "%s: in the room's rows but not in the served cache yet (the cache "
-        "builder has not served it)" % _s for _s in _unserved],
+        "builder has not served it)" % _s for _s in _unserved] + _kid_notes,
 })
 `;
 
@@ -2994,7 +3091,10 @@ const SOLAR_SYSTEM_CENTRE_WORDS = "Another reference that measures this " +
     "orbit from the solar system's centre of mass, or on another date, " +
     "gives slightly different numbers, because the Sun itself moves " +
     "around that centre.";
-function solarSystemSourceLine(src, sourceNote) {
+// L-515 step 2b: centreName, for a moon drawn in the root, names what its
+// elements are measured from ("Jupiter's centre", "the Pluto-Charon
+// barycenter").
+function solarSystemSourceLine(src, sourceNote, centreName) {
     if (!src) { return null; }
     // Julian date 2440587.5 is 1970-01-01 00:00, the Unix epoch.
     // The JD's day and whether it is midnight, read on JPL's own clock:
@@ -3007,7 +3107,9 @@ function solarSystemSourceLine(src, sourceNote) {
     const got = solarSystemDay(new Date(String(src.retrieved)));
     const centre = (src.center === "@sun")
         ? "measured from the Sun's centre"
-        : "measured from the Horizons centre " + src.center;
+        : (centreName ? "measured from " + centreName + " (Horizons centre " +
+                        src.center + ")"
+                      : "measured from the Horizons centre " + src.center);
     return "JPL Horizons (" + JPL_HORIZONS_URL + "), Horizons id: " + src.query_target +
         (sourceNote ? ", " + sourceNote : "") +
         ". Osculating orbital elements " + centre +
@@ -3285,6 +3387,13 @@ const EXHIBITS = {
     // SUN_INFO_HTML, and sunCentreWords stay in this file, marked
     // OBSOLETE and read by no room, until a talk rules on them (Tony's
     // ruling of 2026-11-03: obsolete code is marked, not deleted).
+    // OBSOLETE since L-515 step 2b, part 3 (2026-11-10): ?exhibit=earth opens
+    // the root centred on Earth (EXHIBIT_ADDRESSES), and this row, its
+    // driver EARTH_DRIVER and its words EARTH_INFO_HTML are read by no room;
+    // kept, marked, until a talk rules (Tony's ruling of 2026-11-03, L-509),
+    // as the Sun room's were. tools/headless/run_room_driver.py still runs
+    // EARTH_DRIVER by name, and gallery/earth_geometry.js still draws
+    // Earth's shells, now inside Earth's fold.
     earth: {
         title: "Earth",
         sceneTitle: "Earth",
@@ -3408,6 +3517,41 @@ const EXHIBITS = {
                                             shellSpecs, aByKey, shellLabels)
                 .map(function (p) { return rawByKey[p.key]; })
                 .filter(function (r) { return !!r; });
+            // L-515 step 2b, part 1 (Tony's rulings 13 and 14 of 2026-11-09):
+            // each child the driver drew at its parent's place -- an object
+            // fetched around a body this room draws, read from the config's
+            // tree -- is a row folded under its parent's row, right after it,
+            // the children by distance: where each one's orbit comes nearest
+            // its parent, a(1 - e) (the strict-distance rule of 2026-11-07).
+            const kids = payload.children || {};
+            const kidBodies = payload.child_bodies || {};
+            const nearest = function (s) {
+                const c = kidBodies[s] || {};
+                return (typeof c.a_au === "number" && typeof c.e === "number")
+                    ? c.a_au * (1 - c.e) : Infinity;
+            };
+            for (let i = allRows.length - 1; i >= 0; i--) {
+                const p = allRows[i];
+                if (typeof p.slug !== "string") { continue; }
+                const mine = Object.keys(kids).filter(function (s) { return kids[s] === p.slug; })
+                    .sort(function (a, b) { return nearest(a) - nearest(b); });
+                if (!mine.length) { continue; }
+                allRows.splice.apply(allRows, [i + 1, 0].concat(mine.map(function (s) {
+                    return { slug: s, under: p.slug };
+                })));
+            }
+            Object.keys(kids).forEach(function (s) {
+                if (!allRows.some(function (r) { return r.slug === s; })) {
+                    warnings.push(s + ": drawn at " + kids[s] + "'s place, but " + kids[s] +
+                                  " has no row here, so it has none either");
+                }
+            });
+            const allBodies = Object.assign({}, bodies, kidBodies);
+            // L-515 step 2b, part 4: a row that is a barycentre, by JPL's own
+            // name for it ("Pluto Barycenter"), read from the served config.
+            const baryOf = function (b) {
+                return /barycenter$/i.test(String((b || {}).horizons_name || ""));
+            };
             const rows = allRows.filter(function (r) { return typeof r.slug === "string"; });
             // L-443, 2026-10-26: what each group's JPL or IAU class name
             // means, served on the group's own row (Tony: "keep these
@@ -3449,7 +3593,11 @@ const EXHIBITS = {
             // own opening (?exhibit=sun, EXHIBIT_ADDRESSES): that body's
             // arrival block, applied to its shells by GalleryArrival as
             // its room applied it, and no body ticked.
-            const openingOf = (EXHIBIT_ASKED !== EXHIBIT) ? EXHIBIT_ASKED : null;
+            // L-515 step 2b, part 3: ?exhibit=earth opens on Earth's own
+            // opening by Centre on, at the end of boot; like ?exhibit=sun it
+            // ticks no body of the root's served opening.
+            const openingOf = (EXHIBIT_ASKED === "sun") ? EXHIBIT_ASKED : null;
+            const ownOpening = EXHIBIT_ASKED !== EXHIBIT;
             let shellOpening = null;
             if (openingOf) {
                 shellOpening = GalleryArrival.applyArrival(sunBuilt.traces, cfgText, openingOf);
@@ -3459,16 +3607,68 @@ const EXHIBITS = {
                 });
             }
             const drawn = {};
-            if (!openingOf) {
+            if (!ownOpening) {
                 ((restored ? restored.ticked : arrival.drawn) || []).forEach(function (s) { drawn[s] = true; });
             }
             const epochJd = payload.epoch_jd;
             for (const row of rows) {
                 const slug = row.slug;
                 if (slug === "sun") { continue; }
-                const b = bodies[slug] || {};
+                const b = allBodies[slug] || {};
                 const label = (typeof row.label === "string" && row.label) ? row.label : b.name;
                 let found = 0;
+                if (row.under) {
+                    // L-515 step 2b, part 1: a child, drawn at its parent's
+                    // place. Its box is the Moon's pattern (L-513), its
+                    // distance from its parent (ruling 8), read from its own
+                    // elements around the parent (meta.rel_au), and past its
+                    // checked span a sentence saying so (ruling 18;
+                    // SolarSystemFigures.childBox). Go To opens this box
+                    // (L-514 ruling 4): the marker is the row's label target.
+                    const parentName = (allBodies[row.under] || {}).name ||
+                        b.parent_name || row.under;
+                    const parentRow = rows.filter(function (r) { return r.slug === row.under; })[0];
+                    // A parent row that says what its Horizons id is (Pluto's
+                    // row: "the Pluto-Charon barycenter") is named by those
+                    // words, since the child circles that point, not a body.
+                    const parentNote = (parentRow && typeof parentRow.source_note === "string" &&
+                                        parentRow.source_note) ? parentRow.source_note : null;
+                    const parentLabel = parentNote ||
+                        ((parentRow && typeof parentRow.label === "string" &&
+                          parentRow.label) ? parentRow.label : parentName);
+                    for (const t of traces) {
+                        if (t.legendgroup !== slug) { continue; }
+                        if (!drawn[slug]) { t.visible = SUN_HIDDEN; }
+                        if (t.mode === "text") { t.text = [label]; continue; }
+                        if (t.mode === "markers" && / info$/.test(t.name || "")) {
+                            t.text = [label + "'s orbit, drawn around" +
+                                      GalleryFeatures.SOFT_BR + parentLabel];
+                            continue;
+                        }
+                        if (t.mode !== "markers" || !(t.meta && Array.isArray(t.meta.rel_au))) { continue; }
+                        found++;
+                        t.showlegend = true;
+                        t.name = label;
+                        const box = SolarSystemFigures.childBox(b, t.meta.rel_au, epochJd,
+                            GalleryFeatures._KM_PER_AU, parentLabel);
+                        box.warnings.forEach(function (w) { warnings.push(w); });
+                        const blines = (box.lines || [label]).map(function (s, j) {
+                            return j === 0 ? s : "&#8226; " + solarSystemSoftWrap(s, 60);
+                        });
+                        t.text = [blines.join("<br>")];
+                        const extra = Object.assign({ label_target: true }, box.meta || {});
+                        const line = solarSystemSourceLine(b.source, null,
+                            parentNote || parentLabel + "'s centre");
+                        if (line) { extra.source = line; }
+                        t.meta = Object.assign({}, t.meta || {}, extra);
+                    }
+                    if (found !== 1) {
+                        warnings.push((label || slug) + " was asked for and " +
+                            (found ? "drawn " + found + " times" : "not drawn") +
+                            " at " + parentLabel + "'s place");
+                    }
+                    continue;
+                }
                 for (const t of traces) {
                     if (t.legendgroup !== slug) { continue; }
                     if (!drawn[slug]) { t.visible = SUN_HIDDEN; }
@@ -3503,6 +3703,16 @@ const EXHIBITS = {
                     found++;
                     t.showlegend = true;
                     t.name = label;
+                    // L-515 step 2b, part 4 (the coordinator's lean for
+                    // Tony's phone look, not ruled): a barycentre -- JPL's
+                    // own name for the point says so -- is drawn as the
+                    // drawing code's barycentre mark, the open white square
+                    // (render_objects.build_center_marker), in the Sun's view
+                    // and as the middle of a view centred on it.
+                    if (baryOf(b)) {
+                        t.marker = Object.assign({}, t.marker || {},
+                            { symbol: "square-open", size: 7, color: "white" });
+                    }
                     const lines = [label];
                     // L-481 (Tony, 2026-10-24): "add bullets to the
                     // sentences in the hover to improve readability in
@@ -3652,19 +3862,26 @@ const EXHIBITS = {
             // -- the planets its plan passes by and the farthest its path
             // reaches -- among the top-level body rows, the planets and
             // Pluto (gallery/solar_system_drawer.js, companions).
+            // L-515 step 2b: a moon's row is never a companion.
             const companionRows = rows.filter(function (r) {
-                return r.slug && r.slug !== "sun" && !r.in && bodies[r.slug];
+                return r.slug && r.slug !== "sun" && !r.in && !r.under && bodies[r.slug];
             }).map(function (r) {
                 const b = bodies[r.slug];
+                // L-515 step 2b, part 4 (Tony's ruling 19): a barycentre's
+                // row ("Pluto system", JPL's "Pluto Barycenter") also goes
+                // by the names of the bodies folded under it, so a plan's
+                // flyby of Pluto still ticks it, as the label "Pluto" did.
+                const sys = baryOf(b) ? Object.keys(kids).filter(function (s) {
+                    return kids[s] === r.slug; }).map(function (s) { return (kidBodies[s] || {}).name; }) : [];
                 return { key: r.slug, a_au: b.a_au, e: b.e,
-                         names: [r.label, b.name].filter(function (x) {
+                         names: [r.label, b.name].concat(sys).filter(function (x) {
                              return typeof x === "string" && x; }) };
             });
             // L-493 (2026-10-26): every name a row goes by, for the
             // drawer's search box (gallery/solar_system_drawer.js, FIND).
             const names = { center: SSD.searchNames(null, "Sun", null, null) };
             for (const row of rows) {
-                const b = bodies[row.slug];
+                const b = allBodies[row.slug];   // L-515 step 2b: the children too
                 if (!b || row.slug === "sun") { continue; }
                 names[row.slug] = SSD.searchNames(
                     (typeof row.label === "string" && row.label) ? row.label : null,
@@ -3794,8 +4011,35 @@ const EXHIBITS = {
                 ? restored.order[restored.order.length - 1] : null;
             // L-515 part 3: ?exhibit=sun names no row on its handle; the
             // drawer names the outermost thing drawn, as the Sun room did.
+            // ?exhibit=sun's Reset puts back the Sun's opening, as the Sun
+            // room's did; ?exhibit=earth's returns to the Sun's view on the
+            // root's served opening (Tony's ruling 16: "Home and Reset
+            // return to the Sun's view"), though it opened on Earth's alone.
             const openDrawn = openingOf ? shellOpening.drawn.slice() : (arrival.drawn || []).slice();
             const openHighlight = openingOf ? null : arrival.highlight;
+            // L-515 step 2b, part 2 (Tony's rulings 9, 15 and 16): the rows
+            // that offer Centre on -- every body something is drawn or
+            // fetched around (SolarSystemDrawer.centresOf, read from the
+            // config, never typed), the Sun among them -- with each one's
+            // own served opening, and the Sun's shells' keys, so Centre on
+            // ticks what the opening names.
+            let cfgObj = {};
+            try { cfgObj = JSON.parse(cfgText); } catch (e) { cfgObj = {}; }
+            const centreKeys = [], centreOpenings = {};
+            SSD.centresOf(cfgObj).forEach(function (s) {
+                const key = s === "sun" ? SSD.SUN_KEY : s;
+                if (key !== SSD.SUN_KEY && !rows.some(function (r) { return r.slug === s; })) { return; }
+                centreKeys.push(key);
+                const o = (cfgObj.objects || []).filter(function (x) { return x && x.slug === s; })[0] || {};
+                centreOpenings[key] = (o.arrival && typeof o.arrival === "object") ? o.arrival : null;
+            });
+            const centreShells = { };
+            centreShells[SSD.SUN_KEY] = shellSpecs.map(function (s) {
+                return { key: s.key, shellKey: shellKeyOf[s.key] || null,
+                         frameElement: (sunBuilt.traces || []).some(function (t) {
+                             return t && t.legendgroup === s.key && t.meta && t.meta.frame_element === true;
+                         }) };
+            });
             return { traces: traces, warnings: warnings, absent: [],
                      subtitle: stamp,
                      focusGroup: restoredFocus ||
@@ -3808,7 +4052,11 @@ const EXHIBITS = {
                                companions: companions,
                                names: names,
                                // L-515: the restored tick order, if any.
-                               order: restored ? restored.order : null } };
+                               order: restored ? restored.order : null,
+                               // L-515 step 2b, part 2: Centre on.
+                               centres: centreKeys,
+                               openings: centreOpenings,
+                               centreShells: centreShells } };
         }
     }
 };
@@ -3956,6 +4204,8 @@ function sceneAddressGroups(traces, isRoot) {
             };
             out.push(e);
         }
+        // L-515 step 2b, part 3: a fold's shell by its place key ("earth.crust").
+        if (!e.shell && t.meta && typeof t.meta.place_key === "string") { e.shell = t.meta.place_key; }
         if (!e.shell && t.meta && typeof t.meta.shell_key === "string") { e.shell = t.meta.shell_key; }
     });
     out.forEach(function (e) { e.addr = SA.rowKey(e.key, e.shell); });
@@ -3984,10 +4234,61 @@ function sceneShowApply(traces, built) {
         built.drawer.order = r.order.slice();
         built.focusGroup = r.order.length ? r.order[r.order.length - 1] : null;
     }
-    r.missing.forEach(function (k) {
+    // L-515 step 2b, part 3: a key that may name a row of a fold not drawn
+    // yet ("earth.crust", or a bare Earth key on ?exhibit=earth) waits for
+    // the fold (ssFoldsAtOpening), which warns for what it cannot meet.
+    st.foldKeys = r.missing.filter(sceneFoldKeyMaybe);
+    r.missing.filter(function (k) { return !sceneFoldKeyMaybe(k); }).forEach(function (k) {
         console.warn(EXHIBIT + " exhibit: the shared link names \"" + k +
                      "\", which is no row of this room");
     });
+}
+
+// L-515 step 2b, part 3: a shared link's key that may be a fold's row: one
+// written "<centre>.<key>", or, on ?exhibit=earth, any key, as the Earth
+// room wrote them ("crust", "moon", "earth-rotation-axis-and-equator").
+function sceneFoldKeyMaybe(k) {
+    return /^[a-z0-9_]+\./.test(k) || EXHIBIT_ASKED === "earth";
+}
+
+// The folds the address needs, drawn at the room's opening, the shared
+// link's rows in them ticked; then ?exhibit=earth's Centre on Earth.
+async function ssFoldsAtOpening() {
+    const st = sceneAddrState;
+    const want = (st && st.foldKeys) ? st.foldKeys.slice() : [];
+    const centres = {};
+    if (EXHIBIT_ASKED === "earth") { centres.earth = true; }
+    want.forEach(function (k) {
+        const m = /^([a-z0-9_]+)\./.exec(k);
+        if (m) { centres[m[1]] = true; }
+    });
+    for (const c of Object.keys(centres)) { await ssFoldBuild(c); }
+    if (want.length) {
+        const SA = window.SceneAddress, SSD = window.SolarSystemDrawer;
+        const byAddr = {};
+        sunGroups.forEach(function (g) {
+            const sk = sceneShellKeyOf(g);
+            byAddr[SA.rowKey(g.key, sk)] = g.key;
+        });
+        want.forEach(function (k) {
+            const key = byAddr[k] || (EXHIBIT_ASKED === "earth" ? byAddr["earth." + k] : null) ||
+                (EXHIBIT_ASKED === "earth" && k === "moon" ? "moon" : null);
+            const i = key ? ssIndex(key) : -1;
+            if (i < 0 || !SSD.tickable(key)) {
+                console.warn(EXHIBIT + " exhibit: the shared link names \"" + k +
+                             "\", which is no row of this room");
+                if (st.missing.indexOf(k) < 0) { st.missing.push(k); }
+                return;
+            }
+            st.missing = st.missing.filter(function (x) { return x !== k; });
+            sunGroups[i].shown = true;
+            ssDrawer.order = SSD.orderAdd(ssDrawer.order, key);
+        });
+        await sunApplyVisibility(true, sunOutermostShown());
+    }
+    if (EXHIBIT_ASKED === "earth") {
+        await ssCentreOn(ssIndex("earth"), !!(st && st.show));
+    }
 }
 
 // A drawn group's served shell key, read off its traces.
@@ -3995,6 +4296,8 @@ function sceneShellKeyOf(g) {
     const data = (sunPlotDiv && sunPlotDiv.data) || [];
     for (let j = 0; j < g.indices.length; j++) {
         const t = data[g.indices[j]];
+        // L-515 step 2b, part 3: a fold's shell by its place key.
+        if (t && t.meta && typeof t.meta.place_key === "string") { return t.meta.place_key; }
         if (t && t.meta && typeof t.meta.shell_key === "string") { return t.meta.shell_key; }
     }
     return null;
@@ -4413,6 +4716,255 @@ function sunFocusOn(k, whole) {
     setSunDrawer(false);
     renderSunDrawer();
     return sunFrameOn(k, whole);
+}
+
+// ====================================================================
+// L-515 step 2b, part 2: THE VIEW'S MIDDLE (Tony's rulings 15 to 17 and
+// 20 of 2026-11-09). The Solar System room's view is a box about its
+// middle: the Sun, or the body Centre on put there, or a moon's planet
+// after Go To on the moon. The middle is held at the scene's ORIGIN: the
+// whole drawing is moved so the middle sits at 0, 0, 0, in 64-bit
+// numbers, before it is drawn (gallery/view_centre.js says why: 32-bit
+// WebGL puts Pluto's system 121 km off at its distance). So every frame
+// stays a box [-r, r] about the origin, and every reader of the plot's
+// points -- the frame, the count line, the axis lines, the text box --
+// reads the shifted plot and agrees with it. The direction arrows and the
+// far lines keep copies of their own, which stay absolute; they are
+// handed the view's box in absolute points (sunArrowsApply,
+// sunFarLinesApply). Each trace's absolute points are kept once, at the
+// first shift (viewAbs), and every shifted copy is made from them.
+// ====================================================================
+let viewMid = { key: "center", at: [0, 0, 0] };
+let viewAbs = null;   // trace index -> its absolute {x, y, z}
+
+// Traces whose points are another piece's to write: the direction arrows,
+// the axis lines and their x marks (placed about the origin by their own
+// code), the far lines (kept absolute in sunFarServed), the Earth room's
+// Sun line.
+function viewOwnedElsewhere(i, t) {
+    return !t || !!(t.meta && t.meta.direction_arrow) ||
+        (Array.isArray(sunOriginAxisIdx) && sunOriginAxisIdx.indexOf(i) >= 0) ||
+        (Array.isArray(sunOriginTickIdx) && sunOriginTickIdx.indexOf(i) >= 0) ||
+        (sunFarServed && sunFarServed.hasOwnProperty(i)) ||
+        sunLineTraces.indexOf(i) >= 0;
+}
+
+function viewAbsCapture() {
+    if (viewAbs || !sunPlotDiv || !Array.isArray(sunPlotDiv.data)) { return; }
+    viewAbs = {};
+    sunPlotDiv.data.forEach(function (t, i) {
+        if (viewOwnedElsewhere(i, t)) { return; }
+        if (!Array.isArray(t.x) || !Array.isArray(t.y) || !Array.isArray(t.z)) { return; }
+        // Captured while the middle is the Sun: the plot's points ARE absolute.
+        viewAbs[i] = { x: t.x.slice(), y: t.y.slice(), z: t.z.slice() };
+    });
+}
+
+// Where a row's body is, in absolute points: its position marker (the
+// row's label target), or null.
+function viewMarkerAbs(key) {
+    const k = ssIndex(key);
+    if (k < 0 || !sunPlotDiv) { return null; }
+    const data = sunPlotDiv.data;
+    for (const i of sunGroups[k].indices) {
+        const t = data[i];
+        if (!(t && t.meta && t.meta.label_target === true && Array.isArray(t.x))) { continue; }
+        const src = (viewAbs && viewAbs[i]) ? viewAbs[i] : null;
+        const x = src ? src.x[0] : t.x[0] + viewMid.at[0];
+        const y = src ? src.y[0] : t.y[0] + viewMid.at[1];
+        const z = src ? src.z[0] : t.z[0] + viewMid.at[2];
+        return [x, y, z].every(isFinite) ? [x, y, z] : null;
+    }
+    return null;
+}
+
+// What the axis lines cross at, in a visitor's words: the Sun, a body by
+// its row's name, a row that says what its Horizons id is by those words
+// (Pluto's: "the Pluto-Charon barycenter").
+function viewNameOf(key) {
+    if (key === window.SolarSystemDrawer.SUN_KEY) { return "the Sun"; }
+    const raw = ssDrawer && ssDrawer.rawByKey ? ssDrawer.rawByKey[key] : null;
+    if (raw && typeof raw.source_note === "string" && raw.source_note) { return raw.source_note; }
+    const k = ssIndex(key);
+    return k >= 0 ? sunGroups[k].name : key;
+}
+
+// Ruling 17: the frame note says where the three lines cross.
+function viewCrossFill() {
+    const el = document.getElementById("sun-frame-cross");
+    if (!el) { return; }
+    el.hidden = !ssDrawer;
+    el.textContent = ssDrawer ? ViewCentre.WORDS.cross(viewNameOf(viewMid.key)) : "";
+}
+
+// Move the whole drawing so `at` (absolute, AU) sits at the origin, and
+// name it the middle. Nothing is drawn differently but where it sits.
+function viewShiftTo(at, key) {
+    const SSD = window.SolarSystemDrawer;
+    const same = at.every(function (v, i) { return v === viewMid.at[i]; });
+    viewMid = { key: key || SSD.SUN_KEY, at: at.slice() };
+    viewCrossFill();
+    if (same || !sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
+    viewAbsCapture();
+    const idx = [], xs = [], ys = [], zs = [];
+    Object.keys(viewAbs).forEach(function (i) {
+        const s = ViewCentre.shifted(viewAbs[i], at);
+        idx.push(Number(i)); xs.push(s.x); ys.push(s.y); zs.push(s.z);
+        sunExtents[Number(i)] = sunTraceExtentAu(s);
+    });
+    if (sunFarServed) {
+        Object.keys(sunFarServed).forEach(function (i) {
+            sunExtents[Number(i)] = sunTraceExtentAu(ViewCentre.shifted(sunFarServed[i], at));
+        });
+    }
+    sunArrowLastBox = "";
+    sunFarLastBox = "";
+    if (!idx.length) { return Promise.resolve(); }
+    return Plotly.restyle(sunPlotDiv, { x: xs, y: ys, z: zs }, idx);
+}
+
+// A frame of half-range r about the middle; at the opening angle when
+// `opening`, else the camera kept.
+function viewFrame(r, opening) {
+    if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
+    const d = sunGridDtick(2 * r);
+    const update = {
+        "scene.xaxis.range": [-r, r], "scene.xaxis.dtick": d,
+        "scene.yaxis.range": [-r, r], "scene.yaxis.dtick": d,
+        "scene.zaxis.range": [-r, r], "scene.zaxis.dtick": d,
+        "scene.xaxis.tick0": 0, "scene.yaxis.tick0": 0, "scene.zaxis.tick0": 0
+    };
+    if (opening) { update["scene.camera"] = NAV_SUN_CAMERA; }
+    return Plotly.relayout(sunPlotDiv, opening ? update : sunKeepCamera(sunPlotDiv, update))
+        .then(sunHudUpdate);
+}
+
+// What a centre's opening is framed on (method): the shells it ticked,
+// each by its whole drawn shape at 10 percent, as ?exhibit=sun frames the
+// Sun's; with none (Jupiter, Saturn: the symbol alone, L-514 ruling 1),
+// the whole orbits of what circles it, at the room's 20 percent, so the
+// symbol sits in the middle of its moons' reach; with neither, the room's
+// own half-range. Measured about the middle, from the shifted plot.
+function viewCentreFrameR(centreKey, keys, anyRow) {
+    const SSD = window.SolarSystemDrawer;
+    let r = 0;
+    keys.forEach(function (key) {
+        const i = ssIndex(key);
+        if (i < 0 || key === centreKey) { return; }
+        if (sunGroupIsShell(i)) {
+            r = Math.max(r, sunGroupRadius(i, true) * SHELL_FRAME_MARGIN);
+        } else if (anyRow) {
+            // A link's moon, whole orbit, at the room's margin.
+            r = Math.max(r, sunGroupRadius(i, true) * sunFrameMargin());
+        }
+    });
+    if (r > 0) { return r; }
+    // What circles it: the bodies in its fold, not its own shells.
+    SSD.foldChildren(ssDrawer.rows, centreKey).filter(function (c) { return !SSD.isShell(c); }).forEach(function (c) {
+        const i = ssIndex(c.key);
+        if (i >= 0) { r = Math.max(r, sunGroupRadius(i, true) * sunFrameMargin()); }
+    });
+    return r > 0 ? r : EX.halfRangeAu;
+}
+
+// Centre on <body> (Tony's rulings 15 and 16): the body in the middle, on
+// its own served opening. What was ticked stays ticked; the opening's
+// rows are ticked too (ViewCentre.openingKeys); the count line counts
+// what lies outside. The trail ends on what the opening is about.
+function ssCentreOn(k, linkTicks) {
+    const SSD = window.SolarSystemDrawer;
+    const grp = sunGroups[k];
+    if (!grp || !ssDrawer) { return Promise.resolve(); }
+    const key = grp.key;
+    // L-515 step 2b, part 3: a centre whose fold is not drawn yet is drawn
+    // first (its stored drawings fetched now, not at the room's opening).
+    if (ssFoldNeeds(key)) {
+        return ssFoldBuild(key).then(function () { return ssCentreOn(ssIndex(key), linkTicks); });
+    }
+    const at = key === SSD.SUN_KEY ? [0, 0, 0] : viewMarkerAbs(key);
+    if (!at) {
+        console.warn("solar-system exhibit: " + grp.name + " has no position to centre on");
+        return Promise.resolve();
+    }
+    const op = ssDrawer.openingTicks[key] || ViewCentre.openingKeys(key, ssDrawer.openings[key] || null,
+        ssDrawer.centreShells[key] || [],
+        SSD.foldChildren(ssDrawer.rows, key).map(function (r) { return r.key; }));
+    op.unknown = op.unknown || [];
+    op.unknown.forEach(function (u) {
+        console.warn("solar-system exhibit: " + grp.name + "'s opening names \"" + u +
+                     "\", which is not a row this room draws");
+    });
+    // A shared link opened centred on a body (?exhibit=earth&show=...) keeps
+    // the link's rows: the opening ticks nothing more than the body itself,
+    // the fixed row its room had.
+    (linkTicks ? [key] : op.keys).forEach(function (kk) {
+        const i = ssIndex(kk);
+        if (i < 0 || !SSD.tickable(kk)) { return; }
+        if (!sunGroups[i].shown) { sunGroups[i].shown = true; }
+        ssDrawer.order = SSD.orderAdd(ssDrawer.order, kk);
+    });
+    const fi = ssIndex(op.focus);
+    sunFocusIdx = fi >= 0 ? fi : k;
+    ssDrawer.trailFocus = op.focus;
+    ssDrawer.open = null;
+    setSunDrawer(false);
+    const shown = sunShownRestyle();
+    return sunLabelClose()
+        .then(function () { return viewShiftTo(at, key); })
+        .then(function () {
+            return shown ? Plotly.restyle(sunPlotDiv, { visible: shown.vis }, shown.idx) : null;
+        })
+        .then(function () {
+            // A shared link's rows (?exhibit=earth&show=crust,moon): framed
+            // on what it ticked in the centre's fold, the Moon's orbit say.
+            const keys = linkTicks ? SSD.foldChildren(ssDrawer.rows, key)
+                .map(function (r) { return r.key; })
+                .filter(function (kk) { const i = ssIndex(kk); return i >= 0 && sunGroups[i].shown; })
+                : op.keys;
+            return viewFrame(viewCentreFrameR(key, keys, !!linkTicks), true);
+        })
+        .then(function () { renderSunDrawer(); });
+}
+
+// The trail line in the root (Tony's ruling 20): the path down the tree to
+// what is in focus, every part but the last a link to that centre's own
+// opening ("Solar system" to the Sun's view, ticks kept), the last bold.
+// "Solar system" alone on opening, and after Home or Reset.
+function viewTrailMount() {
+    const SSD = window.SolarSystemDrawer;
+    const el = document.getElementById("sun-trail");
+    if (!el || !ssDrawer) { return; }
+    const path = ViewCentre.trailPath(function (key) { return ssDrawer.byKey[key] || null; },
+                                      ssDrawer.trailFocus);
+    const parts = ViewCentre.trailParts(path, function (key) {
+        const i = ssIndex(key);
+        return i >= 0 ? sunGroups[i].name : key;
+    });
+    const sig = JSON.stringify(parts);
+    if (el.dataset.sig === sig && !el.hidden) { return; }
+    el.dataset.sig = sig;
+    el.textContent = "";
+    parts.forEach(function (p, j) {
+        if (j > 0) { el.appendChild(document.createTextNode(ViewCentre.WORDS.sep)); }
+        if (p.link) {
+            const a = document.createElement("a");
+            a.setAttribute("tabindex", "0");
+            a.setAttribute("role", "button");
+            a.setAttribute("data-trail", p.key);
+            a.textContent = p.text;
+            a.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                if (p.key === SSD.SUN_KEY) { navHome(); }
+                else { ssCentreOn(ssIndex(p.key)); }
+            });
+            el.appendChild(a);
+        } else {
+            const b = document.createElement("b");
+            b.textContent = p.text;
+            el.appendChild(b);
+        }
+    });
+    el.hidden = false;
 }
 
 // ---- Navigation cluster: +, -, Home (L-267 step 7, 2026-09-04) ----
@@ -4994,6 +5546,7 @@ async function initSunExhibit() {
             }
         }
         GalleryFeatures.setDrawings(drawings);
+        galleryDrawings = drawings;   // L-515 step 2b: a fold adds to them
 
         // L-515 step 2a (one drawer): the tree, read from the served
         // config: in a centre, its children (the drawer's order); in the
@@ -5009,6 +5562,9 @@ async function initSunExhibit() {
 
         // Per room: how the payload becomes traces (the EXHIBITS table).
         const built = EX.compose(payload, cfg);
+        // L-515 step 2b, part 3: a centre's fold is drawn the first time it
+        // is needed, from the driver's payload and the served config.
+        if (built.drawer) { ssFoldPayload = payload; ssFoldCfgText = cfg; }
         // A room may put a line under its title (the Solar System room's
         // date). The Sun and Earth rooms return none, so theirs is as it was.
         sunSceneSubtitle = built.subtitle || null;
@@ -5272,6 +5828,17 @@ async function initSunExhibit() {
         // drawer, so the drawer has no row for them, and after the
         // arrival extent has been measured, so they cannot widen it.
         await sunOriginAxesInstall(gd);
+        // L-515 step 2b (ruling 17): the frame note says where the lines cross.
+        viewCrossFill();
+        // L-515 step 2b (ruling 20): ?exhibit=sun is the Sun's own opening,
+        // so its trail ends on what that opening is about ("Solar system >
+        // Photosphere"), as Centre on Sun's does.
+        if (ssDrawer && EXHIBIT_ASKED === "sun") {
+            const SK = window.SolarSystemDrawer.SUN_KEY;
+            ssDrawer.trailFocus = ViewCentre.openingKeys(SK, ssDrawer.openings[SK] || null,
+                ssDrawer.centreShells[SK] || [], []).focus;
+            viewTrailMount();
+        }
         // L-289: the frame HUD binds to the camera once the scene exists.
         sunHudInstall(gd);
         // The title and its line: at the top, unless on an upright phone
@@ -5295,6 +5862,12 @@ async function initSunExhibit() {
         // L-517: back from a saved picture opened here, the drawer opens at
         // its fold.
         if (ssDrawer) { ssPicReturn(); }
+        // L-515 step 2b, part 3: a fold the address needs is drawn now --
+        // ?exhibit=earth's, or the fold of a row a shared link names
+        // ("earth.crust") -- and the rows the link names in it ticked; then
+        // ?exhibit=earth centres on Earth, on Earth's own opening unless the
+        // link says what is ticked.
+        if (ssDrawer) { await ssFoldsAtOpening(); }
         // L-518: the room is open; the address now mirrors the scene, and a
         // shared link that could not be met in full says so.
         sceneAddressOpened();
@@ -6292,17 +6865,23 @@ function sunArrowsApply(gd) {
         lo.push(Math.min(r[0], r[1]));
         hi.push(Math.max(r[0], r[1]));
     }
-    const key = lo.concat(hi).join(",");
+    // L-515 step 2b, part 2: the arrows' specs are absolute points; the
+    // plot's box is about the view's middle (viewMid), so the box goes in
+    // absolute and the arrows come back shifted (gallery/view_centre.js).
+    const mid = viewMid.at;
+    const key = lo.concat(hi, mid).join(",");
     if (key === sunArrowLastBox) { return Promise.resolve(); }
     sunArrowLastBox = key;
     const idx = Object.keys(sunArrowServed).map(Number);
     if (!idx.length) { return Promise.resolve(); }
+    const box = ViewCentre.absBox(lo, hi, mid);
     const xs = [], ys = [], zs = [];
     idx.forEach(function (i) {
-        const a = GalleryArrows.place(sunArrowServed[i], lo, hi);
+        const a = GalleryArrows.place(sunArrowServed[i], box.lo, box.hi);
         xs.push(a.x); ys.push(a.y); zs.push(a.z);
     });
-    return Plotly.restyle(gd, { x: xs, y: ys, z: zs }, idx);
+    const s = ViewCentre.shiftedParts(xs, ys, zs, mid);
+    return Plotly.restyle(gd, { x: s.x, y: s.y, z: s.z }, idx);
 }
 
 function sunArrowsInstall(gd) {
@@ -6350,12 +6929,17 @@ function sunFarLinesApply(gd) {
         lo.push(Math.min(r[0], r[1]));
         hi.push(Math.max(r[0], r[1]));
     }
-    const key = lo.concat(hi).join(",");
+    // L-515 step 2b, part 2: the far lines' copies are absolute points; the
+    // box goes in absolute and the cut lines come back shifted.
+    const mid = viewMid.at;
+    const key = lo.concat(hi, mid).join(",");
     if (key === sunFarLastBox) { return Promise.resolve(); }
     sunFarLastBox = key;
-    const p = GalleryFarLines.plan(sunFarServed, lo, hi);
+    const box = ViewCentre.absBox(lo, hi, mid);
+    const p = GalleryFarLines.plan(sunFarServed, box.lo, box.hi);
     if (!p.indices.length) { return Promise.resolve(); }
-    return Plotly.restyle(gd, { x: p.x, y: p.y, z: p.z }, p.indices);
+    const s = ViewCentre.shiftedParts(p.x, p.y, p.z, mid);
+    return Plotly.restyle(gd, { x: s.x, y: s.y, z: s.z }, p.indices);
 }
 
 // After every relayout that moves an axis range, re-cut the far lines.
@@ -6511,14 +7095,36 @@ function sunSwatchColor(trace) {
 // null in the Sun and Earth rooms, so every branch that asks is skipped.
 let ssDrawer = null;
 
-function ssDrawerState(served) {
+// The drawer's rows from the served rows (raw): the rows, each by its key,
+// and each one's served words by its key (L-515 step 2b: Pluto's
+// source_note names what the axis lines cross at). Called again when a
+// fold's rows join (ssFoldBuild).
+function ssDrawerRows(raw) {
     const SSD = window.SolarSystemDrawer;
-    const rows = SSD.rowsFromServed(served.rows);
+    const rows = SSD.rowsFromServed(raw);
     const byKey = {};
     rows.forEach(function (r) { byKey[r.key] = r; });
+    const rawByKey = {};
+    (raw || []).forEach(function (r) {
+        if (!r) { return; }
+        const k = typeof r.group === "string" ? SSD.GROUP_PREFIX + r.group
+            : typeof r.drawing === "string" ? SSD.DRAWING_PREFIX + r.drawing
+            : typeof r.shell === "string" ? r.shell
+            : typeof r.slug === "string" ? (r.slug === "sun" ? SSD.SUN_KEY : r.slug) : null;
+        if (k) { rawByKey[k] = r; }
+    });
+    return { rows: rows, byKey: byKey, rawByKey: rawByKey };
+}
+
+function ssDrawerState(served) {
+    const SSD = window.SolarSystemDrawer;
+    const made = ssDrawerRows(served.rows);
+    const rows = made.rows;
     return {
+        raw: (served.rows || []).slice(),
         rows: rows,
-        byKey: byKey,
+        byKey: made.byKey,
+        rawByKey: made.rawByKey,
         opening: { drawn: (served.drawn || []).slice(),
                    highlight: served.highlight },
         // L-515: the tick order put back on a return to the root, else the
@@ -6526,6 +7132,16 @@ function ssDrawerState(served) {
         order: Array.isArray(served.order) ? served.order.slice()
             : SSD.openingOrder(rows, served.drawn, served.highlight),
         companions: served.companions || {},   // L-443: {spacecraft: [rows]}
+        // L-515 step 2b, part 2: the rows offering Centre on, each one's
+        // served opening, and the Sun's shells' keys; and the trail's
+        // focus, null in the Sun's view.
+        centres: served.centres || [],
+        openings: served.openings || {},
+        centreShells: served.centreShells || {},
+        trailFocus: null,
+        // L-515 step 2b, part 3: a fold drawn later says what its centre's
+        // opening ticks, {centre: {keys, focus}} (ssFoldBuild).
+        openingTicks: served.openingTicks || {},
         names: served.names || {},             // L-493: {key: [names]}
         query: "",                             // L-493: the search box
         open: null,       // the key of the opened row, or null
@@ -6547,6 +7163,9 @@ function drawerTrailMount() {
     const el = document.getElementById("sun-trail");
     if (!el) { return; }
     const centre = sunGroups.filter(function (g) { return g.key === SSD.SUN_KEY; })[0];
+    // L-515 step 2b, part 2 (ruling 20): the root shows its trail always,
+    // the path down the tree to what is in focus (viewTrailMount).
+    if (ssDrawer) { viewTrailMount(); return; }
     if (EXHIBIT === SSD.ROOT_EXHIBIT || !centre) {
         el.hidden = true;
         el.textContent = "";
@@ -6645,7 +7264,10 @@ function ssWireRow(row, grp, k, list) {
         const at = function (sel) {
             return !!(t && typeof t.closest === "function" && t.closest(sel));
         };
-        if (at("a.enter")) { treeTickMemoryKeep(); return; }   // Centre on: let it go
+        // L-515 step 2b, part 2 (Tony's ruling 15): Centre on moves the
+        // view here, in this page, so the body sits in the middle.
+        if (at("a.enter")) { ev.preventDefault(); ssCentreOn(k); return; }
+        if (at(".bfold")) { ssBodyFold(grp.key); return; }     // L-515 step 2b
         if (at(".go")) { ssGo(k); return; }
         if (at(".pick") && SSD.tickable(grp.key)) { ssTick(k, !grp.shown); return; }
         ssSelect(k, true);
@@ -6661,8 +7283,12 @@ function ssWireRow(row, grp, k, list) {
     // body with no centre shows neither label. It simply has no 'Centre
     // on' button." Until then such a row opened to one of the two, in a
     // line under it (.sun-row-open), which is no longer made.
-    const room = SSD.roomFor(served, Object.keys(EXHIBITS));
-    if (!room) { return; }
+    // L-515 step 2b, part 2 (Tony's rulings 9, 15 and 16): every centre in
+    // the tree offers Centre on -- a body something is drawn or fetched
+    // around, read from the config (compose's drawer.centres), the Sun's
+    // fixed row too ("Centre on Sun", ruling 16) -- and it moves the view
+    // in this page (ssCentreOn). Until 2b it led to the centre's own room.
+    if ((ssDrawer.centres || []).indexOf(grp.key) < 0) { return; }
     const inline = document.createElement("span");
     inline.className = "open-inline";
     inline.setAttribute("data-open-for", grp.key);
@@ -6670,7 +7296,10 @@ function ssWireRow(row, grp, k, list) {
     inline.setAttribute("data-room", "yes");
     const a = document.createElement("a");
     a.className = "enter";
-    a.href = "interactive.html?exhibit=" + encodeURIComponent(room);
+    // No address: it moves the view in this page, and never navigates.
+    a.setAttribute("tabindex", "0");
+    a.setAttribute("role", "button");
+    a.setAttribute("data-centre", grp.key);
     a.textContent = SSD.WORDS.enter(grp.name);
     inline.appendChild(a);
     row.appendChild(inline);
@@ -6809,6 +7438,15 @@ function ssRender() {
             SSD.rowVisible(gServed, ssDrawer.rows, shown, ssDrawer.folds) &&
             SSD.groupResetOffered(ssDrawer.rows, g, shown, ssDrawer.folds));
     }
+    // L-515 step 2b: each body row's fold arrow, open or shut; while
+    // searching, open where a child of it was found.
+    const bfolds = list.querySelectorAll(".sun-row .bfold[data-fold-for]");
+    for (let f = 0; f < bfolds.length; f++) {
+        const key = bfolds[f].getAttribute("data-fold-for");
+        const open = hits ? SSD.searchFoldOpen(key, hits) : !!ssDrawer.folds[SSD.foldKey(key)];
+        bfolds[f].textContent = SSD.groupArrow(open);
+        bfolds[f].setAttribute("aria-expanded", open ? "true" : "false");
+    }
     const findCount = document.getElementById("sun-find-count");
     if (findCount) {
         findCount.textContent = hits ? SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s) : "";
@@ -6845,6 +7483,7 @@ function ssTick(k, on) {
     if (!grp || !SSD.tickable(grp.key)) { return Promise.resolve(); }
     grp.shown = on;
     if (on) {
+        ssTickParent(grp.key);
         ssTickCompanions(grp.key);
         ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);
         sunFocusIdx = k;
@@ -6864,6 +7503,244 @@ function ssTick(k, on) {
 // companions). Each joins Home's order before the spacecraft, so the
 // handle still names the spacecraft. Unticking the spacecraft leaves
 // them; the visitor unticks them, or Reset puts the room back.
+// L-515 step 2b, part 1 (Tony's ruling 13 of 2026-11-09, as put to him):
+// "ticking a moon also ticks its planet; unticking the moon leaves the
+// planet." The planet joins Home's order before the moon, so the handle
+// names the moon. Its fold opens, so the moon's row stays in view.
+function ssTickParent(key) {
+    const SSD = window.SolarSystemDrawer;
+    const p = SSD.parentOf(ssDrawer.rows, key);
+    if (!p) { return; }
+    ssDrawer.folds[SSD.foldKey(p)] = true;
+    const pi = ssIndex(p);
+    if (pi < 0 || !SSD.tickable(p) || sunGroups[pi].shown) { return; }
+    sunGroups[pi].shown = true;
+    ssDrawer.order = SSD.orderAdd(ssDrawer.order, p);
+}
+
+// ====================================================================
+// L-515 step 2b, part 3 (Tony's ruling 14 of 2026-11-09): A CENTRE'S OWN
+// SHELLS IN ITS FOLD. "the planetary folds should follow the pattern used in
+// the solar view: Planet * shells by distance * moons by distance". Earth's
+// served shells and its guides (the rotation axis with its equator, the
+// day-night line) are rows in Earth's fold beside the Moon, by distance
+// (DrawerOrder.plan, the strict-distance rule of 2026-11-07), drawn at
+// Earth's place: the Earth room's own drawing (EarthGeometry.composeScene),
+// moved out to where Earth is, by adding Earth's position, as the moons are.
+// METHOD, the Sun line: not drawn in the root. It stood for a Sun the Earth
+// room could not draw; here the Sun is drawn at its true place, and the
+// day-night line shows which side faces it. The Earth room keeps it.
+// LOADING (the brief's): the root does not fetch a fold's stored drawings
+// (Earth's radiation belts and exosphere, 110 KB together) on opening. A
+// fold is drawn the first time it is opened, or its centre centred on, or
+// at the room's opening when the address asks for it (?exhibit=earth),
+// and its drawings are fetched then. A shell row is keyed "<centre>.<shell
+// key>" in the root ("earth.crust"), for a place and a shared link: the
+// Sun's shells keep their own keys, and the Sun's Hill sphere and Earth's
+// would otherwise be one key.
+// ====================================================================
+let ssFoldPayload = null;     // the root driver's payload, kept for folds
+let ssFoldCfgText = "";       // the served config's text, for openings
+let galleryDrawings = {};     // every stored drawing fetched so far
+const ssFoldBuilt = {};       // {centre: true} once its fold is drawn
+
+function ssFoldNeeds(key) {
+    const ff = ssFoldPayload && ssFoldPayload.fold_features;
+    // L-515 step 2b, part 4: every centre serving features of its own --
+    // Earth, and Jupiter's and Saturn's rings and belts.
+    return !!(ssDrawer && ff && ff[key] && !ssFoldBuilt[key]);
+}
+
+// The stored drawings a fold's features name, fetched once each.
+async function ssFoldDrawings(features) {
+    const notes = [];
+    let fetched = 0;
+    for (const name of GalleryFeatures.drawingNames(features)) {
+        if (galleryDrawings[name]) { continue; }
+        try {
+            const text = await fetchTextOrThrow("data/solar-system/drawings/" + name + ".json");
+            fetched += text.length;
+            galleryDrawings[name] = JSON.parse(text);
+        } catch (err) {
+            notes.push("the stored drawing " + name + " could not be read (" + err.message + ")");
+        }
+    }
+    GalleryFeatures.setDrawings(galleryDrawings);
+    return { notes: notes, bytes: fetched };
+}
+
+// A fold's traces (absolute, AU), its rows in the drawer's order (raw, the
+// centre's children among its shells by distance), and its centre's
+// opening. at: the centre's absolute place. data: the plot's traces in
+// absolute points, for the children (the Moon) to be measured. kids: the
+// children's row keys. Earth's are the Earth room's own drawing (part 3);
+// any other centre's (Jupiter's and Saturn's rings and belts, part 4) are
+// the renderers' (GalleryFeatures.buildFeatureTraces), as the root draws
+// the Sun's, at a half-range that hands every shape over.
+function ssFoldTraces(key, at, data, kids) {
+    if (key !== "earth") { return ssFoldTracesOf(key, at, data, kids); }
+    const fp = ssFoldPayload.fold_features[key];
+    const b = (ssFoldPayload.bodies || {})[key] || {};
+    const d = Math.sqrt(at[0] * at[0] + at[1] * at[1] + at[2] * at[2]);
+    const stamp = sceneMomentStamp(ssFoldPayload.epoch_jd);
+    const p = {
+        figure: { data: [] }, features: fp.features, poleOfDate: fp.pole_of_date,
+        sun: d > 0 ? { dir: [-at[0] / d, -at[1] / d, -at[2] / d], distAu: d,
+                       elementsEpochJd: (b.source || {}).epoch } : null,
+        earthPeriod: b.period,
+        earth: { name: b.name, description: b.description, info_url: b.info_url },
+        moon: null, moonArc: null, epochJd: ssFoldPayload.epoch_jd
+    };
+    const built = EarthGeometry.composeScene(p, {
+        GF: GalleryFeatures, halfRangeAu: EARTH_HALF_RANGE_AU,
+        epochIso: stamp || "the scene epoch"
+    });
+    // The Earth room's own centre marker and Moon are the root's already;
+    // its Sun line is not drawn here (METHOD, above).
+    const dropGroups = { center: true, moon: true };
+    built.traces.forEach(function (t) {
+        if (t && t.meta && t.meta.sun_line) { dropGroups[t.legendgroup] = true; }
+    });
+    const traces = built.traces.filter(function (t) {
+        return t && t.legendgroup && !dropGroups[t.legendgroup];
+    });
+    // Its opening, its order with the Moon and its move to Earth's place:
+    // the common half every fold shares (ssFoldFinish).
+    return ssFoldFinish(key, at, data, kids, traces, fp.features, built.warnings || []);
+}
+
+// L-515 step 2b, part 4: a centre's fold from the renderers (Jupiter's,
+// Saturn's), its shells by distance among its moons; its opening its
+// served arrival block's (the symbol alone, L-514 ruling 1's pattern).
+function ssFoldTracesOf(key, at, data, kids) {
+    const fp = ssFoldPayload.fold_features[key];
+    const b = (ssFoldPayload.bodies || {})[key] || {};
+    const bodies = {};
+    bodies[key] = { name: b.name || key, position: [0, 0, 0] };
+    const built = GalleryFeatures.buildFeatureTraces(fp.features, bodies, { sceneHalfRangeAu: 1 });
+    return ssFoldFinish(key, at, data, kids, built.traces, fp.features, built.warnings || []);
+}
+
+// The common half of a fold: its opening (the served arrival block, read
+// on a copy), its order by distance with the children, its traces moved to
+// the centre's place, its rows keyed "<centre>.<shell key>".
+function ssFoldFinish(key, at, data, kids, traces, features, warnings) {
+    const copy = traces.map(function (t) { return Object.assign({}, t); });
+    GalleryArrival.applyArrival(copy, ssFoldCfgText, key);
+    const openGroups = [];
+    copy.forEach(function (t) {
+        if (t.visible !== "legendonly" && t.visible !== false && openGroups.indexOf(t.legendgroup) < 0) {
+            openGroups.push(t.legendgroup);
+        }
+    });
+    const kidTraces = [];
+    data.forEach(function (t) {
+        if (t && kids.indexOf(t.legendgroup) >= 0 && Array.isArray(t.x)) {
+            const s = ViewCentre.shifted(t, at);
+            kidTraces.push({ legendgroup: t.legendgroup, name: t.name, mode: t.mode,
+                             showlegend: t.showlegend, x: s.x, y: s.y, z: s.z, meta: t.meta });
+        }
+    });
+    const plan = DrawerOrder.plan(traces.concat(kidTraces), features,
+                                  GalleryFeatures._KM_PER_AU, { centre: [0, 0, 0], children: kids });
+    const groupName = {}, shellOf = {};
+    traces.forEach(function (t) {
+        const s = ViewCentre.shifted(t, [-at[0], -at[1], -at[2]]);
+        t.x = s.x; t.y = s.y; t.z = s.z;
+        t.visible = SUN_HIDDEN;
+        t.meta = Object.assign({}, t.meta || {}, { child_of: key });
+        if (typeof t.meta.shell_key === "string") {
+            t.meta.place_key = key + "." + t.meta.shell_key;
+            shellOf[t.legendgroup] = t.meta.place_key;
+        }
+        if (t.showlegend !== false || !groupName[t.legendgroup]) { groupName[t.legendgroup] = t.name; }
+    });
+    const rows = [];
+    plan.rows.forEach(function (r) {
+        if (kids.indexOf(r.key) >= 0) { rows.push({ slug: r.key, under: key }); return; }
+        if (!groupName.hasOwnProperty(r.key)) { return; }
+        rows.push({ shell: r.key, label: groupName[r.key] || r.key,
+                    shell_key: shellOf[r.key] || null, under: key });
+    });
+    const focus = openGroups.filter(function (g) { return shellOf[g]; })[0] || key;
+    return { traces: traces, rows: rows,
+             opening: { keys: [key].concat(openGroups), focus: focus, unknown: [] },
+             warnings: warnings.concat(plan.warnings || []) };
+}
+
+// The fold's rows in the served rows, right after the centre's row, in
+// place of the children's rows there.
+function ssFoldSplice(raw, key, foldRows) {
+    const out = raw.filter(function (r) { return !(r && r.under === key); });
+    const at = out.findIndex(function (r) { return r && r.slug === key; });
+    if (at < 0) { return out; }
+    out.splice.apply(out, [at + 1, 0].concat(foldRows));
+    return out;
+}
+
+// Draw a centre's fold into the open room, once: its drawings fetched, its
+// traces added at its place (shifted to the view's middle), its rows
+// joining the drawer, the drawer built again with what is ticked kept.
+async function ssFoldBuild(key) {
+    const SSD = window.SolarSystemDrawer;
+    if (!ssFoldNeeds(key) || !sunPlotDiv) { return; }
+    ssFoldBuilt[key] = true;
+    const got = await ssFoldDrawings(ssFoldPayload.fold_features[key].features);
+    const at = viewMarkerAbs(key);
+    if (!at) { console.warn("solar-system exhibit: " + key + " has no place to draw its fold at"); return; }
+    const back = [-viewMid.at[0], -viewMid.at[1], -viewMid.at[2]];
+    const absData = sunPlotDiv.data.map(function (t, i) {
+        return (viewAbs && viewAbs[i]) ? Object.assign({}, t, viewAbs[i])
+            : Object.assign({}, t, ViewCentre.shifted(t, back));
+    });
+    const kids = SSD.foldChildren(ssDrawer.rows, key).map(function (r) { return r.key; });
+    const f = ssFoldTraces(key, at, absData, kids);
+    got.notes.concat(f.warnings).forEach(function (w) { console.warn("solar-system exhibit: " + w); });
+    ssFoldReport[key] = { traces: f.traces.length, bytes: got.bytes };
+    const n0 = sunPlotDiv.data.length;
+    const plotT = f.traces.map(function (t, j) {
+        if (viewAbs) { viewAbs[n0 + j] = { x: t.x.slice(), y: t.y.slice(), z: t.z.slice() }; }
+        return Object.assign({}, t, ViewCentre.shifted(t, viewMid.at));
+    });
+    const focusKey = (sunFocusIdx >= 0 && sunGroups[sunFocusIdx]) ? sunGroups[sunFocusIdx].key : null;
+    await sunLabelClose();
+    await Plotly.addTraces(sunPlotDiv, plotT);
+    plotT.forEach(function (t, j) { sunExtents[n0 + j] = sunTraceExtentAu(t); });
+    ssDrawer.raw = ssFoldSplice(ssDrawer.raw, key, f.rows);
+    const made = ssDrawerRows(ssDrawer.raw);
+    ssDrawer.rows = made.rows; ssDrawer.byKey = made.byKey; ssDrawer.rawByKey = made.rawByKey;
+    f.rows.forEach(function (r) {
+        if (r.shell) { ssDrawer.names[r.shell] = SSD.searchNames(r.label, null, null, null); }
+    });
+    ssDrawer.openingTicks[key] = f.opening;
+    buildSunDrawer(sunPlotDiv.data, null);
+    sunFocusIdx = focusKey ? ssIndex(focusKey) : -1;
+    renderSunDrawer();
+}
+// What each fold drew when it was built, for the checks: {centre: {traces, bytes}}.
+const ssFoldReport = {};
+
+// L-515 step 2b: a body row's fold arrow tapped folds its moons open or
+// shut, and moves nothing. Chosen while searching, it clears the search
+// and opens, as a group chosen from a search does (L-496).
+function ssBodyFold(key) {
+    const SSD = window.SolarSystemDrawer;
+    if (!ssDrawer) { return; }
+    // L-515 step 2b, part 3: the first time a centre's fold opens, its own
+    // shells are drawn and its rows join (ssFoldBuild), then it opens.
+    if (ssFoldNeeds(key)) { return ssFoldBuild(key).then(function () { ssBodyFold(key); }); }
+    const fk = SSD.foldKey(key);
+    if (ssDrawer.query) {
+        ssFindSet("");
+        ssPicShowRow(key);
+        ssDrawer.folds[fk] = true;
+    } else {
+        ssDrawer.folds[fk] = !ssDrawer.folds[fk];
+    }
+    renderSunDrawer();
+    sunMeasureDrawer();
+}
+
 function ssTickCompanions(key) {
     const SSD = window.SolarSystemDrawer;
     (ssDrawer.companions[key] || []).forEach(function (c) {
@@ -6884,8 +7761,24 @@ function ssGo(k) {
     const SSD = window.SolarSystemDrawer;
     const grp = sunGroups[k];
     if (!grp) { return Promise.resolve(); }
+    // L-515 step 2b, part 2 (method, the brief's, with L-479): Go To puts
+    // what the body circles at the middle -- a moon's planet, else the Sun
+    // -- and fits the body's whole orbit about it; the trail ends on the
+    // body ("Solar system > Jupiter > Io"; "Solar system > Mars").
+    const row = ssDrawer && ssDrawer.byKey[grp.key];
+    const midKey = (row && row.under) ? row.under : SSD.SUN_KEY;
+    const at = midKey === SSD.SUN_KEY ? [0, 0, 0] : (viewMarkerAbs(midKey) || [0, 0, 0]);
+    if (ssDrawer) { ssDrawer.trailFocus = grp.key; }
+    return viewShiftTo(at, midKey).then(function () { return ssGoHere(k); });
+}
+
+function ssGoHere(k) {
+    const SSD = window.SolarSystemDrawer;
+    const grp = sunGroups[k];
+    if (!grp) { return Promise.resolve(); }
     if (!grp.shown && SSD.tickable(grp.key)) {
         grp.shown = true;
+        ssTickParent(grp.key);   // L-515 step 2b
         ssTickCompanions(grp.key);
         ssDrawer.order = SSD.orderAdd(ssDrawer.order, grp.key);
         sunFocusIdx = k;
@@ -7061,8 +7954,13 @@ function ssPicFold(foldId) {
 // Opens every group above a fold's row, so the row and its fold show.
 function ssPicShowRow(rowKey) {
     const SSD = window.SolarSystemDrawer;
-    const row = ssDrawer.byKey[rowKey];
+    let row = ssDrawer.byKey[rowKey];
     if (!row) { return; }
+    // L-515 step 2b: a moon's row shows inside its planet's fold.
+    if (row.under) {
+        ssDrawer.folds[SSD.foldKey(row.under)] = true;
+        row = ssDrawer.byKey[row.under] || row;
+    }
     const up = SSD.isGroup(row) ? SSD.ancestors(ssDrawer.rows, row.group)
         : (row.group ? [row.group].concat(SSD.ancestors(ssDrawer.rows, row.group)) : []);
     up.forEach(function (g) { ssDrawer.folds[g] = true; });
@@ -7183,6 +8081,19 @@ function drawerBuildRows(list, makeRow) {
         if (k < 0) { return; }
         const row = makeRow(sunGroups[k], k);
         if (entry.member) { row.classList.add("member"); }
+        // L-515 step 2b, part 1 (Tony's ruling 13): a body row that heads a
+        // fold of moons keeps its tick box and gains the fold's arrow, at the
+        // start of its name; the arrow folds it open or shut (ssBodyFold).
+        if (entry.heads && ssDrawer) {
+            const name = row.querySelector(".rname");
+            const arrow = document.createElement("span");
+            arrow.className = "bfold";
+            arrow.setAttribute("data-fold-for", entry.key);
+            arrow.setAttribute("role", "button");
+            arrow.setAttribute("aria-label", "Show or hide what circles " + sunGroups[k].name);
+            row.classList.add("heads");
+            if (name) { name.insertBefore(arrow, name.firstChild); }
+        }
         // Tony, 2026-11-07, night: a body in a sub-group (the Jupiter-family
         // comets under Comets) sits one step further in.
         if (entry.depth > 1) { row.classList.add("deep"); }
@@ -7267,7 +8178,15 @@ function ssReset() {
 // put back and the opening frame with it -- the one time Home changes
 // what is drawn. (The design wrote "ticks Earth again", when the room opened on
 // Earth alone; what the room opens on is now served and can change.)
+// L-515 step 2b, part 2 (Tony's ruling 16): "Home and Reset return to the
+// Sun's view": the middle the Sun again, the trail "Solar system" alone.
 function ssHome(gd, reset) {
+    ssDrawer.trailFocus = null;
+    return viewShiftTo([0, 0, 0], window.SolarSystemDrawer.SUN_KEY)
+        .then(function () { return ssHomeAtSun(gd, reset); });
+}
+
+function ssHomeAtSun(gd, reset) {
     const SSD = window.SolarSystemDrawer;
     let key = reset ? null : SSD.homeTarget(ssDrawer.order, ssShownByKey());
     let first = Promise.resolve();
@@ -7525,6 +8444,8 @@ function renderSunDrawer() {
             : "Nothing drawn";
 
     renderSunInfo(grp);
+    // L-515 step 2b: the root's trail follows Go To, Centre on and Home.
+    if (ssDrawer) { viewTrailMount(); }
     // L-518: every tick and untick passes through here, so the address
     // is rewritten here (sceneAddressWrite does nothing until the room
     // has opened).

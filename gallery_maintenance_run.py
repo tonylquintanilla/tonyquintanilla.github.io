@@ -247,6 +247,11 @@ tools/test_drawer_places.py, the logic behind the gallery editor's drawer
 tree and Places list, and gates; the Picture folds checker now holds a card
 in several places, beside any row, the Sun's shells and the belt's cloud
 among them.)
+Module updated: November 10, 2026 with Anthropic's Claude Opus 5.5
+(L-515 step 2b, part 1: the "Compose children" checker runs
+tools/test_compose_children.py and gates -- each moon drawn at its
+planet's place by adding; gallery/assembler/compose_children.py joins
+SERVED_FILES.)
 """
 
 import hashlib
@@ -439,6 +444,15 @@ OFFLINE_CHECKERS = [
     ("Drawn orbit", "python",
      ["tools/test_drawn_orbit.py"], ".", "DRAWN ORBIT:", False),
 
+    # L-515 step 2b, part 1 (2026-11-10): each moon is drawn in the Solar
+    # System room at its planet's place, by ADDING the planet's position to
+    # the moon's own elements around it, never by subtracting two answers;
+    # its orbit is centred on its planet's marker and its distance is its
+    # own. Worked cases, the real served moons, the page's wiring; its
+    # self-test breaks the module three ways first. Gates.
+    ("Compose children", "python",
+     ["tools/test_compose_children.py"], ".", "COMPOSE CHILDREN:", False),
+
     # L-421 (2026-10-11): each stored drawing the config names is pulled,
     # served byte for byte, and tilted as it records -- the plane through
     # the served dots fitted again here. Red right after a pull that moved
@@ -596,6 +610,16 @@ OFFLINE_CHECKERS = [
     # breaks the logic three ways first. Gates.
     ("Solar System drawer", "node",
      ["documentation/smoke_solar_system_drawer.js"], ".", "===", False),
+
+    # L-515 step 2b, part 2 (2026-11-10): the view's middle. It requires
+    # the real gallery/view_centre.js and works Tony's rulings 15 to 17 and
+    # 20 by hand -- the trail as the path down the tree, what Centre on
+    # ticks, the shift keeping its gaps; measures the 32-bit error on every
+    # moon the root draws, from the Sun and with its planet at the middle,
+    # and prints it; and checks the page hands every reader the shift. Its
+    # self-test breaks the real file four ways first. Gates.
+    ("View centre", "node",
+     ["documentation/smoke_view_centre.js"], ".", "===", False),
 
     # L-517 part 1 (2026-11-08): the saved Solar System pictures, each in a
     # fold beside its body's row in that drawer. It requires the real
@@ -816,6 +840,12 @@ SERVED_FILES = [
     # metadata, which the Solar System room now reads to place them.
     "gallery/picture_folds.js",
     "gallery/gallery_metadata.json",
+    # L-515 step 2b (2026-11-10): the assembler module the root loads to
+    # draw each moon at its planet's place (SUN_ASSEMBLER_MODULES).
+    "gallery/assembler/compose_children.py",
+    # L-515 step 2b, part 2: the page loads it with a script tag, the
+    # view's middle (gallery/view_centre.js).
+    "gallery/view_centre.js",
     # The positions files are not typed here (L-423, 2026-11-06).
     # positions_files() below reads them from the config. The typed list
     # had kept piece C of C/2025 K1's file after the comet became an

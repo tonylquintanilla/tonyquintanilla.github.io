@@ -34,6 +34,9 @@ Role: devtool
 Domain: gallery_pipeline
 
 Written November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519).
+Updated November 10, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
+2b: a scene's drawer_row, its places since L-519 part 2, is no longer
+refused here; the Drawer places check holds where it points.)
 """
 
 import json
@@ -192,8 +195,13 @@ def main():
             failures.append("scene %s: %s" % (v['id'], '; '.join(t for k, t in lines if k == 'bad')))
         if v.get('room') != scene_card.SCENE_ROOM:
             failures.append("scene %s is in room %s, not %s" % (v['id'], v.get('room'), scene_card.SCENE_ROOM))
-        if v.get('drawer_row'):
-            failures.append("scene %s also has a saved picture's place (drawer_row)" % v['id'])
+        # L-519 part 2 (Places, interactive-exhibit 1.39): a scene may sit
+        # beside one or several rows, named in drawer_row, as a saved
+        # picture does; that its places are rows the drawer lists is the
+        # Drawer places check's (tools/test_drawer_places.py). Until
+        # 2026-11-10 this line refused a scene with any drawer_row, which
+        # part 2 made the way a scene is placed, so it went red on Tony's
+        # first placed scene (2026 ED138's, beside its body).
     print("Scenes in the metadata: %d%s" % (len(scenes), (": " + "; ".join(
         "%s [%s]%s" % (v.get('title'), v['id'], ' (Featured)' if v.get('featured') else '')
         for v in scenes)) if scenes else ''))

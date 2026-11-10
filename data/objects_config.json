@@ -1395,6 +1395,11 @@
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
+      "arrival": {
+        "_declared": "Drawing choices for what Centre on opens, not measurements, so there is no orrery_constant link. drawn lists this centre's own served shells ticked when the view is centred on it, by key; moon true would tick what circles it too. What was ticked stays ticked. Tony's rulings of 2026-11-09 (L-515, ruling 16) and 2026-11-06 (L-514, ruling 1: the symbol alone).",
+        "drawn": [],
+        "moon": false
+      },
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 100.0, "unit": "km",
@@ -1440,6 +1445,11 @@
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
+      "arrival": {
+        "_declared": "Drawing choices for what Centre on opens, not measurements, so there is no orrery_constant link. drawn lists this centre's own served shells ticked when the view is centred on it, by key; moon true would tick what circles it too. What was ticked stays ticked. Tony's rulings of 2026-11-09 (L-515, ruling 16) and 2026-11-06 (L-514, ruling 1: the symbol alone).",
+        "drawn": [],
+        "moon": false
+      },
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 100.0, "unit": "km",
@@ -2695,7 +2705,7 @@
           { "slug": "chariklo", "in": "centaurs" },
           { "slug": "uranus", "find": ["planet"] },
           { "slug": "neptune", "find": ["planet"] },
-          { "slug": "pluto_barycenter", "label": "Pluto",
+          { "slug": "pluto_barycenter", "label": "Pluto system",
             "about": "The symbol marks the gravitational center (barycenter) that Pluto and its moon Charon orbit together. It lies outside Pluto itself.",
             "source_note": "the Pluto-Charon barycenter" },
           { "group": "tno", "find": ["TNO", "Kuiper belt"], "label": "Trans-Neptunian objects", "order": "a", "about": "Trans-Neptunian: a body whose orbit lies beyond Neptune's." },
