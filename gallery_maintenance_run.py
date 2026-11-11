@@ -659,6 +659,17 @@ OFFLINE_CHECKERS = [
     ("Drawer places", "python",
      ["tools/test_drawer_places.py"], ".", "===", False),
 
+    # L-522 step 2 (2026-11-11): what interactive.html does moved out of
+    # the interactive-exhibit skill into INTERACTIVE_AS_BUILT.md, changed
+    # in the commit that changes the page. Every code name it gives in
+    # backticks must be in the code, the gallery's or the orrery's; it
+    # prints how many names it examined, what it set aside as not names
+    # by kind, and each name not found. The orrery's own names are on a
+    # list, not examined on GitHub's night, which has no orrery. Its
+    # self-test plants three faults on a throwaway copy first. Gates.
+    ("As-built names", "python",
+     ["tools/check_as_built_names.py"], ".", "AS-BUILT NAMES:", False),
+
     # L-456 (2026-10-20): the i panel lists its sources one to a line,
     # each web address a link. It requires the real gallery/source_list.js,
     # works where an address ends and what the list holds, builds the Sun

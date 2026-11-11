@@ -953,7 +953,7 @@ Plotly.
   drawn, when it has more than its bodies to show. The logic is in
   `gallery/solar_system_drawer.js` (`rowsFromServed`, `rowVisible`,
   `groupCount`, `groupArrow`, `groupReset`, `groupResetOffered`,
-  `orderGroups`); the page's part is `ssBuildRows`, `ssGroupReset`,
+  `orderGroups`); the page's part is `drawerBuildRows`, `ssGroupReset`,
   `ssFold`. Checked by the drawer check's sections 4 and 6, with seven
   planted faults, and walked headlessly (`walk_solar_system_drawer.js`,
   sections 1, 6, 11, 15 and 16).
@@ -1748,7 +1748,7 @@ budget row (`documentation/smoke_hover_budget.js`): five worked cases
 for the file, the page loading it and turning Plotly's box off, and a
 copy of the file with its sentence cut taken out, which must fail; it
 measures the phone's boxes bulleted. (The file's own header names a
-`documentation/smoke_text_box.js`, which does not exist at acbf206b.)
+`documentation/smoke_text_box.js` [not in the code, L-522], which does not exist at acbf206b.)
 
 ## Readability
 

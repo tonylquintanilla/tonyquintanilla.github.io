@@ -40,6 +40,13 @@ so. The repository's copy is the one read. Claude Code also offers the
 copy installed in Tony's account; an installed skill of the same name
 is not invoked (L-522).
 
+What `interactive.html` does now, room by room and part by part, is
+`INTERACTIVE_AS_BUILT.md` at this folder's root; the interactive-exhibit
+skill keeps the rules. A session reads the section for the part it
+changes, and changes that page in the commit that changes the page's
+code. The gallery run's "As-built names" row holds its code names to the
+code (L-522).
+
 ## At the start of a session
 
 1. Read `..\palomas_orrery_for_github\documentation\WHERE_WE_ARE.md`.
