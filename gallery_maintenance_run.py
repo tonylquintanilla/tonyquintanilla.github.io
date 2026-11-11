@@ -252,6 +252,13 @@ Module updated: November 10, 2026 with Anthropic's Claude Opus 5.5
 tools/test_compose_children.py and gates -- each moon drawn at its
 planet's place by adding; gallery/assembler/compose_children.py joins
 SERVED_FILES.)
+Module updated: November 11, 2026 with Anthropic's Claude Opus 5.5
+(L-522 step 2 and L-523: the "As-built names" checker runs
+tools/check_as_built_names.py and gates -- every code name
+INTERACTIVE_AS_BUILT.md gives is in the code; the "Tap hover" checker
+runs documentation/smoke_tap_hover.js and gates -- a finger's tap that
+Plotly sends as a hover opens the box; the live check also fetches
+gallery/tap_hover.js, which the page loads with a script tag.)
 """
 
 import hashlib
@@ -623,6 +630,18 @@ OFFLINE_CHECKERS = [
     ("View centre", "node",
      ["documentation/smoke_view_centre.js"], ".", "===", False),
 
+    # L-523 (2026-11-11): a finger's tap that Plotly sends as a hover.
+    # Plotly 2.35.2's 3D scene sends a pick as plotly_click only under 5 px
+    # from the finger, else as plotly_hover, which the page ignored for a
+    # finger. It requires the real gallery/tap_hover.js and works 25 cases
+    # -- a tap opens, a drag, a pinch, a mouse, a late re-sent hover and a
+    # served press do not; the widened pick is any finger's (Tony, "Yes,
+    # any finger") -- and checks the page loads the file and opens a click
+    # and a hover-tap by one function. Its self-test breaks the real file
+    # five ways first. Gates.
+    ("Tap hover", "node",
+     ["documentation/smoke_tap_hover.js"], ".", "===", False),
+
     # L-517 part 1 (2026-11-08): the saved Solar System pictures, each in a
     # fold beside its body's row in that drawer. It requires the real
     # gallery/picture_folds.js and solar_system_drawer.js, works which twin
@@ -859,6 +878,9 @@ SERVED_FILES = [
     # L-515 step 2b, part 2: the page loads it with a script tag, the
     # view's middle (gallery/view_centre.js).
     "gallery/view_centre.js",
+    # L-523: the page loads it with a script tag, whether a finger's
+    # hover is its tap (gallery/tap_hover.js).
+    "gallery/tap_hover.js",
     # The positions files are not typed here (L-423, 2026-11-06).
     # positions_files() below reads them from the config. The typed list
     # had kept piece C of C/2025 K1's file after the comet became an

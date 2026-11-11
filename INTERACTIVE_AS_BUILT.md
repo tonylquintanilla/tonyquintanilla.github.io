@@ -1721,7 +1721,33 @@ names its row. Plotly's own box is switched off by `hovermode: false`
 in `buildSunLayout`'s scene; read from plotly.js 2.35.2, gl3d/scene.js,
 that gates only the box (`Fx.loneHover`), so `plotly_click` and the
 hover events still fire. A tap is deferred out of the event (L-278) and
-opens `sunLabelShow` with the marker's words; in the Sun and Earth
+opens `sunLabelShow` with the marker's words, through `sunTapOpen`,
+whether Plotly sent it as `plotly_click` or, for a finger, as
+`plotly_hover` (L-523, 2026-11-11; Tony: "tapping on the phone is hit or
+miss on small object dots"). Plotly 2.35.2 sends a pick as a click only
+under 5 px from the finger (`src/plots/gl3d/scene.js`, line 459), and
+a finger's pick reaches 22 px, so a thumb a little off a dot was sent
+as a hover, which opened nothing. The 22 px reach is any finger's or
+pen's, in either orientation (Tony's ruling of 2026-11-11, "Yes, any
+finger"; until then a portrait phone's only, by the screen's shape):
+`GalleryTapHover.widePick` decides from the last pointer's kind, and
+`sunTapPicking` applies it at every press and after every plot; a
+mouse's press puts back Plotly's own 10 px. `gallery/tap_hover.js`
+(`GalleryTapHover`) decides: a finger's or a pen's hover opens the box
+when its press was a tap by the page's own test (`isTap`: one finger,
+at most `SUN_LABEL_TAP_PX` moved, lifted within `SUN_LABEL_TAP_MS`),
+the picked trace carries words (`sunTraceCarriesWords`), the press is
+not served yet (`sunClickServedTap`), and the hover comes within
+`SUN_LABEL_TAP_MS` of the lift; a hover while the finger is still down
+is kept (`sunPressHover`) and the lift decides (`atLift`); a mouse keeps
+its own path. The last press is `sunPress`. Checked by the gallery run's
+Tap hover row (`documentation/smoke_tap_hover.js`: 25 worked cases, the
+page's wiring, the real file broken five ways first) and walked
+(`tools/headless/walk_tap_hover.js`: a tap sent as a hover after the
+lift and during the press, the hover re-sent, a drag, a pinch, a late
+hover, a wordless trace, the mouse, a click, and the 22 px reach for a
+finger on a landscape window; it failed three of its checks on the page
+before the fix, and the last one before the ruling was built). In the Sun and Earth
 rooms the camera still frames the shell, in the Solar System room it
 moves nothing. The box is left-aligned, its border the feature's colour
 at 2 px, and OPAQUE (v1.35; Tony, 2026-11-07, night: "fully opaque, so

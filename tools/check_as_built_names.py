@@ -110,7 +110,8 @@ CODE_EXT = (".py", ".js", ".html", ".css", ".yml", ".bat")
 
 # Names the page gives from plotly.js 2.35.2 (served from its CDN; in
 # neither repository). Set aside by name, never looked for.
-PLOTLY_NAMES = {"Fx.loneHover", "annotation-text-g", "clipToBounds"}
+PLOTLY_NAMES = {"Fx.loneHover", "annotation-text-g", "clipToBounds",
+                "src/plots/gl3d/scene.js"}
 
 # The names found only in the orrery's code. Checked against the orrery
 # on Tony's computer; not examined on GitHub's night, which has no orrery.

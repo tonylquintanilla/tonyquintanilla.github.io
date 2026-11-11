@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** November 10, 2026 by `module_atlas.py`  
+**Generated:** November 11, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,14 +10,15 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 59  
-**Total Lines of Code (non-blank):** 31,774  
-**Total Public Functions/Classes:** 520
+**Total Python Files:** 60  
+**Total Lines of Code (non-blank):** 32,175  
+**Total Public Functions/Classes:** 531
 
 ## Classification Coverage
 
-**Undetermined role (10).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (11).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
+- `tools/check_as_built_names.py`
 - `tools/check_tree_parents.py`
 - `tools/exhibit_store_editor.py`
 - `tools/record_earth_scene.py`
@@ -29,8 +30,9 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (7).** No valid `Domain:` tag.
+**Undetermined domain (8).** No valid `Domain:` tag.
 
+- `tools/check_as_built_names.py`
 - `tools/check_tree_parents.py`
 - `tools/exhibit_store_editor.py`
 - `tools/record_earth_scene.py`
@@ -114,7 +116,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,687 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,696 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,727 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (555 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
@@ -144,6 +146,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
+| `check_as_built_names.py` | - every code name INTERACTIVE_AS_BUILT.md gives in backticks is found in the code it belongs to. (370 lines) |
 | `check_tree_parents.py` | - every object's parent in data/objects_config.json is the centre JPL is asked around for it. (171 lines) |
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (690 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |

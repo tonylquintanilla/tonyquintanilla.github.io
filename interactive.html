@@ -565,6 +565,9 @@
          the minute shown (L-518). Its own file so that a check can
          require it. -->
     <script src="gallery/scene_address.js"></script>
+    <!-- Is a finger's plotly_hover its tap? (L-523). Its own file so that
+         a check can require it. -->
+    <script src="gallery/tap_hover.js"></script>
 
     <!-- Fonts -- match gallery viewer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5791,34 +5794,10 @@ async function initSunExhibit() {
             // 12 s to close the box. A tap is counted at pointerdown.
             if (sunClickServedTap === sunTapSerial) { return; }
             sunClickServedTap = sunTapSerial;
-            const ti = ev.points[0].curveNumber;
-            const k = sunTraceGroup[ti];
-            // L-267 click deferral, 2026-09-02. DO NOT call sunFocusOn
-            // straight from here. Its relayout re-enters Plotly's
-            // layoutReplot while this click dispatch has not returned,
-            // and the page dies with "Maximum call stack size exceeded"
-            // -- on a stack only ~25 frames deep, so a large array
-            // applied as arguments inside a half-finished replot, not
-            // recursion. The relayout itself is fine: it completed
-            // cleanly from the console with a tooltip up, with the
-            // tooltip dismissed, and on a timer over a hovered marker.
-            // The context was the whole bug. setTimeout 0 lets Plotly
-            // finish dispatching first. Confirmed live before patching.
-            if (typeof k === "number") {
-                // The Solar System room: a tap on a body highlights its
-                // row and moves nothing (L-363 step 3b, design 3.5).
-                // L-497: in every room the tap then opens the one text
-                // box with the tapped marker's words, where Plotly's own
-                // box used to open.
-                setTimeout(function () {
-                    if (ssDrawer) {
-                        ssSelect(k, false);
-                        sunLabelShow(k, ti);
-                    } else {
-                        sunFocusOn(k).then(function () { return sunLabelShow(k, ti); });
-                    }
-                }, 0);
-            }
+            // L-523: one function opens a tap, whether Plotly sends it as
+            // a click or, a finger 5 px off or more, as a hover. It defers
+            // out of Plotly's event (the L-267 / L-278 lesson, kept there).
+            sunTapOpen(ev.points);
         });
         sunLabelInstall(gd);   // L-318: tap in the scene closes the drawer label
         sunFarLinesInstall(gd);   // L-463: far lines cut at every frame change
@@ -6711,15 +6690,20 @@ function sunLabelIfHidden() {
 // EVERY trace, and only then does scene.js drop a pick whose trace has
 // hoverinfo 'skip'. A shell's text-less dots, packed round its 8-px cross,
 // are usually nearer the finger, so they win and nothing opens.
-// On a portrait phone only (Tony: the mouse is fine on the desktop):
+// For a finger or a pen, in either orientation (Tony: the mouse is fine
+// on the desktop; and, 2026-11-11, "Yes, any finger", L-523 -- until then
+// a portrait phone only, by the screen's shape, so a landscape thumb kept
+// Plotly's 10 px):
 //   1. a trace with hoverinfo 'skip' draws nothing into the pick buffer,
 //      so only a marker that carries text can be picked;
 //   2. the search widens to SUN_PICK_RADIUS_PX, a ~44-px target.
 // Both reach into Plotly's internals. The page loads a pinned Plotly, and
 // if those internals are not where 2.35.2 keeps them this does nothing --
 // today's behaviour. Plotly builds new WebGL objects when a hidden trace
-// is shown again, so this runs after every plot; turning the phone to
-// landscape restores Plotly's own values.
+// is shown again, so this runs after every plot, and again at every
+// press (sunLabelInstall); a mouse's press
+// restores Plotly's own values. Before any press, a portrait phone has it
+// (GalleryTapHover.widePick).
 // MODE-5 KNOB: SUN_PICK_RADIUS_PX.
 const SUN_PICK_RADIUS_PX = 22;
 let sunTapBound = false;
@@ -6732,7 +6716,11 @@ function sunTapPicking(gd) {
         if (!glplot || !scene.traces || typeof glplot.pickRadius !== "number") {
             return false;
         }
-        const phone = !!EX && sunPhonePortrait();
+        // Any finger or pen, either orientation (Tony's ruling of
+        // 2026-11-11, "Yes, any finger", L-523); a mouse keeps Plotly's
+        // own. Before any press, a portrait phone, as since round 6.
+        const phone = !!EX && GalleryTapHover.widePick(sunPointerKind,
+                                                       sunPhonePortrait());
         let changed = false;
         if (phone) {
             if (glplot._sunOwnPickRadius === undefined) {
@@ -6802,6 +6790,50 @@ function sunTapInstall(gd) {
 let sunTapSerial = 0;          // counts presses in the plot
 let sunClickServedTap = -1;    // the press whose plotly_click was acted on
 let sunPointerKind = "";       // L-497: "mouse", "touch" or "pen", last seen
+let sunPress = null;           // L-523: the last press (gallery/tap_hover.js)
+let sunPressHover = null;      // L-523: a hover kept while that finger was down
+
+// L-523: does the picked trace carry words a box can open? A marker with
+// its text, as the label marker reads it (sunLabelMarker).
+function sunTraceCarriesWords(ti) {
+    const t = sunPlotDiv && sunPlotDiv.data && sunPlotDiv.data[ti];
+    return !!(t && t.hoverinfo !== "skip" && Array.isArray(t.text) &&
+              typeof t.text[0] === "string" && t.text[0].length > 0);
+}
+
+// What a tap on a marker opens, whether Plotly sent it as plotly_click or,
+// for a finger 5 px off or more, as plotly_hover (L-523). The caller has
+// already counted the press as served (sunClickServedTap).
+function sunTapOpen(points) {
+    const ti = points[0].curveNumber;
+    const k = sunTraceGroup[ti];
+    // L-267 click deferral, 2026-09-02. DO NOT call sunFocusOn
+    // straight from here. Its relayout re-enters Plotly's
+    // layoutReplot while this click dispatch has not returned,
+    // and the page dies with "Maximum call stack size exceeded"
+    // -- on a stack only ~25 frames deep, so a large array
+    // applied as arguments inside a half-finished replot, not
+    // recursion. The relayout itself is fine: it completed
+    // cleanly from the console with a tooltip up, with the
+    // tooltip dismissed, and on a timer over a hovered marker.
+    // The context was the whole bug. setTimeout 0 lets Plotly
+    // finish dispatching first. Confirmed live before patching.
+    if (typeof k === "number") {
+        // The Solar System room: a tap on a body highlights its
+        // row and moves nothing (L-363 step 3b, design 3.5).
+        // L-497: in every room the tap then opens the one text
+        // box with the tapped marker's words, where Plotly's own
+        // box used to open.
+        setTimeout(function () {
+            if (ssDrawer) {
+                ssSelect(k, false);
+                sunLabelShow(k, ti);
+            } else {
+                sunFocusOn(k).then(function () { return sunLabelShow(k, ti); });
+            }
+        }, 0);
+    }
+}
 function sunPlotlyHoverDrop(gd) {
     try {
         const scene = gd && gd._fullLayout && gd._fullLayout.scene
@@ -6828,10 +6860,20 @@ function sunLabelInstall(gd) {
     gd.addEventListener("pointerdown", function (ev) {
         sunTapSerial += 1;             // tap lag: one focus per press
         sunPointerKind = ev.pointerType || "";
+        // L-523: the widened pick follows the pointer, so it is in place
+        // before this press's pick (sunTapPicking, gallery/tap_hover.js).
+        // Every press: a mouse's pointermove changes the kind without one,
+        // and sunTapPicking redraws only when something changed.
+        sunTapPicking(gd);
         sunPlotlyHoverDrop(gd);        // tap lag: a new press closes Plotly's box
         down.set(ev.pointerId, { x: ev.clientX, y: ev.clientY, t: Date.now(),
                                  multi: down.size > 0, serial: sunTapSerial });
         if (down.size > 1) { down.forEach(function (d) { d.multi = true; }); }
+        // L-523: the last press, for a hover that is a finger's tap.
+        sunPress = { serial: sunTapSerial, kind: sunPointerKind,
+                     multi: down.size > 1, x: ev.clientX, y: ev.clientY,
+                     t: Date.now(), up: null, tap: null };
+        sunPressHover = null;
     }, true);
     // L-497: which kind of pointer last moved over the plot. Only a mouse
     // opens the box by resting on a marker; a finger opens it by a tap.
@@ -6842,10 +6884,23 @@ function sunLabelInstall(gd) {
         const d = down.get(ev.pointerId);
         if (!d) { return; }
         down.delete(ev.pointerId);
+        // The page's tap test (gallery/tap_hover.js, isTap): one finger,
+        // moved at most SUN_LABEL_TAP_PX, lifted within SUN_LABEL_TAP_MS.
+        const tap = ev.type === "pointerup" && GalleryTapHover.isTap(d,
+            ev.clientX, ev.clientY, Date.now(), SUN_LABEL_TAP_PX, SUN_LABEL_TAP_MS);
+        // L-523: the press's verdict is kept for a hover that comes after
+        // the lift, and a hover kept while the finger was down opens now.
+        if (sunPress && sunPress.serial === d.serial) {
+            sunPress.up = { t: Date.now() };
+            sunPress.tap = tap;
+            sunPress.multi = d.multi;
+            if (GalleryTapHover.atLift(sunPress, sunClickServedTap, sunPressHover)) {
+                sunClickServedTap = d.serial;
+                sunTapOpen(sunPressHover.points);
+            }
+            sunPressHover = null;
+        }
         if (sunLabelGroup < 0) { return; }
-        const tap = ev.type === "pointerup" && !d.multi &&
-            Math.hypot(ev.clientX - d.x, ev.clientY - d.y) <= SUN_LABEL_TAP_PX &&
-            (Date.now() - d.t) <= SUN_LABEL_TAP_MS;
         // L-497: a tap that landed on a marker opens that marker's words
         // (plotly_click, below), so it does not also close the box.
         setTimeout(function () {
@@ -6862,8 +6917,28 @@ function sunLabelInstall(gd) {
     // the one box, as Plotly's own box did; moving off closes a box the
     // pointer opened, and never one a tap or the drawer opened. Deferred,
     // out of Plotly's event (L-278).
+    // L-523 (2026-11-11): a FINGER's hover may be its tap. Plotly 2.35.2's
+    // 3D scene sends a pick as plotly_click only under 5 px from the
+    // finger (scene.js line 459), else as plotly_hover; with the pick
+    // widened to SUN_PICK_RADIUS_PX a thumb 5 to 22 px off a dot came here
+    // and opened nothing (Tony: "hit or miss on small object dots").
+    // gallery/tap_hover.js decides; a tap opens as plotly_click does, once
+    // per press, deferred (sunTapOpen); a hover while the finger is still
+    // down waits for the lift.
     gd.on("plotly_hover", function (ev) {
-        if (sunPointerKind !== "mouse" || !ev || !ev.points || !ev.points.length) { return; }
+        if (!ev || !ev.points || !ev.points.length) { return; }
+        if (sunPointerKind !== "mouse") {
+            const v = GalleryTapHover.decide(sunPress, sunClickServedTap,
+                sunTraceCarriesWords(ev.points[0].curveNumber), Date.now(),
+                SUN_LABEL_TAP_MS);
+            if (v === "wait") {
+                sunPressHover = { serial: sunPress.serial, points: ev.points };
+            } else if (v === "open") {
+                sunClickServedTap = sunPress.serial;
+                sunTapOpen(ev.points);
+            }
+            return;
+        }
         const ti = ev.points[0].curveNumber;
         const k = sunTraceGroup[ti];
         if (typeof k !== "number") { return; }
