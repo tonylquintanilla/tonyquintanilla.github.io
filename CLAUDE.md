@@ -30,10 +30,15 @@ They live in the orrery folder at
 Manifest in the protocol says which fires on which work; for this
 repository that is usually interactive-exhibit, gallery-cache-builder,
 gallery-assembler, gallery-pipeline, ledger-and-session-records,
-safe-file-editing and agentic-pre-test. Read each one the job fires,
-in full, before the work, and open your first report by naming the
-skills you read and the version line each carries. Compare that
-version with the manifest's row; if they disagree, stop and say so.
+safe-file-editing and agentic-pre-test. Read each one the job fires
+before the work: in full when its rules govern the work; in the parts
+its read plan names when it is loaded for its version line or one
+section (the protocol's Token Economy). Open your first report by
+naming the skills you read and the version line each carries. Compare
+that version with the manifest's row; if they disagree, stop and say
+so. The repository's copy is the one read. Claude Code also offers the
+copy installed in Tony's account; an installed skill of the same name
+is not invoked (L-522).
 
 ## At the start of a session
 
@@ -68,6 +73,9 @@ version with the manifest's row; if they disagree, stop and say so.
 - The orrery folder is read, not edited, from a gallery session,
   except its ledger and Where We Are for the records.
 - ASCII only, LF line endings: the safe-file-editing skill.
+- Before adding to a document listed in the orrery's DOCUMENT_CAPS.md,
+  read its row; at its cap, move something out first, to its home. A
+  session never raises a cap (L-522).
 
 ## At the end of a session
 
@@ -82,7 +90,13 @@ version with the manifest's row; if they disagree, stop and say so.
   empty zone is not a missing record: read his latest copy instead.
 - Your final report lists every file changed with the number of
   edits, in both folders, the way a patch prints "ok <file> (n
-  edits)"; then his run order; then the Tony-action rollup.
+  edits)"; then the session's token count as Claude Code prints it
+  (the /cost output: input and output tokens, by model), which Tony
+  writes in his run record beside the commit (the protocol's Token
+  Economy, L-506). Where no /cost figure prints, as in Tony's app,
+  give the context size the app shows at the close and the sizes read
+  and written, in that form every time (L-522). Then his run order;
+  then the Tony-action rollup.
 
 ## How to report to Tony
 
@@ -96,5 +110,7 @@ Register Rule, Part 2). So every report to him:
 - Puts one question to him per report. A finding, a recommendation,
   an uncertainty and a question are four things; send the one that is
   due and put the rest in the records.
+- May add, after "Where this leaves us", one line, "One final
+  thought:", a concern nobody asked for; optional, never invented.
 - Ends with the file list for his run record, his run order, and the
   Tony-action rollup, in that order.
