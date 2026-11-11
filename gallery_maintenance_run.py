@@ -259,6 +259,10 @@ INTERACTIVE_AS_BUILT.md gives is in the code; the "Tap hover" checker
 runs documentation/smoke_tap_hover.js and gates -- a finger's tap that
 Plotly sends as a hover opens the box; the live check also fetches
 gallery/tap_hover.js, which the page loads with a script tag.)
+Module updated: November 11, 2026 with Anthropic's Claude Opus 5.5
+(L-524: the "Kepler solver" checker runs tools/test_kepler_solver.py and
+gates -- the assembler's solve_kepler answers every e below 1 and every
+mean anomaly, or raises.)
 """
 
 import hashlib
@@ -459,6 +463,15 @@ OFFLINE_CHECKERS = [
     # self-test breaks the module three ways first. Gates.
     ("Compose children", "python",
      ["tools/test_compose_children.py"], ".", "COMPOSE CHILDREN:", False),
+
+    # L-524 (2026-11-11): the assembler's Kepler solver answers every e
+    # below 1 and every mean anomaly, or raises. Every drawn position comes
+    # through it, and so does the builder's trust measurement that sets the
+    # site's window. A sweep of e and M, the served bodies' own e by name,
+    # Halley's served elements of that day; its self-test runs the solver
+    # as it was before that day and must go red. Gates.
+    ("Kepler solver", "python",
+     ["tools/test_kepler_solver.py"], ".", "KEPLER SOLVER:", False),
 
     # L-421 (2026-10-11): each stored drawing the config names is pulled,
     # served byte for byte, and tilted as it records -- the plane through

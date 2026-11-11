@@ -47,6 +47,13 @@ Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 build B: a wrong comment corrected -- scatter3d lines do take a dash. No
 code changed.)
 
+Module updated: November 11, 2026 with Anthropic's Claude Opus 5.5 (L-524,
+the Kepler solver's start: solve_kepler solves for |M| from E = pi and
+gives E the sign of M, which converges for every e below 1 and every M;
+a solve that cannot vouch for its answer raises KeplerNotConverged, and
+an e outside [0, 1) or a value that is not a number raises ValueError.
+Checked by the gallery run's Kepler solver row, tools/test_kepler_solver.py.)
+
 Role: rendering
 Domain: assembler
 """
@@ -62,17 +69,59 @@ K_GAUSS = 0.01720209895  # sqrt(GM_sun) in AU**1.5 / day -- no longer used
 
 # --- two-body math (validated) --------------------------------------------
 
+class KeplerNotConverged(ArithmeticError):
+    """solve_kepler could not reach an answer it can vouch for. Raised, never
+    returned: a wrong E drawn as a position is the failure this exists to
+    stop (L-524)."""
+
+
 def solve_kepler(mean_anom_rad: float, e: float,
                  tol: float = 1e-12, itmax: int = 100) -> float:
-    """Solve M = E - e*sin(E) for eccentric anomaly E (Newton-Raphson)."""
+    """Solve M = E - e*sin(E) for the eccentric anomaly E, 0 <= e < 1.
+
+    Returns E in [-pi, pi], with the sign of M folded into [-pi, pi).
+
+    THE METHOD (L-524, 2026-11-11). Kepler's equation is odd in E, so the
+    solve is made for |M| on [0, pi] and E takes the sign of M. On [0, pi]
+    f(E) = E - e sin E - |M| rises (f' = 1 - e cos E > 0 for e < 1) and is
+    convex (f'' = e sin E >= 0), and at E = pi it is pi - |M| >= 0. Newton's
+    method started there, on the right of the root of a rising convex
+    function, steps down toward the root every time and never passes it,
+    so it converges for every e below 1 and every M. Until this date the
+    start was E = pi for e of 0.8 or more on M folded into [-pi, pi): for a
+    negative M that start is on the wrong side, and for scattered M the
+    100 steps ran out and a wrong E was returned with no warning (Halley's
+    trust sample of 2026-11-11, 21.6 degrees off, the site's window cut to
+    0.3 days).
+
+    NOTHING WRONG IS RETURNED. An e outside [0, 1) or a value that is not a
+    number raises ValueError. The only returns are the exact roots at 0
+    and pi and an E whose last Newton step was under `tol` and whose
+    equation holds to 1e-9 rad; anything else raises KeplerNotConverged.
+    """
+    if not (math.isfinite(mean_anom_rad) and math.isfinite(e)):
+        raise ValueError("solve_kepler: M = %r, e = %r is not a number"
+                         % (mean_anom_rad, e))
+    if not 0.0 <= e < 1.0:
+        raise ValueError("solve_kepler: e = %r; Kepler's equation for an "
+                         "ellipse needs 0 <= e < 1" % e)
     m = (mean_anom_rad + math.pi) % (2.0 * math.pi) - math.pi
-    ecc_anom = m if e < 0.8 else math.pi
+    sign = -1.0 if m < 0.0 else 1.0
+    am = abs(m)                                    # [0, pi]
+    if am == 0.0 or am == math.pi:
+        return sign * am
+    ecc_anom = math.pi
     for _ in range(itmax):
-        delta = ecc_anom - e * math.sin(ecc_anom) - m
-        ecc_anom -= delta / (1.0 - e * math.cos(ecc_anom))
-        if abs(delta) < tol:
+        step = (ecc_anom - e * math.sin(ecc_anom) - am) / (1.0 - e * math.cos(ecc_anom))
+        ecc_anom -= step
+        if abs(step) < tol:
+            resid = ecc_anom - e * math.sin(ecc_anom) - am
+            if 0.0 <= ecc_anom <= math.pi and abs(resid) < 1e-9:
+                return sign * ecc_anom
             break
-    return ecc_anom
+    raise KeplerNotConverged(
+        "solve_kepler: no answer for M = %r rad, e = %r in %d steps (E = %r)"
+        % (mean_anom_rad, e, itmax, ecc_anom))
 
 
 def _elements_to_xyz_au(a: float, e: float, i: float, node: float,

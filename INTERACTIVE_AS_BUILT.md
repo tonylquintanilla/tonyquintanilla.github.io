@@ -462,6 +462,19 @@ silently.
   (`panelNote`, `reportSceneFrozen`, `#scene-frozen`). Both are words a
   visitor reads, so they go to Tony's phone look before they are
   settled (built 2026-11-07, his look still to come).
+- THE FROZEN LINE ON AN UPRIGHT PHONE (L-524; Tony, 2026-11-11: "the
+  date line on the phone is problematic"). In one piece it is about 284
+  px wide, and the gap between the zoom buttons and the arrow cross is
+  about the screen's width less 212 px, so on every phone it pushed the
+  title below the cross. `sunFitTitle` now tries the line in the gap in
+  one piece, then in two lines, then in three
+  (`SceneMoment.subtitleWraps`, `sunSceneSubtitleWraps`: the same words,
+  only the breaks differ), and moves the title below the cross only if
+  none fits. Every fit starts from one piece, so a screen turned
+  sideways shows it whole. Measured with `?freeze=1` on 2026-11-11: two
+  lines at 375, 412 and 430 px wide; three at 360; below the cross at
+  320, as the plain line also goes there; sideways, one piece at the
+  top.
 - THE TWO SENTENCES THAT SAY "TODAY" -- the spacecraft's dates sentence
   and a comet's span sentence -- take the frozen room's words there
   (`todayWords`: "where they were on the day shown", and "a year after

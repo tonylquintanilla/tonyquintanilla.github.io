@@ -10,13 +10,13 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 60  
-**Total Lines of Code (non-blank):** 32,175  
-**Total Public Functions/Classes:** 531
+**Total Python Files:** 61  
+**Total Lines of Code (non-blank):** 32,434  
+**Total Public Functions/Classes:** 540
 
 ## Classification Coverage
 
-**Undetermined role (11).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (12).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/check_as_built_names.py`
 - `tools/check_tree_parents.py`
@@ -26,6 +26,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `sweep_collapsed_features.py`
 - `tools/test_compose_children.py`
 - `tools/test_exhibit_store_editor.py`
+- `tools/test_kepler_solver.py`
 - `tools/test_mirror_constants.py`
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
@@ -51,7 +52,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `presentation.py` | Layout, axes, colors, title, and layer ordering. (243 lines) |
 | `render_events.py` | Perihelion and event_link markers. (20 lines) |
 | `render_objects.py` | Object markers, center marker, and labels. (63 lines) |
-| `render_orbits.py` | Osculating (and mean-elements) conics. (207 lines) |
+| `render_orbits.py` | Osculating (and mean-elements) conics. (250 lines) |
 | `render_spacecraft.py` | A spacecraft's path, or a comet's on an open path, drawn from its served positions. (202 lines) |
 
 ---
@@ -116,7 +117,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,687 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,727 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,739 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (555 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
@@ -154,6 +155,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_compose_children.py` | - the moons in the Solar System room are drawn where their planets are, by ADDING, and their distance is their own. (200 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (412 lines) |
+| `test_kepler_solver.py` | - the assembler's Kepler solver gives the right answer for every eccentricity and every mean anomaly, or it says so. (204 lines) |
 | `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (735 lines) |
 | `test_pole_of_date.py` | Offline checks of Earth's pole and tilt of date as the gallery cache builder computes them. (228 lines) |
 | `test_store_writer.py` | - the in-place writer does what it says, and refuses what it must. L-334 piece 5, the writer's half. (734 lines) |

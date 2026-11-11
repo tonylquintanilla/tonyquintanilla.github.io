@@ -31,6 +31,8 @@
 //       Mode 5 knob ?freeze=1, so the frozen room can be seen on a phone
 //       before the day comes. Null with no window.
 //   subtitle(stamp)  the line under the title when frozen.
+//   subtitleWraps(stamp)  the same words in two lines, then three, for an
+//       upright phone whose gap beside the arrows is too narrow for one.
 //   panelNote(stamp)  the sentence at the top of the i panel when frozen.
 //   todayWords(text, frozen, fetchedDay)  two served sentences that say
 //       "today", put in the frozen room's terms, the comet's naming the
@@ -43,6 +45,9 @@
 // moment row), which breaks this file three ways first.
 //
 // Written November 7, 2026 with Anthropic's Claude Opus 5.5.
+// Updated November 11, 2026 with Anthropic's Claude Opus 5.5 (L-524:
+// subtitleWraps, the frozen line broken to fit beside the arrows on a
+// phone; Tony, 2026-11-11: "the date line on the phone is problematic").
 (function (root) {
     "use strict";
 
@@ -94,6 +99,15 @@
         return stamp + ", the last day our data covers";
     }
 
+    // The same words broken into lines, fewest lines first, for an upright
+    // phone where the line in one piece is wider than the space between
+    // the zoom buttons and the arrow cross (L-524). Only the breaks differ;
+    // read with each <br> as a space, every form is subtitle(stamp).
+    function subtitleWraps(stamp) {
+        return [stamp + ",<br>the last day our data covers",
+                stamp + ",<br>the last day<br>our data covers"];
+    }
+
     function panelNote(stamp) {
         return "This room shows " + stamp + ", the last day its data " +
             "covers, and not today. The positions are checked against " +
@@ -127,6 +141,7 @@
         askFor: askFor,
         pastWindowMs: pastWindowMs,
         subtitle: subtitle,
+        subtitleWraps: subtitleWraps,
         panelNote: panelNote,
         todayWords: todayWords,
         TODAY_SWAPS: TODAY_SWAPS,

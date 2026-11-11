@@ -496,6 +496,12 @@
         place, and a scene in a Scenes fold under each row it names.
         The page's part is unchanged but for these words: every row
         already asks for its folds, PictureFolds decides which.)
+     Updated: November 11, 2026 with Anthropic's Claude Opus 5.5
+       (L-524, the frozen date line on a phone: where the line in one
+        piece is too wide for the gap beside the arrow cross, sunFitTitle
+        tries it there in two lines, then three
+        (SceneMoment.subtitleWraps, the same words), before moving the
+        title below the cross; every fit starts from one piece again.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -5231,6 +5237,9 @@ function mountNavCluster() {
 
 // The line under the scene title, set from the room's compose, or null.
 let sunSceneSubtitle = null;
+// The same line broken to fit beside the arrows on an upright phone,
+// fewest lines first (SceneMoment.subtitleWraps); empty when it has none.
+let sunSceneSubtitleWraps = [];
 
 // Where the scene title and its line sit. At the top, centred, as always.
 // On an upright phone the arrow cross sits in the top-right corner
@@ -5326,17 +5335,25 @@ function sunPlaceCredit() {
 
 async function sunFitTitle() {
     if (!sunPlotDiv || !window.Plotly) { return; }
-    const set = function (p) {
-        return Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv, {
-            "title.x": p.x, "title.y": p.y,
-            "title.yref": p.yref, "title.yanchor": p.yanchor }));
+    // The line under the title goes back to one piece at every fit, so a
+    // screen turned sideways shows it whole again.
+    const set = function (p, line) {
+        const update = { "title.x": p.x, "title.y": p.y,
+            "title.yref": p.yref, "title.yanchor": p.yanchor };
+        if (sunSceneSubtitle) { update["title.subtitle.text"] = line || sunSceneSubtitle; }
+        return Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv, update));
     };
     await set(SUN_TITLE_TOP);
     if (!sunPhonePortrait() || !sunTitleTouchesButtons()) { return; }
     const gap = sunTitleInGap();
     if (gap) {
-        await set(gap);
-        if (!sunTitleTouchesButtons()) { return; }
+        // L-524 (Tony, 2026-11-11: "the date line on the phone is
+        // problematic"): a line too wide for the gap is tried there in
+        // two lines, then three, before the title leaves the top.
+        for (const line of [sunSceneSubtitle].concat(sunSceneSubtitleWraps)) {
+            await set(gap, line);
+            if (!sunTitleTouchesButtons()) { return; }
+        }
     }
     const below = sunTitleBelowCross();
     if (below) { await set(below); }
@@ -5623,12 +5640,14 @@ async function initSunExhibit() {
         // A room may put a line under its title (the Solar System room's
         // date). The Sun and Earth rooms return none, so theirs is as it was.
         sunSceneSubtitle = built.subtitle || null;
+        sunSceneSubtitleWraps = [];
         // L-515 part 4: a room drawn at the window's last minute says so,
         // under its title and at the top of its i panel.
         if (sceneMomentAsked && sceneMomentAsked.frozen) {
             const frozenStamp = sunSceneSubtitle ||
                 sceneMomentStamp(SceneMoment._jdOfMs(Date.parse(sceneMomentAsked.iso)));
             sunSceneSubtitle = SceneMoment.subtitle(frozenStamp);
+            sunSceneSubtitleWraps = SceneMoment.subtitleWraps(frozenStamp);
             reportSceneFrozen(SceneMoment.panelNote(frozenStamp));
         }
         // L-518: a shared minute keeps the line under the title as it is

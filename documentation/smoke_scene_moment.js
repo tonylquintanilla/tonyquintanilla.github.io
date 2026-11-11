@@ -14,7 +14,8 @@
 //      minute before; no window, or an unreadable one, changes nothing; a
 //      day-room (epochNow false) past the window freezes too; a clock
 //      before the window's start is not moved; the ?freeze=1 clock lands
-//      past the window and freezes; and the frozen words carry the stamp.
+//      past the window and freezes; and the frozen words carry the stamp,
+//      broken for a phone into two lines and three with the same words.
 //   2. THE REAL RESOLVER ON THE SERVED CACHE. For the served
 //      coverage_index.json's window, the moment the file gives a clock a
 //      day past the end, and the moment asked before the freeze, are
@@ -34,19 +35,22 @@
 //   4. interactive.html loads the file, asks it for EPOCH_ISO from the
 //      served window, reads the ?freeze=1 knob, puts the frozen words
 //      under the title and at the top of the i panel, and passes the
-//      frozen flag to both sentences.
+//      frozen flag to both sentences; on an upright phone the title fit
+//      tries the broken line beside the arrows before moving it below.
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and breaks the
-//   real file four ways -- the freeze taken out (the minute asked as it
+//   real file five ways -- the freeze taken out (the minute asked as it
 //   is), the frozen minute set one minute AFTER the window's end, the
-//   "today" swap turned off, and the day fetched dropped from the comet's
-//   sentence -- so a green run has shown it can go red.
+//   "today" swap turned off, the day fetched dropped from the comet's
+//   sentence, and a word lost from the line broken for a phone -- so a green run has shown it can go red.
 //
 // Written November 7, 2026 with Anthropic's Claude Opus 5.5.
 // Updated November 7, 2026, night, with Anthropic's Claude Opus 5.5 (the
 // comet's frozen sentence names the day its data was fetched; a fourth
 // planted break).
+// Updated November 11, 2026 with Anthropic's Claude Opus 5.5 (L-524: the
+// frozen line broken for a phone, three wiring points, a fifth break).
 
 "use strict";
 const fs = require("fs");
@@ -127,6 +131,18 @@ function cases(SM) {
   for (const t of [SM.subtitle(stamp), SM.panelNote(stamp)]) {
     if (/[^\x00-\x7F]/.test(t)) { out.push("non-ASCII in the frozen words: " + t); }
   }
+  // The line broken for a phone (L-524): two lines, then three, and read
+  // with each break as a space, the same words as the line in one piece.
+  const wraps = (typeof SM.subtitleWraps === "function") ? SM.subtitleWraps(stamp) : null;
+  if (!Array.isArray(wraps) || wraps.length !== 2) {
+    out.push("subtitleWraps does not give the line in two lines and in three");
+  } else {
+    wraps.forEach(function (w, i) {
+      if (w.split("<br>").length !== i + 2) { out.push("subtitleWraps form " + (i + 1) + " is not " + (i + 2) + " lines: " + w); }
+      if (w.split("<br>").join(" ") !== SM.subtitle(stamp)) { out.push("subtitleWraps form " + (i + 1) + " changes the words: " + w); }
+      if (/[^\x00-\x7F]/.test(w)) { out.push("non-ASCII in the broken line: " + w); }
+    });
+  }
   // 9. the sentences that say "today" (part 3 of the header).
   for (const name of Object.keys(SENTENCES)) {
     const s = SENTENCES[name];
@@ -163,7 +179,8 @@ const breaks = [
    "return Math.floor(msOfJd(endJd) / MS_PER_MIN - END_MARGIN_MIN) * MS_PER_MIN;",
    "return (Math.floor(msOfJd(endJd) / MS_PER_MIN) + 1) * MS_PER_MIN;"],
   ["the today swap off", "if (!frozen || typeof text !== \"string\") { return text; }", "return text;"],
-  ["the day fetched dropped", "? fetchedDay + \", \" : \"\";", "? \"\" : \"\";"]
+  ["the day fetched dropped", "? fetchedDay + \", \" : \"\";", "? \"\" : \"\";"],
+  ["a word lost in the broken line", "stamp + \",<br>the last day<br>our data covers\"", "stamp + \",<br>the last day<br>data covers\""]
 ];
 const selfFails = [];
 for (const [name, from, to] of breaks) {
@@ -244,6 +261,9 @@ const need = [
   ['pyodide.globals.set("EPOCH_ISO", sceneMomentAsked.iso);', "EPOCH_ISO is not the moment SceneMoment gave"],
   ['.get("freeze") === "1";', "the ?freeze=1 knob is not read"],
   ["sunSceneSubtitle = SceneMoment.subtitle(frozenStamp);", "a frozen room does not say so under its title"],
+  ["sunSceneSubtitleWraps = SceneMoment.subtitleWraps(frozenStamp);", "a frozen room's line has no broken forms for a phone"],
+  ["for (const line of [sunSceneSubtitle].concat(sunSceneSubtitleWraps)) {", "the title fit does not try the broken line in the gap beside the arrows"],
+  ["update[\"title.subtitle.text\"] = line || sunSceneSubtitle;", "the title fit does not put the line back in one piece"],
   ["reportSceneFrozen(SceneMoment.panelNote(frozenStamp));", "a frozen room does not say so in its i panel"],
   ["SceneMoment.todayWords(COMET_SPAN_WORDS, frozen, fetched)", "a comet's span sentence ignores the freeze or the day fetched"],
   ["(b.path_source || {}).retrieved)));", "a comet's span sentence is not given the day its path was fetched"],
