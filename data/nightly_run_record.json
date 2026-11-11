@@ -1,10 +1,10 @@
 {
   "_comment": "Written by daily_run.py --night on a clean night only (L-485), so this is the website's last clean run. A red night writes nothing: its record is the run's log on GitHub.",
   "schema": 1,
-  "clean_run_utc": "2026-11-09T22:30:31.040749+00:00",
-  "started_utc": "2026-11-09T22:27:47.010599+00:00",
+  "clean_run_utc": "2026-11-11T04:27:52.441794+00:00",
+  "started_utc": "2026-11-11T04:24:32.767754+00:00",
   "where": "GitHub Actions",
-  "orrery_pulled": "b2c38828d149bbfc51f831143d3b15c42bd1db79",
+  "orrery_pulled": "d65309a8242333eeb9374bb1ad3cbcc6a3f18001",
   "pulls_asked": "with the run's GITHUB_TOKEN",
   "swap_log_line": {
     "attempts": {
@@ -15,10 +15,10 @@
     "mode": "nightly",
     "outcome": "ok",
     "reached": "staging_to_live",
-    "run_id": "20261109T222751Z",
-    "time": "2026-11-09T22:29:47.710061+00:00"
+    "run_id": "20261111T042435Z",
+    "time": "2026-11-11T04:26:55.852326+00:00"
   },
-  "run_records": "Run records: carried 141 of 141, plus tonight's: 20261109T222751Z.json.",
+  "run_records": "Run records: carried 143 of 143, plus tonight's: 20261111T042435Z.json.",
   "served_files_changed": 103,
   "steps": [
     {
@@ -29,7 +29,7 @@
     {
       "step": "Pulls from the orrery",
       "result": "ok",
-      "seconds": 3.4
+      "seconds": 2.2
     },
     {
       "step": "Pull matches push (runner)",
@@ -39,7 +39,7 @@
     {
       "step": "Cache builder",
       "result": "exit 0",
-      "seconds": 117.1
+      "seconds": 140.8
     },
     {
       "step": "Run records",
@@ -49,7 +49,7 @@
     {
       "step": "Maintenance run, night pass",
       "result": "exit 0",
-      "seconds": 41.8
+      "seconds": 56.0
     }
   ],
   "rows": [
@@ -58,7 +58,7 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/constants_export.json, data/constants_export.sha",
-      "seconds": 0.4
+      "seconds": 0.3
     },
     {
       "row": "Config mirror",
@@ -72,7 +72,7 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/objects_export.json, data/objects_export.sha",
-      "seconds": 0.5
+      "seconds": 0.3
     },
     {
       "row": "Objects mirror",
@@ -86,14 +86,14 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/drawings/hills_cloud.json, data/drawings/van_allen_belts.json, data/drawings/earth_exosphere.json, data/drawings/pulled_at.sha",
-      "seconds": 0.8
+      "seconds": 0.6
     },
     {
       "row": "Cache builder suite",
       "kind": "checker",
       "verdict": "PASS",
       "note": "PASS (526 checks, 0 failures)",
-      "seconds": 14.2
+      "seconds": 19.0
     },
     {
       "row": "Pole of date",
@@ -113,14 +113,14 @@
       "row": "Store writer suite",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "All 481 store-writer checks passed: an allow list that lets through only a shell's words, a belt's words and the arrival settings, the rooms section's included; a no-edit round trip; one line per change; empty words handled; a refused batch writing nothing; awkward text; and the shell list matching the cache check's rule.",
-      "seconds": 20.1
+      "note": "All 488 store-writer checks passed: an allow list that lets through only a shell's words, a belt's words and the arrival settings, the rooms section's included; a no-edit round trip; one line per change; empty words handled; a refused batch writing nothing; awkward text; and the shell list matching the cache check's rule.",
+      "seconds": 28.6
     },
     {
       "row": "Store editor suite",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "All 377 store-editor checks passed: every box the form offers is one the writer allows; the word list and the tick list differ by the belts, on purpose; nothing typed saves nothing; the save message does not promise a visitor sees what they cannot yet; and a red Cache in step is explained rather than just shown.",
+      "note": "All 383 store-editor checks passed: every box the form offers is one the writer allows; the word list and the tick list differ by the belts, on purpose; nothing typed saves nothing; the save message does not promise a visitor sees what they cannot yet; and a red Cache in step is explained rather than just shown.",
       "seconds": 0.2
     },
     {
@@ -128,7 +128,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "MIRROR OBJECTS SUITE: pass",
-      "seconds": 0.2
+      "seconds": 0.3
     },
     {
       "row": "Objects mirror check",
@@ -162,7 +162,7 @@
       "row": "Pointer join",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "Every link is accounted for: 188 link(s) against orrery b2c38828, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
+      "note": "Every link is accounted for: 188 link(s) against orrery d65309a8, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
       "seconds": 0.1
     },
     {
@@ -177,7 +177,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "The served cache holds the config's 102 object(s) and their features exactly: 4 object(s) with 34 named shell(s), in both cache files.",
-      "seconds": 0.0
+      "seconds": 0.1
     },
     {
       "row": "Drawn orbit",
@@ -187,11 +187,18 @@
       "seconds": 0.5
     },
     {
+      "row": "Compose children",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "COMPOSE CHILDREN: pass -- each moon is drawn at its planet's place by adding, its orbit around its planet's marker, its distance its own",
+      "seconds": 0.0
+    },
+    {
       "row": "Drawings",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery b2c38828; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
-      "seconds": 0.4
+      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery d65309a8; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
+      "seconds": 0.5
     },
     {
       "row": "Collapsed features",
@@ -205,7 +212,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.7
+      "seconds": 0.4
     },
     {
       "row": "Page framing",
@@ -226,28 +233,28 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "row": "Hover budget",
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "row": "Typed facts",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "TYPED FACTS: PASS -- 0 typed facts in the Sun and Earth rooms; 17 number line(s), 28 of 35 allowed sentence(s) seen, 0 held open (L-451); 26 word field(s) masked.",
-      "seconds": 0.1
+      "note": "TYPED FACTS: PASS -- 0 typed facts in the Sun and Earth rooms; 17 number line(s), 32 of 84 allowed sentence(s) seen, 0 held open (L-451); 26 word field(s) masked.",
+      "seconds": 0.2
     },
     {
       "row": "Typed numbers",
       "kind": "checker",
       "verdict": "PASS",
       "note": "TYPED NUMBERS: PASS -- 0 typed numbers in the Sun and Earth rooms' served words; 325 number(s) masked, 0 held.",
-      "seconds": 0.2
+      "seconds": 0.3
     },
     {
       "row": "Arrival",
@@ -261,7 +268,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: 62 hover(s) and 308 number(s) examined; 14 graded, 7 graded by line, 48 held to the fixture ===",
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "row": "Solar System figures",
@@ -292,11 +299,18 @@
       "seconds": 0.1
     },
     {
+      "row": "View centre",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: the view is centred where Tony ruled, the trail is the path down the tree, Centre on opens a centre's own opening, and the shift takes every moon's 32-bit error under half a kilometre with every reader agreeing on it ===",
+      "seconds": 0.0
+    },
+    {
       "row": "Picture folds",
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: a phone is offered the portrait twins and a desktop the landscape ones, never a \"none\" card on a phone; every Solar System picture has a place naming a row the room serves; Find finds a picture's words; and both pages wire the folds and the way back; the Solar System's addresses open its live room, and Back answers both of its signals; and every scene sits in the Scenes fold under the Sun, opens its own link, and Back returns to the room ===",
-      "seconds": 0.0
+      "seconds": 0.1
     },
     {
       "row": "Scene cards",
@@ -304,6 +318,13 @@
       "verdict": "PASS",
       "note": "=== PASS: a shared link is cleaned to a scene's address, each thing taken off named; a link that cannot be a scene is refused; a key no row has is named; a link already on a card is refused; and every scene in the metadata is clean ===",
       "seconds": 0.4
+    },
+    {
+      "row": "Drawer places",
+      "kind": "checker",
+      "verdict": "PASS",
+      "note": "=== PASS: the editor's tree is the Solar System room's drawer, in the website's order, the Sun's shells under the Sun; a card's places are one or several, written as the website reads them, twins together; every card's places are rows the drawer lists ===",
+      "seconds": 0.2
     },
     {
       "row": "Source list",
@@ -317,7 +338,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== DRAWER ORDER: both rooms list their shells and the centre's children where each begins, the centre first; self-test red three times",
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "row": "Drawn ends",
@@ -331,7 +352,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== LABEL WORDS: all 34 shell rows in both rooms open their own feature's words; 5 stored drawings' crosses stand off the axis lines; Earth's fixed row opens its own words; self-test red three times",
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "row": "Scene moment",
@@ -400,5 +421,5 @@
       "why": "writes MODULE_ATLAS.md and MODULE_INDEX.md, which are documents; the night commits no page or word (Tony's R1, 2026-10-25)"
     }
   ],
-  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/42711968894"
+  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/42958901733"
 }
