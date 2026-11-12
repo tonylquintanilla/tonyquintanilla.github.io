@@ -211,7 +211,21 @@
        - Back and Forward: the page answers popstate as well as
          hashchange (routeFromHistory), and the second of the two finds
          the screen already drawn. Tony's phone look: "from the stars
-         page, the back button does not bring us back to the lobby." -->
+         page, the back button does not bring us back to the lobby."
+     Updated: November 12, 2026 with Anthropic's Claude Opus 5.5 (L-527,
+       a first visit's guide, Part 3: the front page's way in)
+       - Under the name, two served lines (gallery_config.json "sentence"
+         and the new "sentence_more"): "An orrery is a model of the solar
+         system that moves." and what this one shows, from JPL's (NASA)
+         data, updated every night.
+       - The start card's title "Today's solar system" (also its served
+         title) and its sentence "Turn it, tap a planet, fly to the
+         Moon." A first visit: the gold "Show me around", the room with
+         the guide, and under it "Explore on my own", without; once
+         either is chosen, one button, "Explore the solar system". The
+         Tutorial row under Featured: a switch and its line. All of it is
+         one setting, gallery/first_guide.js's, shared with the room, and
+         every way in carries the choice in the room's address. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -244,6 +258,10 @@
 
     <!-- The lobby's guest book (L-281) -->
     <script src="gallery/guestbook.js"></script>
+
+    <!-- A first visit's guide (L-527): the setting the start card and the
+         Tutorial row read and write, shared with the Solar System room -->
+    <script src="gallery/first_guide.js"></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1238,6 +1256,61 @@
             line-height: 1.4;
         }
         .lobby .welcome-note.lobby-note { margin: 26px auto 0; }
+        /* L-527 (a first visit's guide, Part 3): the two lines under the
+           name; the start card's second way in, a link under the gold
+           button; the Tutorial row under Featured, its switch and the
+           line under it, because a phone has no hover. */
+        .lobby-line + .lobby-line { margin-top: 6px; }
+        .lobby-start-alone {
+            display: block;
+            width: 100%;
+            min-height: 44px;
+            border: 0;
+            background: none;
+            color: #d6d4d0;
+            font: inherit;
+            font-size: 0.98rem;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            cursor: pointer;
+        }
+        .lobby-start-alone:hover { color: #f1efe9; }
+        .lobby-start-alone:focus-visible { outline: 2px solid #f1efe9; outline-offset: 2px; }
+        .lobby-tutorial { margin: 0 0 26px; padding: 0 4px; }
+        .lobby-tutorial-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            min-height: 44px;
+        }
+        .lobby-tutorial-word { font-size: 1.02rem; font-weight: 600; color: #f1efe9; }
+        .lobby-switch {
+            position: relative;
+            flex: 0 0 auto;
+            width: 52px;
+            height: 30px;
+            border: 1px solid rgba(241, 239, 233, 0.35);
+            border-radius: 15px;
+            background: rgba(241, 239, 233, 0.18);
+            cursor: pointer;
+            padding: 0;
+        }
+        .lobby-switch::after {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #f1efe9;
+            transition: left 0.15s ease;
+        }
+        .lobby-switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+        .lobby-switch[aria-checked="true"]::after { left: 25px; background: #0a0a0f; }
+        .lobby-switch:focus-visible { outline: 2px solid #f1efe9; outline-offset: 2px; }
+        .lobby-tutorial-line { font-size: 0.88rem; line-height: 1.45; color: #d6d4d0; margin-top: 4px; }
         .lobby-row {
             display: flex;
             align-items: center;
@@ -3038,8 +3111,12 @@
         // The first screen. One writer for the home view; goHome() and the
         // initial load both call this. Doors open the existing menu at that
         // door until L-286 gives each door its own rooms page.
-        var LOBBY_DEFAULT_SENTENCE = 'The solar system, Earth and the nearby stars in 3D, ' +
-            'from real science data.';
+        // L-527 (Part 3): the two lines under the name, served from
+        // gallery_config.json ("sentence" and "sentence_more"); these are
+        // the words when the config cannot be read (Tony, Nov 12, 09:56).
+        var LOBBY_DEFAULT_SENTENCE = 'An orrery is a model of the solar system that moves.';
+        var LOBBY_DEFAULT_MORE = 'This one shows the Sun, the planets, moons, comets and ' +
+            'spacecraft where they are today, from JPL\'s (NASA) data, updated every night.';
         // More to explore (L-517, board D): one strip per subject, in
         // this order. The pictures are drawn from the site's own cards by
         // tools/headless/draw_lobby_strips.py, and carry no numbers; each
@@ -3159,10 +3236,99 @@
         // L-517 (board D): the kicker "Solar System", the title "Today's
         // sky, live" (also the card's served title since then, so its
         // door's page and the menu read the same), the button "Explore".
+        // L-527 (Part 3): the title "Today's solar system" -- it is not
+        // the sky, and it is not live -- in gallery_metadata.json too;
+        // the card's ways in are the guide's (GalleryGuide.FRONT): a first
+        // visit's gold "Show me around" and under it "Explore on my own",
+        // then, once either is chosen, one button, "Explore the solar
+        // system". LOBBY_START_BUTTON is the one button only when
+        // first_guide.js has not loaded.
         var LOBBY_START_ID = 'solar_system';
         var LOBBY_START_KICKER = 'Solar System';
-        var LOBBY_START_TITLE = 'Today\'s sky, live';
+        var LOBBY_START_TITLE = 'Today\'s solar system';
         var LOBBY_START_BUTTON = 'Explore';
+        var LOBBY_ARROW = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+                 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                 '<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>';
+
+        // L-527: the one setting, kept in the visitor's browser and read by
+        // this page and the Solar System room (GalleryGuide.KEY, "on" or
+        // "off"; none yet counts as on). A browser that keeps nothing: the
+        // choice is held for this page only (guideMemory), and every way
+        // into the room carries it in the address (GalleryGuide.roomAddress).
+        var guideMemory = null;
+        function guideStore() {
+            try { return window.localStorage; } catch (e) { return null; }
+        }
+        function guideValue() {
+            var G = window.GalleryGuide;
+            if (!G) return null;
+            var v = G.read(guideStore());
+            return v !== null ? v : guideMemory;
+        }
+        function guideKeep(value) {
+            var G = window.GalleryGuide;
+            if (!G) return;
+            guideMemory = value;
+            G.write(guideStore(), value);
+        }
+        // The start card's ways in, for what the setting holds.
+        function startWaysHtml() {
+            var G = window.GalleryGuide;
+            if (!G) {
+                return '<button type="button" class="lobby-start-enter" data-way="plain">' +
+                       escapeHtml(LOBBY_START_BUTTON) + ' ' + LOBBY_ARROW + '</button>';
+            }
+            if (G.frontView(guideValue()) === 'first') {
+                return '<button type="button" class="lobby-start-enter" data-way="show">' +
+                       escapeHtml(G.FRONT.show) + ' ' + LOBBY_ARROW + '</button>' +
+                       '<button type="button" class="lobby-start-alone" data-way="alone">' +
+                       escapeHtml(G.FRONT.alone) + '</button>';
+            }
+            return '<button type="button" class="lobby-start-enter" data-way="again">' +
+                   escapeHtml(G.FRONT.again) + ' ' + LOBBY_ARROW + '</button>';
+        }
+        // Into the room by one way: what it keeps, then the room's address
+        // with the choice in it. Back comes back here, as a live card's
+        // tap does (openCard).
+        function startGo(way) {
+            var G = window.GalleryGuide;
+            var item = vizLookup[LOBBY_START_ID];
+            if (!item || !item.live) return;
+            if (!G || way === 'plain') { openCard(LOBBY_START_ID); return; }
+            var kept = G.keeps(way);
+            if (kept) guideKeep(kept);
+            try { sessionStorage.setItem('po_gallery_from', window.location.hash); } catch (e) {}
+            window.location.href = G.roomAddress(item.live, way, guideValue());
+        }
+        // The Tutorial row: the same setting, a switch and its line.
+        function tutorialHtml() {
+            var G = window.GalleryGuide;
+            if (!G) return '';
+            return '<div class="lobby-tutorial">' +
+                   '<div class="lobby-tutorial-row"><span class="lobby-tutorial-word" id="lobby-tutorial-word">' +
+                   escapeHtml(G.FRONT.tutorial) + '</span>' +
+                   '<button type="button" class="lobby-switch" id="lobby-tutorial" role="switch" ' +
+                   'aria-labelledby="lobby-tutorial-word" aria-describedby="lobby-tutorial-line" aria-checked="false"></button></div>' +
+                   '<div class="lobby-tutorial-line" id="lobby-tutorial-line"></div></div>';
+        }
+        // The card and the switch are two views of the one setting, so
+        // both are drawn from it: on the lobby's drawing, after the switch
+        // turns, and when the browser shows this page again from Back
+        // (pageshow), the room having written the setting meanwhile.
+        function guideViewsRefresh() {
+            var G = window.GalleryGuide;
+            var ways = document.getElementById('lobby-start-ways');
+            if (ways) ways.innerHTML = startWaysHtml();
+            var sw = document.getElementById('lobby-tutorial');
+            var line = document.getElementById('lobby-tutorial-line');
+            if (G && sw && line) {
+                var on = G.isOn(guideValue());
+                sw.setAttribute('aria-checked', on ? 'true' : 'false');
+                line.textContent = on ? G.FRONT.tutorialOn : G.FRONT.tutorialOff;
+            }
+        }
+        window.addEventListener('pageshow', guideViewsRefresh);
         function startCardHtml(item) {
             var h = '<div class="lobby-start" data-viz-id="' + escapeHtml(item.id) + '">';
             if (item.picture) {
@@ -3176,10 +3342,7 @@
             if (item.description) {
                 h += '<div class="lobby-start-desc">' + escapeHtml(item.description) + '</div>';
             }
-            h += '<button type="button" class="lobby-start-enter">' + escapeHtml(LOBBY_START_BUTTON) + ' ' +
-                 '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-                 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-                 '<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></button>';
+            h += '<div class="lobby-start-ways" id="lobby-start-ways">' + startWaysHtml() + '</div>';
             h += '</div></div>';
             return h;
         }
@@ -3193,12 +3356,16 @@
             }
 
             var cfgSentence = (window.__galleryConfig && window.__galleryConfig.sentence) || '';
+            var cfgMore = (window.__galleryConfig && window.__galleryConfig.sentence_more) || '';
             var html = '<div class="lobby">';
             // The name, gold, with the About button beside it (L-517,
-            // board D); the one line under it is the served sentence.
+            // board D); under it, since L-527, two served lines: what an
+            // orrery is, and what this one shows.
             html += '<div class="lobby-title-row"><div class="welcome-title">Paloma\'s Orrery</div>' +
                     '<button class="footer-about-btn" id="lobby-about-btn" title="About Paloma\'s Orrery">i</button></div>';
-            html += '<div class="welcome-text">' + escapeHtml(cfgSentence || LOBBY_DEFAULT_SENTENCE) + '</div>';
+            html += '<div class="welcome-text"><div class="lobby-line">' +
+                    escapeHtml(cfgSentence || LOBBY_DEFAULT_SENTENCE) + '</div>' +
+                    '<div class="lobby-line">' + escapeHtml(cfgMore || LOBBY_DEFAULT_MORE) + '</div></div>';
 
             // The way in (L-428): the start card, once, first.
             var startItem = null;
@@ -3284,6 +3451,10 @@
                 html += '</div>';
             }
 
+            // L-527: the Tutorial row, under Featured, above the line
+            // about Paloma; its state is drawn by guideViewsRefresh, below.
+            html += tutorialHtml();
+
             // L-447: what an orrery is and who Paloma is, served beside
             // the sentence; nothing is printed when the config has none.
             // Since L-517 it stands just above the guest book.
@@ -3322,14 +3493,25 @@
                     openCard(this.getAttribute('data-viz-id'));
                 });
             }
-            // The start card (L-428): one handler on the whole block, so
-            // the picture and the Enter button both open the room.
+            // The start card (L-428): one handler on the whole block. A
+            // tap on a way in (L-527) goes that way; a tap anywhere else on
+            // the card, its picture say, goes the gold button's way.
             var startEl = welcomeState.querySelector('.lobby-start');
             if (startEl) {
-                startEl.addEventListener('click', function () {
-                    openCard(this.getAttribute('data-viz-id'));
+                startEl.addEventListener('click', function (ev) {
+                    var way = ev.target && ev.target.closest ? ev.target.closest('[data-way]') : null;
+                    if (!way) way = this.querySelector('.lobby-start-enter');
+                    startGo(way ? way.getAttribute('data-way') : 'plain');
                 });
             }
+            var tutorial = document.getElementById('lobby-tutorial');
+            if (tutorial) {
+                tutorial.addEventListener('click', function () {
+                    guideKeep(window.GalleryGuide.isOn(guideValue()) ? 'off' : 'on');
+                    guideViewsRefresh();
+                });
+            }
+            guideViewsRefresh();
             var about = document.getElementById('lobby-about-btn');
             if (about) about.addEventListener('click', openAbout);
         }

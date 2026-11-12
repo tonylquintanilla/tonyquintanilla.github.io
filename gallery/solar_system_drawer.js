@@ -134,20 +134,20 @@
 //   FIXED ROW  every centre has one: no tick box, no Go To, always drawn;
 //              its name opens its text box and its panel. Its trace group
 //              is the assembler's centre marker, "center", in every room.
-//   CENTRE ON  where "Enter the <name> room" stood, "Centre on <name>"
+//   CENTRE ON  where "Enter the <name> room" stood, "Center on <name>"
 //              (WORDS.enter) on the row of a body whose centre is built.
 //              A body that is a centre in the tree but has none built --
 //              something is served around it, an object fetched around it
 //              or features of its own (centresOf, read from the config,
 //              never typed) -- reads "Not built yet" there (WORDS.notBuilt).
 //              REMOVED by Tony's phone look of 2026-11-07: "A body with no
-//              centre shows neither label. It simply has no 'Centre on'
+//              centre shows neither label. It simply has no 'Center on'
 //              button." Not built yet and No room or cards yet are gone.
 //              Any other body opens to "No room or cards yet" as before.
 //   TRAIL      a centre other than the root shows "Solar system > <name>"
 //              at the top of its drawer, its first part a link back to
 //              the root (WORDS.trailRoot, ROOT_EXHIBIT).
-//   TICKS KEPT leaving the root by Centre on keeps what was ticked there,
+//   TICKS KEPT leaving the root by Center on keeps what was ticked there,
 //              for the open tab only (sessionStorage), and the root's next
 //              opening in that tab puts it back, once (tickMemory,
 //              tickRestore). Reset still starts fresh.
@@ -157,7 +157,7 @@
 // Anthropic's Claude Opus 5.5 (L-515 step 2a: ONE DRAWER, above). Updated November 7, 2026, later, with
 // Anthropic's Claude Opus 5.5 (L-515, Tony's phone look at part 2:
 // centreOffer, WORDS.noRoom and WORDS.notBuilt removed; a row offers
-// Centre on or nothing). Updated November 7, 2026, later still, with
+// Center on or nothing). Updated November 7, 2026, later still, with
 // Anthropic's Claude Opus 5.5 (L-515 part 3, Tony's ruling 7: the Sun's
 // shells are rows in the root -- a served row {shell, label} read by
 // rowsFromServed, placed among the bodies by distance by placeShells, in
@@ -231,11 +231,11 @@
   // his, 2026-10-24 (L-477).
   const WORDS = {
     // L-515 (Tony's rulings 2 and 10 of 2026-11-07): the room button reads
-    // "Centre on <name>"; the trail line's first part is the root. Since
+    // "Center on <name>"; the trail line's first part is the root. Since
     // his phone look of 2026-11-07 a body with no centre built shows
     // nothing where the button would be: noRoom ("No room or cards yet")
     // and notBuilt ("Not built yet") are gone.
-    enter: function (name) { return "Centre on " + name; },
+    enter: function (name) { return "Center on " + name; },
     trailRoot: "Solar system",
     trailSep: " > ",
     reset: "Reset",
@@ -426,7 +426,7 @@
 
   // L-515, Tony's phone look of 2026-11-07: centreOffer, which said
   // "Not built yet" on a centre in the tree with none built, is gone with
-  // the words; a row offers Centre on where roomFor names a room, and
+  // the words; a row offers Center on where roomFor names a room, and
   // nothing else.
 
   // L-515 (rulings 6 and 9): the bodies that are centres in the tree,

@@ -30,7 +30,7 @@
 //      link's, AT ITS OWN FRAME (Tony's phone look of 2026-11-08, night:
 //      "the scene resets but the scale does not").
 //   9. The same in the Solar System room: from a link with Ikeya-Seki,
-//      and from the ticks kept on a return from Centre on, Reset comes
+//      and from the ticks kept on a return from Center on, Reset comes
 //      back to the plain opening's frame.
 //   8. A tap on "Tap to update." asks the browser to go to the address
 //      without its minute.
@@ -211,7 +211,7 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
   const rootR = frameR(rootPlain);
   for (const [what, o] of [
       ["a link with Ikeya-Seki", { query: "&show=ikeya_seki&at=" + atOf(shared) }],
-      ["the ticks kept on a return from Centre on",
+      ["the ticks kept on a return from Center on",
        { session: { po_root_ticks: JSON.stringify({ ticked: ["ikeya_seki"], order: ["ikeya_seki"] }) } }]]) {
     w = await h.boot(ROOT, "solar-system", P_ROOT, Object.assign(o, PAGE));
     ok(frameR(w) > rootR * 10, "9: " + what + " does not open framed on Ikeya-Seki");

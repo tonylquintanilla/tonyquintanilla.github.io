@@ -269,7 +269,9 @@ documentation/smoke_first_guide.js and gates -- each card ends only on
 its own action, the setting and the address decide whether it runs, the
 page loads Plotly 2.35.2 and the ring's sum is 2.35.2's own; the live
 check also fetches gallery/first_guide.js, which the page loads with a
-script tag.)
+script tag. Later that day, Part 3: the same row holds the front page --
+its two served lines, the start card's title and sentence, its ways in
+and the Tutorial row, wired to the same file.)
 """
 
 import hashlib
@@ -640,7 +642,7 @@ OFFLINE_CHECKERS = [
 
     # L-515 step 2b, part 2 (2026-11-10): the view's middle. It requires
     # the real gallery/view_centre.js and works Tony's rulings 15 to 17 and
-    # 20 by hand -- the trail as the path down the tree, what Centre on
+    # 20 by hand -- the trail as the path down the tree, what Center on
     # ticks, the shift keeping its gaps; measures the 32-bit error on every
     # moon the root draws, from the Sun and with its planet at the middle,
     # and prints it; and checks the page hands every reader the shift. Its
@@ -671,8 +673,13 @@ OFFLINE_CHECKERS = [
     # the Plotly version from interactive.html's script line and is red,
     # naming both, if it is not 2.35.2, and holds the ring's sum to Plotly
     # 2.35.2's own placement (documentation/fixture_plotly_2_35_2_placement.js)
-    # on 2,000 cameras. And the page's wiring. Its self-test breaks the real
-    # file nine ways and plants a page on another Plotly first. Gates.
+    # on 2,000 cameras. And the page's wiring. Since Part 3, the front page
+    # too: the two lines under the name (gallery_config.json), the start
+    # card's title and sentence (gallery_metadata.json and the page), the
+    # ways in, each carrying the choice in the room's address, and the
+    # Tutorial row, drawn from the one setting. Its self-test breaks the real
+    # file fourteen ways and plants a page on another Plotly, three wrong
+    # sideways lines and a front page four ways first. Gates.
     ("First guide", "node",
      ["documentation/smoke_first_guide.js"], ".", "===", False),
 

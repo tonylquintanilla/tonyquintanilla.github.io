@@ -11,7 +11,7 @@
 //      arrow or a cut line comes back shifted; the trail is the path down
 //      the tree -- "Solar system" alone, "Solar system > Mars", "Solar
 //      system > Jupiter > Io", "Solar system > Photosphere" -- every part
-//      but the last a link, the last bold; Centre on ticks the centre, the
+//      but the last a link, the last bold; Center on ticks the centre, the
 //      shells its opening names and, with them, its frame elements, and
 //      what circles it only where the opening serves moon true, and never
 //      unticks; the frame note's words; and (Tony's phone look of
@@ -26,7 +26,7 @@
 //      32-bit error under half a kilometre, the finest a distance in the
 //      room prints (SolarSystemFigures.FINEST_KM).
 //   3. interactive.html loads the file and every reader agrees on the
-//      shift: Go To, Centre on, Home and Reset move the middle; the arrows
+//      shift: Go To, Center on, Home and Reset move the middle; the arrows
 //      and the far lines are handed the box in absolute points; the axis
 //      lines, the arrows, the far lines and the Sun line are kept out of
 //      the shifted copy; the frame note's line is on the page; and Tony's
@@ -41,7 +41,7 @@
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST first breaks the real file
 //   five ways -- a gap shifted into a number, the trail's last part a
-//   link, a parent left out of the trail, Centre on ticking what circles a
+//   link, a parent left out of the trail, Center on ticking what circles a
 //   centre whose opening says moon false, a body's place never put into
 //   its line -- and each must turn the worked cases red.
 //
@@ -99,10 +99,10 @@ function cases(VC) {
                   { key: "Sun: Core", shellKey: "core", frameElement: false }];
   const sun = VC.openingKeys("center", { drawn: ["photosphere"] }, shells, []);
   want(sun.keys.join() === "Sun: Photosphere,Sun: Rotation Axis" && sun.focus === "Sun: Photosphere",
-       "Centre on Sun does not open on the photosphere and the rotation axis: " + sun.keys.join());
+       "Center on Sun does not open on the photosphere and the rotation axis: " + sun.keys.join());
   const jup = VC.openingKeys("jupiter", { drawn: [], moon: false }, [], ["io"]);
   want(jup.keys.join() === "jupiter" && jup.focus === "jupiter",
-       "Centre on Jupiter does not open on its symbol alone: " + jup.keys.join());
+       "Center on Jupiter does not open on its symbol alone: " + jup.keys.join());
   const moons = VC.openingKeys("jupiter", { drawn: [], moon: true }, [], ["io"]);
   want(moons.keys.join() === "jupiter,io", "an opening serving moon true does not tick what circles it");
   const bad = VC.openingKeys("center", { drawn: ["nosuch"] }, shells, []);
@@ -219,14 +219,14 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
 [['<script src="gallery/view_centre.js"></script>', "the page does not load gallery/view_centre.js"],
  ["return viewShiftTo(at, midKey).then(function () { return ssGoHere(k); });", "Go To does not move the middle to what the body circles"],
  ["return viewShiftTo([0, 0, 0], window.SolarSystemDrawer.SUN_KEY)", "Home and Reset do not return to the Sun's view"],
- [".then(function () { return viewShiftTo(at, key); })", "Centre on does not move the middle to the body"],
+ [".then(function () { return viewShiftTo(at, key); })", "Center on does not move the middle to the body"],
  ["const box = ViewCentre.absBox(lo, hi, mid);\n    const xs = [], ys = [], zs = [];", "the direction arrows are not handed the box in absolute points"],
  ["const p = GalleryFarLines.plan(sunFarServed, box.lo, box.hi);", "the far lines are not handed the box in absolute points"],
  ["(Array.isArray(sunOriginAxisIdx) && sunOriginAxisIdx.indexOf(i) >= 0)", "the axis lines are shifted with the drawing, so they would leave the middle"],
  ["!!(t.meta && t.meta.direction_arrow)", "the arrows are shifted twice"],
  ['<p id="sun-frame-cross" hidden></p>', "the frame note has no line saying where the axis lines cross"],
- ['if (at("a.enter")) { ev.preventDefault(); ssCentreOn(k); return; }', "Centre on does not move the view in the page"],
- ["if ((ssDrawer.centres || []).indexOf(grp.key) < 0) { return; }", "Centre on is not offered by the tree's centres"],
+ ['if (at("a.enter")) { ev.preventDefault(); ssCentreOn(k); return; }', "Center on does not move the view in the page"],
+ ["if ((ssDrawer.centres || []).indexOf(grp.key) < 0) { return; }", "Center on is not offered by the tree's centres"],
  // Tony's phone look of 2026-11-10.
  ["const n = ViewCentre.throughPoint(l, p);", "a body's place is not put into its own line, so a centred orbit misses its body"],
  ["const inFold = mid !== SSD.SUN_KEY && viewInFold(grp.key, mid);", "a tick does not ask whether it is in the centred view's fold"],
@@ -260,5 +260,5 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("=== PASS: the view is centred where Tony ruled, the trail is the path down the tree, " +
-            "Centre on opens a centre's own opening, and the shift takes every moon's 32-bit error " +
+            "Center on opens a centre's own opening, and the shift takes every moon's 32-bit error " +
             "under half a kilometre with every reader agreeing on it ===");

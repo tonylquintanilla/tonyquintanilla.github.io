@@ -430,10 +430,10 @@
         a fixed centre row in every centre -- the Sun's in the Sun room,
         Earth's in the Earth room, new -- no tick box, always drawn, its
         name opening its text box and panel; the trail line "Solar system
-        > Earth" at the top of a centre's drawer; "Centre on <name>" where
+        > Earth" at the top of a centre's drawer; "Center on <name>" where
         "Enter the <name> room" stood, and "Not built yet" on a centre in
         the tree with none built; the root's ticks kept on leaving by
-        Centre on and put back once on its next opening in the tab, Reset
+        Center on and put back once on its next opening in the tab, Reset
         still fresh; a centre's children listed after its shells.)
      Updated: November 7, 2026, evening, with Anthropic's Claude Opus 5.5
        (L-515, Tony's phone look at part 2: the Earth room's Sun line
@@ -505,7 +505,7 @@
      Updated: November 12, 2026 with Anthropic's Claude Opus 5.5
        (L-527, a first visit's guide: on the Solar System room's plain
         opening, while the visitor's setting is on, four steps -- turn
-        it, tap Earth, Centre on Earth and tick the Moon, Halley's comet
+        it, tap Earth, Center on Earth and tick the Moon, Halley's comet
         -- each card asking for one action and waiting for it, a ring
         on the body to tap, "Skip the guide" on every card; it stands in
         for the i note, which shows once after the guide ends. The
@@ -550,7 +550,7 @@
     <script src="gallery/solar_system_drawer.js"></script>
     <!-- L-515 step 2b, part 2: where the Solar System room's view is
          centred -- the shift that puts the middle at the scene's origin,
-         the trail's path down the tree, what Centre on ticks. Its own
+         the trail's path down the tree, what Center on ticks. Its own
          file so that a check can require it (smoke_view_centre.js). -->
     <script src="gallery/view_centre.js"></script>
     <!-- The saved pictures in that drawer, each in a fold beside its
@@ -812,7 +812,9 @@
            GalleryGuide.SIDEWAYS -- one line at the top of the picture, just
            under the title's lines (uprightLinePlace sets its top): no
            popup, nothing to dismiss, every touch going through to the
-           picture, which still turns and zooms; gone when upright. */
+           picture, which still turns and zooms; gone when upright. In the
+           cards' yellow, so it reads apart from the picture (Tony's phone
+           look of 2026-11-12, 15:55). */
         .upright-line { display: none; }
         @media (orientation: landscape) and (max-height: 500px) {
             body.sun-exhibit .upright-line {
@@ -820,7 +822,7 @@
                 transform: translateX(-50%); max-width: calc(100% - 32px);
                 box-sizing: border-box; padding: 3px 12px; border-radius: 8px;
                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                background: rgba(10, 10, 15, 0.8); color: var(--text-primary);
+                background: var(--accent); color: var(--bg-deep);
                 font: 500 12px 'DM Sans', system-ui, sans-serif;
                 pointer-events: none;
             }
@@ -2111,7 +2113,7 @@ function infoHintMaybeShow() {
 // L-527 -- A FIRST VISIT'S GUIDE (Tony's rulings of 2026-11-11 and 12)
 // ====================================================================
 // Four steps in the Solar System room, each card asking for one action
-// and waiting for it: turn the picture; tap Earth; open the menu, Centre on
+// and waiting for it: turn the picture; tap Earth; open the menu, Center on
 // Earth, tick the Moon; Take me there, then tap Halley. Then the end card.
 // The steps, every word, the setting and the sums are
 // gallery/first_guide.js (GalleryGuide); this page draws the card and the
@@ -2128,7 +2130,7 @@ function infoHintMaybeShow() {
 // session's change of 2026-11-12).
 const GUIDE_TURN_DEG = 5;           // a turn of the view this large ends step 1
 const GUIDE_PAUSE_MS = 900;         // the next card waits this long, so the result is seen
-const GUIDE_REOPEN_MS = 1200;       // after Centre on closes the menu, it opens at the Moon's row
+const GUIDE_REOPEN_MS = 1200;       // after Center on closes the menu, it opens at the Moon's row
 const GUIDE_DRAWER_SHOW_MS = 2500;  // Take me there: the menu shown at Halley's row this long
 const GUIDE_RING_PX = 44;           // the ring's width, as .guide-ring draws it
 const GUIDE_SETTLE_MS = 400;        // the menu's slide and its rows settled
@@ -2229,10 +2231,10 @@ function guideShow() {
     // Held sideways: the paused card, and nothing of the step done yet.
     if (guideSideways()) { guideRender(card, true); guideFrame(); return; }
     if (card.wait === "turn") { guideCam0 = sunPlotDiv ? sunLiveCamera(sunPlotDiv) : null; }
-    // "There's the Moon, going round Earth": the menu out of the way.
+    // "There's the Moon, going around Earth": the menu out of the way.
     if (card.id === "comet") { setSunDrawer(false); }
     // A card at a row of the menu: the menu open there, the row's fold open
-    // (Centre on closes the menu, so the Moon's card opens it again).
+    // (Center on closes the menu, so the Moon's card opens it again).
     if (card.row) { guideOpenAt(card.row); }
     guideRender(card);
     guideFrame();
@@ -4090,7 +4092,7 @@ const EXHIBITS = {
             // arrival block, applied to its shells by GalleryArrival as
             // its room applied it, and no body ticked.
             // L-515 step 2b, part 3: ?exhibit=earth opens on Earth's own
-            // opening by Centre on, at the end of boot; like ?exhibit=sun it
+            // opening by Center on, at the end of boot; like ?exhibit=sun it
             // ticks no body of the root's served opening.
             const openingOf = (EXHIBIT_ASKED === "sun") ? EXHIBIT_ASKED : null;
             const ownOpening = EXHIBIT_ASKED !== EXHIBIT;
@@ -4560,10 +4562,10 @@ const EXHIBITS = {
             const openDrawn = openingOf ? shellOpening.drawn.slice() : (arrival.drawn || []).slice();
             const openHighlight = openingOf ? null : arrival.highlight;
             // L-515 step 2b, part 2 (Tony's rulings 9, 15 and 16): the rows
-            // that offer Centre on -- every body something is drawn or
+            // that offer Center on -- every body something is drawn or
             // fetched around (SolarSystemDrawer.centresOf, read from the
             // config, never typed), the Sun among them -- with each one's
-            // own served opening, and the Sun's shells' keys, so Centre on
+            // own served opening, and the Sun's shells' keys, so Center on
             // ticks what the opening names.
             let cfgObj = {};
             try { cfgObj = JSON.parse(cfgText); } catch (e) { cfgObj = {}; }
@@ -4595,7 +4597,7 @@ const EXHIBITS = {
                                names: names,
                                // L-515: the restored tick order, if any.
                                order: restored ? restored.order : null,
-                               // L-515 step 2b, part 2: Centre on.
+                               // L-515 step 2b, part 2: Center on.
                                centres: centreKeys,
                                openings: centreOpenings,
                                centreShells: centreShells } };
@@ -4794,7 +4796,7 @@ function sceneFoldKeyMaybe(k) {
 }
 
 // The folds the address needs, drawn at the room's opening, the shared
-// link's rows in them ticked; then ?exhibit=earth's Centre on Earth.
+// link's rows in them ticked; then ?exhibit=earth's Center on Earth.
 async function ssFoldsAtOpening() {
     const st = sceneAddrState;
     const want = (st && st.foldKeys) ? st.foldKeys.slice() : [];
@@ -5220,7 +5222,7 @@ function sunLineFit() {
 // Reset used the frame the page OPENED on (navArrivalR), which since the
 // shared link is the frame of the link's rows -- and every reload's
 // address carries the ticks -- and, before it, of the ticks the root kept
-// on a return from Centre on. Null when nothing drawn has a size.
+// on a return from Center on. Null when nothing drawn has a size.
 function sunTicksFrameR() {
     const far = sunOutermostShown();
     const rad = far >= 0 ? sunGroupRadius(far) : 0;
@@ -5263,7 +5265,7 @@ function sunFocusOn(k, whole) {
 // ====================================================================
 // L-515 step 2b, part 2: THE VIEW'S MIDDLE (Tony's rulings 15 to 17 and
 // 20 of 2026-11-09). The Solar System room's view is a box about its
-// middle: the Sun, or the body Centre on put there, or a moon's planet
+// middle: the Sun, or the body Center on put there, or a moon's planet
 // after Go To on the moon. The middle is held at the scene's ORIGIN: the
 // whole drawing is moved so the middle sits at 0, 0, 0, in 64-bit
 // numbers, before it is drawn (gallery/view_centre.js says why: 32-bit
@@ -5441,7 +5443,7 @@ function viewFoldFrameR(centre) {
     return r > 0 ? r : viewCentreFrameR(centre, [], false);
 }
 
-// Centre on <body> (Tony's rulings 15 and 16): the body in the middle, on
+// Center on <body> (Tony's rulings 15 and 16): the body in the middle, on
 // its own served opening. What was ticked stays ticked; the opening's
 // rows are ticked too (ViewCentre.openingKeys); the count line counts
 // what lies outside. The trail ends on what the opening is about.
@@ -6398,7 +6400,7 @@ async function initSunExhibit() {
         viewCrossFill();
         // L-515 step 2b (ruling 20): ?exhibit=sun is the Sun's own opening,
         // so its trail ends on what that opening is about ("Solar system >
-        // Photosphere"), as Centre on Sun's does.
+        // Photosphere"), as Center on Sun's does.
         if (ssDrawer && EXHIBIT_ASKED === "sun") {
             const SK = window.SolarSystemDrawer.SUN_KEY;
             ssDrawer.trailFocus = ViewCentre.openingKeys(SK, ssDrawer.openings[SK] || null,
@@ -7749,7 +7751,7 @@ function sunSwatchColor(trace) {
 // file; this part only touches the page and Plotly.
 //   - The Sun's row cannot be ticked: it is the scene's fixed centre.
 //   - "Enter the ... room" sits on the row of every body with a room in
-//     EXHIBITS, always (L-429, 2026-10-10); "Centre on <name>" since L-515.
+//     EXHIBITS, always (L-429, 2026-10-10); "Center on <name>" since L-515.
 //     A row with none shows nothing there since Tony's phone look of
 //     2026-11-07 (until then "No room or cards yet" or "Not built yet").
 //   - The groups fold open; a group row ticks nothing (L-477).
@@ -7801,7 +7803,7 @@ function ssDrawerState(served) {
         order: Array.isArray(served.order) ? served.order.slice()
             : SSD.openingOrder(rows, served.drawn, served.highlight),
         companions: served.companions || {},   // L-443: {spacecraft: [rows]}
-        // L-515 step 2b, part 2: the rows offering Centre on, each one's
+        // L-515 step 2b, part 2: the rows offering Center on, each one's
         // served opening, and the Sun's shells' keys; and the trail's
         // focus, null in the Sun's view.
         centres: served.centres || [],
@@ -7851,7 +7853,7 @@ function drawerTrailMount() {
 
 // L-515 (Tony's ruling 10 of 2026-11-07): "returning to the root restores
 // what the visitor had ticked there; Reset still starts fresh." When the
-// visitor leaves the root by a Centre on button, what is ticked there and
+// visitor leaves the root by a Center on button, what is ticked there and
 // in what order is kept for this tab only (sessionStorage, which the
 // browser empties when the tab closes: no stored information between
 // sessions, Tony, 2026-09-30); the root's next opening in this tab takes
@@ -7933,7 +7935,7 @@ function ssWireRow(row, grp, k, list) {
         const at = function (sel) {
             return !!(t && typeof t.closest === "function" && t.closest(sel));
         };
-        // L-515 step 2b, part 2 (Tony's ruling 15): Centre on moves the
+        // L-515 step 2b, part 2 (Tony's ruling 15): Center on moves the
         // view here, in this page, so the body sits in the middle.
         if (at("a.enter")) { ev.preventDefault(); ssCentreOn(k); return; }
         if (at(".bfold")) { ssBodyFold(grp.key); return; }     // L-515 step 2b
@@ -7945,7 +7947,7 @@ function ssWireRow(row, grp, k, list) {
         if (!SSD.tickable(grp.key)) { sunLabelShow(k); }
     };
     list.appendChild(row);
-    // A body whose centre is built shows "Centre on <name>" on its own
+    // A body whose centre is built shows "Center on <name>" on its own
     // row, after Go To, always and on every screen (L-429, 2026-10-10;
     // L-515). Any other body shows nothing there: L-515, Tony's phone look
     // of 2026-11-07, "Remove 'Not built yet' and 'No room or cards yet.' A
@@ -7953,9 +7955,9 @@ function ssWireRow(row, grp, k, list) {
     // on' button." Until then such a row opened to one of the two, in a
     // line under it (.sun-row-open), which is no longer made.
     // L-515 step 2b, part 2 (Tony's rulings 9, 15 and 16): every centre in
-    // the tree offers Centre on -- a body something is drawn or fetched
+    // the tree offers Center on -- a body something is drawn or fetched
     // around, read from the config (compose's drawer.centres), the Sun's
-    // fixed row too ("Centre on Sun", ruling 16) -- and it moves the view
+    // fixed row too ("Center on Sun", ruling 16) -- and it moves the view
     // in this page (ssCentreOn). Until 2b it led to the centre's own room.
     if ((ssDrawer.centres || []).indexOf(grp.key) < 0) { return; }
     const inline = document.createElement("span");
@@ -8908,7 +8910,7 @@ function ssHomeAtSun(gd, reset) {
         first = sunApplyVisibility(true, sunOutermostShown());
         // L-518: framed on the opening just put back, by the room's rule,
         // not on the frame the page opened on (a shared link's rows, or
-        // the ticks kept on a return from Centre on).
+        // the ticks kept on a return from Center on).
         r = sunTicksFrameR() || navArrivalR || EX.halfRangeAu;
     } else {
         const far = sunOutermostShown();
@@ -9145,7 +9147,7 @@ function renderSunDrawer() {
             : "Nothing drawn";
 
     renderSunInfo(grp);
-    // L-515 step 2b: the root's trail follows Go To, Centre on and Home.
+    // L-515 step 2b: the root's trail follows Go To, Center on and Home.
     if (ssDrawer) { viewTrailMount(); }
     // L-518: every tick and untick passes through here, so the address
     // is rewritten here (sceneAddressWrite does nothing until the room

@@ -3,8 +3,8 @@
   "visualizations": [
     {
       "id": "solar_system",
-      "title": "Today's sky, live",
-      "description": "The Sun, the planets, Earth and its Moon. Turn it with your finger.",
+      "title": "Today's solar system",
+      "description": "Turn it, tap a planet, fly to the Moon.",
       "room": "solar_system",
       "shape": "9:16",
       "files": {},

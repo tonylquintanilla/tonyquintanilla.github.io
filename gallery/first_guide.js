@@ -41,6 +41,10 @@
 //                    13:44): held sideways the room shows one line,
 //                    WORDS.sideways, and the guide pauses on
 //                    WORDS.upright, going on at the same step upright.
+//   FRONT            the front page's start card and Tutorial row:
+//                    frontView() (a first visit's two ways in, or the one
+//                    returning button), keeps() (what a way in writes),
+//                    roomAddress() (the room's address, the choice in it).
 //
 // WHY IT IS ITS OWN FILE. Tony's ruling of 2026-09-18 (L-338): logic that
 // needs no browser lives in its own file, so a check can reach it. Its
@@ -66,11 +70,11 @@
         theEnd: "The end",
         skip: "Skip the guide",
         turn: "This is the solar system today, seen from above. Drag with one finger to turn it.",
-        earth: "Find home: tap Earth, the blue dot in the ring.",
+        earth: "Find our home planet: tap Earth, the blue dot in the ring.",
         menu: "Open the menu, bottom left.",
-        centre: "This is the menu. On Earth's row, tap Centre on Earth to fly in.",
-        moon: "Now tick the Moon, to see it go round Earth.",
-        comet: "There's the Moon, going round Earth. Next, a comet.",
+        centre: "This is the menu. On Earth's row, tap Center on Earth to fly in.",
+        moon: "Now tick the Moon, to see it go around Earth.",
+        comet: "There's the Moon, going around Earth. Next, a comet.",
         go: "Take me there",
         halley: "That long orbit is Halley's comet. Tap Halley, in the ring, to see where it is today.",
         end: "That's the orrery: the solar system as it is today, drawn from JPL's (NASA) data, updated every night. Explore on your own, or turn on Tutorial on the front page to see this again.",
@@ -80,6 +84,42 @@
         sideways: "This room works best with your phone upright.",
         upright: "Turn your phone upright to continue."
     };
+
+    // The front page's way in (Part 3 of L-527): the start card's buttons
+    // and the Tutorial row, the same setting seen from the front page.
+    // The two lines under the name are served (gallery_config.json), and
+    // the card's title and sentence are the card's own
+    // (gallery_metadata.json); these are the page's controls.
+    var FRONT = {
+        show: "Show me around",
+        alone: "Explore on my own",
+        again: "Explore the solar system",
+        tutorial: "Tutorial",
+        tutorialOn: "On. The short guide runs the next time you open the Solar System room.",
+        tutorialOff: "Off. Turn it on to see the short guide again the next time you open the Solar System room."
+    };
+    // What the start card offers: a first visit (no choice yet) the two
+    // ways in; once a choice is kept, one button.
+    function frontView(value) {
+        return (value === "on" || value === "off") ? "returning" : "first";
+    }
+    // What a way in keeps: "Show me around" on, "Explore on my own" off,
+    // the returning button nothing.
+    function keeps(how) {
+        return how === "show" ? "on" : (how === "alone" ? "off" : null);
+    }
+    // The room's address for a way in. Every way carries the choice in the
+    // address -- "Show me around" guide=1, "Explore on my own" guide=0, the
+    // returning button the setting's own value -- so a browser that keeps
+    // nothing opens the room as its front page showed it. The room takes
+    // guide out of the address as it opens (withoutGuide).
+    function roomAddress(live, how, value) {
+        var run = how === "show" ? true : (how === "alone" ? false : isOn(value));
+        var at = String(live || "").split("#")[0];
+        var p = at.indexOf("?") < 0 ? new URLSearchParams("") : new URLSearchParams(at.slice(at.indexOf("?") + 1));
+        p.set("guide", run ? "1" : "0");
+        return (at.indexOf("?") < 0 ? at : at.slice(0, at.indexOf("?"))) + "?" + p.toString();
+    }
 
     // Each card: its step number (5 is the end card), its words, what ends
     // it (wait, and for some a key), and where it sits (place): "top",
@@ -298,7 +338,8 @@
 
     root.GalleryGuide = {
         KEY: KEY, PLOTLY_VERSION: PLOTLY_VERSION, SIDEWAYS: SIDEWAYS,
-        WORDS: WORDS, STEPS: STEPS,
+        WORDS: WORDS, STEPS: STEPS, FRONT: FRONT,
+        frontView: frontView, keeps: keeps, roomAddress: roomAddress,
         ends: ends, doneBy: doneBy, create: create, label: label, dots: dots,
         read: read, write: write, isOn: isOn, plain: plain, asked: asked,
         shouldRun: shouldRun, withoutGuide: withoutGuide,

@@ -20,7 +20,7 @@
 // What a visitor does is done as a visitor does it, with the mouse: a drag
 // turns the picture; a click at the RING's centre must open Earth's box
 // (and Halley's), which is the proof that the ring sits on the dot Plotly
-// picks; the menu button, Centre on Earth, the Moon's tick box and the
+// picks; the menu button, Center on Earth, the Moon's tick box and the
 // card's buttons are clicked. The ring is also held to a Plotly scene
 // annotation pinned at the same point, Plotly's own placement, within
 // RING_TOLERANCE_PX. Its report names each step passed and whether the
@@ -75,11 +75,16 @@ window.loadPyodide = async function () {
            runPythonAsync: async function () { return payload; } };
 };`;
 
-async function open(browser, size, opts) {
+// A fresh browser profile serving the site from ROOT; urls lists every
+// page of the site asked for, address and all (the front page's ways in
+// are read there before the room takes guide out of its address).
+async function makeContext(browser, size, opts) {
   opts = opts || {};
+  const urls = [];
   const context = await browser.newContext({ viewport: { width: size.w, height: size.h }, deviceScaleFactor: 1 });
   await context.route("**/*", function (route) {
     const url = route.request().url();
+    if (url.startsWith(ORIGIN) && /\.html(\?|#|$)/.test(url)) { urls.push(url); }
     if (url.indexOf("cdn.plot.ly/plotly-") >= 0) {
       return route.fulfill({ status: 200, contentType: "application/javascript", body: fs.readFileSync(BUNDLE) });
     }
@@ -121,6 +126,12 @@ async function open(browser, size, opts) {
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", function (e) { errors.push(String(e && e.message || e)); });
+  return { page: page, context: context, errors: errors, urls: urls };
+}
+
+async function open(browser, size, opts) {
+  opts = opts || {};
+  const { page, context, errors } = await makeContext(browser, size, opts);
   await page.goto(ORIGIN + "interactive.html?exhibit=solar-system" + (opts.query || ""));
   await page.waitForFunction(function () {
     const o = document.getElementById("loading-overlay");
@@ -302,7 +313,7 @@ async function fullWalk(browser, size) {
     good = ok(await waitCard(page, "menu"), "step 3's first card came up") && good;
     if (good) { tag("step 2, tap Earth"); }
 
-    // Step 3: the menu, Centre on Earth, the Moon.
+    // Step 3: the menu, Center on Earth, the Moon.
     good = (await cardClearOf(page, await rect(page, "#sun-drawer-btn"), "the menu button"));
     const c3 = await rect(page, "#guide-card"), b3 = await rect(page, "#sun-drawer-btn");
     good = ok(c3 && b3 && c3.bottom <= b3.top + 0.5, "the menu card sits above the menu button") && good;
@@ -313,7 +324,7 @@ async function fullWalk(browser, size) {
     good = ok(await rowSeen(page, '#sun-drawer-list .sun-row[data-k="' + earthRow + '"]'), "Earth's row is in view in the menu") && good;
     good = (await cardClearOf(page, await rect(page, "#sun-drawer"), "the open menu")) && good;
     await tap(page, '#sun-drawer-list a.enter[data-centre="earth"]', 'ssCentreOn(ssIndex("earth"))');
-    good = ok(await waitCard(page, "moon", 8000), "Centre on Earth; the menu opened again at the Moon") && good;
+    good = ok(await waitCard(page, "moon", 8000), "Center on Earth; the menu opened again at the Moon") && good;
     good = ok(await page.evaluate(function () { return viewMid.key === "earth"; }), "the view is centred on Earth") && good;
     const moonRow = await page.evaluate(function () { return ssIndex("moon"); });
     const moonSel = '#sun-drawer-list .sun-row[data-k="' + moonRow + '"]';
@@ -324,7 +335,7 @@ async function fullWalk(browser, size) {
     good = ok(await waitCard(page, "comet"), "the Moon ticked; step 4's card came up") && good;
     good = ok(await page.evaluate(function () { return !document.body.classList.contains("sun-drawer-open"); }),
               "the menu is out of the way to see the Moon") && good;
-    if (good) { tag("step 3, the menu, Centre on Earth, the Moon"); }
+    if (good) { tag("step 3, the menu, Center on Earth, the Moon"); }
 
     // Step 4: Take me there, then Halley.
     good = ok((await page.textContent("#guide-go")) === "Take me there", "the card's button reads Take me there");
@@ -442,15 +453,20 @@ async function lineCheck(page, sideways) {
       });
     return { shown: r.width > 0 && r.height > 0, text: el.textContent,
              top: r.top - v.top, third: v.height / 3, left: r.left, right: r.right, bottom: r.bottom, over: over,
-             through: getComputedStyle(el).pointerEvents === "none" };
+             through: getComputedStyle(el).pointerEvents === "none",
+             // Tony's phone look of 2026-11-12, 15:55: the cards' yellow.
+             colour: getComputedStyle(el).backgroundColor + " / " + getComputedStyle(el).color,
+             cardColour: getComputedStyle(document.getElementById("guide-card")).backgroundColor + " / " +
+                         getComputedStyle(document.getElementById("guide-card")).color };
   });
   if (!sideways) { return ok(l && !l.shown, "upright: the line is gone"); }
   const vp = page.viewportSize();
   return ok(l && l.shown && l.text === LINE_WORDS && l.through && l.top < l.third && !l.over.length &&
-            l.left >= 0 && l.right <= vp.width,
+            l.colour === l.cardColour && l.left >= 0 && l.right <= vp.width,
             "sideways: the line \"" + (l && l.text) + "\" at the top of the picture, under the title (" +
             (l ? Math.round(l.left) + "-" + Math.round(l.right) + " px across, " + Math.round(l.top) +
-                 " px into the picture, covering " + (l.over.join(", ") || "nothing") : "none") +
+                 " px into the picture, covering " + (l.over.join(", ") || "nothing") + "; " + l.colour +
+                 (l.colour === l.cardColour ? ", the cards' yellow" : ", not the cards' " + l.cardColour) : "none") +
             "), letting touches through");
 }
 async function pausedCheck(page, id, step, what) {
@@ -565,6 +581,159 @@ async function settingWalk(browser) {
   } finally { await context.close(); }
 }
 
+// ---- the front page's way in (Part 3) ----
+const FRONT_LINES = ["An orrery is a model of the solar system that moves.",
+  "This one shows the Sun, the planets, moons, comets and spacecraft where they are today, from JPL's (NASA) data, updated every night."];
+const TUTORIAL_ON = "On. The short guide runs the next time you open the Solar System room.";
+const TUTORIAL_OFF = "Off. Turn it on to see the short guide again the next time you open the Solar System room.";
+function front(page) {
+  return page.evaluate(function () {
+    const q = function (s) { return document.querySelector(s); };
+    const all = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+    const sw = q("#lobby-tutorial"), lobby = q(".lobby");
+    const order = function (el) { return el ? all(".lobby *").indexOf(el) : -1; };
+    const featured = all(".lobby-heading").filter(function (h) { return h.textContent === "Featured"; })[0] || null;
+    let kept = null;
+    try { kept = window.localStorage.getItem("paloma_orrery_guide"); } catch (e) { kept = "(refused)"; }
+    return {
+      lines: all(".lobby .welcome-text .lobby-line").map(function (e) { return e.textContent; }),
+      title: q(".lobby-start-title") && q(".lobby-start-title").textContent,
+      desc: q(".lobby-start-desc") && q(".lobby-start-desc").textContent,
+      ways: all("#lobby-start-ways [data-way]").map(function (e) {
+        const r = e.getBoundingClientRect();
+        return { way: e.getAttribute("data-way"), words: e.textContent.trim(), h: Math.round(r.height), gold: e.classList.contains("lobby-start-enter") };
+      }),
+      switchOn: sw ? sw.getAttribute("aria-checked") : null,
+      line: q("#lobby-tutorial-line") && q("#lobby-tutorial-line").textContent,
+      tutorialAt: order(q(".lobby-tutorial")), featuredAt: order(featured), paloma: order(q(".lobby-note")),
+      kept: kept, wide: lobby ? document.documentElement.scrollWidth <= window.innerWidth : false
+    };
+  });
+}
+async function frontOpen(browser, size, opts) {
+  const c = await makeContext(browser, size, opts);
+  await c.page.goto(ORIGIN + "index.html");
+  await c.page.waitForSelector("#lobby-start-ways [data-way]", { timeout: 20000 });
+  await c.page.waitForTimeout(300);
+  return c;
+}
+async function roomOpened(page) {
+  await page.waitForURL(/interactive\.html/, { timeout: 20000 });
+  await page.waitForFunction(function () {
+    const o = document.getElementById("loading-overlay");
+    return o && o.classList.contains("hidden");
+  }, null, { timeout: 60000 });
+  await page.waitForTimeout(1500);
+  return page.evaluate(function () {
+    const el = document.getElementById("guide-card");
+    let kept = null;
+    try { kept = window.localStorage.getItem("paloma_orrery_guide"); } catch (e) { kept = "(refused)"; }
+    return { guide: !!(el && el.classList.contains("show")), card: el && el.getAttribute("data-card"),
+             search: window.location.search, kept: kept };
+  });
+}
+async function backToFront(page) {
+  await page.goBack();
+  await page.waitForSelector("#lobby-start-ways [data-way]", { timeout: 20000 });
+  await page.waitForTimeout(400);
+  return front(page);
+}
+function lastUrl(urls) { return urls.filter(function (u) { return u.indexOf("interactive.html") >= 0; }).slice(-1)[0] || ""; }
+async function frontWalk(browser) {
+  const size = SIZES[0];
+  console.log("\n== The front page, " + size.name + ": a first visitor, then a returning one");
+  // A first visitor (a fresh profile, as a private window is).
+  let c = await frontOpen(browser, size);
+  try {
+    let f = await front(c.page);
+    let good = ok(JSON.stringify(f.lines) === JSON.stringify(FRONT_LINES), "the two lines under the name: " + JSON.stringify(f.lines));
+    good = ok(f.title === "Today's solar system" && f.desc === "Turn it, tap a planet, fly to the Moon.",
+              "the start card: \"" + f.title + "\", \"" + f.desc + "\"") && good;
+    good = ok(f.ways.length === 2 && f.ways[0].words === "Show me around" && f.ways[0].gold &&
+              f.ways[1].words === "Explore on my own" && !f.ways[1].gold && f.ways.every(function (w) { return w.h >= 44; }),
+              "a first visit: the gold \"Show me around\" and under it \"Explore on my own\", each 44 px tall or more (" +
+              f.ways.map(function (w) { return w.words + " " + w.h + " px"; }).join(", ") + ")") && good;
+    good = ok(f.switchOn === "true" && f.line === TUTORIAL_ON, "the Tutorial switch on, its line \"" + f.line + "\"") && good;
+    good = ok(f.featuredAt >= 0 && f.tutorialAt > f.featuredAt && f.paloma > f.tutorialAt,
+              "the Tutorial row under Featured, above the line about Paloma") && good;
+    good = ok(f.wide, "no sideways scroll on the front page") && good;
+    good = ok(f.kept === null, "nothing kept before a choice") && good;
+    if (good) { stepsPassed.push("front page, a first visit: the two lines, the card, the two ways in, the Tutorial row"); }
+    if (process.env.WALK_SHOTS) {
+      await c.page.screenshot({ path: path.join(process.env.WALK_SHOTS, "walk_front_first.png") }).catch(function () {});
+      await c.page.evaluate(function () { document.querySelector(".lobby-tutorial").scrollIntoView({ block: "center" }); });
+      await c.page.screenshot({ path: path.join(process.env.WALK_SHOTS, "walk_front_tutorial.png") }).catch(function () {});
+      await c.page.evaluate(function () { window.scrollTo(0, 0); document.querySelectorAll("*").forEach(function (e) { if (e.scrollTop) { e.scrollTop = 0; } }); });
+    }
+
+    await c.page.click("#lobby-start-ways [data-way='show']");
+    let r = await roomOpened(c.page);
+    good = ok(/[?&]guide=1(&|$)/.test(lastUrl(c.urls)), "Show me around opens " + lastUrl(c.urls).slice(ORIGIN.length));
+    good = ok(r.guide && r.card === "turn" && r.kept === "on" && r.search.indexOf("guide") < 0,
+              "the room with the guide at step 1, the setting on, the address without guide (" + r.search + ")") && good;
+    await c.page.click("#guide-skip");
+    await c.page.waitForTimeout(400);
+    f = await backToFront(c.page);
+    good = ok(f.kept === "off" && f.ways.length === 1 && f.ways[0].words === "Explore the solar system" &&
+              f.switchOn === "false" && f.line === TUTORIAL_OFF,
+              "Skip, then Back: one button \"" + (f.ways[0] && f.ways[0].words) + "\", the switch off, its line \"" + f.line + "\"") && good;
+    if (good) { stepsPassed.push("front page: Show me around runs the guide; Skip, and the front page shows the returning button, the switch off"); }
+
+    await c.page.click("#lobby-tutorial");
+    await c.page.waitForTimeout(200);
+    f = await front(c.page);
+    good = ok(f.kept === "on" && f.switchOn === "true" && f.line === TUTORIAL_ON && f.ways.length === 1,
+              "the switch turned on: the setting on, its line \"" + f.line + "\", still one button");
+    await c.page.click("#lobby-start-ways [data-way='again']");
+    r = await roomOpened(c.page);
+    good = ok(r.guide && r.card === "turn", "Explore the solar system, Tutorial on: the guide runs (" + lastUrl(c.urls).slice(ORIGIN.length) + ")") && good;
+    await c.page.click("#guide-skip");
+    await c.page.waitForTimeout(400);
+    f = await backToFront(c.page);
+    await c.page.click("#lobby-start-ways [data-way='again']");
+    r = await roomOpened(c.page);
+    good = ok(!r.guide && /[?&]guide=0(&|$)/.test(lastUrl(c.urls)), "Explore the solar system, Tutorial off: no guide (" +
+              lastUrl(c.urls).slice(ORIGIN.length) + ")") && good;
+    if (good) { stepsPassed.push("front page: the Tutorial switch decides what Explore the solar system opens"); }
+    ok(c.errors.length === 0, "no page error" + (c.errors.length ? ": " + c.errors.join(" | ").slice(0, 300) : ""));
+  } finally { await c.context.close(); }
+
+  // Explore on my own, from a fresh profile.
+  c = await frontOpen(browser, size);
+  try {
+    await c.page.click("#lobby-start-ways [data-way='alone']");
+    const r = await roomOpened(c.page);
+    let good = ok(!r.guide && r.kept === "off" && /[?&]guide=0(&|$)/.test(lastUrl(c.urls)) && r.search.indexOf("guide") < 0,
+                  "Explore on my own: the room with no guide, the setting off (" + lastUrl(c.urls).slice(ORIGIN.length) + ")");
+    const f = await backToFront(c.page);
+    good = ok(f.ways.length === 1 && f.ways[0].words === "Explore the solar system" && f.switchOn === "false",
+              "Back: the returning button, the switch off") && good;
+    if (good) { stepsPassed.push("front page: Explore on my own opens the room with no guide and keeps off"); }
+  } finally { await c.context.close(); }
+
+  // The picture, on a first visit, goes the gold button's way.
+  c = await frontOpen(browser, size);
+  try {
+    await c.page.click(".lobby-start-picture");
+    const r = await roomOpened(c.page);
+    if (ok(r.guide && /[?&]guide=1(&|$)/.test(lastUrl(c.urls)), "a first visit's tap on the picture goes Show me around's way")) {
+      stepsPassed.push("front page: the card's picture goes the gold button's way");
+    }
+  } finally { await c.context.close(); }
+
+  // A browser that keeps nothing: Show me around still runs the guide, and
+  // nothing is remembered.
+  c = await frontOpen(browser, size, { blocked: true });
+  try {
+    await c.page.click("#lobby-start-ways [data-way='show']");
+    const r = await roomOpened(c.page);
+    let good = ok(r.guide && r.card === "turn", "a browser that keeps nothing: Show me around runs the guide");
+    const f = await backToFront(c.page);
+    good = ok(f.ways.length === 2 && f.ways[0].words === "Show me around", "and Back shows the first visit's two ways again") && good;
+    if (good) { stepsPassed.push("front page, a browser that keeps nothing: Show me around runs the guide, nothing remembered"); }
+  } finally { await c.context.close(); }
+}
+
 async function main() {
   if (!PAYLOAD) { console.log("usage: node tools/headless/walk_first_guide.js . <payload.json> [planted page]"); process.exit(2); }
   // The browser: Playwright's own Chromium, or with WALK_CHANNEL=msedge the
@@ -575,9 +744,14 @@ async function main() {
   const browser = await chromium.launch(launch);
   const rings = [];
   try {
+    // WALK_ONLY=front walks the front page alone, for work on it.
+    if (process.env.WALK_ONLY === "front") { await frontWalk(browser); }
+    else {
     for (const size of (PAGE ? SIZES.slice(0, 1) : SIZES)) { rings.push(size.name + ": " + (await fullWalk(browser, size)).join("; ")); }
     if (!PAGE) { for (const size of SIDEWAYS) { await sidewaysWalk(browser, size); } }
     if (!PAGE) { await settingWalk(browser); }
+    if (!PAGE) { await frontWalk(browser); }
+    }
   } finally { await browser.close(); }
   console.log("\nSteps passed (" + stepsPassed.length + "):");
   stepsPassed.forEach(function (s) { console.log("  - " + s); });

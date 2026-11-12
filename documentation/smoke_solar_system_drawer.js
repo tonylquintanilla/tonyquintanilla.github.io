@@ -96,16 +96,16 @@
 // Updated October 29, 2026 with Anthropic's Claude Opus 5.5 (L-503: a
 // drawing row, the belt's cloud, section 9, and two breaks).
 // Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
-// 2a, one drawer: section 10 -- the plan, the centres, Centre on and Not
+// 2a, one drawer: section 10 -- the plan, the centres, Center on and Not
 // built yet, the kept ticks -- with four breaks, and the page's wiring).
 //  10. (L-515, Tony's rulings 2 and 10 of 2026-11-07) One drawer: the
 //      centre's fixed row first, groups, bodies or shells by the centre's
-//      kind; Centre on and Not built yet read from the tree; a centre's
+//      kind; Center on and Not built yet read from the tree; a centre's
 //      children; the root's ticks kept and put back.
 // Updated November 7, 2026, later, with Anthropic's Claude Opus 5.5 (L-515,
 // Tony's phone look at part 2: Not built yet and No room or cards yet are
 // gone. Section 10 and the words now hold that neither word is served and
-// the page writes neither; Centre on only where a centre is built. The
+// the page writes neither; Center on only where a centre is built. The
 // break that offered Not built yet everywhere became one that puts both
 // words back.) Updated the same evening for L-515 part 3 (Tony's ruling
 // 7): section 11, the Sun's shells placed among the root's rows by
@@ -162,7 +162,7 @@ const DRAWN = [
 // 10. L-515 step 2a (one nested tree; Tony's rulings 2 and 10 of
 // 2026-11-07): ONE drawer for every centre. Its plan puts the centre's
 // fixed row first and lists groups, bodies or shells by the centre's kind;
-// a row offers Centre on where a centre is built, and since Tony's phone
+// a row offers Center on where a centre is built, and since Tony's phone
 // look of 2026-11-07 nothing else (Not built yet is gone); which bodies
 // are centres is still read from the config;
 // a centre's children are the objects fetched around it; and the root's
@@ -225,7 +225,7 @@ function treeCases(SSD) {
   const keysOf = function (plan) {
     return plan.map(function (e) { return e.kind + ":" + e.key; }).join();
   };
-  want(SSD.WORDS.enter("Earth") === "Centre on Earth" &&
+  want(SSD.WORDS.enter("Earth") === "Center on Earth" &&
        !Object.prototype.hasOwnProperty.call(SSD.WORDS, "notBuilt") &&
        SSD.WORDS.trailRoot === "Solar system" && SSD.WORDS.trailSep === " > ",
        "the one drawer's words are not Tony's (L-515): " + SSD.WORDS.enter("Earth"));
@@ -259,14 +259,14 @@ function treeCases(SSD) {
        SSD.childrenOf(TREE_CFG, "mars").length === 0 &&
        SSD.childrenOf(TREE_CFG, "sun").indexOf("sun") < 0,
        "a centre's children are not the objects fetched around it");
-  // Tony's phone look of 2026-11-07: Centre on where a centre is built,
+  // Tony's phone look of 2026-11-07: Center on where a centre is built,
   // and nothing else -- no "Not built yet" on a centre in the tree.
   const rooms = ["sun", "earth", "solar-system"];
   want(SSD.roomFor({ slug: "earth" }, rooms) === "earth" &&
        SSD.roomFor({ slug: "jupiter" }, rooms) === null &&
        SSD.roomFor({ slug: "pluto_barycenter" }, rooms) === null &&
        SSD.roomFor({ slug: "mars" }, rooms) === null,
-       "Centre on is offered where no centre is built, or missed where one is");
+       "Center on is offered where no centre is built, or missed where one is");
   // The root's ticks, kept and put back.
   const rows = SSD.rowsFromServed(ROWS);
   const kept = SSD.tickMemory({ center: true, earth: true, mars: true, mercury: false },
@@ -683,10 +683,10 @@ function cases(SSD) {
        SSD.roomFor(rows[2], ["sun", "earth"]) === "earth" &&
        SSD.roomFor(rows[4], ["sun", "earth"]) === null,
        "a room is offered where none exists, or missed where one does");
-  // L-515 (Tony's ruling 2): "Enter the <name> room" became "Centre on
+  // L-515 (Tony's ruling 2): "Enter the <name> room" became "Center on
   // <name>"; since his phone look of 2026-11-07 a body with no centre
   // built shows nothing there, so "No room or cards yet" is gone.
-  want(SSD.WORDS.enter("Sun") === "Centre on Sun" &&
+  want(SSD.WORDS.enter("Sun") === "Center on Sun" &&
        !Object.prototype.hasOwnProperty.call(SSD.WORDS, "noRoom"),
        "the visitor's words are not Tony's");
   return fails.concat(groupCases(SSD), outsideCases(SSD), companionCases(SSD),
@@ -955,7 +955,7 @@ if (page.indexOf('<script src="gallery/solar_system_drawer.js"></script>') < 0) 
   failures.push("interactive.html does not load gallery/solar_system_drawer.js");
 }
 ["rowsFromServed", "openingOrder", "homeTarget", "orderAdd", "orderRemove",
- // L-515 step 2b, part 2: Centre on is offered by the tree's centres
+ // L-515 step 2b, part 2: Center on is offered by the tree's centres
  // (centresOf), no longer by the page's own table of rooms (roomFor).
  "rowVisible", "countLine", "centresOf", "tickable",
  "WORDS.enter", "isGroup", "members", "groupCount", "groupArrow",
@@ -999,9 +999,9 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
   ["const plan = SSD.rowPlan(ssDrawer ? ssDrawer.rows : null,", "the one builder does not ask the plan (L-515)"],
   ['else if (entry.kind === "fixed") { drawerWireFixed(', "a centre of shells has no fixed row (L-515)"],
   ["payload.restoreText = treeTickMemoryTake();", "the root does not take back its kept ticks (L-515)"],
-  // L-515 step 2b, part 2: Centre on moves the view in the page, so the
+  // L-515 step 2b, part 2: Center on moves the view in the page, so the
   // ticks stay in it; the keeper still serves a saved picture's return.
-  ['if (at("a.enter")) { ev.preventDefault(); ssCentreOn(k); return; }', "Centre on does not move the view in the page (L-515 step 2b)"],
+  ['if (at("a.enter")) { ev.preventDefault(); ssCentreOn(k); return; }', "Center on does not move the view in the page (L-515 step 2b)"],
   ["if (EXHIBIT_ASKED === EXHIBIT && !entry.scene) { treeTickMemoryKeep(); }", "a saved picture opened from the root does not keep its ticks (L-515)"],
   ["drawerTrailMount();", "the trail line is never mounted (L-515)"],
   ['<div class="sun-trail" id="sun-trail" hidden></div>', "the drawer has no trail line (L-515)"],
@@ -1082,7 +1082,7 @@ if ((page.match(/ssTickParent\(grp\.key\);/g) || []).length < 2) {
 // room or cards yet.'" The page writes neither, and asks for no offer.
 [["SSD.WORDS.noRoom", "the page still writes No room or cards yet"],
  ["SSD.WORDS.notBuilt", "the page still writes Not built yet"],
- ["SSD.centreOffer", "the page still asks what a row offers besides Centre on"],
+ ["SSD.centreOffer", "the page still asks what a row offers besides Center on"],
  ["payload.centres", "the page still hands the drawer the tree's centres, which nothing reads"]
 ].forEach(function (c) {
   if (page.indexOf(c[0]) >= 0) { failures.push(c[1] + " (L-515)"); }

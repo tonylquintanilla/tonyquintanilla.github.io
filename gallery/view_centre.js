@@ -3,7 +3,7 @@
 // that needs no browser lives in its own file, so a check can reach it).
 //
 // WHAT IT DECIDES. Tony's rulings of 2026-11-09 (L-515):
-//   15  "Centre on <body>" moves the view so the body sits in the middle
+//   15  "Center on <body>" moves the view so the body sits in the middle
 //       (picture A): every orbit still drawn around what JPL measured it
 //       around; nothing new is asked of JPL and nothing is measured from
 //       the centre.

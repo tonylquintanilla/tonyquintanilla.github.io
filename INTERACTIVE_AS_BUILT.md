@@ -599,25 +599,25 @@ their own (Tony's ruling 14). The next section is the picture.
   the tree (ruling 20; the next section). A centre of shells drawn on its
   own page -- none since step 2b, the Earth room being obsolete -- would
   still show "Solar system > <name>" (`drawerTrailMount`).
-- **Centre on, and nothing else.** On a body's row where "Enter the
-  <name> room" stood, "Centre on <name>" (`WORDS.enter`), since v1.40 for
+- **Center on, and nothing else.** On a body's row where "Enter the
+  <name> room" stood, "Center on <name>" (`WORDS.enter`), since v1.40 for
   every centre in the tree (`centresOf`, compose's `drawer.centres`), the
   Sun's fixed row among them, and it moves the view in the page (the next
   section); until then, for a body whose slug was a key in `EXHIBITS`, it
   led to that room. Any other body shows NOTHING there,
   before or after its row is opened (v1.34; Tony's phone look of
   2026-11-07: "Remove 'Not built yet' and 'No room or cards yet.' A body
-  with no centre shows neither label. It simply has no 'Centre on'
+  with no centre shows neither label. It simply has no 'Center on'
   button."); the line under an opened row (`.sun-row-open`) is no longer
   made, and `centreOffer`, `WORDS.notBuilt` and `WORDS.noRoom` are gone.
   Which bodies are centres is READ FROM THE CONFIG, never typed
   (`centresOf`: an object fetched around it, or features served on its
   own entry): at 2b the Sun, Earth, Jupiter, Saturn and the Pluto system.
-  Since v1.40 the Sun's row offers "Centre on Sun" (ruling 16, reversing
-  v1.34's "the root's Sun row offers no Centre on").
+  Since v1.40 the Sun's row offers "Center on Sun" (ruling 16, reversing
+  v1.34's "the root's Sun row offers no Center on").
 - **The root's ticks are kept** (ruling 10: "returning to the root
   restores what the visitor had ticked there; Reset still starts
-  fresh"). Since v1.40 Centre on stays in the page, so the ticks stay in
+  fresh"). Since v1.40 Center on stays in the page, so the ticks stay in
   it; the keeper serves a saved picture opened from the root
   (`ssPicOpen`). Leaving the root keeps what is ticked
   and in what order (`tickMemory`, `treeTickMemoryKeep`) in
@@ -695,7 +695,7 @@ their own (Tony's ruling 14). The next section is the picture.
   what is drawn: 0.007883 AU on 2026-11-07); its Reset puts that back.
   It takes no kept ticks; the root's own address does.
 - **Checked** by the Solar System drawer check's section 10 (the plan,
-  the centres, Centre on and no other words, the kept ticks; four
+  the centres, Center on and no other words, the kept ticks; four
   planted breaks; the page's wiring) and section 11 (the Sun's shells
   placed by distance, a served shell row, an opening naming a shell;
   three breaks; the page's wiring for the shells, ?exhibit=sun and the
@@ -790,13 +790,13 @@ v1.40, L-515 (one nested tree), step 2b; Tony's rulings 13 to 20 of
   Earth's own box in its fold (`earthBox`, `moonBox` in
   `gallery/earth_geometry.js`) does not print the sentence.
 - **The view's middle and the shift** (rulings 15, 17; method). The view
-  is a box about its MIDDLE: the Sun; or the body Centre on put there; or,
+  is a box about its MIDDLE: the Sun; or the body Center on put there; or,
   after Go To, what the body circles -- a moon's planet, else the Sun --
   its whole orbit fitted (L-479). Before a centred or close view is drawn
   the whole drawing is moved so the middle is the scene's origin, in 64-bit
   numbers (`viewShiftTo`): every trace's absolute points kept once, at the
   first shift (`viewAbs`), each shifted copy made from them. Frames stay
-  `[-r, r]` about the origin, so Go To, Centre on, +, - and Home frame
+  `[-r, r]` about the origin, so Go To, Center on, +, - and Home frame
   about the middle, and every reader of the plot's points -- the frame, the
   count line, the axis lines and their x marks (through the middle, in
   the Sun's directions), the text box's anchor -- agrees with it. The two
@@ -810,7 +810,7 @@ v1.40, L-515 (one nested tree), step 2b; Tony's rulings 13 to 20 of
   lines cross at <name>." (`#sun-frame-cross`, `viewCrossFill`; words for
   the phone look). Logic in `gallery/view_centre.js` (`ViewCentre`, L-338),
   on the live check's file list.
-- **Centre on** (rulings 15, 16). Picture A: the body in the middle, every
+- **Center on** (rulings 15, 16). Picture A: the body in the middle, every
   orbit still drawn around what JPL measured it around; nothing new asked
   of JPL. It opens the centre's OWN served opening (`openingKeys`): the
   centre's row, each shell its arrival block names and, with them, its
@@ -831,7 +831,7 @@ v1.40, L-515 (one nested tree), step 2b; Tony's rulings 13 to 20 of
   on opening and after Home or Reset; "Solar system > Photosphere" centred
   on the Sun or on `?exhibit=sun`; "Solar system > Jupiter > Io" after Go To
   on Io; "Solar system > Earth > Crust"; "Solar system > Pluto system >
-  Pluto". It moves on Go To, Centre on, Home and Reset, not on a name tap.
+  Pluto". It moves on Go To, Center on, Home and Reset, not on a name tap.
 - **A centre's fold of its own shells** (ruling 14; method). Earth's served
   shells and guides are the Earth room's own drawing
   (`EarthGeometry.composeScene`), Jupiter's and Saturn's rings and
@@ -870,7 +870,7 @@ v1.40, L-515 (one nested tree), step 2b; Tony's rulings 13 to 20 of
   (`tools/test_compose_children.py`: the moon at its planet's place by
   adding, its orbit about the planet's marker, its distance its own; three
   breaks), View centre row (`documentation/smoke_view_centre.js`: the
-  trail, Centre on's ticks, the shift keeping its gaps, the 32-bit error
+  trail, Center on's ticks, the shift keeping its gaps, the 32-bit error
   measured on every moon and printed, the page's wiring; four breaks), the
   Solar System drawer check's section 13 (a body that folds; four breaks),
   the Solar System figures check (`childWorked`, three breaks; every moon's
@@ -901,7 +901,7 @@ Plotly.
 - **A row opens, and a centre is one tap away.** Tapping a name
   highlights the row and opens it; a second tap closes it. Ticking a
   body opens its row too (Tony, 2026-09-30). A centre in the tree (until
-  v1.40 a body whose slug was a key in `EXHIBITS`) shows "Centre on
+  v1.40 a body whose slug was a key in `EXHIBITS`) shows "Center on
   <name>" (until v1.33 "Enter the <name> room"; One drawer for every
   centre, above) on its OWN row, to the
   right of Go To, always and on every screen, so one tap enters the
@@ -1855,17 +1855,32 @@ letter or loses text, with two breaks; and walked (section 20).
 
 L-527; Tony's rulings of 2026-11-11 and 12, on the ledger, and the
 coordinating session's two changes of 2026-11-12. Built 2026-11-12, the
-Solar System room's part (Part 2); the front page's way in is Part 3.
+Solar System room's part (Part 2), then the front page's way in (Part
+3), whose page, `index.html`, is not this page's subject: there a first
+visit's start card offers "Show me around" (`guide=1`) and "Explore on
+my own" (`guide=0`), then one button, "Explore the solar system", whose
+address carries the setting's own value; "Show me around" writes `on`,
+"Explore on my own" `off`; and a Tutorial switch under Featured turns
+the setting. Every way in carries the choice in the address, so a
+browser that keeps nothing opens the room as its front page showed it
+(`GalleryGuide.FRONT`, `frontView`, `keeps`, `roomAddress`).
 
 - **What it is.** On the room's plain opening, four steps, each a card in
   the i note's yellow asking for one action and waiting for it: turn the
-  picture; tap Earth, a ring on it; open the menu, Centre on Earth, tick
+  picture; tap Earth, a ring on it; open the menu, Center on Earth, tick
   the Moon; "Take me there", then tap Halley, a ring on it; then the end
   card, "Explore". "Skip the guide" on every card but the end card, whose
   Explore ends it the same way. The cards give instructions only. Every
   word, the steps and what ends each one are `gallery/first_guide.js`
   (`GalleryGuide`: `STEPS`, `WORDS`, `create`, `doneBy`), a file of its own
   by L-338, loaded by a script tag and on the live check's file list.
+- **American English** (Tony's phone look of 2026-11-12, 15:55): step 2
+  says "Find our home planet" (not "Find home", which could be read as the
+  Home button), and the cards say "Center" and "around". The drawer's
+  button reads "Center on <name>" with them (`WORDS.enter` in
+  `gallery/solar_system_drawer.js`); code names keep "centre". Other
+  British spellings a visitor reads in the room are listed on L-527 and
+  left as they are.
 - **When it runs** (`GalleryGuide.shouldRun`, read once as the page loads,
   `GUIDE_RUN`): only on the plain opening -- the Solar System room by its
   own address, no `show` or `at`, so never on a shared link, a scene,
@@ -1895,7 +1910,7 @@ Solar System room's part (Part 2); the front page's way in is Part 3.
   not a turn). A card whose action is already done moves on at once
   (`settle`). The next card comes `GUIDE_PAUSE_MS` (900) later, by a timer,
   never inside a Plotly event (L-278).
-- **Step 3's menu.** Centre on closes the menu, so the Moon's card opens it
+- **Step 3's menu.** Center on closes the menu, so the Moon's card opens it
   again after `GUIDE_REOPEN_MS` (1200), with Earth's fold open and the
   Moon's row scrolled into view (`guideOpenAt`, `guideScrollTo`). The row is
   scrolled in the menu's own list only: `scrollIntoView` also scrolls the
@@ -1935,7 +1950,8 @@ Solar System room's part (Part 2); the front page's way in is Part 3.
   the room shows one line, `#upright-line`, "This room works best with
   your phone upright." (`GalleryGuide.WORDS.sideways`), shown by CSS alone
   in `body.sun-exhibit`, just under the picture's title and its lines
-  (`uprightLinePlace`, each frame from `sunHudWatch`); no popup, nothing
+  (`uprightLinePlace`, each frame from `sunHudWatch`), in the cards'
+  yellow so it reads apart from the picture (Tony, 15:55); no popup, nothing
   to dismiss, `pointer-events: none`, so the picture still turns and
   zooms; gone when upright. The guide, held sideways, pauses
   (`guideSideways`): its card keeps the step's label and dots, says "Turn
@@ -1954,8 +1970,9 @@ Solar System room's part (Part 2); the front page's way in is Part 3.
   if not 2.35.2; the ring's sum held to Plotly 2.35.2's own code, copied in
   `documentation/fixture_plotly_2_35_2_placement.js`, on 2,000 cameras; the
   page's wiring; the sideways test, the line's words, where the CSS shows
-  it and that it lets touches through; the real file broken ten ways, a
-  page on another Plotly and two pages with a wrong sideways line first. And walked in a real browser
+  it, its yellow and that it lets touches through; the real file broken
+  ten ways, a page on another Plotly and three pages with a wrong sideways
+  line (other words, another test, a dark line) first. And walked in a real browser
   (`tools/headless/walk_first_guide.js`, below, The headless recipe).
 - **Seen in the walk, not the guide's** (2026-11-12): Plotly picks one
   pixel, and at some angles a line drawn through a dot's centre takes it,
@@ -2007,9 +2024,15 @@ Solar System room's part (Part 2); the front page's way in is Part 3.
      holds the ring to a Plotly scene annotation pinned at the same point,
      at two phone sizes upright (the room is built and tested upright,
      Tony's ruling of 2026-11-12), and walks the setting's states; at two
-     sizes sideways it checks the line and the paused card, that the
+     sizes sideways it checks the line (its words, its place and the
+     cards' yellow, read from the browser) and the paused card, that the
      picture still turns and zooms, and that turned upright the same step
-     goes on. Its report names each step passed and whether the ring was
+     goes on. Then the front page (Part 3): a first visitor's two lines,
+     card and ways in; "Show me around" into the room with the guide;
+     Skip and Back to the returning button; the Tutorial switch deciding
+     what that button opens; "Explore on my own"; the picture's tap; a
+     browser that keeps nothing (`WALK_ONLY=front` walks this part alone).
+     Its report names each step passed and whether the ring was
      drawn. A ring tap that opens nothing is tried again 4 px off, up to
      four, each said. On Tony's computer Playwright's own Chromium would not start
      (2026-11-12); `WALK_CHANNEL=msedge` runs it in the computer's Edge, on

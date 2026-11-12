@@ -27,9 +27,15 @@
 // room's one line and the paused card's words to the ruling, and the
 // page's CSS and wiring to the file's test and words.
 //
-// A SELF-TEST runs first and breaks the real file ten ways, and plants a
-// page on another Plotly and two pages whose sideways line is wrong; each
-// must be caught. Then the worked cases on
+// THE FRONT PAGE (Part 3): its two served lines, the start card's title and
+// sentence, the ways in (a first visit's "Show me around" and "Explore on
+// my own", then one button), each carrying the choice into the room's
+// address, and the Tutorial row under Featured, all drawn from the one
+// setting through the file.
+//
+// A SELF-TEST runs first and breaks the real file fourteen ways, and plants
+// a page on another Plotly, three pages whose sideways line is wrong, and a
+// front page four ways; each must be caught. Then the worked cases on
 // the real file, the words, and the page's wiring. Gates: any failure,
 // each named, exits 1.
 //
@@ -53,11 +59,11 @@ function load(src) {
 // (documentation/COORD_L527_guide_brief_20261112.md in the orrery).
 const WORDS = {
   turn: "This is the solar system today, seen from above. Drag with one finger to turn it.",
-  earth: "Find home: tap Earth, the blue dot in the ring.",
+  earth: "Find our home planet: tap Earth, the blue dot in the ring.",
   menu: "Open the menu, bottom left.",
-  centre: "This is the menu. On Earth's row, tap Centre on Earth to fly in.",
-  moon: "Now tick the Moon, to see it go round Earth.",
-  comet: "There's the Moon, going round Earth. Next, a comet.",
+  centre: "This is the menu. On Earth's row, tap Center on Earth to fly in.",
+  moon: "Now tick the Moon, to see it go around Earth.",
+  comet: "There's the Moon, going around Earth. Next, a comet.",
   go: "Take me there",
   halley: "That long orbit is Halley's comet. Tap Halley, in the ring, to see where it is today.",
   end: "That's the orrery: the solar system as it is today, drawn from JPL's (NASA) data, updated every night. Explore on your own, or turn on Tutorial on the front page to see this again.",
@@ -68,6 +74,24 @@ const WORDS = {
   upright: "Turn your phone upright to continue.",
 };
 const EXPECT_SIDEWAYS = "(orientation: landscape) and (max-height: 500px)";
+// The front page's way in (Part 3), as the brief gives it: the start
+// card's buttons and the Tutorial row (gallery/first_guide.js, FRONT), and
+// the served words (Tony, Nov 12, 09:56: "yes").
+const FRONT = {
+  show: "Show me around",
+  alone: "Explore on my own",
+  again: "Explore the solar system",
+  tutorial: "Tutorial",
+  tutorialOn: "On. The short guide runs the next time you open the Solar System room.",
+  tutorialOff: "Off. Turn it on to see the short guide again the next time you open the Solar System room.",
+};
+const SERVED = {
+  sentence: "An orrery is a model of the solar system that moves.",
+  sentence_more: "This one shows the Sun, the planets, moons, comets and spacecraft where they are today, from JPL's (NASA) data, updated every night.",
+  title: "Today's solar system",
+  description: "Turn it, tap a planet, fly to the Moon.",
+};
+const LIVE = "interactive.html?exhibit=solar-system";
 
 // A storage that keeps, one that keeps nothing, one that throws.
 function store(init) {
@@ -104,8 +128,8 @@ function cases(G) {
   eq(G.label(g.card()), "Step 3 of 4", "the menu's label");
   eq(g.signal("drawer", null, false), false, "the menu closing is not opening it");
   eq(g.signal("drawer", null, true), true, "the menu card ends when it opens");
-  eq(g.signal("centre", "jupiter"), false, "Centre on Jupiter is not Centre on Earth");
-  eq(g.signal("centre", "earth"), true, "Centre on Earth ends its card");
+  eq(g.signal("centre", "jupiter"), false, "Center on Jupiter is not Center on Earth");
+  eq(g.signal("centre", "earth"), true, "Center on Earth ends its card");
   eq(g.signal("tick", "moon", false), false, "the Moon unticked is not ticked");
   eq(g.signal("tick", "mars", true), false, "Mars ticked is not the Moon");
   eq(g.signal("tick", "moon", true), true, "the Moon ticked ends step 3");
@@ -126,7 +150,7 @@ function cases(G) {
   const s = G.create();
   s.signal("turn");
   eq(s.settle({ box: "earth", drawer: true, mid: "sun", ticked: {} }), 2, "Earth's box and the menu already open: two cards passed");
-  eq(s.card().id, "centre", "and the card is Centre on Earth");
+  eq(s.card().id, "centre", "and the card is Center on Earth");
   eq(s.settle({ box: null, drawer: false, mid: "sun", ticked: { moon: true } }), 0, "not centred: nothing passed");
   eq(G.doneBy(G.STEPS[0], { box: "earth", drawer: true, mid: "earth", ticked: { moon: true } }), false, "a turn is never already done");
   eq(G.doneBy(G.STEPS[4], { ticked: { moon: true } }), true, "the Moon already ticked");
@@ -277,7 +301,86 @@ function cases(G) {
   Object.keys(WORDS).forEach(function (k) { eq(G.WORDS[k], WORDS[k], "the words \"" + k + "\""); });
   eq(G.WORDS.stepOf(2), "Step 2 of 4", "the step label");
   eq(G.SIDEWAYS, EXPECT_SIDEWAYS, "the test for a phone held sideways");
+
+  // ---- the front page's way in ----
+  Object.keys(FRONT).forEach(function (k) { eq(G.FRONT && G.FRONT[k], FRONT[k], "the front page's words \"" + k + "\""); });
+  eq(G.frontView(null), "first", "no choice yet: the two ways in");
+  eq(G.frontView("on"), "returning", "Show me around chosen: the one button");
+  eq(G.frontView("off"), "returning", "Explore on my own chosen: the one button");
+  eq(G.keeps("show"), "on", "Show me around keeps on");
+  eq(G.keeps("alone"), "off", "Explore on my own keeps off");
+  eq(G.keeps("again"), null, "the returning button keeps nothing");
+  eq(G.roomAddress(LIVE, "show", null), LIVE + "&guide=1", "Show me around's address");
+  eq(G.roomAddress(LIVE, "alone", null), LIVE + "&guide=0", "Explore on my own's address");
+  // Every way, every setting: the room does what the front page offered,
+  // and the address it keeps carries no guide.
+  [null, "on", "off"].forEach(function (value) {
+    [["show", true], ["alone", false], ["again", G.isOn(value)]].forEach(function (w) {
+      const at = G.roomAddress(LIVE, w[0], value);
+      const search = at.slice(at.indexOf("?"));
+      eq(G.shouldRun(search, value), w[1], "the room from " + w[0] + " with the setting " + value);
+      eq(G.shouldRun(search, null), w[1], "the room from " + w[0] + " in a browser that keeps nothing (" + value + " on the front page)");
+      eq(G.withoutGuide(search), "?exhibit=solar-system", "the room's address after " + w[0]);
+    });
+  });
   return f;
+}
+
+// The front page: the served words, the start card's title, and its
+// wiring to the file. front is index.html's text, cfg and meta the served
+// gallery_config.json and gallery_metadata.json.
+function frontFails(front, cfg, meta) {
+  const f = [];
+  if (cfg.sentence !== SERVED.sentence) { f.push("the first line under the name (gallery_config.json \"sentence\") is " + JSON.stringify(cfg.sentence)); }
+  if (cfg.sentence_more !== SERVED.sentence_more) { f.push("the second line under the name (\"sentence_more\") is " + JSON.stringify(cfg.sentence_more)); }
+  const card = (meta.visualizations || []).filter((v) => v.id === "solar_system")[0] || {};
+  if (card.title !== SERVED.title) { f.push("the start card's served title is " + JSON.stringify(card.title)); }
+  if (card.description !== SERVED.description) { f.push("the start card's sentence is " + JSON.stringify(card.description)); }
+  const typed = front.match(/var LOBBY_START_TITLE = '((?:[^'\\]|\\.)*)';/);
+  if (!typed || typed[1].replace(/\\'/g, "'") !== SERVED.title) {
+    f.push("the start card's typed title (LOBBY_START_TITLE) is " + (typed ? typed[1] : "missing") + ", not the served title");
+  }
+  const fb = front.match(/var LOBBY_DEFAULT_SENTENCE = '((?:[^'\\]|\\.)*)';/);
+  if (!fb || fb[1] !== SERVED.sentence) { f.push("the first line's words when the config cannot be read are not the served ones"); }
+  if (front.indexOf("'This one shows the Sun, the planets, moons, comets and ' +\n            'spacecraft where they are today, from JPL\\'s (NASA) data, updated every night.'") < 0) {
+    f.push("the second line's words when the config cannot be read are not the served ones");
+  }
+  const fn = (name) => bodyOf(front, name);
+  const need = [
+    ["loads the file", '<script src="gallery/first_guide.js"></script>', ""],
+    ["the start card asks the file what to offer", "G.frontView(guideValue()) === 'first'", "startWaysHtml"],
+    ["a first visit: Show me around", "escapeHtml(G.FRONT.show)", "startWaysHtml"],
+    ["a first visit: Explore on my own", "escapeHtml(G.FRONT.alone)", "startWaysHtml"],
+    ["a returning visit: the one button", "escapeHtml(G.FRONT.again)", "startWaysHtml"],
+    ["a way in keeps its choice", "var kept = G.keeps(way);", "startGo"],
+    ["a way in carries the choice in the address", "G.roomAddress(item.live, way, guideValue())", "startGo"],
+    ["the setting read with the file's reader", "G.read(guideStore())", "guideValue"],
+    ["the setting written with the file's writer", "G.write(guideStore(), value);", "guideKeep"],
+    ["the switch drawn from the setting", "var on = G.isOn(guideValue());", "guideViewsRefresh"],
+    ["the switch's lines", "line.textContent = on ? G.FRONT.tutorialOn : G.FRONT.tutorialOff;", "guideViewsRefresh"],
+    ["the card's ways drawn from the setting", "ways.innerHTML = startWaysHtml();", "guideViewsRefresh"],
+    ["drawn again when Back shows the page", "window.addEventListener('pageshow', guideViewsRefresh);", ""],
+    ["the switch turns the setting", "guideKeep(window.GalleryGuide.isOn(guideValue()) ? 'off' : 'on');", "renderLobby"],
+    ["the two served lines", "escapeHtml(cfgMore || LOBBY_DEFAULT_MORE)", "renderLobby"],
+  ];
+  need.forEach(function (n) {
+    const where = n[2] ? fn(n[2]) : front;
+    if (!where) { f.push("the front page: function " + n[2] + " not found"); return; }
+    if (where.indexOf(n[1]) < 0) { f.push("the front page: " + n[0] + " (" + n[1] + (n[2] ? ", in " + n[2] : "") + ") not found"); }
+  });
+  // The Tutorial row under Featured, above the line about Paloma.
+  const lobby = fn("renderLobby");
+  const a = lobby.indexOf("lobby-heading\">Featured"), b = lobby.indexOf("html += tutorialHtml();"), c = lobby.indexOf("var cfgNote");
+  if (!(a >= 0 && b > a && c > b)) { f.push("the front page: the Tutorial row is not under Featured and above the line about Paloma"); }
+  return f;
+}
+// From "function <name>(" to the next named function, at any indent.
+function bodyOf(page, name) {
+  const m = new RegExp("\\n[ \\t]*(async )?function " + name + "\\(").exec(page);
+  if (!m) { return ""; }
+  const from = m.index + m[0].length;
+  const next = page.slice(from).search(/\n[ \t]*(async )?function [A-Za-z_]+\(/);
+  return next < 0 ? page.slice(m.index) : page.slice(m.index, from + next);
 }
 
 // The page's Plotly against the version the ring's sum was read from.
@@ -311,6 +414,10 @@ function uprightFails(page, G) {
     const rule = page.slice(at, page.indexOf("}", at + 60));
     if (rule.indexOf("display: block;") < 0) { f.push("the sideways line: its sideways rule does not show it"); }
     if (rule.indexOf("pointer-events: none;") < 0) { f.push("the sideways line: it would take the picture's touches"); }
+    // Tony's phone look of 2026-11-12, 15:55: the cards' yellow.
+    if (rule.indexOf("background: var(--accent); color: var(--bg-deep);") < 0) {
+      f.push("the sideways line: not in the cards' yellow (background var(--accent), text var(--bg-deep))");
+    }
   }
   return f;
 }
@@ -330,6 +437,10 @@ const breaks = [
    "return Math.abs(la - lb) > 1e-9 || Math.acos(cos) * 180 / Math.PI > minDeg;"],
   ["a word changed", "Drag with one finger to turn it.", "Drag to turn it."],
   ["the paused card's words changed", 'upright: "Turn your phone upright to continue."', 'upright: "Please rotate."'],
+  ["the returning button forgets the setting", '(how === "alone" ? false : isOn(value))', '(how === "alone" ? false : true)'],
+  ["Explore on my own keeps nothing", '(how === "alone" ? "off" : null)', '(how === "alone" ? null : null)'],
+  ["a kept choice not seen on the front page", 'return (value === "on" || value === "off") ? "returning" : "first";', 'return "first";'],
+  ["a front page word changed", 'again: "Explore the solar system"', 'again: "Explore"'],
 ];
 const selfFails = [];
 for (const [name, from, to] of breaks) {
@@ -352,8 +463,32 @@ if (wrongWords === PAGE || uprightFails(wrongWords, load(SRC)).length === 0) {
 if (wrongTest === PAGE || uprightFails(wrongTest, load(SRC)).length === 0) {
   selfFails.push("self-test: a sideways line under another test was not caught");
 }
-console.log("Self-test: the cases go red on demand (" + breaks.length + " ways, a page on another Plotly, and two wrong sideways lines)." +
-            (selfFails.length ? "" : " All caught."));
+const wrongColour = PAGE.replace("background: var(--accent); color: var(--bg-deep);\n                font: 500 12px",
+                                 "background: rgba(10, 10, 15, 0.8); color: var(--text-primary);\n                font: 500 12px");
+if (wrongColour === PAGE || uprightFails(wrongColour, load(SRC)).length === 0) {
+  selfFails.push("self-test: a dark sideways line, not the cards' yellow, was not caught");
+}
+// The front page planted three ways: the old title, the Tutorial row
+// under the line about Paloma, and the page not drawn again from Back.
+const FRONT_PAGE = read("index.html");
+const CFG = JSON.parse(read("gallery/gallery_config.json"));
+const META = JSON.parse(read("gallery/gallery_metadata.json"));
+const frontPlants = [
+  ["the start card's old title", FRONT_PAGE.replace("var LOBBY_START_TITLE = 'Today\\'s solar system';", "var LOBBY_START_TITLE = 'Today\\'s sky, live';")],
+  ["the Tutorial row under the line about Paloma",
+   FRONT_PAGE.replace("            html += tutorialHtml();\n", "").replace("            var cfgNote", "            html += tutorialHtml();\n            var cfgNote")
+             .replace("if (cfgNote) html += '<div class=\"welcome-note lobby-note\">' + escapeHtml(cfgNote) + '</div>';",
+                      "if (cfgNote) html += '<div class=\"welcome-note lobby-note\">' + escapeHtml(cfgNote) + '</div>';\n            html += tutorialHtml();")
+             .replace("            html += tutorialHtml();\n            var cfgNote", "            var cfgNote")],
+  ["the page not drawn again from Back", FRONT_PAGE.replace("window.addEventListener('pageshow', guideViewsRefresh);", "")],
+];
+frontPlants.forEach(function (p) {
+  if (p[1] === FRONT_PAGE || frontFails(p[1], CFG, META).length === 0) { selfFails.push("self-test: a front page with " + p[0] + " was not caught"); }
+});
+const oldLine = Object.assign({}, CFG, { sentence: "The solar system, Earth and the nearby stars in 3D, from real science data." });
+if (frontFails(FRONT_PAGE, oldLine, META).length === 0) { selfFails.push("self-test: the old line under the name was not caught"); }
+console.log("Self-test: the cases go red on demand (" + breaks.length + " ways, a page on another Plotly, three wrong sideways lines, " +
+            "and a front page four ways)." + (selfFails.length ? "" : " All caught."));
 
 const G = load(SRC);
 const failures = selfFails.concat(cases(G));
@@ -365,7 +500,7 @@ failures.push.apply(failures, vf);
 if (!vf.length) { console.log("The page loads Plotly " + EXPECT_PLOTLY + ", the version the ring's sum was read from."); }
 const uf = uprightFails(PAGE, G);
 failures.push.apply(failures, uf);
-if (!uf.length) { console.log("Held sideways (" + G.SIDEWAYS + "), the room shows \"" + G.WORDS.sideways + "\", touches going through."); }
+if (!uf.length) { console.log("Held sideways (" + G.SIDEWAYS + "), the room shows \"" + G.WORDS.sideways + "\" in the cards' yellow, touches going through."); }
 
 // ---- the page's wiring ----
 function body(name) {
@@ -380,7 +515,7 @@ const need = [
   ["takes guide= out of the address", "G.withoutGuide(window.location.search)", ""],
   ["a box opened tells the guide", 'guideSignal("box", grp.key)', "sunLabelShow"],
   ["the menu tells the guide", 'guideSignal("drawer", null, open)', "setSunDrawer"],
-  ["Centre on tells the guide", 'guideSignal("centre", key)', "ssCentreOn"],
+  ["Center on tells the guide", 'guideSignal("centre", key)', "ssCentreOn"],
   ["a tick tells the guide", 'guideSignal("tick", grp.key, on)', "ssTick"],
   ["the camera watch runs the guide's frame", "guideFrame();", "sunHudWatch"],
   ["step 1 asks the file about the turn", "window.GalleryGuide.turned(", "guideFrame"],
@@ -412,10 +547,16 @@ if (served.indexOf('"gallery/first_guide.js"') < 0) {
   failures.push("the live check: gallery/first_guide.js is not on SERVED_FILES");
 }
 console.log("Read the page's wiring (" + need.length + " places) and the live check's file list.");
+const ff = frontFails(FRONT_PAGE, CFG, META);
+failures.push.apply(failures, ff);
+if (!ff.length) {
+  console.log("The front page: the two served lines, \"" + SERVED.title + "\" and its sentence, the ways in (" +
+              FRONT.show + " / " + FRONT.alone + "; then " + FRONT.again + ") and the Tutorial row under Featured, wired to the file.");
+}
 
 if (failures.length) {
   failures.forEach((x) => console.log("  FAIL " + x));
   console.log("=== FIRST GUIDE: FAIL -- " + failures.length + " finding(s)");
   process.exit(1);
 }
-console.log("=== FIRST GUIDE: ok -- each card ends only on its own action; the setting and the address decide; the ring's sum is Plotly 2.35.2's own and the page loads 2.35.2; no card covers its target");
+console.log("=== FIRST GUIDE: ok -- each card ends only on its own action; the setting and the address decide; the ring's sum is Plotly 2.35.2's own and the page loads 2.35.2; no card covers its target; the front page offers the ways in from the one setting");
