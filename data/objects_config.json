@@ -1864,7 +1864,7 @@
     {
       "slug": "encke", "name": "Encke", "horizons_id": "90000091", "id_type": "smallbody",
       "horizons_name": "2P/Encke",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000091", "target_label": null, "open_orbit": false, "fetched": "2026-10-13", "words": null, "days_only": false, "years": {"value": 3.303, "figures": 4, "text": "3.303"}, "days": {"value": 1206.3, "figures": 5, "text": "1206.3"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "90000091", "target_label": null, "open_orbit": false, "fetched": "2026-11-12", "words": null, "days_only": false, "years": {"value": 3.303, "figures": 4, "text": "3.303"}, "days": {"value": 1206.0, "figures": 4, "text": "1206"}},
       "description": "A short-period comet whose dust trail is the source of the Taurid meteor showers.",
       "info_url": "https://science.nasa.gov/solar-system/comets/2p-encke/",
       "category": "comet", "availability": "analytic", "parent": "sun",
@@ -2308,7 +2308,7 @@
       "horizons_name": "90377 Sedna",
       "description": "A distant trans-Neptunian dwarf planet with an extremely long orbit.",
       "info_url": "https://en.wikipedia.org/wiki/Sedna_(dwarf_planet)",
-      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2003 VB12", "target_label": null, "open_orbit": false, "fetched": "2026-10-13", "words": null, "days_only": false, "years": {"value": 11390.0, "figures": 4, "text": "11,390"}, "days": {"value": 4160000.0, "figures": 3, "text": "4,160,000"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@0", "center_label": "the solar system's center of mass", "target": "2003 VB12", "target_label": null, "open_orbit": false, "fetched": "2026-11-12", "words": null, "days_only": false, "years": {"value": 11390.0, "figures": 4, "text": "11,390"}, "days": {"value": 4160000.0, "figures": 3, "text": "4,160,000"}},
       "category": "asteroid", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none", "features": {}
