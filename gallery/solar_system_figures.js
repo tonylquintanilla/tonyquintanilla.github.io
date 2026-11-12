@@ -561,8 +561,9 @@
   // JPL, or that JPL did not answer, from its last good build, with a
   // `hold` block on its entry. Its box says so in one sentence, naming the
   // date of the orbit it is drawn from on JPL's clock, as the span sentence
-  // does (Tony, 2026-11-10). Words for Tony's phone look, on the Typed facts
-  // check's ALLOWED list; ?hold=<slug> shows them when nothing is held.
+  // does (Tony, 2026-11-10). Settled by Tony's phone look of 2026-11-11,
+  // 19:20 Chicago: "The hover is fine." Held by the Solar System figures
+  // check; ?hold=<slug> shows them when nothing is held.
   var HELD_WORDS = {
     failed: function (who, dated) {
       return who + " is drawn from JPL's orbit dated " + dated + " on JPL's " +

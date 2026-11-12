@@ -775,8 +775,9 @@ v1.40, L-515 (one nested tree), step 2b; Tony's rulings 13 to 20 of
   the Sun open "The Moon", "The Sun" (`subject`). A held Sun-centred body
   past its own checked span also prints `SPAN_WORDS`, as a moon does. A
   path is never held. A hold whose orbit's date is not served prints no
-  sentence and is named in the room's notes. Words proposed for Tony's
-  phone look, not yet settled. MODE 5 KNOB, read once as the room is
+  sentence and is named in the room's notes. Words settled by Tony's
+  phone look of 2026-11-11, 19:20 Chicago: "The hover is fine." The
+  room's title and date line do not change for a held body. MODE 5 KNOB, read once as the room is
   built: `?hold=halley` (several by commas; `SolarSystemFigures.holdKnob`,
   `holdFor`) draws those bodies as held, so the sentence can be seen when
   nothing is held, as `?freeze=1` shows the freeze. CHECKED by the Solar
