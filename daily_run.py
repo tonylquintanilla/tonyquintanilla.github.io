@@ -128,6 +128,19 @@ THE NIGHT FORM (L-485, the website's nightly run; python daily_run.py
     Nothing in the Daily Run commits or pushes, by day or by night; the
     workflow does, after the gate.
 
+A HELD BODY IS NAMED, NOT RED (L-525; Tony, 2026-11-11, 11:22: "Hold the
+bad data and report, then continue.")
+    The cache builder holds a Sun-centred body whose accuracy test fails,
+    or one JPL does not answer, at its last good build, and records it in
+    the served index's `holds` block. A hold does not turn a run red. It is
+    said where Tony reads without being asked to: both summaries print
+    one HELD line a body, every run while the hold lasts, and a "HOLD
+    ENDED" line the run it ends; and the night's commit title starts with
+    the names ("HELD Halley -- Nightly run ..."), from --held-title. The
+    words have one home: held_title here, each body's line in the
+    builder. --check runs the title on six made-up nights and two planted
+    faults, and reads the served index's holds, as the commit step will.
+
 HOW TO RUN IT
     From the dashboard: Daily Run, at the top of the Daily Run group.
     From VS Code: open this file and press Run. Answer questions in the
@@ -138,6 +151,11 @@ HOW TO RUN IT
                                   goes red on any uncommitted edit.
     python daily_run.py --allow-list   what the night may commit, for the
                                   workflow's commit step.
+    python daily_run.py --held-title   the words the night's commit title
+                                  starts with ("HELD Halley -- "), empty
+                                  when nothing is held (L-525).
+    python daily_run.py --held-lines   the HELD lines, one a body, for the
+                                  commit's second paragraph (L-525).
     python daily_run.py --check   lists the four steps and fails if a
                                   script is missing. The gallery
                                   maintenance run runs this, so a rename
@@ -178,6 +196,10 @@ Module updated: October 31, 2026 with Anthropic's Claude Opus 5.5 (L-485,
 the gallery half: --night, the night form for GitHub's computers, and its
 gate; the runner form of pull matches push; --allow-list; --check runs
 the night's fixtures with their planted faults.)
+Module updated: November 11, 2026 with Anthropic's Claude Opus 5.5 (L-525,
+hold the bad data: the HELD lines in both summaries and the night's
+record, --held-title and --held-lines for the workflow's commit title,
+and --check's held-title fixtures with two planted faults.)
 """
 
 import datetime
@@ -211,6 +233,9 @@ SWAP_LOG = os.path.join("data", "cache_swap_log.jsonl")
 LIVE_RUNS = os.path.join("data", "solar-system", "raw", "runs")
 PREV_RUNS = os.path.join("data", "solar-system.prev", "raw", "runs")
 LINE = "=" * 70
+
+# L-525: the served index, where the builder records each held body.
+SERVED_INDEX = os.path.join("data", "solar-system", "coverage_index.json")
 
 # L-461: Tony's orrery folder, beside this one, and the files in which
 # each pull records the orrery commit it fetched.
@@ -379,6 +404,100 @@ def pull_match_fixtures():
     return sum(got) + sum(caught), len(got) + 2, lines
 
 
+def served_holds(root):
+    """L-525 (hold the bad data): the holds recorded by the builder that
+    made the served cache, from the served index's `holds` block, as
+    (held, ended, None); each a list of {"slug", "name", "line", ...}. A
+    cache built before L-525 has no block, and holds nothing. An index
+    that cannot be read is (None, None, why): never "nothing held"."""
+    path = os.path.join(root, SERVED_INDEX)
+    try:
+        with open(path, encoding="utf-8") as f:
+            index = json.load(f)
+    except (OSError, ValueError) as exc:
+        return None, None, "could not read %s (%s)" % (_slash(SERVED_INDEX), exc)
+    holds = index.get("holds") or {}
+    return list(holds.get("held") or []), list(holds.get("ended") or []), None
+
+
+def held_title(held, ended):
+    """L-525: the words the night's commit title starts with, empty when
+    nothing is held and no hold ended. A hold is not red; it is announced
+    where Tony reads without being asked to, the title of the night's
+    commit (his words, Nov 11, 15:43: "I do look at pull titles"). HELD
+    comes first, so a title cut short on screen still shows it, and every
+    held body is named; past three, the count comes first too."""
+    parts = []
+    if held:
+        names = ", ".join(h["name"] for h in held)
+        parts.append("HELD %d bodies: %s" % (len(held), names)
+                     if len(held) > 3 else "HELD %s" % names)
+    if ended:
+        parts.append("HOLD ENDED %s" % ", ".join(h["name"] for h in ended))
+    return ("; ".join(parts) + " -- ") if parts else ""
+
+
+def held_lines(held, ended):
+    """L-525: one line a body, the builder's own words: every HELD body,
+    then every hold that ended in this build. The night's commit carries
+    them below its title; both summaries print them."""
+    return [h["line"] for h in (held or [])] + [h["line"] for h in (ended or [])]
+
+
+def print_held():
+    """L-525: the HELD lines in a summary, every run while a hold lasts;
+    a hold is not a problem and does not change the run's exit."""
+    held, ended, err = served_holds(ROOT)
+    lines = ["could not say what is held: %s" % err] if err else held_lines(held, ended)
+    for line in lines:
+        print("  %s" % line)
+
+
+def held_fixtures():
+    """L-525: the commit title's words on made-up holds -- none, one,
+    three, four (the count first), an ended hold, and one of each -- and
+    two planted faults that must fail: a title that leaves the held bodies
+    out, and one that forgets a hold that ended."""
+    def h(name):
+        return {"name": name, "line": "HELD %s since 2026-11-11: ..." % name}
+
+    def e(name):
+        return {"name": name, "line": "HOLD ENDED %s: ..." % name}
+    cases = [
+        ([], [], ""),
+        ([h("Halley")], [], "HELD Halley -- "),
+        ([h("Halley"), h("Encke"), h("Apophis")], [],
+         "HELD Halley, Encke, Apophis -- "),
+        ([h("Halley"), h("Encke"), h("Apophis"), h("Ceres")], [],
+         "HELD 4 bodies: Halley, Encke, Apophis, Ceres -- "),
+        ([], [e("Halley")], "HOLD ENDED Halley -- "),
+        ([h("Encke")], [e("Halley")], "HELD Encke; HOLD ENDED Halley -- "),
+    ]
+
+    def wrong(fn):
+        return [c for c in cases if fn(c[0], c[1]) != c[2]]
+    lines = []
+    passed = total = 0
+    real = wrong(held_title)
+    total += 1
+    if not real:
+        passed += 1
+    lines.append("  held title: %d of %d made-up nights read as they should%s"
+                 % (len(cases) - len(real), len(cases),
+                    "" if not real else " -- WRONG: %r" % [held_title(c[0], c[1]) for c in real]))
+    for label, fault in (("leaves the held bodies out", lambda held, ended: ""),
+                         ("forgets an ended hold",
+                          lambda held, ended: held_title(held, []))):
+        caught = wrong(fault)
+        total += 1
+        if caught:
+            passed += 1
+        lines.append("  held title, planted fault (%s): %s"
+                     % (label, "caught on %d of %d nights" % (len(caught), len(cases))
+                        if caught else "NOT CAUGHT"))
+    return passed, total, lines
+
+
 def check():
     print("Daily Run steps, from %s:" % ROOT)
     missing = 0
@@ -393,7 +512,7 @@ def check():
     # L-485: the night form's runner-side pull match and its gate, each
     # on made-up cases with planted faults; and its allow-list readable.
     night_passed, night_total = 0, 0
-    for fixtures in (remote_match_fixtures, night_gate_fixtures):
+    for fixtures in (remote_match_fixtures, night_gate_fixtures, held_fixtures):
         p_, t_, lines = fixtures()
         night_passed += p_
         night_total += t_
@@ -406,6 +525,16 @@ def check():
     except Exception as exc:          # a check must say it could not look
         print("  night allow-list: could not be read (%s)" % exc)
         night_total += 1
+    # L-525: the served cache's holds, read as the commit step reads them.
+    # An index that cannot be read fails, never "nothing held".
+    held, ended, err = served_holds(ROOT)
+    night_total += 1
+    if err:
+        print("  served holds: %s" % err)
+    else:
+        night_passed += 1
+        print("  served holds: %s" % ("; ".join(held_lines(held, ended))
+                                      or "none held"))
     passed += night_passed
     total += night_total
     if missing:
@@ -413,11 +542,11 @@ def check():
         return 1
     if passed != total:
         print("=== DAILY RUN: all %d step scripts found, but the pull-match "
-              "and night checks FAILED %d of %d fixture checks (L-461, L-485)"
+              "and night checks FAILED %d of %d fixture checks (L-461, L-485, L-525)"
               % (len(STEPS), total - passed, total))
         return 1
     print("=== DAILY RUN: all %d step scripts found; the pull-match and night "
-          "checks passed %d of %d fixture checks (L-461, L-485)"
+          "checks passed %d of %d fixture checks (L-461, L-485, L-525)"
           % (len(STEPS), passed, total))
     return 0
 
@@ -1049,6 +1178,7 @@ def night_main():
         "swap_log_line": swap_line,
         "run_records": report[0],
         "served_files_changed": len(served),
+        "holds": held_lines(*served_holds(ROOT)[:2]),
         "steps": [{"step": label, "result": said, "seconds": round(sec, 1)}
                   for label, said, sec in steps],
         "rows": [{"row": row[1], "kind": "checker" if row[6] else "generator",
@@ -1063,6 +1193,7 @@ def night_main():
     print(LINE)
     for label, said, seconds in steps:
         print("  %-30s %-36s %7.1fs" % (label, said, seconds))
+    print_held()
     print("  Wrote %s. The workflow commits the allow-list, and only it."
           % _slash(NIGHT_RECORD))
     print(LINE)
@@ -1167,6 +1298,7 @@ def main():
     print(LINE)
     for label, result in results:
         print("  %-28s %s" % (label, result))
+    print_held()
     problems = [label for label, result in results
                 if result != "skipped today"
                 and not result.startswith("ok")
@@ -1247,6 +1379,20 @@ if __name__ == "__main__":
         # ending in "/" (L-485).
         _files, _folders = night_allow_list(ROOT)
         print("\n".join(_files + _folders))
+        sys.exit(0)
+    if "--held-title" in sys.argv[1:] or "--held-lines" in sys.argv[1:]:
+        # For the workflow's commit step (L-525): the words the night's
+        # commit title starts with, or its HELD lines, one a line. A
+        # served index that cannot be read exits 1, naming it, so the
+        # commit step stops rather than commit a title that hides a hold.
+        _held, _ended, _err = served_holds(ROOT)
+        if _err:
+            print("HELD LINE: %s" % _err, file=sys.stderr)
+            sys.exit(1)
+        if "--held-title" in sys.argv[1:]:
+            sys.stdout.write(held_title(_held, _ended))
+        else:
+            print("\n".join(held_lines(_held, _ended)))
         sys.exit(0)
     if "--night" in sys.argv[1:]:
         sys.exit(night_main())

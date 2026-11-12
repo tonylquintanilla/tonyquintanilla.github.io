@@ -161,8 +161,22 @@ jobs:
           named=$(git diff --cached --name-only | grep -v '^data/solar-system/' | tr '\n' ' ')
           served=$(git diff --cached --name-only | grep -c '^data/solar-system/' || true)
           day=$(date -u +%Y-%m-%d)
-          git commit -m "Nightly run $day UTC: $named and $served files under data/solar-system/" \
-                     -m "Written by .github/workflows/nightly.yml (L-485, the gallery half): the night ran clean, and these $count files are what its tools wrote."
+          # L-525 (hold the bad data): a held body is named at the START of
+          # the title, every night the hold lasts, and "HOLD ENDED" the
+          # night it ends -- a hold is not red, and the title of the
+          # night's commit is where Tony reads without being asked to
+          # (his words, Nov 11, 15:43: "I do look at pull titles"). The
+          # words come from the Daily Run, their one home; a served index
+          # it cannot read stops this step, so nothing is committed under
+          # a title that hides a hold.
+          held=$(python daily_run.py --held-title)
+          heldlines=$(python daily_run.py --held-lines | tr -d '\r')
+          set -- -m "${held}Nightly run $day UTC: $named and $served files under data/solar-system/" \
+                 -m "Written by .github/workflows/nightly.yml (L-485, the gallery half): the night ran clean, and these $count files are what its tools wrote."
+          if [ -n "$heldlines" ]; then
+            set -- "$@" -m "$heldlines"
+          fi
+          git commit "$@"
           git push
           echo "NIGHT COMMIT: pushed $(git rev-parse HEAD): $count files ($named + $served under data/solar-system/)"
 

@@ -146,6 +146,12 @@
 // of the elements' date), one sentence saying so (ruling 18). Updated
 // November 10, 2026 with Anthropic's Claude Opus 5.5.
 
+// A HELD BODY (L-525, hold the bad data, November 11, 2026). heldLine is
+// the one sentence a held body's box prints, a Sun-centred body's and a
+// moon's alike, from the `hold` block the cache builder serves on its
+// entry; holdKnob reads the ?hold= test address. Written with Anthropic's
+// Claude Opus 5.5.
+
 (function (global) {
   "use strict";
 
@@ -549,14 +555,81 @@
     return (THE_NAMES.indexOf(name) >= 0 ? "the " : "") + name + "'s";
   }
 
+  // A HELD BODY'S SENTENCE (L-525, hold the bad data; Tony's ruling of
+  // 2026-11-11, 11:22: "Hold the bad data and report, then continue."). The
+  // cache builder serves a body whose newer orbits failed its check against
+  // JPL, or that JPL did not answer, from its last good build, with a
+  // `hold` block on its entry. Its box says so in one sentence, naming the
+  // date of the orbit it is drawn from on JPL's clock, as the span sentence
+  // does (Tony, 2026-11-10). Words for Tony's phone look, on the Typed facts
+  // check's ALLOWED list; ?hold=<slug> shows them when nothing is held.
+  var HELD_WORDS = {
+    failed: function (who, dated) {
+      return who + " is drawn from JPL's orbit dated " + dated + " on JPL's " +
+        "clock, the last one that passed this page's check against JPL; the " +
+        "newer ones have not passed yet.";
+    },
+    unanswered: function (who, dated) {
+      return who + " is drawn from JPL's orbit dated " + dated + " on JPL's " +
+        "clock, the last one this page could check against JPL; JPL has not " +
+        "answered since.";
+    },
+    unchecked: function (who, dated) {
+      return who + " is drawn from JPL's orbit dated " + dated + " on JPL's " +
+        "clock, the last one this page served; it has not passed this page's " +
+        "check against JPL.";
+    }
+  };
+  // "Halley", "The Moon": the name a sentence opens on.
+  function subject(name) {
+    return (THE_NAMES.indexOf(name) >= 0 ? "The " : "") + name;
+  }
+  // The sentence for a held body, or null when it is not held. hold: the
+  // served block; trust: its served trust, whose element_epoch_jd dates the
+  // orbit it is drawn from. A hold whose orbit's date is not served is
+  // {line: null, why}, so the room can name it rather than print less.
+  function heldLine(hold, trust, name) {
+    if (!hold || typeof hold !== "object") { return { line: null, why: null }; }
+    var dated = epochText(trust && trust.element_epoch_jd);
+    if (!dated) {
+      return { line: null, why: "held, but the date of the orbit it is drawn " +
+                                "from is not served, so the sentence is not shown" };
+    }
+    var kind = hold.passed_before === false ? "unchecked"
+             : (hold.kind === "failed" ? "failed" : "unanswered");
+    return { line: HELD_WORDS[kind](subject(name), dated), why: null };
+  }
+  // The Mode 5 knob, read once at load: ?hold=halley (or several, by
+  // commas) has the room treat those bodies as held, so Tony can see the
+  // sentence on his phone when nothing is held, as ?freeze=1 does for the
+  // freeze. Slugs, lower case; an empty list when the address has none.
+  function holdKnob(search) {
+    var m = /[?&]hold=([^&]*)/.exec(String(search || ""));
+    if (!m) { return []; }
+    return decodeURIComponent(m[1]).split(",").map(function (s) {
+      return s.trim().toLowerCase();
+    }).filter(Boolean);
+  }
+  // The hold a body is drawn with: its served one, or the knob's made-up
+  // one when the address names it; null otherwise.
+  function holdFor(served, slug, knob) {
+    if (served && typeof served === "object") { return served; }
+    if ((knob || []).indexOf(slug) >= 0) {
+      return { kind: "failed", passed_before: true, knob: true };
+    }
+    return null;
+  }
+
   // child: {name, description, info_url, period, accuracy, trust:
   // {rate_deg_per_day, element_epoch_jd, delta_days}}, as the room's driver
   // serves it. rel: [x, y, z], the child around its parent, AU. Returns
   // {lines, meta, warnings, past, unserved}: lines the box's lines, its
   // name first; meta the panel's words (about, info_url); past whether the
   // minute is past the checked span; unserved which of the orrery's
-  // description, link and period it has none of yet.
-  function childBox(child, rel, epochJd, kmPerAu, parentName) {
+  // description, link and period it has none of yet. hold (L-525,
+  // optional): the hold the room draws it with (holdFor); left out, the
+  // child's own served hold.
+  function childBox(child, rel, epochJd, kmPerAu, parentName, hold) {
     var warnings = [];
     if (!child || typeof child !== "object") {
       return { lines: null, meta: null, past: false,
@@ -579,6 +652,11 @@
     } else {
       unserved.push("link");
     }
+    // L-525: a moon JPL did not answer is held at its last build; the
+    // room hands the hold in (its served one, or the ?hold= knob's).
+    var held = heldLine(hold === undefined ? child.hold : hold, child.trust, name);
+    if (held.line) { lines.push(held.line); }
+    else if (held.why) { warnings.push(name + ": " + held.why); }
     var past = pastSpan(child.trust, epochJd);
     var dist = distanceLine({ x: rel[0], y: rel[1], z: rel[2] }, child.trust,
                             epochJd, child.accuracy, kmPerAu, null, parentName);
@@ -628,6 +706,11 @@
     SPAN_MONTHS: SPAN_MONTHS,
     epochText: epochText,
     possessive: possessive,
+    HELD_WORDS: HELD_WORDS,
+    subject: subject,
+    heldLine: heldLine,
+    holdKnob: holdKnob,
+    holdFor: holdFor,
     childBox: childBox,
     servedFigures: servedFigures,
     periodLine: periodLine,

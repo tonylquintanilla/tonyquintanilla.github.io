@@ -746,16 +746,47 @@ v1.40, L-515 (one nested tree), step 2b; Tony's rulings 13 to 20 of
   drift and JPL's published accuracy, and the sentence saying which set
   the digits; past its checked span -- the trust block's `delta_days`
   either side of `element_epoch_jd`, written in whole hours under a day,
-  days to one decimal above -- one sentence, "This page checked its
-  working-out against JPL for <span> either side of the date of JPL's
-  orbit. The minute shown is outside that time." (words for Tony's phone
-  look, on the Typed facts check's ALLOWED); its period. A parent row that
+  days to one decimal above -- one sentence, "The position shown was
+  worked out from JPL's orbit dated <date> on JPL's clock, but is outside
+  that orbit's best-accuracy window of <span> either side."
+  (`SolarSystemFigures.SPAN_WORDS`, Tony's words of 2026-11-10, on the
+  Typed facts check's ALLOWED); its period. A parent row that
   says what its Horizons id is names the parent (Pluto's: "the
   Pluto-Charon barycenter"). Go To on a moon opens the moon's own box
   (L-514 ruling 4): its marker is the row's label target, and the Earth
   room's Moon is marked so too. A moon the orrery does not key yet (Io,
   Titan, Pluto, Charon at 2b) has no words, link or period; the box says
   nothing of it and the Solar System figures check lists them every run.
+- **A held body's box** (L-525, hold the bad data; Tony's ruling of
+  2026-11-11, 11:22: "Hold the bad data and report, then continue."). The
+  cache builder serves a body whose newer orbits failed its check against
+  JPL, or that JPL did not answer, from its last good build, with a
+  `hold` block on its entry (gallery-cache-builder); the driver hands it
+  on as the body's `hold`, a moon's too, with its trust's `delta_days`.
+  Its box says so first, after the class and the row's words, in one
+  sentence dated on JPL's clock as the span sentence is
+  (`SolarSystemFigures.heldLine`, `HELD_WORDS`): a failed test, "<Name> is
+  drawn from JPL's orbit dated <date> on JPL's clock, the last one that
+  passed this page's check against JPL; the newer ones have not passed
+  yet."; JPL not answering (its fetch or its check), "... the last one
+  this page could check against JPL; JPL has not answered since."; held
+  at a build that had not passed either, "... the last one this page
+  served; it has not passed this page's check against JPL." The Moon and
+  the Sun open "The Moon", "The Sun" (`subject`). A held Sun-centred body
+  past its own checked span also prints `SPAN_WORDS`, as a moon does. A
+  path is never held. A hold whose orbit's date is not served prints no
+  sentence and is named in the room's notes. Words proposed for Tony's
+  phone look, not yet settled. MODE 5 KNOB, read once as the room is
+  built: `?hold=halley` (several by commas; `SolarSystemFigures.holdKnob`,
+  `holdFor`) draws those bodies as held, so the sentence can be seen when
+  nothing is held, as `?freeze=1` shows the freeze. CHECKED by the Solar
+  System figures row (`heldWorked`: the three sentences, the knob read as
+  slugs, a held moon's box; four breaks of the real file first), and
+  walked headlessly (`tools/headless/walk_held_body.js`: nothing held,
+  the knob, a served hold planted on Jupiter and on the Moon, upright and
+  sideways; shown failing on the page as it stood before). Not covered:
+  Earth's own box in its fold (`earthBox`, `moonBox` in
+  `gallery/earth_geometry.js`) does not print the sentence.
 - **The view's middle and the shift** (rulings 15, 17; method). The view
   is a box about its MIDDLE: the Sun; or the body Centre on put there; or,
   after Go To, what the body circles -- a moon's planet, else the Sun --

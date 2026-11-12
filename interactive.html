@@ -2875,7 +2875,12 @@ for _slug in _bodies:
         "trust": {
             "rate_deg_per_day": _trust.get("error_rate_deg_per_day"),
             "element_epoch_jd": _trust.get("element_epoch_jd"),
+            # L-525: its own checked span, for a held body past it.
+            "delta_days": _trust.get("delta_days"),
         },
+        # L-525 (hold the bad data): the builder's hold block, when this
+        # body is served from its last good build; its box says so.
+        "hold": _rec.get("hold"),
         "accuracy": ((_objs.get(_slug) or {}).get("position_accuracy")
                      or _rec.get("position_uncertainty")),
         # L-484, 2026-10-31: why the builder served no uncertainty, in its
@@ -3017,6 +3022,8 @@ json.dumps({
             "element_epoch_jd": ((_cache.record(_s) or {}).get("trust") or {}).get("element_epoch_jd"),
             "delta_days": ((_cache.record(_s) or {}).get("trust") or {}).get("delta_days"),
         },
+        # L-525: a moon JPL did not answer is held at its last build.
+        "hold": (_cache.record(_s) or {}).get("hold"),
         "accuracy": (_objs.get(_s) or {}).get("position_accuracy"),
         "description": (_objs.get(_s) or {}).get("description"),
         "info_url": (_objs.get(_s) or {}).get("info_url"),
@@ -3620,6 +3627,10 @@ const EXHIBITS = {
                 ((restored ? restored.ticked : arrival.drawn) || []).forEach(function (s) { drawn[s] = true; });
             }
             const epochJd = payload.epoch_jd;
+            // L-525: the Mode 5 knob ?hold=<slug>[,<slug>], read once as the
+            // room is built: those bodies are drawn as held, so the held
+            // sentence can be seen when nothing is held (as ?freeze=1).
+            const holdKnob = SolarSystemFigures.holdKnob(window.location.search);
             for (const row of rows) {
                 const slug = row.slug;
                 if (slug === "sun") { continue; }
@@ -3658,8 +3669,11 @@ const EXHIBITS = {
                         found++;
                         t.showlegend = true;
                         t.name = label;
+                        // L-525: a moon JPL did not answer is held; its box
+                        // says so (childBox), and ?hold=<slug> shows it.
                         const box = SolarSystemFigures.childBox(b, t.meta.rel_au, epochJd,
-                            GalleryFeatures._KM_PER_AU, parentLabel);
+                            GalleryFeatures._KM_PER_AU, parentLabel,
+                            SolarSystemFigures.holdFor(b.hold, slug, holdKnob));
                         box.warnings.forEach(function (w) { warnings.push(w); });
                         const blines = (box.lines || [label]).map(function (s, j) {
                             return j === 0 ? s : "&#8226; " + solarSystemSoftWrap(s, 60);
@@ -3736,6 +3750,15 @@ const EXHIBITS = {
                     if (typeof row.about === "string" && row.about) {
                         lines.push(bullet(solarSystemSoftWrap(row.about, 60)));
                     }
+                    // L-525 (hold the bad data): a body the cache builder
+                    // holds at its last good build says so, first, in one
+                    // sentence (SolarSystemFigures.heldLine); ?hold=<slug>
+                    // shows it when nothing is held. A path is never held.
+                    const hold = (b.kind === "spacecraft" || b.kind === "comet_path") ? null
+                        : SolarSystemFigures.holdFor(b.hold, slug, holdKnob);
+                    const held = SolarSystemFigures.heldLine(hold, b.trust, label);
+                    if (held.line) { lines.push(bullet(solarSystemSoftWrap(held.line, 60))); }
+                    else if (held.why) { warnings.push(label + ": " + held.why); }
                     if (b.kind === "spacecraft" || b.kind === "comet_path") {
                         // L-443 build B: a spacecraft, drawn from its
                         // served positions. Its distance prints to what
@@ -3809,6 +3832,16 @@ const EXHIBITS = {
                             b.uncertainty_missing);
                         if (dist.line) {
                             lines.push(bullet(dist.line));
+                            // L-525: a held body past its own checked span
+                            // says so, as a moon does (SPAN_WORDS).
+                            if (hold && SolarSystemFigures.pastSpan(b.trust, epochJd)) {
+                                const span = SolarSystemFigures.spanText(b.trust.delta_days);
+                                const dated = SolarSystemFigures.epochText(b.trust.element_epoch_jd);
+                                if (span && dated) {
+                                    lines.push(bullet(solarSystemSoftWrap(
+                                        SolarSystemFigures.SPAN_WORDS(span, dated), 60)));
+                                }
+                            }
                             if (dist.note) {
                                 lines.push(bullet(solarSystemSoftWrap(dist.note, 60)));
                             }

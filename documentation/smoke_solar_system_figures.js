@@ -461,6 +461,50 @@ function childWorked(lib) {
   return fails;
 }
 
+// ---- L-525: a held body's sentence ------------------------------------
+// heldLine, holdKnob and holdFor, and childBox printing a held moon's
+// sentence. The cache builder serves a body held at its last good build
+// with a `hold` block; its box says so in one sentence dated on JPL's clock
+// (2461355.5 is 11 November 2026, 00:00 on it). ?hold=<slug> is the Mode 5
+// knob that shows it when nothing is held.
+function heldWorked(lib) {
+  const fails = [];
+  const want = function (c, w) { if (!c) { fails.push(w); } };
+  const trust = { rate_deg_per_day: 1e-7, element_epoch_jd: 2461355.5, delta_days: 30 };
+  const failed = lib.heldLine({ kind: "failed", passed_before: true }, trust, "Halley");
+  want(failed.line === "Halley is drawn from JPL's orbit dated 11 November 2026, midnight on " +
+       "JPL's clock, the last one that passed this page's check against JPL; the newer ones " +
+       "have not passed yet.", "a failed test's sentence is not as proposed: " + failed.line);
+  const moon = lib.heldLine({ kind: "unanswered", passed_before: true }, trust, "Moon");
+  want(moon.line === "The Moon is drawn from JPL's orbit dated 11 November 2026, midnight on " +
+       "JPL's clock, the last one this page could check against JPL; JPL has not answered since.",
+       "an unanswered body's sentence is not as proposed: " + moon.line);
+  const untested = lib.heldLine({ kind: "untested", passed_before: true }, trust, "Ceres");
+  want(/the last one this page could check against JPL; JPL has not answered since\.$/.test(untested.line || ""),
+       "a test JPL did not answer does not take the unanswered words: " + untested.line);
+  const unchecked = lib.heldLine({ kind: "failed", passed_before: false }, trust, "Encke");
+  want(/the last one this page served; it has not passed this page's check against JPL\.$/.test(unchecked.line || ""),
+       "a hold at a build that had not passed either does not say so: " + unchecked.line);
+  want(lib.heldLine(null, trust, "Halley").line === null, "a body not held prints a held sentence");
+  const undated = lib.heldLine({ kind: "failed" }, {}, "Halley");
+  want(undated.line === null && typeof undated.why === "string",
+       "a hold with no orbit date is printed, or not named");
+  want(JSON.stringify(lib.holdKnob("?exhibit=solar-system&hold=Halley,%20Encke")) === '["halley","encke"]' &&
+       lib.holdKnob("?freeze=1").length === 0, "the ?hold= address is not read as slugs");
+  const served = { kind: "unanswered" };
+  want(lib.holdFor(served, "halley", ["halley"]) === served &&
+       (lib.holdFor(null, "halley", ["halley"]) || {}).kind === "failed" &&
+       lib.holdFor(null, "ceres", ["halley"]) === null,
+       "the served hold, the knob's and none are not told apart");
+  const io = { name: "Io", description: "A moon.", hold: { kind: "unanswered", passed_before: true },
+               trust: { rate_deg_per_day: 0.026, element_epoch_jd: 2461355.5, delta_days: 0.221 } };
+  const box = lib.childBox(io, [0.0028, 0, 0], 2461355.6, KM_PER_AU_TEST, "Jupiter");
+  want(box.lines[2] === "Io is drawn from JPL's orbit dated 11 November 2026, midnight on JPL's " +
+       "clock, the last one this page could check against JPL; JPL has not answered since.",
+       "a held moon's box does not say so after its words: " + box.lines.join(" | "));
+  return fails;
+}
+
 // ---- self-test: the checks must be able to fail -------------------
 // Three copies of the REAL file, each with one deliberate fault, loaded
 // in a sandbox. Each must fail the worked cases.
@@ -572,6 +616,23 @@ const selfFailures = [];
     selfFailures.push(fault[0] + " passed the moon box's worked cases");
   }
 });
+// L-525: a held body's sentence, four breaks.
+[
+  ["a hold never printed",
+   "if (!hold || typeof hold !== \"object\") { return { line: null, why: null }; }",
+   "return { line: null, why: null };"],
+  ["a failed test given the unanswered words",
+   "(hold.kind === \"failed\" ? \"failed\" : \"unanswered\")", "\"unanswered\""],
+  ["the ?hold= address ignored",
+   "if ((knob || []).indexOf(slug) >= 0) {", "if (false) {"],
+  ["a held moon's box silent",
+   "var held = heldLine(hold === undefined ? child.hold : hold, child.trust, name);",
+   "var held = heldLine(null, child.trust, name);"]
+].forEach(function (fault) {
+  if (heldWorked(loadWith(fault[1], fault[2])).length === 0) {
+    selfFailures.push(fault[0] + " passed the held sentence's worked cases");
+  }
+});
 if (selfFailures.length) {
   console.log("SELF-TEST FAILED -- the checks below cannot fail:");
   selfFailures.forEach(function (f) { console.log("  " + f); });
@@ -592,12 +653,15 @@ console.log("Self-test: the worked cases fail on a Report test one place " +
             "on the refused and the none sentences each in the other's " +
             "place; and a moon's box on the span sentence printed inside " +
             "its span, on it never printed, and on the distance taken from " +
-            "where the moon is drawn rather than from its parent.");
+            "where the moon is drawn rather than from its parent; and a held " +
+            "body's sentence on a hold never printed, on a failed test given " +
+            "the unanswered words, on the ?hold= address ignored, and on a " +
+            "held moon's box silent.");
 
 // ---- 1. worked cases ----------------------------------------------
 const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF),
                                     pathWorked(SSF), uncertaintyWorked(SSF),
-                                    childWorked(SSF));
+                                    childWorked(SSF), heldWorked(SSF));
 
 // ---- 2. the real config -------------------------------------------
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "data",

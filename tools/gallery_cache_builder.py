@@ -155,6 +155,15 @@ one left from its days as a path is dropped and named, with its old
 plan's stamps. Piece C of C/2025 K1, drawn as an orbit by JPL's
 database e since Nov 4, had stopped the night on #T.
 patch_L510_2_orbit_body_drops_future_points.py.)
+Module updated: November 11, 2026 with Anthropic's Claude Opus 5.5 (L-525,
+hold the bad data: a Sun-centred body whose accuracy test fails, or
+cannot be made, and any body JPL does not answer, is HELD at its last
+good build and leaves the served window, which the bodies that passed
+set; the hold is carried forward swap after swap, ends by name when the
+test passes, and is listed in the index's `holds` for the night's commit
+title; a body with no build to hold at is not served, and named; more
+than HOLD_LIMIT (5) held in one build is a failed build, no swap. Tony's
+ruling of Nov 11, 11:22; the coordinator's two changes of that evening.)
 """
 
 import argparse
@@ -940,6 +949,160 @@ def measure_trust(obj, osc, warn):
             'window_days': None, 'cap_applied': None, 'window': None,
             'error': str(exc),
         }
+
+
+# ===========================================================================
+# L-525 -- HOLD THE BAD DATA (Tony, 2026-11-11, 11:22: "Hold the bad data
+# and report, then continue. This follows our pattern of fix and report
+# instead of stopping."). Until then one body's failed test cut the whole
+# site's window (L-149's minimum): on Nov 11 one sample of Halley's,
+# wrong by L-524's solver fault, left 0.3 days for every room.
+#
+# WHO IS HELD. A Sun-centred body -- one whose span sets the site's
+# window -- when either sample of its accuracy test is more than
+# TRUST_TOLERANCE_DEG from JPL's position, or the test could not be made;
+# and any body but a path when JPL did not answer its fetch, since then
+# there is no fresh orbit. A moon, or any body carrying its own span, is
+# NOT held for a test number over the limit (the coordinator's change of
+# Nov 11): its samples run near a third of the limit on ordinary nights
+# from the Sun's real pull, so a number over it is most likely physics,
+# and an older orbit would draw it worse; it keeps the fresh orbit, its
+# own short span and the sentence past it. Replayed on the 186 committed
+# served indexes of Jul 11 to Nov 11, the rule holds Halley on Nov 10
+# (3.99 degrees) and Nov 11 (21.6) and nothing else; the next worst
+# Sun-centred body was Earth, 0.012 degrees.
+#
+# HOW. The body is served from its entry in the cache this build
+# replaces, whole (orbit, trust and its own span, comet block, drawn
+# orbit), its "you are here" point cleared as A-3 clears it, with a
+# `hold` block: since when, why, and from which build. Each later build
+# while the hold lasts copies that entry forward again, so the last good
+# entry survives any number of swaps (.prev keeps one generation only).
+# A held body leaves the served window (derive_served). It is tested
+# again every build; the hold ends when it passes, named "HOLD ENDED".
+# A body with no build to hold at is not served, and named. More than
+# HOLD_LIMIT held in one build is a failed build, not holds (run_build).
+#
+# A hold is not red. It is said in the night's commit title and both
+# Daily Run summaries (daily_run.py, from the index's `holds`), every run
+# while it lasts.
+# ===========================================================================
+
+HOLD_SCHEMA_VERSION = 1
+HOLD_LIMIT = 5      # more held than this in one build is a failed build
+
+
+def held_by_test(obj):
+    """L-525: whether a failed accuracy test holds this body -- a body
+    whose span takes part in the site's window (Sun-centred, drawn from
+    its elements). Every other body is held only when JPL does not answer."""
+    return (obj.get('canonical_frame') == TRUST_WINDOW_PARTICIPANT_FRAME
+            and not is_path_body(obj)
+            and obj.get('serve_positions') is not False)
+
+
+def _days_words(days):
+    """30.0 -> '30', 3.4 -> '3.4': a test's offset as a person reads it."""
+    return ('%.1f' % abs(float(days))).rstrip('0').rstrip('.')
+
+
+def trust_verdict(trust):
+    """L-525: None when a body's accuracy test passed; otherwise (kind,
+    words). 'failed': either sample is more than TRUST_TOLERANCE_DEG from
+    JPL's position (the tolerance unchanged). 'untested': the test could
+    not be made (JPL did not answer the check, or no mean motion, or an
+    orbit the test cannot take). A trust block of another method (a path's
+    fetched positions) is not this test, and is None."""
+    if not trust or trust.get('method') != 'two_body_rate_v1':
+        return None
+    if trust.get('window_days') is None:
+        return ('untested', 'JPL did not answer its accuracy test (%s)'
+                % (trust.get('error') or 'no measurement'))
+    samples = trust.get('samples') or []
+    if not samples:
+        return None
+    worst = max(samples, key=lambda s: s['error_deg'])
+    if worst['error_deg'] > TRUST_TOLERANCE_DEG:
+        return ('failed', 'its accuracy test was %.1f degrees from JPL at %s '
+                'days (the limit is %g)' % (worst['error_deg'],
+                                            _days_words(worst['offset_days']),
+                                            TRUST_TOLERANCE_DEG))
+    return None
+
+
+def prior_hold(prior_index, slug):
+    """The hold block the replaced cache served for this body, or None."""
+    entry = ((prior_index or {}).get('objects') or {}).get(slug) or {}
+    return entry.get('hold')
+
+
+def hold_from_prior(obj, prior_index, kind, why, today):
+    """L-525: this body's result served from its entry in the cache this
+    build replaces, with a hold block; None when there is no entry to hold
+    at (none, no orbit, or a positions file this path does not carry). An
+    entry already held keeps its first day and its source build, so the
+    last good entry is copied forward, swap after swap."""
+    slug = obj['slug']
+    prior = ((prior_index or {}).get('objects') or {}).get(slug)
+    if not prior or prior.get('osculating') is None or prior.get('positions') is not None:
+        return None
+    ph = prior.get('hold')
+    if ph:
+        passed_before = bool(ph.get('passed_before'))
+    else:
+        passed_before = (not held_by_test(obj)
+                         or trust_verdict(prior.get('trust')) is None)
+    hold = {
+        'schema_version': HOLD_SCHEMA_VERSION,
+        'since': ph['since'] if ph else today,
+        'kind': kind,
+        'why': why,
+        'first_why': (ph.get('first_why') or ph.get('why')) if ph else why,
+        'from_generated': ph.get('from_generated') if ph else prior_index.get('generated'),
+        'passed_before': passed_before,
+    }
+    return {'slug': slug, 'obj': obj, 'osc_block': prior['osculating'],
+            'positions': None, 'as_of_today': None,
+            'orbit_type': prior.get('orbit_type'), 'comet': prior.get('comet'),
+            'trust': prior.get('trust'), 'drawn_orbit': prior.get('drawn_orbit'),
+            'stale': True, 'hold': hold}
+
+
+def hold_source_words(hold):
+    """Where a held body is drawn from, in words."""
+    if hold.get('from_generated'):
+        return 'drawn from the build of %s%s' % (
+            hold['from_generated'][:10],
+            '' if hold.get('passed_before') else ', which had not passed either')
+    return 'drawn from the last orbit JPL gave it'
+
+
+def hold_entry(obj, hold, served=True):
+    """L-525: one held body as the index's `holds` lists it, with the line
+    the night's commit and the Daily Run print for it."""
+    if served:
+        line = 'HELD %s since %s: %s; %s' % (obj['name'], hold['since'], hold['why'],
+                                             hold_source_words(hold))
+    else:
+        line = ('HELD %s since %s: %s; not served: no good build to hold at'
+                % (obj['name'], hold['since'], hold['why']))
+    return {'slug': obj['slug'], 'name': obj['name'], 'since': hold['since'],
+            'kind': hold['kind'], 'why': hold['why'], 'served': served, 'line': line}
+
+
+def ended_entry(obj, ended):
+    """L-525: a hold this build ended, as the index lists it."""
+    how = ('JPL answered its fetch' if ended.get('kind') == 'unanswered'
+           else 'its accuracy test passed')
+    return {'slug': obj['slug'], 'name': obj['name'], 'since': ended.get('since'),
+            'line': 'HOLD ENDED %s: held since %s; %s in this build'
+                    % (obj['name'], ended.get('since'), how)}
+
+
+def print_holds(holds):
+    """The builder's own [HOLD] lines, the same words the summaries print."""
+    for h in (holds or {}).get('held', []) + (holds or {}).get('ended', []):
+        print("[HOLD] %s" % h['line'], flush=True)
 
 
 # ===========================================================================
@@ -1814,7 +1977,7 @@ def build_pole_of_date(obj, day, frame, warn):
 
 
 def derive_served(staging, results, defaults, warn=None, frame=None,
-                  uncertainty=None):
+                  uncertainty=None, holds=None):
     """Assemble coverage_index.json (v0.6 schema parity + conic additions) and
     write it under the staging tree. warn (M2, optional): callback for
     FLAG-3 served_window-null warnings; defaults to a no-op so existing
@@ -1826,7 +1989,10 @@ def derive_served(staging, results, defaults, warn=None, frame=None,
     own position uncertainty, and why each one not served was not, served
     as the index's position_uncertainty so a check can tell a body never
     asked from one whose answer failed; each served body's block goes on
-    its own entry."""
+    its own entry.
+    holds (L-525, optional): the bodies held in this build and the holds
+    it ended, served as the index's `holds`; a held body's entry carries
+    its own `hold` block and is left out of the served window."""
     if warn is None:
         warn = lambda msg: None
     objects = {}
@@ -1858,6 +2024,8 @@ def derive_served(staging, results, defaults, warn=None, frame=None,
             block['pole_of_date'] = r.get('pole_of_date')
         if r.get('position_uncertainty') is not None:   # L-399
             block['position_uncertainty'] = r['position_uncertainty']
+        if r.get('hold') is not None:                   # L-525
+            block['hold'] = r['hold']
         objects[slug] = block
 
     # M2 sec 5.5, corrected L-149: global served_window. Participants are
@@ -1867,11 +2035,20 @@ def derive_served(staging, results, defaults, warn=None, frame=None,
     # served_window null, named in a warning (FLAG-3: the conservative,
     # honest default -- a survivors-only minimum could silently under/over-
     # state the true bound with no visible sign anything degraded).
+    # L-525: a HELD body keeps its own last good span on its entry and
+    # leaves this minimum, the way a moon carries its own span; the site's
+    # window is set by the bodies that passed. So a missing window here
+    # can only be a body that is not held -- none, as built -- and FLAG-3's
+    # null stays for it.
     as_of_jd = _dt_to_jd(_utcnow())
     participant_windows = []
     missing = []
+    held_out = []
     for slug, block in objects.items():
         if block['canonical_frame'] != TRUST_WINDOW_PARTICIPANT_FRAME:
+            continue
+        if block.get('hold') is not None:
+            held_out.append(slug)
             continue
         wd = (block.get('trust') or {}).get('window_days')
         if wd is None:
@@ -1888,8 +2065,10 @@ def derive_served(staging, results, defaults, warn=None, frame=None,
         w_min, w_slug = min(participant_windows)
         served_window = {'start_jd': as_of_jd - w_min, 'end_jd': as_of_jd + w_min}
         print("[window] served window: %.1f days either side of today, set by "
-              "%s, the shortest of %d bodies' trusted spans"
-              % (w_min, w_slug, len(participant_windows)), flush=True)
+              "%s, the shortest of %d bodies' trusted spans%s"
+              % (w_min, w_slug, len(participant_windows),
+                 ('; held out of it: %s' % ', '.join(sorted(held_out)))
+                 if held_out else ''), flush=True)
     else:
         served_window = None   # no participants at all (e.g. an empty catalog)
 
@@ -1909,6 +2088,13 @@ def derive_served(staging, results, defaults, warn=None, frame=None,
     }
     if frame is not None:                           # L-322 Stage D
         index['frame_constants'] = frame
+    if holds is not None:                           # L-525
+        index['holds'] = {
+            'limit': HOLD_LIMIT,
+            'tolerance_deg': TRUST_TOLERANCE_DEG,
+            'held': holds['held'],
+            'ended': holds['ended'],
+        }
     if uncertainty is not None:                     # L-399
         index['position_uncertainty'] = {
             'sigma': UNCERTAINTY_SIGMA,
@@ -2754,6 +2940,9 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
             raise SystemExit("no such slug: %s" % only_slug)
 
     results = []
+    # L-525: the bodies held in this build, and the holds it ends.
+    holds = {'held': [], 'ended': []}
+    today = _utcnow().strftime('%Y-%m-%d')
     for obj in objects:
         # L-234: an entry served for its features only (a frame
         # origin) has no ephemeris to fetch. Skip before the try,
@@ -2784,13 +2973,65 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                              'method': 'fetched_positions', 'window': None}
             if obj['trace_policy'] == 'full-arc':
                 r['positions'] = build_position_file(staging, obj['slug'], obj, r['_raw_points'])
+            # L-525: a Sun-centred body whose accuracy test failed, or
+            # could not be made, is HELD at its last good build; one with
+            # none to hold at is not served, and named. Anything else
+            # that was held and is served fresh now ends its hold.
+            verdict = trust_verdict(r['trust']) if held_by_test(obj) else None
+            if verdict is not None:
+                held = hold_from_prior(obj, prior_index, verdict[0], verdict[1], today)
+                if held is None:
+                    holds['held'].append(hold_entry(obj, {
+                        'since': today, 'kind': verdict[0], 'why': verdict[1]},
+                        served=False))
+                    run_manifest['objects'][obj['slug']] += (
+                        '; HELD, not served: no good build to hold at')
+                    continue
+                r = held
+                holds['held'].append(hold_entry(obj, held['hold']))
+                run_manifest['objects'][obj['slug']] += (
+                    '; HELD, %s: %s' % (hold_source_words(held['hold']), verdict[1]))
+            else:
+                ended = prior_hold(prior_index, obj['slug'])
+                if ended is not None:
+                    holds['ended'].append(ended_entry(obj, ended))
             results.append(r)
         except Exception as e:
+            # L-525: a body JPL did not answer -- a moon or other body
+            # that carries its own span included, since there is then no
+            # fresh orbit -- is HELD at its last good build, so it keeps
+            # its own span and leaves the site's window to the bodies that
+            # passed. A path keeps A-3's last-good positions below.
+            held = None
+            if not is_path_body(obj):
+                held = hold_from_prior(obj, prior_index, 'unanswered',
+                                       'JPL did not answer its fetch (%s)' % e, today)
+            if held is not None:
+                results.append(held)
+                holds['held'].append(hold_entry(obj, held['hold']))
+                warn("%s: FETCH FAILED (%s); HELD, %s"
+                     % (obj['slug'], e, hold_source_words(held['hold'])))
+                run_manifest['objects'][obj['slug']] = (
+                    'failed: %s (served last-good: HELD, %s)'
+                    % (e, hold_source_words(held['hold'])))
+                continue
             # A-3: serve the orbit from last-good (as_of_today NULLED -- never a
             # stale marker) rather than let the object vanish; drop only if there
             # is no last-good to serve.
             stale = serve_last_good(staging, obj, warn, prior_index=prior_index)
             if stale is not None:
+                if not is_path_body(obj):
+                    # L-525: no build to hold at, but its last elements
+                    # are served: held all the same, so a Sun-centred
+                    # body leaves the site's window rather than null it.
+                    ph = prior_hold(prior_index, obj['slug'])
+                    stale['hold'] = {
+                        'schema_version': HOLD_SCHEMA_VERSION,
+                        'since': ph['since'] if ph else today,
+                        'kind': 'unanswered',
+                        'why': 'JPL did not answer its fetch (%s)' % e,
+                        'from_generated': None, 'passed_before': False}
+                    holds['held'].append(hold_entry(obj, stale['hold']))
                 results.append(stale)
                 warn("%s: FETCH FAILED (%s); served last-good orbit, as_of_today nulled" % (obj['slug'], e))
                 run_manifest['objects'][obj['slug']] = 'failed: %s (served last-good)' % e
@@ -2850,8 +3091,29 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                                   '%s (%s)' % kv for kv in sorted(unc['missing'].items())))
                               if unc['missing'] else ''), flush=True)
 
+    # L-525: more than HOLD_LIMIT bodies held in one build is a failed
+    # build, not a set of holds -- JPL not answering, or a fault in this
+    # code -- and stops here, before anything is swapped in: the night is
+    # red and commits nothing, and the site keeps the cache it has. Until
+    # L-525 such a build validated and swapped, its window null; an
+    # outage must not become a commit with every body held.
+    held_count = len(holds['held'])
+    run_manifest['holds'] = {
+        'held': ['%s (%s)' % (h['slug'], h['kind']) for h in holds['held']],
+        'ended': [e['slug'] for e in holds['ended']]}
+    if held_count > HOLD_LIMIT and not only_slug:
+        run_manifest['structural_validation'] = (
+            'fail: %d bodies held in one build, more than %d -- a failed build, '
+            'not holds (is JPL answering?): %s' % (
+                held_count, HOLD_LIMIT,
+                ', '.join(h['slug'] for h in holds['held'])))
+        _write_run_manifest(staging, run_manifest)
+        print("[ABORT] %s -- no swap, no commit; staging kept at %s"
+              % (run_manifest['structural_validation'], staging), flush=True)
+        return run_manifest
+
     index = derive_served(staging, results, defaults, warn, frame=frame,
-                          uncertainty=unc)
+                          uncertainty=unc, holds=holds)
 
     # N3: object-set continuity -- a run must not silently DROP an object the
     # prior generation served (a first appearance on first-build is fine). This
@@ -2978,6 +3240,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
         _write_run_manifest(out_dir, run_manifest)
     for wmsg in warnings_log:
         print("[warn]", wmsg, flush=True)
+    print_holds(index.get('holds'))
     print("[done] run %s (%s): %d objects" % (run_id, mode, len(results)), flush=True)
     return run_manifest
 

@@ -114,6 +114,16 @@ Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5
 (L-510: a saved position a year ahead and an old plan's stamp planted
 in Hale-Bopp's file before the nightly re-run; both dropped and named.
 patch_L510_2_orbit_body_drops_future_points.py.)
+Module updated: November 11, 2026 with Anthropic's Claude Opus 5.5
+(L-525, hold the bad data: hold_checks, eleven checks on real builds with a
+body's check positions turned a few degrees, so its accuracy test fails
+as Halley's did on Nov 10 and 11 -- the rest of the site's window as it
+was, the body served from its last good build, the hold through two more
+swaps, its end by name, the night's commit title naming it, a moon over
+the limit not held, a moon JPL does not answer held, an unanswered test
+held, a body with no good build not served and named, and more than
+HOLD_LIMIT held a failed build with no swap; and the M2 check-vector
+failure, which nulled the whole window, now holds the body.)
 """
 import contextlib
 import io
@@ -885,10 +895,21 @@ def main():
             finally:
                 b.fetch_vectors_range = _fv_current
             idx_fail = json.load(open(out_m2fail / 'coverage_index.json'))
-            check('error' in idx_fail['objects']['jupiter']['trust'],
-                  "M2: forced check-vector failure -> jupiter trust carries 'error'")
-            check(idx_fail['served_window'] is None,
-                  "M2: forced check-vector failure -> served_window null (FLAG-3, exercised)")
+            # L-525 (Tony, 2026-11-11: "Hold the bad data and report,
+            # then continue."): until then this failure nulled the WHOLE
+            # site's window (FLAG-3). Now the body is held; on a first
+            # build there is no good build to hold it at, so it is not
+            # served, and named; the site keeps the window of the bodies
+            # that passed.
+            held_fail = [h for h in (idx_fail.get('holds') or {}).get('held', [])
+                         if h.get('slug') == 'jupiter']
+            check('jupiter' not in idx_fail['objects'] and bool(held_fail)
+                  and held_fail[0].get('kind') == 'untested',
+                  "L-525: forced check-vector failure on a first build -> jupiter "
+                  "held with no good build, not served, and named")
+            check(idx_fail['served_window'] is not None,
+                  "L-525: forced check-vector failure -> served_window STAYS "
+                  "non-null (was null under FLAG-3)")
 
         # L-149: the same failure-injection pattern, aimed at pluto instead
         # of jupiter. Before the fix this would ALSO have nulled
@@ -1714,6 +1735,7 @@ def main():
     uncertainty_checks(cfg, check)
     fresh_answer_checks(check)
     side_change_checks(cfg_path, check)
+    hold_checks(cfg, check)
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
@@ -2207,6 +2229,166 @@ def fresh_answer_checks(check):
     check(len(planted) == len(calls) and all(c is True for _n, c in planted),
           "L-399: planted fault caught -- with the setting turned on, every "
           "question would read astroquery's saved answers")
+
+
+def hold_checks(cfg, check):
+    """L-525 (hold the bad data; Tony, 2026-11-11, 11:22: "Hold the bad
+    data and report, then continue."). Each check is on real builds with
+    the fakes, a fault planted by turning a body's check positions a few
+    degrees about the pole, so its accuracy test fails as Halley's did:
+    - one planted bad body leaves the rest of the site's window as it was;
+    - the held body is served from the last good build, and its hold
+      survives two more swaps unchanged;
+    - the hold ends when the test passes, and says so by name;
+    - the held body is in the night's commit title by name (daily_run.py,
+      the one home of the title's words);
+    - a moon over the limit is NOT held (the coordinator's change 1 of
+      Nov 11): it keeps its fresh orbit; a moon JPL does not answer is;
+    - a test JPL does not answer holds a Sun-centred body too;
+    - a body with no good build to hold at is not served, and named;
+    - more than HOLD_LIMIT bodies held is a failed build, not holds: no
+      swap, the live cache as it was (the coordinator's change 2)."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import daily_run as dr
+    _fv = b.fetch_vectors_range
+    _fe = b.fetch_elements
+
+    def turned(hids, deg=2.0):
+        c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg))
+
+        def fv(hid, *a, **k):
+            pts = _fv(hid, *a, **k)
+            if k.get('epoch_jds') is not None and hid in hids:
+                pts = {key: dict(p, x=p['x'] * c - p['y'] * s,
+                                 y=p['x'] * s + p['y'] * c)
+                       for key, p in pts.items()}
+            return pts
+        return fv
+
+    def build(out, mode, fv=None, fe=None):
+        b.fetch_vectors_range = fv or _fv
+        b.fetch_elements = fe or _fe
+        try:
+            return b.run_build(cfg, out, mode=mode, do_commit=False)
+        finally:
+            b.fetch_vectors_range = _fv
+            b.fetch_elements = _fe
+
+    def index(out):
+        with open(out / 'coverage_index.json') as f:
+            return json.load(f)
+
+    def title(out):
+        held, ended, err = dr.served_holds(str(out.parent.parent))
+        return err or dr.held_title(held, ended)
+
+    def half(idx):
+        sw = idx.get('served_window')
+        return None if sw is None else (sw['end_jd'] - sw['start_jd']) / 2.0
+
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / 'data' / 'solar-system'
+        out.mkdir(parents=True)
+        build(out, 'first-build')
+        build(out, 'nightly')
+        clean = index(out)
+        good_jupiter = clean['objects']['jupiter']
+
+        rm1 = build(out, 'nightly', fv=turned({'599'}))
+        n1 = index(out)
+        j1 = n1['objects'].get('jupiter') or {}
+        check(rm1['structural_validation'] == 'pass' and j1.get('hold') is not None
+              and j1['hold'].get('kind') == 'failed',
+              "L-525: a planted bad body (Jupiter, its test 2 degrees off) is HELD "
+              "(%s)" % (j1.get('hold') or {}).get('why'))
+        check(half(n1) is not None and half(n1) == half(clean),
+              "L-525: one planted bad body leaves the rest of the site's window as "
+              "it was (%.1f days either side, %.1f before)"
+              % (half(n1) or -1, half(clean) or -1))
+        check(j1.get('osculating') == good_jupiter['osculating']
+              and j1.get('trust') == good_jupiter['trust']
+              and j1.get('as_of_today') is None,
+              "L-525: the held body is served from the last good build "
+              "(its orbit and its own span), its 'you are here' point cleared")
+        check(title(out) == "HELD Jupiter -- ",
+              "L-525: the held body is in the night's commit title by name (%r)"
+              % title(out))
+
+        build(out, 'nightly', fv=turned({'599'}))
+        build(out, 'nightly', fv=turned({'599'}))
+        n3 = index(out)
+        j3 = n3['objects'].get('jupiter') or {}
+        check(j3.get('hold') == j1.get('hold')
+              and j3.get('osculating') == good_jupiter['osculating']
+              and half(n3) == half(clean),
+              "L-525: the hold survives two more swaps unchanged (since %s, "
+              "drawn from the build of %s)"
+              % ((j3.get('hold') or {}).get('since'),
+                 ((j3.get('hold') or {}).get('from_generated') or '')[:10]))
+
+        build(out, 'nightly')
+        n4 = index(out)
+        ended = [e.get('slug') for e in (n4.get('holds') or {}).get('ended', [])]
+        check('hold' not in n4['objects']['jupiter'] and ended == ['jupiter']
+              and title(out) == "HOLD ENDED Jupiter -- ",
+              "L-525: the hold ends when the test passes, by name (%r)" % title(out))
+
+        rm5 = build(out, 'nightly', fv=turned({'301'}))
+        n5 = index(out)
+        moon = n5['objects'].get('moon') or {}
+        worst = max([s['error_deg'] for s in (moon.get('trust') or {}).get('samples', [])]
+                    or [0.0])
+        check('hold' not in moon and worst > b.TRUST_TOLERANCE_DEG
+              and half(n5) == half(clean) and title(out) == "",
+              "L-525: a moon over the limit is NOT held: its fresh orbit and its "
+              "own short span (worst sample %.2f degrees)" % worst)
+
+        def moon_unanswered(hid, *a, **k):
+            if hid == '301':
+                raise RuntimeError("simulated: JPL did not answer")
+            return _fe(hid, *a, **k)
+        build(out, 'nightly', fe=moon_unanswered)
+        n6 = index(out)
+        moon6 = n6['objects'].get('moon') or {}
+        check((moon6.get('hold') or {}).get('kind') == 'unanswered'
+              and moon6.get('osculating') == moon.get('osculating'),
+              "L-525: a moon JPL does not answer is held, from the last build")
+
+        def jupiter_untested(hid, *a, **k):
+            if k.get('epoch_jds') is not None and hid == '599':
+                raise RuntimeError("simulated check-vector outage")
+            return _fv(hid, *a, **k)
+        build(out, 'nightly', fv=jupiter_untested)
+        n7 = index(out)
+        check(((n7['objects'].get('jupiter') or {}).get('hold') or {}).get('kind')
+              == 'untested' and half(n7) == half(clean),
+              "L-525: a test JPL does not answer holds the body, and the site "
+              "keeps its window")
+
+        before = (out / 'coverage_index.json').read_bytes()
+
+        def dead(*a, **k):
+            raise RuntimeError("simulated: JPL down")
+        rm8 = build(out, 'nightly', fe=dead, fv=dead)
+        check(str(rm8['structural_validation']).startswith('fail')
+              and 'held' in str(rm8['structural_validation'])
+              and (out / 'coverage_index.json').read_bytes() == before,
+              "L-525: more than %d bodies held is a failed build, not holds: no "
+              "swap, the live cache as it was (%s)"
+              % (b.HOLD_LIMIT, str(rm8['structural_validation'])[:90]))
+
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / 'data' / 'solar-system'
+        out.mkdir(parents=True)
+        rm9 = build(out, 'first-build', fv=turned({'599'}))
+        n9 = index(out)
+        named = [h for h in (n9.get('holds') or {}).get('held', [])
+                 if h.get('slug') == 'jupiter']
+        check(rm9['structural_validation'] == 'pass'
+              and 'jupiter' not in n9['objects'] and named
+              and named[0].get('served') is False and half(n9) is not None,
+              "L-525: a body with no good build to hold at is not served, and "
+              "named (%s)" % (named[0].get('line') if named else 'not named'))
 
 
 if __name__ == '__main__':
