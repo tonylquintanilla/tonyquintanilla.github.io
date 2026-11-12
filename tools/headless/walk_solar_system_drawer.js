@@ -146,6 +146,10 @@
 // rows with the drawer shut; Back opening the room as left at Scenes; a
 // reload of the scene dropping what was kept. A planted page walks 29 and
 // 30 alone.
+// Updated November 12, 2026 with Anthropic's Claude Opus 5.5 (L-527, a first
+// visit's guide): 22a now finds the guide's first card greeting a first
+// visit, the note waiting, and Skip putting the guide away and turning it
+// off, then the note greeting; the rest of the walk runs with the guide off.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -485,11 +489,24 @@ async function places(root, payload, page) {
   const w = await h.boot(root, "solar-system", payload);
   const d = w.document, E = (s) => w.eval(s);
   // 22a. L-494: a first visit is greeted by the note on the i button,
-  // once the room is ready (the overlay leaves after 300 ms).
+  // once the room is ready (the overlay leaves after 300 ms). Since L-527
+  // (2026-11-12) a first visit's guide stands in for the note while it
+  // runs, and the note shows once the guide is put away; so the first
+  // card greets, Skip puts it away, and then the note shows, and the rest
+  // of this walk runs with the guide off.
   await new Promise(r => setTimeout(r, 450));
   const hint = () => d.getElementById("info-hint");
-  ok(hint() && hint().classList.contains("show"),
-     "a first visit is not greeted by the note on the i button");
+  const guideCard = d.getElementById("guide-card");
+  ok(guideCard && guideCard.classList.contains("show") && guideCard.getAttribute("data-card") === "turn" &&
+     !(hint() && hint().classList.contains("show")),
+     "a first visit is not greeted by the guide's first card, the note waiting (L-527)");
+  if (guideCard) {
+    d.getElementById("guide-skip").dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true }));
+    await h.done();
+  }
+  ok(hint() && hint().classList.contains("show") && !guideCard.classList.contains("show") &&
+     E("localStorage.getItem('paloma_orrery_guide')") === "off",
+     "Skip did not put the guide away, turn it off, and greet with the note on the i button");
   const idx = (key) => E("ssIndex(" + JSON.stringify(key) + ")");
   const row = (key) => d.querySelector('#sun-drawer-list .sun-row[data-k="' + idx(key) + '"]');
   // L-515, Tony's phone look of 2026-11-07: a row with no centre built

@@ -263,6 +263,13 @@ Module updated: November 11, 2026 with Anthropic's Claude Opus 5.5
 (L-524: the "Kepler solver" checker runs tools/test_kepler_solver.py and
 gates -- the assembler's solve_kepler answers every e below 1 and every
 mean anomaly, or raises.)
+Module updated: November 12, 2026 with Anthropic's Claude Opus 5.5
+(L-527, a first visit's guide: the "First guide" checker runs
+documentation/smoke_first_guide.js and gates -- each card ends only on
+its own action, the setting and the address decide whether it runs, the
+page loads Plotly 2.35.2 and the ring's sum is 2.35.2's own; the live
+check also fetches gallery/first_guide.js, which the page loads with a
+script tag.)
 """
 
 import hashlib
@@ -655,6 +662,20 @@ OFFLINE_CHECKERS = [
     ("Tap hover", "node",
      ["documentation/smoke_tap_hover.js"], ".", "===", False),
 
+    # L-527 (2026-11-12): a first visit's guide in the Solar System room.
+    # It requires the real gallery/first_guide.js and works each card ending
+    # only on its own action, the setting (none counts as on; a storage that
+    # throws keeps nothing), whether the address runs it (a shared link
+    # never), step 1's turn, where a card goes so it never covers its
+    # target, and the words as ruled. The ring's check can fail: it reads
+    # the Plotly version from interactive.html's script line and is red,
+    # naming both, if it is not 2.35.2, and holds the ring's sum to Plotly
+    # 2.35.2's own placement (documentation/fixture_plotly_2_35_2_placement.js)
+    # on 2,000 cameras. And the page's wiring. Its self-test breaks the real
+    # file nine ways and plants a page on another Plotly first. Gates.
+    ("First guide", "node",
+     ["documentation/smoke_first_guide.js"], ".", "===", False),
+
     # L-517 part 1 (2026-11-08): the saved Solar System pictures, each in a
     # fold beside its body's row in that drawer. It requires the real
     # gallery/picture_folds.js and solar_system_drawer.js, works which twin
@@ -894,6 +915,9 @@ SERVED_FILES = [
     # L-523: the page loads it with a script tag, whether a finger's
     # hover is its tap (gallery/tap_hover.js).
     "gallery/tap_hover.js",
+    # L-527: the page loads it with a script tag, a first visit's guide
+    # (gallery/first_guide.js).
+    "gallery/first_guide.js",
     # The positions files are not typed here (L-423, 2026-11-06).
     # positions_files() below reads them from the config. The typed list
     # had kept piece C of C/2025 K1's file after the comet became an

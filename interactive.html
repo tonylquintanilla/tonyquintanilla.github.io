@@ -502,6 +502,14 @@
         tries it there in two lines, then three
         (SceneMoment.subtitleWraps, the same words), before moving the
         title below the cross; every fit starts from one piece again.)
+     Updated: November 12, 2026 with Anthropic's Claude Opus 5.5
+       (L-527, a first visit's guide: on the Solar System room's plain
+        opening, while the visitor's setting is on, four steps -- turn
+        it, tap Earth, Centre on Earth and tick the Moon, Halley's comet
+        -- each card asking for one action and waiting for it, a ring
+        on the body to tap, "Skip the guide" on every card; it stands in
+        for the i note, which shows once after the guide ends. The
+        steps, words, setting and sums are gallery/first_guide.js.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -574,6 +582,11 @@
     <!-- Is a finger's plotly_hover its tap? (L-523). Its own file so that
          a check can require it. -->
     <script src="gallery/tap_hover.js"></script>
+    <!-- A first visit's guide in the Solar System room (L-527): its steps,
+         words, setting, card placement and the ring's sum. Its own file so
+         that a check can require it (smoke_first_guide.js); the front page
+         reads the same setting through it. -->
+    <script src="gallery/first_guide.js"></script>
 
     <!-- Fonts -- match gallery viewer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -740,6 +753,77 @@
             background: var(--bg-deep); color: var(--text-primary);
             border: none; border-radius: 8px; cursor: pointer;
             font: 600 13px 'DM Sans', system-ui, sans-serif;
+        }
+
+        /* L-527: a first visit's guide. Its cards are the i note's yellow
+           (--accent, dark text), one at a time, placed by the page
+           (guideCardPlace) so a card never covers its own target; above
+           the drawer and its scrim, so its buttons always take a tap. The
+           ring is a circle over the picture, kept on its body every frame
+           (guideRingPlace), letting every tap through to the dot below. */
+        .guide-card {
+            position: absolute; left: 16px; top: 8px; z-index: 46;
+            width: min(360px, calc(100% - 32px)); box-sizing: border-box;
+            display: none;
+            background: var(--accent); color: var(--bg-deep);
+            border-radius: 10px; padding: 12px 14px;
+            font: 500 14px/1.4 'DM Sans', system-ui, sans-serif;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+        }
+        .guide-card.show { display: block; }
+        .guide-head {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 6px; font: 600 12px 'DM Sans', system-ui, sans-serif;
+        }
+        .guide-dots span {
+            display: inline-block; width: 7px; height: 7px; margin-left: 5px;
+            border-radius: 50%; background: rgba(10, 10, 15, 0.25);
+        }
+        .guide-dots span.on { background: var(--bg-deep); }
+        .guide-words { margin: 0 0 10px; }
+        .guide-buttons {
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+        }
+        .guide-skip {
+            min-height: 36px; padding: 0; background: none; border: none;
+            color: var(--bg-deep); text-decoration: underline; cursor: pointer;
+            font: 500 13px 'DM Sans', system-ui, sans-serif;
+        }
+        .guide-go {
+            min-height: 44px; padding: 0 18px; margin-left: auto;
+            background: var(--bg-deep); color: var(--text-primary);
+            border: none; border-radius: 8px; cursor: pointer;
+            font: 600 15px 'DM Sans', system-ui, sans-serif;
+        }
+        .guide-ring {
+            position: absolute; left: 0; top: 0; z-index: 4;
+            width: 44px; height: 44px; margin: -22px 0 0 -22px; box-sizing: border-box;
+            border: 3px solid var(--accent); border-radius: 50%;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55);
+            pointer-events: none; display: none;
+        }
+        .guide-ring.show { display: block; }
+        @media (orientation: landscape) and (max-height: 500px) {
+            .guide-card { width: min(300px, 40%); padding: 10px 12px; font-size: 13px; }
+            .guide-words { margin-bottom: 6px; }
+        }
+        /* The room is built and used upright (Tony's ruling of 2026-11-12,
+           13:18 and 13:44, L-527). Held sideways -- the same test as
+           GalleryGuide.SIDEWAYS -- one line at the top of the picture, just
+           under the title's lines (uprightLinePlace sets its top): no
+           popup, nothing to dismiss, every touch going through to the
+           picture, which still turns and zooms; gone when upright. */
+        .upright-line { display: none; }
+        @media (orientation: landscape) and (max-height: 500px) {
+            body.sun-exhibit .upright-line {
+                display: block; position: absolute; top: 0; left: 50%; z-index: 45;
+                transform: translateX(-50%); max-width: calc(100% - 32px);
+                box-sizing: border-box; padding: 3px 12px; border-radius: 8px;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                background: rgba(10, 10, 15, 0.8); color: var(--text-primary);
+                font: 500 12px 'DM Sans', system-ui, sans-serif;
+                pointer-events: none;
+            }
         }
 
         /* --- Viz area --- */
@@ -1635,6 +1719,26 @@
         <div class="viz-area">
             <div id="plotly-container"></div>
 
+            <!-- L-527: a first visit's guide, one card at a time, and the
+                 ring on the body a card asks the visitor to tap. Filled by
+                 guideRender from gallery/first_guide.js's words. -->
+            <div class="guide-ring" id="guide-ring" aria-hidden="true"></div>
+            <!-- Held sideways, the room's one line (L-527, Tony's ruling of
+                 2026-11-12); shown by CSS alone, with GalleryGuide.WORDS.sideways'
+                 words, which the First guide check holds to these. -->
+            <div class="upright-line" id="upright-line" role="status">This room works best with your phone upright.</div>
+            <div class="guide-card" id="guide-card" role="dialog" aria-live="polite" aria-label="Guide">
+                <div class="guide-head">
+                    <span id="guide-label"></span>
+                    <span class="guide-dots" id="guide-dots" aria-hidden="true"></span>
+                </div>
+                <div class="guide-words" id="guide-words"></div>
+                <div class="guide-buttons">
+                    <button type="button" class="guide-skip" id="guide-skip"></button>
+                    <button type="button" class="guide-go" id="guide-go"></button>
+                </div>
+            </div>
+
             <!-- Info panel (slides in from right) -->
             <div class="info-panel" id="info-panel">
                 <h3>About This Exhibit</h3>
@@ -2001,6 +2105,382 @@ function infoHintMaybeShow() {
     const hint = document.getElementById('info-hint');
     if (!hint || infoHintSeen()) { return; }
     hint.classList.add('show');
+}
+
+// ====================================================================
+// L-527 -- A FIRST VISIT'S GUIDE (Tony's rulings of 2026-11-11 and 12)
+// ====================================================================
+// Four steps in the Solar System room, each card asking for one action
+// and waiting for it: turn the picture; tap Earth; open the menu, Centre on
+// Earth, tick the Moon; Take me there, then tap Halley. Then the end card.
+// The steps, every word, the setting and the sums are
+// gallery/first_guide.js (GalleryGuide); this page draws the card and the
+// ring and tells the guide when an action is done, from the page's own
+// functions: sunLabelShow (a box opened), setSunDrawer (the menu),
+// ssCentreOn, ssTick, and the live camera read each frame (sunHudWatch),
+// since Plotly sends no event while a finger turns a 3D scene. Every
+// signal is handled by a timer, never inside a Plotly event (L-278).
+// It runs on the room's plain opening while the setting is on (none counts
+// as on), or when the address asks (?guide=1, the front page's "Show me
+// around" and the test address); never on a shared link or scene. Skip
+// and the end card's Explore turn the setting off, and then the i note
+// (L-494) shows as it does for any first visit (the coordinating
+// session's change of 2026-11-12).
+const GUIDE_TURN_DEG = 5;           // a turn of the view this large ends step 1
+const GUIDE_PAUSE_MS = 900;         // the next card waits this long, so the result is seen
+const GUIDE_REOPEN_MS = 1200;       // after Centre on closes the menu, it opens at the Moon's row
+const GUIDE_DRAWER_SHOW_MS = 2500;  // Take me there: the menu shown at Halley's row this long
+const GUIDE_RING_PX = 44;           // the ring's width, as .guide-ring draws it
+const GUIDE_SETTLE_MS = 400;        // the menu's slide and its rows settled
+
+// The room is built and used upright (Tony's ruling of 2026-11-12, 13:18
+// and 13:44). Held sideways the guide waits: its card says to turn the
+// phone upright, no action counts, and upright it goes on at the same step.
+const GUIDE_SIDEWAYS = (window.matchMedia && window.GalleryGuide)
+    ? window.matchMedia(window.GalleryGuide.SIDEWAYS) : null;
+function guideSideways() { return !!(GUIDE_SIDEWAYS && GUIDE_SIDEWAYS.matches); }
+
+// Held sideways, the room's one line sits just under the picture's title
+// and its lines (the title, the date, "Tap to update."), covering none of
+// them; each frame, as the title moves when the screen turns.
+function uprightLinePlace() {
+    if (!guideSideways()) { return; }
+    const line = document.getElementById("upright-line");
+    const area = document.querySelector(".viz-area");
+    if (!line || !area) { return; }
+    const top0 = area.getBoundingClientRect().top;
+    let below = 0;
+    [document.querySelector("#plotly-container .g-gtitle"), document.getElementById("scene-update")].forEach(function (el) {
+        if (!el) { return; }
+        const r = el.getBoundingClientRect();
+        if (r.height > 0) { below = Math.max(below, r.bottom - top0); }
+    });
+    const top = Math.round(below + 4) + "px";
+    if (line.style.top !== top) { line.style.top = top; }
+}
+
+function guideStore() {
+    try { return window.localStorage; } catch (e) { return null; }
+}
+// Read once, as the page loads; guide= leaves the address at once, so a
+// link copied later never carries it (the scene address keeps the rest).
+const GUIDE_RUN = (function () {
+    const G = window.GalleryGuide;
+    if (!G) { return false; }
+    const run = G.shouldRun(window.location.search, G.read(guideStore()));
+    const q = G.withoutGuide(window.location.search);
+    if (q !== window.location.search) {
+        try {
+            window.history.replaceState(window.history.state, "",
+                window.location.pathname + q + window.location.hash);
+        } catch (e) { /* the address keeps guide=; nothing else reads it */ }
+    }
+    return run;
+})();
+let guide = null;          // the guide's place while it runs (GalleryGuide.create)
+let guideCam0 = null;      // the camera when step 1's card came up
+let guideBusy = false;     // Take me there is moving the room
+let guideTimer = 0;
+let guideRingDrawn = false;  // the ring is on screen now (read by the walk)
+let guideRingEver = false;   // the ring was drawn at least once
+
+// Opened when the room is ready; true if the guide runs (the i note then
+// waits for its end).
+function guideStart() {
+    if (!GUIDE_RUN || !ssDrawer || !window.GalleryGuide) { return false; }
+    guide = window.GalleryGuide.create();
+    const skip = document.getElementById("guide-skip");
+    const go = document.getElementById("guide-go");
+    if (skip) { skip.onclick = guideSkip; }
+    if (go) { go.onclick = guideButton; }
+    guideShow();
+    return true;
+}
+
+// What is already true, so a card whose action is done moves on at once.
+function guideSnap() {
+    const ticked = {};
+    sunGroups.forEach(function (g) { if (g.shown) { ticked[g.key] = true; } });
+    return {
+        box: (sunLabelGroup >= 0 && sunGroups[sunLabelGroup]) ? sunGroups[sunLabelGroup].key : null,
+        drawer: document.body.classList.contains("sun-drawer-open"),
+        mid: viewMid.key,
+        ticked: ticked
+    };
+}
+
+// The page's functions say an action is done; the guide moves on only on
+// the current card's own action, and its next card comes after a pause.
+function guideSignal(signal, key, on) {
+    if (!guide || guideBusy || guideSideways()) { return; }
+    if (!guide.signal(signal, key, on)) { return; }
+    guideHide();
+    clearTimeout(guideTimer);
+    guideTimer = setTimeout(guideShow, signal === "centre" ? GUIDE_REOPEN_MS : GUIDE_PAUSE_MS);
+}
+
+function guideShow() {
+    if (!guide) { return; }
+    guide.settle(guideSnap());
+    // A card whose ring names a body this room does not draw is passed.
+    while (!guide.finished() && guide.card().ring && ssIndex(guide.card().ring) < 0) { guide.next(); }
+    const card = guide.card();
+    if (!card) { guideEnd(); return; }
+    // Held sideways: the paused card, and nothing of the step done yet.
+    if (guideSideways()) { guideRender(card, true); guideFrame(); return; }
+    if (card.wait === "turn") { guideCam0 = sunPlotDiv ? sunLiveCamera(sunPlotDiv) : null; }
+    // "There's the Moon, going round Earth": the menu out of the way.
+    if (card.id === "comet") { setSunDrawer(false); }
+    // A card at a row of the menu: the menu open there, the row's fold open
+    // (Centre on closes the menu, so the Moon's card opens it again).
+    if (card.row) { guideOpenAt(card.row); }
+    guideRender(card);
+    guideFrame();
+}
+
+function guideOpenAt(key) {
+    const SSD = window.SolarSystemDrawer;
+    if (!ssDrawer || !SSD) { return; }
+    const p = SSD.parentOf(ssDrawer.rows, key);
+    if (p) { ssDrawer.folds[SSD.foldKey(p)] = true; }
+    // A body's group row, as the drawer keeps it (the served "in").
+    const row = ssDrawer.byKey[key];
+    const grp = row && row.group;
+    if (grp) {
+        SSD.ancestors(ssDrawer.rows, grp).forEach(function (a) { ssDrawer.folds[a] = true; });
+        ssDrawer.folds[grp] = true;
+    }
+    renderSunDrawer();
+    if (!document.body.classList.contains("sun-drawer-open")) { setSunDrawer(true); }
+    sunMeasureDrawer();
+    guideScrollTo(key);
+    // Again once the menu has slid open and its rows have settled.
+    setTimeout(function () { guideScrollTo(key); }, GUIDE_SETTLE_MS);
+}
+
+function guideRowEl(key) {
+    const k = ssIndex(key);
+    return k < 0 ? null : document.querySelector('#sun-drawer-list .sun-row[data-k="' + k + '"]');
+}
+// The row brought into view by scrolling the menu's own list only:
+// scrollIntoView would also scroll the picture's area (overflow hidden is
+// still scrollable), moving the drawer, the ring and the card off where
+// they are measured -- seen in the walk sideways, 2026-11-12.
+function guideScrollTo(key) {
+    const el = guideRowEl(key);
+    const list = document.getElementById("sun-drawer-list");
+    if (!el || !list) { return; }
+    const lr = list.getBoundingClientRect(), r = el.getBoundingClientRect();
+    if (r.top < lr.top) { list.scrollTop -= (lr.top - r.top); }
+    else if (r.bottom > lr.bottom) { list.scrollTop += Math.min(r.bottom - lr.bottom, r.top - lr.top); }
+}
+
+function guideRender(card, paused) {
+    const G = window.GalleryGuide;
+    const el = document.getElementById("guide-card");
+    if (!el || !G) { return; }
+    document.getElementById("guide-label").textContent = G.label(card);
+    const dots = document.getElementById("guide-dots");
+    dots.textContent = "";
+    for (let i = 0; i < 4; i++) {
+        const d = document.createElement("span");
+        if (i < G.dots(card)) { d.className = "on"; }
+        dots.appendChild(d);
+    }
+    document.getElementById("guide-words").textContent = paused ? G.WORDS.upright : G.WORDS[card.words];
+    const skip = document.getElementById("guide-skip");
+    skip.textContent = G.WORDS.skip;
+    // The end card's Explore ends the guide as Skip would; it has no Skip.
+    // A paused card keeps Skip, the one way out while sideways.
+    skip.hidden = !paused && card.id === "end";
+    const go = document.getElementById("guide-go");
+    const button = paused ? null : card.button;
+    go.hidden = !button;
+    go.textContent = button ? G.WORDS[button] : "";
+    el.setAttribute("data-card", card.id);
+    el.setAttribute("data-paused", paused ? "1" : "0");
+    el.classList.add("show");
+}
+
+function guideHide() {
+    const el = document.getElementById("guide-card");
+    if (el) { el.classList.remove("show"); }
+    const ring = document.getElementById("guide-ring");
+    if (ring) { ring.classList.remove("show"); }
+    guideRingDrawn = false;
+}
+
+// Each frame (sunHudWatch): step 1's turn, the ring kept on its body, and
+// the card kept clear of its target.
+function guideFrame() {
+    if (!guide) { return; }
+    const card = guide.card();
+    const el = document.getElementById("guide-card");
+    if (!card || !el || !el.classList.contains("show")) { return; }
+    // Turned round while a card is up: the card that suits the phone.
+    if ((el.getAttribute("data-paused") === "1") !== guideSideways()) { guideShow(); return; }
+    if (guideSideways()) {
+        const ring = document.getElementById("guide-ring");
+        if (ring) { ring.classList.remove("show"); }
+        guideRingDrawn = false;
+        guideCardPlace(card, true);
+        return;
+    }
+    if (card.wait === "turn" && guideCam0 && !guideBusy && sunPlotDiv &&
+        window.GalleryGuide.turned(guideCam0, sunLiveCamera(sunPlotDiv), GUIDE_TURN_DEG)) {
+        guideSignal("turn");
+        return;
+    }
+    guideRingPlace(card);
+    guideCardPlace(card);
+}
+
+// The ring on its body: the body's own marker, put on the screen by Plotly
+// 2.35.2's own sum (GalleryGuide.screenOf), read from the scene Plotly
+// keeps in gd._fullLayout.scene._scene. If that is not where 2.35.2 keeps
+// it, or the body is outside the box or behind the camera, no ring is
+// drawn and the card's words still say where to tap.
+function guideRingPlace(card) {
+    const ring = document.getElementById("guide-ring");
+    if (!ring) { return; }
+    let at = null;
+    if (card.ring && sunPlotDiv) {
+        const k = ssIndex(card.ring);
+        const m = k >= 0 ? sunLabelMarker(k) : null;
+        try {
+            const fl = sunPlotDiv._fullLayout, sc = fl && fl.scene && fl.scene._scene;
+            if (m && sc && sc.glplot && sc.container) {
+                const point = [m.x[0], m.y[0], m.z[0]];
+                const ranges = [fl.scene.xaxis.range, fl.scene.yaxis.range, fl.scene.zaxis.range];
+                if (window.GalleryGuide.inBox(point, ranges)) {
+                    const r = sc.container.getBoundingClientRect();
+                    const p = window.GalleryGuide.screenOf(sc.glplot.cameraParams, sc.dataScale,
+                                                           point, r.width, r.height);
+                    const viz = document.querySelector(".viz-area").getBoundingClientRect();
+                    if (p) { at = { x: r.left - viz.left + p.x, y: r.top - viz.top + p.y }; }
+                }
+            }
+        } catch (e) { at = null; }
+    }
+    if (!at) { ring.classList.remove("show"); guideRingDrawn = false; return; }
+    ring.style.left = at.x.toFixed(1) + "px";
+    ring.style.top = at.y.toFixed(1) + "px";
+    ring.classList.add("show");
+    guideRingDrawn = true;
+    guideRingEver = true;
+}
+
+// A rect of an element, relative to the picture's area; null if not shown.
+function guideRectOf(el, viz) {
+    if (!el || el.hidden) { return null; }
+    const r = el.getBoundingClientRect();
+    if (!(r.width > 0) || !(r.height > 0)) { return null; }
+    return { left: r.left - viz.left, top: r.top - viz.top,
+             right: r.right - viz.left, bottom: r.bottom - viz.top };
+}
+
+// The page's own pieces a card must not cover: the title and its lines,
+// the sideways line, the zoom buttons and the arrow cross, the frame row, the count line, the
+// menu button and, open, the menu.
+function guideBlockers(viz) {
+    const out = [];
+    const add = function (el, soft) {
+        const r = guideRectOf(el, viz);
+        if (r) { if (soft) { r.soft = true; } out.push(r); }
+    };
+    add(document.querySelector("#plotly-container .g-gtitle"));
+    add(document.getElementById("scene-update"));
+    add(document.getElementById("upright-line"));
+    document.querySelectorAll(".nav-cluster, .nav-cross-apart").forEach(function (el) { add(el); });
+    // The frame row and the count line give way to a card only when nothing
+    // else fits (a sideways phone), never the card's own target.
+    add(document.getElementById("sun-hud"), true);
+    add(document.getElementById("ss-outside"), true);
+    add(document.getElementById("sun-drawer-btn"));
+    if (document.body.classList.contains("sun-drawer-open")) { add(document.getElementById("sun-drawer")); }
+    return out;
+}
+
+// What the card points at, which it must not cover.
+function guideTarget(card, viz) {
+    if (card.ring) {
+        const ring = document.getElementById("guide-ring");
+        if (!ring || !ring.classList.contains("show")) { return null; }
+        const x = parseFloat(ring.style.left), y = parseFloat(ring.style.top), h = GUIDE_RING_PX / 2 + 6;
+        return { left: x - h, top: y - h, right: x + h, bottom: y + h };
+    }
+    if (card.row) { return guideRectOf(guideRowEl(card.row), viz); }
+    if (card.place === "menu") { return guideRectOf(document.getElementById("sun-drawer-btn"), viz); }
+    return null;
+}
+
+let guideLastPlace = "";
+function guideCardPlace(card, paused) {
+    const el = document.getElementById("guide-card");
+    const area = document.querySelector(".viz-area");
+    if (!el || !area) { return; }
+    const viz = area.getBoundingClientRect();
+    const view = { w: viz.width || window.innerWidth, h: viz.height || window.innerHeight };
+    const size = { w: el.offsetWidth, h: el.offsetHeight };
+    // A paused card points at nothing, at the top.
+    const p = window.GalleryGuide.place(view, size, guideBlockers(viz),
+                                        paused ? null : guideTarget(card, viz), paused ? "top" : card.place);
+    const sig = card.id + (paused ? ":paused:" : ":") + p.left.toFixed(0) + ":" + p.top.toFixed(0);
+    if (sig === guideLastPlace) { return; }
+    guideLastPlace = sig;
+    el.style.left = p.left.toFixed(0) + "px";
+    el.style.top = p.top.toFixed(0) + "px";
+    el.setAttribute("data-place", p.at + (p.ok ? "" : " (crowded)"));
+}
+
+// The card's own button: "Take me there" or the end card's "Explore".
+function guideButton() {
+    const card = guide && guide.card();
+    if (!card) { return; }
+    if (card.button === "go") { guideGo(); return; }
+    if (card.button === "explore") { guideClose(); }
+}
+
+function guideWait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+// Take me there (Tony's ruling of 2026-11-12, 00:23, "Yes, C"): back to the
+// Sun's view keeping the ticks -- the trail line's "Solar system", Home
+// (L-515 ruling 20) -- Halley ticked, the menu shown for a moment folded
+// open at Comets, Halley-type comets, Halley, then closed; then the ring
+// on Halley and its card.
+async function guideGo() {
+    if (!guide || guideBusy || !guide.signal("go")) { return; }
+    guideHide();
+    guideBusy = true;
+    try {
+        await sunLabelClose();
+        await navHome();
+        const h = ssIndex("halley");
+        if (h >= 0) {
+            if (!sunGroups[h].shown) { await ssTick(h, true); }
+            guideOpenAt("halley");
+            await guideWait(GUIDE_DRAWER_SHOW_MS);
+            setSunDrawer(false);
+        }
+    } catch (e) {
+        console.warn("solar-system exhibit: the guide's move to Halley stopped: " + e.message);
+    }
+    guideBusy = false;
+    guideShow();
+}
+
+// Skip, or the end card's Explore: the setting off, the guide gone, and
+// the i note as for any first visit (L-494).
+function guideSkip() { guideClose(); }
+function guideClose() {
+    if (window.GalleryGuide) { window.GalleryGuide.write(guideStore(), "off"); }
+    guideEnd();
+    infoHintMaybeShow();
+}
+function guideEnd() {
+    clearTimeout(guideTimer);
+    guide = null;
+    guideHide();
 }
 
 function togglePlanet(name, btn) {
@@ -5017,7 +5497,10 @@ function ssCentreOn(k, linkTicks) {
                 : op.keys;
             return viewFrame(viewCentreFrameR(key, keys, !!linkTicks), true);
         })
-        .then(function () { renderSunDrawer(); });
+        .then(function () {
+            renderSunDrawer();
+            guideSignal("centre", key);   // L-527: the view centred on a body
+        });
 }
 
 // The trail line in the root (Tony's ruling 20): the path down the tree to
@@ -5959,7 +6442,9 @@ async function initSunExhibit() {
         status.textContent = "Ready";
         setTimeout(() => {
             document.getElementById("loading-overlay").classList.add("hidden");
-            infoHintMaybeShow();   // L-494
+            // L-527: a first visit's guide stands in for the i note while
+            // it runs; the note shows once it ends (guideClose).
+            if (!guideStart()) { infoHintMaybeShow(); }   // L-494
         }, 300);
 
     } catch (err) {
@@ -6655,6 +7140,7 @@ function sunLabelShow(k, ti, by) {
     }
     sunLabelGroup = k;
     sunLabelApplied = "";
+    guideSignal("box", grp.key);   // L-527: a box opened (Earth's, Halley's)
     return sunLabelRefresh();
 }
 
@@ -7170,6 +7656,10 @@ function sunHudWatch() {
             const key = [e.x, e.y, e.z, u.x, u.y, u.z, c.x, c.y, c.z].map(function (v) { return (+v || 0).toFixed(4); }).join(",");
             if (key !== sunHudLastCam) { sunHudLastCam = key; sunTriadUpdate(cam); }
         }
+        // L-527: the guide reads the same camera (step 1's turn), keeps its
+        // ring on its body and its card clear of its target.
+        guideFrame();
+        uprightLinePlace();
     }
     requestAnimationFrame(sunHudWatch);
 }
@@ -7704,6 +8194,7 @@ function ssTick(k, on) {
     const done = inFold ? sunApplyVisibility(true, null, false, viewFoldFrameR(mid))
         : sunApplyVisibility(true, sunOutermostShown());
     sunMeasureDrawer();
+    guideSignal("tick", grp.key, on);   // L-527: a row ticked (the Moon)
     return done;
 }
 
@@ -9000,6 +9491,7 @@ function setSunDrawer(open) {
     const b = document.getElementById("sun-drawer-btn");
     b.classList.toggle("open", open);
     b.setAttribute("aria-expanded", open ? "true" : "false");
+    guideSignal("drawer", null, open);   // L-527: the menu opened
 }
 
 function wireSunDrawer() {

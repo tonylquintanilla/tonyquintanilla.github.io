@@ -350,12 +350,22 @@ check("no hard line break splits a sentence (write it as the soft break)",
 if (pagePath) {
     const page = fs.readFileSync(pagePath, "utf8");
     // L-494: the note that took the sentence's place, under the i button,
-    // shown on a first visit and put away by "Got it" or the button.
+    // shown on a first visit and put away by "Got it" or the button. Since
+    // L-527 (2026-11-12) a first visit's guide stands in for it in the
+    // exhibit rooms while it runs, and it shows once the guide is put away;
+    // the three places it is shown are named, not counted: the Explorer's
+    // opening, a room's opening when no guide runs, and the guide's end.
     check("the page greets a first visit with a note pointing at the i button",
           page.indexOf('id="info-hint"') >= 0 &&
           page.indexOf("More information and the sources for everything you see are here.") >= 0 &&
           page.indexOf("function infoHintMaybeShow()") >= 0 &&
-          (page.match(/infoHintMaybeShow\(\);/g) || []).length === 2,
+          (page.match(/infoHintMaybeShow\(\);/g) || []).length === 3 &&
+          page.indexOf("            infoHintMaybeShow();   // L-494") >= 0 &&
+          page.indexOf("if (!guideStart()) { infoHintMaybeShow(); }   // L-494") >= 0 &&
+          (function () {
+              const at = page.indexOf("\nfunction guideClose() {");
+              return at >= 0 && page.slice(at, page.indexOf("\n}", at)).indexOf("infoHintMaybeShow();") >= 0;
+          })(),
           pagePath);
     const start = page.indexOf("\nfunction sunLabelWrap(");
     const widthM = page.match(/const SUN_LABEL_WRAP_CHARS = (\d+);/);

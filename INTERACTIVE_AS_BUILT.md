@@ -30,6 +30,7 @@ names" row) holds every code name below in backticks to the code.
 - One text box
 - Readability
 - The i panel, one sentence to a bullet
+- A first visit's guide
 - The headless recipe
 
 ## The anatomy of an exhibit (the Sun, read at fc8d9fb3; two rows corrected at 1.1)
@@ -1850,6 +1851,119 @@ words are capitalised. Checked by the Source list check's part 5, which
 cuts every served text and names any piece that starts with a small
 letter or loses text, with two breaks; and walked (section 20).
 
+## A first visit's guide
+
+L-527; Tony's rulings of 2026-11-11 and 12, on the ledger, and the
+coordinating session's two changes of 2026-11-12. Built 2026-11-12, the
+Solar System room's part (Part 2); the front page's way in is Part 3.
+
+- **What it is.** On the room's plain opening, four steps, each a card in
+  the i note's yellow asking for one action and waiting for it: turn the
+  picture; tap Earth, a ring on it; open the menu, Centre on Earth, tick
+  the Moon; "Take me there", then tap Halley, a ring on it; then the end
+  card, "Explore". "Skip the guide" on every card but the end card, whose
+  Explore ends it the same way. The cards give instructions only. Every
+  word, the steps and what ends each one are `gallery/first_guide.js`
+  (`GalleryGuide`: `STEPS`, `WORDS`, `create`, `doneBy`), a file of its own
+  by L-338, loaded by a script tag and on the live check's file list.
+- **When it runs** (`GalleryGuide.shouldRun`, read once as the page loads,
+  `GUIDE_RUN`): only on the plain opening -- the Solar System room by its
+  own address, no `show` or `at`, so never on a shared link, a scene,
+  `?exhibit=earth` or `?exhibit=sun`; then `?guide=1` runs it whatever the
+  setting (the front page's "Show me around" and the test address,
+  `interactive.html?guide=1`, beside which `&freeze=1` still works),
+  `?guide=0` never, and otherwise the visitor's setting decides. `guide=`
+  leaves the address at once (`GalleryGuide.withoutGuide`), so a link
+  copied later never carries it.
+- **The setting**: `paloma_orrery_guide` in the visitor's browser
+  (`GalleryGuide.KEY`), `on` or `off`; none counts as on, so every browser
+  meets the guide once after the update, and the i note's own key does not
+  count. Skip and the end card's Explore write `off` (`guideClose`). A
+  browser that keeps nothing runs it on every plain opening.
+- **The i note** (L-494): while the guide runs it stands in for the note,
+  which `guideStart` keeps back; once the guide ends by Skip or Explore,
+  `infoHintMaybeShow` shows it as for any first visit. With the guide off
+  the note behaves as before.
+- **What says a step is done**: the page's own functions tell the guide
+  (`guideSignal`), and the guide moves on only on the current card's own
+  action (`GalleryGuide.ends`), so anything else leaves the card as it is.
+  A box opened: `sunLabelShow`. The menu opened: `setSunDrawer`. The view
+  centred: `ssCentreOn`. A row ticked: `ssTick`. Step 1's turn: Plotly sends
+  no event while a finger turns a 3D scene, so `guideFrame`, run each frame
+  from `sunHudWatch`, compares the live camera with the one when the card
+  came up (`GalleryGuide.turned`, more than `GUIDE_TURN_DEG`, 5; a zoom is
+  not a turn). A card whose action is already done moves on at once
+  (`settle`). The next card comes `GUIDE_PAUSE_MS` (900) later, by a timer,
+  never inside a Plotly event (L-278).
+- **Step 3's menu.** Centre on closes the menu, so the Moon's card opens it
+  again after `GUIDE_REOPEN_MS` (1200), with Earth's fold open and the
+  Moon's row scrolled into view (`guideOpenAt`, `guideScrollTo`). The row is
+  scrolled in the menu's own list only: `scrollIntoView` also scrolls the
+  picture's area, overflow hidden or not, and moved the drawer, the ring
+  and the card off where they are measured (seen sideways in the walk).
+- **Take me there** (`guideGo`, Tony's "Yes, C"): the text box closed;
+  `navHome`, the trail line's "Solar system", the Sun's view with the ticks
+  kept (L-515 ruling 20); Halley ticked (`ssTick`, which ticks Neptune with
+  it, as a comet's tick does); the menu opened, folded open at Comets and
+  Halley-type comets and scrolled to Halley's row, for
+  `GUIDE_DRAWER_SHOW_MS` (2500); the menu closed; then Halley's ring and
+  card.
+- **The ring** (`guideRingPlace`): a circle over the picture
+  (`#guide-ring`), letting every tap through, put each frame on the body's
+  own marker (`sunLabelMarker`) by Plotly 2.35.2's own sum for a point of a
+  3D scene, `GalleryGuide.screenOf` (src/plots/gl3d/project.js with the
+  scene's `cameraParams` and `dataScale`, and scene.js's placement), read
+  from `gd._fullLayout.scene._scene` as the tap fix reaches it. No ring
+  when that is not where 2.35.2 keeps it, or the body is outside the box or
+  behind the camera; the card's words still say where to tap.
+- **Where a card sits** (`guideCardPlace`, `GalleryGuide.place`): the page's
+  own pieces measured each frame -- the title, the scene's update line, the
+  sideways line, the zoom buttons and the arrow cross, the frame row, the count line, the menu
+  button and, open, the menu (`guideBlockers`) -- and the card's target, the
+  ring, the row, or the menu button (`guideTarget`), which it never covers.
+  Upright the card is centred, at the top or the bottom by its place;
+  sideways it is at most 300 px or 40 percent wide, at the right, else the
+  left. The frame row and the count line give way only when nothing else
+  fits (a sideways phone's picture is about 315 px tall, the frame row 90 of
+  them). The place taken is on the card as `data-place`. The sideways
+  placement stays, for the paused card and a phone turned mid-step.
+- **Held sideways** (Tony's ruling of 2026-11-12, 13:18 and 13:44: the
+  room is built and used upright; some saved pictures, Earth Science's
+  above all, may use landscape, the room does not). The test for a phone
+  held sideways is `GalleryGuide.SIDEWAYS`, "(orientation: landscape) and
+  (max-height: 500px)", the same words as the page's CSS. Held sideways
+  the room shows one line, `#upright-line`, "This room works best with
+  your phone upright." (`GalleryGuide.WORDS.sideways`), shown by CSS alone
+  in `body.sun-exhibit`, just under the picture's title and its lines
+  (`uprightLinePlace`, each frame from `sunHudWatch`); no popup, nothing
+  to dismiss, `pointer-events: none`, so the picture still turns and
+  zooms; gone when upright. The guide, held sideways, pauses
+  (`guideSideways`): its card keeps the step's label and dots, says "Turn
+  your phone upright to continue." (`WORDS.upright`), keeps Skip, has no
+  button and no ring, and sits at the top clear of the line; no action
+  counts (`guideSignal` returns), and nothing of the step is done (no
+  menu opened, no camera taken). Turned upright, `guideFrame` sees the
+  card no longer suits the phone (`data-paused`) and `guideShow` puts up
+  the same step, its camera taken afresh. The open menu shows no rows
+  sideways (its header, trail line and Find fill its 40 percent of a
+  picture about 315 px tall): not supported, by the ruling, not a fault.
+- **Checked** by the gallery run's First guide row
+  (`documentation/smoke_first_guide.js`, gates): the steps, the setting,
+  the address, the turn, the card's places and the words, worked on the
+  real file; the page's Plotly read from its script line, red, naming both,
+  if not 2.35.2; the ring's sum held to Plotly 2.35.2's own code, copied in
+  `documentation/fixture_plotly_2_35_2_placement.js`, on 2,000 cameras; the
+  page's wiring; the sideways test, the line's words, where the CSS shows
+  it and that it lets touches through; the real file broken ten ways, a
+  page on another Plotly and two pages with a wrong sideways line first. And walked in a real browser
+  (`tools/headless/walk_first_guide.js`, below, The headless recipe).
+- **Seen in the walk, not the guide's** (2026-11-12): Plotly picks one
+  pixel, and at some angles a line drawn through a dot's centre takes it,
+  so a click dead on Earth's centre opened nothing and one 4 px off opened
+  Earth's box (375 x 667, the line traces hidden, the click opened Earth).
+  The walk taps again a little off, as a finger would; Tony's phone look
+  is the test of a finger.
+
 ## The headless recipe
 
    **THE HEADLESS RECIPE** (v1.9, L-405; first used for L-363 step 3b).
@@ -1882,6 +1996,24 @@ letter or loses text, with two breaks; and walked (section 20).
      helpers, and is run once against a deliberately broken copy to show
      it can fail. It fixes its own opening, so a change to what the room
      opens on does not break it.
+   - A walk in a REAL browser (L-527, 2026-11-12):
+     `walk_first_guide.js . <payload.json> [planted page]`, with Playwright
+     and the npm package `plotly.js-dist-min@2.35.2` in the scratch folder.
+     It opens the real page in Chromium with WebGL, the CDN's Plotly served
+     from that package and the driver's payload handed over in place of
+     Pyodide, and does what a visitor does with the mouse: drags, taps the
+     ring's centre (which must open the body's box), taps the menu's rows
+     and the card's buttons at their centres, never scrolling first. It
+     holds the ring to a Plotly scene annotation pinned at the same point,
+     at two phone sizes upright (the room is built and tested upright,
+     Tony's ruling of 2026-11-12), and walks the setting's states; at two
+     sizes sideways it checks the line and the paused card, that the
+     picture still turns and zooms, and that turned upright the same step
+     goes on. Its report names each step passed and whether the ring was
+     drawn. A ring tap that opens nothing is tried again 4 px off, up to
+     four, each said. On Tony's computer Playwright's own Chromium would not start
+     (2026-11-12); `WALK_CHANNEL=msedge` runs it in the computer's Edge, on
+     a fresh profile of its own.
    - A CANDIDATE, not yet a file in either repository (v1.27, L-495):
      real pictures before a build. On the night of 2026-10-26 the
      direction arrows' styles and distances were rendered in the
