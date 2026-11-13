@@ -1,11 +1,11 @@
 // gallery/first_guide.js -- a first visit's guide in the Solar System room
-// (L-527): four steps, each asking for one action and waiting for it.
+// (L-527): five steps, each asking for one action and waiting for it.
 //
 // WHY IT EXISTS. Tony, 2026-11-11, 22:42 Chicago: a friend on a phone
 // closed the room's first-visit note unread, turned the picture with a
 // thumb, and then: "now what?!" Most visitors do not know what an orrery
 // is. His rulings of that night and of 2026-11-12 (L-527, in the orrery's
-// ledger) settled a story of four steps -- home, the Moon, Halley's comet
+// ledger) settled a story of steps -- home, the Moon, Halley's comet
 // -- each card asking for one action, the next card shown only when that
 // action is done, "Skip the guide" on every card. The cards give
 // instructions only: every fact stays in the boxes, which carry their
@@ -41,6 +41,15 @@
 //                    13:44): held sideways the room shows one line,
 //                    WORDS.sideways, and the guide pauses on
 //                    WORDS.upright, going on at the same step upright.
+//   faceOn() and     Take me there's view of Halley (Tony's phone look of
+//   cameraFor()      2026-11-12, evening: "the view swings so Halley's
+//                    elliptical orbit can be seen"): from the drawn orbit
+//                    alone, its plane, long axis and middle; then a camera
+//                    looking straight down on that plane, the long axis up
+//                    the screen, the far end at the top, the whole orbit
+//                    in the picture above the card.
+//   NOTE_KEY         the room's i note's first-visit mark, cleared by the
+//                    front page's Tutorial switch turned on (clearNote).
 //   FRONT            the front page's start card and Tutorial row:
 //                    frontView() (a first visit's two ways in, or the one
 //                    returning button), keeps() (what a way in writes),
@@ -56,7 +65,7 @@
     "use strict";
 
     var KEY = "paloma_orrery_guide";
-    var STEPS_COUNTED = 4;
+    var STEPS_COUNTED = 5;
     // The version of Plotly the ring's sum was read from and checked
     // against. The gallery run's First guide row is red if the page loads
     // another (the coordinating session's change of 2026-11-12).
@@ -69,12 +78,12 @@
         stepOf: function (n) { return "Step " + n + " of " + STEPS_COUNTED; },
         theEnd: "The end",
         skip: "Skip the guide",
-        turn: "This is the solar system today, seen from above. Drag with one finger to turn it.",
+        turn: "This is the inner solar system today, seen from above. Drag with one finger to turn it.",
         earth: "Find our home planet: tap Earth, the blue dot in the ring.",
         menu: "Open the menu, bottom left.",
         centre: "This is the menu. On Earth's row, tap Center on Earth to fly in.",
-        moon: "Now tick the Moon, to see it go around Earth.",
-        comet: "There's the Moon, going around Earth. Next, a comet.",
+        moon: "Now tick the Moon, to see its orbit around Earth.",
+        comet: "There's the Moon's orbit around Earth. Next, a comet.",
         go: "Take me there",
         halley: "That long orbit is Halley's comet. Tap Halley, in the ring, to see where it is today.",
         end: "That's the orrery: the solar system as it is today, drawn from JPL's (NASA) data, updated every night. Explore on your own, or turn on Tutorial on the front page to see this again.",
@@ -84,6 +93,95 @@
         sideways: "This room works best with your phone upright.",
         upright: "Turn your phone upright to continue."
     };
+
+    // The room's i note's first-visit mark (interactive.html,
+    // INFO_HINT_KEY, L-494). The Tutorial switch turned on clears it, so
+    // the note shows again after the guide's end card (Tony's phone look
+    // of 2026-11-12, evening). The First guide check holds the two equal.
+    var NOTE_KEY = "paloma_orrery_info_hint_seen";
+    function clearNote(storage) {
+        try { storage.removeItem(NOTE_KEY); return true; } catch (e) { return false; }
+    }
+
+    // ---- Take me there: Halley's orbit, seen face-on ----
+    // points: the drawn orbit, [x, y, z] in the scene's data units, the Sun
+    // at the origin (null gaps skipped). Its plane's normal is the sum of
+    // p[i] x p[i+1] (the way the body goes round, whatever the orbit's
+    // tilt), turned to point north (z >= 0), so the view is from above the
+    // ecliptic; its long axis points from the Sun to the farthest point
+    // drawn, laid in the plane; its middle is the middle of the points'
+    // extent along the long axis and across it. Returns null for fewer
+    // than three points or a degenerate plane.
+    function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+    function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+    function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+    function unit(a) {
+        var l = Math.sqrt(dot(a, a));
+        return l > 0 ? [a[0] / l, a[1] / l, a[2] / l] : null;
+    }
+    function faceOn(points) {
+        var p = (points || []).filter(function (q) {
+            return q && isFinite(q[0]) && isFinite(q[1]) && isFinite(q[2]) &&
+                q[0] !== null && q[1] !== null && q[2] !== null;
+        });
+        if (p.length < 3) { return null; }
+        var h = [0, 0, 0], far = p[0];
+        for (var i = 0; i < p.length; i++) {
+            if (i + 1 < p.length) {
+                var c = cross(p[i], p[i + 1]);
+                h = [h[0] + c[0], h[1] + c[1], h[2] + c[2]];
+            }
+            if (dot(p[i], p[i]) > dot(far, far)) { far = p[i]; }
+        }
+        var n = unit(h);
+        if (!n) { return null; }
+        if (n[2] < 0) { n = [-n[0], -n[1], -n[2]]; }
+        var u = unit(sub(far, [n[0] * dot(far, n), n[1] * dot(far, n), n[2] * dot(far, n)]));
+        if (!u) { return null; }
+        var v = cross(n, u);
+        var a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+        p.forEach(function (q) {
+            var a = dot(q, u), b = dot(q, v);
+            a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b);
+        });
+        var ma = (a0 + a1) / 2, mb = (b0 + b1) / 2;
+        return { normal: n, up: u, across: v,
+                 mid: [u[0] * ma + v[0] * mb, u[1] * ma + v[1] * mb, u[2] * ma + v[2] * mb],
+                 halfLong: (a1 - a0) / 2, halfAcross: (b1 - b0) / 2 };
+    }
+    // The camera, in Plotly's camera units, for a face: scale turns a data
+    // point into those units ({mid: the ranges' middles, k: aspect ratio
+    // over span, per axis}, read from the scene); f5 and f0 are the
+    // projection's 1 / tan(half the field of view) up the screen and
+    // across it (its [5] and [0]). The long axis fills FACE_FIT.long of the
+    // picture's height, its middle FACE_FIT.at from the top: the top of the
+    // picture under the title and the bottom left to the card. Across, at
+    // most FACE_FIT.across of the width. So the orbit runs from 14 to 50
+    // percent of the height: the card, placed away from Halley's ring near
+    // the top, began at 54 percent on the smaller phone of the walk
+    // (375 x 667).
+    var FACE_FIT = { long: 0.36, at: 0.32, across: 0.85 };
+    function cameraFor(face, scale, f5, f0) {
+        if (!face || !scale || !(f5 > 0) || !(f0 > 0)) { return null; }
+        var k = scale.k, m = scale.mid;
+        var cu = function (q) { return [(q[0] - m[0]) * k[0], (q[1] - m[1]) * k[1], (q[2] - m[2]) * k[2]]; };
+        // The face's lengths in camera units (k equal on the three axes
+        // when the aspect ratio is 1:1:1, as the room's is; the smallest
+        // keeps the fit safe otherwise).
+        var kk = Math.min(Math.abs(k[0]), Math.abs(k[1]), Math.abs(k[2]));
+        var L = face.halfLong * kk, W = face.halfAcross * kk;
+        var d = Math.max(L * f5 / FACE_FIT.long, W * f0 / FACE_FIT.across);
+        if (!(d > 0)) { return null; }
+        // The middle drawn FACE_FIT.at from the top: in screen terms y =
+        // 1 - 2 * at, which the camera's centre, moved down the up axis,
+        // puts it at.
+        var shift = (1 - 2 * FACE_FIT.at) * d / f5;
+        var mid = cu(face.mid);
+        var c = [mid[0] - face.up[0] * shift, mid[1] - face.up[1] * shift, mid[2] - face.up[2] * shift];
+        return { eye: { x: c[0] + face.normal[0] * d, y: c[1] + face.normal[1] * d, z: c[2] + face.normal[2] * d },
+                 center: { x: c[0], y: c[1], z: c[2] },
+                 up: { x: face.up[0], y: face.up[1], z: face.up[2] } };
+    }
 
     // The front page's way in (Part 3 of L-527): the start card's buttons
     // and the Tutorial row, the same setting seen from the front page.
@@ -121,7 +219,8 @@
         return (at.indexOf("?") < 0 ? at : at.slice(0, at.indexOf("?"))) + "?" + p.toString();
     }
 
-    // Each card: its step number (5 is the end card), its words, what ends
+    // Each card: its step number (6 is the end card; Tony's phone look of
+    // 2026-11-12, evening: Halley a step of its own, five in all), its words, what ends
     // it (wait, and for some a key), and where it sits (place): "top",
     // "away" (the half of the screen its ring is not in), "menu" (just
     // above the menu button), "drawer" (just above the open menu).
@@ -130,10 +229,10 @@
         { id: "earth",  step: 2, words: "earth",  wait: "box",     key: "earth",  ring: "earth",  place: "away" },
         { id: "menu",   step: 3, words: "menu",   wait: "drawer",  place: "menu" },
         { id: "centre", step: 3, words: "centre", wait: "centre",  key: "earth",  row: "earth",   place: "drawer" },
-        { id: "moon",   step: 3, words: "moon",   wait: "tick",    key: "moon",   row: "moon",    place: "drawer" },
+        { id: "moon",   step: 4, words: "moon",   wait: "tick",    key: "moon",   row: "moon",    place: "drawer" },
         { id: "comet",  step: 4, words: "comet",  wait: "go",      button: "go",  place: "top" },
-        { id: "halley", step: 4, words: "halley", wait: "box",     key: "halley", ring: "halley", place: "away" },
-        { id: "end",    step: 5, words: "end",    wait: "explore", button: "explore", place: "top" }
+        { id: "halley", step: 5, words: "halley", wait: "box",     key: "halley", ring: "halley", place: "away" },
+        { id: "end",    step: 6, words: "end",    wait: "explore", button: "explore", place: "top" }
     ];
 
     // Does this signal end this card? signal: "turn", "box" (a box opened,
@@ -180,7 +279,7 @@
         return g;
     }
 
-    // The label over a card's words and how many of its four dots are lit.
+    // The label over a card's words and how many of its five dots are lit.
     function label(card) {
         if (!card) { return ""; }
         return card.step > STEPS_COUNTED ? WORDS.theEnd : WORDS.stepOf(card.step);
@@ -337,8 +436,9 @@
     }
 
     root.GalleryGuide = {
-        KEY: KEY, PLOTLY_VERSION: PLOTLY_VERSION, SIDEWAYS: SIDEWAYS,
-        WORDS: WORDS, STEPS: STEPS, FRONT: FRONT,
+        KEY: KEY, COUNTED: STEPS_COUNTED, PLOTLY_VERSION: PLOTLY_VERSION, SIDEWAYS: SIDEWAYS,
+        WORDS: WORDS, STEPS: STEPS, FRONT: FRONT, NOTE_KEY: NOTE_KEY, FACE_FIT: FACE_FIT,
+        clearNote: clearNote, faceOn: faceOn, cameraFor: cameraFor,
         frontView: frontView, keeps: keeps, roomAddress: roomAddress,
         ends: ends, doneBy: doneBy, create: create, label: label, dots: dots,
         read: read, write: write, isOn: isOn, plain: plain, asked: asked,

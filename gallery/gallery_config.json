@@ -2,7 +2,7 @@
   "version": 2,
   "sentence": "An orrery is a model of the solar system that moves.",
   "sentence_more": "This one shows the Sun, the planets, moons, comets and spacecraft where they are today, from JPL's (NASA) data, updated every night.",
-  "name_note": "An orrery is a model of the solar system. I built this one for my daughter Paloma, whose name is Spanish for dove.",
+  "name_note": "I built this digital orrery for my daughter Paloma, whose name is Spanish for dove.",
   "doors": [
     {
       "key": "solar_system",

@@ -1865,11 +1865,13 @@ the setting. Every way in carries the choice in the address, so a
 browser that keeps nothing opens the room as its front page showed it
 (`GalleryGuide.FRONT`, `frontView`, `keeps`, `roomAddress`).
 
-- **What it is.** On the room's plain opening, four steps, each a card in
-  the i note's yellow asking for one action and waiting for it: turn the
-  picture; tap Earth, a ring on it; open the menu, Center on Earth, tick
-  the Moon; "Take me there", then tap Halley, a ring on it; then the end
-  card, "Explore". "Skip the guide" on every card but the end card, whose
+- **What it is.** On the room's plain opening, five steps (Tony's phone
+  look of 2026-11-12, evening: Halley a step of its own), each a card in
+  the i note's yellow asking for one action and waiting for it, "Step n
+  of 5" and one dot a step (`GalleryGuide.COUNTED`): 1, turn the
+  picture; 2, tap Earth, a ring on it; 3, open the menu, Center on Earth;
+  4, tick the Moon, then "Take me there"; 5, tap Halley, a ring on it;
+  then the end card, "Explore". "Skip the guide" on every card but the end card, whose
   Explore ends it the same way. The cards give instructions only. Every
   word, the steps and what ends each one are `gallery/first_guide.js`
   (`GalleryGuide`: `STEPS`, `WORDS`, `create`, `doneBy`), a file of its own
@@ -1898,7 +1900,10 @@ browser that keeps nothing opens the room as its front page showed it
 - **The i note** (L-494): while the guide runs it stands in for the note,
   which `guideStart` keeps back; once the guide ends by Skip or Explore,
   `infoHintMaybeShow` shows it as for any first visit. With the guide off
-  the note behaves as before.
+  the note behaves as before. The front page's Tutorial switch turned on
+  clears the note's mark (`GalleryGuide.NOTE_KEY`, the page's
+  `INFO_HINT_KEY`; `clearNote`), so the note shows again after the end
+  card.
 - **What says a step is done**: the page's own functions tell the guide
   (`guideSignal`), and the guide moves on only on the current card's own
   action (`GalleryGuide.ends`), so anything else leaves the card as it is.
@@ -1910,7 +1915,7 @@ browser that keeps nothing opens the room as its front page showed it
   not a turn). A card whose action is already done moves on at once
   (`settle`). The next card comes `GUIDE_PAUSE_MS` (900) later, by a timer,
   never inside a Plotly event (L-278).
-- **Step 3's menu.** Center on closes the menu, so the Moon's card opens it
+- **Steps 3 and 4's menu.** Center on closes the menu, so the Moon's card opens it
   again after `GUIDE_REOPEN_MS` (1200), with Earth's fold open and the
   Moon's row scrolled into view (`guideOpenAt`, `guideScrollTo`). The row is
   scrolled in the menu's own list only: `scrollIntoView` also scrolls the
@@ -1921,8 +1926,15 @@ browser that keeps nothing opens the room as its front page showed it
   kept (L-515 ruling 20); Halley ticked (`ssTick`, which ticks Neptune with
   it, as a comet's tick does); the menu opened, folded open at Comets and
   Halley-type comets and scrolled to Halley's row, for
-  `GUIDE_DRAWER_SHOW_MS` (2500); the menu closed; then Halley's ring and
-  card.
+  `GUIDE_DRAWER_SHOW_MS` (2500); the menu closed; the view swung
+  (`guideSwingTo`, over `GUIDE_SWING_MS`, 900, in `GUIDE_SWING_STEPS`, 18,
+  camera moves) to look straight down on the plane of Halley's drawn
+  orbit from the north, its long axis up the screen and the far end at
+  the top, the orbit from 14 to 50 percent of the picture's height, above
+  where the card goes (`GalleryGuide.faceOn` and `cameraFor`, from the
+  drawn orbit, the scene's ranges and Plotly's projection; `FACE_FIT`);
+  then Halley's ring and card. No orbit drawn, or Plotly's internals not
+  where 2.35.2 keeps them: the view stays as it was.
 - **The ring** (`guideRingPlace`): a circle over the picture
   (`#guide-ring`), letting every tap through, put each frame on the body's
   own marker (`sunLabelMarker`) by Plotly 2.35.2's own sum for a point of a
@@ -2027,7 +2039,10 @@ browser that keeps nothing opens the room as its front page showed it
      sizes sideways it checks the line (its words, its place and the
      cards' yellow, read from the browser) and the paused card, that the
      picture still turns and zooms, and that turned upright the same step
-     goes on. Then the front page (Part 3): a first visitor's two lines,
+     goes on. After Take me there it measures the swing: the camera
+     straight down on Halley's drawn orbit, and the whole orbit on screen
+     by Plotly's own camera, Halley above the Sun, clear of the card.
+     Then the front page (Part 3): a first visitor's two lines,
      card and ways in; "Show me around" into the room with the guide;
      Skip and Back to the returning button; the Tutorial switch deciding
      what that button opens; "Explore on my own"; the picture's tap; a
@@ -2035,7 +2050,9 @@ browser that keeps nothing opens the room as its front page showed it
      Its report names each step passed and whether the ring was
      drawn. A ring tap that opens nothing is tried again 4 px off, up to
      four, each said. On Tony's computer Playwright's own Chromium would not start
-     (2026-11-12); `WALK_CHANNEL=msedge` runs it in the computer's Edge, on
+     (2026-11-12); `WALK_CHANNEL=chrome` runs it in the computer's Chrome
+     (Edge 157 would not start that evening), in the browser's new
+     headless mode, on
      a fresh profile of its own.
    - A CANDIDATE, not yet a file in either repository (v1.27, L-495):
      real pictures before a build. On the night of 2026-10-26 the

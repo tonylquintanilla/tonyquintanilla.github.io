@@ -1,5 +1,5 @@
 // walk_first_guide.js -- a first visit's guide (L-527), walked in a real
-// browser: the four steps by the visitor's own actions, the ring on its
+// browser: the five steps by the visitor's own actions, the ring on its
 // body measured against Plotly 2.35.2's own placement, every card clear
 // of its target, upright, and the setting's states; held sideways, the
 // room's one line and the guide's paused card.
@@ -29,7 +29,7 @@
 // are the test of what a visitor sees.
 //
 // UPRIGHT ONLY, by Tony's ruling of 2026-11-12, 13:18 and 13:44 (L-527):
-// the room is built and used upright, so the four steps are walked
+// the room is built and used upright, so the five steps are walked
 // upright. Sideways the walk checks the ruling instead: the line "This
 // room works best with your phone upright." at the top, letting the
 // picture turn and zoom; the guide paused on "Turn your phone upright to
@@ -256,7 +256,7 @@ async function ringAgainstPlotly(page, key) {
 }
 
 async function fullWalk(browser, size) {
-  console.log("\n== The four steps, " + size.name);
+  console.log("\n== The five steps, " + size.name);
   const { page, context, errors } = await open(browser, size);
   const tag = function (s) { stepsPassed.push(size.name + ": " + s); };
   let ringNote = [];
@@ -277,7 +277,7 @@ async function fullWalk(browser, size) {
 
     // Step 1: a drag turns it.
     let good = ok(await waitCard(page, "turn"), "step 1's card is up");
-    good = ok((await page.textContent("#guide-label")) === "Step 1 of 4", "it says Step 1 of 4") && good;
+    good = ok((await page.textContent("#guide-label")) === "Step 1 of 5", "it says Step 1 of 5") && good;
     good = (await cardClearOf(page, await rect(page, "#plotly-container .g-gtitle"), "the title")) && good;
     const vp = page.viewportSize();
     await page.mouse.move(vp.width * 0.5, vp.height * 0.55);
@@ -332,12 +332,12 @@ async function fullWalk(browser, size) {
     good = ok(await rowSeen(page, moonSel), "the Moon's row is in view") && good;
     good = (await cardClearOf(page, await rect(page, "#sun-drawer"), "the open menu and the Moon's row")) && good;
     await tap(page, moonSel + " .pick", 'ssTick(ssIndex("moon"), true)');
-    good = ok(await waitCard(page, "comet"), "the Moon ticked; step 4's card came up") && good;
+    good = ok(await waitCard(page, "comet"), "the Moon ticked; Take me there's card came up") && good;
     good = ok(await page.evaluate(function () { return !document.body.classList.contains("sun-drawer-open"); }),
               "the menu is out of the way to see the Moon") && good;
-    if (good) { tag("step 3, the menu, Center on Earth, the Moon"); }
+    if (good) { tag("step 3, the menu and Center on Earth; step 4, the Moon"); }
 
-    // Step 4: Take me there, then Halley.
+    // Step 4's Take me there, then step 5, Halley.
     good = ok((await page.textContent("#guide-go")) === "Take me there", "the card's button reads Take me there");
     await tap(page, "#guide-go");
     try {
@@ -362,6 +362,51 @@ async function fullWalk(browser, size) {
     good = ok(await waitCard(page, "halley", 6000), "the menu closed; Halley's card came up") && good;
     good = ok(await page.evaluate(function () { return !document.body.classList.contains("sun-drawer-open"); }), "the menu is closed") && good;
     await page.waitForTimeout(300);
+    // The swing (Tony's phone look of 2026-11-12, evening): the view
+    // straight down on Halley's orbit, the far end up, the whole orbit on
+    // screen by Plotly's own camera and clear of the card.
+    const sw = await page.evaluate(function () {
+      const gd = sunPlotDiv, G = window.GalleryGuide, h = ssIndex("halley");
+      let orbit = null;
+      sunGroups[h].indices.forEach(function (i) {
+        const t = gd.data[i];
+        if (t && String(t.mode || "").indexOf("lines") >= 0 && (t.x || []).length > 3 && (!orbit || t.x.length > orbit.x.length)) { orbit = t; }
+      });
+      if (!orbit) { return null; }
+      const pts = orbit.x.map(function (x, i) { return [x, orbit.y[i], orbit.z[i]]; });
+      const face = G.faceOn(pts);
+      const cam = sunLiveCamera(gd), c = cam.center || { x: 0, y: 0, z: 0 };
+      const e = [cam.eye.x - c.x, cam.eye.y - c.y, cam.eye.z - c.z], el = Math.hypot(e[0], e[1], e[2]);
+      const fl = gd._fullLayout, sc = fl.scene._scene, box = sc.container.getBoundingClientRect();
+      const viz = document.querySelector(".viz-area").getBoundingClientRect();
+      let top = Infinity, bottom = -Infinity, left = Infinity, right = -Infinity;
+      pts.forEach(function (q) {
+        const p = G.screenOf(sc.glplot.cameraParams, sc.dataScale, q, box.width, box.height);
+        if (!p) { return; }
+        const y = box.top - viz.top + p.y, x = box.left - viz.left + p.x;
+        top = Math.min(top, y); bottom = Math.max(bottom, y); left = Math.min(left, x); right = Math.max(right, x);
+      });
+      const hp = G.screenOf(sc.glplot.cameraParams, sc.dataScale, [sunLabelMarker(h).x[0], sunLabelMarker(h).y[0], sunLabelMarker(h).z[0]], box.width, box.height);
+      const sp = G.screenOf(sc.glplot.cameraParams, sc.dataScale, [0, 0, 0], box.width, box.height);
+      const card = document.getElementById("guide-card").getBoundingClientRect();
+      return { cos: (e[0] * face.normal[0] + e[1] * face.normal[1] + e[2] * face.normal[2]) / el,
+               orbit: { left: left, top: top, right: right, bottom: bottom },
+               farUp: hp && sp ? hp.y < sp.y : false,
+               view: { w: viz.width, h: viz.height },
+               card: { left: card.left - viz.left, top: card.top - viz.top, right: card.right - viz.left, bottom: card.bottom - viz.top } };
+    });
+    good = ok(sw && sw.cos > 0.9999, "Take me there swung the view straight down on Halley's orbit (cos " + (sw ? sw.cos.toFixed(6) : "none") + ")") && good;
+    if (sw) {
+      const o = sw.orbit;
+      good = ok(o.top >= 0 && o.left >= 0 && o.right <= sw.view.w && o.bottom <= sw.view.h && !overlaps(o, sw.card) &&
+                o.bottom - o.top >= 0.3 * sw.view.h && o.right - o.left >= 30 && sw.farUp,
+                "the whole orbit on screen, " + Math.round(o.right - o.left) + " x " + Math.round(o.bottom - o.top) +
+                " px " + fmt(o) + " in a picture " + Math.round(sw.view.w) + " x " + Math.round(sw.view.h) +
+                ", Halley above the Sun, clear of the card " + fmt(sw.card)) && good;
+    }
+    if (process.env.WALK_SHOTS) {
+      await page.screenshot({ path: path.join(process.env.WALK_SHOTS, "walk_halley_" + size.w + "x" + size.h + ".png") }).catch(function () {});
+    }
     const r4 = await ringAgainstPlotly(page, "halley");
     ringNote.push("Halley: " + (r4.drawn ? "drawn" : "NOT drawn"));
     good = ok(r4.drawn, "the ring is drawn on Halley") && good;
@@ -380,11 +425,11 @@ async function fullWalk(browser, size) {
     good = ok(seen_halley.indexOf("halley") >= 0,
               "a click at the ring's centre opened Halley's box (boxes opened: " + seen_halley.join(", ") + ")") && good;
     good = ok(await waitCard(page, "end"), "the end card came up") && good;
-    if (good) { tag("step 4, Take me there and tap Halley"); }
+    if (good) { tag("step 4's Take me there, the view swung to Halley's orbit; step 5, tap Halley"); }
 
     // The end card.
     good = ok((await page.textContent("#guide-label")) === "The end", "it says The end");
-    good = ok((await page.$$eval("#guide-dots span.on", function (s) { return s.length; })) === 4, "all four dots") && good;
+    good = ok((await page.$$eval("#guide-dots span.on", function (s) { return s.length; })) === 5, "all five dots") && good;
     good = ok(await page.evaluate(function () { return document.getElementById("guide-skip").hidden; }), "no Skip on the end card") && good;
     await tap(page, "#guide-go");
     await page.waitForTimeout(300);
@@ -471,7 +516,7 @@ async function lineCheck(page, sideways) {
 }
 async function pausedCheck(page, id, step, what) {
   const c = await card(page);
-  const good = ok(c.shown && c.id === id && c.paused && c.words === PAUSED_WORDS && c.label === "Step " + step + " of 4" &&
+  const good = ok(c.shown && c.id === id && c.paused && c.words === PAUSED_WORDS && c.label === "Step " + step + " of 5" &&
                   c.skip && !c.go && !c.ring,
                   "sideways, " + what + ": the guide paused (" + c.label + ", \"" + c.words + "\", Skip " +
                   (c.skip ? "shown" : "hidden") + ", " + (c.go ? "a button" : "no button") + ", ring " +
@@ -488,7 +533,7 @@ async function resumedCheck(page, id, step, what) {
     }, id, { timeout: 4000 });
   } catch (e) { /* counted below */ }
   const c = await card(page);
-  return ok(c.shown && c.id === id && !c.paused && c.words !== PAUSED_WORDS && c.label === "Step " + step + " of 4",
+  return ok(c.shown && c.id === id && !c.paused && c.words !== PAUSED_WORDS && c.label === "Step " + step + " of 5",
             "turned upright, " + what + ": the same step goes on (" + c.label + ", \"" + c.words.slice(0, 40) + "...\")");
 }
 async function sidewaysWalk(browser, size) {
@@ -736,11 +781,18 @@ async function frontWalk(browser) {
 
 async function main() {
   if (!PAYLOAD) { console.log("usage: node tools/headless/walk_first_guide.js . <payload.json> [planted page]"); process.exit(2); }
-  // The browser: Playwright's own Chromium, or with WALK_CHANNEL=msedge the
-  // computer's Edge, on a fresh profile of its own (Playwright's Chromium
+  // The browser: Playwright's own Chromium, or with WALK_CHANNEL=chrome (or msedge) the
+  // computer's own browser, on a fresh profile of its own (Playwright's Chromium
   // would not start on Tony's computer on 2026-11-12).
   const launch = { args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] };
-  if (process.env.WALK_CHANNEL) { launch.channel = process.env.WALK_CHANNEL; }
+  // An installed browser has dropped the old headless mode Playwright
+  // 1.48 asks for (Edge 157 would not start, 2026-11-12, evening), so a
+  // channel runs in the new one.
+  if (process.env.WALK_CHANNEL) {
+    launch.channel = process.env.WALK_CHANNEL;
+    launch.headless = false;
+    launch.args.unshift("--headless=new");
+  }
   const browser = await chromium.launch(launch);
   const rings = [];
   try {

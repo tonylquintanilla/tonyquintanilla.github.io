@@ -678,7 +678,7 @@ OFFLINE_CHECKERS = [
     # card's title and sentence (gallery_metadata.json and the page), the
     # ways in, each carrying the choice in the room's address, and the
     # Tutorial row, drawn from the one setting. Its self-test breaks the real
-    # file fourteen ways and plants a page on another Plotly, three wrong
+    # file eighteen ways and plants a page on another Plotly, three wrong
     # sideways lines and a front page four ways first. Gates.
     ("First guide", "node",
      ["documentation/smoke_first_guide.js"], ".", "===", False),

@@ -3507,7 +3507,12 @@
             var tutorial = document.getElementById('lobby-tutorial');
             if (tutorial) {
                 tutorial.addEventListener('click', function () {
-                    guideKeep(window.GalleryGuide.isOn(guideValue()) ? 'off' : 'on');
+                    var G = window.GalleryGuide;
+                    var turnOn = !G.isOn(guideValue());
+                    guideKeep(turnOn ? 'on' : 'off');
+                    // Turned on, the room's i note shows again after the
+                    // guide's end card (Tony's phone look, Nov 12, evening).
+                    if (turnOn) G.clearNote(guideStore());
                     guideViewsRefresh();
                 });
             }

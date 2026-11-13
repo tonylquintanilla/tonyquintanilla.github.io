@@ -33,7 +33,7 @@
 // address, and the Tutorial row under Featured, all drawn from the one
 // setting through the file.
 //
-// A SELF-TEST runs first and breaks the real file fourteen ways, and plants
+// A SELF-TEST runs first and breaks the real file eighteen ways, and plants
 // a page on another Plotly, three pages whose sideways line is wrong, and a
 // front page four ways; each must be caught. Then the worked cases on
 // the real file, the words, and the page's wiring. Gates: any failure,
@@ -58,12 +58,12 @@ function load(src) {
 // The words, as the brief and Tony's rulings give them
 // (documentation/COORD_L527_guide_brief_20261112.md in the orrery).
 const WORDS = {
-  turn: "This is the solar system today, seen from above. Drag with one finger to turn it.",
+  turn: "This is the inner solar system today, seen from above. Drag with one finger to turn it.",
   earth: "Find our home planet: tap Earth, the blue dot in the ring.",
   menu: "Open the menu, bottom left.",
   centre: "This is the menu. On Earth's row, tap Center on Earth to fly in.",
-  moon: "Now tick the Moon, to see it go around Earth.",
-  comet: "There's the Moon, going around Earth. Next, a comet.",
+  moon: "Now tick the Moon, to see its orbit around Earth.",
+  comet: "There's the Moon's orbit around Earth. Next, a comet.",
   go: "Take me there",
   halley: "That long orbit is Halley's comet. Tap Halley, in the ring, to see where it is today.",
   end: "That's the orrery: the solar system as it is today, drawn from JPL's (NASA) data, updated every night. Explore on your own, or turn on Tutorial on the front page to see this again.",
@@ -90,13 +90,17 @@ const SERVED = {
   sentence_more: "This one shows the Sun, the planets, moons, comets and spacecraft where they are today, from JPL's (NASA) data, updated every night.",
   title: "Today's solar system",
   description: "Turn it, tap a planet, fly to the Moon.",
+  // Tony's phone look of 2026-11-12, evening: its first sentence repeated
+  // the new line under the name.
+  name_note: "I built this digital orrery for my daughter Paloma, whose name is Spanish for dove.",
 };
 const LIVE = "interactive.html?exhibit=solar-system";
 
 // A storage that keeps, one that keeps nothing, one that throws.
 function store(init) {
   const m = Object.assign({}, init || {});
-  return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, _m: m };
+  return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); },
+           removeItem: (k) => { delete m[k]; }, _m: m };
 }
 const THROWS = { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); } };
 
@@ -114,7 +118,7 @@ function cases(G) {
   eq(G.STEPS.map((s) => s.id).join(","), "turn,earth,menu,centre,moon,comet,halley,end", "the cards in order");
   const g = G.create();
   eq(g.card().id, "turn", "the guide opens on step 1");
-  eq(G.label(g.card()), "Step 1 of 4", "step 1's label");
+  eq(G.label(g.card()), "Step 1 of 5", "step 1's label");
   eq(G.dots(g.card()), 1, "step 1 lights one dot");
   eq(g.signal("box", "earth"), false, "step 1: Earth's box is not a turn");
   eq(g.signal("drawer", null, true), false, "step 1: the menu is not a turn");
@@ -125,23 +129,27 @@ function cases(G) {
   eq(g.signal("turn"), false, "step 2: another turn does nothing");
   eq(g.signal("box", "earth"), true, "step 2 ends when Earth's box opens");
   eq(g.card().id, "menu", "then the menu");
-  eq(G.label(g.card()), "Step 3 of 4", "the menu's label");
+  eq(G.label(g.card()), "Step 3 of 5", "the menu's label");
   eq(g.signal("drawer", null, false), false, "the menu closing is not opening it");
   eq(g.signal("drawer", null, true), true, "the menu card ends when it opens");
   eq(g.signal("centre", "jupiter"), false, "Center on Jupiter is not Center on Earth");
   eq(g.signal("centre", "earth"), true, "Center on Earth ends its card");
+  eq(G.label(g.card()), "Step 4 of 5", "the Moon's tick is step 4 (Tony's phone look of 2026-11-12, evening)");
   eq(g.signal("tick", "moon", false), false, "the Moon unticked is not ticked");
   eq(g.signal("tick", "mars", true), false, "Mars ticked is not the Moon");
-  eq(g.signal("tick", "moon", true), true, "the Moon ticked ends step 3");
-  eq(g.card().id, "comet", "then step 4's first card");
-  eq(g.card().button, "go", "step 4 has its button");
+  eq(g.signal("tick", "moon", true), true, "the Moon ticked ends its card");
+  eq(g.card().id, "comet", "then step 4's Take me there card");
+  eq(G.label(g.card()), "Step 4 of 5", "Take me there is still step 4");
+  eq(g.card().button, "go", "Take me there has its button");
   eq(g.signal("box", "halley"), false, "Halley's box before Take me there does nothing");
   eq(g.signal("go"), true, "Take me there ends it");
+  eq(G.label(g.card()), "Step 5 of 5", "Halley is step 5, a step of its own");
+  eq(G.dots(g.card()), 5, "Halley lights all five dots");
   eq(g.signal("box", "earth"), false, "Halley's card: Earth's box does nothing");
-  eq(g.signal("box", "halley"), true, "Halley's box ends step 4");
+  eq(g.signal("box", "halley"), true, "Halley's box ends step 5");
   eq(g.card().id, "end", "then the end card");
   eq(G.label(g.card()), "The end", "the end card's label");
-  eq(G.dots(g.card()), 4, "the end card lights all four dots");
+  eq(G.dots(g.card()), 5, "the end card lights all five dots");
   eq(g.signal("explore"), true, "Explore ends the guide");
   eq(g.finished(), true, "and it is finished");
   eq(g.card(), null, "no card after the end");
@@ -299,8 +307,71 @@ function cases(G) {
 
   // ---- the words, each as ruled ----
   Object.keys(WORDS).forEach(function (k) { eq(G.WORDS[k], WORDS[k], "the words \"" + k + "\""); });
-  eq(G.WORDS.stepOf(2), "Step 2 of 4", "the step label");
+  eq(G.WORDS.stepOf(2), "Step 2 of 5", "the step label");
+  eq(G.COUNTED, 5, "five steps counted, five dots");
   eq(G.SIDEWAYS, EXPECT_SIDEWAYS, "the test for a phone held sideways");
+
+  // ---- Take me there: Halley's orbit seen face-on ----
+  // A Halley-like orbit, drawn as the room draws one: a = 17.8, e = 0.967,
+  // tilted 162 degrees (it goes round the other way), turned 59 and 112
+  // degrees. Made here only to test the sums, not to print.
+  const A = 17.8, E = 0.967, B = A * Math.sqrt(1 - E * E);
+  const rad = Math.PI / 180;
+  function rot(v, ax, t) {
+    const c = Math.cos(t), s = Math.sin(t);
+    if (ax === "x") { return [v[0], c * v[1] - s * v[2], s * v[1] + c * v[2]]; }
+    return [c * v[0] - s * v[1], s * v[0] + c * v[1], v[2]];
+  }
+  function toSky(v) { return rot(rot(rot(v, "z", 112 * rad), "x", 162 * rad), "z", 59 * rad); }
+  const orbitPts = [];
+  for (let i = 0; i <= 360; i++) {
+    const M = i * rad, Ecc = (function () { let x = M; for (let j = 0; j < 60; j++) { x = x - (x - E * Math.sin(x) - M) / (1 - E * Math.cos(x)); } return x; })();
+    orbitPts.push(toSky([A * (Math.cos(Ecc) - E), B * Math.sin(Ecc), 0]));
+  }
+  const trueN = toSky([0, 0, 1]), north = trueN[2] < 0 ? trueN.map((x) => -x) : trueN;
+  const aph = toSky([-1, 0, 0]);
+  const face = G.faceOn ? G.faceOn(orbitPts) : null;
+  const dotv = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const near = (a, b, tol) => Math.abs(a - b) <= tol;
+  eq(!!face, true, "the face of a drawn orbit");
+  if (face) {
+    eq(dotv(face.normal, north) > 0.99999, true, "seen straight down on the orbit's plane, from the north (cos " + dotv(face.normal, north).toFixed(6) + ")");
+    eq(dotv(face.up, aph) > 0.9999, true, "the long axis up the screen, the far end at the top (cos " + dotv(face.up, aph).toFixed(6) + ")");
+    eq(near(face.halfLong, A, 0.01) && near(face.halfAcross, B, 0.05), true,
+       "the orbit's half-lengths " + face.halfLong.toFixed(3) + " and " + face.halfAcross.toFixed(3) + ", for " + A + " and " + B.toFixed(3));
+    eq(near(dotv(face.mid, face.up), A * E, 0.01), true, "the middle of the orbit, a times e from the Sun toward the far end");
+    // The camera, through a perspective of the room's kind: the orbit's
+    // long axis from FACE_FIT.at - long/2 to at + long/2 of the height.
+    const span = 85.54, scale = { mid: [0, 0, 0], k: [1 / span, 1 / span, 1 / span] };
+    const f5 = 1 / Math.tan(Math.PI / 8), f0 = f5 * (680 / 390);
+    const cam = G.cameraFor(face, scale, f5, f0);
+    eq(!!cam, true, "a camera for the face");
+    if (cam) {
+      const e = [cam.eye.x, cam.eye.y, cam.eye.z], c = [cam.center.x, cam.center.y, cam.center.z];
+      const fw = (function () { const d = [c[0] - e[0], c[1] - e[1], c[2] - e[2]]; const l = Math.sqrt(dotv(d, d)); return d.map((x) => x / l); })();
+      const up = [cam.up.x, cam.up.y, cam.up.z];
+      const right = [fw[1] * up[2] - fw[2] * up[1], fw[2] * up[0] - fw[0] * up[2], fw[0] * up[1] - fw[1] * up[0]];
+      let top = 1, bottom = -1, wide = 0;
+      orbitPts.forEach(function (q) {
+        const r = [q[0] / span - e[0], q[1] / span - e[1], q[2] / span - e[2]], z = dotv(r, fw);
+        const y = dotv(r, up) * f5 / z, x = dotv(r, right) * f0 / z;
+        top = Math.min(top, (1 - y) / 2); bottom = Math.max(bottom, (1 - y) / 2); wide = Math.max(wide, Math.abs(x));
+      });
+      const F = G.FACE_FIT;
+      eq(near(top, F.at - F.long / 2, 0.002) && near(bottom, F.at + F.long / 2, 0.002) && wide <= F.across,
+         true, "the orbit drawn from " + top.toFixed(3) + " to " + bottom.toFixed(3) + " of the height, " +
+         wide.toFixed(3) + " of the half-width at most");
+    }
+  }
+  eq(G.faceOn ? G.faceOn([[1, 0, 0], [2, 0, 0]]) : 0, null, "two points have no face");
+
+  // ---- the i note's mark, cleared by the Tutorial switch ----
+  eq(G.NOTE_KEY, "paloma_orrery_info_hint_seen", "the i note's key");
+  const noteStore = store({ paloma_orrery_info_hint_seen: "yes", paloma_orrery_guide: "on" });
+  eq(G.clearNote(noteStore), true, "the mark cleared");
+  eq(noteStore.getItem("paloma_orrery_info_hint_seen"), null, "and the note shows again");
+  eq(noteStore.getItem("paloma_orrery_guide"), "on", "the setting untouched");
+  eq(G.clearNote(THROWS), false, "a storage that throws: nothing cleared, nothing thrown");
 
   // ---- the front page's way in ----
   Object.keys(FRONT).forEach(function (k) { eq(G.FRONT && G.FRONT[k], FRONT[k], "the front page's words \"" + k + "\""); });
@@ -332,6 +403,7 @@ function cases(G) {
 function frontFails(front, cfg, meta) {
   const f = [];
   if (cfg.sentence !== SERVED.sentence) { f.push("the first line under the name (gallery_config.json \"sentence\") is " + JSON.stringify(cfg.sentence)); }
+  if (cfg.name_note !== SERVED.name_note) { f.push("the line about Paloma (\"name_note\") is " + JSON.stringify(cfg.name_note)); }
   if (cfg.sentence_more !== SERVED.sentence_more) { f.push("the second line under the name (\"sentence_more\") is " + JSON.stringify(cfg.sentence_more)); }
   const card = (meta.visualizations || []).filter((v) => v.id === "solar_system")[0] || {};
   if (card.title !== SERVED.title) { f.push("the start card's served title is " + JSON.stringify(card.title)); }
@@ -360,7 +432,8 @@ function frontFails(front, cfg, meta) {
     ["the switch's lines", "line.textContent = on ? G.FRONT.tutorialOn : G.FRONT.tutorialOff;", "guideViewsRefresh"],
     ["the card's ways drawn from the setting", "ways.innerHTML = startWaysHtml();", "guideViewsRefresh"],
     ["drawn again when Back shows the page", "window.addEventListener('pageshow', guideViewsRefresh);", ""],
-    ["the switch turns the setting", "guideKeep(window.GalleryGuide.isOn(guideValue()) ? 'off' : 'on');", "renderLobby"],
+    ["the switch turns the setting", "guideKeep(turnOn ? 'on' : 'off');", "renderLobby"],
+    ["the switch turned on clears the i note's mark", "if (turnOn) G.clearNote(guideStore());", "renderLobby"],
     ["the two served lines", "escapeHtml(cfgMore || LOBBY_DEFAULT_MORE)", "renderLobby"],
   ];
   need.forEach(function (n) {
@@ -441,6 +514,10 @@ const breaks = [
   ["Explore on my own keeps nothing", '(how === "alone" ? "off" : null)', '(how === "alone" ? null : null)'],
   ["a kept choice not seen on the front page", 'return (value === "on" || value === "off") ? "returning" : "first";', 'return "first";'],
   ["a front page word changed", 'again: "Explore the solar system"', 'again: "Explore"'],
+  ["Halley's orbit seen from the south", "if (n[2] < 0) { n = [-n[0], -n[1], -n[2]]; }", ""],
+  ["the near end at the top", "if (dot(p[i], p[i]) > dot(far, far)) { far = p[i]; }", "if (dot(p[i], p[i]) < dot(far, far)) { far = p[i]; }"],
+  ["the orbit's middle not moved up", "var shift = (1 - 2 * FACE_FIT.at) * d / f5;", "var shift = 0;"],
+  ["the switch clears nothing", "try { storage.removeItem(NOTE_KEY); return true; }", "try { return true; }"],
 ];
 const selfFails = [];
 for (const [name, from, to] of breaks) {
@@ -535,6 +612,10 @@ const need = [
   ["turned round, the card that suits the phone", '(el.getAttribute("data-paused") === "1") !== guideSideways()', "guideFrame"],
   ["no card covers the sideways line", 'add(document.getElementById("upright-line"));', "guideBlockers"],
   ["the sideways line placed under the title each frame", "uprightLinePlace();", "sunHudWatch"],
+  ["Take me there swings the view to Halley's orbit", "await guideSwingTo(h);", "guideGo"],
+  ["one dot a step, as many as the file counts", "for (let i = 0; i < G.COUNTED; i++) {", "guideRender"],
+  ["the swing asks the file's sums", "G.cameraFor(G.faceOn(pts), scale, proj[5], proj[0])", "guideSwingTo"],
+  ["the i note's key is the file's", "const INFO_HINT_KEY = '" + "paloma_orrery_info_hint_seen" + "';", ""],
 ];
 for (const [what, text, fn] of need) {
   const where = fn ? body(fn) : PAGE;

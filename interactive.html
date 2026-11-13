@@ -509,7 +509,10 @@
         -- each card asking for one action and waiting for it, a ring
         on the body to tap, "Skip the guide" on every card; it stands in
         for the i note, which shows once after the guide ends. The
-        steps, words, setting and sums are gallery/first_guide.js.)
+        steps, words, setting and sums are gallery/first_guide.js.
+        After Tony's phone look that evening: five steps, Halley's its
+        own, and Take me there swings the view to look straight down on
+        Halley's orbit, the whole ellipse in the picture (guideSwingTo).)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -2112,9 +2115,10 @@ function infoHintMaybeShow() {
 // ====================================================================
 // L-527 -- A FIRST VISIT'S GUIDE (Tony's rulings of 2026-11-11 and 12)
 // ====================================================================
-// Four steps in the Solar System room, each card asking for one action
-// and waiting for it: turn the picture; tap Earth; open the menu, Center on
-// Earth, tick the Moon; Take me there, then tap Halley. Then the end card.
+// Five steps in the Solar System room, each card asking for one action
+// and waiting for it: turn the picture; tap Earth; open the menu and
+// Center on Earth; tick the Moon, then Take me there, the view swung to
+// Halley's orbit; tap Halley. Then the end card.
 // The steps, every word, the setting and the sums are
 // gallery/first_guide.js (GalleryGuide); this page draws the card and the
 // ring and tells the guide when an action is done, from the page's own
@@ -2284,7 +2288,7 @@ function guideRender(card, paused) {
     document.getElementById("guide-label").textContent = G.label(card);
     const dots = document.getElementById("guide-dots");
     dots.textContent = "";
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < G.COUNTED; i++) {   // one dot a step, as many as the file counts
         const d = document.createElement("span");
         if (i < G.dots(card)) { d.className = "on"; }
         dots.appendChild(d);
@@ -2463,12 +2467,76 @@ async function guideGo() {
             guideOpenAt("halley");
             await guideWait(GUIDE_DRAWER_SHOW_MS);
             setSunDrawer(false);
+            await guideSwingTo(h);
         }
     } catch (e) {
         console.warn("solar-system exhibit: the guide's move to Halley stopped: " + e.message);
     }
     guideBusy = false;
     guideShow();
+}
+
+// Take me there's last move (Tony's phone look of 2026-11-12, evening:
+// "the view swings so Halley's elliptical orbit can be seen"). The view
+// turns, over GUIDE_SWING_MS, to look straight down on the plane of the
+// body's drawn orbit, its long axis up the screen and the far end at the
+// top, the whole orbit in the picture above the card: the sums are
+// GalleryGuide.faceOn and cameraFor, from the drawn orbit and the scene's
+// own ranges and projection. No orbit drawn, or Plotly's internals not
+// where 2.35.2 keeps them: the view stays as it is.
+const GUIDE_SWING_MS = 900;
+const GUIDE_SWING_STEPS = 18;
+async function guideSwingTo(k) {
+    const gd = sunPlotDiv, G = window.GalleryGuide, grp = sunGroups[k];
+    if (!gd || !G || !grp || !window.Plotly) { return; }
+    let orbit = null;
+    grp.indices.forEach(function (i) {
+        const t = gd.data[i];
+        if (t && String(t.mode || "").indexOf("lines") >= 0 && (t.x || []).length > 3 &&
+                (!orbit || t.x.length > orbit.x.length)) { orbit = t; }
+    });
+    const full = gd._fullLayout && gd._fullLayout.scene;
+    const sc = full && full._scene;
+    const proj = sc && sc.glplot && sc.glplot.cameraParams && sc.glplot.cameraParams.projection;
+    if (!orbit || !full || !proj) { return; }
+    const pts = orbit.x.map(function (x, i) { return [x, orbit.y[i], orbit.z[i]]; });
+    const ar = full.aspectratio || { x: 1, y: 1, z: 1 };
+    const scale = { mid: [], k: [] };
+    [["xaxis", ar.x], ["yaxis", ar.y], ["zaxis", ar.z]].forEach(function (a) {
+        const r = full[a[0]].range;
+        scale.mid.push((r[0] + r[1]) / 2);
+        scale.k.push((a[1] || 1) / (r[1] - r[0]));
+    });
+    const to = G.cameraFor(G.faceOn(pts), scale, proj[5], proj[0]);
+    const from = sunLiveCamera(gd);
+    if (!to || !from || !from.eye) { return; }
+    // From the live camera to the face-on one: the centre moved straight,
+    // the eye's direction and the up turned on the great circle, the
+    // eye's distance changed evenly.
+    const fc = from.center || { x: 0, y: 0, z: 0 };
+    const fe = { x: from.eye.x - fc.x, y: from.eye.y - fc.y, z: from.eye.z - fc.z };
+    const te = { x: to.eye.x - to.center.x, y: to.eye.y - to.center.y, z: to.eye.z - to.center.z };
+    const fu = navVecUnit(from.up || { x: 0, y: 0, z: 1 }), tu = navVecUnit(to.up);
+    function turn(a, b, t) {
+        const ua = navVecUnit(a), ub = navVecUnit(b);
+        const ang = Math.acos(Math.max(-1, Math.min(1, navVecDot(ua, ub))));
+        let axis = navVecUnit(navVecCross(ua, ub));
+        if (!axis || ang < 1e-6) { return t < 1 ? ua : ub; }
+        return navVecRotate(ua, axis, ang * t);
+    }
+    const fl = navVecLen(fe), tl = navVecLen(te);
+    for (let i = 1; i <= GUIDE_SWING_STEPS; i++) {
+        const s = i / GUIDE_SWING_STEPS, t = s * s * (3 - 2 * s);
+        const dir = turn(fe, te, t), len = fl + (tl - fl) * t;
+        const c = { x: fc.x + (to.center.x - fc.x) * t, y: fc.y + (to.center.y - fc.y) * t,
+                    z: fc.z + (to.center.z - fc.z) * t };
+        const camera = { eye: { x: c.x + dir.x * len, y: c.y + dir.y * len, z: c.z + dir.z * len },
+                         center: c, up: turn(fu, tu, t) };
+        if (from.projection) { camera.projection = from.projection; }
+        await Plotly.relayout(gd, { "scene.camera": camera });
+        await guideWait(GUIDE_SWING_MS / GUIDE_SWING_STEPS);
+    }
+    sunHudUpdate();
 }
 
 // Skip, or the end card's Explore: the setting off, the guide gone, and
