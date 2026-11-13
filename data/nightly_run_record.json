@@ -1,10 +1,10 @@
 {
   "_comment": "Written by daily_run.py --night on a clean night only (L-485), so this is the website's last clean run. A red night writes nothing: its record is the run's log on GitHub.",
   "schema": 1,
-  "clean_run_utc": "2026-11-13T16:32:05.751285+00:00",
-  "started_utc": "2026-11-13T16:28:53.486426+00:00",
+  "clean_run_utc": "2026-11-13T19:52:47.577868+00:00",
+  "started_utc": "2026-11-13T19:49:17.661554+00:00",
   "where": "GitHub Actions",
-  "orrery_pulled": "f5b383e3fa724fa9acad55c1de650cbf59ce846d",
+  "orrery_pulled": "11662222b00babb5b1551b0d7b603eebdf65036a",
   "pulls_asked": "with the run's GITHUB_TOKEN",
   "swap_log_line": {
     "attempts": {
@@ -15,11 +15,11 @@
     "mode": "nightly",
     "outcome": "ok",
     "reached": "staging_to_live",
-    "run_id": "20261113T162858Z",
-    "time": "2026-11-13T16:30:42.927838+00:00"
+    "run_id": "20261113T194921Z",
+    "time": "2026-11-13T19:51:40.031853+00:00"
   },
-  "run_records": "Run records: carried 148 of 148, plus tonight's: 20261113T162858Z.json.",
-  "served_files_changed": 196,
+  "run_records": "Run records: carried 149 of 149, plus tonight's: 20261113T194921Z.json.",
+  "served_files_changed": 103,
   "holds": [],
   "steps": [
     {
@@ -30,7 +30,7 @@
     {
       "step": "Pulls from the orrery",
       "result": "ok",
-      "seconds": 3.2
+      "seconds": 2.6
     },
     {
       "step": "Pull matches push (runner)",
@@ -40,7 +40,7 @@
     {
       "step": "Cache builder",
       "result": "exit 0",
-      "seconds": 106.0
+      "seconds": 139.7
     },
     {
       "step": "Run records",
@@ -50,7 +50,7 @@
     {
       "step": "Maintenance run, night pass",
       "result": "exit 0",
-      "seconds": 82.1
+      "seconds": 65.9
     }
   ],
   "rows": [
@@ -59,7 +59,7 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/constants_export.json, data/constants_export.sha",
-      "seconds": 0.4
+      "seconds": 0.5
     },
     {
       "row": "Config mirror",
@@ -94,7 +94,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "PASS (537 checks, 0 failures)",
-      "seconds": 29.6
+      "seconds": 23.0
     },
     {
       "row": "Pole of date",
@@ -115,14 +115,14 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "All 488 store-writer checks passed: an allow list that lets through only a shell's words, a belt's words and the arrival settings, the rooms section's included; a no-edit round trip; one line per change; empty words handled; a refused batch writing nothing; awkward text; and the shell list matching the cache check's rule.",
-      "seconds": 35.9
+      "seconds": 29.7
     },
     {
       "row": "Store editor suite",
       "kind": "checker",
       "verdict": "PASS",
       "note": "All 383 store-editor checks passed: every box the form offers is one the writer allows; the word list and the tick list differ by the belts, on purpose; nothing typed saves nothing; the save message does not promise a visitor sees what they cannot yet; and a red Cache in step is explained rather than just shown.",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "Objects mirror suite",
@@ -150,7 +150,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "PULL FAILURES: all 16 checks passed (3 pulls x 3 ways to fail, the run after a failed pull, the run's token to GitHub's interface only, and 5 planted faults caught)",
-      "seconds": 0.2
+      "seconds": 0.1
     },
     {
       "row": "Horizons confirmations",
@@ -163,7 +163,7 @@
       "row": "Pointer join",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "Every link is accounted for: 188 link(s) against orrery f5b383e3, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
+      "note": "Every link is accounted for: 188 link(s) against orrery 11662222, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
       "seconds": 0.1
     },
     {
@@ -171,7 +171,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "TREE PARENTS: ok -- 102 objects, each parent its fetched centre",
-      "seconds": 0.1
+      "seconds": 0.0
     },
     {
       "row": "Cache in step",
@@ -185,28 +185,28 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "DRAWN ORBIT: pass -- 18 checks, every planted fault caught",
-      "seconds": 0.7
+      "seconds": 0.6
     },
     {
       "row": "Compose children",
       "kind": "checker",
       "verdict": "PASS",
       "note": "COMPOSE CHILDREN: pass -- each moon is drawn at its planet's place by adding, its orbit around its planet's marker, its distance its own",
-      "seconds": 0.1
+      "seconds": 0.0
     },
     {
       "row": "Kepler solver",
       "kind": "checker",
       "verdict": "PASS",
       "note": "KEPLER SOLVER: pass -- every e below 1 and every M solved to 1e-09 rad, a solve that cannot finish raises",
-      "seconds": 5.9
+      "seconds": 4.3
     },
     {
       "row": "Drawings",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery f5b383e3; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
-      "seconds": 0.7
+      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery 11662222; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
+      "seconds": 0.5
     },
     {
       "row": "Collapsed features",
@@ -220,7 +220,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "Page framing",
@@ -241,14 +241,14 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.2
+      "seconds": 0.1
     },
     {
       "row": "Hover budget",
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.2
+      "seconds": 0.1
     },
     {
       "row": "Typed facts",
@@ -269,7 +269,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "Arrival: both rooms open on the right things; every shell trace carries its key; the fallback with no arrival block is unchanged.",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "Display figures",
@@ -283,7 +283,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: 8 worked cases, 65 drawer rows matched to their accuracy rows, 64 served distances; Uranus, Neptune and Pluto print to JPL's ten-thousands place; 6 period cases and 64 served periods printed as the orrery printed them; 5 orbit-line cases and 64 served orbit lines; 3 path cases and 32 served paths, spacecraft and comets ===",
-      "seconds": 0.2
+      "seconds": 0.1
     },
     {
       "row": "Far lines",
@@ -297,7 +297,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: the arrows point the way the points run, sit ahead of the body, stay in the view, and the page places them ===",
-      "seconds": 0.1
+      "seconds": 0.0
     },
     {
       "row": "Solar System drawer",
@@ -311,7 +311,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: the view is centred where Tony ruled, the trail is the path down the tree, Center on opens a centre's own opening, and the shift takes every moon's 32-bit error under half a kilometre with every reader agreeing on it ===",
-      "seconds": 0.1
+      "seconds": 0.0
     },
     {
       "row": "Tap hover",
@@ -325,7 +325,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== FIRST GUIDE: ok -- each card ends only on its own action; the setting and the address decide; the ring's sum is Plotly 2.35.2's own and the page loads 2.35.2; no card covers its target; the front page offers the ways in from the one setting",
-      "seconds": 0.4
+      "seconds": 0.3
     },
     {
       "row": "Picture folds",
@@ -346,21 +346,21 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: the editor's tree is the Solar System room's drawer, in the website's order, the Sun's shells under the Sun; a card's places are one or several, written as the website reads them, twins together; every card's places are rows the drawer lists ===",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "As-built names",
       "kind": "checker",
       "verdict": "PASS",
       "note": "AS-BUILT NAMES: ok -- every name examined is in the code",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "Source list",
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: the i panel's sources are a list, every address a link, and its words are one sentence to a bullet ===",
-      "seconds": 0.2
+      "seconds": 0.1
     },
     {
       "row": "Drawer order",
@@ -374,7 +374,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== DRAWN ENDS: every drawing starts and stops on a served row or a held end; self-test red three times",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "Label words",
@@ -423,7 +423,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "SERVED LIST: all 7 checks passed (the real list, the typed list free of positions files, and 5 planted faults caught)",
-      "seconds": 0.7
+      "seconds": 0.6
     },
     {
       "row": "Artifact 1 assembler",
@@ -450,5 +450,5 @@
       "why": "writes MODULE_ATLAS.md and MODULE_INDEX.md, which are documents; the night commits no page or word (Tony's R1, 2026-10-25)"
     }
   ],
-  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/43462958391"
+  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/43495630042"
 }
