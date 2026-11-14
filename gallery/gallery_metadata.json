@@ -2430,7 +2430,7 @@
         "landscape": "food_insecurity_sdn_teaser_gallery.json"
       },
       "live": null,
-      "featured": true,
+      "featured": false,
       "sources": [],
       "converted": "2026-06-28 16:56",
       "size_kb": {
@@ -2448,13 +2448,33 @@
         "portrait": "food_insecurity_sdn_teaser_mobile.json"
       },
       "live": null,
-      "featured": true,
+      "featured": false,
       "sources": [],
       "converted": "2026-06-28 16:56",
       "size_kb": {
         "portrait": 137.4
       },
       "sibling": "food_insecurity_sdn_teaser_gallery"
+    },
+    {
+      "id": "food_insecurity_sdn",
+      "title": "Sudan: Acute Food Insecurity",
+      "description": "IPC's three periods, February 2026 - January 2027, on Google Earth.",
+      "room": "earth_system/food_insecurity",
+      "shape": "9:16",
+      "files": {},
+      "live": "earth/food_insecurity_sdn.html",
+      "page": true,
+      "featured": true,
+      "wide": true,
+      "kicker": "Google Earth",
+      "picture": "earth/food_insecurity_sdn.png",
+      "picture_alt": "Map of Sudan for October 2026 - January 2027: areas colored by IPC phase, white where not analyzed, camps as circles, dark red dots for Phase 5 (Catastrophe) and IPC's Risk of Famine symbol.",
+      "sources": [
+        "IPC, IPC Mapping Tool"
+      ],
+      "converted": "2026-11-13 20:40",
+      "size_kb": {}
     },
     {
       "id": "st_louis_1954_teaser_gallery",
@@ -2548,6 +2568,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-11-09 17:04",
-  "total_count": 135
+  "last_updated": "2026-11-13 20:40",
+  "total_count": 136
 }

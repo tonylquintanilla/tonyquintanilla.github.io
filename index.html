@@ -225,7 +225,17 @@
          either is chosen, one button, "Explore the solar system". The
          Tutorial row under Featured: a switch and its line. All of it is
          one setting, gallery/first_guide.js's, shared with the room, and
-         every way in carries the choice in the room's address. -->
+         every way in carries the choice in the room's address.
+     Updated: November 13, 2026 with Anthropic's Claude Opus 5.5 (L-001,
+       Sudan's food insecurity moves to Google Earth on the web)
+       - A PAGE CARD: a card served "page": true opens its "live" address
+         like any live card, but it is a page, not a room, so it carries
+         no "Interactive" label. The first is Sudan's one-home page,
+         earth/food_insecurity_sdn.html, featured wide.
+       - The Google Earth button: a _kmz_handoff that names an .html page
+         (from the site's top folder) opens it in a new tab, with no
+         download and no iPhone download tips; a .kmz still downloads
+         from gallery/assets/. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3221,7 +3231,7 @@
             if (item.description && item.description !== item.title) {
                 h += '<div class="lobby-wide-desc">' + escapeHtml(item.description) + '</div>';
             }
-            if (item.live) h += '<div class="viz-card-featured">Interactive</div>';
+            if (item.live && !item.page) h += '<div class="viz-card-featured">Interactive</div>';
             h += '</div>';
             return h;
         }
@@ -3444,7 +3454,7 @@
                     html += '<div class="lobby-card-body">';
                     html += '<div class="lobby-card-room">' + escapeHtml(roomLabel) + '</div>';
                     html += '<div class="lobby-card-title">' + escapeHtml(item.title || 'Untitled') + '</div>';
-                    if (item.live) html += '<div class="viz-card-featured">Interactive</div>';
+                    if (item.live && !item.page) html += '<div class="viz-card-featured">Interactive</div>';
                     html += '</div></div>';
                 }
                 if (featured.length) html += '</div>';
@@ -3821,7 +3831,7 @@
                     if (!v.live && v.size_kb) {
                         html += '<div class="room-card-meta">' + escapeHtml(sizeLabel(v)) + '</div>';
                     }
-                    if (v.live) html += '<div class="viz-card-featured">Interactive</div>';
+                    if (v.live && !v.page) html += '<div class="viz-card-featured">Interactive</div>';
                     html += '</div></div>';
                 }
                 html += '</div></div>';
@@ -3996,7 +4006,7 @@
                                 if (loose.featured) {
                                     html += '<div class="viz-card-featured">Featured</div>';
                                 }
-                                if (loose.live) {
+                                if (loose.live && !loose.page) {
                                     html += '<div class="viz-card-featured">Interactive</div>';
                                 }
                                 html += '</div>';
@@ -4027,7 +4037,7 @@
                             if (item.featured) {
                                 html += '<div class="viz-card-featured">Featured</div>';
                             }
-                            if (item.live) {
+                            if (item.live && !item.page) {
                                 html += '<div class="viz-card-featured">Interactive</div>';
                             }
                             html += '</div>';
@@ -4050,7 +4060,7 @@
                         if (item.featured) {
                             html += '<div class="viz-card-featured">Featured</div>';
                         }
-                        if (item.live) {
+                        if (item.live && !item.page) {
                             html += '<div class="viz-card-featured">Interactive</div>';
                         }
                         html += '</div>';
@@ -4175,12 +4185,21 @@
 
                 if (figDict.layout._kmz_handoff) {
                     kmzBtn.style.display = 'flex';
-                    var relativePath = 'gallery/assets/' + figDict.layout._kmz_handoff;
+                    // A layer's one-home page (L-001, Nov 2026: Earth System
+                    // layers move to Google Earth on the web) is named from
+                    // the site's top folder, e.g. earth/food_insecurity_sdn.html,
+                    // and opens in a new tab; a .kmz is a file in
+                    // gallery/assets/ and downloads.
+                    var handoff = figDict.layout._kmz_handoff;
+                    var isPage = /\.html$/i.test(handoff);
+                    var relativePath = isPage ? handoff : 'gallery/assets/' + handoff;
                     // Standard download for all platforms (desktop and mobile)
                     // Mobile: OS handles .kmz via share sheet / "Open in" dialog
                     // googleearth:// intent scheme was unreliable (opened app
                     // but didn't load the KMZ file)
                     kmzBtn.href = relativePath;
+                    if (isPage) kmzBtn.removeAttribute('download');
+                    else kmzBtn.setAttribute('download', '');
 
             //    if (figDict.layout._kmz_handoff) {
             //        kmzBtn.style.display = 'flex';
@@ -4862,6 +4881,8 @@
             // KMZ Handoff iOS Flow
             var kmzBtn = document.getElementById('kmz-handoff-btn');
             kmzBtn.addEventListener('click', function(e) {
+                // A page is not a download: no iPhone download tips (L-001).
+                if (/\.html$/i.test(this.getAttribute('href') || '')) return;
                 var ua = navigator.userAgent;
                 var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
                 
