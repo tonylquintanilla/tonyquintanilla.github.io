@@ -1634,7 +1634,7 @@
     {
       "slug": "apophis", "name": "Apophis", "horizons_id": "2004 MN4", "id_type": "smallbody",
       "horizons_name": "99942 Apophis",
-      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2004 MN4", "target_label": null, "open_orbit": false, "fetched": "2026-10-15", "words": null, "days_only": true, "years": null, "days": {"value": 323.54, "figures": 5, "text": "323.54"}},
+      "period": {"kind": "fetched", "typed": false, "center": "@sun", "center_label": "the Sun", "target": "2004 MN4", "target_label": null, "open_orbit": false, "fetched": "2026-11-14", "words": null, "days_only": true, "years": null, "days": {"value": 323.54, "figures": 5, "text": "323.54"}},
       "description": "A near-Earth asteroid that will make a close approach in 2029. Future OSIRIS-APEX target.",
       "info_url": "https://cneos.jpl.nasa.gov/apophis/",
       "category": "asteroid", "availability": "analytic", "parent": "sun",
