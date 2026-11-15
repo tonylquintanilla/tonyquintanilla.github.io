@@ -235,6 +235,11 @@ CENTER_SLUG_MAP = {
     '@399': 'earth', '399': 'earth', 'Earth': 'earth',
     '@599': 'jupiter', '599': 'jupiter', 'Jupiter': 'jupiter',
     '@699': 'saturn', '699': 'saturn', 'Saturn': 'saturn',
+    # L-514, 2026-11-15 (Tony's go-ahead): Mars, for Phobos and Deimos,
+    # served around '@499'. This copy now goes one body past its source:
+    # the orrery's map (export_orbit_cache.py) has no Mars, as nothing the
+    # orrery caches is fetched around Mars.
+    '@499': 'mars', '499': 'mars', 'Mars': 'mars',
     '@9': 'pluto_barycenter', '9': 'pluto_barycenter',
     'Pluto-Charon Barycenter': 'pluto_barycenter',
     '@3': 'earth_moon_barycenter', '3': 'earth_moon_barycenter',

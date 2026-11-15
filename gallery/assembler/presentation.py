@@ -78,6 +78,11 @@ _COLORS = {
     "uranus": "rgb(173, 216, 230)",
     "neptune": "rgb(0, 0, 255)",
     "pluto_barycenter": "rgb(205, 92, 92)",
+    # L-514, 2026-11-15: Mars's two moons, in the orrery's own colours
+    # (color_map in constants_new.py, orrery b30d6d05). A first choice for
+    # Tony's phone look.
+    "phobos": "rgb(139, 0, 0)",
+    "deimos": "rgb(105, 105, 105)",
     # L-443 build B, 2026-10-25: the twelve spacecraft, in the orrery's own
     # colours (color_map in constants_new.py, by each entry's color_key,
     # orrery 0c27f47). Voyager 1's was #ff6f61 here, a choice of this file;

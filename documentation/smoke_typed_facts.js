@@ -162,6 +162,11 @@ const ALLOWED = [
   // prints in days only, so the Moon's line has no years figure.
   ["Orbital period: # days, around Earth, from JPL Horizons, fetched ###.",
    "the page's own account of its data: the served period, around the served centre, with its source and fetch date"],
+  // L-514 session 2, 2026-11-15 (Tony's rulings 3 and 5 of Nov 6 and 14:
+  // each of Mars's moons' boxes is the Moon's pattern, its period in days):
+  // the same line, around the served centre, Mars.
+  ["Orbital period: # days, around Mars, from JPL Horizons, fetched ###.",
+   "the page's own account of its data: the served period, around the served centre, with its source and fetch date"],
   ["# AU from Earth (# km).", "the scene: the Moon's propagated distance"],
   ["This distance is rounded to how far this page's working-out from JPL's orbit may have drifted by the minute shown.",
    "how the page works: which error set the distance's digits (L-513)"],
@@ -474,7 +479,9 @@ function sentences(text) {
   const GSF = global.SolarSystemFigures;
   GSF.SPAN_MONTHS.forEach(function (m) {
     ["# " + m + " #, midnight", "# " + m + " #"].forEach(function (dated) {
-      ["# hours", "# days"].forEach(function (span) {
+      // L-514, 2026-11-15: and the singular, as spanText writes a span
+      // that rounds to one (Phobos's, 0.96 hours, prints "1 hour").
+      ["# hours", "# days", "# hour", "# day"].forEach(function (span) {
         ALLOWED.push([GSF.SPAN_WORDS(span, dated), why]);
       });
     });

@@ -1524,6 +1524,11 @@
       "category": "planet", "availability": "analytic", "parent": "sun",
       "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "heliocentric",
       "trajectory_of": null, "trace_policy": "none",
+      "arrival": {
+        "_declared": "Drawing choices for what Centre on opens, not measurements, so there is no orrery_constant link. drawn lists this centre's own served shells ticked when the view is centred on it, by key; moon true would tick what circles it too. What was ticked stays ticked. Tony's rulings of 2026-11-09 (L-515, ruling 16) and 2026-11-06 (L-514, ruling 1: the symbol alone).",
+        "drawn": [],
+        "moon": false
+      },
       "position_accuracy": {
         "_comment": "How well JPL knows where this body is: the place its distance prints to at the finest, for its group in JPL's 2014 ephemeris report. The value is written by tools/mirror_constants.py from the orrery row named below, never by hand. The Solar System room prints by the larger of this and the measured drift (L-398, Tony's ruling of 2026-10-01).",
         "value": 1.0, "unit": "km",
@@ -1585,6 +1590,44 @@
         "figures": "exact",
         "orrery_constant": "constants_new.py::DE430_MOON_POSITION_PLACE_KM",
         "source": "Folkner, W. M., Williams, J. G., Boggs, D. H., Park, R. S. & Kuchynka, P. (2014), \"The Planetary and Lunar Ephemerides DE430 and DE431\", IPN Progress Report 42-196, https://ipnpr.jpl.nasa.gov/progress_report/42-196/196C.pdf -- abstract: the present-day lunar orbit is known to submeter accuracy through fitting lunar laser ranging data."
+      },
+      "features": {}
+    },
+    {
+      "slug": "phobos", "name": "Phobos", "horizons_id": "401", "id_type": "majorbody",
+      "description": "NASA: \"Phobos is on a collision course with Mars.\"",
+      "info_url": "https://science.nasa.gov/mars/moons/phobos/",
+      "period": {"kind": "fetched", "typed": false, "center": "@499", "center_label": "Mars", "target": "401", "target_label": null, "open_orbit": false, "fetched": "2026-11-15", "words": null, "days_only": true, "years": null, "days": {"value": 0.31914, "figures": 5, "text": "0.31914"}},
+      "horizons_name": "Phobos",
+      "category": "moon", "availability": "analytic", "parent": "mars",
+      "canonical_center": "@499", "center_slug": "mars", "canonical_frame": "parent-relative",
+      "trajectory_of": null, "trace_policy": "none",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where Phobos is around Mars: the place its distance prints to at the finest, by the 2025 ephemeris of the Martian moons (MAR099). The value, its units and its citation are written by tools/mirror_constants.py from the orrery row named below, never by hand (L-513, L-514). The Solar System room prints Phobos's distance by the larger of this and the measured drift.",
+        "value": 10.0, "unit": "km",
+        "in": {"au": {"value": 6.684587122268446e-08, "figures": "exact", "prints": null}, "km": {"value": 10.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443704e-13, "figures": "exact", "prints": null}, "r_earth": {"value": 0.0015678560412142944, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-05, "figures": "exact", "prints": null}},
+        "figures": "exact",
+        "orrery_constant": "constants_new.py::MAR099_PHOBOS_DEIMOS_POSITION_PLACE_KM",
+        "source": "Brozovic, M., Jacobson, R. A. & Park, R. S. (2025), \"Revised Ephemerides of the Martian Satellites, Phobos and Deimos\", AJ 170:42, https://doi.org/10.3847/1538-3881/addab4 (open access) -- Section 6, Conclusions, p. 13: \"the realistic 1 sigma value for the uncertainties is on the order of a few kilometers for the next couple of decades\" (the paper prints the Greek sigma)."
+      },
+      "features": {}
+    },
+    {
+      "slug": "deimos", "name": "Deimos", "horizons_id": "402", "id_type": "majorbody",
+      "description": "NASA: \"Deimos is the smaller of the two Martian moons and is less irregular in shape.\"",
+      "info_url": "https://science.nasa.gov/mars/moons/deimos/",
+      "period": {"kind": "fetched", "typed": false, "center": "@499", "center_label": "Mars", "target": "402", "target_label": null, "open_orbit": false, "fetched": "2026-11-15", "words": null, "days_only": true, "years": null, "days": {"value": 1.2625, "figures": 5, "text": "1.2625"}},
+      "horizons_name": "Deimos",
+      "category": "moon", "availability": "analytic", "parent": "mars",
+      "canonical_center": "@499", "center_slug": "mars", "canonical_frame": "parent-relative",
+      "trajectory_of": null, "trace_policy": "none",
+      "position_accuracy": {
+        "_comment": "How well JPL knows where Deimos is around Mars: the place its distance prints to at the finest, by the 2025 ephemeris of the Martian moons (MAR099). The value, its units and its citation are written by tools/mirror_constants.py from the orrery row named below, never by hand (L-513, L-514). The Solar System room prints Deimos's distance by the larger of this and the measured drift.",
+        "value": 10.0, "unit": "km",
+        "in": {"au": {"value": 6.684587122268446e-08, "figures": "exact", "prints": null}, "km": {"value": 10.0, "figures": "exact", "prints": null}, "pc": {"value": 3.2407792894443704e-13, "figures": "exact", "prints": null}, "r_earth": {"value": 0.0015678560412142944, "figures": "exact", "prints": null}, "r_sun": {"value": 1.4374011786689665e-05, "figures": "exact", "prints": null}},
+        "figures": "exact",
+        "orrery_constant": "constants_new.py::MAR099_PHOBOS_DEIMOS_POSITION_PLACE_KM",
+        "source": "Brozovic, M., Jacobson, R. A. & Park, R. S. (2025), \"Revised Ephemerides of the Martian Satellites, Phobos and Deimos\", AJ 170:42, https://doi.org/10.3847/1538-3881/addab4 (open access) -- Section 6, Conclusions, p. 13: \"the realistic 1 sigma value for the uncertainties is on the order of a few kilometers for the next couple of decades\" (the paper prints the Greek sigma)."
       },
       "features": {}
     },

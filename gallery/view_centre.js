@@ -38,7 +38,10 @@
 // Written November 10, 2026 with Anthropic's Claude Opus 5.5. Updated
 // November 10, 2026, afternoon, with Anthropic's Claude Opus 5.5 (Tony's
 // phone look of step 2b: throughPoint, a body's place put into its own
-// drawn line so a centred orbit runs through its body).
+// drawn line so a centred orbit runs through its body). Updated November
+// 15, 2026 with Anthropic's Claude Opus 5.5 (L-514 session 2: fitAcross, a
+// frame fitted across the picture's narrow side, in every place a frame is
+// set).
 
 (function (global) {
   "use strict";
@@ -209,7 +212,85 @@
     return { x: put(line.x, p[0]), y: put(line.y, p[1]), z: put(line.z, p[2]) };
   }
 
+  // L-514 session 2, Tony's rulings of 2026-11-15: WHAT IS FRAMED FITS
+  // ACROSS THE PICTURE'S NARROW SIDE, in every place a frame is set; a
+  // picture wider than tall changes nothing. The frame is a cube [-r, r] seen
+  // from the opening camera, and Plotly holds the picture's height to the
+  // camera's field of view; an upright phone's picture (331 x 689 on a
+  // 375 x 812 phone, measured) is half as wide as it is tall, so a cube
+  // framed on the outermost moon's whole orbit at the room's 20 percent ran
+  // Deimos's and Io's orbits off its sides (first found on Mars's centred
+  // view; the same cause clipped Mars's orbit in the Sun's view). fitAcross
+  // gives the smallest r,
+  // not below r0, at which every point lies inside the narrow side with
+  // `margin` to spare (1.1: the orbit plus 10 percent fits), worked out
+  // from the picture's own width and height.
+  //
+  // The sum is Plotly 2.35.2's, read from its scene on a phone-sized page
+  // (2026-11-15, the Mars view at r and 1.5 r): the scene scales a point
+  // to p / (2r), the cube to +-0.5 (model x dataScale x r = 0.5); the view
+  // is a look from the camera's eye at its centre, up its up; the
+  // projection is a perspective of field of view pi/4 (1 / tan(pi/8) =
+  // 2.41421 vertically) at the picture's width over height (5.02536 =
+  // 2.41421 / (331/689)). Only the ranges changed between the two reads.
+  // Points are the plot's own (shifted, about the middle); the camera is
+  // {eye, center, up} in the scene's units, as Plotly's layout gives it.
+  // A point at or behind the eye cannot be fitted; null is returned and
+  // the caller keeps r0.
+  var FIT_F = 1 / Math.tan(Math.PI / 8);
+  function fitNdc(p, r, cam, aspect, narrowIsX) {
+    var e = cam.eye, c = cam.center || { x: 0, y: 0, z: 0 }, u = cam.up || { x: 0, y: 0, z: 1 };
+    var zx = e.x - c.x, zy = e.y - c.y, zz = e.z - c.z;
+    var zl = Math.sqrt(zx * zx + zy * zy + zz * zz);
+    zx /= zl; zy /= zl; zz /= zl;
+    var xx = u.y * zz - u.z * zy, xy = u.z * zx - u.x * zz, xz = u.x * zy - u.y * zx;
+    var xl = Math.sqrt(xx * xx + xy * xy + xz * xz);
+    xx /= xl; xy /= xl; xz /= xl;
+    var yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+    var q = [p[0] / (2 * r) - e.x, p[1] / (2 * r) - e.y, p[2] / (2 * r) - e.z];
+    var depth = -(q[0] * zx + q[1] * zy + q[2] * zz);
+    if (!(depth > 0)) { return null; }
+    if (narrowIsX) { return Math.abs(FIT_F / aspect * (q[0] * xx + q[1] * xy + q[2] * xz) / depth); }
+    return Math.abs(FIT_F * (q[0] * yx + q[1] * yy + q[2] * yz) / depth);
+  }
+  function fitWorst(points, r, cam, aspect, narrowIsX) {
+    var worst = 0;
+    for (var i = 0; i < points.length; i++) {
+      var n = fitNdc(points[i], r, cam, aspect, narrowIsX);
+      if (n === null) { return null; }
+      if (n > worst) { worst = n; }
+    }
+    return worst;
+  }
+  function fitAcross(points, r0, cam, width, height, margin) {
+    if (!(r0 > 0) || !(width > 0) || !(height > 0) || !cam || !cam.eye) { return null; }
+    // A picture wider than tall: nothing changes (Tony, 2026-11-15).
+    if (width > height) { return r0; }
+    var pts = (points || []).filter(function (p) { return Array.isArray(p) && p.every(isNum); });
+    if (!pts.length) { return null; }
+    var m = isNum(margin) && margin >= 1 ? margin : 1.1;
+    var aspect = width / height, narrowIsX = width <= height;
+    var w0 = fitWorst(pts, r0, cam, aspect, narrowIsX);
+    if (w0 === null) { return null; }
+    if (w0 * m <= 1) { return r0; }
+    // Widening shrinks every point toward the middle: bisect for the
+    // smallest r that fits, within a millionth of r0.
+    var lo = r0, hi = r0 * 2;
+    for (var g = 0; g < 40; g++) {
+      var wh = fitWorst(pts, hi, cam, aspect, narrowIsX);
+      if (wh !== null && wh * m <= 1) { break; }
+      lo = hi; hi *= 2;
+    }
+    for (var s = 0; s < 60 && (hi - lo) > r0 * 1e-6; s++) {
+      var mid = (lo + hi) / 2, wm = fitWorst(pts, mid, cam, aspect, narrowIsX);
+      if (wm !== null && wm * m <= 1) { hi = mid; } else { lo = mid; }
+    }
+    return hi;
+  }
+
   global.ViewCentre = {
+    fitAcross: fitAcross,
+    fitNdc: fitNdc,
     throughPoint: throughPoint,
     ROOT_KEY: ROOT_KEY,
     WORDS: WORDS,

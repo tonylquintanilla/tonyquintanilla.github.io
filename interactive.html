@@ -5185,10 +5185,21 @@ function sunGridDtick(span) {
 
 // One half-range on all three axes, so a sphere stays a sphere. Plotly's
 // own autorange fits each axis separately and would draw ellipsoids.
+// L-514 session 2 (Tony's rulings of 2026-11-15): then fitted across the
+// picture's narrow side (viewFitR), from the visitor's own camera, which
+// this frame keeps, and the grid spacing worked out from the frame as
+// widened. What is framed: in the Solar System room, a frame on the
+// farthest row drawn (a tick, an untick, a group's Reset) holds every
+// row drawn, each by the room's measure; otherwise the one group k (Go
+// To, a moon's included; a focus in the Sun and Earth rooms).
 function sunFrameOn(k, whole) {
     if (!sunPlotDiv || !window.Plotly) { return Promise.resolve(); }
     const rad = sunGroupRadius(k, whole);
-    const r = rad > 0 ? rad * sunGroupMargin(k) : (EX ? EX.halfRangeAu : SUN_HALF_RANGE_AU);
+    let r = rad > 0 ? rad * sunGroupMargin(k) : (EX ? EX.halfRangeAu : SUN_HALF_RANGE_AU);
+    if (rad > 0) {
+        const all = ssDrawer && !whole && k === sunOutermostShown();
+        r = viewFitR(r, all ? viewShownGroups() : [k], !!whole, viewLiveCamera());
+    }
     const d = sunGridDtick(2 * r);
     return Plotly.relayout(sunPlotDiv, sunKeepCamera(sunPlotDiv, {
         "scene.xaxis.range": [-r, r], "scene.xaxis.dtick": d,
@@ -5457,26 +5468,123 @@ function viewFrame(r, opening) {
 // the whole orbits of what circles it, at the room's 20 percent, so the
 // symbol sits in the middle of its moons' reach; with neither, the room's
 // own half-range. Measured about the middle, from the shifted plot.
-function viewCentreFrameR(centreKey, keys, anyRow) {
+// L-514 session 2, Tony's rulings of 2026-11-15: the frame is then
+// fitted across the picture's narrow side (viewFitR), on what it holds,
+// each whole: the shells, a link's moon, or the orbits of what circles it.
+// cam is the camera the frame is seen from: the opening camera from
+// Center on, the visitor's own when a tick in the fold returns here.
+function viewCentreFrameR(centreKey, keys, anyRow, cam) {
     const SSD = window.SolarSystemDrawer;
     let r = 0;
+    const framed = [];
     keys.forEach(function (key) {
         const i = ssIndex(key);
         if (i < 0 || key === centreKey) { return; }
         if (sunGroupIsShell(i)) {
             r = Math.max(r, sunGroupRadius(i, true) * SHELL_FRAME_MARGIN);
+            framed.push(i);
         } else if (anyRow) {
             // A link's moon, whole orbit, at the room's margin.
             r = Math.max(r, sunGroupRadius(i, true) * sunFrameMargin());
+            framed.push(i);
         }
     });
-    if (r > 0) { return r; }
+    if (r > 0) { return viewFitR(r, framed, true, cam || NAV_SUN_CAMERA); }
     // What circles it: the bodies in its fold, not its own shells.
     SSD.foldChildren(ssDrawer.rows, centreKey).filter(function (c) { return !SSD.isShell(c); }).forEach(function (c) {
         const i = ssIndex(c.key);
-        if (i >= 0) { r = Math.max(r, sunGroupRadius(i, true) * sunFrameMargin()); }
+        if (i >= 0) {
+            r = Math.max(r, sunGroupRadius(i, true) * sunFrameMargin());
+            framed.push(i);
+        }
     });
-    return r > 0 ? r : EX.halfRangeAu;
+    return r > 0 ? viewFitR(r, framed, true, cam || NAV_SUN_CAMERA) : EX.halfRangeAu;
+}
+
+// ====================================================================
+// L-514 session 2, Tony's rulings of 2026-11-15: EVERY FRAME FITS ACROSS
+// THE PICTURE'S NARROW SIDE. In every place a frame is set -- each room's
+// opening (the Solar System view's too), a tick, Go To (a moon's
+// included), Center on, Home and Reset -- the frame r that place works
+// out by its own rule is then widened, if it must be, until the farthest
+// point of what it frames lies inside the picture's narrow side with 10
+// percent to spare (VIEW_FIT_MARGIN), seen from the camera the frame is
+// seen from and worked out from the scene's own box on each phone. On a
+// picture wider than tall nothing changes. The grid spacing is worked out
+// after, from the frame as widened, so the grid's label matches it. The
+// sum is ViewCentre.fitAcross (gallery/view_centre.js), Plotly 2.35.2's
+// own. WHY: the frame is a cube, and Plotly holds the picture's height to
+// the camera's field of view, so an upright phone's picture showed only
+// about 0.8 of the frame across; Deimos's, Io's, Titan's and Charon's
+// orbits ran off its sides in their centred views, and Mars's orbit off
+// the Sun's view's.
+//
+// What is framed, point by point, measured as each place's own rule
+// measures it (sunGroupRadius): a shell by its whole drawn shape; a body,
+// in a room that frames on where its bodies are now and unless the frame
+// is on its whole orbit (`whole`), by its position marker alone; every
+// other trace by all its points. Points are the plot's own, about the
+// middle: absolute ones kept in viewAbs (or, for the far lines, in
+// sunFarServed, their full served reach) shifted to the middle, or, before
+// the first shift, the plot's points as drawn, the middle then the Sun.
+// The Sun line, the direction arrows and the axis lines set no frame and
+// are left out.
+const VIEW_FIT_MARGIN = 1.1;
+function viewTracePoints(data, ti, whole, pts) {
+    const t = data[ti];
+    if (!t || sunLineTraces.indexOf(ti) >= 0 || (t.meta && t.meta.direction_arrow) ||
+        (Array.isArray(sunOriginAxisIdx) && sunOriginAxisIdx.indexOf(ti) >= 0) ||
+        (Array.isArray(sunOriginTickIdx) && sunOriginTickIdx.indexOf(ti) >= 0)) { return; }
+    if (EX && EX.frameOnPosition && !whole && !sunTraceIsShell(t) &&
+        !(t.meta && t.meta.label_target === true)) { return; }
+    const far = sunFarServed && sunFarServed[ti];
+    const abs = viewAbs ? (viewAbs[ti] || far) : (far || t);
+    if (!abs || !Array.isArray(abs.x) || !Array.isArray(abs.y) || !Array.isArray(abs.z)) { return; }
+    const s = ViewCentre.shifted(abs, viewMid.at);
+    for (let j = 0; j < s.x.length; j++) { pts.push([s.x[j], s.y[j], s.z[j]]); }
+}
+function viewGroupPoints(groups, whole) {
+    const pts = [];
+    const data = sunPlotDiv && Array.isArray(sunPlotDiv.data) ? sunPlotDiv.data : null;
+    if (!data) { return pts; }
+    groups.forEach(function (i) {
+        const g = sunGroups[i];
+        if (g) { g.indices.forEach(function (ti) { viewTracePoints(data, ti, whole, pts); }); }
+    });
+    return pts;
+}
+// The groups drawn now, as a tick, Home or Reset frames them.
+function viewShownGroups() {
+    const out = [];
+    for (let i = 0; i < sunGroups.length; i++) { if (sunGroups[i].shown) { out.push(i); } }
+    return out;
+}
+// The camera a kept-camera frame is seen from: the visitor's own.
+function viewLiveCamera() {
+    const c = sunPlotDiv ? sunLiveCamera(sunPlotDiv) : null;
+    return (c && c.eye) ? c : NAV_SUN_CAMERA;
+}
+// r fitted on these points, in gd's scene box, from cam. With no box to
+// read (no Plotly scene yet, a page with none), a picture wider than
+// tall, a scene not a cube, or an orthographic camera, r is kept.
+function viewFitPoints(gd, r, pts, cam) {
+    if (!(r > 0) || !gd) { return r; }
+    let box = null, full = null;
+    try {
+        full = gd._fullLayout && gd._fullLayout.scene;
+        const sc = full && full._scene;
+        box = sc && sc.container ? sc.container.getBoundingClientRect() : null;
+    } catch (e) { box = null; }
+    if (!box || !(box.width > 0) || !(box.height > 0) || box.width > box.height) { return r; }
+    const ar = full.aspectratio;
+    if (ar && (Math.abs(ar.x - ar.y) > 1e-9 || Math.abs(ar.y - ar.z) > 1e-9)) { return r; }
+    const c = cam || NAV_SUN_CAMERA;
+    if (!c.eye || (c.projection && c.projection.type === "orthographic")) { return r; }
+    const fit = ViewCentre.fitAcross(pts, r, c, box.width, box.height, VIEW_FIT_MARGIN);
+    return fit === null ? r : fit;
+}
+function viewFitR(r, groups, whole, cam) {
+    return viewFitPoints(sunPlotDiv, r, viewGroupPoints(groups, whole), cam);
 }
 
 // L-515 step 2b, Tony's phone look of 2026-11-10: whether a row sits in a
@@ -5500,15 +5608,20 @@ function viewInFold(key, centre) {
 // moon where it is now at 20 percent, a shell whole at 10, as
 // sunOutermostShown compares them), about the middle; with nothing in the
 // fold ticked, what its opening frames on (viewCentreFrameR).
+// L-514 session 2: fitted across the picture's narrow side on the rows it
+// framed, seen from the visitor's own camera, which the tick keeps.
 function viewFoldFrameR(centre) {
     let r = 0;
+    const framed = [];
     for (let i = 0; i < sunGroups.length; i++) {
         const g = sunGroups[i];
         if (!g.shown || !viewInFold(g.key, centre)) { continue; }
         if (g.indices.some(function (ti) { return sunLineTraces.indexOf(ti) >= 0; })) { continue; }
         r = Math.max(r, sunGroupRadius(i) * sunGroupMargin(i));
+        framed.push(i);
     }
-    return r > 0 ? r : viewCentreFrameR(centre, [], false);
+    return r > 0 ? viewFitR(r, framed, false, viewLiveCamera())
+        : viewCentreFrameR(centre, [], false, viewLiveCamera());
 }
 
 // Center on <body> (Tony's rulings 15 and 16): the body in the middle, on
@@ -5710,7 +5823,11 @@ function navHome(frameR) {
     const update = { "scene.camera": isSun ? NAV_SUN_CAMERA : NAV_EXPLORER_CAMERA };
     const homeR = (typeof frameR === "number" && frameR > 0) ? frameR : navArrivalR;
     if (homeR) {
-        const r = homeR;
+        // L-514 session 2: a room's Home and Reset (the Sun and Earth
+        // rooms) fitted across the picture's narrow side on what is drawn,
+        // from the opening camera they return to; the Explorer's frame,
+        // not a cube, is kept.
+        const r = isSun ? viewFitR(homeR, viewShownGroups(), false, NAV_SUN_CAMERA) : homeR;
         const d = sunGridDtick(2 * r);
         // The Explorer's z-axis is 0.3x its x/y (buildLayout); the Sun's
         // three axes are equal (buildSunLayout). Match what arrival drew.
@@ -6459,6 +6576,30 @@ async function initSunExhibit() {
         // recorded before the link's ticks were applied.
         if (!ssDrawer && sceneAddrState && sceneAddrState.servedShown) {
             sunOpening = sceneAddrState.servedShown;
+        }
+        // L-514 session 2 (Tony's rulings of 2026-11-15): the opening
+        // frame, every room's and the Solar System view's, fitted across
+        // the picture's narrow side on what it opened on, each trace by
+        // the room's measure, now that Plotly has laid the picture out;
+        // the grid spacing from the frame as widened, and Home returning
+        // to it. Before the axis lines go in, so they are cut to it.
+        {
+            const pts = [];
+            traces.forEach(function (t, i) {
+                if (t.visible === "legendonly" || t.visible === false) { return; }
+                viewTracePoints(traces, i, false, pts);
+            });
+            const fitR = viewFitPoints(gd, arrivalR, pts, NAV_SUN_CAMERA);
+            if (fitR > arrivalR) {
+                const d = sunGridDtick(2 * fitR);
+                navArrivalR = fitR;
+                await Plotly.relayout(gd, {
+                    "scene.xaxis.range": [-fitR, fitR], "scene.xaxis.dtick": d,
+                    "scene.yaxis.range": [-fitR, fitR], "scene.yaxis.dtick": d,
+                    "scene.zaxis.range": [-fitR, fitR], "scene.zaxis.dtick": d,
+                    "scene.xaxis.tick0": 0, "scene.yaxis.tick0": 0, "scene.zaxis.tick0": 0
+                });
+            }
         }
         // L-289: the three axis lines through the origin go in AFTER the
         // drawer, so the drawer has no row for them, and after the
@@ -8985,6 +9126,9 @@ function ssHomeAtSun(gd, reset) {
         const rad = sunGroupRadius(far);
         r = rad > 0 ? rad * sunGroupMargin(far) : EX.halfRangeAu;
     }
+    // L-514 session 2: Home and Reset fitted across the picture's narrow
+    // side on every row drawn, from the opening camera they return to.
+    r = viewFitR(r, viewShownGroups(), false, NAV_SUN_CAMERA);
     sunFocusIdx = (key !== null) ? ssIndex(key) : sunOutermostShown();
     ssDrawer.open = null;
     setSunDrawer(false);

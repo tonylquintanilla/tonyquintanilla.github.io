@@ -40,15 +40,29 @@
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST first breaks the real file
-//   five ways -- a gap shifted into a number, the trail's last part a
+//   eight ways -- a gap shifted into a number, the trail's last part a
 //   link, a parent left out of the trail, Center on ticking what circles a
 //   centre whose opening says moon false, a body's place never put into
-//   its line -- and each must turn the worked cases red.
+//   its line, the picture's width over height or the margin left out of
+//   the fit, a picture wider than tall fitted -- and each must turn the
+//   worked cases red.
+//   5. (L-514 session 2, Tony's rulings of 2026-11-15) Every frame fits
+//      across the picture's narrow side with 10 percent to spare: the
+//      fit's sum agrees with Plotly 2.35.2's own matrices, as measured on
+//      a phone-sized page; a whole orbit on an upright picture is widened
+//      until it just fits; a picture wider than tall changes nothing; a
+//      point behind the eye keeps the frame. Worked in section 1's cases;
+//      section 3 holds the page to calling it in every place a frame is
+//      set -- each room's opening, a tick, Go To, Center on, Home and
+//      Reset -- with the grid spacing worked out from the frame widened.
 //
 // Written November 10, 2026 with Anthropic's Claude Opus 5.5.
 // Updated November 10, 2026, afternoon, with Anthropic's Claude Opus 5.5
 // (Tony's phone look of step 2b: the orbit through its body, the frame and
 // the trail after a tick in a centred view, Find drawing a fold).
+// Updated November 15, 2026 with Anthropic's Claude Opus 5.5 (L-514
+// session 2: the fit across the narrow side, in every place a frame is
+// set).
 
 "use strict";
 const fs = require("fs");
@@ -143,6 +157,47 @@ function cases(VC) {
        "a point across a gap, well off the line, or on a point already, is put into the line");
   want(Math.abs(VC.float32ErrorKm([1, 0, 0], 1) - 0) < 1e-12 &&
        VC.float32ErrorKm([1.1, 0, 0], 149597870.7) > 0, "the 32-bit error is not measured");
+  // L-514 session 2 (Tony's ruling of 2026-11-15): a centred view's moons
+  // fit across the picture's narrow side with 10 percent to spare. The sum
+  // is held to Plotly 2.35.2's own matrices, read from its scene on the
+  // Mars view of 2026-11-15 on a 375 x 812 phone (picture 331 x 689),
+  // column-major as Plotly keeps them, to five places: the view from the
+  // opening camera and the projection.
+  const CAM = { eye: { x: 1.25, y: -1.25, z: 0.75 }, center: { x: 0, y: 0, z: 0 }, up: { x: 0, y: 0, z: 1 } };
+  const VIEW = [0.70711, -0.27617, 0.65094, 0, 0.70711, 0.27617, -0.65094, 0, 0, 0.92057, 0.39057, 0, 0, 0, -1.92029, 1];
+  const PROJ = [5.02536, 0, 0, 0, 0, 2.41421, 0, 0, 0, 0, -1.00002, -1, 0, 0, -0.02, 0];
+  const xf = function (m, v) {
+    const o = [0, 0, 0, 0];
+    for (let i = 0; i < 4; i++) { for (let j = 0; j < 4; j++) { o[j] += m[4 * i + j] * v[i]; } }
+    return o;
+  };
+  const rr = 1.88e-4;
+  const probe = [[rr, 0, 0], [0, -rr, 0], [-0.7 * rr, 0.6 * rr, 0.1 * rr], [0.3 * rr, 0.8 * rr, -0.2 * rr]];
+  let worstOff = 0;
+  probe.forEach(function (p) {
+    const c = xf(PROJ, xf(VIEW, [p[0] / (2 * rr), p[1] / (2 * rr), p[2] / (2 * rr), 1]));
+    const nx = VC.fitNdc(p, rr, CAM, 331 / 689, true), ny = VC.fitNdc(p, rr, CAM, 331 / 689, false);
+    worstOff = Math.max(worstOff, Math.abs(nx - Math.abs(c[0] / c[3])), Math.abs(ny - Math.abs(c[1] / c[3])));
+  });
+  want(worstOff < 1e-4, "the fit's sum is not Plotly 2.35.2's: off its measured matrices by " + worstOff);
+  // A moon's whole orbit, a circle in the plane, framed at the room's 20
+  // percent: on the upright picture it is widened until it fits across the
+  // width with 10 percent to spare, just; on a wide picture, whose narrow
+  // side is its height, it already fits and is kept.
+  const ring = [];
+  for (let j = 0; j < 360; j++) { const a = j * Math.PI / 180; ring.push([Math.cos(a), Math.sin(a), 0]); }
+  const fit = VC.fitAcross(ring, 1.2, CAM, 331, 689, 1.1);
+  let worstAt = 0;
+  ring.forEach(function (p) { worstAt = Math.max(worstAt, VC.fitNdc(p, fit, CAM, 331 / 689, true)); });
+  want(fit > 1.2 && worstAt * 1.1 <= 1 && worstAt * 1.1 > 1 - 1e-5,
+       "an orbit on an upright picture is not fitted across its width with 10 percent to spare, just: r " +
+       fit + ", the orbit's reach with the margin " + (worstAt * 1.1));
+  // A picture wider than tall changes nothing (Tony, 2026-11-15), even
+  // where the frame would not hold the orbit.
+  want(VC.fitAcross(ring, 1.2, CAM, 800, 400, 1.1) === 1.2 && VC.fitAcross(ring, 0.5, CAM, 800, 400, 1.1) === 0.5,
+       "a frame on a picture wider than tall is changed");
+  want(VC.fitAcross([[100, -100, 60]], 1, CAM, 331, 689, 1.1) === null && VC.fitAcross([], 1, CAM, 331, 689, 1.1) === null,
+       "a point behind the eye, or no point, is fitted instead of keeping the frame");
   return fails;
 }
 
@@ -156,7 +211,12 @@ const breaks = [
   ["what circles a centre ticked though its opening says moon false",
    "if (arrival && arrival.moon === true) {", "if (arrival) {"],
   ["a body's place never put into its line",
-   "if (best < 0 || !(bestOff <= lim)) { return null; }", "return null;"]
+   "if (best < 0 || !(bestOff <= lim)) { return null; }", "return null;"],
+  // L-514 session 2: the fit across the narrow side.
+  ["the picture's width over height left out of the fit",
+   "return Math.abs(FIT_F / aspect * (q[0] * xx", "return Math.abs(FIT_F * (q[0] * xx"],
+  ["the margin left out of the fit", "var m = isNum(margin) && margin >= 1 ? margin : 1.1;", "var m = 1;"],
+  ["a picture wider than tall fitted too", "if (width > height) { return r0; }", "if (false) { return r0; }"]
 ];
 const caught = [];
 breaks.forEach(function (b) {
@@ -233,7 +293,19 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
  ["sunApplyVisibility(true, null, false, viewFoldFrameR(mid))", "a tick in a centred view's fold frames on everything ticked, so the view jumps to the solar system"],
  ["if (on) { ssDrawer.trailFocus = grp.key; }", "a tick in a centred view's fold does not end the trail on the row ticked"],
  ["if (mid !== window.SolarSystemDrawer.SUN_KEY && viewInFold(grp.key, mid)) {", "a name tapped in a centred view's fold does not end the trail on it"],
- ["if (ssFoldNeeds(h)) { setTimeout(function () { ssFoldBuild(h); }, 0); }", "Find on a centre does not draw its fold, so Earth's shells are not found with it"]
+ ["if (ssFoldNeeds(h)) { setTimeout(function () { ssFoldBuild(h); }, 0); }", "Find on a centre does not draw its fold, so Earth's shells are not found with it"],
+ // L-514 session 2 (Tony's rulings of 2026-11-15): every place that sets
+ // a frame calls the fit, and the grid spacing follows the frame widened.
+ ["const fit = ViewCentre.fitAcross(pts, r, c, box.width, box.height, VIEW_FIT_MARGIN);", "the fit is not worked out from the picture's own width and height"],
+ ["const VIEW_FIT_MARGIN = 1.1;", "the fit's margin is not 10 percent"],
+ ["if (r > 0) { return viewFitR(r, framed, true, cam || NAV_SUN_CAMERA); }", "Center on a centre with shells, or a shared link's moon, is not fitted"],
+ ["return r > 0 ? viewFitR(r, framed, true, cam || NAV_SUN_CAMERA) : EX.halfRangeAu;", "Center on a centre framed on its moons' orbits is not fitted"],
+ ["return r > 0 ? viewFitR(r, framed, false, viewLiveCamera())", "a tick in a centred view's fold is not fitted"],
+ ["r = viewFitR(r, all ? viewShownGroups() : [k], !!whole, viewLiveCamera());\n    }\n    const d = sunGridDtick(2 * r);", "a tick, an untick or Go To is not fitted, or its grid spacing is worked out before the fit"],
+ ["r = viewFitR(r, viewShownGroups(), false, NAV_SUN_CAMERA);", "Home and Reset in the Solar System room are not fitted"],
+ ["const r = isSun ? viewFitR(homeR, viewShownGroups(), false, NAV_SUN_CAMERA) : homeR;\n        const d = sunGridDtick(2 * r);", "Home and Reset in a room of shells are not fitted, or the grid is worked out before the fit"],
+ ["const fitR = viewFitPoints(gd, arrivalR, pts, NAV_SUN_CAMERA);", "a room's opening is not fitted"],
+ ["const d = sunGridDtick(2 * fitR);", "a room's fitted opening keeps the grid spacing of the frame before the fit"]
 ].forEach(function (c) { if (page.indexOf(c[0]) < 0) { failures.push(c[1]); } });
 
 // 4. The real config.

@@ -1038,7 +1038,9 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
  ["shellOpening = GalleryArrival.applyArrival(sunBuilt.traces, cfgText, openingOf);", "?exhibit=sun does not open on the Sun's arrival block"],
  ["if (!openingOf) { t.visible = drawn[t.legendgroup] ? true : SUN_HIDDEN; }", "the Sun's shells are not unticked on the root's opening"],
  ['"features": [_f for _f in result.report["features"]', "the root's driver does not hand over the Sun's features"],
- ["const r = rad > 0 ? rad * sunGroupMargin(k) :", "a shell in the root is not framed at its own margin"],
+ // L-514 session 2 (2026-11-15): `let`, as the frame is then fitted across
+ // the picture's narrow side (viewFitR); the margin it starts from is kept.
+ ["let r = rad > 0 ? rad * sunGroupMargin(k) :", "a shell in the root is not framed at its own margin"],
  ["if (EX && EX.frameOnPosition && !whole && !sunGroupIsShell(k)) {", "a shell in the root is framed by a position it does not have"],
  ["return sunLabelClose().then(function () { return ssHome(gd, true); });", "the root's Reset leaves a text box open"],
  ["SSD.inOpening(row, want)", "Reset does not put back a shell the opening ticked"]

@@ -824,6 +824,48 @@ v1.40, L-515 (one nested tree), step 2b; Tony's rulings 13 to 20 of
   percent; with none, the whole orbits of its moons (not its own shells)
   at the room's 20 percent; with neither, the room's half-range. A shared
   link opened centred on a body keeps the link's rows and frames on them.
+- **Every frame fits across the picture** (L-514 session 2, Tony's
+  rulings of 2026-11-15). In every place a frame is set, the frame that
+  place works out by its own rule is then widened, if it must be, until
+  the farthest point of what it frames lies inside the picture's narrow
+  side with 10 percent to spare (`viewFitR`, `viewFitPoints`,
+  `VIEW_FIT_MARGIN` 1.1), worked out from the scene's own box on each
+  phone, from the camera the frame is seen from. On a picture wider than
+  tall nothing changes. The grid spacing is worked out after, from the
+  frame as widened, so the grid's label matches it. The places:
+  - each room's opening, the Solar System view's, `?exhibit=sun`'s and
+    `?exhibit=earth`'s (the boot, after Plotly lays the picture out; Home
+    then returns to the fitted frame, `navArrivalR`);
+  - a tick, an untick and a group's Reset in the root, and Go To, a
+    moon's included (`sunFrameOn`, the visitor's camera kept);
+  - Center on (`viewCentreFrameR`, the opening camera) and a tick or untick
+    inside a centred view's fold (`viewFoldFrameR`, the visitor's camera);
+  - Home and Reset (`ssHomeAtSun`, and `navHome` in a room of shells; the
+    Explorer's frame, not a cube, is kept).
+  What is framed is measured as each place's rule measures it: a shell by
+  its whole drawn shape; a body, in the Solar System room, by where it is
+  now, unless the frame is on its whole orbit (Go To, Center on); every
+  other trace by all its points (`viewTracePoints`). A frame on the
+  farthest row drawn holds every row drawn (`viewShownGroups`). The Sun
+  line, the direction arrows and the axis lines set no frame. WHY: the
+  frame is a cube, and Plotly holds the picture's height to the camera's
+  field of view, so an upright phone's picture (331 x 689 on a 375 x 812
+  phone) showed only about 0.8 of the frame across, and Deimos's, Io's,
+  Titan's and Charon's orbits ran 4 to 19 px off its sides. The sum, in
+  `ViewCentre.fitAcross`, is Plotly 2.35.2's own (its scene read on the
+  Mars view: a point scaled to p / 2r, a look from the eye, a perspective
+  of pi/4 at width over height), held to its measured matrices in the
+  View centre check. Measured in a browser at 375 x 812 on 2026-11-15:
+  where a frame had to widen, what it frames came 15 px inside the side,
+  exactly the 10 percent (Center on Mars, Jupiter, Saturn, the Pluto
+  system and Earth; Go To Phobos, Deimos, Mars and Jupiter; a tick of Io;
+  `?exhibit=earth`); where it already fitted it was kept (the Solar
+  System view's opening, Home and Reset, with Earth's position 58 px
+  inside; `?exhibit=sun`, 37 px). At 1200 x 700 every frame measured is
+  the one before the fit. A frame on where bodies are now holds the
+  bodies, not their orbits: at the Solar System view's opening Mars's
+  orbit still runs 11 px off the side. Walked in
+  walk_solar_system_drawer.js section 38.
 - **The trail** (ruling 20): the path down the tree to what is in focus,
   `ViewCentre.trailPath`/`trailParts` -- every part but the last a link to
   that centre's own opening, ticks kept ("Solar system" the Sun's view,

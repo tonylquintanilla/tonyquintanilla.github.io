@@ -150,6 +150,10 @@ ELEMS = {
     '399': (1.000, 0.017), '599': (5.204, 0.049), '699': (9.583, 0.056),
     '301': (0.00257, 0.055), '501': (0.002819, 0.004), '606': (0.00817, 0.0288),
     '999': (1.39e-5, 0.001), '901': (1.17e-4, 0.0002),
+    # L-514, 2026-11-15: Phobos and Deimos around Mars. Rough test
+    # values like the rest of this table, used only by the mocks; never
+    # served.
+    '401': (6.27e-5, 0.015), '402': (1.568e-4, 0.0003),
     '99942': (0.922, 0.191), '90000091': (2.215, 0.848),
     # L-395, 2026-10-01: Apophis under the orrery's id, which the
     # objects mirror writes into the config. The old key stays so the

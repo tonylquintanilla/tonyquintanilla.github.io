@@ -45,6 +45,14 @@
 // parent's tick and the moon's label target taken out. Section 20 counts
 // the row after Earth's from the last of Earth's moons.
 //
+// Section 37 (2026-11-15, L-514 session 2): Mars's fold lists Phobos then
+// Deimos; Centre on Mars opens on its symbol alone, both moons off; Go To
+// on each moon opens its own box, its distance from Mars in tens of
+// kilometres by JPL's published accuracy, and its period. Section 38
+// (same day, Tony's rulings): handed an upright phone's picture, Centre on
+// Mars, Go To Deimos and Home each fit what they frame across the width
+// with 10 percent to spare, on the grid each widened frame earns.
+//
 // Section 28 (2026-11-07, night, Tony): one group over the groups that
 // sit together -- Comets, Spacecraft, Apollo and Amor asteroids -- folded,
 // indented, counted and reset through their sub-groups, and found by Find
@@ -593,9 +601,11 @@ async function places(root, payload, page) {
   ok(!inl("earth").querySelector("a").getAttribute("href") &&
      inl("earth").querySelector("a").getAttribute("data-centre") === "earth",
      "Center on Earth still leads to another page");
-  ok(inl("mars").hidden, "Mars shows a button on its row");
+  // Venus, a body with no centre (Mars was, until L-514 served its moons
+  // on 2026-11-15 and made it one).
+  ok(inl("venus").hidden, "Venus shows a button on its row");
   // L-515, Tony's phone look of 2026-11-07: no "No room or cards yet".
-  ok(bare("mars"), "Mars, with no centre, shows a label where Center on would be");
+  ok(bare("venus"), "Venus, with no centre, shows a label where Center on would be");
   ok(d.querySelectorAll(".sun-row-open:not([hidden])").length === 0, "a row is open on arrival");
   // 2. Sun cannot be ticked
   await pick("center");
@@ -1392,18 +1402,18 @@ async function places(root, payload, page) {
     const rowKeys = E("ssDrawer.rows.filter(r => r.slug && ssIndex(r.key) >= 0).map(r => r.slug)");
     // L-515 step 2b, part 2 (Tony's rulings 9 and 15): every centre in the
     // tree -- worked out here from the config, the Sun among them -- offers
-    // "Center on <name>" on its row; a body that is no centre (Mars, until
-    // its moons are served) shows nothing there, before or after its row
-    // is opened (Tony's phone look of 2026-11-07).
+    // "Center on <name>" on its row; a body that is no centre (Venus; Mars
+    // was until L-514 served its moons, 2026-11-15) shows nothing there,
+    // before or after its row is opened (Tony's phone look of 2026-11-07).
     const centres = cfg.objects.filter(o => isCentre(o) &&
                                            (o.slug === "sun" || rowKeys.indexOf(o.slug) >= 0)).map(o => o.slug);
     const keyOf = (s) => s === "sun" ? "center" : s;
     ok(centres.length > 1 && centres.every(s => inl(keyOf(s)).textContent === "Center on " + E("sunGroups[ssIndex('" + keyOf(s) + "')].name")),
        "a centre in the tree does not offer Center on: " + centres.filter(s => !/^Center on /.test(inl(keyOf(s)).textContent)).join(","));
-    ok(bare("mars"), "Mars, no centre, shows something where Center on would be: " + row("mars").textContent);
-    await E("ssSelect(ssIndex('mars'), true)"); await h.done();
-    ok(expanded("mars") && bare("mars"), "mars: opening its row shows a label");
-    console.log("  Center on: " + centres.join(", ") + "; no label on: mars");
+    ok(bare("venus"), "Venus, no centre, shows something where Center on would be: " + row("venus").textContent);
+    await E("ssSelect(ssIndex('venus'), true)"); await h.done();
+    ok(expanded("venus") && bare("venus"), "venus: opening its row shows a label");
+    console.log("  Center on: " + centres.join(", ") + "; no label on: venus");
     const drawerText = d.getElementById("sun-drawer").textContent;
     ok(drawerText.indexOf("Not built yet") < 0 &&
        drawerText.indexOf("No room or cards yet") < 0,
@@ -2012,6 +2022,135 @@ async function places(root, payload, page) {
     ok(missKm < 1, "Jupiter's drawn orbit misses Jupiter, at the middle, by " + missKm + " km");
     console.log("  36: Find 'Jupiter' brings " + jFold.length + " rows; Io ticked at Jupiter's middle frames at " +
                 r1.toFixed(4) + " AU; Jupiter's orbit misses it by " + missKm.toFixed(3) + " km");
+  }
+  // 37. L-514 session 2 (Tony's rulings 1 to 5, and step 2b's 14 to 16):
+  // Mars and its two moons, on a fresh page. Mars's fold lists Phobos,
+  // then Deimos, nearest first; Centre on Mars puts Mars at the middle on
+  // its symbol alone, both moons off; Go To on each moon opens that moon's
+  // own box (ruling 4): its name, its distance from Mars to the place the
+  // larger of the drift and JPL's published accuracy earns (worked out
+  // here, the accuracy read from the payload), the sentence saying which,
+  // and its period in days.
+  if (data.children && data.children.phobos === "mars" && data.children.deimos === "mars") {
+    const wM = await h.boot(root, "solar-system", payload);
+    const dM = wM.document, EM = (s) => wM.eval(s);
+    const clk = async (el) => { el.dispatchEvent(new wM.MouseEvent("click", { bubbles: true, cancelable: true })); for (let i = 0; i < 4; i++) { await h.done(); } };
+    const idxM = (k) => EM("ssIndex(" + JSON.stringify(k) + ")");
+    const rowM = (k) => dM.querySelector('#sun-drawer-list .sun-row[data-k="' + idxM(k) + '"]');
+    const shownM = (k) => EM("sunGroups[" + idxM(k) + "].shown");
+    const cbM = data.child_bodies || {};
+    const fold = EM("ssDrawer.rows.filter(r => r.under === 'mars').map(r => r.key)");
+    ok(fold.join(",") === "phobos,deimos" && rowM("phobos").hidden && rowM("deimos").hidden &&
+       rowM("mars").querySelector(".bfold").textContent === "\u25b8",
+       "Mars's fold does not list Phobos then Deimos, folded shut on opening: " + fold.join(","));
+    await clk(rowM("mars").querySelector("a.enter"));
+    const mid = EM("viewMid.key"), trailM = dM.getElementById("sun-trail").textContent;
+    // At the middle: Mars's drawn marker sits at the scene's origin, as the
+    // whole drawing is shifted there, and the frame note says so.
+    const mkM = EM("sunPlotDiv.data").find(t => t.legendgroup === "mars" && t.meta && t.meta.label_target);
+    const atMid = mkM ? [mkM.x[0], mkM.y[0], mkM.z[0]] : [NaN, NaN, NaN];
+    ok(mid === "mars" && trailM === "Solar system > Mars" && shownM("mars") === true &&
+       shownM("phobos") === false && shownM("deimos") === false &&
+       atMid.every(v => Math.abs(v) < 1e-12) &&
+       dM.getElementById("sun-frame-cross").textContent === "In this view the lines cross at Mars.",
+       "Centre on Mars does not put Mars at the middle on its symbol alone, both moons off: " +
+       mid + " " + trailM + " phobos " + shownM("phobos") + " deimos " + shownM("deimos") + " at " + atMid.join(","));
+    const said = {};
+    for (const moon of ["phobos", "deimos"]) {
+      const name = moon === "phobos" ? "Phobos" : "Deimos";
+      if (rowM(moon).hidden) { await clk(rowM("mars").querySelector(".bfold")); }
+      await clk(rowM(moon).querySelector(".pick"));
+      await clk(rowM(moon).querySelector(".go"));
+      const mk = EM("(sunLabelMarker(ssIndex('" + moon + "')) || {}).text") || [""];
+      // The box's lines, each wrapped line joined back to its bullet's.
+      const lines = String(mk[0]).split(/<br[^>]*>/).reduce((out, s) => {
+        if (s.indexOf("&#8226; ") === 0 || !out.length) { out.push(s.replace(/^&#8226; /, "")); }
+        else { out[out.length - 1] += " " + s; }
+        return out;
+      }, []);
+      const tr = EM("sunPlotDiv.data").find(t => t.legendgroup === moon && t.meta && Array.isArray(t.meta.rel_au));
+      const rel = tr ? tr.meta.rel_au : [NaN, NaN, NaN];
+      const km = Math.hypot(rel[0], rel[1], rel[2]) * EM("GalleryFeatures._KM_PER_AU");
+      const distLine = lines.find(s => s.indexOf("AU from Mars (") >= 0) || "";
+      const printed = (/\(([\d,]+) km\)/.exec(distLine) || [0, ""])[1];
+      const printedKm = Number(printed.replace(/,/g, ""));
+      const acc = ((cbM[moon] || {}).accuracy || {}).value;
+      const past = Math.abs(data.epoch_jd - cbM[moon].trust.element_epoch_jd) > cbM[moon].trust.delta_days;
+      const accWords = "This distance is rounded to JPL's published accuracy for " + name + "'s orbit around Mars.";
+      const all = lines.join(" ");
+      ok(EM("sunLabelGroup") === idxM(moon) && lines[0] === name && acc === 10 &&
+         printedKm > 0 && Math.abs(printedKm - km) <= 10 && (past || printedKm % 10 === 0) &&
+         (past || all.indexOf(accWords) >= 0) && /\bdays?\b/.test(all) &&
+         lines[1] && lines[1].indexOf("NASA: ") === 0 && shownM("mars") === true,
+         "Go To on " + name + " does not open its own box with its distance from Mars in tens of km, " +
+         "JPL's published accuracy named, and its period: " + lines.join(" | ") + " against " + km.toFixed(1) + " km");
+      said[moon] = printed + " km" + (past ? " (past its span)" : "");
+    }
+    console.log("  37: Mars's fold " + fold.join(", ") + "; Centre on Mars at the middle, moons off; Go To Phobos " +
+                said.phobos + ", Go To Deimos " + said.deimos);
+  }
+  // 38. L-514 session 2, Tony's rulings of 2026-11-15: every frame fits
+  // across the picture's narrow side with 10 percent to spare. jsdom lays
+  // out no picture, so the page keeps its frames there; this section hands
+  // the page an upright phone's picture (331 x 689, Plotly's scene box on a
+  // 375 x 812 phone, measured) once it has opened, and walks the same
+  // steps on two fresh pages, with and without it: Centre on Mars, Go To
+  // Deimos, Home. With the picture, Centre on Mars and Go To Deimos are
+  // wider, and what each frames -- Phobos's and Deimos's whole orbits,
+  // Deimos's whole orbit (every point of their lines, over 300) -- reaches
+  // across the width with the margin, just; Home frames every body drawn,
+  // where it is now, inside the width with the margin, and just, if it was
+  // widened. Each grid spacing is the one the widened frame earns. The
+  // opening is laid out before the picture is handed over, so it is framed
+  // as without it here; the page's fit of the opening was measured in a
+  // browser. That the sum is Plotly's own is smoke_view_centre.js's.
+  if (data.children && data.children.phobos === "mars" && data.children.deimos === "mars") {
+    const walkFit = async function (picture) {
+      const wF = await h.boot(root, "solar-system", payload);
+      const dF = wF.document, EF = (s) => wF.eval(s);
+      const clk = async (el) => { el.dispatchEvent(new wF.MouseEvent("click", { bubbles: true, cancelable: true })); for (let i = 0; i < 4; i++) { await h.done(); } };
+      const row = (k) => dF.querySelector('#sun-drawer-list .sun-row[data-k="' + EF("ssIndex(" + JSON.stringify(k) + ")") + '"]');
+      // The frame, whether its grid spacing is the one it earns, and how far
+      // across the half-width what it frames reaches with the margin.
+      const frame = (groups, whole) => EF("(function () { const r = sunPlotDiv.layout.scene.xaxis.range[1]; " +
+        "const pts = viewGroupPoints(" + groups + ", " + whole + "); let w = 0, n = 0; " +
+        "pts.forEach(function (p) { if (p.every(isFinite)) { n++; w = Math.max(w, ViewCentre.fitNdc(p, r, NAV_SUN_CAMERA, 331 / 689, true)); } }); " +
+        "return { r: r, grid: sunPlotDiv.layout.scene.xaxis.dtick === sunGridDtick(2 * r), n: n, reach: w * 1.1 }; })()");
+      if (picture) {
+        EF("sunPlotDiv._fullLayout = { scene: { _scene: { container: { getBoundingClientRect: function () { " +
+           "return { width: 331, height: 689 }; } } } } }");
+      }
+      const out = { root: EF("sunPlotDiv.layout.scene.xaxis.range[1]") };
+      await clk(row("mars").querySelector("a.enter"));
+      out.centre = frame("[ssIndex('phobos'), ssIndex('deimos')]", true);
+      if (row("deimos").hidden) { await clk(row("mars").querySelector(".bfold")); }
+      await clk(row("deimos").querySelector(".pick"));
+      await clk(row("deimos").querySelector(".go"));
+      out.goTo = frame("[ssIndex('deimos')]", true);
+      EF("ssHome(sunPlotDiv, false)");
+      for (let i = 0; i < 6; i++) { await h.done(); }
+      out.home = frame("viewShownGroups()", false);
+      return out;
+    };
+    const plain = await walkFit(false), phone = await walkFit(true);
+    const just = (f) => f.reach <= 1 + 1e-9 && f.reach > 1 - 1e-4;
+    ok(phone.centre.r > plain.centre.r && phone.centre.n > 300 && just(phone.centre) && phone.centre.grid,
+       "on an upright phone Centre on Mars does not fit Phobos's and Deimos's whole orbits across the width " +
+       "with 10 percent to spare, just, on the grid it earns: " + JSON.stringify(phone.centre) + " (without the picture " +
+       JSON.stringify(plain.centre) + ")");
+    ok(phone.goTo.r > plain.goTo.r && phone.goTo.n > 300 && just(phone.goTo) && phone.goTo.grid,
+       "on an upright phone Go To Deimos does not fit its whole orbit across the width with 10 percent to spare, " +
+       "just, on the grid it earns: " + JSON.stringify(phone.goTo) + " (without the picture " + JSON.stringify(plain.goTo) + ")");
+    ok(phone.home.r >= plain.home.r && phone.home.n > 0 && phone.home.reach <= 1 + 1e-9 &&
+       (phone.home.r === plain.home.r || just(phone.home)) && phone.home.grid,
+       "on an upright phone Home does not hold every body drawn inside the width with 10 percent to spare, " +
+       "on the grid it earns: " + JSON.stringify(phone.home) + " (without the picture " + JSON.stringify(plain.home) + ")");
+    ok(phone.root === plain.root, "the opening moved when the picture was handed over after it: " + phone.root + " / " + plain.root);
+    const x = (a, b) => (a.r / b.r).toFixed(3);
+    console.log("  38: upright phone -- Centre on Mars " + x(phone.centre, plain.centre) + " times wider, " +
+                "Go To Deimos " + x(phone.goTo, plain.goTo) + ", Home " + x(phone.home, plain.home) +
+                "; what each frames reaches " + phone.centre.reach.toFixed(5) + ", " + phone.goTo.reach.toFixed(5) +
+                ", " + phone.home.reach.toFixed(5) + " of the half-width with 10 percent; each grid the one it earns");
   }
   // 29. L-517: the saved pictures, last, since it boots the page again.
   await pictures(w, root, payload, null);
