@@ -966,6 +966,17 @@ decision is made in `gallery/solar_system_drawer.js`, checked by
 breaks the file three ways first); the page only touches the DOM and
 Plotly.
 
+- **The drawer opens at the row its handle names** (Tony's ruling of
+  2026-11-16, his run record `WHERE_WE_ARE_11-15-26_0837_run_record.md`;
+  L-535). `setSunDrawer(true)` calls `sunDrawerToHandle`: the handle's
+  row (`sunFocusIdx`, drawn `focused`) has its groups and fold opened
+  (`ssPicShowRow`) and is scrolled to the top of the list, the list alone
+  scrolled as `guideScrollTo` does. Earth at the opening (the served
+  highlight, his Sep 29 choice), Venus after a tap on Venus, the Sun at
+  the top after a tap on the Sun, a centred body with its fold below it.
+  Walk section 39 holds the four, on a list given row places, and fails
+  on a page without the call. The first guide's cards are unchanged; its
+  steps 3 and 4 open the menu with Earth's row at the top.
 - **The Sun's row is fixed**: no tick box, no GO, never unticked by
   Reset. It still highlights and opens. The Sun's trace group is
   `center` (the assembler's centre marker), not its slug.

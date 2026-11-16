@@ -163,6 +163,9 @@
 // Center on Sun as Home does (33, 34); ?exhibit=sun opens as the Solar
 // System view (27); Center on opens the body's own fold, Earth's on
 // ?exhibit=earth (34) and Mars's (37).
+// Updated November 16, 2026 with Anthropic's Claude Opus 5.5 (Tony's ruling
+// of that day, on L-535): the drawer opens at the row its handle names
+// (39); section 37's distance held within half the place it prints.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -2102,7 +2105,10 @@ async function places(root, payload, page) {
       const accWords = "This distance is rounded to JPL's published accuracy for " + name + "'s orbit around Mars.";
       const all = lines.join(" ");
       ok(EM("sunLabelGroup") === idxM(moon) && lines[0] === name && acc === 10 &&
-         printedKm > 0 && Math.abs(printedKm - km) <= 10 && (past || printedKm % 10 === 0) &&
+         // Within half the place the print earns: tens inside the span, the
+         // drift's coarser place past it (a walk dated a day later, 2026-11-16).
+         printedKm > 0 && Math.abs(printedKm - km) <= Math.max(10, 0.5 * Math.pow(10, (/0*$/.exec(printed.replace(/,/g, "")) || [""])[0].length)) &&
+         (past || printedKm % 10 === 0) &&
          (past || all.indexOf(accWords) >= 0) && /\bdays?\b/.test(all) &&
          lines[1] && lines[1].indexOf("NASA: ") === 0 && shownM("mars") === true,
          "Go To on " + name + " does not open its own box with its distance from Mars in tens of km, " +
@@ -2174,6 +2180,56 @@ async function places(root, payload, page) {
                 "Go To Deimos " + x(phone.goTo, plain.goTo) + ", Home " + x(phone.home, plain.home) +
                 "; what each frames reaches " + phone.centre.reach.toFixed(5) + ", " + phone.goTo.reach.toFixed(5) +
                 ", " + phone.home.reach.toFixed(5) + " of the half-width with 10 percent; each grid the one it earns");
+  }
+  // 39. Tony's ruling of 2026-11-16 (recorded on L-535): the drawer opens at
+  // the row its handle names, scrolled to the top of the list, highlighted.
+  // jsdom lays out nothing, so this section gives the list a height and
+  // each shown row a 40 px place in list order, and keeps the list's
+  // scrollTop; the page's own scroll then lands where the row stands. The
+  // opening (Earth, the served highlight), a tap on Venus in the picture,
+  // a tap on the Sun, and Centre on Mars with its fold open below it.
+  {
+    const wD = await h.boot(root, "solar-system", payload);
+    const dD = wD.document, ED = (s) => wD.eval(s);
+    const clkD = async (el) => { el.dispatchEvent(new wD.MouseEvent("click", { bubbles: true, cancelable: true })); for (let i = 0; i < 4; i++) { await h.done(); } };
+    ED("(function () {" +
+       "var list = document.getElementById('sun-drawer-list'), top = 0;" +
+       "Object.defineProperty(list, 'scrollTop', { get: function () { return top; }, set: function (v) { top = Math.max(0, v); }, configurable: true });" +
+       "list.getBoundingClientRect = function () { return { top: 0, bottom: 400, left: 0, right: 300, height: 400, width: 300 }; };" +
+       "var orig = Element.prototype.getBoundingClientRect;" +
+       "Element.prototype.getBoundingClientRect = function () {" +
+       "  if (this.classList && this.classList.contains('sun-row') && list.contains(this)) {" +
+       "    var rows = Array.prototype.filter.call(list.querySelectorAll('.sun-row'), function (r) { return !r.hidden; });" +
+       "    var t = rows.indexOf(this) * 40 - top; return { top: t, bottom: t + 40, left: 0, right: 300, height: 40, width: 300 }; }" +
+       "  return orig.call(this); }; })()");
+    const atTop = () => ED("(function () { var list = document.getElementById('sun-drawer-list');" +
+      "var rows = Array.prototype.filter.call(list.querySelectorAll('.sun-row'), function (r) { return !r.hidden; });" +
+      "var el = rows[Math.round(list.scrollTop / 40)]; return el ? sunGroups[Number(el.getAttribute('data-k'))].key + (el.classList.contains('focused') ? '' : ' (not highlighted)') : null; })()");
+    const handle = () => ED("sunGroups[sunFocusIdx] ? sunGroups[sunFocusIdx].key : null");
+    const tap = async (k) => {
+      const ti = ED("sunPlotDiv.data.findIndex(t => t.legendgroup === " + JSON.stringify(k) + " && t.meta && t.meta.label_target)");
+      ED("sunTapSerial += 1"); ED("sunPlotDiv._ev.plotly_click.forEach(f => f({points: [{curveNumber: " + ti + "}]}))");
+      await h.done(); await h.done();
+    };
+    const seen = [];
+    const open = async (want, what) => {
+      ED("setSunDrawer(true)"); await h.done();
+      const got = atTop();
+      ok(handle() === want && got === want, what + ": the drawer does not open at the handle's row " + want +
+         ", highlighted, at the top: handle " + handle() + ", top row " + got);
+      seen.push(what + " " + got);
+      ED("setSunDrawer(false)"); await h.done();
+    };
+    await open("earth", "the opening");
+    await tap("venus");
+    await open("venus", "a tap on Venus");
+    await tap("center");
+    await open("center", "a tap on the Sun");
+    const rowD = (k) => dD.querySelector('#sun-drawer-list .sun-row[data-k="' + ED("ssIndex(" + JSON.stringify(k) + ")") + '"]');
+    await clkD(rowD("mars").querySelector("a.enter"));
+    await open("mars", "Centre on Mars");
+    ok(!rowD("phobos").hidden && !rowD("deimos").hidden, "Centre on Mars: its fold is not open below its row");
+    console.log("  39: the drawer opens at its handle's row -- " + seen.join("; "));
   }
   // 29. L-517: the saved pictures, last, since it boots the page again.
   await pictures(w, root, payload, null);

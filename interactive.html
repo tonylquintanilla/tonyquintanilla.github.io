@@ -9726,11 +9726,30 @@ function sunMeasureDrawer() {
     document.body.style.setProperty("--sun-drawer-h", d.offsetHeight + "px");
 }
 
+// THE DRAWER OPENS AT THE ROW ITS HANDLE NAMES (Tony's ruling of
+// 2026-11-16, his run record WHERE_WE_ARE_11-15-26_0837_run_record.md, the
+// last lines; recorded on L-535): opening the drawer scrolls the handle's
+// row (sunFocusIdx, the row drawn "focused") to the top of the list, the
+// groups above it and the fold it sits in opened so it shows: Earth at the
+// Solar System view's opening (the opening's highlight, his Sep 29 choice),
+// Venus after a tap on Venus, the Sun at the top after a tap on the Sun, a
+// centred body with its list open below it. The list alone is scrolled, as
+// guideScrollTo does, so the picture's area does not move.
+function sunDrawerToHandle() {
+    if (!ssDrawer || sunFocusIdx < 0 || !sunGroups[sunFocusIdx]) { return; }
+    const row = ssDrawer.byKey[sunGroups[sunFocusIdx].key];
+    if (row) { ssPicShowRow(row.key); renderSunDrawer(); }
+    const list = document.getElementById("sun-drawer-list");
+    const el = list && list.querySelector('.sun-row[data-k="' + sunFocusIdx + '"]');
+    if (!el || el.hidden) { return; }
+    list.scrollTop += el.getBoundingClientRect().top - list.getBoundingClientRect().top;
+}
+
 function setSunDrawer(open) {
     document.getElementById("sun-drawer").classList.toggle("open", open);
     document.getElementById("sun-scrim").classList.toggle("open", open);
     document.body.classList.toggle("sun-drawer-open", open);
-    if (open) { sunMeasureDrawer(); }
+    if (open) { sunMeasureDrawer(); sunDrawerToHandle(); }
     const b = document.getElementById("sun-drawer-btn");
     b.classList.toggle("open", open);
     b.setAttribute("aria-expanded", open ? "true" : "false");
