@@ -41,6 +41,9 @@
 // Updated November 8, 2026, night, with Anthropic's Claude Opus 5.5
 // (Tony's first phone look: "Tap to update." in place of "as shared";
 // Reset's frame, steps 7 and 9).
+// Updated November 15, 2026 with Anthropic's Claude Opus 5.5 (L-535: a
+// plain ?exhibit=earth opens on Earth's symbol alone, framed on the Moon's
+// whole orbit, as a link with the Moon is; step 7).
 "use strict";
 const fs = require("fs"), path = require("path");
 const h = require("./page_harness.js");
@@ -192,16 +195,24 @@ const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.sli
   ok(!!upd(w), "7: Earth from a link offers no \"Tap to update.\"");
   ok(q(w).get("exhibit") === "earth" && same((q(w).get("show") || "").split(","), ["earth.crust", "moon", "earth"]),
      "7: Earth's address is not the shared scene, as the root keys it: " + w.location.search);
-  // Earth's own opening, read from a plain boot: centred on Earth, its crust.
+  // Earth's own opening, read from a plain boot: centred on Earth, on its
+  // symbol alone since L-535 (Tony's ruling of 2026-11-15, "the crust view
+  // is a legacy default"), framed on the Moon's whole orbit as Mars's
+  // opening is on its moons'.
   const plain = await h.boot(ROOT, "earth", P_ROOT, PAGE);
   await settle();
   const ownR = frameR(plain);
-  ok(plain.eval("viewMid.key") === "earth" && ticked(plain).indexOf("Earth: Crust") >= 0,
-     "7: a plain ?exhibit=earth does not open centred on Earth, on its crust: " + ticked(plain));
+  ok(plain.eval("viewMid.key") === "earth" && ticked(plain).indexOf("Earth: Crust") < 0 &&
+     ticked(plain).indexOf("earth") >= 0,
+     "7: a plain ?exhibit=earth does not open centred on Earth, on its symbol alone: " + ticked(plain));
   w = await h.boot(ROOT, "earth", P_ROOT, Object.assign({
     query: "&show=crust,moon&at=" + atOf(shared) }, PAGE));
   await settle();
-  ok(frameR(w) > ownR * 10, "7: Earth from a link with the Moon does not open framed on the Moon: " + frameR(w) + " vs " + ownR);
+  // The link ticks the Moon, so it frames on the Moon's whole orbit, which
+  // Earth's own opening frames too since L-535: the two agree, and both are
+  // far wider than the crust (Earth's radius, about 4.3e-5 AU).
+  ok(Math.abs(frameR(w) - ownR) <= 1e-6 * ownR && frameR(w) > 4.3e-5 * 10,
+     "7: Earth from a link with the Moon does not open framed on the Moon: " + frameR(w) + " vs " + ownR);
   await reset(w);
   ok(w.eval("viewMid.key") === "center" && same(ticked(w), OPENING),
      "7: Earth's Reset does not return to the Sun's view on the root's opening: " + ticked(w));

@@ -158,6 +158,11 @@
 // visit's guide): 22a now finds the guide's first card greeting a first
 // visit, the note waiting, and Skip putting the guide away and turning it
 // off, then the note greeting; the rest of the walk runs with the guide off.
+// Updated November 15, 2026 with Anthropic's Claude Opus 5.5 (L-535, Tony's
+// rulings of that day): Center on Earth opens on its symbol alone and
+// Center on Sun as Home does (33, 34); ?exhibit=sun opens as the Solar
+// System view (27); Center on opens the body's own fold, Earth's on
+// ?exhibit=earth (34) and Mars's (37).
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -1515,31 +1520,25 @@ async function places(root, payload, page) {
     await click(d.getElementById("sun-drawer-all"));
     ok(shellKeys.every(k => !shown(k)) && E("sunLabelGroup") === -1,
        "Reset does not untick the Sun's shells and close the box");
-    // ?exhibit=sun: this room, on the Sun's arrival block, nothing else.
-    const cfg27 = JSON.parse(fs.readFileSync(path.join(root, "data", "objects_config.json"), "utf8"));
-    const sunArr = (cfg27.objects.find(o => o.slug === "sun").arrival || {}).drawn || [];
+    // ?exhibit=sun: since L-535 (Tony's "Yes, like Home" of 2026-11-15),
+    // the Solar System view itself: the same rows ticked and the same frame
+    // as a fresh ?exhibit=solar-system, the Sun at the middle, no shell.
     const w3 = await h.boot(root, "sun", given);
     const E3 = (s) => w3.eval(s);
     ok(w3.document.getElementById("loading-status").textContent === "Ready" && h.errors.length === 0,
        "?exhibit=sun did not open: " + h.errors.join("; "));
-    // L-515 step 2b (Tony's ruling 20): ?exhibit=sun is the Sun's own
-    // opening, so its trail reads "Solar system > Photosphere".
-    const asRoot = E3("EXHIBIT") === "solar-system" && E3("!!sunPlotDiv") &&
-      w3.document.getElementById("sun-trail").textContent === "Solar system > Photosphere";
-    ok(asRoot, "?exhibit=sun did not open the Solar System room as the root");
-    const data3 = asRoot ? E3("sunPlotDiv.data") : [];
-    const wantOn = [...new Set(data3.filter(t => isShellT(t) &&
-      (t.meta.frame_element === true || sunArr.indexOf(t.meta.shell_key) >= 0)).map(t => t.legendgroup))].sort();
-    const isOn = asRoot ? E3("sunGroups.filter(g => g.shown && g.key !== 'center').map(g => g.key)").sort() : [];
-    ok(wantOn.length > 0 && isOn.join("|") === wantOn.join("|"),
-       "?exhibit=sun does not open on the Sun's arrival block alone: " + isOn.join(", "));
-    const far3 = data3.filter(t => wantOn.indexOf(t.legendgroup) >= 0).reduce((m, t) =>
-      ["x", "y", "z"].reduce((mm, a) => (t[a] || []).reduce((q, v) =>
-        (isFinite(v) && v !== null ? Math.max(q, Math.abs(v)) : q), mm), m), 0) * 1.1;
-    const frame3 = asRoot ? E3("sunPlotDiv.layout.scene.xaxis.range[1]") : NaN;
-    ok(near(frame3, far3), "?exhibit=sun does not open at the Sun room's frame: " + frame3 + " vs " + far3);
-    console.log("  27: shells " + shellKeys.length + "; ?exhibit=sun opens on " + isOn.join(", ") +
-                " at +/-" + far3.toPrecision(4) + " AU");
+    const w0 = await h.boot(root, "solar-system", given);
+    const E0 = (s) => w0.eval(s);
+    const onOf = (EV) => EV("sunGroups.filter(g => g.shown).map(g => g.key)").sort();
+    const isOn = onOf(E3), rootOn = onOf(E0);
+    const frame3 = E3("sunPlotDiv.layout.scene.xaxis.range[1]"), frame0 = E0("sunPlotDiv.layout.scene.xaxis.range[1]");
+    ok(E3("EXHIBIT") === "solar-system" && E3("viewMid.key") === "center" &&
+       w3.document.getElementById("sun-trail").textContent === "Solar system" &&
+       isOn.join("|") === rootOn.join("|") && !isOn.some(k => /^Sun: /.test(k)) && near(frame3, frame0),
+       "?exhibit=sun does not open as the Solar System view: " + isOn.join(", ") + " at " + frame3 +
+       " vs " + rootOn.join(", ") + " at " + frame0);
+    console.log("  27: shells " + shellKeys.length + "; ?exhibit=sun opens as the Solar System view on " +
+                isOn.join(", ") + " at +/-" + frame3.toPrecision(4) + " AU");
   }
   // 28. Tony, 2026-11-07, night: one group over the groups that sit
   // together -- Comets over the six comet groups, Spacecraft over Active
@@ -1814,12 +1813,14 @@ async function places(root, payload, page) {
     await click(d.querySelector("#sun-trail a"));
     ok(mid() === "center" && trail() === "Solar system" && absOf("jupiter").every((v, i) => v === jAbs[i]),
        "the trail's 'Solar system' does not return to the Sun's view with Jupiter back in place");
-    // Center on Sun: ?exhibit=sun's opening, the photosphere and the axis.
+    // Center on Sun: the Solar System view, framed as Home frames it (L-535,
+    // Tony's rulings of 2026-11-15; until then the photosphere and the axis).
     await click(inl("center").querySelector("a.enter"));
-    ok(trail() === "Solar system > Photosphere" && mid() === "center" &&
-       E("sunGroups.filter(g => g.shown).map(g => g.key)").indexOf("Sun: Photosphere") >= 0 &&
-       E("sunGroups.filter(g => g.shown).map(g => g.key)").indexOf("Sun: Rotation Axis") >= 0,
-       "Center on Sun does not open on the photosphere and the rotation axis: " + trail());
+    const sunR = range();
+    await E("navHome()"); await h.done(); await h.done();
+    ok(trail() === "Solar system" && mid() === "center" && near(sunR, range()) &&
+       E("sunGroups.filter(g => g.shown).map(g => g.key)").indexOf("Sun: Photosphere") < 0,
+       "Center on Sun does not open as Home does, the photosphere off: " + trail() + " at " + sunR + " vs Home " + range());
     // Go To on Io: Jupiter at the middle, the trail down to Io, its box.
     await click(row("jupiter").querySelector(".bfold"));
     await click(row("io").querySelector(".go"));
@@ -1879,14 +1880,20 @@ async function places(root, payload, page) {
     const mean = ["x", "y", "z"].map(a => crust[a].filter(v => v !== null).reduce((s, v) => s + v, 0) / crust[a].filter(v => v !== null).length);
     ok(mean.every((v, i) => Math.abs(v - earthAt[i]) < 2e-5), "Earth's crust is not drawn at Earth's place: " + mean.join(",") + " vs " + earthAt.join(","));
     await clk(rowE("earth").querySelector("a.enter"));
+    // L-535 (Tony's ruling of 2026-11-15, "the crust view is a legacy
+    // default. we should remove it"): Earth's symbol alone, the crust and
+    // the Moon off; the crust is the visitor's to tick, then Go To.
     const ticked = EE("sunGroups.filter(g => g.shown).map(g => g.key)");
-    ok(dE.getElementById("sun-trail").textContent === "Solar system > Earth > Crust" && EE("viewMid.key") === "earth" &&
-       ticked.indexOf("Earth: Crust") >= 0 && ticked.indexOf("Earth: Rotation Axis and Equator") >= 0 &&
-       ticked.indexOf("moon") < 0,
-       "Center on Earth does not open on Earth's own opening: " + dE.getElementById("sun-trail").textContent + " | " + ticked.join(","));
-    const crustR = EE("sunPlotDiv.data").filter(t => t.legendgroup === "Earth: Crust")
-      .reduce((m, t) => ["x", "y", "z"].reduce((mm, a) => (t[a] || []).reduce((q, v) => (isFinite(v) && v !== null ? Math.max(q, Math.abs(v)) : q), mm), m), 0);
-    ok(EE("sunPlotDiv.layout.scene.xaxis.range[1]") >= crustR, "Center on Earth does not hold its crust");
+    ok(dE.getElementById("sun-trail").textContent === "Solar system > Earth" && EE("viewMid.key") === "earth" &&
+       ticked.indexOf("earth") >= 0 && ticked.indexOf("Earth: Crust") < 0 && ticked.indexOf("moon") < 0,
+       "Center on Earth does not open on Earth's symbol alone, the crust and the Moon off: " +
+       dE.getElementById("sun-trail").textContent + " | " + ticked.join(","));
+    // Its frame holds the Moon's whole orbit, as Mars's holds its moons'.
+    const moonR = EE("viewCentreFrameR('earth', [], false)");
+    ok(EE("sunPlotDiv.layout.scene.xaxis.range[1]") >= moonR * 0.999,
+       "Center on Earth does not frame what its opening frames: " + EE("sunPlotDiv.layout.scene.xaxis.range[1]") + " vs " + moonR);
+    // A shell ticked by the visitor is still keyed earth.<key>.
+    await clk(rowE("Earth: Crust").querySelector(".pick"));
     const addr = wE.location.search;
     ok(/[?&]show=[^&]*earth\.crust/.test(addr), "the address does not key Earth's crust earth.crust: " + addr);
     // ?exhibit=earth: the root, centred on Earth, on Earth's opening.
@@ -1894,9 +1901,19 @@ async function places(root, payload, page) {
     for (let i = 0; i < 4; i++) { await h.done(); }
     const E2 = (s) => w2.eval(s);
     ok(E2("EXHIBIT") === "solar-system" && E2("viewMid.key") === "earth" &&
-       w2.document.getElementById("sun-trail").textContent === "Solar system > Earth > Crust" &&
-       E2("sunGroups.filter(g => g.shown).map(g => g.key)").indexOf("mercury") < 0,
-       "?exhibit=earth does not open the root centred on Earth, on Earth's opening alone");
+       w2.document.getElementById("sun-trail").textContent === "Solar system > Earth" &&
+       E2("sunGroups.filter(g => g.shown).map(g => g.key)").indexOf("mercury") < 0 &&
+       E2("sunGroups.filter(g => g.shown).map(g => g.key)").indexOf("Earth: Crust") < 0,
+       "?exhibit=earth does not open the root centred on Earth, on its symbol alone");
+    // L-535 (Tony, 2026-11-15): Centre on opens the body's own fold, so the
+    // drawer lists Earth's shells and the Moon, on a page that never
+    // opened it.
+    const fold2 = E2("ssDrawer.rows.filter(r => r.under === 'earth').map(r => r.key)");
+    const row2 = (k) => w2.document.querySelector('#sun-drawer-list .sun-row[data-k="' + E2("ssIndex(" + JSON.stringify(k) + ")") + '"]');
+    ok(E2("!!ssDrawer.folds[SolarSystemDrawer.foldKey('earth')]") && fold2.length >= 16 &&
+       fold2.indexOf("moon") >= 0 && fold2.every(k => row2(k) && !row2(k).hidden),
+       "?exhibit=earth does not open Earth's fold, its shells and the Moon listed: " +
+       fold2.filter(k => !row2(k) || row2(k).hidden).join(", "));
     // An Earth room link's bare keys are Earth's.
     const w3 = await h.boot(root, "earth", payload, { query: "&show=crust,moon" });
     for (let i = 0; i < 4; i++) { await h.done(); }
@@ -2055,6 +2072,12 @@ async function places(root, payload, page) {
        dM.getElementById("sun-frame-cross").textContent === "In this view the lines cross at Mars.",
        "Centre on Mars does not put Mars at the middle on its symbol alone, both moons off: " +
        mid + " " + trailM + " phobos " + shownM("phobos") + " deimos " + shownM("deimos") + " at " + atMid.join(","));
+    // L-535 (Tony, 2026-11-15): Centre on opens the body's own fold, so
+    // the drawer lists Phobos and Deimos (shut before, above).
+    ok(EM("!!ssDrawer.folds[SolarSystemDrawer.foldKey('mars')]") && !rowM("phobos").hidden && !rowM("deimos").hidden &&
+       rowM("mars").querySelector(".bfold").textContent === "\u25be",
+       "Centre on Mars does not open Mars's fold, Phobos and Deimos listed: " +
+       rowM("mars").querySelector(".bfold").textContent + " " + rowM("phobos").hidden + " " + rowM("deimos").hidden);
     const said = {};
     for (const moon of ["phobos", "deimos"]) {
       const name = moon === "phobos" ? "Phobos" : "Deimos";
@@ -2086,7 +2109,7 @@ async function places(root, payload, page) {
          "JPL's published accuracy named, and its period: " + lines.join(" | ") + " against " + km.toFixed(1) + " km");
       said[moon] = printed + " km" + (past ? " (past its span)" : "");
     }
-    console.log("  37: Mars's fold " + fold.join(", ") + "; Centre on Mars at the middle, moons off; Go To Phobos " +
+    console.log("  37: Mars's fold " + fold.join(", ") + "; Centre on Mars at the middle, moons off, its fold open; Go To Phobos " +
                 said.phobos + ", Go To Deimos " + said.deimos);
   }
   // 38. L-514 session 2, Tony's rulings of 2026-11-15: every frame fits

@@ -127,6 +127,9 @@
 // part 3 holds every served reason to one the page knows and every
 // reason the page knows to the builder's source, and prints which
 // sentence each body prints. Part 4 holds the page passing the reason.
+// Updated November 15, 2026 with Anthropic's Claude Opus 5.5 (L-535): the
+// period's worked cases gain one with its served reason, which prints
+// after the period as served.
 
 "use strict";
 const fs = require("fs");
@@ -273,6 +276,17 @@ function periodWorked(lib) {
     days: { value: 27, figures: 2, text: "27" } }),
     "Orbital period: 27 days, around Earth, from JPL Horizons, fetched " +
     "2026-11-06.");
+  // L-535 (Tony's rulings of 2026-11-15): the served reason follows the
+  // period, as served; Phobos's words, fixture figures.
+  want("a period with its reason", lib.periodLine({
+    kind: "fetched", center: "@499", center_label: "Mars",
+    fetched: "2026-11-16", days_only: true, years: null,
+    days: { value: 0.3192, figures: 4, text: "0.3192" },
+    reason: "JPL gives no uncertainty for this period, so only the digits " +
+            "that stay the same over a year are shown." }),
+    "Orbital period: 0.3192 days, around Mars, from JPL Horizons, fetched " +
+    "2026-11-16. JPL gives no uncertainty for this period, so only the " +
+    "digits that stay the same over a year are shown.");
   want("a typed period under a year", lib.periodLine({
     kind: "typed", typed: true, words: "Typed value, not fetched from JPL.",
     days_only: true, years: null,

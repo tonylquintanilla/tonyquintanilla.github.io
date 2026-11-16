@@ -2970,6 +2970,8 @@ const EXHIBIT_ADDRESSES = {
     // on Earth, on Earth's own opening (ssCentreOn, at the end of boot).
     earth: "solar-system"
 };
+// L-535: the Sun's own opening on ?exhibit=sun, retired 2026-11-15.
+const openingOfSunObsolete = false;
 const EXHIBIT_ASKED = (new URLSearchParams(window.location.search)
                      .get("exhibit") || "solar-system").toLowerCase();
 const EXHIBIT = EXHIBIT_ADDRESSES.hasOwnProperty(EXHIBIT_ASKED)
@@ -4162,8 +4164,12 @@ const EXHIBITS = {
             // L-515 step 2b, part 3: ?exhibit=earth opens on Earth's own
             // opening by Center on, at the end of boot; like ?exhibit=sun it
             // ticks no body of the root's served opening.
-            const openingOf = (EXHIBIT_ASKED === "sun") ? EXHIBIT_ASKED : null;
-            const ownOpening = EXHIBIT_ASKED !== EXHIBIT;
+            // L-535 (Tony's "Yes, like Home" of 2026-11-15): ?exhibit=sun
+            // opens as the Solar System view does, the Sun at the middle and
+            // the root's served opening ticked, so no body's own opening is
+            // applied for it; only ?exhibit=earth keeps its own, by Center on.
+            const openingOf = null;
+            const ownOpening = EXHIBIT_ASKED === "earth";
             let shellOpening = null;
             if (openingOf) {
                 shellOpening = GalleryArrival.applyArrival(sunBuilt.traces, cfgText, openingOf);
@@ -4623,8 +4629,9 @@ const EXHIBITS = {
                 ? restored.order[restored.order.length - 1] : null;
             // L-515 part 3: ?exhibit=sun names no row on its handle; the
             // drawer names the outermost thing drawn, as the Sun room did.
-            // ?exhibit=sun's Reset puts back the Sun's opening, as the Sun
-            // room's did; ?exhibit=earth's returns to the Sun's view on the
+            // ?exhibit=sun's Reset put back the Sun's opening, as the Sun
+            // room's did, until L-535 (2026-11-15): it opens as the Solar
+            // System view now, and Resets to it. ?exhibit=earth's returns to the Sun's view on the
             // root's served opening (Tony's ruling 16: "Home and Reset
             // return to the Sun's view"), though it opened on Earth's alone.
             const openDrawn = openingOf ? shellOpening.drawn.slice() : (arrival.drawn || []).slice();
@@ -5633,6 +5640,17 @@ function ssCentreOn(k, linkTicks) {
     const grp = sunGroups[k];
     if (!grp || !ssDrawer) { return Promise.resolve(); }
     const key = grp.key;
+    // L-535 (Tony's "Yes, like Home" of 2026-11-15): Center on Sun is the
+    // Solar System view, the Sun at the middle and the bodies ticked framed
+    // where they are now, as Home frames them; its own fold opens, as every
+    // Center on's does.
+    if (key === SSD.SUN_KEY) {
+        ssDrawer.folds[SSD.foldKey(key)] = true;
+        return navHome().then(function () {
+            renderSunDrawer();
+            guideSignal("centre", key);
+        });
+    }
     // L-515 step 2b, part 3: a centre whose fold is not drawn yet is drawn
     // first (its stored drawings fetched now, not at the room's opening).
     if (ssFoldNeeds(key)) {
@@ -5663,6 +5681,13 @@ function ssCentreOn(k, linkTicks) {
     const fi = ssIndex(op.focus);
     sunFocusIdx = fi >= 0 ? fi : k;
     ssDrawer.trailFocus = op.focus;
+    // L-535 (Tony, 2026-11-15): Centre on a body opens that body's own fold
+    // in the drawer, every body, beside ssTickParent's rule: after Centre on
+    // Mars the drawer lists Phobos and Deimos, after Centre on Earth its
+    // shells and the Moon. The groups above its row open too, so the fold
+    // shows.
+    ssPicShowRow(key);
+    ssDrawer.folds[SSD.foldKey(key)] = true;
     ssDrawer.open = null;
     setSunDrawer(false);
     const shown = sunShownRestyle();
@@ -6331,7 +6356,9 @@ async function initSunExhibit() {
         const cfgTree = JSON.parse(cfg);
         // L-515 part 3: not on ?exhibit=sun, which asks for the Sun's
         // opening; what was kept stays kept for the root's own address.
-        if (EXHIBIT === SSD0.ROOT_EXHIBIT && EXHIBIT_ASKED === EXHIBIT) {
+        // L-535: ?exhibit=sun is the root's own view now, so it too.
+        if (EXHIBIT === SSD0.ROOT_EXHIBIT &&
+            (EXHIBIT_ASKED === EXHIBIT || EXHIBIT_ASKED === "sun")) {
             payload.restoreText = treeTickMemoryTake();
         }
 
@@ -6610,7 +6637,9 @@ async function initSunExhibit() {
         // L-515 step 2b (ruling 20): ?exhibit=sun is the Sun's own opening,
         // so its trail ends on what that opening is about ("Solar system >
         // Photosphere"), as Center on Sun's does.
-        if (ssDrawer && EXHIBIT_ASKED === "sun") {
+        // L-535: no longer met, ?exhibit=sun opening as the Solar System view
+        // (its trail "Solar system"); kept, marked, as obsolete code is.
+        if (ssDrawer && EXHIBIT_ASKED === "sun" && openingOfSunObsolete) {
             const SK = window.SolarSystemDrawer.SUN_KEY;
             ssDrawer.trailFocus = ViewCentre.openingKeys(SK, ssDrawer.openings[SK] || null,
                 ssDrawer.centreShells[SK] || [], []).focus;

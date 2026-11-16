@@ -251,12 +251,17 @@ REMOVABLE_WORDS = ("source_note",)
 #                         number's own sentence in a hover, served on the
 #                         number beside its source: {value} is that
 #                         number, filled in by the renderer.
+#                         reason (L-535, 2026-11-15) is a fetched
+#                         period's sentence saying what set its digits,
+#                         the orrery's words, written by the objects
+#                         mirror from the export, never by this writer.
 #   SERVED_SETTINGS       strings that are drawing choices or bookkeeping,
 #                         never printed as words: colours, shapes, a stored
 #                         drawing's name, units, figure counts, links into
 #                         the store, a frame's label, the file's own notes.
 SERVED_WORDS_PATCHED = ("radius_note", "cusp_note", "_model", "centre_hover",
-                        "north_pole_hover", "south_pole_hover", "hover_line")
+                        "north_pole_hover", "south_pole_hover", "hover_line",
+                        "reason")
 SERVED_SETTINGS = ("color", "colors", "info_border", "info_borders", "shape",
                    "dots", "unit", "figures", "uncertainty",
                    "orrery_constant", "frame", "_comment", "_declared",

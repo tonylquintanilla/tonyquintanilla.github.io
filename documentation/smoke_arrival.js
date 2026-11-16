@@ -37,6 +37,9 @@
 // Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
 // 2a: Earth's fixed centre row is expected drawn on arrival, with a
 // planted centre stamped as a shell.)
+// Updated November 15, 2026 with Anthropic's Claude Opus 5.5 (L-535: the
+// Sun's and Earth's arrival blocks draw no shell, by Tony's ruling of that
+// day; the expected lists lose the photosphere and the crust.)
 // Updated October 22, 2026 with Anthropic's Claude Opus 5.5 (L-465: the
 // Sun's rotation axis, a frame element the renderers mark, is drawn on
 // arrival and must carry no shell key).
@@ -241,9 +244,13 @@ function checkStamps(slug, sceneTraces, shellOnly) {
 // "center", which earth_geometry.js now keeps; the Sun's comes from the
 // Sun room's driver, which this check does not run (its Sun traces are the
 // renderers' alone), so only Earth's is held here.
+// L-535 (Tony's ruling of 2026-11-15: Centre on a body opens on its
+// symbol alone, never a shell; "the crust view is a legacy default. we
+// should remove it"): the Sun's and Earth's arrival blocks draw no shell,
+// so only the frame elements and Earth's fixed row are expected.
 const EXPECTED = {
-  sun: ["Sun: Photosphere", "Sun: Rotation Axis"],
-  earth: ["Earth: Crust", "Earth: Rotation Axis and Equator",
+  sun: ["Sun: Rotation Axis"],
+  earth: ["Earth: Rotation Axis and Equator",
           "Earth: Sun Direction", "Earth: Terminator (day-night line)",
           "center"]
 };

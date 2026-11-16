@@ -320,7 +320,17 @@ page:
   the served text, never a recount (`SolarSystemFigures.periodLine`,
   shared by the Solar System room's body hovers and the Earth room's
   Sun Direction and Moon box). Three forms, and nothing else: "Orbital period: N
-  years (M days), around <centre>, from JPL Horizons, fetched <date>.";
+  years (M days), around <centre>, from JPL Horizons, fetched <date>.",
+  followed, since L-535 (Tony's rulings of 2026-11-15), by the served
+  `reason`, the orrery's sentence saying what set the digits
+  (`orbital_period.period_reason`: "JPL gives no uncertainty for this
+  period, so only the digits that stay the same over a year are shown.";
+  "Rounded to JPL's stated uncertainty in the orbit."; "JPL's uncertainty
+  for this period is smaller than its change over a year, so only the
+  digits that stay the same over a year are shown."; or the small-body
+  database's reason before ", so only the digits..."), copied by the
+  objects mirror, never typed in the page (Typed facts masks it as a
+  served word, `reason` in the store writer's SERVED_WORDS_PATCHED);
   "Orbital period: N years (M days). Typed value, not fetched from
   JPL." -- printed, marked, so the website and the orrery agree; and
   "Orbital period: not yet fetched from JPL." A PERIOD UNDER A YEAR
@@ -816,10 +826,29 @@ v1.40, L-515 (one nested tree), step 2b; Tony's rulings 13 to 20 of
   centre's row, each shell its arrival block names and, with them, its
   frame elements, and what circles it only where the block serves `moon`
   true; nothing is unticked, and the count line counts what lies outside.
-  The Sun's opening is `?exhibit=sun`'s (the photosphere and the rotation
-  axis); Earth's the Earth room's (the crust and its guides); Jupiter's and
-  Saturn's the symbol alone, served arrival blocks written by the store
-  writer (`add_arrival`; Only two tools write the served config). How a
+  Every centre opens on its symbol alone, never a shell (L-535, Tony's
+  ruling of 2026-11-15: "the crust view is a legacy default. we should
+  remove it"; a shell's view is the visitor's to choose, tick it, then Go
+  To): the Sun's and Earth's arrival blocks were set to `drawn` [] by the
+  store writer that day, so `?exhibit=earth` opens on Earth with its
+  guides, as Mars's,
+  Jupiter's and Saturn's open on the symbol alone (served arrival blocks
+  written by the store writer, `add_arrival`; Only two tools write the
+  served config). Until then the Sun's opened on the photosphere and the
+  axis, Earth's on the crust and its guides. THE SUN'S IS THE SOLAR
+  SYSTEM VIEW (L-535, Tony's "Yes, like Home" of 2026-11-15): Center on
+  Sun is Home (`navHome`, the bodies ticked framed where they are now,
+  fitted), its fold opened, and `?exhibit=sun` opens as
+  `?exhibit=solar-system` does, the root's served opening ticked and its
+  kept ticks restored, so the Sun card and Center on Sun agree; the Sun's
+  own opening on that address is retired (`openingOfSunObsolete`, kept
+  and marked). Walk sections 27 and 33 hold both. CENTER ON OPENS THE BODY'S
+  OWN FOLD (L-535, Tony, 2026-11-15), every body, beside `ssTickParent`'s
+  rule: `ssCentreOn` opens the groups above the body's row
+  (`ssPicShowRow`) and its fold, so after Center on Mars the drawer lists
+  Phobos and Deimos, after Center on Earth its shells and the Moon; the
+  drawer itself stays shut, as Center on leaves it. Walk sections 34, 37
+  and 27 hold both, and fail on a page without the fold line. How a
   centre's opening is framed (method): the shells it ticked, whole, at 10
   percent; with none, the whole orbits of its moons (not its own shells)
   at the room's 20 percent; with neither, the room's half-range. A shared

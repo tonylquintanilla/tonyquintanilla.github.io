@@ -139,6 +139,14 @@
 // Earth, ...", Mercury "87.969 days". Written with Anthropic's Claude
 // Opus 5.5.
 
+// THE PERIOD'S REASON (L-535, Tony's rulings of November 15, 2026). A
+// period fetched from JPL ends with the sentence saying what set its
+// digits, the orrery's own words: the export serves it as the period's
+// "reason" (orbital_period.period_reason), the mirror copies it, and
+// periodLine prints it after the period, never typed here. A period
+// served without one prints as before. Written with Anthropic's Claude
+// Opus 5.5.
+
 // A MOON'S BOX (L-515 step 2b, part 1, November 10, 2026). childBox prints
 // a moon's box by the Moon's pattern wherever it is drawn, its distance
 // from its parent read from its own elements around the parent, and, past
@@ -472,9 +480,12 @@
     var whose = (typeof period.target_label === "string" &&
                  period.target_label) ? "for " + period.target_label + ", "
                                       : "";
+    // L-535: what set the digits, the orrery's sentence, as served.
+    var why = (typeof period.reason === "string" && period.reason)
+        ? " " + period.reason : "";
     return { line: "Orbital period: " + shown + ", " + whose + "around " +
                    period.center_label + ", from JPL Horizons, fetched " +
-                   period.fetched + ".",
+                   period.fetched + "." + why,
              warning: null };
   }
 

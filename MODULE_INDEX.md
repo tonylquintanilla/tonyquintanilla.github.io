@@ -11,7 +11,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 61  
-**Total Lines of Code (non-blank):** 33,015  
+**Total Lines of Code (non-blank):** 33,020  
 **Total Public Functions/Classes:** 554
 
 ## Classification Coverage
@@ -151,7 +151,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `check_tree_parents.py` | - every object's parent in data/objects_config.json is the centre JPL is asked around for it. (171 lines) |
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (690 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
-| `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (875 lines) |
+| `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (880 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_compose_children.py` | - the moons in the Solar System room are drawn where their planets are, by ADDING, and their distance is their own. (200 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (412 lines) |
