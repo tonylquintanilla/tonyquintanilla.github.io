@@ -967,7 +967,8 @@ breaks the file three ways first); the page only touches the DOM and
 Plotly.
 
 - **The drawer opens at the row its handle names** (Tony's ruling of
-  2026-11-16, his run record `WHERE_WE_ARE_11-15-26_0837_run_record.md`;
+  2026-11-16, his run record
+  `WHERE_WE_ARE_11-15-26_0837_run_record.md` [not in the code, L-522];
   L-535). `setSunDrawer(true)` calls `sunDrawerToHandle`: the handle's
   row (`sunFocusIdx`, drawn `focused`) has its groups and fold opened
   (`ssPicShowRow`) and is scrolled to the top of the list, the list alone

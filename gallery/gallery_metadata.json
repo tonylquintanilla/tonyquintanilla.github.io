@@ -2477,6 +2477,25 @@
       "size_kb": {}
     },
     {
+      "id": "el_nino",
+      "title": "El Ni\u00f1o, 2026\u201327",
+      "description": "NOAA's record of El Ni\u00f1o and La Ni\u00f1a since 1950, and what NOAA expects next, in five steps.",
+      "room": "earth_system",
+      "shape": "9:16",
+      "files": {},
+      "live": "earth/el_nino.html",
+      "page": true,
+      "featured": true,
+      "wide": true,
+      "picture": "earth/el_nino.png",
+      "picture_alt": "NOAA's Relative Oceanic Ni\u00f1o Index since 1950, one sliver per season: red for El Ni\u00f1o, blue for La Ni\u00f1a, grey for neutral, the 2026\u201327 event shaded at the right.",
+      "sources": [
+        "NOAA Climate Prediction Center"
+      ],
+      "converted": "2026-11-17 12:00",
+      "size_kb": {}
+    },
+    {
       "id": "st_louis_1954_teaser_gallery",
       "title": "St Louis 1954",
       "description": "St Louis 1954",
