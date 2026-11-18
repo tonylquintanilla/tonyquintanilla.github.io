@@ -35,6 +35,11 @@
 // section 19 has Go To fit Sedna's whole orbit and a zoom-out after Go
 // To on Hyakutake never shrink the view.
 //
+// Section 40 (2026-11-18, L-533, ESCAPADE's path): ESCAPADE-Blue's box
+// carries its loiter line, L2 named in words only, and its companions are
+// Earth and Mars; shown failing once on a page planted without the line.
+// Section 20's launch order and 20b's group place count the two twins.
+//
 // Section 32 (2026-11-10, L-515 step 2b, part 1): the moons in the root --
 // each folded under its planet's row behind an arrow, closed on opening,
 // nearest first; ticking one ticks its planet, unticking it leaves the
@@ -891,7 +896,8 @@ async function places(root, payload, page) {
     await fold("spacecraft");
     const crafts = E("ssDrawer.rows.filter(r => r.group === 'spacecraft' && !SolarSystemDrawer.isGroup(r)).map(r => r.key).join(',')");
     ok(crafts === "voyager_2,voyager_1,new_horizons,juno,osiris_apex,parker_solar_probe," +
-       "bepicolombo,solar_orbiter,lucy,juice,psyche_spacecraft,europa_clipper",
+       "bepicolombo,solar_orbiter,lucy,juice,psyche_spacecraft,europa_clipper" +
+       (data.bodies.escapade_blue ? ",escapade_blue,escapade_gold" : ""),
        "the spacecraft are not in launch order: " + crafts);
     ok(row("osiris_apex").querySelector(".rname").textContent.indexOf("OSIRIS-APEX") >= 0,
        "OSIRIS-APEX's row does not read its label");
@@ -971,10 +977,12 @@ async function places(root, payload, page) {
   // serves Galileo.
   if (data.bodies.galileo && data.bodies.galileo.kind === "spacecraft") {
     const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row:not(.sun-pics):not(.sun-pic)"));
-    ok(rowsDom[rowsDom.indexOf(row("europa_clipper")) + 1] === head("historical_missions") &&
+    // L-533: the active missions' last row is ESCAPADE-Gold's where served.
+    const lastActive = data.bodies.escapade_gold ? "escapade_gold" : "europa_clipper";
+    ok(rowsDom[rowsDom.indexOf(row(lastActive)) + 1] === head("historical_missions") &&
        head("historical_missions").hidden === !E("ssDrawer.folds.spacecraft_all") &&
        !E("ssDrawer.folds.historical_missions"),
-       "the Historical missions group is not listed, folded, right after the twelve spacecraft, under Spacecraft");
+       "the Historical missions group is not listed, folded, right after the active missions, under Spacecraft");
     await fold("historical_missions");
     const past = E("ssDrawer.rows.filter(r => r.group === 'historical_missions' && !SolarSystemDrawer.isGroup(r)).map(r => r.key).join(',')");
     // L-507, more voyages: the seven in launch order, those the payload
@@ -2230,6 +2238,27 @@ async function places(root, payload, page) {
     await open("mars", "Centre on Mars");
     ok(!rowD("phobos").hidden && !rowD("deimos").hidden, "Centre on Mars: its fold is not open below its row");
     console.log("  39: the drawer opens at its handle's row -- " + seen.join("; "));
+  }
+  // 40. L-533 (ESCAPADE's path): ESCAPADE-Blue's loiter, named in its box
+  // in words only (no room draws L2 yet, L-297), and its companions Earth
+  // and Mars, never the point. Run only on a payload that serves it.
+  if (data.bodies.escapade_blue && data.bodies.escapade_blue.path_loiter) {
+    E("setSunDrawer(true)");
+    if (!shown("escapade_blue")) { await pick("escapade_blue"); }
+    const et = E("sunPlotDiv.data").filter(t => t.legendgroup === "escapade_blue");
+    const emk = et.find(t => t.meta && t.meta.label_target === true);
+    const ej = emk ? emk.text[0].replace(/<br soft>/g, " ") : "";
+    const loiterWords = "From its launch on 13 November 2025 until its flyby of Earth " +
+      "on 7 November 2026, it flew wide loops near Earth, around the point called L2.";
+    ok(ej.indexOf(loiterWords) >= 0, "ESCAPADE-Blue's box lacks its loiter line: " + ej.slice(0, 500));
+    ok(E("JSON.stringify(ssDrawer.companions.escapade_blue)") === '["earth","mars"]' &&
+       shown("earth") && shown("mars"),
+       "ESCAPADE-Blue's companions are not Earth and Mars: " +
+       E("JSON.stringify(ssDrawer.companions.escapade_blue)"));
+    ok(et.length >= 2 && et.every(t => t.visible !== "legendonly" && t.visible !== false),
+       "ticking ESCAPADE-Blue did not draw every part of it");
+    console.log("  40: ESCAPADE-Blue's box carries its loiter line; companions " +
+                E("JSON.stringify(ssDrawer.companions.escapade_blue)"));
   }
   // 29. L-517: the saved pictures, last, since it boots the page again.
   await pictures(w, root, payload, null);

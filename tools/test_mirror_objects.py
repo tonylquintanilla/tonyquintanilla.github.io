@@ -204,6 +204,35 @@ def cases():
           "a mirror that drops a path's events was not caught on the next "
           "check")
 
+    # L-533: a loiter's launch is copied with its event, and the orrery's
+    # own bookkeeping for it (left, days) is not. Planted: a mirror that
+    # drops the field.
+    ex10 = json.loads(json.dumps(ex8))
+    ex10["objects"]["apophis"]["path"]["events"].append(
+        {"body": "SEMB-L2", "kind": "loiter", "stays": False,
+         "closest": "1979-05-01 00:00", "dist_km": 500000.0,
+         "window": ["1979-04-01 00:00", "1979-06-01 00:00"], "step": "1d",
+         "launch": "1979-03-31 21:33", "left": "1979-06-12 00:00",
+         "days": 62})
+    by10 = {o["slug"]: o for o in
+            json.loads(mo.apply(cfg4, mo.plan(cfg4, ex10)[0]))["objects"]}
+    lo10 = [e for e in by10["apophis"]["path"]["events"]
+            if e.get("kind") == "loiter"]
+    check(len(lo10) == 1 and lo10[0].get("launch") == "1979-03-31 21:33"
+          and "left" not in lo10[0] and "days" not in lo10[0],
+          "a loiter's launch was not copied, or its bookkeeping was: %r"
+          % lo10)
+    real_fields = mo.EVENT_FIELDS
+    mo.EVENT_FIELDS = tuple(f for f in real_fields if f != "launch")
+    try:
+        no_launch = json.loads(mo.apply(cfg4, mo.plan(cfg4, ex10)[0]))
+    finally:
+        mo.EVENT_FIELDS = real_fields
+    nl = [e for o in no_launch["objects"] if o["slug"] == "apophis"
+          for e in o["path"]["events"] if e.get("kind") == "loiter"]
+    check(nl and "launch" not in nl[0],
+          "planted: a mirror without the launch still copied it")
+
     # L-443, slice 2's comets: a comet's open_path mark is copied with its
     # path, and written for no other body.
     ex9 = json.loads(json.dumps(ex8))

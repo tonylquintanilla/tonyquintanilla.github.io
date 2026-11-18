@@ -171,6 +171,9 @@ WHEN A BODY CHANGES SIDE. patch_L510_3_mirror_follows_e_rule.py.)
 Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5 (L-507,
 more voyages: an ended mission's mission_end, end_note and cutoff_note
 are copied.)
+Module updated: November 18, 2026 with Anthropic's Claude Opus 5.5 (L-533,
+ESCAPADE's path: a loiter's launch, JPL's first position, is copied with
+its event, for the box's "From its launch on".)
 """
 
 import json
@@ -196,7 +199,8 @@ MIN_SCHEMA = 2
 # each event's speed and Hill sphere) is the orrery's and is not copied.
 PATH_FIELDS = ("made", "span", "backbone", "events")
 EVENT_FIELDS = ("body", "kind", "stays", "closest", "dist_km", "window",
-                "step")
+                "step", "launch")   # L-533: a loiter's launch, JPL's
+                                    # first position, where it has one
 
 
 def path_copy(path):

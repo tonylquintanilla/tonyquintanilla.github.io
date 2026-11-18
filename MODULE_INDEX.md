@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** November 17, 2026 by `module_atlas.py`  
+**Generated:** November 18, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -11,8 +11,8 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 61  
-**Total Lines of Code (non-blank):** 33,020  
-**Total Public Functions/Classes:** 554
+**Total Lines of Code (non-blank):** 33,078  
+**Total Public Functions/Classes:** 556
 
 ## Classification Coverage
 
@@ -49,7 +49,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `presentation.py` | Layout, axes, colors, title, and layer ordering. (248 lines) |
+| `presentation.py` | Layout, axes, colors, title, and layer ordering. (254 lines) |
 | `render_events.py` | Perihelion and event_link markers. (20 lines) |
 | `render_objects.py` | Object markers, center marker, and labels. (63 lines) |
 | `render_orbits.py` | Osculating (and mean-elements) conics. (250 lines) |
@@ -134,7 +134,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (131 lines) |
 | `test_drawer_places.py` | - checks tools/drawer_places.py, the logic behind the gallery editor's drawer tree and its Places list (L-519 part 2, Featured's rethink), without opening the editor. (278 lines) |
 | `test_drawn_orbit.py` | - an orbit whose period is taken around the solar system's barycentre is drawn around the barycentre, moved to where the barycentre sits seen from the Sun; and every way of getting that wrong is caught (L-431, build 3). (244 lines) |
-| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (2,186 lines) |
+| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (2,238 lines) |
 | `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (315 lines) |
 | `test_mirror_objects.py` | - tools/mirror_objects.py does what it says, on fixtures where each refusal and each kind of write must happen, and then on the real config. (455 lines) |
 | `test_pull_failures.py` | - a pull that cannot fetch fails by name, writes nothing, and the mirror after it does not run; and proof that this check can fail. (355 lines) |

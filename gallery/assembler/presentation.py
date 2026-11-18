@@ -102,6 +102,12 @@ _COLORS = {
     "juice": "blue",
     "psyche_spacecraft": "green",
     "europa_clipper": "red",
+    # L-533, 2026-11-18: ESCAPADE's twins, in the orrery's own colours
+    # (color_map in constants_new.py, by each entry's color_key, this
+    # session's uncommitted orrery): Blue blue, Gold gold. A first choice
+    # for Tony's phone look (Mode 5).
+    "escapade_blue": "blue",
+    "escapade_gold": "gold",
     # L-507, 2026-11-02: the first two historical missions, in the
     # orrery's own colours (color_map in constants_new.py, by each entry's
     # color_key, orrery 15dc8e34): Cassini green; Galileo goldenrod, not

@@ -711,7 +711,60 @@
              unserved: unserved };
   }
 
+  // L-533 (ESCAPADE's path): a spacecraft's loiter, the months it looped
+  // near Earth around a Lagrange point before a flyby, served as one event
+  // of its path plan (the orrery's path_plan.py; Tony's ruling of
+  // 2026-11-18). The point is drawn in no room yet (L-297), so the box
+  // names it in words only (Tony, 2026-11-18). The words are placeholders
+  // until Tony's "Approved" of documentation/WORDS_L533_escapade_20261118.md
+  // in the orrery.
+  // Tony's "Approved, with two changes" of 2026-11-18: a loiter that
+  // begins at launch says "From its launch on <day>", the day of JPL's
+  // first position, served on the event as its "launch".
+  var LOITER_WORDS = function (point, from, to, flybyOf, atLaunch) {
+    return "From " + (atLaunch ? "its launch on " : "") + from +
+      (flybyOf ? " until its flyby of " + flybyOf +
+      " on " + to : " to " + to) + ", it flew wide loops near Earth, " +
+      "around the point called " + point + ".";
+  };
+  // JPL's names for the five points of the Sun and the Earth-Moon
+  // barycentre are SEMB-L1 to SEMB-L5; the box says L1 to L5.
+  function loiterPoint(body) {
+    var m = /^SEMB-(L[1-5])$/.exec(String(body || ""));
+    return m ? m[1] : null;
+  }
+  // "YYYY-MM-DD HH:MM", a plan's moment on JPL's clock, as the box prints
+  // a day ("14 November 2025"); null if it is not one.
+  function planDay(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ""));
+    if (!m || +m[2] < 1 || +m[2] > 12) { return null; }
+    return (+m[3]) + " " + SPAN_MONTHS[+m[2] - 1] + " " + m[1];
+  }
+  // {line, why}: the loiter's sentence from what the page hands it,
+  // {point, start, end, launch, flyby_of}; no line and no why for a path
+  // with no loiter, a why for one the box cannot say.
+  function loiterLine(loiter) {
+    if (!loiter) { return { line: null, why: null }; }
+    var point = loiterPoint(loiter.point);
+    if (!point) {
+      return { line: null, why: "its loiter is served at " +
+               JSON.stringify(loiter.point) + ", which the box cannot name" };
+    }
+    var launch = loiter.launch ? planDay(loiter.launch) : null;
+    var from = launch || planDay(loiter.start), to = planDay(loiter.end);
+    if (!from || !to) {
+      return { line: null, why: "its loiter's days are not served" };
+    }
+    return { line: LOITER_WORDS(point, from, to, loiter.flyby_of || null,
+                                !!launch),
+             why: null };
+  }
+
   global.SolarSystemFigures = {
+    LOITER_WORDS: LOITER_WORDS,
+    loiterPoint: loiterPoint,
+    planDay: planDay,
+    loiterLine: loiterLine,
     spanText: spanText,
     pastSpan: pastSpan,
     SPAN_WORDS: SPAN_WORDS,

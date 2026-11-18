@@ -1817,6 +1817,22 @@
       "notes": "A spacecraft path (L-443 slice 2, build B). Its name, horizons_id and id_type come from the orrery's list (celestial_objects.py) through the objects mirror, as do its description, link and path plan: the plan the orrery's path_plan.py makes from JPL's own positions -- its span, launch to where JPL's data ends; a point every 7 days, thinned where the path runs straight; and a window of finer steps around each flyby, arrival, departure or pass of the Sun. The cache builder fetches the path by that plan, whole again whenever the orrery makes a new one (every 30 days), and the room draws it solid to the minute shown and dashed after, JPL's predicted part. No date is typed here."
     },
     {
+      "slug": "escapade_blue", "name": "ESCAPADE-Blue", "horizons_id": "-9", "id_type": "id",
+      "horizons_name": "ESCAPADE-Blue (spacecraft)",
+      "category": "spacecraft", "availability": "spacecraft", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "arc-natural",
+      "trajectory_of": null, "trace_policy": "full-arc", "features": {},
+      "notes": "A spacecraft path (L-533, ESCAPADE's path), drawn as every spacecraft's is. Its name, horizons_id and id_type come from the orrery's list (celestial_objects.py) through the objects mirror, as do its description, link and path plan: the plan the orrery's path_plan.py makes from JPL's own positions -- its span, launch to where JPL's data ends; a point every 7 days, thinned where the path runs straight; a window of finer steps around its flyby of Earth and its arrival at Mars; and its loiter, the months it looped near Earth around L2 before the flyby, drawn a point a day. The cache builder fetches the path by that plan, whole again whenever the orrery makes a new one (every 30 days), and the room draws it solid to the minute shown and dashed after, JPL's predicted part. No date is typed here."
+    },
+    {
+      "slug": "escapade_gold", "name": "ESCAPADE-Gold", "horizons_id": "-10", "id_type": "id",
+      "horizons_name": "ESCAPADE-Gold (spacecraft)",
+      "category": "spacecraft", "availability": "spacecraft", "parent": "sun",
+      "canonical_center": "@sun", "center_slug": "sun", "canonical_frame": "arc-natural",
+      "trajectory_of": null, "trace_policy": "full-arc", "features": {},
+      "notes": "A spacecraft path (L-533, ESCAPADE's path), drawn as every spacecraft's is. Its name, horizons_id and id_type come from the orrery's list (celestial_objects.py) through the objects mirror, as do its description, link and path plan: the plan the orrery's path_plan.py makes from JPL's own positions -- its span, launch to where JPL's data ends; a point every 7 days, thinned where the path runs straight; a window of finer steps around its flyby of Earth and its arrival at Mars; and its loiter, the months it looped near Earth around L2 before the flyby, drawn a point a day. The cache builder fetches the path by that plan, whole again whenever the orrery makes a new one (every 30 days), and the room draws it solid to the minute shown and dashed after, JPL's predicted part. No date is typed here."
+    },
+    {
       "slug": "galileo", "name": "Galileo", "horizons_id": "-77", "id_type": "id",
       "mission_end": "2003-09-21",
       "description": "Galileo studied Jupiter and its moons from 1995 to 2003.",
@@ -2679,6 +2695,8 @@
           { "slug": "juice", "in": "spacecraft" },
           { "slug": "psyche_spacecraft", "in": "spacecraft", "label": "Psyche spacecraft" },
           { "slug": "europa_clipper", "in": "spacecraft", "label": "Europa Clipper" },
+          { "slug": "escapade_blue", "in": "spacecraft" },
+          { "slug": "escapade_gold", "in": "spacecraft" },
           { "group": "historical_missions", "in": "spacecraft_all", "find": ["probe", "mission", "ended"], "label": "Historical missions" },
           { "slug": "pioneer_10", "in": "historical_missions" },
           { "slug": "pioneer_11", "in": "historical_missions" },

@@ -364,6 +364,36 @@ function pathWorked(lib) {
   return out;
 }
 
+// ---- 7b. worked cases: a spacecraft's loiter (L-533) ---------------
+function loiterWorked(lib) {
+  const out = [];
+  const blue = lib.loiterLine({ point: "SEMB-L2", start: "2025-11-14 00:00",
+                                end: "2026-11-07 10:01", launch: "2025-11-13 21:33",
+                                flyby_of: "Earth" });
+  if (blue.line !== "From its launch on 13 November 2025 until its flyby of Earth on " +
+      "7 November 2026, it flew wide loops near Earth, around the point " +
+      "called L2.") {
+    out.push("a loiter ending at its flyby printed " + JSON.stringify(blue.line));
+  }
+  const drift = lib.loiterLine({ point: "SEMB-L1", start: "2025-01-01 00:00",
+                                 end: "2025-07-02 00:00", flyby_of: null });
+  if (drift.line !== "From 1 January 2025 to 2 July 2025, it flew wide " +
+      "loops near Earth, around the point called L1.") {
+    out.push("a loiter with no flyby printed " + JSON.stringify(drift.line));
+  }
+  const odd = lib.loiterLine({ point: "Earth", start: "2025-01-01 00:00",
+                               end: "2025-07-02 00:00" });
+  if (odd.line !== null || !odd.why) {
+    out.push("a loiter served at a body that is no Lagrange point printed " +
+             JSON.stringify(odd.line));
+  }
+  const none = lib.loiterLine(null);
+  if (none.line !== null || none.why !== null) {
+    out.push("a path with no loiter printed or warned");
+  }
+  return out;
+}
+
 // ---- 8. worked cases: a small body's own uncertainty (L-399) -------
 function uncertaintyWorked(lib) {
   const out = [];
@@ -615,6 +645,22 @@ const selfFailures = [];
     selfFailures.push(fault[0] + " passed the spacecraft's worked cases");
   }
 });
+// L-533: a spacecraft's loiter, two breaks.
+[
+  ["the flyby that ends a loiter left out",
+   "LOITER_WORDS(point, from, to, loiter.flyby_of || null,",
+   "LOITER_WORDS(point, from, to, null,"],
+  ["the launch ignored",
+   "var launch = loiter.launch ? planDay(loiter.launch) : null;",
+   "var launch = null;"],
+  ["any served body named as the loiter's point",
+   "var m = /^SEMB-(L[1-5])$/.exec(String(body || \"\"));",
+   "var m = /^(?:SEMB-)?(.+)$/.exec(String(body || \"\"));"]
+].forEach(function (fault) {
+  if (loiterWorked(loadWith(fault[1], fault[2])).length === 0) {
+    selfFailures.push(fault[0] + " passed the loiter's worked cases");
+  }
+});
 // L-515 step 2b, part 1: a moon's box (childBox), three breaks.
 [
   ["the span sentence printed inside the checked span",
@@ -670,12 +716,15 @@ console.log("Self-test: the worked cases fail on a Report test one place " +
             "where the moon is drawn rather than from its parent; and a held " +
             "body's sentence on a hold never printed, on a failed test given " +
             "the unanswered words, on the ?hold= address ignored, and on a " +
-            "held moon's box silent.");
+            "held moon's box silent; and a spacecraft's loiter on the " +
+            "flyby that ends it left out, on its launch ignored, and on any " +
+            "served body named as its point.");
 
 // ---- 1. worked cases ----------------------------------------------
 const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF),
                                     pathWorked(SSF), uncertaintyWorked(SSF),
-                                    childWorked(SSF), heldWorked(SSF));
+                                    childWorked(SSF), heldWorked(SSF),
+                                    loiterWorked(SSF));
 
 // ---- 2. the real config -------------------------------------------
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "data",

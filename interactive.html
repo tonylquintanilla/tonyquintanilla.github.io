@@ -3400,6 +3400,28 @@ def _path_events(_o):
             _out.append(_ev.get("body"))
     return _out
 
+# L-533 (ESCAPADE's path): a spacecraft's loiter, the first event of kind
+# "loiter" in its plan, for the text box: the point JPL names, its first
+# and last moments (its window, as the mirror copies it), and the body of
+# the flyby that ends it, where a flyby falls on its last moment (the
+# orrery's plan ends a loiter at its flyby, Tony's ruling of 2026-11-18).
+def _path_loiter(_o):
+    _evs = ((_o.get("path") or {}).get("events")) or []
+    _lo = next((_e for _e in _evs if isinstance(_e, dict)
+                and _e.get("kind") == "loiter"), None)
+    if _lo is None or not isinstance(_lo.get("window"), list) \
+            or len(_lo["window"]) != 2:
+        return None
+    _w0, _w1 = _lo["window"]
+    _fly = next((_e for _e in _evs if isinstance(_e, dict)
+                 and _e.get("kind") == "flyby" and _e.get("closest") == _w1),
+                None)
+    # Tony, 2026-11-18: a loiter that begins at launch says so, the day
+    # read from JPL's first position (the event's "launch"), never typed.
+    return {"point": _lo.get("body"), "start": _w0, "end": _w1,
+            "launch": _lo.get("launch"),
+            "flyby_of": _fly.get("body") if _fly else None}
+
 # L-443, 2026-10-26 (Tony, for a comet on an open path: "so far"): a
 # comet's reach counts only the served points up to the moment shown,
 # since its dashed year ahead is a drawing choice, not JPL's plan; a
@@ -3496,6 +3518,8 @@ for _slug in _bodies:
         "path_events": (_path_events(_objs.get(_slug) or {})
                         if (_rec.get("category") == "spacecraft"
                             or _rec.get("open_path")) else None),
+        "path_loiter": (_path_loiter(_objs.get(_slug) or {})
+                        if _rec.get("category") == "spacecraft" else None),
         "path_reach_au": (_path_reach_au(_pos.get(_slug))
                           if _rec.get("category") == "spacecraft"
                           else _path_reach_au(_pos.get(_slug),
@@ -4360,6 +4384,14 @@ const EXHIBITS = {
                                 ended ? ENDED_PATH_WORDS + starts + " to " + ends + "." :
                                 (comet ? COMET_PATH_WORDS : SPACECRAFT_PATH_WORDS) +
                                 ends + ".", 60)));
+                            // L-533: a loiter near Earth, named in words only,
+                            // the point being drawn in no room yet (L-297).
+                            const loiter = SolarSystemFigures.loiterLine(b.path_loiter);
+                            if (loiter.line) {
+                                lines.push(bullet(solarSystemSoftWrap(loiter.line, 60)));
+                            } else if (loiter.why) {
+                                warnings.push(label + ": no loiter line -- " + loiter.why);
+                            }
                             // L-515 part 4: in a room drawn at the served
                             // window's last minute, "today" is not the day shown.
                             // L-518: a shared minute is not today either, so

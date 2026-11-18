@@ -124,6 +124,10 @@ the limit not held, a moon JPL does not answer held, an unanswered test
 held, a body with no good build not served and named, and more than
 HOLD_LIMIT held a failed build with no swap; and the M2 check-vector
 failure, which nulled the whole window, now holds the body.)
+Module updated: November 18, 2026 with Anthropic's Claude Opus 5.5
+(L-533, ESCAPADE's path: spacecraft_id_checks, no served spacecraft's
+Horizons id resolves to a centre -- ESCAPADE-Blue's '-9' beside the
+Pluto-Charon barycentre's '9' -- with a planted fault, an lstrip of '-'.)
 """
 import contextlib
 import io
@@ -1740,6 +1744,7 @@ def main():
     fresh_answer_checks(check)
     side_change_checks(cfg_path, check)
     hold_checks(cfg, check)
+    spacecraft_id_checks(cfg, check)
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
@@ -1771,6 +1776,58 @@ def _plan_cfg(cfg, made, events=True, start='1977-09-06', end='2099-12-31',
             if dist_km is not None:
                 o['path']['events'][0]['dist_km'] = dist_km
     return c
+
+
+def spacecraft_ids_as_centres(cfg, resolve):
+    """[(slug, id, what it resolved to)] for each served spacecraft whose
+    Horizons id, bare or '@'-prefixed, a centre lookup would read as a
+    centre. resolve is the builder's resolve_center_slug or a planted
+    stand-in for it."""
+    out = []
+    for o in cfg['objects']:
+        hid = str(o.get('horizons_id') or '')
+        if o.get('category') != 'spacecraft' or not hid.startswith('-'):
+            continue
+        for asked in (hid, '@' + hid):
+            try:
+                out.append((o['slug'], asked, resolve(asked)))
+            except ValueError:
+                pass
+    return out
+
+
+def spacecraft_id_checks(cfg, check):
+    """L-533 (ESCAPADE's path): ESCAPADE-Blue's Horizons id is '-9', and
+    CENTER_SLUG_MAP reads '9' and '@9' as the Pluto-Charon barycentre.
+    No served spacecraft's id may ever resolve to a centre, and each is
+    served around the Sun. Planted fault: the lookup's lstrip taking '-'
+    as well as '@', which turns '-9' into '9'."""
+    craft = [o for o in cfg['objects'] if o.get('category') == 'spacecraft']
+    bad = spacecraft_ids_as_centres(cfg, b.resolve_center_slug)
+    off_sun = [o['slug'] for o in craft
+               if b.resolve_center_slug(o['canonical_center']) != 'sun']
+    names = ", ".join("%s %s" % (o['slug'], o['horizons_id']) for o in craft
+                      if o['slug'].startswith('escapade'))
+    check(craft and not bad and not off_sun,
+          "L-533: no spacecraft's Horizons id resolves to a centre, and each "
+          "is served around the Sun (%d spacecraft examined, %s; read as a "
+          "centre: %s; not around the Sun: %s)"
+          % (len(craft), names or "no ESCAPADE entry", bad or "none",
+             off_sun or "none"))
+
+    def planted(center_body):
+        slug = b.CENTER_SLUG_MAP.get(center_body)
+        if slug is None:
+            slug = b.CENTER_SLUG_MAP.get(str(center_body).lstrip('@-'))
+        if slug is None:
+            raise ValueError("Unmapped center_body: %r" % (center_body,))
+        return slug
+    caught = spacecraft_ids_as_centres(cfg, planted)
+    check(any(slug == 'escapade_blue' and got == 'pluto_barycenter'
+              for slug, _asked, got in caught),
+          "L-533: planted fault caught -- an lstrip of '-' reads "
+          "ESCAPADE-Blue's '-9' as the Pluto-Charon barycentre (%s)"
+          % (caught or "nothing caught"))
 
 
 def path_by_plan_checks(cfg, check):

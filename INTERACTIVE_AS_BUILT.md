@@ -1304,6 +1304,31 @@ Plotly.
     Cassini, Rosetta, Akatsuki and DART, in launch order. Apollo 11's
     S-IVB and Artemis II wait for slice 2, the encounters (Tony,
     2026-11-05: "Apollo in slice 2").
+- **A loiter** (L-533, ESCAPADE's path, 2026-11-18). ESCAPADE-Blue and
+  ESCAPADE-Gold looped near Earth around L2 for about a year before each
+  made its one powered flyby of Earth. The orrery's path plan serves
+  that as one event of kind `loiter` (horizons-orbital-mechanics, How a
+  Path's Events Are Found): its body JPL's point (`SEMB-L2`), its window
+  from its first day to its flyby, at a 1-day step, which the builder
+  fetches as it fetches any event's window. The driver hands the box
+  the first loiter in the plan (`path_loiter`: the point, the window's
+  two ends, and the body of a flyby whose moment is the window's end),
+  and the box prints one more bullet after the path sentence,
+  `SolarSystemFigures.loiterLine`: "From its launch on 13 November 2025
+  until its flyby of Earth on 7 November 2026, it flew wide loops near
+  Earth, around the point called L2." (`LOITER_WORDS`, Tony's
+  "Approved, with two changes" of 2026-11-18, the words in
+  documentation/WORDS_L533_escapade_20261118.md in the orrery). The
+  launch day is the event's `launch`, JPL's first position, which the
+  orrery's plan reads where a loiter begins on the path's first day and
+  the mirror copies; without one the sentence starts on the loiter's
+  first day. L2 is named in words only: no room draws it (L-297, the
+  ten Lagrange points, next). A point the box cannot name is a room
+  note, not a line. A loiter is no companion: `path_events` names only
+  flyby, arrival and departure bodies, so ticking a craft ticks Earth
+  and Mars and never the point. Checked by the figures check's part 7b
+  (four worked cases, three planted faults: the flyby left out, the
+  launch ignored, and any served body named as the point).
 - **A spacecraft's companions** (v1.25, L-443; Tony, 2026-10-25: "in
   addition to the default inner planets, add the farthest planet orbit
   that the object has reached ... This gives perspective to a spacecraft
