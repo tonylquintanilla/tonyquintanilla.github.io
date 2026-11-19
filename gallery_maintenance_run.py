@@ -473,6 +473,15 @@ OFFLINE_CHECKERS = [
     ("Compose children", "python",
      ["tools/test_compose_children.py"], ".", "COMPOSE CHILDREN:", False),
 
+    # L-297 (2026-11-19, Tony's ruling: the curve's error "on for the
+    # Lagrange points and the open-path comets only ... so it can fail"):
+    # every served point of those kinds is held out and predicted as the
+    # box predicts it, and the real miss must never exceed the printed
+    # error. Self-test first: with the figure undoubled it must find
+    # misses larger. Gates.
+    ("Curve error", "python",
+     ["tools/test_curve_error.py"], ".", "CURVE ERROR:", False),
+
     # L-524 (2026-11-11): the assembler's Kepler solver answers every e
     # below 1 and every mean anomaly, or raises. Every drawn position comes
     # through it, and so does the builder's trust measurement that sets the
@@ -964,9 +973,11 @@ def positions_files(root):
     if tools not in sys.path:
         sys.path.insert(0, tools)
     try:
-        from gallery_cache_builder import is_path_body
+        # L-297: and each Lagrange point's, served across the window
+        # (serves_positions: a path, or a point).
+        from gallery_cache_builder import serves_positions
     except Exception as exc:                      # a missing dependency
-        return [], ("could not import the cache builder's is_path_body: "
+        return [], ("could not import the cache builder's serves_positions: "
                     "%s" % exc)
     objects = config.get("objects") if isinstance(config, dict) else None
     if isinstance(objects, dict):
@@ -974,10 +985,10 @@ def positions_files(root):
     files = ["data/solar-system/positions/%s.json" % obj["slug"]
              for obj in (objects or [])
              if isinstance(obj, dict) and obj.get("slug")
-             and is_path_body(obj)]
+             and serves_positions(obj)]
     if not files:
-        return [], ("%s names no spacecraft and no comet on an open "
-                    "path" % PROBE)
+        return [], ("%s names no spacecraft, no comet on an open "
+                    "path and no Lagrange point" % PROBE)
     return files, None
 
 

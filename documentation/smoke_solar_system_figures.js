@@ -367,30 +367,64 @@ function pathWorked(lib) {
 // ---- 7b. worked cases: a spacecraft's loiter (L-533) ---------------
 function loiterWorked(lib) {
   const out = [];
-  const blue = lib.loiterLine({ point: "SEMB-L2", start: "2025-11-14 00:00",
+  // L-297 (Tony, 2026-11-19): the point is named as the room names it,
+  // "Earth-Sun L2", from the point's own entry (point_name).
+  const blue = lib.loiterLine({ point: "SEMB-L2", point_name: "Earth-Sun L2",
+                                start: "2025-11-14 00:00",
                                 end: "2026-11-07 10:01", launch: "2025-11-13 21:33",
                                 flyby_of: "Earth" });
   if (blue.line !== "From its launch on 13 November 2025 until its flyby of Earth on " +
       "7 November 2026, it flew wide loops near Earth, around the point " +
-      "called L2.") {
+      "called Earth-Sun L2.") {
     out.push("a loiter ending at its flyby printed " + JSON.stringify(blue.line));
   }
-  const drift = lib.loiterLine({ point: "SEMB-L1", start: "2025-01-01 00:00",
+  const drift = lib.loiterLine({ point: "SEMB-L1", point_name: "Earth-Sun L1",
+                                 start: "2025-01-01 00:00",
                                  end: "2025-07-02 00:00", flyby_of: null });
   if (drift.line !== "From 1 January 2025 to 2 July 2025, it flew wide " +
-      "loops near Earth, around the point called L1.") {
+      "loops near Earth, around the point called Earth-Sun L1.") {
     out.push("a loiter with no flyby printed " + JSON.stringify(drift.line));
   }
   const odd = lib.loiterLine({ point: "Earth", start: "2025-01-01 00:00",
                                end: "2025-07-02 00:00" });
   if (odd.line !== null || !odd.why) {
-    out.push("a loiter served at a body that is no Lagrange point printed " +
+    out.push("a loiter at a point no served entry names printed " +
              JSON.stringify(odd.line));
   }
   const none = lib.loiterLine(null);
   if (none.line !== null || none.why !== null) {
     out.push("a path with no loiter printed or warned");
   }
+  return out;
+}
+
+// ---- 7c. worked cases: a Lagrange point's box (L-297) --------------
+function pointWorked(lib) {
+  const out = [];
+  const AU = KM_PER_AU_TEST;
+  // Earth-Moon L2 around Earth: 0.00303 AU = 453,281.5 km; an error of
+  // 0.13 km is under the half-km floor, so whole kilometres: 453,282 km;
+  // the AU's place for 0.5 km, 0.5 / AU = 3.3e-9, log10(6.7e-9) + 0.5 =
+  // -7.67, floor -8: 0.00303000 AU.
+  const em = lib.pointBox({ name: "Earth-Moon L2", description: "Words." },
+                          [0.00303, 0, 0], 0.13, AU, "Earth");
+  const want = ["Earth-Moon L2", "Words.",
+                "0.00303000 AU from Earth (453,282 km).",
+                lib.JPL_STATES_NONE];
+  if (JSON.stringify(em.lines) !== JSON.stringify(want)) {
+    out.push("Earth-Moon L2's box printed " + JSON.stringify(em.lines));
+  }
+  // An Earth-Sun point around the Sun, a 300 km error: log10(600) + 0.5 =
+  // 3.28, floor 3, to the 1,000 km: 1.01 AU = 151,093,849 km -> 151,094,000;
+  // the AU's place for 300 / AU = 2.0e-6, log10(4.0e-6) + 0.5 = -4.9,
+  // floor -5: 1.01000 AU.
+  const es = lib.pointBox({ name: "Earth-Sun L2", description: "Words." },
+                          [1.01, 0, 0], 300, AU, "the Sun");
+  if (es.lines[2] !== "1.01000 AU from the Sun (151,094,000 km).") {
+    out.push("Earth-Sun L2's distance printed " + JSON.stringify(es.lines[2]));
+  }
+  const none = lib.pointBox({ name: "Earth-Moon L1" }, null, 1, AU, "Earth");
+  if (!none.warnings.length) { out.push("a point with no position printed no warning"); }
   return out;
 }
 
@@ -653,12 +687,25 @@ const selfFailures = [];
   ["the launch ignored",
    "var launch = loiter.launch ? planDay(loiter.launch) : null;",
    "var launch = null;"],
-  ["any served body named as the loiter's point",
-   "var m = /^SEMB-(L[1-5])$/.exec(String(body || \"\"));",
-   "var m = /^(?:SEMB-)?(.+)$/.exec(String(body || \"\"));"]
+  ["JPL's name for the point printed, not the room's",
+   "var n = loiter && loiter.point_name;",
+   "var n = loiter && loiter.point;"]
 ].forEach(function (fault) {
   if (loiterWorked(loadWith(fault[1], fault[2])).length === 0) {
     selfFailures.push(fault[0] + " passed the loiter's worked cases");
+  }
+});
+// L-297: a Lagrange point's box, two breaks.
+[
+  ["a point's distance measured from the Sun whatever its centre",
+   "function pathDistanceLine(pos, errKm, kmPerAu, fromWords) {",
+   "function pathDistanceLine(pos, errKm, kmPerAu, fromWordsLost) {"],
+  ["the sentence on JPL's accuracy left out",
+   "      lines.push(JPL_STATES_NONE);\n    } else {\n      warnings.push(name + \": no distance shown",
+   "    } else {\n      warnings.push(name + \": no distance shown"]
+].forEach(function (fault) {
+  if (pointWorked(loadWith(fault[1], fault[2])).length === 0) {
+    selfFailures.push(fault[0] + " passed the point's worked cases");
   }
 });
 // L-515 step 2b, part 1: a moon's box (childBox), three breaks.
@@ -724,7 +771,7 @@ console.log("Self-test: the worked cases fail on a Report test one place " +
 const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF),
                                     pathWorked(SSF), uncertaintyWorked(SSF),
                                     childWorked(SSF), heldWorked(SSF),
-                                    loiterWorked(SSF));
+                                    loiterWorked(SSF), pointWorked(SSF));
 
 // ---- 2. the real config -------------------------------------------
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "data",
@@ -742,6 +789,14 @@ const allRows = ((room.drawer || {}).rows || [])
 const crafts = allRows.filter(function (s) {
   return (objs[s] || {}).category === "spacecraft" || !!(objs[s] || {}).open_path;
 });
+// L-297: a Lagrange point has no orbit, accuracy row or period either;
+// part 7b holds every one the config names, rows and children alike.
+const points = Object.keys(objs).filter(function (s) {
+  return objs[s].category === "lagrange_point";
+});
+allRows.splice(0, allRows.length, ...allRows.filter(function (s) {
+  return points.indexOf(s) < 0;
+}));
 const rows = allRows.filter(function (s) { return crafts.indexOf(s) < 0; });
 if (!rows.length) { failures.push("the room serves no drawer rows"); }
 const small = [];
@@ -1041,6 +1096,38 @@ if (!missionEndIssue({ mission_end: "2003-09-21" }, { end: "2003-09-30" })[0] ||
                     { end: "2025-08-23" }).join() !== ",true") {
   failures.push("the mission_end check cannot fail, or fails a right one (L-507)");
 }
+// ---- 7b. the Lagrange points (L-297) --------------------------------
+// Each served its positions, today's point, and a box that prints its
+// distance from its own centre and JPL's word on its accuracy; no
+// accuracy row and no period.
+const pointTable = [];
+points.forEach(function (slug) {
+  const o = objs[slug] || {};
+  if (o.position_accuracy) { failures.push(slug + ": a point serving a position_accuracy"); }
+  if (o.period !== undefined && o.period !== null) { failures.push(slug + ": a point serving a period"); }
+  const rec = (cov.objects || {})[slug];
+  if (!rec) {
+    failures.push(slug + ": the served cache has no record for it (run the cache builder)");
+    return;
+  }
+  const file = (rec.positions || {}).file;
+  if (!file || !fs.existsSync(path.join(root, "data", "solar-system", file))) {
+    failures.push(slug + ": the served cache names no positions file on disk");
+  }
+  const p = rec.as_of_today;
+  if (!p) { failures.push(slug + ": the served cache has no as_of_today for it"); return; }
+  const box = SSF.pointBox(o, [p.x / kmPerAu, p.y / kmPerAu, p.z / kmPerAu], 0,
+                           kmPerAu, o.center_slug === "earth" ? "Earth" : "the Sun");
+  if (!box.lines || box.lines.indexOf(SSF.JPL_STATES_NONE) < 0) {
+    failures.push(slug + ": its box lacks its distance or JPL's word: " +
+                  JSON.stringify(box.lines));
+    return;
+  }
+  pointTable.push([slug, box.lines[box.lines.length - 2]]);
+});
+console.log("Lagrange points (" + pointTable.length + " of " + points.length + "): " +
+            (pointTable.map(function (r) { return r[0] + " " + r[1]; }).join("; ") || "none") + ".");
+
 const craftTable = [];
 crafts.forEach(function (slug) {
   const o = objs[slug] || {};
@@ -1101,8 +1188,11 @@ crafts.forEach(function (slug) {
   ["SolarSystemFigures.pathDistanceLine(", "the page does not call pathDistanceLine"],
   ['"kind": ("spacecraft" if _rec.get("category") == "spacecraft"',
    "the page's driver does not mark a spacecraft"],
-  ['else "comet_path" if _rec.get("open_path") else None),',
+  ['else "comet_path" if _rec.get("open_path")',
    "the page's driver does not mark a comet on an open path"],
+  ['else "point" if _rec.get("category") == "lagrange_point"',
+   "the page's driver does not mark a Lagrange point (L-297)"],
+  ["SolarSystemFigures.pointBox(", "the page does not call pointBox (L-297)"],
   ["const ended = sc.ended === true && !comet;",
    "the page does not give an ended mission its own text box (L-507)"],
   ["ended ? ENDED_DISTANCE_WORDS : \"\"), 60)));",

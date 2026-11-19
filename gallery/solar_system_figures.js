@@ -333,7 +333,11 @@
   // the assembler -- and never finer than whole kilometres. JPL's own
   // uncertainty for a spacecraft is not served, so the text box says so,
   // in the sentence of 2026-10-01, every time.
-  function pathDistanceLine(pos, errKm, kmPerAu) {
+  // L-297: fromWords names the centre the distance is from, the Sun
+  // unless given (a Lagrange point served around Earth: "Earth").
+  function pathDistanceLine(pos, errKm, kmPerAu, fromWords) {
+    var from = (typeof fromWords === "string" && fromWords) ? fromWords
+                                                             : "the Sun";
     if (!(typeof kmPerAu === "number" && kmPerAu > 0)) {
       return { line: null, why: "kilometres per AU is not served" };
     }
@@ -352,7 +356,7 @@
     var auText = au.place < 0 ? au.value.toFixed(-au.place)
                               : withCommas(au.value);
     return {
-      line: auText + " AU from the Sun (" + withCommas(km.value) + " km)",
+      line: auText + " AU from " + from + " (" + withCommas(km.value) + " km)",
       note: NO_SOURCE_ACCURACY,
       governs: (useKm === FINEST_KM) ? "whole kilometres"
                                      : "working out between points",
@@ -714,10 +718,10 @@
   // L-533 (ESCAPADE's path): a spacecraft's loiter, the months it looped
   // near Earth around a Lagrange point before a flyby, served as one event
   // of its path plan (the orrery's path_plan.py; Tony's ruling of
-  // 2026-11-18). The point is drawn in no room yet (L-297), so the box
-  // names it in words only (Tony, 2026-11-18). The words are placeholders
-  // until Tony's "Approved" of documentation/WORDS_L533_escapade_20261118.md
-  // in the orrery.
+  // 2026-11-18). Words of documentation/WORDS_L533_escapade_20261118.md in
+  // the orrery, as approved. L-297 (Tony, 2026-11-19): the point is named
+  // as the room names it, "Earth-Sun L2", read by the driver from the
+  // point's own entry (the loiter's point_name), never typed.
   // Tony's "Approved, with two changes" of 2026-11-18: a loiter that
   // begins at launch says "From its launch on <day>", the day of JPL's
   // first position, served on the event as its "launch".
@@ -727,11 +731,13 @@
       " on " + to : " to " + to) + ", it flew wide loops near Earth, " +
       "around the point called " + point + ".";
   };
-  // JPL's names for the five points of the Sun and the Earth-Moon
-  // barycentre are SEMB-L1 to SEMB-L5; the box says L1 to L5.
-  function loiterPoint(body) {
-    var m = /^SEMB-(L[1-5])$/.exec(String(body || ""));
-    return m ? m[1] : null;
+  // The point's name as the room shows it: the loiter's point_name, which
+  // the driver reads from the entry whose JPL name is the plan's ("SEMB-L2"
+  // is the entry named "Earth-Sun L2"); null when no entry is served for
+  // it, and then the box prints no loiter line and says why.
+  function loiterPoint(loiter) {
+    var n = loiter && loiter.point_name;
+    return (typeof n === "string" && n) ? n : null;
   }
   // "YYYY-MM-DD HH:MM", a plan's moment on JPL's clock, as the box prints
   // a day ("14 November 2025"); null if it is not one.
@@ -745,10 +751,11 @@
   // with no loiter, a why for one the box cannot say.
   function loiterLine(loiter) {
     if (!loiter) { return { line: null, why: null }; }
-    var point = loiterPoint(loiter.point);
+    var point = loiterPoint(loiter);
     if (!point) {
       return { line: null, why: "its loiter is served at " +
-               JSON.stringify(loiter.point) + ", which the box cannot name" };
+               JSON.stringify(loiter.point) + ", and no point of that JPL " +
+               "name is served, so the box cannot name it" };
     }
     var launch = loiter.launch ? planDay(loiter.launch) : null;
     var from = launch || planDay(loiter.start), to = planDay(loiter.end);
@@ -760,7 +767,54 @@
              why: null };
   }
 
+  // L-297 (the Lagrange points): a point's text box. Its name; the
+  // orrery's words (NASA's, as approved, copied by the objects mirror);
+  // its distance from the centre it is served around -- Earth for an
+  // Earth-Moon point, read from its own served position around Earth
+  // (rel), never from the sum drawn; the Sun for an Earth-Sun point -- to
+  // the place the working-out between its served points earns
+  // (pathDistanceLine); and JPL's word on its accuracy, which is none:
+  // asked by Horizons' vector table 2xr on 2026-11-19, JPL answered both
+  // EM-L2 (3012) and SEMB-L2 (32) with every uncertainty column "n.a."
+  // (L-297's note). A point has no orbit and no period; the box says
+  // nothing of either. child: the driver's words for it; rel: [x, y, z]
+  // AU around its centre; errKm: the marker's interp_err_km.
+  function pointBox(point, rel, errKm, kmPerAu, fromWords) {
+    var warnings = [];
+    if (!point || typeof point !== "object") {
+      return { lines: null, meta: null,
+               warnings: ["no text box words served for this point"] };
+    }
+    var name = (typeof point.name === "string" && point.name) ? point.name
+                                                              : "Lagrange point";
+    var lines = [name];
+    var meta = {};
+    if (typeof point.description === "string" && point.description) {
+      lines.push(point.description);
+      meta.about = point.description;
+    } else {
+      warnings.push(name + ": no description is served for it");
+    }
+    if (typeof point.info_url === "string" && point.info_url) {
+      meta.info_url = point.info_url;
+    }
+    if (!Array.isArray(rel) || rel.length !== 3) {
+      warnings.push(name + ": its position around its centre is not served");
+      return { lines: lines, meta: meta, warnings: warnings };
+    }
+    var dist = pathDistanceLine({ x: rel[0], y: rel[1], z: rel[2] }, errKm,
+                                kmPerAu, fromWords);
+    if (dist.line) {
+      lines.push(dist.line + ".");
+      lines.push(JPL_STATES_NONE);
+    } else {
+      warnings.push(name + ": no distance shown -- " + dist.why);
+    }
+    return { lines: lines, meta: meta, warnings: warnings };
+  }
+
   global.SolarSystemFigures = {
+    pointBox: pointBox,
     LOITER_WORDS: LOITER_WORDS,
     loiterPoint: loiterPoint,
     planDay: planDay,

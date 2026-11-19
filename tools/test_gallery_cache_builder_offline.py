@@ -128,6 +128,17 @@ Module updated: November 18, 2026 with Anthropic's Claude Opus 5.5
 (L-533, ESCAPADE's path: spacecraft_id_checks, no served spacecraft's
 Horizons id resolves to a centre -- ESCAPADE-Blue's '-9' beside the
 Pluto-Charon barycentre's '9' -- with a planted fault, an lstrip of '-'.)
+Module updated: November 19, 2026 with Anthropic's Claude Opus 5.5
+(L-297, the Lagrange points: point_checks, on real builds with a stand-in
+JPL that answers each point by its name on a circle about its centre --
+each served its positions across the window and a day past each edge,
+today's point, no elements, in its config place; the window the same with
+and without them, and narrowed when a point is let in (planted); #L
+refusing elements, a short last day, a gap, no today's point and the
+window's frame, each planted; a build aborting on a short file; JPL
+answering a number as an asteroid refused by name; a failed fetch served
+last-good; the nightly's shrink gate passing; and no point's number read
+as a centre, with a planted lookup that reads 31 as 3.)
 """
 import contextlib
 import io
@@ -333,6 +344,34 @@ def FAKE_SC_R(d):
 # L-443 build B part 2: a comet on an open path, a straight line past the
 # Sun (fake_vectors), nearest at 0.4 AU on this day.
 _COMET_T0 = datetime(2026, 1, 15, tzinfo=timezone.utc)
+
+
+# L-297: the Lagrange points. The stand-in JPL answers each by its JPL name
+# on a circle about its centre -- the Earth-Moon points at the Moon's
+# distance and pace, the Earth-Sun points at Earth's -- and a number it does
+# not know as an asteroid, as JPL answers 3013 (L-297, Session 1).
+FAKE_POINT_NAMES = {'3011': 'EM-L1', '3012': 'EM-L2', '3014': 'EM-L4',
+                    '3015': 'EM-L5', '31': 'SEMB-L1', '32': 'SEMB-L2',
+                    '34': 'SEMB-L4', '35': 'SEMB-L5'}
+
+
+def fake_point_vectors(horizons_id, id_type, center, start_dt, stop_dt,
+                       step='1d', key_fmt=None):
+    hid = str(horizons_id)
+    r, period = ((0.0029, 27.32) if hid.startswith('30') else (1.01, 365.25))
+    out = {}
+    d = start_dt
+    while d <= stop_dt:
+        jd = b._dt_to_jd(d)
+        a = 2.0 * math.pi * (jd - 2451545.0) / period
+        out[d.strftime(key_fmt or b.MINUTE_KEY)] = {
+            'jd': jd, 'x': r * math.cos(a), 'y': r * math.sin(a), 'z': 0.0}
+        d += timedelta(days=_step_days(step))
+    name = FAKE_POINT_NAMES.get(hid)
+    return out, ('%s (%s)' % (name, hid) if name
+                 else '%s Dobrovoleva (1979 SD7)' % hid)
+
+
 FAKE_COMET_AU_PER_DAY = 0.02
 
 
@@ -457,7 +496,7 @@ def stand_in_plans(cfg):
 # a recorder in place of astroquery.
 _REAL_FETCHES = {n: getattr(b, n) for n in (
     'fetch_vectors_range', 'fetch_elements', 'fetch_solution_tp',
-    'fetch_pole_radec', 'fetch_orbit_plane')}
+    'fetch_pole_radec', 'fetch_orbit_plane', 'fetch_point_vectors')}
 
 
 def install_mocks():
@@ -466,6 +505,7 @@ def install_mocks():
     b.fetch_orbit_plane = fake_orbit_plane
     b.fetch_elements = fake_elements
     b.fetch_vectors_range = fake_vectors
+    b.fetch_point_vectors = fake_point_vectors      # L-297
     b.fetch_solution_tp = fake_solution_tp
     b.fetch_small_body_2xr = fake_2xr
     b._NOW_OVERRIDE = FIXED_NOW
@@ -819,6 +859,13 @@ def main():
                       "M2: %s trust method == fetched_positions" % slug2)
                 check(tr.get('window') is None,
                       "M2: %s trust window is null" % slug2)
+            elif block2.get('category') == b.POINT_CATEGORY:
+                # L-297: a Lagrange point has no elements to test; it is
+                # served JPL's own positions, and serves no window.
+                check(tr.get('method') == 'served_positions'
+                      and tr.get('window') is None,
+                      "M2/L-297: %s (Lagrange point) trust method == "
+                      "served_positions, window null" % slug2)
             elif block2.get('canonical_frame') == b.FEATURES_ONLY_FRAME:
                 # L-256: a frame origin has no orbit because it IS the
                 # centre, so features_only_result() serves 'not_applicable'
@@ -1745,6 +1792,7 @@ def main():
     side_change_checks(cfg_path, check)
     hold_checks(cfg, check)
     spacecraft_id_checks(cfg, check)
+    point_checks(cfg, check)
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
@@ -2259,6 +2307,8 @@ def fresh_answer_checks(check):
         ('solution TP', lambda: _REAL_FETCHES['fetch_solution_tp']('x')),
         ('pole of date', lambda: _REAL_FETCHES['fetch_pole_radec'](2461342.5)),
         ('orbit plane', lambda: _REAL_FETCHES['fetch_orbit_plane'](2461342.5)),
+        ('a Lagrange point', lambda: _REAL_FETCHES['fetch_point_vectors'](
+            '3012', 'id', '@399', day, day + timedelta(days=1))),
     ]
     real_h, real_req = b.Horizons, b._require_astro
 
@@ -2450,6 +2500,243 @@ def hold_checks(cfg, check):
               and named[0].get('served') is False and half(n9) is not None,
               "L-525: a body with no good build to hold at is not served, and "
               "named (%s)" % (named[0].get('line') if named else 'not named'))
+
+
+# L-297: the stand-in entries for the points, used when the config has none
+# yet (the objects mirror fills a point's words from the orrery's export);
+# the config's own when it has them.
+def point_cfg(cfg):
+    c = json.loads(json.dumps(cfg))
+    if any(o.get('category') == b.POINT_CATEGORY for o in c['objects']):
+        return c
+    for slug, hid, name, centre in (('em_l2', '3012', 'EM-L2', 'earth'),
+                                    ('semb_l1', '31', 'SEMB-L1', 'sun')):
+        c['objects'].append({
+            'slug': slug, 'name': slug, 'horizons_id': hid, 'id_type': 'id',
+            'horizons_name': name, 'category': b.POINT_CATEGORY,
+            'availability': 'point', 'parent': centre,
+            'canonical_center': '@399' if centre == 'earth' else '@sun',
+            'center_slug': centre, 'canonical_frame': 'arc-natural',
+            'trajectory_of': None, 'trace_policy': 'none'})
+    return c
+
+
+def point_checks(cfg, check):
+    """L-297 (the Lagrange points): the fourth serving shape, on real
+    builds with the stand-in JPL above."""
+    pc = point_cfg(cfg)
+    pts = [o for o in pc['objects'] if b.is_point(o)]
+    slugs = [o['slug'] for o in pts]
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / 'data' / 'solar-system'
+        out.mkdir(parents=True)
+        with contextlib.redirect_stdout(io.StringIO()):
+            rm = b.run_build(pc, out, mode='first-build', do_commit=False)
+        idx = json.load(open(out / 'coverage_index.json'))
+        objs, sw = idx['objects'], idx['served_window']
+        bad = {}
+        for s in slugs:
+            got = b.point_problems(objs.get(s, {}), sw, out) if s in objs \
+                else ['not served']
+            o = objs.get(s, {})
+            if not (o.get('osculating') is None and o.get('positions')
+                    and o.get('as_of_today')
+                    and (o.get('point') or {}).get('last_good') is False):
+                got = got + ['not served as a fresh point']
+            if got:
+                bad[s] = got
+        check(rm['structural_validation'] == 'pass' and sw and not bad,
+              "L-297: each Lagrange point served its positions across the "
+              "window and a day past each edge, today's point, no elements "
+              "(%d: %s; %s; problems: %s)"
+              % (len(slugs), ", ".join(slugs), rm['structural_validation'],
+                 bad or "none"))
+        served_order = list(objs)
+        config_order = [o['slug'] for o in pc['objects']]
+        check(served_order == config_order,
+              "L-297: every body served in its config place, the points "
+              "though fetched last (%s at %s)"
+              % (slugs[0], served_order.index(slugs[0])
+                 if slugs[0] in served_order else 'nowhere'))
+        pf = json.load(open(out / objs[slugs[0]]['positions']['file']))
+        t = pf['data']['t']
+        check(pf['unit'] == 'km' and t[0] <= sw['start_jd'] - 1 + 1e-3
+              and t[-1] >= sw['end_jd'] + 1 - 1e-3,
+              "L-297: %s's file runs JD %.2f to %.2f, the window JD %.2f to "
+              "%.2f, %d points" % (slugs[0], t[0], t[-1], sw['start_jd'],
+                                 sw['end_jd'], len(t)))
+
+        # The window is the same with and without the points.
+        with tempfile.TemporaryDirectory() as td2:
+            out2 = Path(td2) / 'data' / 'solar-system'
+            out2.mkdir(parents=True)
+            bare = json.loads(json.dumps(pc))
+            bare['objects'] = [o for o in bare['objects'] if not b.is_point(o)]
+            with contextlib.redirect_stdout(io.StringIO()):
+                b.run_build(bare, out2, mode='first-build', do_commit=False)
+            sw2 = json.load(open(out2 / 'coverage_index.json'))['served_window']
+        half = (sw['end_jd'] - sw['start_jd']) / 2.0
+        check(sw2 and abs(half - (sw2['end_jd'] - sw2['start_jd']) / 2.0) < 1e-6,
+              "L-297: the window is as wide with the points as without them "
+              "(%.2f days either side)" % half)
+
+        # Planted: a point let into the window, with a half-day span.
+        results = [{'slug': o['slug'], 'obj': o,
+                    'trust': objs.get(o['slug'], {}).get('trust'),
+                    'hold': objs.get(o['slug'], {}).get('hold')}
+                   for o in pc['objects']]
+        leak = dict(pts[0], canonical_frame='heliocentric')
+        results.append({'slug': 'leak', 'obj': leak,
+                        'trust': {'window_days': 0.5}})
+        kept, _f = b.served_window_from(results, 2461000.0)
+        real = b.is_point
+        b.is_point = lambda o: False
+        try:
+            narrowed, _f2 = b.served_window_from(results, 2461000.0)
+        finally:
+            b.is_point = real
+        check(kept and abs(kept['end_jd'] - 2461000.0 - half) < 1e-6
+              and narrowed and abs(narrowed['end_jd'] - 2461000.5) < 1e-9,
+              "L-297: a point in the window's frame with a half-day span "
+              "leaves the window as it is (%.2f days); planted fault caught -- "
+              "let in, it narrows the window to %.1f days"
+              % ((kept['end_jd'] - 2461000.0) if kept else -1,
+                 (narrowed['end_jd'] - 2461000.0) if narrowed else -1))
+
+        # #L, each way a served point can be wrong, planted on copies.
+        o0 = objs[slugs[0]]
+        path = out / o0['positions']['file']
+        whole = path.read_bytes()
+
+        def with_file(keep):
+            d = json.loads(whole.decode('ascii'))
+            idxs = [i for i in range(len(d['data']['t'])) if keep(i)]
+            for ax in ('t', 'x', 'y', 'z'):
+                d['data'][ax] = [d['data'][ax][i] for i in idxs]
+            path.write_bytes(json.dumps(d).encode('ascii'))
+
+        n = len(t)
+        # an hour inside the band near today, and a day far from it
+        hour_i = next(i for i in range(1, n - 1) if t[i + 1] - t[i - 1] < 0.1)
+        plants = [
+            ("elements served", dict(o0, osculating={'a_au': 1.0}), None,
+             "elements"),
+            ("the window's frame", dict(o0, canonical_frame='heliocentric'),
+             None, "frame"),
+            ("no today's point", dict(o0, as_of_today=None), None,
+             "today's point"),
+            ("the last day short of the edge", o0, lambda i: i < n - 2,
+             "last day"),
+            ("a gap of two days", o0, lambda i: i != 5, "days between"),
+            # Tony's ruling of 2026-11-19: an hour apart near today.
+            ("an hour missing near today", o0, lambda i: i != hour_i,
+             "hours near today"),
+            ("no hours near today", dict(o0, point=dict(o0['point'],
+                                                        near=None)),
+             None, "no hours near today"),
+        ]
+        caught = []
+        for label, block, keep, word in plants:
+            if keep:
+                with_file(keep)
+            got = b.point_problems(block, sw, out)
+            path.write_bytes(whole)
+            caught.append((label, any(word in g for g in got)))
+        check(all(c for _l, c in caught),
+              "L-297: #L refuses each planted fault (%s)"
+              % ", ".join("%s %s" % (l, "caught" if c else "MISSED")
+                          for l, c in caught))
+        # A dry run of one point serves no window: the point's own is used,
+        # and with neither the check says so rather than pass.
+        with_file(lambda i: i < n - 2)
+        own = b.point_problems(o0, None, out)
+        none = b.point_problems(dict(o0, point=dict(o0['point'], window=None)),
+                                None, out)
+        path.write_bytes(whole)
+        check(any('last day' in g for g in own)
+              and any('no window' in g for g in none),
+              "L-297: with no served window, a short file is held to the "
+              "window the point was fetched across (%s); with none at all, "
+              "named (%s)" % ('; '.join(own)[:60], '; '.join(none)[:40]))
+        with_file(lambda i: i < n - 2)
+        try:
+            b.assert_structural(idx, out)
+            why = "passed"
+        except b.ValidationAbort as e:
+            why = str(e)
+        path.write_bytes(whole)
+        check(why.startswith('#L %s' % slugs[0]),
+              "L-297: a build whose point stops short of the window ABORTs "
+              "by name (%s)" % why[:100])
+
+        # A failed fetch: served last-good, today's point nulled.
+        real_fp = b.fetch_point_vectors
+
+        def dead(*a, **k):
+            raise RuntimeError("simulated: JPL down")
+        b.fetch_point_vectors = dead
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                rm2 = b.run_build(pc, out, mode='nightly', do_commit=False)
+        finally:
+            b.fetch_point_vectors = real_fp
+        o2 = json.load(open(out / 'coverage_index.json'))['objects'].get(
+            slugs[0], {})
+        check(rm2['structural_validation'] == 'pass'
+              and o2.get('as_of_today') is None
+              and (o2.get('point') or {}).get('last_good') is True
+              and o2.get('positions'),
+              "L-297: a point JPL does not answer is served its archived "
+              "days, last_good, today's point nulled (%s)"
+              % rm2['structural_validation'])
+        with contextlib.redirect_stdout(io.StringIO()):
+            rm3 = b.run_build(pc, out, mode='nightly', do_commit=False)
+        check(rm3['structural_validation'] == 'pass',
+              "L-297: the next nightly build passes, the shrink gate with it "
+              "(%s)" % rm3['structural_validation'])
+
+    # JPL answering a number under another name: refused by name.
+    wrong = json.loads(json.dumps(pc))
+    wrong['objects'] = [o for o in wrong['objects'] if not b.is_point(o)]
+    wrong['objects'].append(dict(pts[0], slug='em_l3_probe',
+                                 horizons_id='3013', horizons_name='EM-L3'))
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / 'data' / 'solar-system'
+        out.mkdir(parents=True)
+        with contextlib.redirect_stdout(io.StringIO()):
+            rm4 = b.run_build(wrong, out, mode='first-build', do_commit=False)
+    said = rm4['objects'].get('em_l3_probe', '')
+    check('JPL answered' in said and 'Dobrovoleva' in said
+          and 'dropped' in said,
+          "L-297: a point JPL answers as an asteroid is refused by name, "
+          "not served (%s)" % said[:110])
+
+    # No point's number is read as a centre; planted: a lookup that reads
+    # 31 as 3, the Earth-Moon barycentre.
+    def asked_as_centre(resolve):
+        found = []
+        for o in pts:
+            for asked in (o['horizons_id'], '@' + o['horizons_id']):
+                try:
+                    found.append((o['slug'], asked, resolve(asked)))
+                except ValueError:
+                    pass
+        return found
+
+    def planted_lookup(c):
+        got = b.CENTER_SLUG_MAP.get(str(c).lstrip('@')[:1])
+        if got is None:
+            raise ValueError(c)
+        return got
+    read = asked_as_centre(b.resolve_center_slug)
+    caught = asked_as_centre(planted_lookup)
+    check(not read and any(g == 'earth_moon_barycenter'
+                           for _s, _a, g in caught),
+          "L-297: no Lagrange point's number resolves to a centre (%d "
+          "points, %s); planted fault caught -- a lookup reading the first "
+          "digit takes %s as the Earth-Moon barycentre"
+          % (len(pts), read or "none read",
+             caught[0][1] if caught else "none"))
 
 
 if __name__ == '__main__':

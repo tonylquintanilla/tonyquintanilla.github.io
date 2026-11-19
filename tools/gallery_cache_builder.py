@@ -164,6 +164,17 @@ test passes, and is listed in the index's `holds` for the night's commit
 title; a body with no build to hold at is not served, and named; more
 than HOLD_LIMIT (5) held in one build is a failed build, no swap. Tony's
 ruling of Nov 11, 11:22; the coordinator's two changes of that evening.)
+Module updated: November 19, 2026 with Anthropic's Claude Opus 5.5 (L-297,
+the Lagrange points: a fourth serving shape, serving_shape 'point'. A
+point has no elements; it is fetched after every other body, its daily
+positions from JPL around the centre it is served around, across the
+served window and a day past each edge (process_point), JPL's answer held
+to the point's own name; it never takes part in the window
+(served_window_from); a failed fetch serves its archived days inside the
+window, today's point nulled (serve_last_good_point); the validator's #L
+(point_problems) refuses elements, a frame that would join the window, a
+fresh point with no today's point, a gap over a day, or days that stop
+short of either edge.)
 """
 
 import argparse
@@ -271,6 +282,39 @@ def is_path_body(obj):
     so near parabolic that its numbers cannot tell -- which the objects
     mirror copies onto the entry."""
     return obj.get('category') == 'spacecraft' or bool(obj.get('open_path'))
+
+
+# L-297: a Lagrange point, the orrery's object_type 'lagrange_point'.
+POINT_CATEGORY = 'lagrange_point'
+
+
+def is_point(obj):
+    """A Lagrange point (L-297): no mass and no orbit, so no elements; served
+    its daily positions from JPL across the served window (process_point)."""
+    return obj.get('category') == POINT_CATEGORY
+
+
+def serving_shape(obj):
+    """Which of the four serving shapes a config entry is served in, one
+    word: 'features' (the Sun, a frame origin, no ephemeris), 'path' (a
+    spacecraft or a comet on an open path, by its plan), 'point' (a
+    Lagrange point, across the window) or 'elements' (every other body:
+    osculating elements, carried to any minute). tools/check_cache_in_step.py
+    holds the served cache to it."""
+    if obj.get('serve_positions') is False:
+        return 'features'
+    if is_path_body(obj):
+        return 'path'
+    if is_point(obj):
+        return 'point'
+    return 'elements'
+
+
+def serves_positions(obj):
+    """True for a body whose positions file the page fetches: a path, or
+    (L-297) a Lagrange point. The served list (gallery_maintenance_run.py,
+    positions_files) reads it."""
+    return serving_shape(obj) in ('path', 'point')
 
 
 def needs_drawn_orbit(obj):
@@ -625,7 +669,7 @@ def is_small_body_target(obj):
     comet by its id_type, or a pinned small-body record number (9 then
     seven digits) whatever its id_type. A path body is drawn from its
     positions, and a body served for its features only fetches nothing."""
-    if is_path_body(obj) or obj.get('serve_positions') is False:
+    if serving_shape(obj) != 'elements':     # L-297: nor a Lagrange point
         return False
     hid = str(obj.get('horizons_id') or '').strip()
     if not hid:
@@ -1002,8 +1046,7 @@ def held_by_test(obj):
     whose span takes part in the site's window (Sun-centred, drawn from
     its elements). Every other body is held only when JPL does not answer."""
     return (obj.get('canonical_frame') == TRUST_WINDOW_PARTICIPANT_FRAME
-            and not is_path_body(obj)
-            and obj.get('serve_positions') is not False)
+            and serving_shape(obj) == 'elements')    # L-297: not a point
 
 
 def _days_words(days):
@@ -1743,6 +1786,283 @@ def serve_last_good(root, obj, warn, prior_index=None):
             'comet': comet, 'stale': True, 'trust': stale_trust}
 
 
+# ===========================================================================
+# THE LAGRANGE POINTS (L-297) -- the fourth serving shape
+# ===========================================================================
+#
+# A point has no mass and no orbit, so it has no elements to fetch and none
+# to carry it past today. It is served its daily positions from JPL around
+# the centre JPL serves it around, across the whole served window and a day
+# past each edge, so the room can place it at any minute it may show with
+# the parabola through the three served points nearest that minute
+# (gallery/assembler/render_spacecraft.py, position_at). Tony's ruling of
+# 2026-11-18, 18:38 ("Yes"). It is fetched after every other body, because
+# the window is set by them; it never takes part in the window itself
+# (served_window_from), so its span cannot narrow it.
+
+POINT_EDGE_DAYS = 1      # a served day past each edge of the window
+POINT_STEP = '1d'
+POINT_STEP_DAYS = 1.0
+POINT_MINUTE = 1.0 / 1440.0
+# Tony's ruling of 2026-11-19 ("an hour apart from yesterday to the day
+# after tomorrow, a day apart elsewhere, as you recommend"): near today the
+# points are an hour apart, so a visitor in the days after a build sees the
+# Earth-Moon points to the kilometre, not to the 1,000 km (measured in
+# Part A: the real miss between daily points was up to 330 km for Earth-Moon
+# L2, under a quarter of a kilometre between hourly ones).
+POINT_NEAR_STEP = '1h'
+POINT_NEAR_STEP_DAYS = 1.0 / 24.0
+POINT_NEAR_FROM_DAYS = 1   # yesterday, 00:00 UTC
+POINT_NEAR_TO_DAYS = 3     # the end of the day after tomorrow
+
+
+def served_window_from(results, as_of_jd):
+    """(served_window, facts) -- the site's window, the minimum over the
+    trusted spans of the Sun-centred bodies drawn from their elements, as
+    derive_served serves it (M2 sec 5.5, corrected L-149; a held body
+    leaves it, L-525). facts: days, set_by, count, missing, held_out.
+
+    L-297: a Lagrange point never takes part, whatever its frame: it has
+    no trusted span, and a participant without one nulls the window for
+    the whole site (FLAG-3). So a point's span cannot narrow the window;
+    the offline suite plants a point that does, and sees it refused."""
+    windows, missing, held_out = [], [], []
+    for r in results:
+        obj = r['obj']
+        if obj.get('canonical_frame') != TRUST_WINDOW_PARTICIPANT_FRAME:
+            continue
+        if is_point(obj):
+            continue
+        if r.get('hold') is not None:
+            held_out.append(r['slug'])
+            continue
+        wd = (r.get('trust') or {}).get('window_days')
+        if wd is None:
+            missing.append(r['slug'])
+        else:
+            windows.append((wd, r['slug']))
+    facts = {'days': None, 'set_by': None, 'count': len(windows),
+             'missing': missing, 'held_out': held_out}
+    if missing or not windows:
+        return None, facts
+    w_min, w_slug = min(windows)
+    facts['days'], facts['set_by'] = w_min, w_slug
+    return {'start_jd': as_of_jd - w_min, 'end_jd': as_of_jd + w_min}, facts
+
+
+def point_window(results, prior_index, warn):
+    """(window, said) -- the window the Lagrange points are fetched
+    across: this build's, from the bodies already processed; else, as in
+    a dry run of one point, the window the live cache serves, named; else
+    None, and each point fails by name and is served last-good."""
+    window, facts = served_window_from(results, _dt_to_jd(_utcnow()))
+    if window is not None:
+        return window, ("this build's window, %.1f days either side of now, "
+                        "set by %s" % (facts['days'], facts['set_by']))
+    prior = (prior_index or {}).get('served_window')
+    if isinstance(prior, dict) and prior.get('start_jd') is not None:
+        warn("Lagrange points: this build sets no window (%s); fetched "
+             "across the live cache's" % (
+                 'missing: %s' % facts['missing'] if facts['missing']
+                 else 'no body sets one'))
+        return prior, "the live cache's window (this build sets none)"
+    warn("Lagrange points: no window from this build or the live cache; "
+         "each point is served last-good")
+    return None, "none"
+
+
+def point_span(window):
+    """(start, stop) UTC datetimes: the served window's first day, less a
+    day, at 00:00, to the day after its last day, plus a day, at 00:00 --
+    so a point lies at or before each edge's minute and one beyond it."""
+    first = _jd_to_dt(window['start_jd']).replace(hour=0, minute=0, second=0,
+                                                  microsecond=0)
+    last = _jd_to_dt(window['end_jd'])
+    end_day = last.replace(hour=0, minute=0, second=0, microsecond=0)
+    if end_day < last:
+        end_day += timedelta(days=1)
+    return (first - timedelta(days=POINT_EDGE_DAYS),
+            end_day + timedelta(days=POINT_EDGE_DAYS))
+
+
+def fetch_point_vectors(horizons_id, id_type, center, start_dt, stop_dt,
+                        step=POINT_STEP, key_fmt=MINUTE_KEY):
+    """(points, target) -- fetch_vectors_range's range form, with the name
+    JPL answers to, so a point is never served under a number JPL reads as
+    another body: asked by number, 3013 is the asteroid 3013 Dobrovoleva,
+    since JPL has no EM-L3 (L-297, Session 1). Keyed to the minute, so the
+    days and the hours near today share one archive."""
+    _require_astro()
+    epochs = {'start': utc_to_tdb(start_dt).strftime('%Y-%m-%d %H:%M'),
+              'stop': utc_to_tdb(stop_dt).strftime('%Y-%m-%d %H:%M'),
+              'step': step}
+    obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type),
+                   location=_normalize_center(center), epochs=epochs)
+    eph = obj.vectors(refplane='ecliptic', cache=HORIZONS_CACHE)
+    out = {}
+    for row in eph:
+        jd = float(row['datetime_jd'])
+        dt = Time(jd, format='jd').datetime.replace(tzinfo=timezone.utc)
+        out[dt.strftime(key_fmt)] = {'jd': jd, 'x': float(row['x']),
+                                     'y': float(row['y']), 'z': float(row['z'])}
+    target = str(eph['targetname'][0]) if len(eph) else ''
+    return out, target
+
+
+def jpl_name_of(target):
+    """JPL's name in its answer's target line: 'EM-L2 (3012)' -> 'EM-L2'."""
+    return str(target or '').split(' (')[0].strip()
+
+
+def point_near_span(today):
+    """(start, stop) UTC datetimes of the hourly band: yesterday at 00:00
+    to the end of the day after tomorrow."""
+    return (today - timedelta(days=POINT_NEAR_FROM_DAYS),
+            today + timedelta(days=POINT_NEAR_TO_DAYS))
+
+
+def process_point(root, obj, window, run_manifest, warn):
+    """One Lagrange point's result: its positions across the window, a day
+    apart, and an hour apart from yesterday to the day after tomorrow;
+    today's point; no elements. Raises (and the caller serves last-good)
+    when there is no window, when JPL answers under another name, or
+    answers nothing."""
+    slug = obj['slug']
+    if window is None:
+        raise ValueError("no served window to fetch it across")
+    today = _utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    start, stop = point_span(window)
+    near0, near1 = point_near_span(today)
+    new = {}
+    for a, z, step in ((start, stop, POINT_STEP),
+                       (near0, near1, POINT_NEAR_STEP)):
+        got, target = fetch_point_vectors(obj['horizons_id'], obj['id_type'],
+                                          obj['canonical_center'], a, z, step)
+        if jpl_name_of(target) != obj.get('horizons_name'):
+            raise ValueError("JPL answered %r for %s, not %s"
+                             % (target, obj['horizons_id'],
+                                obj.get('horizons_name')))
+        if len(got) < 2:
+            raise ValueError("JPL answered %d point(s) for %s to %s"
+                             % (len(got), a.date(), z.date()))
+        new.update(got)
+    raw = load_raw_vectors(root, slug) or {
+        'object': slug, 'center': obj['canonical_center'],
+        'center_slug': obj['center_slug'], 'unit': 'au', 'epoch_type': 'JD',
+        'points': {}}
+    raw['points'].update(new)     # the archive keeps every day it was served
+    w = guard_monitor(slug, obj['category'], new, None, None, 0, None)
+    if w:
+        emit_guard_warnings(w, obj['canonical_center'])
+        run_manifest['guard_warnings'].extend(w)
+    save_raw_vectors(root, slug, raw)
+    run_manifest['objects'][slug] = ('point: %d points, %s to %s, hourly %s '
+                                     'to %s, as %s'
+                                     % (len(new), start.date(), stop.date(),
+                                        near0.date(), near1.date(), target))
+    return {'slug': slug, 'obj': obj, 'osc_block': None,
+            'positions': build_position_file(root, slug, obj, new),
+            'as_of_today': as_of_today_km(new, _dt_to_jd(today) + 0.5),
+            'orbit_type': None, 'comet': None, '_raw_points': new,
+            'trust': {'schema_version': TRUST_SCHEMA_VERSION,
+                      'method': 'served_positions', 'window': None},
+            'point': {'step': POINT_STEP, 'edge_days': POINT_EDGE_DAYS,
+                      'jpl_name': jpl_name_of(target),
+                      'window': {'start_jd': window['start_jd'],
+                                 'end_jd': window['end_jd']},
+                      'near': {'step': POINT_NEAR_STEP,
+                               'start_jd': _dt_to_jd(near0),
+                               'end_jd': _dt_to_jd(near1)},
+                      'last_good': False}}
+
+
+def serve_last_good_point(root, obj, window):
+    """A-3 for a point: the days its archive holds inside this window's
+    span, or None. today's point is nulled, never a stale marker, and the
+    served block says last_good, so the coverage check knows."""
+    slug = obj['slug']
+    raw = load_raw_vectors(root, slug)
+    pts = (raw or {}).get('points') or {}
+    if window is not None:
+        start, stop = point_span(window)
+        lo, hi = _dt_to_jd(start) - 0.01, _dt_to_jd(stop) + 0.01
+        pts = dict((k, p) for k, p in pts.items() if lo <= p['jd'] <= hi)
+    if len(pts) < 2:
+        return None
+    return {'slug': slug, 'obj': obj, 'osc_block': None,
+            'positions': build_position_file(root, slug, obj, pts),
+            'as_of_today': None, 'orbit_type': None, 'comet': None,
+            'stale': True,
+            'trust': {'schema_version': TRUST_SCHEMA_VERSION,
+                      'method': 'served_positions', 'window': None},
+            'point': {'step': POINT_STEP, 'edge_days': POINT_EDGE_DAYS,
+                      'jpl_name': obj.get('horizons_name'),
+                      'last_good': True}}
+
+
+def point_problems(o, served_window, staging):
+    """Each way a served Lagrange point is wrong, in words (empty when it
+    is right): elements served; no positions; a fresh point with no
+    today's point, or whose days do not reach a day past each edge of the
+    window, or leave a gap of more than a day; a frame that would take
+    part in the window. The window is the index's; where the index has
+    none (a dry run of one point), the one the point was fetched across,
+    and with neither the check says so rather than pass."""
+    out = []
+    if o.get('osculating') is not None:
+        out.append("served elements; a point has none")
+    if o.get('canonical_frame') == TRUST_WINDOW_PARTICIPANT_FRAME:
+        out.append("its frame is %s, the window's participants' frame"
+                   % TRUST_WINDOW_PARTICIPANT_FRAME)
+    pos = o.get('positions')
+    if not pos:
+        out.append("no positions served")
+        return out
+    pt = o.get('point') or {}
+    if pt.get('last_good'):
+        return out
+    if o.get('as_of_today') is None:
+        out.append("served fresh with no today's point")
+    path = staging / pos['file']
+    if not path.exists():
+        return out        # #8 names it
+    with open(path) as f:
+        t = sorted((json.load(f).get('data') or {}).get('t') or [])
+    if len(t) < 3:
+        out.append("%d positions served; the parabola needs three" % len(t))
+        return out
+    gap = max(t[i + 1] - t[i] for i in range(len(t) - 1))
+    if gap > POINT_STEP_DAYS + POINT_MINUTE:
+        out.append("a gap of %.3f days between served days" % gap)
+    near = pt.get('near') or {}
+    if near.get('start_jd') is not None:
+        band = [v for v in t if near['start_jd'] - POINT_MINUTE <= v
+                <= near['end_jd'] + 2 * POINT_MINUTE]
+        hours = int(round((near['end_jd'] - near['start_jd']) * 24)) + 1
+        wide = max([band[i + 1] - band[i] for i in range(len(band) - 1)]
+                   or [0.0])
+        if len(band) < hours or wide > POINT_NEAR_STEP_DAYS + POINT_MINUTE:
+            out.append("its hours near today: %d of %d served, the widest "
+                       "gap %.1f hours" % (len(band), hours, wide * 24))
+    else:
+        out.append("served fresh with no hours near today")
+    if not served_window:
+        served_window = pt.get('window')
+        if not served_window:
+            out.append("no window to hold its days to")
+    if served_window:
+        edge = POINT_EDGE_DAYS - POINT_MINUTE
+        if t[0] > served_window['start_jd'] - edge:
+            out.append("its first day, JD %.4f, is not a day before the "
+                       "window's first minute, JD %.4f"
+                       % (t[0], served_window['start_jd']))
+        if t[-1] < served_window['end_jd'] + edge:
+            out.append("its last day, JD %.4f, is not a day after the "
+                       "window's last minute, JD %.4f"
+                       % (t[-1], served_window['end_jd']))
+    return out
+
+
 def _iso_to_jd(iso_str):
     """ISO-8601 UTC timestamp -> JD (for the #T freshness check)."""
     dt = datetime.fromisoformat(iso_str.replace('Z', '+00:00'))
@@ -2031,6 +2351,8 @@ def derive_served(staging, results, defaults, warn=None, frame=None,
             block['position_uncertainty'] = r['position_uncertainty']
         if r.get('hold') is not None:                   # L-525
             block['hold'] = r['hold']
+        if r.get('point') is not None:                  # L-297
+            block['point'] = r['point']
         objects[slug] = block
 
     # M2 sec 5.5, corrected L-149: global served_window. Participants are
@@ -2045,37 +2367,22 @@ def derive_served(staging, results, defaults, warn=None, frame=None,
     # window is set by the bodies that passed. So a missing window here
     # can only be a body that is not held -- none, as built -- and FLAG-3's
     # null stays for it.
+    # L-297: the reckoning has one home, served_window_from, which the
+    # Lagrange points' fetch reads too, before this step.
     as_of_jd = _dt_to_jd(_utcnow())
-    participant_windows = []
-    missing = []
-    held_out = []
-    for slug, block in objects.items():
-        if block['canonical_frame'] != TRUST_WINDOW_PARTICIPANT_FRAME:
-            continue
-        if block.get('hold') is not None:
-            held_out.append(slug)
-            continue
-        wd = (block.get('trust') or {}).get('window_days')
-        if wd is None:
-            missing.append(slug)
-        else:
-            participant_windows.append((wd, slug))
-    if missing:
-        served_window = None
+    served_window, w = served_window_from(results, as_of_jd)
+    if w['missing']:
         warn("served_window: null -- trust measurement missing/failed for %s "
-            "(FLAG-3: null-on-any-failure is the conservative default)" % missing)
-    elif participant_windows:
+            "(FLAG-3: null-on-any-failure is the conservative default)"
+             % w['missing'])
+    elif served_window is not None:
         # L-443: the window's width and the body that sets it are printed,
         # so a body that narrows the room for every visitor is seen by name.
-        w_min, w_slug = min(participant_windows)
-        served_window = {'start_jd': as_of_jd - w_min, 'end_jd': as_of_jd + w_min}
         print("[window] served window: %.1f days either side of today, set by "
               "%s, the shortest of %d bodies' trusted spans%s"
-              % (w_min, w_slug, len(participant_windows),
-                 ('; held out of it: %s' % ', '.join(sorted(held_out)))
-                 if held_out else ''), flush=True)
-    else:
-        served_window = None   # no participants at all (e.g. an empty catalog)
+              % (w['days'], w['set_by'], w['count'],
+                 ('; held out of it: %s' % ', '.join(sorted(w['held_out'])))
+                 if w['held_out'] else ''), flush=True)
 
     index = {
         'schema_version': SCHEMA_VERSION,
@@ -2232,7 +2539,15 @@ def assert_structural(index, staging):
                     "#FO %s: features-only entry carries orbital data"
                     % slug)
             continue
-        if o['category'] == 'spacecraft' or o.get('open_path'):
+        if o['category'] == POINT_CATEGORY:
+            # L-297: a Lagrange point is served its positions across the
+            # window and nothing else (point_problems says each way it
+            # can be wrong); #8, #B3 and #T below hold for it as for a
+            # path.
+            problems = point_problems(o, index.get('served_window'), staging)
+            if problems:
+                raise ValidationAbort("#L %s: %s" % (slug, '; '.join(problems)))
+        elif o['category'] == 'spacecraft' or o.get('open_path'):
             if o['osculating'] is not None or o['positions'] is None:
                 raise ValidationAbort("#2 %s: a path (a spacecraft, or a comet on an open path) must have positions, no osculating" % slug)
         else:
@@ -2948,7 +3263,11 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     # L-525: the bodies held in this build, and the holds it ends.
     holds = {'held': [], 'ended': []}
     today = _utcnow().strftime('%Y-%m-%d')
+    points_pending = []    # L-297: fetched after the window is known
     for obj in objects:
+        if is_point(obj):
+            points_pending.append(obj)
+            continue
         # L-234: an entry served for its features only (a frame
         # origin) has no ephemeris to fetch. Skip before the try,
         # so a features-only entry can never fall into the
@@ -3043,6 +3362,31 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
             else:
                 warn("%s: FETCH FAILED (%s); no last-good -- object dropped this run" % (obj['slug'], e))
                 run_manifest['objects'][obj['slug']] = 'failed: %s (dropped)' % e
+
+    # L-297: the Lagrange points, after every other body, because each is
+    # fetched across the served window, and the window is set by the
+    # bodies above. Each is served in its config place.
+    if points_pending:
+        window, said = point_window(results, prior_index, warn)
+        run_manifest['point_window'] = said
+        for obj in points_pending:
+            try:
+                r = process_point(staging, obj, window, run_manifest, warn)
+            except Exception as e:
+                r = serve_last_good_point(staging, obj, window)
+                if r is None:
+                    warn("%s: FETCH FAILED (%s); no last-good -- object "
+                         "dropped this run" % (obj['slug'], e))
+                    run_manifest['objects'][obj['slug']] = (
+                        'failed: %s (dropped)' % e)
+                    continue
+                warn("%s: FETCH FAILED (%s); served last-good positions, "
+                     "as_of_today nulled" % (obj['slug'], e))
+                run_manifest['objects'][obj['slug']] = (
+                    'failed: %s (served last-good)' % e)
+            results.append(r)
+        place = dict((o['slug'], i) for i, o in enumerate(objects))
+        results.sort(key=lambda r: place.get(r['slug'], len(place)))
 
     # L-322 Stage D: the frame rows, and Earth's pole of date at the same
     # 0h UT epoch the osculating elements use. Kept apart from the orbit's
@@ -3139,8 +3483,9 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
         floor = int(0.5 * defaults['backfill_days'])
         for r in results:
             # L-234: features-only entries fetch nothing, so the
-            # backfill floor does not apply to them.
-            if (not is_path_body(r['obj'])
+            # backfill floor does not apply to them. L-297: nor to a
+            # Lagrange point, whose count is its window's, not a year's.
+            if (not is_path_body(r['obj']) and not is_point(r['obj'])
                     and r['obj'].get('serve_positions') is not False):
                 rr = load_raw_vectors(staging, r['slug'])
                 n = len(rr['points']) if rr else 0

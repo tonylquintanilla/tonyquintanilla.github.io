@@ -2240,7 +2240,7 @@ async function places(root, payload, page) {
     console.log("  39: the drawer opens at its handle's row -- " + seen.join("; "));
   }
   // 40. L-533 (ESCAPADE's path): ESCAPADE-Blue's loiter, named in its box
-  // in words only (no room draws L2 yet, L-297), and its companions Earth
+  // as the room names the point, Earth-Sun L2 (L-297), and its companions Earth
   // and Mars, never the point. Run only on a payload that serves it.
   if (data.bodies.escapade_blue && data.bodies.escapade_blue.path_loiter) {
     E("setSunDrawer(true)");
@@ -2249,7 +2249,7 @@ async function places(root, payload, page) {
     const emk = et.find(t => t.meta && t.meta.label_target === true);
     const ej = emk ? emk.text[0].replace(/<br soft>/g, " ") : "";
     const loiterWords = "From its launch on 13 November 2025 until its flyby of Earth " +
-      "on 7 November 2026, it flew wide loops near Earth, around the point called L2.";
+      "on 7 November 2026, it flew wide loops near Earth, around the point called Earth-Sun L2.";
     ok(ej.indexOf(loiterWords) >= 0, "ESCAPADE-Blue's box lacks its loiter line: " + ej.slice(0, 500));
     ok(E("JSON.stringify(ssDrawer.companions.escapade_blue)") === '["earth","mars"]' &&
        shown("earth") && shown("mars"),

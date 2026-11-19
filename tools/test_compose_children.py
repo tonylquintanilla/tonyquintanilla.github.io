@@ -36,6 +36,11 @@ Domain: assembler
 
 Written November 10, 2026 with Anthropic's Claude Opus 5.5 (L-515 step 2b,
 part 1).
+Updated November 19, 2026 with Anthropic's Claude Opus 5.5 (L-297, the
+Lagrange points: a point served around Earth is composed the same way, its
+own served position at the minute PLUS Earth's; a worked case, a fourth
+break (the parent subtracted from a point), and the real served points,
+each at Earth's marker plus its own place, its distance its own.)
 """
 
 import json
@@ -48,6 +53,7 @@ sys.path.insert(0, os.path.join(ROOT, "gallery"))
 
 from assembler import compose_children as REAL          # noqa: E402
 from assembler import render_orbits                    # noqa: E402
+from assembler import render_spacecraft                # noqa: E402
 from assembler.cache_reader import CacheReader         # noqa: E402
 
 J0 = 2461353.5
@@ -91,12 +97,38 @@ def cases(cc):
     lab = by["label"][0]
     want(lab["x"][0] == mk["x"][0] and lab["y"][0] == mk["y"][0],
          "the child's label is not at its marker")
+    # L-297: a Lagrange point around Earth, served three positions a day
+    # apart on a straight line through (0.0026, 0, 0) on J0, drawn at
+    # Earth's place on J0 + 0.5 plus its own.
+    earth = circle(5.0, 0.1, "@sun", m0=90.0)
+    pay = {"data": {"t": [J0 - 1, J0, J0 + 1],
+                    "x": [0.0026 * 149597870.7] * 3,
+                    "y": [-0.0026 * 149597870.7, 0.0, 0.0026 * 149597870.7],
+                    "z": [0.0, 0.0, 0.0]}}
+    pparts, (prel, _w) = cc.build_point_child_traces(
+        "Earth-Moon L2", pay, earth, "earth", J0 + 0.5, "#fff", "em_l2")
+    pmk = [t for r, t in pparts if r == "object_marker"]
+    want(len(pmk) == 1 and len(pparts) == 2,
+         "a point child is not a marker and a label alone: %r"
+         % [r for r, _t in pparts])
+    if pmk:
+        own = render_spacecraft.position_at(render_spacecraft._series(pay),
+                                            J0 + 0.5)["km"]
+        own = [v / 149597870.7 for v in own]
+        ep = render_orbits.propagate_marker(earth, J0 + 0.5)
+        want(abs(pmk[0]["x"][0] - (ep[0] + own[0])) < 1e-12 and
+             abs(pmk[0]["y"][0] - (ep[1] + own[1])) < 1e-12,
+             "the point is not drawn at Earth's place plus its own: (%r, %r)"
+             % (pmk[0]["x"][0], pmk[0]["y"][0]))
+        want(list(pmk[0]["meta"]["rel_au"]) == own and list(prel) == own,
+             "the point's distance from Earth is not read from its own position")
     return fails
 
 
 def broken_subtract():
     class B:
         children_to_draw = staticmethod(REAL.children_to_draw)
+        build_point_child_traces = staticmethod(REAL.build_point_child_traces)
 
         @staticmethod
         def build_child_traces(name, c, p, ps, t, col, lg, n=360):
@@ -114,6 +146,7 @@ def broken_subtract():
 def broken_orbit_at_sun():
     class B:
         children_to_draw = staticmethod(REAL.children_to_draw)
+        build_point_child_traces = staticmethod(REAL.build_point_child_traces)
 
         @staticmethod
         def build_child_traces(name, c, p, ps, t, col, lg, n=360):
@@ -129,6 +162,7 @@ def broken_orbit_at_sun():
 def broken_difference():
     class B:
         children_to_draw = staticmethod(REAL.children_to_draw)
+        build_point_child_traces = staticmethod(REAL.build_point_child_traces)
 
         @staticmethod
         def build_child_traces(name, c, p, ps, t, col, lg, n=360):
@@ -147,7 +181,25 @@ def broken_difference():
     return B
 
 
-def real_cases(cc, cfg, cov):
+def broken_point_subtract():
+    """L-297: the parent subtracted from a point, not added."""
+    class B(object):
+        build_child_traces = staticmethod(REAL.build_child_traces)
+        children_to_draw = staticmethod(REAL.children_to_draw)
+
+        @staticmethod
+        def build_point_child_traces(name, pay, p, ps, t, col, lg, **kw):
+            parts, out = REAL.build_point_child_traces(name, pay, p, ps, t,
+                                                       col, lg, **kw)
+            pp = render_orbits.propagate_marker(p, t)
+            for _r, tr in parts:
+                for i, a in enumerate("xyz"):
+                    tr[a] = [tr[a][0] - 2 * pp[i]]
+            return parts, out
+    return B
+
+
+def real_cases(cc, cfg, cov, positions=None):
     fails, lines = [], []
     cache = CacheReader(cov)
     rows = (((cfg.get("rooms") or {}).get("solar-system") or {})
@@ -159,7 +211,12 @@ def real_cases(cc, cfg, cov):
     want_kids = [(o["slug"], o["center_slug"]) for o in cfg.get("objects") or []
                  if isinstance(o, dict) and o.get("center_slug") in drawn
                  and o.get("center_slug") != o.get("slug")
-                 and cache.has(o["slug"]) and (cache.record(o["slug"]) or {}).get("osculating")]
+                 and cache.has(o["slug"]) and (
+                     (cache.record(o["slug"]) or {}).get("osculating")
+                     # L-297: a Lagrange point, served positions
+                     or ((cache.record(o["slug"]) or {}).get("category")
+                         == "lagrange_point"
+                         and (cache.record(o["slug"]) or {}).get("positions")))]
     if kids != want_kids:
         fails.append("the children found are not every object fetched around a "
                      "drawn body, in config order: %r against %r" % (kids, want_kids))
@@ -167,8 +224,33 @@ def real_cases(cc, cfg, cov):
         fails.append("no child is served around a body the root draws")
     jd = (cov.get("served_window") or {}).get("start_jd") or J0
     for slug, parent in kids:
-        c_osc = cache.record(slug)["osculating"]
         p_osc = cache.record(parent)["osculating"]
+        if cache.record(slug).get("category") == "lagrange_point":
+            # L-297: its own served position at the minute, plus Earth's.
+            path = os.path.join(ROOT, "data", "solar-system",
+                                cache.record(slug)["positions"]["file"])
+            pay = json.load(open(path, encoding="utf-8"))
+            jdp = (cache.record(slug).get("as_of_today") or {}).get("t") or jd
+            parts, (rel, _w) = cc.build_point_child_traces(
+                slug, pay, p_osc, parent, jdp, "#fff", slug)
+            if rel is None:
+                fails.append("%s: not drawn at %s's place at JD %.3f" % (slug, parent, jdp))
+                continue
+            mk = [t for _r, t in parts if (t.get("meta") or {}).get("rel_au")][0]
+            own = [v / 149597870.7 for v in render_spacecraft.position_at(
+                render_spacecraft._series(pay), jdp)["km"]]
+            pp = render_orbits.propagate_marker(p_osc, jdp)
+            off = max(abs(mk[a][0] - (pp[i] + own[i])) for i, a in enumerate("xyz"))
+            if off > 1e-12:
+                fails.append("%s is not drawn at %s's marker plus its own place: %r AU off"
+                             % (slug, parent, off))
+            if [float(v) for v in mk["meta"]["rel_au"]] != own:
+                fails.append("%s's distance from %s is not read from its own position"
+                             % (slug, parent))
+            r_km = math.sqrt(sum(v * v for v in own)) * 149597870.7
+            lines.append("%s around %s, %s km" % (slug, parent, format(round(r_km), ",")))
+            continue
+        c_osc = cache.record(slug)["osculating"]
         parts, rel = cc.build_child_traces(slug, c_osc, p_osc, parent, jd, "#fff", slug)
         mk = [t for _r, t in parts if (t.get("meta") or {}).get("rel_au")][0]
         own = render_orbits.propagate_marker(c_osc, jd)
@@ -195,7 +277,9 @@ def main():
     for label, b in (("the parent subtracted, not added", broken_subtract()),
                      ("the child's orbit left around the Sun", broken_orbit_at_sun()),
                      ("the child's distance worked out as a difference of two large vectors",
-                      broken_difference())):
+                      broken_difference()),
+                     ("a point's parent subtracted, not added (L-297)",
+                      broken_point_subtract())):
         if cases(b):
             caught.append(label)
         else:

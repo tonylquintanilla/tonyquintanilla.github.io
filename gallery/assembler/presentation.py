@@ -30,6 +30,11 @@ Galileo's white made goldenrod by the same rule.)
 Module updated: November 5, 2026 with Anthropic's Claude Opus 5.5 (L-507,
 more voyages: Pioneer 10's, Pioneer 11's, Rosetta's, Akatsuki's and
 DART's colours, the orrery's, with Rosetta's white made goldenrod.)
+Module updated: November 19, 2026 with Anthropic's Claude Opus 5.5 (L-297,
+the Lagrange points: the eight points' colours, the orrery's, for Tony's
+look; and the label side, a side per body for its name, the default
+"top center" for every body not set: ESCAPADE's twins on opposite sides,
+and the points set where they sit beside Earth and the Moon.)
 
 Role: rendering
 Domain: assembler
@@ -146,12 +151,52 @@ _COLORS = {
     "oumuamua": "magenta",
     "borisov_2i": "red",
     "atlas_3i": "red",
+    # L-297, 2026-11-19: the eight Lagrange points, in the orrery's own
+    # colours (color_map in constants_new.py, read under its old names
+    # 'EM-L1' ... and 'L1' ..., which celestial_objects.COLOR_KEY_BY_NAME
+    # maps each point's name to, Session 1's uncommitted orrery): L1 cyan,
+    # L2 white, L4 magenta, L5 red, the same for each pair. A first choice
+    # for Tony's look (Mode 5).
+    "em_l1": "cyan",
+    "em_l2": "white",
+    "em_l4": "magenta",
+    "em_l5": "red",
+    "semb_l1": "cyan",
+    "semb_l2": "white",
+    "semb_l4": "magenta",
+    "semb_l5": "red",
 }
 _DEFAULT_COLOR = "#8ab4f8"
 
 
 def color_for(slug: str) -> str:
     return _COLORS.get(slug, _DEFAULT_COLOR)
+
+
+# L-297 (Tony's ruling of 2026-11-18, 17:58, "Yes", to his own 17:57:
+# "consider putting one of the names on the opposite side of its symbol"):
+# the side of its symbol a body's name is printed on, Plotly's textposition.
+# A body not set here keeps the default, so nothing else moves. ESCAPADE's
+# twins fly side by side to Mars, so Gold's name goes below. The points
+# beside Earth and the Moon: Earth's and the Moon's names print above, so
+# the near points' go below or beside. Approved on Tony's look of
+# 2026-11-19, with one change: Earth-Moon L1's name on the left, so it no
+# longer runs into Earth-Moon L2's square. A side is one of Plotly's nine.
+_LABEL_SIDES = {
+    "escapade_gold": "bottom center",
+    "em_l1": "middle left",   # Tony's look, 2026-11-19: clear of L2's square
+    "em_l2": "middle right",
+    "semb_l1": "bottom center",
+    "semb_l2": "middle right",
+}
+DEFAULT_LABEL_SIDE = "top center"
+LABEL_SIDE_CHOICES = ("top left", "top center", "top right", "middle left",
+                      "middle center", "middle right", "bottom left",
+                      "bottom center", "bottom right")
+
+
+def label_side_for(slug: str) -> str:
+    return _LABEL_SIDES.get(slug, DEFAULT_LABEL_SIDE)
 
 
 def order_traces(traces_with_roles: List[Any]) -> List[Dict[str, Any]]:

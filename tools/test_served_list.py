@@ -139,13 +139,14 @@ def real_list(results):
         slug = name[len(POSITIONS):-len(".json")]
         obj = entry(config, slug) or {}
         kind = ("spacecraft" if obj.get("category") == "spacecraft"
-                else "comets on open paths")
+                else "Lagrange points" if obj.get("category") ==
+                "lagrange_point" else "comets on open paths")
         kinds.setdefault(kind, []).append(slug)
         if not os.path.isfile(os.path.join(ROOT, name.replace("/", os.sep))):
             problems.append("%s is named by the config, and the working "
                             "copy's served cache has no such file" % name)
     print("  the real config names %d positions files:" % len(files))
-    for kind in ("spacecraft", "comets on open paths"):
+    for kind in ("spacecraft", "comets on open paths", "Lagrange points"):
         slugs = kinds.get(kind, [])
         print("    %d %s: %s" % (len(slugs), kind, ", ".join(slugs)))
     results.append(("the list from the real config, each file on disk",
@@ -198,10 +199,27 @@ def planted(results):
                             "list (%s)" % (problem or "still in it"))
     cases.append(("planted: a comet whose open_path goes leaves", problems))
 
+    # L-297: a Lagrange point serves a positions file: a point's entry
+    # added must join the list, and taken out of its kind, leave it.
+    added = json.loads(json.dumps(config))
+    added["objects"].append({"slug": "__probe_point__",
+                             "category": "lagrange_point"})
+    root = with_config(json.dumps(added))
+    try:
+        files, problem = gmr.positions_files(root)
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+    problems = []
+    if problem or file_of("__probe_point__") not in files:
+        problems.append("a Lagrange point's entry did not join the list "
+                        "(%s)" % (problem or "not in it"))
+    cases.append(("planted: a Lagrange point joins", problems))
+
     # No path body at all, and a config that is not JSON: red, with why.
     empty = json.loads(json.dumps(config))
     empty["objects"] = [obj for obj in empty.get("objects") or []
-                        if not (obj.get("category") == "spacecraft"
+                        if not (obj.get("category") in ("spacecraft",
+                                                        "lagrange_point")
                                 or obj.get("open_path"))]
     for label, text in (("a config naming no path body", json.dumps(empty)),
                         ("a config that is not JSON", "{ not json")):
@@ -263,7 +281,7 @@ def main():
         print("SERVED LIST: %d of %d checks FAILED" % (failures, len(results)))
         return 1
     print("SERVED LIST: all %d checks passed (the real list, the typed list "
-          "free of positions files, and 5 planted faults caught)"
+          "free of positions files, and 6 planted faults caught)"
           % len(results))
     return 0
 

@@ -32,6 +32,12 @@ marker there, so the children sit on the parent's marker.
 
 Module created: November 10, 2026 with Anthropic's Claude Opus 5.5
 (L-515 step 2b, part 1).
+Module updated: November 19, 2026 with Anthropic's Claude Opus 5.5 (L-297,
+the Lagrange points: a child served positions and no elements -- a
+Lagrange point served around Earth -- is drawn at its parent's place the
+same way, by ADDING the parent's position to the point's own, worked out
+from its served positions for the minute (build_point_child_traces); a
+marker alone, no orbit.)
 
 Role: computation
 Domain: assembler
@@ -39,7 +45,7 @@ Domain: assembler
 
 from typing import Any, Dict, List, Tuple
 
-from . import render_orbits, render_objects
+from . import render_orbits, render_objects, render_spacecraft
 from .models import ROLE_LABEL, ROLE_OBJECT_MARKER, ROLE_ORBIT, ROLE_ORBIT_INFO
 
 
@@ -64,12 +70,45 @@ def children_to_draw(config_objects, cache, drawn_parents):
             missing.append("%s: fetched around %s, but the served cache has no "
                            "record of it yet" % (slug, parent))
             continue
-        if not (cache.record(slug) or {}).get("osculating"):
+        rec = cache.record(slug) or {}
+        # L-297: a Lagrange point is served positions, no elements.
+        if not rec.get("osculating") and not (
+                rec.get("category") == "lagrange_point" and rec.get("positions")):
             missing.append("%s: its served record holds no elements, so it is "
                            "not drawn at %s's place" % (slug, parent))
             continue
         out.append((slug, parent))
     return out, missing
+
+
+def build_point_child_traces(name: str, payload: Dict[str, Any],
+                             parent_osc: Dict[str, Any], parent_slug: str,
+                             t_jd: float, color: str, legendgroup: str,
+                             label_side: str = "top center"
+                             ) -> Tuple[List[Tuple[str, Dict[str, Any]]], Any]:
+    """L-297: a Lagrange point served around its parent, drawn at the
+    parent's place: the point's own position around the parent, from its
+    served positions at t_jd (render_spacecraft.build_point_traces), PLUS
+    the parent's position from its own elements around the Sun. Returns
+    ([(role, trace)], rel), rel the point around its parent in AU, or
+    ([], None) with no marker when the minute is outside its served days;
+    the warnings are the renderer's."""
+    parent_pos = render_orbits.propagate_marker(parent_osc, t_jd)
+    parts, warnings = render_spacecraft.build_point_traces(
+        name, payload, t_jd, color, legendgroup, offset_au=parent_pos,
+        label_side=label_side, category="lagrange_point")
+    traces: List[Tuple[str, Dict[str, Any]]] = []
+    rel = None
+    for part, tr in parts:
+        meta = dict(tr.get("meta") or {})
+        meta["child_of"] = parent_slug
+        if part == "marker":
+            meta["parent_au"] = [parent_pos[0], parent_pos[1], parent_pos[2]]
+            rel = tuple(meta["rel_au"])
+        tr["meta"] = meta
+        traces.append((ROLE_OBJECT_MARKER if part == "marker" else ROLE_LABEL,
+                       tr))
+    return traces, (rel, warnings)
 
 
 def build_child_traces(name: str, child_osc: Dict[str, Any],

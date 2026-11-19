@@ -79,12 +79,22 @@ Module updated: October 14, 2026 with Anthropic's Claude Opus 5.5 (L-431,
 build 3: an object whose config period is taken around the barycentre
 needs a served drawn_orbit around it, and a served drawn_orbit needs such
 a period; shown able to fail on a probe each run.)
+Module updated: November 19, 2026 with Anthropic's Claude Opus 5.5 (L-297,
+the Lagrange points: each object is served in the shape the config asks
+for -- elements, a path, a point across the window, or features only --
+by the cache builder's own serving_shape; a body whose config shape
+differs from what the cache serves is named; shown able to fail on a
+probe each run, an elements body asked for as a point.)
 """
 
 import copy
 import json
 import os
 import sys
+
+# L-297: the serving shape has one home, the cache builder's serving_shape.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from gallery_cache_builder import serving_shape  # noqa: E402
 
 CONFIG = os.path.join("data", "objects_config.json")
 CACHES = (
@@ -213,6 +223,13 @@ def compare_objects(config, caches):
             # drawn_orbit around it, and a served drawn_orbit needs a
             # period that asks for one; otherwise the room draws around
             # the wrong centre until the builder runs.
+            # L-297: the shape the config asks for is the one served.
+            shape = serving_shape(obj)
+            if served_shape(record) != shape:
+                failures.append((shown, "%s/shape: the config asks for %s, "
+                                 "the cache serves %s"
+                                 % (obj.get("slug"), shape,
+                                    served_shape(record))))
             want = drawn_centre_wanted(obj)
             held = (record.get("drawn_orbit") or {}).get("period_center")
             if want != held and record.get("osculating") is not None:
@@ -225,6 +242,18 @@ def compare_objects(config, caches):
 
 
 SUN_CENTRES = ("@sun", "@10", "sun", "10")
+
+
+def served_shape(record):
+    """The shape a served record is in, in serving_shape's words: elements
+    when it carries osculating elements, a point or a path when it carries
+    positions (a point by its category), features otherwise."""
+    if record.get("osculating") is not None:
+        return "elements"
+    if record.get("positions") is not None:
+        return ("point" if record.get("category") == "lagrange_point"
+                else "path")
+    return "features"
 
 
 def drawn_centre_wanted(obj):
@@ -277,6 +306,16 @@ def self_test(config, caches):
                    for _where, message in compare_objects(probe, caches)):
             missing.append("a period moved to the barycentre and not built "
                            "was not reported")
+    # L-297: an elements body asked for as a Lagrange point, not built.
+    probe = copy.deepcopy(config)
+    helio = [obj for obj in probe["objects"] if isinstance(obj, dict)
+             and serving_shape(obj) == "elements"]
+    if helio:
+        helio[0]["category"] = "lagrange_point"
+        if not any(message.startswith("%s/shape:" % helio[0].get("slug"))
+                   for _where, message in compare_objects(probe, caches)):
+            missing.append("a body asked for as a Lagrange point and not "
+                           "built was not reported")
     return missing
 
 

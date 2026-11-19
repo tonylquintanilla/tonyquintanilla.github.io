@@ -77,9 +77,19 @@ def assemble_scene(scene_dict: Dict[str, Any], catalog: Catalog,
                     "assembler, so its path is not drawn"
                     % (obj.slug, (obj.positions or {}).get("file")))
                 continue
-            parts, sc_warn = render_spacecraft.build_spacecraft_traces(
-                obj.name, payload, ctx.resolved_epoch_jd, color, lg,
-                symbol=render_spacecraft.symbol_for(obj.category))
+            # L-297: a Lagrange point is served positions too, and is drawn
+            # as a marker alone, no line (render_spacecraft.build_point_traces).
+            if obj.category == "lagrange_point":
+                parts, sc_warn = render_spacecraft.build_point_traces(
+                    obj.name, payload, ctx.resolved_epoch_jd, color, lg,
+                    label_side=presentation.label_side_for(obj.slug),
+                    category=obj.category)
+            else:
+                parts, sc_warn = render_spacecraft.build_spacecraft_traces(
+                    obj.name, payload, ctx.resolved_epoch_jd, color, lg,
+                    symbol=render_spacecraft.symbol_for(obj.category),
+                    category=obj.category,
+                    label_side=presentation.label_side_for(obj.slug))
             extra_warnings.extend(sc_warn)
             role_of = {"flown": ROLE_SPACECRAFT_ARC,
                        "predicted": ROLE_SPACECRAFT_ARC,

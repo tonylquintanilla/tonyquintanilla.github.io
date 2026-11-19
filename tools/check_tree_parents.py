@@ -28,17 +28,22 @@ WHAT IT CHECKS
     2. The root is the object served around itself (the Sun: center_slug
        "sun"), and its `parent` is null. There is exactly one root.
     3. Every `parent` names an object the config lists.
+    4. (L-297) No object is served around a Lagrange point: a point has
+       no mass, and JPL's numbers for the points (3011 to 3015, 31 to 35)
+       are never a centre.
     It prints how many objects it read, the root, and each centre with
     how many objects sit under it, so a pass names what it looked at.
-    Before reading the real config it plants four faults in copies --
+    Before reading the real config it plants five faults in copies --
     a parent that is not the fetched centre, a root with a parent, a
-    parent naming no object, a second root -- and each must be reported.
+    parent naming no object, a second root, a body served around a
+    Lagrange point -- and each must be reported.
 
 WHAT MAKES IT FAIL
 
     - an object whose parent is not its center_slug, named with both
     - no root, more than one, or a root whose parent is not null
     - a parent naming no object in the config
+    - an object served around a Lagrange point (L-297)
     - an object with no center_slug, or no slug
     - the self-test above not producing the failures it must
 
@@ -52,6 +57,9 @@ HOW TO FIX A FAILURE
     the cache is rebuilt).
 
 Written November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step 1).
+Module updated: November 19, 2026 with Anthropic's Claude Opus 5.5 (L-297,
+the Lagrange points: no object is served around a point; a fifth planted
+fault.)
 """
 
 import copy
@@ -78,6 +86,8 @@ def tree_problems(config):
         slugs.add(slug)
     roots = []
     under = {}
+    points = set(o.get("slug") for o in objects
+                 if o.get("category") == "lagrange_point")
     for obj in objects:
         slug = obj.get("slug")
         if not isinstance(slug, str):
@@ -98,6 +108,10 @@ def tree_problems(config):
         if parent != centre:
             problems.append("%s: parent is %r, but it is served around %r"
                             % (slug, parent, centre))
+        if centre in points:
+            problems.append("%s: served around %r, a Lagrange point, which "
+                            "has no mass and is never a centre"
+                            % (slug, centre))
         if centre not in slugs:
             problems.append("%s: served around %r, which is no object in "
                             "the config" % (slug, centre))
@@ -114,7 +128,7 @@ def tree_problems(config):
 
 
 def self_test(config):
-    """The four planted faults, each on its own copy. Returns the list
+    """The five planted faults, each on its own copy. Returns the list
     of plants that were NOT reported (empty is good)."""
     missed = []
     objects = config.get("objects", [])
@@ -151,6 +165,16 @@ def self_test(config):
             lambda objs: objs[by_slug[child]].__setitem__(
                 "center_slug", child),
             "roots")
+    # L-297: a body served around a Lagrange point.
+    planted("a body served around a Lagrange point",
+            lambda objs: (objs.append({"slug": "point_planted",
+                                       "category": "lagrange_point",
+                                       "center_slug": root, "parent": root}),
+                          objs[by_slug[child]].__setitem__(
+                              "center_slug", "point_planted"),
+                          objs[by_slug[child]].__setitem__(
+                              "parent", "point_planted")),
+            "a Lagrange point")
     return missed
 
 
@@ -170,7 +194,7 @@ def main(path=None):
             print("  self-test: the planted fault was NOT reported: %s" % name)
         print("TREE PARENTS: FAIL -- the check could not show it can fail")
         return 1
-    print("  self-test: 4 planted faults, each reported")
+    print("  self-test: 5 planted faults, each reported")
     problems, summary = tree_problems(config)
     if summary:
         print("  read %d objects from %s" % (summary["count"], full))

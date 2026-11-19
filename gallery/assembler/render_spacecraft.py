@@ -30,10 +30,25 @@ that parabola lies from the straight chord between the two points either side
 -- the curvature the points cannot see, taken as the uncertainty of working
 it out. Near today the builder serves a point every day, so the error is
 small; where only weekly points are served it is larger, and the room prints
-the distance to the place that error earns (provenance-discipline 2.23, A
+the distance to the place that error earns (provenance-discipline, A
 Computed Position Prints What Its Errors Earn). With only two points there is
 no parabola, and the error is half the chord. JPL's own uncertainty for the
-spacecraft's position is not served; the room says so.
+spacecraft's position is not served; the room says so. The same rule places
+a Lagrange point (L-297), from JPL's positions a day apart across the served
+window and an hour apart near today.
+
+THE CURVE'S ERROR, BUILT AND SWITCHED OFF (L-297; Tony's ruling of
+2026-11-18, 18:56, "Yes, the straight path is not what is happening"). With
+curve=True the error is twice the larger of the gaps between the parabola
+and the cubic through its three points and one more served point, taken on
+each side (CURVE_FACTOR). Held out against every served point, it was never
+smaller than the real miss for the Lagrange points, the comets on open paths
+and ESCAPADE's flybys; it was for craft orbiting near a planet (Juno,
+BepiColombo, Cassini, Galileo, Europa Clipper, Akatsuki), whose served points
+cannot see their loops -- and so is the chord figure. CURVE_KINDS names the
+kinds it is on for: the Lagrange points and the comets on open paths, by
+Tony's ruling of 2026-11-19 (tools/test_curve_error.py holds those kinds to
+it every run).
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact
 1), as a stub for artifact 5.
@@ -48,6 +63,11 @@ historical missions: a minute past the served path is an ended mission's,
 drawn whole and solid with its marker on the last served point, where it
 was on its last day, the same diamond-open (orrery-coding-conventions),
 its meta marked ended with no error; before, it had no marker.)
+Module updated: November 19, 2026 with Anthropic's Claude Opus 5.5 (L-297,
+the Lagrange points: the curve's error built behind curve=True and
+CURVE_KINDS, on for the Lagrange points and the comets on open paths by
+Tony's ruling of 2026-11-19, held by tools/test_curve_error.py; position_at says how its error was worked out,
+err_from; build_spacecraft_traces takes the body's category.)
 
 Role: rendering
 Domain: assembler
@@ -96,10 +116,43 @@ def _quad(p, q, r, jd):
     return tuple(l0 * p[k] + l1 * q[k] + l2 * r[k] for k in (1, 2, 3))
 
 
-def position_at(rows, jd) -> Optional[Dict[str, Any]]:
-    """{'km': (x, y, z), 'err_km', 'index'} at jd, or None when jd is
-    outside the served span. 'index' is the last served point at or before
-    jd, so the path splits after it."""
+def _cubic(four, jd):
+    """The cubic through four timed points, each axis, at jd."""
+    out = [0.0, 0.0, 0.0]
+    for i, p in enumerate(four):
+        w = 1.0
+        for j, r in enumerate(four):
+            if i != j:
+                w *= (jd - r[0]) / (p[0] - r[0])
+        for k in range(3):
+            out[k] += w * p[k + 1]
+    return tuple(out)
+
+
+# L-297: the curve's error is doubled, so it is never smaller than the real
+# miss. Measured 2026-11-19 by holding out each served point and predicting
+# it, and against JPL's own finer points: Earth-Moon L2 and Earth-Sun L1 a
+# day and an hour apart, Psyche and 3I/ATLAS at their served steps, and
+# ESCAPADE Blue's and Gold's Earth flybys at theirs -- about 1,000 minutes,
+# the real miss at most 0.93 of the doubled figure, and over it in about
+# half the cases with the gap undoubled. Recorded on L-297.
+CURVE_FACTOR = 2.0
+# The kinds of body (a served entry's category) whose box prints the curve's
+# error. Tony's ruling of 2026-11-19: "on for the Lagrange points and the
+# open-path comets only". 'comet' reaches only a comet on an open path
+# here, since a comet on a closed orbit is drawn from its elements, never
+# by this module. Off for every other body: the spacecraft that orbit near
+# a planet (Juno, BepiColombo ...) miss by more than it (L-538).
+CURVE_KINDS = ("lagrange_point", "comet")
+
+
+def position_at(rows, jd, curve=False) -> Optional[Dict[str, Any]]:
+    """{'km': (x, y, z), 'err_km', 'err_from', 'index'} at jd, or None when
+    jd is outside the served span. 'index' is the last served point at or
+    before jd, so the path splits after it. 'err_from' says how the error
+    was worked out: 'chord' (the parabola against the chord), 'curve' with
+    curve=True where a fourth point is served (L-297), 'half_chord' where
+    only two points are."""
     if len(rows) < 2 or jd < rows[0][0] or jd > rows[-1][0]:
         return None
     lo, hi = 0, len(rows) - 1
@@ -122,11 +175,27 @@ def position_at(rows, jd) -> Optional[Dict[str, Any]]:
         third = hi + 1
     if third is None:
         chord = math.sqrt(sum((b[k] - a[k]) ** 2 for k in (1, 2, 3)))
-        return {"km": lin, "err_km": chord / 2.0, "index": lo}
+        return {"km": lin, "err_km": chord / 2.0, "index": lo,
+                "err_from": "half_chord"}
     trio = sorted([a, b, rows[third]], key=lambda r: r[0])
     q = _quad(trio[0], trio[1], trio[2], jd)
+    # L-297 (Tony's ruling of 2026-11-18, 18:56: "Yes, the straight path is
+    # not what is happening"): the error is the curve's, twice the larger
+    # of the gaps between this parabola and the cubic through its three
+    # points and one more, taken on each side. Only where no fourth point
+    # is served does the old figure stand, the parabola against the chord.
+    held = [lo, hi, third]
+    gaps = []
+    for f in ((min(held) - 1, max(held) + 1) if curve else ()):
+        if 0 <= f < len(rows):
+            c = _cubic(sorted([a, b, rows[third], rows[f]],
+                              key=lambda r: r[0]), jd)
+            gaps.append(math.sqrt(sum((c[k] - q[k]) ** 2 for k in range(3))))
+    if gaps:
+        return {"km": q, "err_km": CURVE_FACTOR * max(gaps), "index": lo,
+                "err_from": "curve"}
     err = math.sqrt(sum((q[k] - lin[k]) ** 2 for k in range(3)))
-    return {"km": q, "err_km": err, "index": lo}
+    return {"km": q, "err_km": err, "index": lo, "err_from": "chord"}
 
 
 def _line(name, xs, ys, zs, color, legendgroup, dash, part):
@@ -148,7 +217,9 @@ def _line(name, xs, ys, zs, color, legendgroup, dash, part):
 def build_spacecraft_traces(name: str, payload: Dict[str, Any],
                             epoch_jd: float, color: str,
                             legendgroup: str,
-                            symbol: str = MARKER_SYMBOL) -> Tuple[List[Tuple[str, Dict[str, Any]]], List[str]]:
+                            symbol: str = MARKER_SYMBOL,
+                            category: Optional[str] = None,
+                            label_side: str = "top center") -> Tuple[List[Tuple[str, Dict[str, Any]]], List[str]]:
     """([(part, trace)], warnings). part is 'flown', 'predicted', 'marker' or
     'label'. A minute after the served span is an ended mission's: the
     whole path solid, the marker on its last served point, where it was on
@@ -162,7 +233,7 @@ def build_spacecraft_traces(name: str, payload: Dict[str, Any],
         return [], ["%s: its served path has fewer than two points, so it "
                     "is not drawn" % name]
     au = [(r[0], r[1] / AU_KM, r[2] / AU_KM, r[3] / AU_KM) for r in rows]
-    at = position_at(rows, epoch_jd)
+    at = position_at(rows, epoch_jd, curve=category in CURVE_KINDS)
     out: List[Tuple[str, Dict[str, Any]]] = []
     ended = at is None and epoch_jd > rows[-1][0]
     if at is None and not ended:
@@ -214,7 +285,9 @@ def build_spacecraft_traces(name: str, payload: Dict[str, Any],
         "mode": "text",
         "x": [m[0]], "y": [m[1]], "z": [m[2]],
         "text": [name],
-        "textposition": "top center",
+        # L-297: the side of its symbol the name is printed on, per body
+        # (presentation.label_side_for), "top center" unless set.
+        "textposition": label_side,
         "textfont": {"color": "white"},
         "name": "%s label" % name,
         "legendgroup": legendgroup,
@@ -222,3 +295,75 @@ def build_spacecraft_traces(name: str, payload: Dict[str, Any],
         "hoverinfo": "skip",
     }))
     return out, warnings
+
+
+# L-297: the orrery's symbol for a Lagrange point (celestial_objects.py,
+# every point's entry: 'symbol': 'square-open'; orrery-coding-conventions,
+# the Marker Symbol Convention).
+POINT_SYMBOL = "square-open"
+
+
+def point_at(payload, epoch_jd, curve=False):
+    """position_at on a served positions file: the point's place at the
+    minute, around the centre it is served around, or None when the minute
+    is outside its served days -- then it has no marker (Tony's ruling of
+    2026-11-19: a point served from its saved days is drawn where they
+    cover the minute shown)."""
+    rows = _series(payload)
+    if len(rows) < 2:
+        return None, rows
+    return position_at(rows, epoch_jd, curve=curve), rows
+
+
+def build_point_traces(name: str, payload: Dict[str, Any], epoch_jd: float,
+                       color: str, legendgroup: str,
+                       offset_au=(0.0, 0.0, 0.0),
+                       label_side: str = "top center",
+                       category: Optional[str] = None) -> Tuple[List[Tuple[str, Dict[str, Any]]], List[str]]:
+    """([(part, trace)], warnings) for a Lagrange point (L-297): a marker
+    alone, no line (the brief's ruling: "A marker alone, no line"), placed
+    by position_at at the minute shown, and its name beside it. offset_au
+    is ADDED to the point's own position: its centre's place, for a point
+    served around Earth drawn in the Sun's view (compose_children), never a
+    difference of two answers. The marker's meta carries rel_au, the
+    point around its own centre as served, which its box prints from."""
+    at, rows = point_at(payload, epoch_jd,
+                        curve=category in CURVE_KINDS)
+    if at is None:
+        if len(rows) < 2:
+            return [], ["%s: fewer than two positions are served for it, so "
+                        "it is not drawn" % name]
+        return [], ["%s: the minute shown is outside its served days, so it "
+                    "has no marker" % name]
+    rel = tuple(c / AU_KM for c in at["km"])
+    m = (rel[0] + offset_au[0], rel[1] + offset_au[1], rel[2] + offset_au[2])
+    marker = {
+        "type": "scatter3d",
+        "mode": "markers",
+        "x": [m[0]], "y": [m[1]], "z": [m[2]],
+        "marker": {"symbol": POINT_SYMBOL, "size": MARKER_SIZE,
+                   "color": color},
+        "name": name,
+        "legendgroup": legendgroup,
+        "text": [name],
+        "hovertemplate": "%{text}<extra></extra>",
+        "meta": {"point": True,
+                 "rel_au": list(rel),
+                 "interp_err_km": at["err_km"],
+                 "err_from": at.get("err_from"),
+                 "path_start_jd": rows[0][0],
+                 "path_end_jd": rows[-1][0]},
+    }
+    label = {
+        "type": "scatter3d",
+        "mode": "text",
+        "x": [m[0]], "y": [m[1]], "z": [m[2]],
+        "text": [name],
+        "textposition": label_side,
+        "textfont": {"color": "white"},
+        "name": "%s label" % name,
+        "legendgroup": legendgroup,
+        "showlegend": False,
+        "hoverinfo": "skip",
+    }
+    return [("marker", marker), ("label", label)], []

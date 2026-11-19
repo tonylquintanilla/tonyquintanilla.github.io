@@ -29,6 +29,8 @@ driver as POS_JSON, as the page fetches them.)
 Updated October 26, 2026 with Anthropic's Claude Opus 5.5 (L-443 build B
 part 2: and each comet on an open path's, which the room fetches the same
 way.)
+Updated November 19, 2026 with Anthropic's Claude Opus 5.5 (L-297: and each
+Lagrange point's, the room's rows and the children drawn at Earth's place.)
 """
 
 import json
@@ -40,14 +42,18 @@ def position_files(cov, cfg):
     rows = (((cfg.get("rooms") or {}).get("solar-system") or {})
             .get("drawer") or {}).get("rows") or []
     out = {}
-    for row in rows:
-        rec = (cov.get("objects") or {}).get((row or {}).get("slug"))
-        if rec and (rec.get("category") == "spacecraft"
+    # L-297: and every Lagrange point's, a row or a child, as the page does.
+    slugs = [(row or {}).get("slug") for row in rows]
+    slugs += [s for s, r in (cov.get("objects") or {}).items()
+              if (r or {}).get("category") == "lagrange_point" and s not in slugs]
+    for slug in slugs:
+        rec = (cov.get("objects") or {}).get(slug)
+        if rec and (rec.get("category") in ("spacecraft", "lagrange_point")
                     or rec.get("open_path")):
             f = (rec.get("positions") or {}).get("file")
             if f:
                 with open("data/solar-system/" + f, encoding="utf-8") as h:
-                    out[row["slug"]] = json.load(h)
+                    out[slug] = json.load(h)
     return out
 
 

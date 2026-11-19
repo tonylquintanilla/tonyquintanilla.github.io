@@ -954,6 +954,49 @@ v1.40, L-515 (one nested tree), step 2b; Tony's rulings 13 to 20 of
   cancelable, as a real tap is, and settle twice. `walk_shell_reset.js`
   refuses `earth`, now an address of the root.
 
+## The Lagrange points
+L-297, Session 2 of its brief (November 19, 2026); Tony's rulings of
+2026-11-18 (a marker alone, placed at the minute shown; the curve's error)
+and 2026-11-19 (an hour apart near today); ruling 6 of 2026-11-07 (the
+fetched centre rules), which replaced ruling 4's listing by pair.
+
+- **What is drawn.** Eight points, the orrery's keys: Earth-Moon L1, L2,
+  L4, L5 (`em_l1` ...) served around Earth, and Earth-Sun L1, L2, L4, L5
+  (`semb_l1` ...) served around the Sun. JPL has no L3. Each is a marker
+  alone, the orrery's open square, its name beside it, no line, placed by
+  `position_at` on its served positions (`build_point_traces`); a minute
+  outside its served days draws no marker and is named in the notes.
+- **Where.** The Earth-Sun points are rows of the root, in the group
+  "Earth-Sun Lagrange Points" right after Earth's row. The Earth-Moon
+  points are children of Earth (their `center_slug`), folded under Earth
+  by their distance from it now (`dist_au`, a point having no orbit), and
+  drawn at Earth's place by ADDING Earth's position to their own
+  (`build_point_child_traces`), never a difference.
+- **The page fetches** every point's positions file, rows and children
+  alike (`solarSystemPositionFiles`, by the served category).
+- **The box** (`pointBox`): its name; the orrery's words (NASA's, as
+  approved); its distance from its own centre, Earth or the Sun, read from
+  its own position around it (`rel_au`), to what working out between its
+  points earns; "JPL states no accuracy for this position." (JPL's 2xr
+  answer for the points, every uncertainty column "n.a.", read
+  2026-11-19). No orbit, no period. Its source line (`pointSourceLine`):
+  JPL's id and name for it, the centre, the days served, the steps, and,
+  when JPL did not answer at the last build, that these are the days
+  saved before it.
+- **The marker's error** is the chord figure, as for every path. The
+  curve's error is built and switched off for every kind
+  (`CURVE_KINDS`), pending Tony's ruling (L-297's note of 2026-11-19).
+- **The label side** (`label_side_for`, gallery/assembler/presentation.py):
+  a side per body for its name, "top center" unless set; ESCAPADE-Gold's
+  below, and the near points' below or beside. Mode 5.
+- **ESCAPADE's loiter** names the point as the room does, "Earth-Sun L2",
+  read by the driver from the point's own entry (`loiterPoint`).
+- **Checked** by Compose children (a point's worked case; planted: its
+  parent subtracted), Solar System figures (`pointWorked`, two breaks; the
+  real points, each with its record, file and box), Tree parents (no body
+  served around a point), Cache in step (the serving shape), Served list
+  (a point joins), and the builder's suite (the fourth serving shape).
+
 ## The Solar System room's drawer: bodies, not shells
 v1.9, L-363 step 3b. It is the SAME drawer as the Sun's and Earth's --
 One chrome, many rooms -- with four things added for a room whose rows

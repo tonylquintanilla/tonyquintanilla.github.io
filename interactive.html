@@ -3418,7 +3418,13 @@ def _path_loiter(_o):
                 None)
     # Tony, 2026-11-18: a loiter that begins at launch says so, the day
     # read from JPL's first position (the event's "launch"), never typed.
+    # L-297: the point's name as the room shows it, read from the point's
+    # own entry by JPL's name for it ("SEMB-L2" is Earth-Sun L2), never typed.
+    _pt = next((_p for _p in (_cfg.get("objects") or [])
+                if isinstance(_p, dict) and _p.get("category") == "lagrange_point"
+                and _p.get("horizons_name") == _lo.get("body")), None)
     return {"point": _lo.get("body"), "start": _w0, "end": _w1,
+            "point_name": _pt.get("name") if _pt else None,
             "launch": _lo.get("launch"),
             "flyby_of": _fly.get("body") if _fly else None}
 
@@ -3494,10 +3500,17 @@ for _slug in _bodies:
         # we were adding the farthest planetary orbit for perspective?"),
         # the farthest planet its path has reached so far.
         "kind": ("spacecraft" if _rec.get("category") == "spacecraft"
-                 else "comet_path" if _rec.get("open_path") else None),
+                 else "comet_path" if _rec.get("open_path")
+                 # L-297: a Lagrange point, drawn from its served positions
+                 # as a marker alone; no orbit, no period.
+                 else "point" if _rec.get("category") == "lagrange_point"
+                 else None),
         "path_source": ((_pos.get(_slug) or {}).get("source")
-                        if (_rec.get("category") == "spacecraft"
+                        if (_rec.get("category") in ("spacecraft", "lagrange_point")
                             or _rec.get("open_path")) else None),
+        # L-297: how the builder served a point -- its steps, the window it
+        # was fetched across, and whether it is its saved days (last_good).
+        "point": _rec.get("point"),
         # L-493: the names the drawer's search box looks in besides the
         # label and the name: JPL's (copied by the mirror from the orrery's
         # export) and the Horizons id.
@@ -3540,19 +3553,38 @@ _drawn_parents = set(_s for _s in _bodies
                      if (_cache.record(_s) or {}).get("osculating"))
 _kids, _kid_notes = _cc.children_to_draw(_cfg.get("objects"), _cache, _drawn_parents)
 _children = {}
+_child_rel = {}
+from assembler.presentation import label_side_for as _label_side_for
 for _slug, _parent in _kids:
     _crec = _cache.record(_slug)
     _prec = _cache.record(_parent)
     try:
-        _parts, _rel = _cc.build_child_traces(
-            _crec.get("name") or _slug, _crec.get("osculating"),
-            _prec.get("osculating"), _parent,
-            result.context.resolved_epoch_jd, _color_for(_slug), _slug)
+        if _crec.get("category") == "lagrange_point":
+            # L-297: a Lagrange point served around Earth, a marker alone,
+            # its own served position PLUS Earth's, never a difference.
+            _pf = _cache.position_file(_slug)
+            if _pf is None:
+                _kid_notes.append("%s: its positions file was not handed to the "
+                                  "assembler, so it is not drawn" % _slug)
+                continue
+            _parts, (_rel, _pw) = _cc.build_point_child_traces(
+                _crec.get("name") or _slug, _pf, _prec.get("osculating"), _parent,
+                result.context.resolved_epoch_jd, _color_for(_slug), _slug,
+                label_side=_label_side_for(_slug))
+            _kid_notes.extend(_pw)
+            if _rel is None:
+                continue
+        else:
+            _parts, _rel = _cc.build_child_traces(
+                _crec.get("name") or _slug, _crec.get("osculating"),
+                _prec.get("osculating"), _parent,
+                result.context.resolved_epoch_jd, _color_for(_slug), _slug)
     except (ValueError, KeyError, TypeError) as _exc:
         _kid_notes.append("%s: not drawn at %s's place (%s)" % (_slug, _parent, _exc))
         continue
     result.figure["data"].extend(_t for _role, _t in _parts)
     _children[_slug] = _parent
+    _child_rel[_slug] = list(_rel)
 
 # L-515 step 2b, part 3 (Tony's ruling 14): each centre's OWN features --
 # Earth's shells and guides, Jupiter's and Saturn's rings and belts --
@@ -3609,6 +3641,18 @@ json.dumps({
         "category": (_cache.record(_s) or {}).get("category"),
         "horizons_name": (_objs.get(_s) or {}).get("horizons_name"),
         "horizons_id": (_objs.get(_s) or {}).get("horizons_id"),
+        # L-297: a Lagrange point child: its kind, its source and how it
+        # was served, and its distance from its parent now (AU), for its
+        # place in its parent's fold (a point has no orbit to be nearest by).
+        "kind": ("point" if (_cache.record(_s) or {}).get("category")
+                 == "lagrange_point" else None),
+        "path_source": ((_pos.get(_s) or {}).get("source")
+                        if (_cache.record(_s) or {}).get("category")
+                        == "lagrange_point" else None),
+        "point": (_cache.record(_s) or {}).get("point"),
+        "dist_au": (sum(_c * _c for _c in _child_rel[_s]) ** 0.5
+                    if (_cache.record(_s) or {}).get("category")
+                    == "lagrange_point" else None),
     } for _s, _p in _children.items()},
     "epoch_jd": result.context.resolved_epoch_jd,
     "warnings": result.report["warnings"] + [
@@ -3807,6 +3851,31 @@ const COMET_SPAN_WORDS = "It is drawn from a year before its perihelion, " +
 // says it was fetched by (the Horizons id, the centre, the day) and the
 // span drawn, the served path's first and last points. The step is the
 // plan's backbone, as served on the entry ("7d" reads "7 days").
+// L-297: a Lagrange point's source line: JPL's id and its name for the
+// point, the centre its positions are measured from, the days served and
+// when they were retrieved, and the steps (a day apart across the room's
+// dates, an hour apart near the build's day, Tony's ruling of 2026-11-19).
+function pointSourceLine(b, meta, centreWords) {
+    const src = b.path_source || {};
+    if (!src.query_target) { return null; }
+    const pt = b.point || {};
+    const from = solarSystemJdDay(meta.path_start_jd);
+    const to = solarSystemJdDay(meta.path_end_jd);
+    const got = solarSystemDay(new Date(String(src.retrieved)));
+    const near = pt.near || {};
+    const n0 = solarSystemJdDay(near.start_jd), n1 = solarSystemJdDay(near.end_jd);
+    return "JPL Horizons (" + JPL_HORIZONS_URL + "), Horizons id: " +
+        src.query_target + (b.horizons_name ? " (" + b.horizons_name + ")" : "") +
+        ". Positions measured from " + centreWords +
+        (from && to ? ", from " + from + " UTC to " + to + " UTC" : "") +
+        (got ? ", retrieved " + got + " UTC" : "") + "." +
+        (pt.step === "1d" ? " A point every day" +
+            (near.step === "1h" && n0 && n1 ? ", and every hour from " + n0 +
+                " UTC to " + n1 + " UTC" : "") + "." : "") +
+        (pt.last_good ? " JPL did not answer at the last build; these are " +
+            "the days saved before it." : "");
+}
+
 function spacecraftSourceLine(b, meta) {
     const src = b.path_source || {};
     if (!src.query_target) { return null; }
@@ -4119,6 +4188,12 @@ const EXHIBITS = {
             const kidBodies = payload.child_bodies || {};
             const nearest = function (s) {
                 const c = kidBodies[s] || {};
+                // L-297: a Lagrange point has no orbit; its distance from
+                // its parent now, which the driver reads from its own
+                // served position, sets its place in the fold.
+                if (c.kind === "point" && typeof c.dist_au === "number") {
+                    return c.dist_au;
+                }
                 return (typeof c.a_au === "number" && typeof c.e === "number")
                     ? c.a_au * (1 - c.e) : Infinity;
             };
@@ -4249,6 +4324,23 @@ const EXHIBITS = {
                         found++;
                         t.showlegend = true;
                         t.name = label;
+                        // L-297: a Lagrange point served around its parent:
+                        // its box (SolarSystemFigures.pointBox), its distance
+                        // from the parent read from its own position (rel_au),
+                        // to what working out between its points earns.
+                        if (b.kind === "point") {
+                            const pbox = SolarSystemFigures.pointBox(b, t.meta.rel_au,
+                                t.meta.interp_err_km, GalleryFeatures._KM_PER_AU, parentLabel);
+                            pbox.warnings.forEach(function (w) { warnings.push(w); });
+                            t.text = [(pbox.lines || [label]).map(function (s, j) {
+                                return j === 0 ? s : "&#8226; " + solarSystemSoftWrap(s, 60);
+                            }).join("<br>")];
+                            const pextra = Object.assign({ label_target: true }, pbox.meta || {});
+                            const pline = pointSourceLine(b, t.meta || {}, parentLabel + "'s centre");
+                            if (pline) { pextra.source = pline; }
+                            t.meta = Object.assign({}, t.meta || {}, pextra);
+                            continue;
+                        }
                         // L-525: a moon JPL did not answer is held; its box
                         // says so (childBox), and ?hold=<slug> shows it.
                         const box = SolarSystemFigures.childBox(b, t.meta.rel_au, epochJd,
@@ -4334,6 +4426,24 @@ const EXHIBITS = {
                     // holds at its last good build says so, first, in one
                     // sentence (SolarSystemFigures.heldLine); ?hold=<slug>
                     // shows it when nothing is held. A path is never held.
+                    // L-297: a Lagrange point served around the Sun (the
+                    // Earth-Sun points): its own box, its source line, its
+                    // panel the orrery's words and NASA's link.
+                    if (b.kind === "point") {
+                        const pbox = SolarSystemFigures.pointBox(b,
+                            (t.meta || {}).rel_au, (t.meta || {}).interp_err_km,
+                            GalleryFeatures._KM_PER_AU, "the Sun");
+                        pbox.warnings.forEach(function (w) { warnings.push(w); });
+                        t.text = [(pbox.lines || [label]).map(function (s, j) {
+                            return j === 0 ? s : bullet(solarSystemSoftWrap(s, 60));
+                        }).join("<br>")];
+                        const pextra = Object.assign({ label_target: true }, pbox.meta || {});
+                        if (cls) { pextra.class_about = cls; }
+                        const pline = pointSourceLine(b, t.meta || {}, "the Sun's centre");
+                        if (pline) { pextra.source = pline; }
+                        t.meta = Object.assign({}, t.meta || {}, pextra);
+                        continue;
+                    }
                     const hold = (b.kind === "spacecraft" || b.kind === "comet_path") ? null
                         : SolarSystemFigures.holdFor(b.hold, slug, holdKnob);
                     const held = SolarSystemFigures.heldLine(hold, b.trust, label);
@@ -4749,11 +4859,19 @@ async function fetchTextOrThrow(url) {
 async function solarSystemPositionFiles(cov, cfg, notes) {
     const rows = ((((cfg.rooms || {})["solar-system"] || {}).drawer || {}).rows || []);
     const out = {};
-    for (const row of rows) {
-        const slug = row && row.slug;
+    // L-297: and every Lagrange point's, a row of the room (the Earth-Sun
+    // points) or a child drawn at its parent's place (the Earth-Moon
+    // points, served around Earth), read from the served cache by its kind.
+    const slugs = rows.map(function (r) { return r && r.slug; });
+    Object.keys(cov.objects || {}).forEach(function (s) {
+        if ((cov.objects[s] || {}).category === "lagrange_point" &&
+            slugs.indexOf(s) < 0) { slugs.push(s); }
+    });
+    for (const slug of slugs) {
         const rec = slug ? ((cov.objects || {})[slug] || null) : null;
         // L-443 build B part 2: and of the comets on open paths.
-        if (!rec || !(rec.category === "spacecraft" || rec.open_path)) { continue; }
+        if (!rec || !(rec.category === "spacecraft" || rec.open_path ||
+                      rec.category === "lagrange_point")) { continue; }
         const file = (rec.positions || {}).file;
         if (!file) {
             notes.push(slug + ": the served cache names no positions file, " +
