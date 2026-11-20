@@ -35,6 +35,9 @@ the Lagrange points: the eight points' colours, the orrery's, for Tony's
 look; and the label side, a side per body for its name, the default
 "top center" for every body not set: ESCAPADE's twins on opposite sides,
 and the points set where they sit beside Earth and the Moon.)
+Module updated: November 20, 2026 with Anthropic's Claude Opus 5.5 (L-533,
+the ESCAPADE reel: ESCAPADE-Blue turquoise, as the orrery's, by Tony's
+ruling of 2026-11-20; ESCAPADE-Gold kept.)
 
 Role: rendering
 Domain: assembler
@@ -110,8 +113,11 @@ _COLORS = {
     # L-533, 2026-11-18: ESCAPADE's twins, in the orrery's own colours
     # (color_map in constants_new.py, by each entry's color_key, this
     # session's uncommitted orrery): Blue blue, Gold gold. A first choice
-    # for Tony's phone look (Mode 5).
-    "escapade_blue": "blue",
+    # for Tony's phone look (Mode 5). Blue became turquoise on
+    # 2026-11-20, in both repositories: plain blue was hard to pick out
+    # against the black (Tony, for the ESCAPADE reel: "teal instead of
+    # blue"; turquoise is the brighter teal). Gold kept.
+    "escapade_blue": "turquoise",
     "escapade_gold": "gold",
     # L-507, 2026-11-02: the first two historical missions, in the
     # orrery's own colours (color_map in constants_new.py, by each entry's

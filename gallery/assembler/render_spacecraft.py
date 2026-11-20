@@ -68,6 +68,10 @@ the Lagrange points: the curve's error built behind curve=True and
 CURVE_KINDS, on for the Lagrange points and the comets on open paths by
 Tony's ruling of 2026-11-19, held by tools/test_curve_error.py; position_at says how its error was worked out,
 err_from; build_spacecraft_traces takes the body's category.)
+Module updated: November 20, 2026 with Anthropic's Claude Opus 5.5 (L-533,
+the ESCAPADE reel: a spacecraft's open diamond is drawn with a 2-pixel
+outline in its own colour, MARKER_OUTLINE_PX, by Tony's ruling of
+2026-11-20; a comet's filled diamond keeps none.)
 
 Role: rendering
 Domain: assembler
@@ -90,6 +94,22 @@ def symbol_for(category):
     return COMET_SYMBOL if category == "comet" else MARKER_SYMBOL
 MARKER_SIZE = 6
 LINE_WIDTH = 2
+# L-533, Tony's ruling of 2026-11-20 ("thicker lines for space craft
+# symbols"): a spacecraft's open diamond is outlined this many pixels
+# wide, in its own colour, so a thin glyph reads at phone size. The
+# page's Plotly (2.35.2) passes marker.line.width to the 3D glyph's
+# outline. A Mode 5 knob: Tony's eye on his phone sets it.
+MARKER_OUTLINE_PX = 2
+
+
+def _path_marker(symbol, color):
+    """A path body's marker: a spacecraft's open diamond carries an
+    outline in its own colour (MARKER_OUTLINE_PX); a comet's filled
+    diamond does not."""
+    marker = {"symbol": symbol, "size": MARKER_SIZE, "color": color}
+    if symbol == MARKER_SYMBOL:
+        marker["line"] = {"color": color, "width": MARKER_OUTLINE_PX}
+    return marker
 
 
 def _series(payload: Dict[str, Any]) -> List[Tuple[float, float, float, float]]:
@@ -268,8 +288,7 @@ def build_spacecraft_traces(name: str, payload: Dict[str, Any],
         "type": "scatter3d",
         "mode": "markers",
         "x": [m[0]], "y": [m[1]], "z": [m[2]],
-        "marker": {"symbol": symbol, "size": MARKER_SIZE,
-                   "color": color},
+        "marker": _path_marker(symbol, color),
         "name": name,
         "legendgroup": legendgroup,
         "text": [name],
