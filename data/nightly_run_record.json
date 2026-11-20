@@ -1,10 +1,10 @@
 {
   "_comment": "Written by daily_run.py --night on a clean night only (L-485), so this is the website's last clean run. A red night writes nothing: its record is the run's log on GitHub.",
   "schema": 1,
-  "clean_run_utc": "2026-11-20T17:03:47.179137+00:00",
-  "started_utc": "2026-11-20T16:59:43.761180+00:00",
+  "clean_run_utc": "2026-11-20T20:32:50.633391+00:00",
+  "started_utc": "2026-11-20T20:28:48.857501+00:00",
   "where": "GitHub Actions",
-  "orrery_pulled": "04ebd9fb1c2c216c6c0e4e94f7e0fb4bb1277a11",
+  "orrery_pulled": "c442793ac73a7ecd69c2d39aec3dae4b93305a75",
   "pulls_asked": "with the run's GITHUB_TOKEN",
   "swap_log_line": {
     "attempts": {
@@ -15,11 +15,11 @@
     "mode": "nightly",
     "outcome": "ok",
     "reached": "staging_to_live",
-    "run_id": "20261120T165948Z",
-    "time": "2026-11-20T17:02:18.671844+00:00"
+    "run_id": "20261120T202853Z",
+    "time": "2026-11-20T20:31:12.811239+00:00"
   },
-  "run_records": "Run records: carried 162 of 162, plus tonight's: 20261120T165948Z.json.",
-  "served_files_changed": 221,
+  "run_records": "Run records: carried 163 of 163, plus tonight's: 20261120T202853Z.json.",
+  "served_files_changed": 115,
   "holds": [],
   "steps": [
     {
@@ -30,7 +30,7 @@
     {
       "step": "Pulls from the orrery",
       "result": "ok",
-      "seconds": 2.3
+      "seconds": 3.1
     },
     {
       "step": "Pull matches push (runner)",
@@ -40,7 +40,7 @@
     {
       "step": "Cache builder",
       "result": "exit 0",
-      "seconds": 152.6
+      "seconds": 140.7
     },
     {
       "step": "Run records",
@@ -50,7 +50,7 @@
     {
       "step": "Maintenance run, night pass",
       "result": "exit 0",
-      "seconds": 86.2
+      "seconds": 95.4
     }
   ],
   "rows": [
@@ -59,7 +59,7 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/constants_export.json, data/constants_export.sha",
-      "seconds": 0.3
+      "seconds": 0.4
     },
     {
       "row": "Config mirror",
@@ -87,14 +87,14 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/drawings/hills_cloud.json, data/drawings/van_allen_belts.json, data/drawings/earth_exosphere.json, data/drawings/pulled_at.sha",
-      "seconds": 0.5
+      "seconds": 0.6
     },
     {
       "row": "Cache builder suite",
       "kind": "checker",
       "verdict": "PASS",
       "note": "PASS (579 checks, 0 failures)",
-      "seconds": 32.8
+      "seconds": 36.1
     },
     {
       "row": "Pole of date",
@@ -115,7 +115,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "All 494 store-writer checks passed: an allow list that lets through only a shell's words, a belt's words and the arrival settings, the rooms section's included; a no-edit round trip; one line per change; empty words handled; a refused batch writing nothing; awkward text; and the shell list matching the cache check's rule.",
-      "seconds": 37.4
+      "seconds": 41.1
     },
     {
       "row": "Store editor suite",
@@ -163,7 +163,7 @@
       "row": "Pointer join",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "Every link is accounted for: 190 link(s) against orrery 04ebd9fb, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
+      "note": "Every link is accounted for: 190 link(s) against orrery c442793a, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
       "seconds": 0.1
     },
     {
@@ -178,14 +178,14 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "The served cache holds the config's 114 object(s) and their features exactly: 4 object(s) with 34 named shell(s), in both cache files.",
-      "seconds": 0.6
+      "seconds": 0.8
     },
     {
       "row": "Drawn orbit",
       "kind": "checker",
       "verdict": "PASS",
       "note": "DRAWN ORBIT: pass -- 18 checks, every planted fault caught",
-      "seconds": 0.7
+      "seconds": 0.8
     },
     {
       "row": "Compose children",
@@ -199,21 +199,21 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "CURVE ERROR: ok -- 2991 points held out across 21 served files, none missed by more than its printed error",
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "row": "Kepler solver",
       "kind": "checker",
       "verdict": "PASS",
       "note": "KEPLER SOLVER: pass -- every e below 1 and every M solved to 1e-09 rad, a solve that cannot finish raises",
-      "seconds": 4.9
+      "seconds": 5.8
     },
     {
       "row": "Drawings",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery 04ebd9fb; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
-      "seconds": 0.6
+      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery c442793a; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
+      "seconds": 0.7
     },
     {
       "row": "Collapsed features",
@@ -227,7 +227,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.4
+      "seconds": 0.2
     },
     {
       "row": "Page framing",
@@ -241,7 +241,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "ALL CHECKS PASSED",
-      "seconds": 0.2
+      "seconds": 0.3
     },
     {
       "row": "Earth scene geometry",
@@ -332,7 +332,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== FIRST GUIDE: ok -- each card ends only on its own action; the setting and the address decide; the ring's sum is Plotly 2.35.2's own and the page loads 2.35.2; no card covers its target; the front page offers the ways in from the one setting",
-      "seconds": 0.3
+      "seconds": 0.4
     },
     {
       "row": "Picture folds",
@@ -367,7 +367,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: the i panel's sources are a list, every address a link, and its words are one sentence to a bullet ===",
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "row": "Drawer order",
@@ -457,5 +457,5 @@
       "why": "writes MODULE_ATLAS.md and MODULE_INDEX.md, which are documents; the night commits no page or word (Tony's R1, 2026-10-25)"
     }
   ],
-  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/44778737676"
+  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/44811591044"
 }
