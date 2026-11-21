@@ -235,7 +235,14 @@
        - The Google Earth button: a _kmz_handoff that names an .html page
          (from the site's top folder) opens it in a new tab, with no
          download and no iPhone download tips; a .kmz still downloads
-         from gallery/assets/. -->
+         from gallery/assets/.
+     Updated: November 20, 2026 with Anthropic's Claude Opus 5.5 (L-540,
+       a reel on a Featured card)
+       - A card whose "live" address is another website's (ESCAPADE's
+         reel on Instagram) is read as a page card: no "Interactive"
+         label, and a tap opens it in a new tab, so the lobby stays
+         where it was. Tony's ruling of 2026-11-20: the reel's link and
+         ESCAPADE's scene side by side in Featured. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3058,6 +3065,13 @@
             // Build lookup
             var vizs = metadata.visualizations || [];
             for (var i = 0; i < vizs.length; i++) {
+                // L-540: a card whose address is another website's (a reel
+                // on Instagram) is a page, not a room: no "Interactive"
+                // label, and it opens in a new tab (loadVisualization).
+                if (/^https?:\/\//i.test(vizs[i].live || '')) {
+                    vizs[i].page = true;
+                    vizs[i].outside = true;
+                }
                 vizLookup[vizs[i].id] = vizs[i];
             }
 
@@ -4113,6 +4127,10 @@
             var viz = vizLookup[vizId];
             if (!viz) return;
             if (viz.live) {                 // a live card opens its scene (L-287)
+                if (viz.outside) {          // another website's page: a new tab (L-540)
+                    window.open(viz.live, '_blank', 'noopener');
+                    return;
+                }
                 window.location.href = viz.live;
                 return;
             }
