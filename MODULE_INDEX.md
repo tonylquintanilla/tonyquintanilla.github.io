@@ -11,8 +11,8 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 66  
-**Total Lines of Code (non-blank):** 35,948  
-**Total Public Functions/Classes:** 621
+**Total Lines of Code (non-blank):** 36,012  
+**Total Public Functions/Classes:** 622
 
 ## Classification Coverage
 
@@ -152,7 +152,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `check_as_built_names.py` | - every code name INTERACTIVE_AS_BUILT.md gives in backticks is found in the code it belongs to. (370 lines) |
+| `check_as_built_names.py` | - every code name INTERACTIVE_AS_BUILT.md gives in backticks is found in the code it belongs to. (434 lines) |
 | `check_encounters.py` | - the gallery run's Encounters row: every encounter card, its package under data/encounters/, and the plan it must agree with. (368 lines) |
 | `check_tree_parents.py` | - every object's parent in data/objects_config.json is the centre JPL is asked around for it. (195 lines) |
 | `encounter_fetch.py` | - ask JPL Horizons, fresh, for an encounter's bodies around its centre, and write the encounter's package under data/encounters/. (634 lines) |

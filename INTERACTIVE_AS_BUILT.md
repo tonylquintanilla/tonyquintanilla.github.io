@@ -2224,8 +2224,8 @@ in one encounter, with the Moon and Earth-Sun L2, around Earth's centre.
   fetches the card whose encounter id is the address's (its name is the
   title, the top bar and the tab; `Encounter.infoHtml` fills the i
   panel), its package, and the centre's Hill sphere from the served cache
-  (`feature_configs.json`), drawn by `GalleryFeatures.buildFeatureTraces`
-  as the centre's fold draws it.
+  (`data/solar-system/feature_configs.json`), drawn by
+  `GalleryFeatures.buildFeatureTraces` as the centre's fold draws it.
 - **The scene** is built by `gallery/encounter.js` (`Encounter.compose`),
   which works out no figure: Earth at the centre with its served words;
   the Hill sphere with its served words; each body's whole path through

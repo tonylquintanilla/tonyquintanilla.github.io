@@ -50,6 +50,14 @@ WHAT IT READS
     first self-test run went red on exactly that); and the orrery's .py
     files outside its documentation/, in the sibling folder
     ..\\palomas_orrery_for_github.
+    NOT THE CODE: the served cache, data/solar-system/, and the folders
+    the cache builder leaves beside it on Tony's computer
+    (data/.staging_*, data/solar-system.prev,
+    data/solar-system.quarantine_*), which GitHub never has. A bare
+    file name is not looked for there, so the check reads on Tony's
+    computer what it reads on GitHub's night; the page gives a served
+    file by its path (`data/solar-system/feature_configs.json`), and a
+    path is found where it is.
 
     Two named lists, printed every run:
       - PLOTLY_NAMES: names the page gives from plotly.js 2.35.2, which
@@ -80,7 +88,11 @@ WHAT MAKES IT FAIL
     no code has, a file no repository has, a mark on a name the code
     does have, a call wrapped across a line, a name after it on the same
     closing line, and a backticked thing beginning with a space, and each
-    must be reported.
+    must be reported. It also plants, in a throwaway folder, a file in
+    the served cache, one in each of the three folders the builder
+    leaves behind, and one outside them: the first four must not be
+    read, the fifth must be, and with nothing left out all five must be
+    read, which shows the test can fail.
 
 HOW TO FIX A FAILURE
 
@@ -92,10 +104,16 @@ HOW TO FIX A FAILURE
 
 Written November 11, 2026 with Anthropic's Claude Opus 5.5 (L-522,
 document caps, step 2).
+Module updated: November 21, 2026 with Anthropic's Claude Fable 5.2
+(L-529, guided encounters): data/.staging_* left out, and the self-test
+for it. The page named `feature_configs.json` with no folder; nine
+folders a build of Nov 19 left on Tony's computer each held one, so the
+check was green there and red on GitHub, and two nights went red.
 """
 
 import os
 import re
+import shutil
 import sys
 import tempfile
 
@@ -192,8 +210,13 @@ def walk(top, skip):
 
 
 def gallery_skip(rel):
+    # data/solar-system is the served cache; the prefix also leaves out
+    # its .prev and .quarantine_ siblings. data/.staging_ is a build's
+    # throwaway folder. The last three are on Tony's computer only
+    # (.gitignore), so a name found only there is green at his desk and
+    # red on GitHub's night (L-529, 2026-11-21).
     return (rel.split("/")[-1] in (".git", "__pycache__", "node_modules")
-            or rel.startswith("data/solar-system"))
+            or rel.startswith(("data/solar-system", "data/.staging_")))
 
 
 def orrery_skip(rel):
@@ -385,6 +408,41 @@ def self_test(gallery, orrery):
     return [w for w in wanted if not any(f.startswith(w) for f in failures)]
 
 
+LEFT_OUT = ("data/solar-system/zz_served_l529.json",
+            "data/solar-system.prev/zz_prev_l529.json",
+            "data/solar-system.quarantine_zz/zz_quarantine_l529.json",
+            "data/.staging_solar-system_zz/zz_staging_l529.json")
+KEPT = "tools/zz_kept_l529.py"
+
+
+def leftover_test():
+    """A file only in the served cache, or in a folder the builder leaves
+    behind, is not read; one outside them is. Returns what went wrong."""
+    top = tempfile.mkdtemp(prefix="as_built_leftover_")
+    wrong = []
+    try:
+        for rel in LEFT_OUT + (KEPT,):
+            full = os.path.join(top, *rel.split("/"))
+            os.makedirs(os.path.dirname(full))
+            with open(full, "wb") as handle:
+                handle.write(b"{}\n")
+        code = Code(top, gallery_skip, gallery_is_code)
+        for rel in LEFT_OUT:
+            if code.has("file", rel.split("/")[-1]):
+                wrong.append("%s was read, and GitHub's night would not "
+                             "have it" % rel)
+        if not code.has("file", KEPT.split("/")[-1]):
+            wrong.append("%s, outside those folders, was not read" % KEPT)
+        loose = Code(top, lambda rel: False, gallery_is_code)
+        for rel in LEFT_OUT:
+            if not loose.has("file", rel.split("/")[-1]):
+                wrong.append("with nothing left out, %s was still not "
+                             "read: this test cannot fail" % rel)
+    finally:
+        shutil.rmtree(top, ignore_errors=True)
+    return wrong
+
+
 def main():
     print("AS-BUILT NAMES -- every code name INTERACTIVE_AS_BUILT.md gives "
           "in backticks is in the code")
@@ -401,6 +459,16 @@ def main():
         print("AS-BUILT NAMES: FAIL -- the check could not show it can fail")
         return 1
     print("  self-test: 6 planted faults on a throwaway copy, each reported")
+    wrong = leftover_test()
+    if wrong:
+        for line in wrong:
+            print("  self-test: " + line)
+        print("AS-BUILT NAMES: FAIL -- the check does not read here what "
+              "GitHub's night reads")
+        return 1
+    print("  self-test: 4 files planted in the served cache and the "
+          "builder's leftover folders, none read; 1 outside them, read; "
+          "with nothing left out, all 4 read")
     failures, lines = check(PAGE, gallery, orrery)
     for line in lines:
         print(line)
