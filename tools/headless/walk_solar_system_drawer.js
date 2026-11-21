@@ -179,6 +179,16 @@
 // its line and the link with an arrow, opening the reel's own address in
 // a new tab (target _blank, rel noopener); a tap keeping nothing for Back
 // and no ticks; Find counting it as a link. A planted page walks it too.
+// Updated November 21, 2026, later, with Anthropic's Claude Opus 5.5 (L-521,
+// the walk's red checks): eleven expectations brought up to the page as
+// ruled, each judged stale, the page unchanged. A tap may open the text box
+// but must not move the view (L-497 6a); Sedna's uncertainty note is
+// expected only when no figure is served (L-484); the Earth-Sun Lagrange
+// Points group sits right after Earth's row (L-297); a drawing's words wrap
+// at 70, a body's at 60 (L-503); a Lagrange point sits among Earth's moons
+// by its distance now (L-297); Earth's folds come in the website's order,
+// its Saved pictures last, and an encounter, a scene or a link is never
+// counted among its pictures (L-529, L-540).
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -211,8 +221,16 @@ async function pictures(w, root, payload, page) {
     if (phone) { return v.shape !== "none" && !(f.landscape && !f.portrait && tf.portrait); }
     return !(!f.landscape && f.portrait && tf.landscape);
   };
+  // L-521 (2026-11-21): a saved picture is a card that is not a scene, not
+  // an encounter and not a link (L-529, L-540) -- each of those sits in a
+  // fold of its own -- worked out from the card itself; a card's places are
+  // one or a list.
+  const picture = (v) => v.scene !== true &&
+    !(v.encounter && typeof v.encounter.id === "string" && v.encounter.id) &&
+    !/^https?:\/\//i.test(String(v.live || ""));
+  const placed = (v, place) => [].concat(v.drawer_row || []).indexOf(place) >= 0;
   const want = (place, phone) => meta.visualizations
-    .filter(v => v.drawer_row === place && offered(v, phone)).map(v => v.id);
+    .filter(v => placed(v, place) && picture(v) && offered(v, phone)).map(v => v.id);
   const click = async (el) => { el.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true })); await h.done(); };
   const idx = (key) => E("ssIndex(" + JSON.stringify(key) + ")");
   const row = (key) => d.querySelector('#sun-drawer-list .sun-row[data-k="' + idx(key) + '"]');
@@ -239,8 +257,20 @@ async function pictures(w, root, payload, page) {
      "a saved picture has a tick box or Go To, or no arrow where the box would be");
   // 29b. Earth's fold is right after Earth's row, and the Sun's after the
   // Sun's; a desktop is offered the landscape twins, in the metadata's order.
-  ok(!!fold("earth") && row("earth").nextElementSibling === fold("earth") && !fold("earth").hidden,
-     "Earth's pictures are not in a fold right after Earth's row");
+  // L-521 (2026-11-21): a row's folds come in the website's order -- its
+  // Scenes, Encounters and Links where it has them (L-529, L-540), then its
+  // Saved pictures -- so Earth's pictures are the last of the folds right
+  // after Earth's row. Each fold's heading, line and entries carry its
+  // data-pf.
+  const EARTH_ORDER = ["scenes:earth", "encounters:earth", "links:earth", "earth"];
+  const earthSeq = [];
+  for (let el = row("earth").nextElementSibling; el && EARTH_ORDER.indexOf(el.getAttribute("data-pf")) >= 0;
+       el = el.nextElementSibling) {
+    if (el.classList.contains("sun-pics")) { earthSeq.push(el.getAttribute("data-pf")); }
+  }
+  ok(!!fold("earth") && earthSeq.join() === EARTH_ORDER.filter(f => !!fold(f)).join() && !fold("earth").hidden,
+     "Earth's pictures are not in a fold right after Earth's row and its other folds, in the website's order: " +
+     earthSeq.join());
   // L-519: the Scenes fold, when the metadata holds a scene, comes first.
   let afterSun = row("center").nextElementSibling;
   while (afterSun && afterSun.getAttribute("data-pf") === "scenes") { afterSun = afterSun.nextElementSibling; }
@@ -746,10 +776,17 @@ async function linksFold(root, payload, page) {
   E("setSunDrawer(false)");
   const nep = E("sunPlotDiv.data.findIndex(t => t.legendgroup === 'mercury' && t.meta && t.meta.label_target)");
   calls = E("__calls.length"); const r1 = range();
+  const cam1 = JSON.stringify(E("sunPlotDiv.layout.scene.camera") || null);
   E("sunTapSerial += 1"); E("sunPlotDiv._ev.plotly_click.forEach(f => f({points: [{curveNumber: " + nep + "}]}))");
   await h.done();
   ok(focus() === "mercury", "scene tap did not name Mercury: " + focus());
-  ok(E("__calls.length") === calls && range() === r1, "scene tap moved the view");
+  // L-521 (2026-11-21): since L-497 6a (2026-10-27) a tap opens the body's
+  // text box, a relayout of the annotations alone; the view -- the range
+  // and the camera -- does not move, and no other call is made.
+  const tapCalls = JSON.parse(JSON.stringify(E("__calls.slice(" + calls + ")")));
+  ok(range() === r1 && JSON.stringify(E("sunPlotDiv.layout.scene.camera") || null) === cam1 &&
+     tapCalls.every(c => c[0] === "relayout" && c[1].length > 0 && c[1].every(k => /annotations$/.test(k))),
+     "scene tap moved the view: " + JSON.stringify(tapCalls));
   ok(!d.getElementById("sun-drawer").classList.contains("open"), "scene tap opened the drawer");
   // 8. Home: last ticked still ticked (Neptune), frame holds everything, default camera
   E("sunPlotDiv.layout.scene.camera = {eye: {x: 3, y: 0, z: 0}}");
@@ -944,9 +981,13 @@ async function linksFold(root, payload, page) {
   // paragraph is a list, "creator's".
   const sednaLines = sednaText.split(/<br[^>]*>/);
   const starts = sednaLines.filter(l => l.indexOf("&#8226; ") === 0).length;
-  // Five bulleted lines: its class explained (2026-10-26), the distance,
-  // its note, the period, the orbit.
-  ok(sednaLines[0] === "Sedna" && starts === 5 &&
+  // Bulleted lines: its class explained (2026-10-26), the distance, the
+  // period, the orbit, and a note on JPL's uncertainty only when the
+  // payload serves no figure for it (L-521, 2026-11-21: Sedna's is served
+  // since 2026-10-29, L-484, and the note went with it).
+  const sacc = sb.accuracy || null;
+  const sednaServed = !!sacc && Object.keys(sacc).some(k => /_km$/.test(k) && typeof sacc[k] === "number");
+  ok(sednaLines[0] === "Sedna" && starts === (sednaServed ? 4 : 5) &&
      sednaLines[1] === "&#8226; Trans-Neptunian: a body whose orbit lies beyond Neptune's.",
      "Sedna's hover lines are not bulleted: " + sednaLines.join(" | ").slice(0, 160));
   const sednaSrc = E("sunPlotDiv.data").find(t => t.legendgroup === "sedna" && t.meta && t.meta.label_target).meta.source;
@@ -965,12 +1006,27 @@ async function linksFold(root, payload, page) {
     const rowsDom = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row:not(.sun-pics):not(.sun-pic)"))
       .filter(r => !(r.dataset.k && E("SolarSystemDrawer.isChild(ssDrawer.byKey[sunGroups[" + r.dataset.k + "].key])")));
     const at = rowsDom.indexOf(row("earth"));
-    // Since 2026-11-07 the row after Earth is Spacecraft, the parent, and
-    // the twelve are its Active missions, listed under it.
-    ok(rowsDom[at + 1] === head("spacecraft_all") && !head("spacecraft_all").hidden &&
-       !E("ssDrawer.folds.spacecraft_all") && rowsDom[at + 2] === head("spacecraft") &&
+    // L-297 (2026-11-19; L-521, 2026-11-21): where the payload serves the
+    // Earth-Sun points, their group comes first, folded, right after
+    // Earth's row, its points its members, hidden while it is folded.
+    // Since 2026-11-07 the next row is Spacecraft, the parent, and the
+    // twelve are its Active missions, listed under it.
+    let sc = at + 1;
+    const lagServed = Object.keys(data.bodies).some(k => /^semb_l\d$/.test(k));
+    if (lagServed) {
+      const lag = head("lagrange_earth_sun");
+      ok(!!lag && rowsDom[sc] === lag && !lag.hidden && !E("ssDrawer.folds.lagrange_earth_sun"),
+         "the Earth-Sun Lagrange Points group is not listed, folded, right after Earth's row");
+      const groupOf = (r) => r.dataset.k
+        ? E("(ssDrawer.byKey[sunGroups[" + r.dataset.k + "].key] || {}).group") : null;
+      if (lag && rowsDom[sc] === lag) { sc++; }
+      while (sc < rowsDom.length && rowsDom[sc].hidden && groupOf(rowsDom[sc]) === "lagrange_earth_sun") { sc++; }
+    }
+    ok(rowsDom[sc] === head("spacecraft_all") && !head("spacecraft_all").hidden &&
+       !E("ssDrawer.folds.spacecraft_all") && rowsDom[sc + 1] === head("spacecraft") &&
        head("spacecraft").hidden && !E("ssDrawer.folds.spacecraft"),
-       "the Spacecraft group is not listed, folded, right after Earth's row, Active missions under it");
+       "the Spacecraft group is not listed, folded, right after Earth's row" +
+       (lagServed ? " and the Earth-Sun Lagrange Points" : "") + ", Active missions under it");
     ok(row("juno").hidden, "Juno is shown with its group folded");
     await fold("spacecraft");
     const crafts = E("ssDrawer.rows.filter(r => r.group === 'spacecraft' && !SolarSystemDrawer.isGroup(r)).map(r => r.key).join(',')");
@@ -1180,7 +1236,10 @@ async function linksFold(root, payload, page) {
        head("interstellar").hidden === !E("ssDrawer.folds.comets_all") && !E("ssDrawer.folds.interstellar"),
        "the hyperbolic and interstellar groups are not listed, folded, under Comets");
     const groupsInOrder = E("ssDrawer.rows.filter(r => SolarSystemDrawer.isGroup(r)).map(r => r.group).join(',')");
+    // L-297 (L-521, 2026-11-21): the Earth-Sun Lagrange Points group sits
+    // right after Earth's row, so after the Aten asteroids, where served.
     ok(groupsInOrder.indexOf("comets_all,comets_etc,comets_jfc,comets_htc,comets,comets_hyp,interstellar,aten," +
+       (Object.keys(data.bodies).some(k => /^semb_l\d$/.test(k)) ? "lagrange_earth_sun," : "") +
        "spacecraft_all,spacecraft," + (data.bodies.galileo ? "historical_missions," : "") +
        "apollo_amor,apollo,amor,belt") === 0,
        "the groups are not in their places: " + groupsInOrder);
@@ -1321,15 +1380,20 @@ async function linksFold(root, payload, page) {
   // a tap opens it, filled from the served AU and the chip's spacing; a
   // tap elsewhere closes it; opening the frame note closes it.
   {
+    // L-521 (2026-11-21): a drawing's words (a row "drawing:<name>", L-503)
+    // wrap at 70 (interactive-exhibit: 70 for the desktop box), so its box
+    // may reach 70 and the bullet; a body's, 60 and the bullet.
     const wide = [];
     E("sunPlotDiv.data").forEach(tr => {
       if (!tr.meta || !tr.meta.label_target) { return; }
+      const drawing = String(tr.legendgroup || "").indexOf("drawing:") === 0;
       String((tr.text || [""])[0]).split(/<br[^>]*>/i).forEach(l => {
         const v = l.replace(/<[^>]*>/g, "").replace(/&#8226;/g, "*").replace(/&[a-z]+;/g, "x");
-        if (v.length > 62) { wide.push(tr.name + " " + v.length); }
+        if (v.length > (drawing ? 72 : 62)) { wide.push((tr.name || tr.legendgroup) + " " + v.length); }
       });
     });
-    ok(wide.length === 0, "a body's text box has a line wider than 62 characters: " + wide.slice(0, 8).join(", "));
+    ok(wide.length === 0, "a body's text box has a line wider than 62 characters, or a drawing's than 72: " +
+       wide.slice(0, 8).join(", "));
     w.matchMedia = () => ({ matches: false });   // a phone: no hover
     const chip = d.getElementById("sun-grid-chip"), au = d.getElementById("sun-au-note");
     ok(au && au.hidden, "the AU note is open before the chip is tapped");
@@ -1761,7 +1825,17 @@ async function linksFold(root, payload, page) {
     await click(d.getElementById("sun-drawer-all"));
     const kids = data.children, cb = data.child_bodies || {};
     const parents = Array.from(new Set(Object.values(kids)));
-    const nearestOf = (s) => cb[s].a_au * (1 - cb[s].e);
+    // L-297 (L-521, 2026-11-21): a Lagrange point has no orbit; its served
+    // distance from its parent now sets its place among the moons.
+    const nearestOf = (s) => (cb[s].kind === "point" && typeof cb[s].dist_au === "number")
+      ? cb[s].dist_au : cb[s].a_au * (1 - cb[s].e);
+    // Two at the same distance keep the served order: Earth-Moon L4 and L5
+    // are equally far from Earth by their geometry, and their served
+    // figures differ only in the 17th place (L-521, 2026-11-21).
+    const byNearest = (a, b) => {
+      const dd = nearestOf(a) - nearestOf(b);
+      return Math.abs(dd) < 1e-12 ? 0 : dd;
+    };
     const bf = (p) => row(p).querySelector(".bfold");
     const marker = (k) => E("sunPlotDiv.data").find(t => t.legendgroup === k && t.meta && t.meta.label_target === true);
     ok(parents.every(p => row(p) && row(p).classList.contains("heads") && bf(p) &&
@@ -1776,7 +1850,7 @@ async function linksFold(root, payload, page) {
     const domRows = Array.from(d.querySelectorAll("#sun-drawer-list > .sun-row[data-k]"));
     const underOf = (r) => { const g = E("sunGroups[" + r.dataset.k + "]"); const s = g && E("ssDrawer.byKey[" + JSON.stringify(g.key) + "]"); return s ? s.under : null; };
     for (const p of parents) {
-      const mine = Object.keys(kids).filter(s => kids[s] === p).sort((a, b) => nearestOf(a) - nearestOf(b));
+      const mine = Object.keys(kids).filter(s => kids[s] === p).sort(byNearest);
       const start = domRows.indexOf(row(p)) + 1;
       let end = start;
       while (end < domRows.length && underOf(domRows[end]) === p) { end++; }
@@ -1844,7 +1918,7 @@ async function linksFold(root, payload, page) {
        String(mk[0]).indexOf("AU from Earth (") >= 0 && shown("earth") === true,
        "Go To on the Moon does not open the Moon's own box, or does not tick Earth: " + String((mk || [""])[0]).slice(0, 60));
     console.log("  32: moons " + parents.map(p => p + " > " + Object.keys(kids).filter(s => kids[s] === p)
-      .sort((a, b) => nearestOf(a) - nearestOf(b)).join(", ")).join("; ") + "; Io " +
+      .sort(byNearest).join(", ")).join("; ") + "; Io " +
       (past ? "past" : "inside") + " its span (" + (cb.io.trust.delta_days * 24).toFixed(1) + " hours)");
   }
   // 33. L-515 step 2b, part 2 (Tony's rulings 15, 16, 17 and 20 of
