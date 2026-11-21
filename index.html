@@ -242,7 +242,13 @@
          reel on Instagram) is read as a page card: no "Interactive"
          label, and a tap opens it in a new tab, so the lobby stays
          where it was. Tony's ruling of 2026-11-20: the reel's link and
-         ESCAPADE's scene side by side in Featured. -->
+         ESCAPADE's scene side by side in Featured.
+     Updated: November 20, 2026, night, with Anthropic's Claude Opus 5.5
+       (L-540, Tony: "could you check that all url's in the info panels
+        have live links")
+       - A card's source line makes every web address in it a link, not
+         only a source that is all address; the cut is
+         gallery/source_list.js's, now loaded here too. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -279,6 +285,10 @@
     <!-- A first visit's guide (L-527): the setting the start card and the
          Tutorial row read and write, shared with the Solar System room -->
     <script src="gallery/first_guide.js"></script>
+
+    <!-- Where a web address starts and ends in a card's source line
+         (L-540), the same cut as the room's i panel (L-456) -->
+    <script src="gallery/source_list.js"></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2980,16 +2990,24 @@
             return viz.filename;
         }
 
-        // Card sources (schema v2): one line, URLs clickable, each escaped.
+        // Card sources (schema v2): one line, each escaped, and each web
+        // address in it a link. L-540: an address inside words ("JPL
+        // Horizons, https://...") was left plain, as only a source that
+        // was all address became a link; the cut is now
+        // gallery/source_list.js's, as the room's i panel's.
         function sourcesHtml(item) {
             var src = item.sources;
             if (!src || !src.length) return '';
+            var GS = window.GallerySources;
             var parts = [];
             for (var i = 0; i < src.length; i++) {
                 var s = String(src[i]);
-                var e = escapeHtml(s);
-                parts.push(/^https?:\/\//.test(s)
-                    ? '<a href="' + e + '" target="_blank" rel="noopener">' + e + '</a>' : e);
+                var bits = GS ? GS.pieces(s) : [{ text: s }];
+                parts.push(bits.map(function (p) {
+                    if (!p.url) return escapeHtml(p.text);
+                    var e = escapeHtml(p.url);
+                    return '<a href="' + e + '" target="_blank" rel="noopener">' + e + '</a>';
+                }).join(''));
             }
             return '<div class="viz-card-sources">Sources: ' + parts.join('; ') + '</div>';
         }

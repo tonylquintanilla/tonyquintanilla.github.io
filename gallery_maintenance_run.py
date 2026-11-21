@@ -272,6 +272,10 @@ check also fetches gallery/first_guide.js, which the page loads with a
 script tag. Later that day, Part 3: the same row holds the front page --
 its two served lines, the start card's title and sentence, its ways in
 and the Tutorial row, wired to the same file.)
+Module updated: November 20, 2026, night, with Anthropic's Claude Opus 5.5
+(L-540: the "Link cards" checker runs tools/test_link_card.py, the logic
+behind the gallery editor's New Link Card window, and gates, its
+self-test breaking the real file two ways.)
 """
 
 import hashlib
@@ -715,6 +719,17 @@ OFFLINE_CHECKERS = [
     # file three ways first. Gates.
     ("Scene cards", "python",
      ["tools/test_scene_card.py"], ".", "===", False),
+
+    # L-540 (2026-11-20, a reel on a Featured card): LINK CARDS, a card that
+    # is only a link to another website, made by the gallery editor's New
+    # Link Card window. It checks tools/link_card.py without the window:
+    # an address as a site's Share gives it cleaned of the sharing marks,
+    # each named; the website's own address refused, with New Scene named;
+    # an address already on a card refused; and every link card in the
+    # real metadata clean, on no other card, and out of the drawer. Its
+    # self-test breaks the real file two ways first. Gates.
+    ("Link cards", "python",
+     ["tools/test_link_card.py"], ".", "===", False),
 
     # L-529 (2026-11-20, guided encounters, slice 1): ENCOUNTERS. Every
     # encounter card and its package under data/encounters/ (written by

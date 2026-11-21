@@ -37,6 +37,7 @@
 //   rowDates     the dates beside the encounter's name in its fold, read
 //                from the plan's events on the craft's entries.
 //   infoHtml     the i panel's words: what the drawing is, and its source.
+//                Each web address in it is a link (L-540).
 //
 // THE DIGITS. A frame's distance and speed are JPL's own at that moment:
 // nothing is worked out between points, nothing drifts, and JPL states no
@@ -422,7 +423,26 @@
       WORDS.sourceLine(retrievedWords(pkg))
     ];
     return "<h3>" + esc(title || "") + "</h3>" + lines.map(function (l) {
-      return "<p>" + esc(l) + "</p>"; }).join("");
+      return "<p>" + linkedHtml(l, esc) + "</p>"; }).join("");
+  }
+
+  // L-540 (Tony, 2026-11-20, 22:27: "could you check that all url's in
+  // the info panels have live links not just typed url's? for example,
+  // the new Escapade encounters"): each web address in a line of the i
+  // panel is a link that opens in a new tab. The cut is
+  // gallery/source_list.js's, as the room's own panel's
+  // (sunAppendLinked); the page loads it before this file. Without it
+  // the line is plain text, which is what a check reading the words
+  // (documentation/smoke_typed_facts.js) reads either way.
+  function linkedHtml(s, esc) {
+    var GS = global.GallerySources;
+    if (!GS || typeof GS.pieces !== "function") { return esc(s); }
+    return GS.pieces(String(s)).map(function (p) {
+      if (!p.url) { return esc(p.text); }
+      var u = esc(p.url);
+      return '<a href="' + u.replace(/"/g, "&quot;") +
+        '" target="_blank" rel="noopener">' + u + "</a>";
+    }).join("");
   }
 
   global.Encounter = {

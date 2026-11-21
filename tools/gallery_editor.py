@@ -109,6 +109,14 @@ have several, and its twin shares them. The logic is tools/drawer_places.py,
 checked by tools/test_drawer_places.py. The Earth System and the Stars
 keep the hand-curated tree.
 
+New Link Card... (L-540; Tony, 2026-11-20, 22:27: "I would prefer a new
+link card command in the editor") makes a card that is only a link to
+another website, such as a reel on Instagram: the address cleaned of the
+sharing marks a site adds, a name, Featured on by default, in the
+selected card's gallery room. The lobby opens it in a new tab. The
+logic is tools/link_card.py, checked by tools/test_link_card.py.
+Module updated: November 20, 2026, night, with Anthropic's Claude Opus 5.5 (L-540).
+
 Role: devtool
 Domain: gallery_pipeline
 """
@@ -155,6 +163,7 @@ def preview_base():
 from json_converter import live_scene_urls  # noqa: E402
 # L-519 (2026-11-09): the New Scene window's logic, which needs no window.
 import scene_card  # noqa: E402
+import link_card  # noqa: E402
 import drawer_places  # noqa: E402
 
 # L-519 part 2: the door whose cards are listed in the Solar System room's
@@ -382,6 +391,7 @@ class GalleryEditor:
         c.add_command(label="Pick Live Scene URL...", command=self._pick_live)
         c.add_separator()
         c.add_command(label="New Scene...", command=self._new_scene)
+        c.add_command(label="New Link Card...", command=self._new_link_card)
         menubar.add_cascade(label="Card", menu=c)
 
         self.root.bind('<Control-s>', lambda e: self._save_all())
@@ -1702,8 +1712,12 @@ class GalleryEditor:
             cards.insert(at, entry)
             self._mark_dirty()
             dlg.destroy()
+            # FIXED (L-540, in passing): the refresh selects the card
+            # wherever the tree lists it. A second selection_set by the bare
+            # id raised in the Solar System door, whose cards are listed as
+            # card:<id>|<place>, after the scene was already made, so the
+            # line below never ran and the status kept its old words.
             self._refresh_tree(keep='card:' + entry['id'])
-            self.tree.selection_set('card:' + entry['id'])
             self.status_var.set(f"New scene '{name}' ({entry['id']}) -> {c.link}. "
                                 "Save All writes it.")
 
@@ -1714,6 +1728,121 @@ class GalleryEditor:
         save.configure(command=do_save)
         dlg.bind('<Escape>', lambda e: dlg.destroy())
         # ADDED (L-519, Tony's first try): Windows' right-click Paste.
+        for box in (paste, link_box, name_box):
+            add_edit_menu(box)
+        add_edit_menu(lines_box, read_only=True)
+        recheck()
+        paste.focus_set()
+        self.root.wait_window(dlg)
+
+    def _new_link_card(self):
+        """The New Link Card window (L-540): a card that is only a link to
+        another website, such as a reel on Instagram. Its logic is
+        tools/link_card.py, checked by tools/test_link_card.py without a
+        window; this only shows it. The card goes in the selected card's
+        gallery room, or the Solar System's when none is selected; Move to
+        Room... moves it."""
+        self._apply_form()
+        cards = self.data['visualizations']
+        sel = (self._card_by_id(self.selected[1])
+               if self.selected and self.selected[0] == 'card' else None)
+        room = sel.get('room', STORAGE_KEY) if sel else 'solar_system'
+        dlg = tk.Toplevel(self.root)
+        dlg.title("New link card")
+        dlg.geometry("760x420")
+        dlg.transient(self.root)
+        dlg.grab_set()
+        pad = dict(anchor='w', padx=12)
+        ttk.Label(dlg, text="Paste the address the card opens (a reel, a "
+                  "page on another website):").pack(pady=(12, 2), **pad)
+        paste_var = tk.StringVar()
+        paste = ttk.Entry(dlg, textvariable=paste_var)
+        paste.pack(fill='x', padx=12)
+        ttk.Label(dlg, text="The card's address (you can edit it; it is read "
+                  "again after each edit):").pack(pady=(10, 2), **pad)
+        link_var = tk.StringVar()
+        lf = ttk.Frame(dlg)
+        lf.pack(fill='x', padx=12)
+        link_box = ttk.Entry(lf, textvariable=link_var)
+        link_box.pack(side='left', fill='x', expand=True)
+        look = ttk.Button(lf, text="Look")
+        look.pack(side='left', padx=(6, 0))
+        lines_box = tk.Text(dlg, height=7, wrap='word', relief='flat',
+                            background=dlg.cget('background'))
+        lines_box.tag_configure('good', foreground='#1a7f37')
+        lines_box.tag_configure('bad', foreground='#c62828')
+        lines_box.tag_configure('note', foreground='#666666')
+        lines_box.pack(fill='both', expand=True, padx=12, pady=(10, 4))
+        nf = ttk.Frame(dlg)
+        nf.pack(fill='x', padx=12, pady=4)
+        ttk.Label(nf, text="Name:").pack(side='left')
+        name_var = tk.StringVar()
+        name_box = ttk.Entry(nf, textvariable=name_var)
+        name_box.pack(side='left', fill='x', expand=True, padx=(6, 0))
+        feat_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(dlg, text="Show on the gallery page's Featured",
+                        variable=feat_var).pack(pady=4, **pad)
+        ttk.Label(dlg, text=f"Gallery room: {room} (Move to Room... moves it "
+                  "after)").pack(**pad)
+        bf = ttk.Frame(dlg)
+        bf.pack(fill='x', padx=12, pady=(4, 12))
+        save = ttk.Button(bf, text="Save card")
+        save.pack(side='right', padx=2)
+        ttk.Button(bf, text="Cancel", command=dlg.destroy).pack(side='right', padx=2)
+        state = {'cleaned': None, 'ok': False}
+
+        def recheck(*_a):
+            c = link_card.clean(link_var.get())
+            lines, ok = link_card.check(c, cards)
+            if ok and not name_var.get().strip():
+                lines.append(('bad', "Give the card a name."))
+            state.update(cleaned=c, ok=ok)
+            lines_box.configure(state='normal')
+            lines_box.delete('1.0', 'end')
+            for kind, text in lines:
+                lines_box.insert('end', text + '\n', kind)
+            lines_box.configure(state='disabled')
+            ready = ok and bool(name_var.get().strip())
+            save.state(['!disabled'] if ready else ['disabled'])
+            look.state(['!disabled'] if c.link else ['disabled'])
+
+        def pasted(*_a):
+            c = link_card.clean(paste_var.get())
+            link_var.set(c.link if c.link else paste_var.get().strip())
+
+        def do_look():
+            c = state['cleaned']
+            if c and c.link:
+                webbrowser.open(c.link)
+
+        def do_save():
+            recheck()
+            c = state['cleaned']
+            name = name_var.get().strip()
+            if not (state['ok'] and name and c):
+                return
+            entry = link_card.new_entry(name, c.link, feat_var.get(), room, cards)
+            # After the last card in its room, so the tree keeps them together.
+            at = len(cards)
+            for i, v in enumerate(cards):
+                if v.get('room') == room:
+                    at = i + 1
+            cards.insert(at, entry)
+            self._mark_dirty()
+            dlg.destroy()
+            # The refresh selects it wherever the tree lists it: in the
+            # Solar System door a card with no drawer place is under "Not in
+            # the drawer", as card:<id>|#loose.
+            self._refresh_tree(keep='card:' + entry['id'])
+            self.status_var.set(f"New link card '{name}' ({entry['id']}) -> {c.link}. "
+                                "Save All writes it.")
+
+        paste_var.trace_add('write', pasted)
+        link_var.trace_add('write', recheck)
+        name_var.trace_add('write', recheck)
+        look.configure(command=do_look)
+        save.configure(command=do_save)
+        dlg.bind('<Escape>', lambda e: dlg.destroy())
         for box in (paste, link_box, name_box):
             add_edit_menu(box)
         add_edit_menu(lines_box, read_only=True)
