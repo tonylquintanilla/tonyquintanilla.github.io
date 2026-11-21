@@ -10,19 +10,20 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 66  
-**Total Lines of Code (non-blank):** 35,543  
-**Total Public Functions/Classes:** 614
+**Total Python Files:** 67  
+**Total Lines of Code (non-blank):** 35,741  
+**Total Public Functions/Classes:** 615
 
 ## Classification Coverage
 
-**Undetermined role (17).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (18).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/check_as_built_names.py`
 - `tools/check_encounters.py`
 - `tools/check_tree_parents.py`
 - `tools/encounter_fetch.py`
 - `tools/exhibit_store_editor.py`
+- `patch_L529_1_player_press.py`
 - `patch_L540_2_outside_link_card.py`
 - `patch_L540_4_reel_link_card.py`
 - `tools/record_earth_scene.py`
@@ -36,11 +37,12 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (10).** No valid `Domain:` tag.
+**Undetermined domain (11).** No valid `Domain:` tag.
 
 - `tools/check_as_built_names.py`
 - `tools/check_tree_parents.py`
 - `tools/exhibit_store_editor.py`
+- `patch_L529_1_player_press.py`
 - `patch_L540_2_outside_link_card.py`
 - `patch_L540_4_reel_link_card.py`
 - `tools/record_earth_scene.py`
@@ -159,6 +161,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `check_tree_parents.py` | - every object's parent in data/objects_config.json is the centre JPL is asked around for it. (195 lines) |
 | `encounter_fetch.py` | - ask JPL Horizons, fresh, for an encounter's bodies around its centre, and write the encounter's package under data/encounters/. (634 lines) |
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (690 lines) |
+| `patch_L529_1_player_press.py` | - the encounter's player after Tony's phone look (L-529, guided encounters): Pause takes on the first tap, and the oval around the player is clear. (198 lines) |
 | `patch_L540_2_outside_link_card.py` | - a lobby card that links to another website (L-540) (101 lines) |
 | `patch_L540_4_reel_link_card.py` | - adds the card that links to ESCAPADE's reel on Instagram, featured, beside ESCAPADE's scene (L-540). (101 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |

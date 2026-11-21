@@ -2212,6 +2212,17 @@ in one encounter, with the Moon and Earth-Sun L2, around Earth's centre.
   visit plays in about 90 s on a desktop. A frame waits while a finger
   or the mouse is down on the picture. A box opened by any route pauses
   it (`sunLabelShow`), so its figures stay the frame's; Play closes it.
+  THE BUTTON ANSWERS THE PRESS (`encToggle`; Tony's phone look of
+  2026-11-20: "the Pause button is difficult to activate while Play is
+  not an issue"): its pointerdown, not the click that follows. The
+  reading it was built on, not measured on a phone: while it plays the
+  page is busy drawing, a phone's click waits for the finger to lift
+  and the page to be free, and a second tap then started it again. The
+  click after a press does nothing; a click with no press (the
+  keyboard's) still works; a second press inside `ENC_PRESS_GAP_MS`
+  (350 ms) is the same press. The button is 44 px tall. The oval around
+  the player is clear (his "make the play bar oval around the bar
+  opacity 0"), and the button carries the fill it showed inside it.
 - **The box** (`Encounter.boxText`): the name; the body's served words;
   "At <date, time> UTC: <km> from Earth's centre, moving at <km/s>.";
   for a spacecraft and a Lagrange point, "JPL states no accuracy for this

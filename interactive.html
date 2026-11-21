@@ -523,6 +523,12 @@
         Pause, a slider), "Back to Earth". Its logic is
         gallery/encounter.js. In the room, an Encounters fold under
         Earth's row opens it, its dates read from the plan.)
+     Updated: November 20, 2026 with Anthropic's Claude Fable 5.2
+       (L-529, Tony's phone look of the same night: the player's button
+        answers the press itself, not the click that follows it, and
+        is 44 px tall, so Pause takes while the page is busy drawing
+        frames; a second press inside a third of a second is the same
+        press. The oval around the player is clear.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -1034,14 +1040,20 @@
         .enc-player {
             position: absolute; left: 12px; right: 12px; bottom: 64px;
             z-index: 30; display: flex; align-items: center; gap: 10px;
-            background: rgba(17,24,39,0.94); border: 1px solid var(--border);
+            /* Tony's phone look of 2026-11-20: "make the play bar oval
+               around the bar opacity 0". The oval is clear and keeps
+               its size, so nothing moves; the button carries the fill
+               it showed inside the oval (the two colours combined). */
+            background: transparent; border: 1px solid transparent;
             border-radius: 22px; padding: 4px 12px 4px 4px;
         }
         .enc-play {
-            flex-shrink: 0; min-width: 92px; height: 36px; border-radius: 18px;
-            border: 1px solid var(--border); background: rgba(255,255,255,0.06);
+            /* 44 px tall, as the slider is: a thumb's size. No wait for
+               a second tap before a tap counts (touch-action). */
+            flex-shrink: 0; min-width: 92px; height: 44px; border-radius: 22px;
+            border: 1px solid var(--border); background: rgba(31,38,52,0.94);
             color: var(--text-primary); font: 500 13px 'DM Sans', system-ui, sans-serif;
-            cursor: pointer;
+            cursor: pointer; touch-action: manipulation;
         }
         .enc-play:focus-visible { outline: 2px solid var(--interactive); outline-offset: 2px; }
         .enc-slider { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: var(--interactive); }
@@ -5015,6 +5027,13 @@ function encBackMount(centre) {
 // longer to draw a frame; the clock is even in the data (one hour a
 // frame) and the date under the title says which hour is shown.
 const ENC_FRAME_MS = 120;
+// L-529, Tony's phone look of 2026-11-20 ("the Pause button is difficult
+// to activate while Play is not an issue"). ENC_PRESS_GAP_MS: a second
+// press this soon after the last is the same press, a finger tapping
+// again because the first tap seemed lost. ENC_PRESS_CLICK_MS: a click
+// this soon after a press is that press's own click. Mode 5 knobs.
+const ENC_PRESS_GAP_MS = 350;
+const ENC_PRESS_CLICK_MS = 3000;
 let encPlayer = null;
 async function encPlayerMount(gd, built) {
     if (!built.frames || built.frames.length < 2) { return; }
@@ -5033,8 +5052,23 @@ async function encPlayerMount(gd, built) {
     encPlayer = { gd: gd, names: built.frameNames, frames: built.frames, i: 0, playing: false,
                   timer: null, down: false, slider: slider,
                   button: bar.querySelector("#enc-play") };
+    // The button answers the PRESS (pointerdown), not the click. While it
+    // plays the page is busy drawing a frame most of the time, and a
+    // phone sends a click only once the finger has lifted and the page
+    // is free, so Pause came late and a second tap started it again.
+    // The click that follows a press is that press and does nothing; a
+    // click with no press before it (the keyboard's, a screen reader's,
+    // a walk's) still works.
+    encPlayer.button.addEventListener("pointerdown", function (e) {
+        if (e.pointerType === "mouse" && e.button !== 0) { return; }
+        encPlayer.pressAt = Date.now();
+        encToggle();
+    });
     encPlayer.button.onclick = function () {
-        if (encPlayer.playing) { encPause(); } else { encPlay(); }
+        const since = Date.now() - (encPlayer.pressAt || 0);
+        encPlayer.pressAt = 0;
+        if (since < ENC_PRESS_CLICK_MS) { return; }
+        encToggle();
     };
     slider.addEventListener("input", function () {
         encPause();
@@ -5106,6 +5140,16 @@ function encPause() {
     P.playing = false;
     if (P.timer) { clearTimeout(P.timer); P.timer = null; }
     encPlayerLabel();
+}
+// One press of the player's button: Pause while it plays, Play while it
+// is held. A second press inside ENC_PRESS_GAP_MS is the same press.
+function encToggle() {
+    const P = encPlayer;
+    if (!P) { return; }
+    const now = Date.now();
+    if (now - (P.toggledAt || 0) < ENC_PRESS_GAP_MS) { return; }
+    P.toggledAt = now;
+    if (P.playing) { encPause(); } else { encPlay(); }
 }
 
 // L-443 build B: the positions files of the spacecraft among the Solar
