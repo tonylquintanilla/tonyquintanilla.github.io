@@ -8,9 +8,17 @@ a name (its title), the address (its live field, another website's) and
 Featured on or off. The first is ESCAPADE's reel on Instagram. The lobby
 reads a card whose live address starts with http:// or https:// as a page,
 not a room: no "Interactive" label, and a tap opens it in a new tab
-(index.html, L-540). It has no file and no place in the room's drawer, so
-it shows only in the lobby. A link into the website's own rooms is a scene,
-made by the New Scene window (tools/scene_card.py), not here.
+(index.html, L-540). It has no file. A link into the website's own rooms
+is a scene, made by the New Scene window (tools/scene_card.py), not here.
+
+WHERE A LINK CARD LIVES (L-540, the Links fold, 2026-11-21). In the Solar
+System room, beside a row of its drawer (drawer_row, as any card there):
+the room shows it in that row's Links fold, after the row's Encounters
+and before its Saved pictures, and a tap opens it in a new tab
+(gallery/picture_folds.js). A link card in the Solar System room with no
+place shows in the lobby only. The New Link Card window asks which row;
+with none the card is saved in Storage, hidden from visitors, as any new
+card, until Move to Room... There is no separate links room.
 
 WHAT THIS FILE DECIDES (no window needed, so tools/test_link_card.py can
 check it; the editor's window only shows what it says):
@@ -23,12 +31,16 @@ check it; the editor's window only shows what it says):
   check(cleaned, ...)  the lines the window prints, and whether the card
                        may be saved: an address on another website, and on
                        no other card already.
-  new_entry(...)       the card itself, with an id no other card has.
+  new_entry(...)       the card itself, with an id no other card has, in
+                       the room its place puts it in (above).
 
 Role: devtool
 Domain: gallery_pipeline
 
 Written November 20, 2026 with Anthropic's Claude Opus 5.5 (L-540).
+Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-540, the
+Links fold): new_entry takes the card's place in the drawer, and the
+header says where a link card lives now.
 """
 
 import re
@@ -45,6 +57,11 @@ OWN_HOSTS = ('palomasorrery.com', 'tonyquintanilla.github.io')
 # Sites whose share links name a post by its path alone, so every part
 # after "?" is a sharing mark.
 PATH_ONLY_HOSTS = ('instagram.com',)
+# L-540, the Links fold: where a new link card is saved. Beside a row of
+# the drawer, in the Solar System room; with no row, in Storage, as any
+# new card (the gallery editor's STORAGE_KEY).
+DRAWER_ROOM = 'solar_system'
+STORAGE_ROOM = 'other'
 
 
 class Cleaned(object):
@@ -133,8 +150,10 @@ def check(cleaned, cards, own_id=None):
     return lines, True
 
 
-def new_entry(name, link, featured, room, cards):
-    """The link card, with an id no other card has."""
+def new_entry(name, link, featured, place, cards):
+    """The link card, with an id no other card has. With a place (a row of
+    the Solar System drawer, as drawer_row names it) it is saved in the
+    Solar System room beside that row; with none, in Storage (L-540)."""
     title = (name or '').strip()
     base = 'link_' + (re.sub(r'[^a-z0-9]+', '_', title.lower()).strip('_') or 'card')
     ids = set(v.get('id') for v in cards or [])
@@ -142,11 +161,11 @@ def new_entry(name, link, featured, room, cards):
     while new_id in ids:
         new_id = '%s_%d' % (base, n)
         n += 1
-    return {
+    entry = {
         "id": new_id,
         "title": title,
         "description": "",
-        "room": room,
+        "room": DRAWER_ROOM if place else STORAGE_ROOM,
         "shape": "9:16",
         "files": {},
         "live": link,
@@ -155,3 +174,6 @@ def new_entry(name, link, featured, room, cards):
         "converted": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "size_kb": {},
     }
+    if place:
+        entry["drawer_row"] = place
+    return entry

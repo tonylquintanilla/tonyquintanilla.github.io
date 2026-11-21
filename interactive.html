@@ -529,6 +529,15 @@
         is 44 px tall, so Pause takes while the page is busy drawing
         frames; a second press inside a third of a second is the same
         press. The oval around the player is clear.)
+     Updated: November 21, 2026 with Anthropic's Claude Opus 5.5
+       (L-540, a reel on a Featured card: a LINK card, one whose
+        address is another website's, sits in a fourth fold, Links,
+        under the row of its body, after the row's Encounters and ahead
+        of its Saved pictures; its mark is an arrow leaving a box
+        (LINK_MARK); open, one line, "Each link opens another website in
+        a new tab.", and each link opens in a new tab with nothing kept
+        for Back, since the room stays open in its own tab. Find finds
+        its name and counts it as a link.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -8850,7 +8859,7 @@ function ssRender() {
     }
     const findCount = document.getElementById("sun-find-count");
     if (findCount) {
-        findCount.textContent = hits ? SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s, hits.e) : "";
+        findCount.textContent = hits ? SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s, hits.e, hits.l) : "";
         findCount.hidden = !hits;
     }
     ssPicsRender(hits, seen);   // L-517: the saved pictures' folds
@@ -9262,7 +9271,8 @@ const SCENE_MARK =
     'stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>';
 
 // The folds under one row, if it has any: its Scenes first (L-519), then
-// the row's saved pictures; each its head, its line and one link per card,
+// its Encounters (L-529), its Links (L-540), then the row's saved
+// pictures; each its head, its line and one link per card,
 // appended to the list right after the row. A fold's id is its own
 // (data-pf): the row's key for its pictures, PictureFolds.sceneFoldFor's
 // for its scenes (SCENES_FOLD under the Sun). Any row may have folds,
@@ -9284,25 +9294,37 @@ const ENCOUNTER_MARK =
     '<path d="M0.8 1.5 C 6 3.5, 10.5 4.5, 13.2 11" fill="none" ' +
     'stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
 
-// kind: "scenes", "encounters" or "pictures" (PictureFolds.foldsFrom).
+// L-540: a link fold's mark, an arrow leaving a box, where an encounter
+// fold has its path: the link opens another website.
+const LINK_MARK =
+    '<svg class="picmark" viewBox="0 0 14 12" aria-hidden="true">' +
+    '<path d="M6 1.5 H1.5 V10.5 H10.5 V6" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="M8 0.75 H13.25 V6 M13.25 0.75 L6.5 7.5" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.2" stroke-linecap="round" ' +
+    'stroke-linejoin="round"/></svg>';
+
+// kind: "scenes", "encounters", "links" or "pictures"
+// (PictureFolds.foldsFrom).
 function ssPictureFoldOne(list, foldId, depth, kind) {
     const PF = window.PictureFolds;
     const entries = ssDrawer.pictures.byKey[foldId];
     if (!entries || !entries.length) { return; }
-    const scenes = kind === "scenes", encs = kind === "encounters";
+    const scenes = kind === "scenes", encs = kind === "encounters",
+        links = kind === "links";
     const pf = "pf-" + Math.min(3, (depth || 0) + 1);
     const head = document.createElement("button");
     head.type = "button";
     head.className = "sun-row sun-pics " + pf + (scenes ? " sun-scenes" : "") +
-        (encs ? " sun-encounters" : "");
+        (encs ? " sun-encounters" : "") + (links ? " sun-links" : "");
     head.setAttribute("data-pf", foldId);
     head.setAttribute("aria-expanded", "false");
     head.innerHTML =
         '<span class="pick"><span class="fold"></span>' +
-        (scenes ? SCENE_MARK : (encs ? ENCOUNTER_MARK : PICTURE_MARK)) +
+        (scenes ? SCENE_MARK : (encs ? ENCOUNTER_MARK : (links ? LINK_MARK : PICTURE_MARK))) +
         '</span><span class="rname"></span><span class="gcount"></span>';
     head.querySelector(".rname").textContent = scenes ? PF.WORDS.scenes :
-        (encs ? PF.WORDS.encounters : PF.WORDS.fold);
+        (encs ? PF.WORDS.encounters : (links ? PF.WORDS.links : PF.WORDS.fold));
     head.onclick = function () { ssPicFold(foldId); };
     list.appendChild(head);
     const line = document.createElement("div");
@@ -9310,7 +9332,7 @@ function ssPictureFoldOne(list, foldId, depth, kind) {
     line.setAttribute("data-pf", foldId);
     line.hidden = true;
     line.textContent = scenes ? PF.WORDS.scenesLine :
-        (encs ? PF.WORDS.encountersLine : PF.WORDS.line);
+        (encs ? PF.WORDS.encountersLine : (links ? PF.WORDS.linksLine : PF.WORDS.line));
     list.appendChild(line);
     entries.forEach(function (e) {
         const a = document.createElement("a");
@@ -9330,7 +9352,14 @@ function ssPictureFoldOne(list, foldId, depth, kind) {
             a.querySelector(".rname").appendChild(document.createTextNode(" "));
             a.querySelector(".rname").appendChild(d);
         }
-        a.addEventListener("click", function () { ssPicOpen(foldId, e); });
+        // L-540: a link opens another website in a new tab, and the room
+        // stays open in its own, so nothing is kept for Back (no ssPicOpen).
+        if (e.link) {
+            a.target = "_blank";
+            a.rel = "noopener";
+        } else {
+            a.addEventListener("click", function () { ssPicOpen(foldId, e); });
+        }
         list.appendChild(a);
     });
 }

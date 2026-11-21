@@ -171,6 +171,14 @@
 // Updated November 16, 2026 with Anthropic's Claude Opus 5.5 (Tony's ruling
 // of that day, on L-535): the drawer opens at the row its handle names
 // (39); section 37's distance held within half the place it prints.
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-540, a reel
+// on a Featured card): section 41 walks the Links fold on a copy of the
+// metadata with the reel's card placed beside Earth -- right after Earth's
+// Encounters and ahead of its saved pictures, closed, named Links, its own
+// mark (an arrow leaving a box, no picture's frame) and its count; open,
+// its line and the link with an arrow, opening the reel's own address in
+// a new tab (target _blank, rel noopener); a tap keeping nothing for Back
+// and no ticks; Find counting it as a link. A planted page walks it too.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -490,6 +498,76 @@ async function places(root, payload, page) {
               " pictures beside 3I/ATLAS and the belt's cloud");
 }
 
+// 41. L-540 (a reel on a Featured card): the Links fold. The page is served
+// a copy of the real metadata with the one link card, the reel, placed
+// beside Earth. What is expected is worked out here from that copy, not by
+// the page's helpers: a link card is one whose live address starts with
+// http:// or https://, the lobby's own test.
+async function linksFold(root, payload, page) {
+  const fs = require("fs"), os = require("os"), path = require("path");
+  const meta = JSON.parse(fs.readFileSync(path.join(root, "gallery", "gallery_metadata.json"), "utf8"));
+  const outside = meta.visualizations.filter(v => /^https?:\/\//i.test(v.live || ""));
+  outside.forEach(v => { v.drawer_row = "earth"; });
+  ok(outside.length > 0, "no link card in the metadata to walk (L-540)");
+  if (!outside.length) { return; }
+  const copy = path.join(os.tmpdir(), "walk_links_metadata.json");
+  fs.writeFileSync(copy, JSON.stringify(meta));
+  const w = await h.boot(root, "solar-system", payload,
+    Object.assign({ serve: { "gallery/gallery_metadata.json": copy } }, page ? { page: page } : {}));
+  const d = w.document, E = (s) => w.eval(s);
+  const click = async (el) => { el.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true })); await h.done(); };
+  const fold = (id) => d.querySelector('#sun-drawer-list .sun-pics[data-pf="' + id + '"]');
+  const links = (id) => Array.from(d.querySelectorAll('#sun-drawer-list a.sun-pic[data-pf="' + id + '"]'));
+  const lf = fold("links:earth");
+  // 41a. After Earth's Encounters, ahead of its saved pictures; closed,
+  // named Links, with its own mark and its count.
+  const encLinks = links("encounters:earth");
+  const encLast = encLinks.length ? encLinks[encLinks.length - 1] : null;
+  ok(!!lf && !!encLast && encLast.nextElementSibling === lf,
+     "the Links fold is not right after Earth's Encounters");
+  if (!lf) { return; }
+  const lastLink = links("links:earth")[links("links:earth").length - 1];
+  ok(!!lastLink && lastLink.nextElementSibling === fold("earth"),
+     "Earth's saved pictures do not follow its Links");
+  ok(lf.querySelector(".rname").textContent === "Links" && lf.getAttribute("aria-expanded") === "false" &&
+     lf.querySelector(".gcount").textContent === String(outside.length) &&
+     lf.querySelectorAll("svg.picmark path").length === 2 && !lf.querySelector("svg.picmark rect") &&
+     !lf.querySelector("svg.picmark circle") && !lf.querySelector(".box"),
+     "the Links fold is not closed, named Links, with its own mark and its count of " + outside.length);
+  ok(links("links:earth").every(a => a.hidden), "a link shows when the room opens");
+  // 41b. Open: its line, and each link by name with an arrow, opening its
+  // own address in a new tab.
+  await click(lf.querySelector(".rname"));
+  const line = d.querySelector('#sun-drawer-list .sun-pics-line[data-pf="links:earth"]');
+  ok(!!line && !line.hidden && line.textContent === "Each link opens another website in a new tab.",
+     "the open Links fold does not show its line: " + (line && line.textContent));
+  ok(links("links:earth").map(a => a.getAttribute("href")).join() === outside.map(v => v.live).join() &&
+     links("links:earth").map(a => a.querySelector(".rname").textContent).join() === outside.map(v => v.title).join() &&
+     links("links:earth").every(a => !a.hidden && a.getAttribute("target") === "_blank" &&
+       a.getAttribute("rel") === "noopener" && a.querySelector(".parrow") && !a.querySelector(".box")),
+     "the links do not show by name with an arrow, opening their own address in a new tab");
+  ok(!links("earth").some(a => outside.some(v => v.id === a.getAttribute("data-card"))),
+     "a link card is among Earth's saved pictures");
+  // 41c. A tap keeps nothing for Back, and no ticks.
+  d.addEventListener("click", (ev) => ev.preventDefault());   // stay on the page
+  w.sessionStorage.removeItem("po_room_return");
+  await click(links("links:earth")[0]);
+  ok(w.sessionStorage.getItem("po_room_return") === null && w.sessionStorage.getItem("po_root_ticks") === null,
+     "a link tapped keeps the room for Back, or its ticks: " + w.sessionStorage.getItem("po_room_return"));
+  // 41d. Find a link by a word of its title, counted as a link.
+  const word = (outside[0].title.match(/[A-Za-z]{5,}/g) || []).filter(x => !/earth/i.test(x))
+    .filter(x => !meta.visualizations.some(v => v !== outside[0] && (v.title || "").toLowerCase().indexOf(x.toLowerCase()) >= 0))[0] || "";
+  const find = d.getElementById("sun-find-input");
+  find.value = word; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done();
+  const count = d.getElementById("sun-find-count").textContent;
+  ok(!!word && !fold("links:earth").hidden && fold("links:earth").getAttribute("aria-expanded") === "true" &&
+     /(^|, | and )1 link match(es)?$/.test(count),
+     "Find '" + word + "' does not open the Links fold, counted as a link: " + count);
+  find.value = ""; find.dispatchEvent(new w.Event("input", { bubbles: true })); await h.done();
+  console.log("  41: Links under Earth, " + outside.length + " link(s): " + outside.map(v => v.id).join(", ") +
+              "; Find '" + word + "': " + count);
+}
+
 (async () => {
   const [root, given, planted] = process.argv.slice(2);
   const fs = require("fs"), os = require("os"), path = require("path");
@@ -503,6 +581,7 @@ async function places(root, payload, page) {
     await pictures(wp, root, payload, planted);
     await scenes(root, payload, planted);
     await places(root, payload, planted);
+    await linksFold(root, payload, planted);   // L-540
     console.log(fails.length ? "FAIL " + fails.length + " of " + n + " (planted " + planted + "):\n  " + fails.join("\n  ")
                              : "PASS: " + n + " checks on the planted page -- it should have failed");
     process.exit(fails.length ? 1 : 0);
@@ -2265,6 +2344,8 @@ async function places(root, payload, page) {
   // 30. L-519: the Scenes fold, on a copy of the metadata.
   await scenes(root, payload, null);
   await places(root, payload, null);
+  // 41. L-540: the Links fold, on a copy of the metadata.
+  await linksFold(root, payload, null);
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);
 })();

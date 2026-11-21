@@ -51,10 +51,16 @@ draws in its fold (FOLD_CENTRES: Earth, since part 3) lists them under it,
 "Earth's shells", each a place by "<centre>.<shell key>" ("earth.crust"),
 the key the page gives the row. On the website the fold lists them by
 distance among the moons, which this file does not work out a second time.
+Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-540, a reel
+on a Featured card): is_link, a card whose live address is another
+website's (the lobby's own test), and fold_kind; a place's cards are told
+into the website's four folds in its order: Scenes, Encounters, Links,
+Saved pictures.
 """
 
 import json
 import os
+import re
 
 FIELD = 'drawer_row'
 ROOM = 'solar-system'
@@ -279,13 +285,39 @@ def is_encounter(card):
     return isinstance(e, dict) and isinstance(e.get('id'), str) and bool(e.get('id'))
 
 
+# L-540 (a reel on a Featured card, 2026-11-21): a LINK CARD is one whose
+# live address is another website's, by the lobby's own test
+# (gallery/picture_folds.js, isLink, and index.html). It sits in a row's
+# Links fold, and with no place it shows only in the lobby.
+OUTSIDE = re.compile(r'^https?://', re.I)
+
+
+def is_link(card):
+    live = card.get('live') if isinstance(card, dict) else None
+    return isinstance(live, str) and bool(OUTSIDE.match(live))
+
+
+def fold_kind(card):
+    """The fold a card sits in at its place: 'scenes', 'encounters',
+    'links' or 'pictures', told in the website's order
+    (gallery/picture_folds.js, foldsFrom)."""
+    if is_scene(card):
+        return 'scenes'
+    if is_encounter(card):
+        return 'encounters'
+    if is_link(card):
+        return 'links'
+    return 'pictures'
+
+
+FOLD_KINDS = ('scenes', 'encounters', 'links', 'pictures')
+
+
 def fold_order(cards):
     """The cards at one place in the order the website shows them: its
-    scenes, then its encounters, then its saved pictures
-    (gallery/picture_folds.js, foldsAt)."""
-    scenes = [c for c in cards if is_scene(c)]
-    encs = [c for c in cards if not is_scene(c) and is_encounter(c)]
-    return scenes + encs + [c for c in cards if not is_scene(c) and not is_encounter(c)]
+    scenes, then its encounters, then its links (L-540), then its saved
+    pictures (gallery/picture_folds.js, foldsAt)."""
+    return [c for k in FOLD_KINDS for c in cards if fold_kind(c) == k]
 
 
 def places_of(card):

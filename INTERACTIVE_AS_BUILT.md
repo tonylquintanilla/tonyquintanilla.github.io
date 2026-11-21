@@ -1728,6 +1728,46 @@ Plotly.
   old `picture_folds.js`). And read once against the real page
   headlessly on 2026-11-09: the editor's tree and the page's rows agree,
   116 rows in the same order, and the Sun's shells but the rotation axis.
+- **Links** (L-540, a reel on a Featured card; Tony, by voice,
+  2026-11-21: "outside links should fit like saved scenes. Or saved
+  pictures. ... they're like special links but they are connected to
+  specific bodies"; a reel goes under the body of the encounter it
+  shows, "the Earth encounter belongs under Earth"). A LINK CARD is a
+  card whose live address is another website's, by the lobby's own test
+  (index.html: it starts with http:// or https://), and is neither a
+  scene nor an encounter (`PictureFolds.isLink`). With a place it sits in
+  a fourth fold, Links, under each row it names (`linkFoldFor`:
+  `links:<row key>`), after that row's Encounters and ahead of its Saved
+  pictures (`foldsAt`), never among them, and counted once (`links`).
+  With no place it is in no fold and the check lets it be: the lobby's
+  Featured carries it, and it is the one Solar System card that needs no
+  place. Its mark is an arrow leaving a box (`LINK_MARK`); open, one
+  line, "Each link opens another website in a new tab."
+  (`PictureFolds.WORDS.linksLine`), then each link's name with an arrow.
+  A tap opens the card's own address in a new tab (`target` `_blank`,
+  `rel` `noopener`) and calls no `ssPicOpen`: the room stays open in its
+  own tab, so nothing is kept for Back and no ticks. FIND finds its
+  title beside a body, as an encounter's, and counts it apart: "1 link
+  matches", "1 body and 1 link match" (`searchHits`' `l`, the sixth
+  argument of `WORDS.found`). Words for Tony's phone look: "Links" and
+  the line. CHECKED by the Picture folds row (section 9: the fold's
+  place and order, its count, a link never a picture, Find, the live
+  address, a link with no place in no fold; the real-file print shows
+  each Links fold; four more breaks, nineteen in all; the page's mark,
+  words and new tab) and walked (`walk_solar_system_drawer.js` section
+  41, on a copy of the metadata with the reel beside Earth: right after
+  Earth's Encounters and ahead of its pictures, its name, mark and count,
+  its line, the link opening its own address in a new tab, a tap keeping
+  nothing, Find counting a link; failing on a planted page whose links
+  lose `_blank`). THE EDITOR draws the same fold under each row
+  (`DRAWER_FOLDS`, `drawer_places.fold_kind` and `is_link`) and marks the
+  card "link". New Link Card... asks which row, from the drawer's rows as
+  Add place... offers them, or "No row": with a row the card is saved in
+  room `solar_system` beside it (`link_card.new_entry`'s place); with
+  none, in Storage, as any new card. There is no links room. CHECKED by
+  the Drawer places row (the four folds and their order, two more breaks)
+  and the Link cards row (a link card's places are rows the drawer
+  lists, in the Solar System room; a new card's place sets its room).
 
 **FRAMING, Tony's ruling of 2026-10-02** ("B but with a buffer of
 20%"): the room frames on how far each body is from the Sun NOW, not
@@ -2246,8 +2286,8 @@ in one encounter, with the Moon and Earth-Sun L2, around Earth's centre.
   (`ssPicOpen`). Find finds its name beside a body and counts it apart:
   "1 encounter matches" (`searchHits`' `e`, the fifth argument of
   `WORDS.found`). The gallery editor's tree lists a place's cards as the
-  website does, scenes, encounters, pictures (`drawer_places.fold_order`),
-  and marks the card "encounter".
+  website does, scenes, encounters, links, pictures
+  (`drawer_places.fold_order`), and marks the card "encounter".
 - **Back**: "Back to Earth" in the top bar (`encBackMount`). Opened from
   the fold in this tab it steps back through history, and the room takes
   what it kept and opens its drawer at the fold (`ssPicReturn`,

@@ -12,10 +12,13 @@ WHAT IT CHECKS
      (t=) and losing its sharing mark (si=); the website's own address
      refused, with New Scene named; a room's relative address refused; an
      address already on a card refused, however it was written; a new
-     card's fields and an id no other card has.
+     card's fields and an id no other card has; a new card with a place
+     saved in the Solar System room beside that row, and one with none
+     saved in Storage (L-540, the Links fold).
   2. The real file: every card in gallery/gallery_metadata.json whose live
      address is another website's is already clean, is on no other card,
-     and has no place in the room's drawer.
+     and has no place, or only places, that the room's drawer lists
+     (tools/drawer_places.py, read from data/objects_config.json).
 
 WHAT MAKES IT FAIL
   Any of the above, each named. A SELF-TEST runs first and breaks
@@ -26,6 +29,9 @@ Role: devtool
 Domain: gallery_pipeline
 
 Written November 20, 2026 with Anthropic's Claude Opus 5.5 (L-540).
+Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-540, the
+Links fold): a link card may sit beside a row of the drawer; its places
+must be rows the drawer lists, and a new card's place sets its room.
 """
 
 import json
@@ -37,6 +43,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
 import link_card  # noqa: E402
+import drawer_places  # noqa: E402
 
 REEL = 'https://www.instagram.com/reel/Df-TOOvjork/'
 SHARED = (REEL + '?utm_source=ig_web_copy_link&hvrq=MzRlODBiNWFlZA==&avpt=x')
@@ -81,13 +88,19 @@ def worked_cases(lc):
     lines, ok = lc.check(lc.clean(SHARED), cards, own_id='escapade_reel')
     want(ok, "a card's own address is not a second card")
 
-    e = lc.new_entry('ESCAPADE reel', REEL, True, 'solar_system', cards +
+    e = lc.new_entry('ESCAPADE reel', REEL, True, None, cards +
                      [{'id': 'link_escapade_reel'}])
     want(e['id'] == 'link_escapade_reel_2', "a new id no other card has (got %r)"
          % e['id'])
     want(e['live'] == REEL and e['featured'] is True and e['files'] == {}
-         and 'drawer_row' not in e and 'scene' not in e,
-         "a new card: the address, Featured, no file, no drawer place, not a scene")
+         and 'drawer_row' not in e and 'scene' not in e and e['room'] == 'other',
+         "a new card with no row: the address, Featured, no file, no drawer place, "
+         "not a scene, in Storage (got room %r)" % e.get('room'))
+    e = lc.new_entry('ESCAPADE reel', REEL, False, 'earth', cards)
+    want(e['room'] == 'solar_system' and e.get('drawer_row') == 'earth'
+         and e['featured'] is False and e['id'] == 'link_escapade_reel',
+         "a new card with a row: in the Solar System room beside it (got room %r, "
+         "drawer_row %r)" % (e.get('room'), e.get('drawer_row')))
     return bad
 
 
@@ -98,6 +111,8 @@ def real_file(lc):
         cards = json.load(f).get('visualizations', [])
     outside = [v for v in cards
                if str(v.get('live') or '').lower().startswith(('http://', 'https://'))]
+    labels = drawer_places.place_labels(drawer_places.drawer_tree(
+        drawer_places.read_config(ROOT)))
     for v in outside:
         c = lc.clean(v['live'])
         if c.problems:
@@ -109,9 +124,13 @@ def real_file(lc):
         lines, ok = lc.check(c, cards, own_id=v['id'])
         if not ok:
             bad.append("%s: %s" % (v['id'], lines[-1][1]))
-        if v.get('drawer_row'):
-            bad.append("%s: a link card has a place in the drawer" % v['id'])
-    return bad, [v['id'] for v in outside]
+        for p in drawer_places.unknown_places(v, labels):
+            bad.append("%s: its place %r is no row the drawer lists" % (v['id'], p))
+        if drawer_places.places_of(v) and not drawer_places.in_drawer_door(v):
+            bad.append("%s: it has a place in the drawer but is not in the Solar "
+                       "System room (room %r)" % (v['id'], v.get('room')))
+    return bad, ["%s (%s)" % (v['id'], ", ".join(drawer_places.places_of(v)) or "no place")
+                 for v in outside]
 
 
 def self_test():

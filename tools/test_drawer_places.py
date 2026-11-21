@@ -22,18 +22,27 @@ WHAT IT CHECKS
      shells are the served shells the New Scene window knows
      (scene_card.py); and every Solar System card's places are rows the
      tree lists.
+  3. Folds (L-529, L-540): a place's cards told into the website's four
+     folds, in its order -- Scenes, Encounters, Links, Saved pictures; a
+     link card is one whose live address starts with http:// or https://
+     (any case), the lobby's own test; a room's own address and a scene
+     that opens a room are not links.
 
 WHAT MAKES IT FAIL
   Any of the above, each named. A SELF-TEST runs first and breaks
-  drawer_places.py three ways -- a group's bodies left in served order, a
-  twin left behind, and one place written as a list -- so a green run has
-  shown it can go red.
+  drawer_places.py five ways -- a group's bodies left in served order, a
+  twin left behind, one place written as a list, a link listed among the
+  saved pictures, and the Links fold after the saved pictures -- so a
+  green run has shown it can go red.
 
 Role: devtool
 Domain: gallery_pipeline
 
 Written November 9, 2026, evening, with Anthropic's Claude Opus 5.5
 (L-519 part 2).
+Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-540, a reel
+on a Featured card): section 3, the four folds and is_link, worked in the
+cases so the self-test's two new breaks reach them.
 """
 
 import json
@@ -129,6 +138,22 @@ def cases(D):
          "a place the drawer does not list is not named")
     want(D.in_drawer_door({'room': 'solar_system/comets'}) and not D.in_drawer_door({'room': 'earth_system'}),
          "a card is not told to be in the Solar System door or not")
+    # 3. The folds (L-529, L-540), in the website's order.
+    fsc = {'id': 's', 'scene': True, 'live': 'interactive.html?exhibit=solar-system'}
+    fen = {'id': 'e', 'encounter': {'id': 'x-earth'}}
+    fln = {'id': 'l', 'live': 'https://www.instagram.com/reel/Df-TOOvjork/'}
+    fup = {'id': 'u', 'live': 'HTTP://example.com/page'}
+    fpi = {'id': 'p', 'files': {'landscape': 'p.json'}}
+    frm = {'id': 'r', 'live': 'interactive.html?exhibit=earth'}
+    want(D.is_link(fln) and D.is_link(fup) and not D.is_link(fsc) and not D.is_link(frm) and
+         not D.is_link(fpi) and not D.is_link({'live': None}) and not D.is_link('x'),
+         "a link card is not told by its live address on another website (the lobby's test)")
+    want([D.fold_kind(c) for c in (fsc, fen, fln, fpi, frm)] ==
+         ['scenes', 'encounters', 'links', 'pictures', 'pictures'],
+         "a card is not told into its fold: scenes, encounters, links, pictures")
+    want([c['id'] for c in D.fold_order([fpi, fln, fen, fsc, fup])] == ['s', 'e', 'l', 'u', 'p'],
+         "a place's cards are not in the website's order (Scenes, Encounters, Links, Saved "
+         "pictures): %s" % [c['id'] for c in D.fold_order([fpi, fln, fen, fsc, fup])])
     return f
 
 
@@ -204,6 +229,13 @@ def main():
         ("one place written as a list",
          broken("    elif len(places) == 1:\n        card[FIELD] = places[0]\n",
                 "    elif len(places) == 1:\n        card[FIELD] = list(places)\n")),
+        # L-540: a link listed among the saved pictures; the Links fold
+        # after the saved pictures.
+        ("a link listed among the saved pictures",
+         broken("    if is_link(card):\n        return 'links'\n", "")),
+        ("the Links fold after the saved pictures",
+         broken("FOLD_KINDS = ('scenes', 'encounters', 'links', 'pictures')",
+                "FOLD_KINDS = ('scenes', 'encounters', 'pictures', 'links')")),
     ]
     caught = []
     for name, mod in breaks:
@@ -285,18 +317,14 @@ def main():
         for p in drawer_places.unknown_places(c, labels):
             failures.append("card %s names the place %r, which the drawer does not list" % (c.get('id'), p))
     # L-529 (guided encounters, 2026-11-20): an encounter card is told from
-    # a scene and a picture, and a place's cards are listed in the
-    # website's order: scenes, encounters, saved pictures. Worked by hand,
-    # then on the real cards: every encounter card is in the door's tree at
-    # a place the drawer lists.
+    # a scene and a picture (the website's order of the folds is worked in
+    # the cases, section 3, L-540). Then on the real cards: every encounter
+    # card is in the door's tree at a place the drawer lists.
     sc = {'id': 's', 'scene': True}
     en = {'id': 'e', 'encounter': {'id': 'x-earth'}}
-    pi = {'id': 'p'}
-    if [c['id'] for c in drawer_places.fold_order([pi, en, sc])] != ['s', 'e', 'p'] or \
-            not drawer_places.is_encounter(en) or drawer_places.is_encounter(sc) or \
+    if not drawer_places.is_encounter(en) or drawer_places.is_encounter(sc) or \
             drawer_places.is_encounter({'encounter': {}}):
-        failures.append("an encounter card is not told from a scene and a picture, or a place's "
-                        "cards are not in the website's order (scenes, encounters, pictures)")
+        failures.append("an encounter card is not told from a scene and a picture")
     encs = [c for c in cards if drawer_places.is_encounter(c)]
     for c in encs:
         if not drawer_places.in_drawer_door(c) or not drawer_places.places_of(c) or \
@@ -305,6 +333,12 @@ def main():
                             % c.get('id'))
     print("Encounters in the tree: %s" % ("; ".join("%s beside %s" % (c.get('id'), ", ".join(
         drawer_places.places_of(c))) for c in encs) or "none"))
+    # L-540: the link cards, each beside a row the drawer lists or in the
+    # lobby only.
+    lnks = [c for c in cards if drawer_places.in_drawer_door(c) and drawer_places.is_link(c)]
+    print("Link cards in the door: %s" % ("; ".join("%s %s" % (c.get('id'), (
+        "beside " + ", ".join(drawer_places.places_of(c))) if drawer_places.places_of(c)
+        else "in the lobby only") for c in lnks) or "none"))
     print("The tree: %d rows (%d top-level), %d of the Sun's shells, in the website's order; "
           "%d Solar System cards in %d places." % (len(mine), len(top), len(shells), n_cards, n_places))
 

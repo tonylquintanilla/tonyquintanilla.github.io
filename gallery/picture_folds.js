@@ -96,10 +96,27 @@
 //              never typed in the card. Like a scene it opens another
 //              address of this page, so the room keeps "to" for Back.
 //
+//   LINKS      (L-540, a reel on a Featured card; Tony, by voice, 2026-11-21:
+//              "outside links should fit like saved scenes. Or saved
+//              pictures. ... they're like special links but they are
+//              connected to specific bodies"; a reel "depends on the
+//              encounter", the Earth encounter under Earth). A LINK CARD is
+//              a card whose live address is another website's, by the
+//              lobby's own test (index.html: live starts with http:// or
+//              https://), and that is neither a scene nor an encounter. With
+//              a place it sits in a fold named Links under each row it names
+//              (linkFoldFor), after that row's encounters and ahead of its
+//              saved pictures, never among them; with none it is in no fold
+//              (the lobby's Featured carries it). It opens its own address in
+//              a new tab, so the room stays open in its own tab and keeps
+//              nothing for Back.
+//
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
 // Updated November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519: the
 // Scenes fold under the Sun's row; folds keyed by their own id). Updated
 // the same day, evening (L-519 part 2: places, any row, several).
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-540: the
+// Links fold, a link card beside the row of its body).
 
 (function (global) {
   "use strict";
@@ -117,6 +134,9 @@
   // L-529: an encounter card, and its folds.
   const ENCOUNTER_FIELD = "encounter";
   const ENCOUNTERS_FOLD = "encounters";
+  // L-540: a link card's folds. Its test is the lobby's (index.html).
+  const LINKS_FOLD = "links";
+  const OUTSIDE = /^https?:\/\//i;
 
   // The visitor's words (L-517, the brief's board F). Words for Tony's
   // phone look.
@@ -128,7 +148,10 @@
     scenesLine: "Each scene opens with its bodies ticked, at today's date.",
     // L-529: words for Tony's phone look.
     encounters: "Encounters",
-    encountersLine: "Each encounter plays a completed pass, one hour to a frame."
+    encountersLine: "Each encounter plays a completed pass, one hour to a frame.",
+    // L-540: words for Tony's phone look.
+    links: "Links",
+    linksLine: "Each link opens another website in a new tab."
   };
 
   function isScene(v) { return !!v && v[SCENE_FIELD] === true; }
@@ -137,6 +160,13 @@
     return !!e && typeof e === "object" && typeof e.id === "string" && !!e.id;
   }
   function encounterFoldFor(rowKey) { return ENCOUNTERS_FOLD + ":" + rowKey; }
+  // L-540: a card whose live address is another website's, by the lobby's
+  // own test; a scene or an encounter is never one (foldsFrom tries them
+  // first).
+  function isLink(v) {
+    return !!v && typeof v.live === "string" && OUTSIDE.test(v.live);
+  }
+  function linkFoldFor(rowKey) { return LINKS_FOLD + ":" + rowKey; }
 
   // A phone, by index.html's own test: narrower than 768 px, or a touch
   // screen whose short side is a phone's (a phone held sideways).
@@ -226,7 +256,9 @@
   // quietly; a scene is never a saved picture, whatever it carries.
   // L-529: datesOf(card), optional, gives an encounter's dates for its
   // name's line (null when they cannot be read); the entry carries them as
-  // "dates". encounters counts each encounter once.
+  // "dates". encounters counts each encounter once. L-540: a link card with
+  // a place sits in a Links fold (linkFoldFor), "link" on its entry, and
+  // links counts each once; with no place it is in no fold.
   function foldsFrom(metadata, rows, phone, datesOf) {
     const cards = (metadata && Array.isArray(metadata.visualizations))
       ? metadata.visualizations : [];
@@ -234,16 +266,17 @@
     cards.forEach(function (v) { if (v && v.id) { byId[v.id] = v; } });
     const byKey = {}, keys = [], unplaced = [], rowOf = {}, kind = {};
     const sunKey = rowKeyFor(SCENES_ROW, rows);
-    let count = 0, scenes = 0, encounters = 0;
+    let count = 0, scenes = 0, encounters = 0, links = 0;
     // L-519 part 2: a card is one record, shown in each of its places.
-    // what: "scenes", "encounters" or "pictures".
+    // what: "scenes", "encounters", "links" or "pictures".
     function place(v, what) {
       let shown = false;
       placesOf(v).forEach(function (p) {
         const key = rowKeyFor(p, rows);
         if (!key) { unplaced.push({ id: v.id, place: p }); return; }
         const fold = what === "scenes" ? sceneFoldFor(key, sunKey)
-          : (what === "encounters" ? encounterFoldFor(key) : key);
+          : (what === "encounters" ? encounterFoldFor(key)
+          : (what === "links" ? linkFoldFor(key) : key));
         if (!byKey[fold]) {
           byKey[fold] = []; keys.push(fold);
           rowOf[fold] = key; kind[fold] = what;
@@ -255,6 +288,7 @@
           e.encounter = true;
           e.dates = (typeof datesOf === "function") ? (datesOf(v) || null) : null;
         }
+        if (what === "links") { e.link = true; }
         byKey[fold].push(e);
         shown = true;
       });
@@ -269,20 +303,25 @@
       if (place(v, "encounters")) { encounters++; }
     });
     cards.forEach(function (v) {
-      if (!v || isScene(v) || isEncounter(v) || !placesOf(v).length) { return; }
+      if (!v || isScene(v) || isEncounter(v) || !isLink(v) || !inMode(v, byId, phone)) { return; }
+      if (place(v, "links")) { links++; }
+    });
+    cards.forEach(function (v) {
+      if (!v || isScene(v) || isEncounter(v) || isLink(v) || !placesOf(v).length) { return; }
       if (!inMode(v, byId, phone)) { return; }
       if (place(v, "pictures")) { count++; }
     });
     return { byKey: byKey, keys: keys, rowOf: rowOf, kind: kind,
              unplaced: unplaced, count: count, scenes: scenes,
-             encounters: encounters };
+             encounters: encounters, links: links };
   }
 
   // The folds under one row, in the order they are drawn: its scenes first
-  // (the Sun's row), then its encounters (L-529), then its saved pictures.
+  // (the Sun's row), then its encounters (L-529), then its links (L-540),
+  // then its saved pictures.
   function foldsAt(folds, rowKey) {
     const out = [];
-    ["scenes", "encounters", "pictures"].forEach(function (what) {
+    ["scenes", "encounters", "links", "pictures"].forEach(function (what) {
       ((folds && folds.keys) || []).forEach(function (f) {
         if (folds.rowOf[f] === rowKey && folds.kind[f] === what) { out.push(f); }
       });
@@ -302,14 +341,16 @@
     return k + " of " + n;
   }
 
-  // {rowKey: [{id, words, scene}]}: what Find matches, for searchHits,
-  // by the row each fold sits under (the scenes under the Sun's).
+  // {rowKey: [{id, words, scene, encounter, link}]}: what Find matches, for
+  // searchHits, by the row each fold sits under (the scenes under the
+  // Sun's). L-540: a link is marked, so its title is found by itself.
   function searchWords(folds) {
     const out = {};
     ((folds && folds.keys) || []).forEach(function (k) {
       const row = (folds.rowOf && folds.rowOf[k]) || k;
       out[row] = (out[row] || []).concat(folds.byKey[k].map(function (e) {
-        return { id: e.id, words: e.title, scene: !!e.scene, encounter: !!e.encounter }; }));
+        return { id: e.id, words: e.title, scene: !!e.scene, encounter: !!e.encounter,
+                 link: !!e.link }; }));
     });
     return out;
   }
@@ -352,12 +393,15 @@
     SCENES_ROW: SCENES_ROW,
     ENCOUNTER_FIELD: ENCOUNTER_FIELD,
     ENCOUNTERS_FOLD: ENCOUNTERS_FOLD,
+    LINKS_FOLD: LINKS_FOLD,
     WORDS: WORDS,
     placesOf: placesOf,
     sceneFoldFor: sceneFoldFor,
     encounterFoldFor: encounterFoldFor,
+    linkFoldFor: linkFoldFor,
     isScene: isScene,
     isEncounter: isEncounter,
+    isLink: isLink,
     foldsAt: foldsAt,
     returnFor: returnFor,
     isPhone: isPhone,

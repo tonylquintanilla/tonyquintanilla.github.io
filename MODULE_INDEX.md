@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** November 20, 2026 by `module_atlas.py`  
+**Generated:** November 21, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -10,22 +10,19 @@ way the old hand-maintained MODULE_INDEX.md did. This is the light,
 human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
-**Total Python Files:** 67  
-**Total Lines of Code (non-blank):** 35,741  
-**Total Public Functions/Classes:** 615
+**Total Python Files:** 66  
+**Total Lines of Code (non-blank):** 35,948  
+**Total Public Functions/Classes:** 621
 
 ## Classification Coverage
 
-**Undetermined role (18).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
+**Undetermined role (15).** No valid `Role:` tag in the module docstring. Not guessed -- add the tag and re-run `add_docstrings.py`, then this file.
 
 - `tools/check_as_built_names.py`
 - `tools/check_encounters.py`
 - `tools/check_tree_parents.py`
 - `tools/encounter_fetch.py`
 - `tools/exhibit_store_editor.py`
-- `patch_L529_1_player_press.py`
-- `patch_L540_2_outside_link_card.py`
-- `patch_L540_4_reel_link_card.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -37,14 +34,11 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 - `tools/test_pole_of_date.py`
 - `tools/test_store_writer.py`
 
-**Undetermined domain (11).** No valid `Domain:` tag.
+**Undetermined domain (8).** No valid `Domain:` tag.
 
 - `tools/check_as_built_names.py`
 - `tools/check_tree_parents.py`
 - `tools/exhibit_store_editor.py`
-- `patch_L529_1_player_press.py`
-- `patch_L540_2_outside_link_card.py`
-- `patch_L540_4_reel_link_card.py`
 - `tools/record_earth_scene.py`
 - `tools/store_writer.py`
 - `sweep_collapsed_features.py`
@@ -121,19 +115,20 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `check_horizons_confirmations.py` | - every object the website takes from the orrery's list has been confirmed against JPL Horizons, recently, and has not changed since; and each period it prints from JPL too (L-395, L-431). (259 lines) |
 | `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (1,271 lines) |
 | `debug_encke_tp.py` | - run the EXACT same live Horizons query gallery_cache_builder.py's fetch_solution_tp() makes for Encke, and print the complete raw response text. (61 lines) |
-| `drawer_places.py` | - where a card sits in the Solar System room's drawer. (302 lines) |
+| `drawer_places.py` | - where a card sits in the Solar System room's drawer. (326 lines) |
 | `fingerprint.py` | L-080 semantic fingerprint. (98 lines) |
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
-| `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,689 lines) |
+| `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,918 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,799 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,813 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (555 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
 | `json_converter.py` | Gallery JSON Converter - Extract Plotly figures from HTML and save as JSON. (883 lines) |
+| `link_card.py` | - a LINK CARD: a card that is only a link to another website, made by the gallery editor's New Link Card window (L-540). (159 lines) |
 | `mirror_constants.py` | - write the orrery's exported numbers into data/objects_config.json, and name every link it cannot serve yet. (808 lines) |
 | `mirror_objects.py` | - write each served object's identity, description and NASA link into data/objects_config.json from the orrery's objects export, and name every difference it finds. (498 lines) |
-| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (843 lines) |
+| `module_atlas.py` | Codebase encyclopedia generator for Paloma's Orrery (845 lines) |
 | `pull_constants_export.py` | - copy the orrery's constants export into the gallery, and record the SHA it came from. (205 lines) |
 | `pull_drawings.py` | - copy the orrery's stored drawings into the gallery, and record the SHA they came from. (205 lines) |
 | `pull_objects_export.py` | - copy the orrery's objects export into the gallery, and record the SHA it came from. (105 lines) |
@@ -141,10 +136,11 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (131 lines) |
-| `test_drawer_places.py` | - checks tools/drawer_places.py, the logic behind the gallery editor's drawer tree and its Places list (L-519 part 2, Featured's rethink), without opening the editor. (299 lines) |
+| `test_drawer_places.py` | - checks tools/drawer_places.py, the logic behind the gallery editor's drawer tree and its Places list (L-519 part 2, Featured's rethink), without opening the editor. (333 lines) |
 | `test_drawn_orbit.py` | - an orbit whose period is taken around the solar system's barycentre is drawn around the barycentre, moved to where the barycentre sits seen from the Sun; and every way of getting that wrong is caught (L-431, build 3). (244 lines) |
 | `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (2,505 lines) |
 | `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (315 lines) |
+| `test_link_card.py` | - checks tools/link_card.py, the logic behind the gallery editor's New Link Card window (L-540), without opening the window. (145 lines) |
 | `test_mirror_objects.py` | - tools/mirror_objects.py does what it says, on fixtures where each refusal and each kind of write must happen, and then on the real config. (483 lines) |
 | `test_pull_failures.py` | - a pull that cannot fetch fails by name, writes nothing, and the mirror after it does not run; and proof that this check can fail. (355 lines) |
 | `test_scene_card.py` | - checks tools/scene_card.py, the logic behind the gallery editor's New Scene window (L-519, Featured's rethink), without opening the window. (213 lines) |
@@ -161,9 +157,6 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `check_tree_parents.py` | - every object's parent in data/objects_config.json is the centre JPL is asked around for it. (195 lines) |
 | `encounter_fetch.py` | - ask JPL Horizons, fresh, for an encounter's bodies around its centre, and write the encounter's package under data/encounters/. (634 lines) |
 | `exhibit_store_editor.py` | - edit the words a visitor reads in the exhibit rooms, and tick what each room opens on. L-334 pieces 3 and 4. (690 lines) |
-| `patch_L529_1_player_press.py` | - the encounter's player after Tony's phone look (L-529, guided encounters): Pause takes on the first tap, and the oval around the player is clear. (198 lines) |
-| `patch_L540_2_outside_link_card.py` | - a lobby card that links to another website (L-540) (101 lines) |
-| `patch_L540_4_reel_link_card.py` | - adds the card that links to ESCAPADE's reel on Instagram, featured, beside ESCAPADE's scene (L-540). (101 lines) |
 | `record_earth_scene.py` | Tools/record_earth_scene.py -- re-record documentation/payload_earth_scene.json, the saved Earth scene four checks compose the Earth room from. (105 lines) |
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (880 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |

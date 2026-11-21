@@ -58,17 +58,34 @@
 //      from. In the real files the root's rows are the served rows and the
 //      Sun's served shells; every place names one of them, twins share
 //      their places, and drawer_row is a string or a list of two or more.
+//   8. L-529 (encounters): a card with an encounter block sits in an
+//      Encounters fold under its row, after its scenes and ahead of its
+//      saved pictures; its dates and its own address; Find counts it.
+//   9. L-540 (link cards): a card whose live address is another website's
+//      (the lobby's own test) sits, with a place, in a Links fold under its
+//      row, after its Encounters and ahead of its saved pictures, never
+//      among them; it is counted once; Find finds its title beside a body
+//      and counts it as a link; it opens its own address. With no place it
+//      is in no fold, and the real-file check lets it be (the lobby's
+//      Featured carries it). The page draws the fold with its own words and
+//      mark, and each link opens in a new tab with nothing kept for Back.
+//      The real-file print shows each Links fold.
 //
 // WHAT MAKES IT FAIL
 //   Any of the above, each named. A SELF-TEST runs first and breaks the
-//   logic eleven ways -- a phone offered a landscape card with a portrait
-//   twin, a "none" card offered on a phone, a place naming no row
+//   logic nineteen ways -- a phone offered a landscape card with a
+//   portrait twin, a "none" card offered on a phone, a place naming no row
 //   dropped without a word, a picture's words not found, a picture's
 //   words adding rows while a group matches, a scene listed among the
-//   saved pictures, a card shown in its first place only, a shell refused
-//   as a place, a card counted once per place, a scene's own opening
-//   taking what was kept, and a scene hidden while a body matches -- so
-//   a green run has shown it can go red.
+//   saved pictures, an encounter listed among the saved pictures, an
+//   encounter's fold after its row's saved pictures, an encounter hidden
+//   while a body matches, an encounter counted as a picture, a card shown
+//   in its first place only, a shell refused as a place, a card counted
+//   once per place, a scene's own opening taking what was kept, a scene
+//   hidden while a body matches, and four for links (L-540): a link listed
+//   among the saved pictures, a link's fold after its row's saved
+//   pictures, a link hidden while a body matches, a link counted as a
+//   picture -- so a green run has shown it can go red.
 //
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
 // Updated November 8, 2026, evening, with Anthropic's Claude Opus 5.5
@@ -81,6 +98,9 @@
 // Updated November 20, 2026 with Anthropic's Claude Opus 5.5 (L-529,
 // guided encounters: section 8, the Encounters fold; four more breaks; the
 // real encounter cards in their folds; the page's wiring for them).
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-540, link
+// cards: section 9, the Links fold; four more breaks; a link card with no
+// place allowed in the real files; the page's wiring for it).
 
 "use strict";
 const fs = require("fs");
@@ -309,6 +329,53 @@ function cases(P, S) {
   want(keptEnc && P.returnFor(keptEnc, encTo) === "keep" &&
        P.returnFor(keptEnc, "https://x/interactive.html?exhibit=earth") === "take",
        "an encounter's own opening takes what was kept for Back, or the room does not");
+  // 9. L-540: link cards. A card whose live address is another website's,
+  // with a place, sits in a Links fold under its row, after its encounters
+  // and ahead of its saved pictures, never among them; with none, in no
+  // fold. Find finds its title beside a body and counts it as a link.
+  const META9 = { visualizations: META8.visualizations.concat([
+    { id: "reel_e", title: "The twins' story (reel)", room: "solar_system", shape: "9:16", files: {},
+      live: "https://www.example.org/reel/abc/", drawer_row: "earth" },
+    { id: "reel_none", title: "A reel with no place", room: "solar_system", shape: "9:16", files: {},
+      live: "https://www.example.org/reel/xyz/", featured: true }
+  ]) };
+  [true, false].forEach(function (phone9) {
+    const scr = phone9 ? "phone" : "desktop";
+    const e9 = P.foldsFrom(META9, ROWS, phone9);
+    want(P.foldsAt(e9, "earth").join(",") === "scenes:earth,encounters:earth,links:earth,earth",
+         "on a " + scr + ", Earth's row does not hold its scenes, encounters, links, then saved pictures: " + P.foldsAt(e9, "earth").join(","));
+    want(ids(e9.byKey["links:earth"]) === "reel_e" && e9.kind["links:earth"] === "links" &&
+         e9.rowOf["links:earth"] === "earth" && ids(e9.byKey.earth) === "pic_e" &&
+         e9.links === 1 && e9.count === 1 && e9.encounters === 1 && e9.scenes === 1,
+         "on a " + scr + ", a link is listed among the saved pictures, or is not counted once as a link");
+    want(!Object.keys(e9.byKey).some(function (k) { return e9.byKey[k].some(function (e) { return e.id === "reel_none"; }); }) &&
+         !e9.unplaced.some(function (u) { return u.id === "reel_none"; }),
+         "on a " + scr + ", a link card with no place is in a fold, or reported as misplaced");
+    const le = (e9.byKey["links:earth"] || [])[0] || {};
+    want(le.link === true && le.href === "https://www.example.org/reel/abc/" && !le.scene && !le.encounter,
+         "on a " + scr + ", a link does not open its own address, or is not marked a link");
+  });
+  want(P.linkFoldFor("earth") === "links:earth" && P.LINKS_FOLD === "links", "a row's Links fold is not keyed links:<row>");
+  want(P.isLink(META9.visualizations[3]) && P.isLink({ live: "HTTP://x.org/" }) &&
+       !P.isLink(META8.visualizations[0]) && !P.isLink(META.visualizations[1]) && !P.isLink({ id: "x" }),
+       "a link card is not told by the lobby's test, another website's address");
+  want(P.WORDS.links === "Links" && P.WORDS.linksLine === "Each link opens another website in a new tab.",
+       "the Links fold's words are not the brief's (words for Tony's phone look)");
+  const w9 = P.searchWords(P.foldsFrom(META9, ROWS, true));
+  const tw = S.searchHits(ROWS, "twins", NAMES, w9);
+  want(tw && tw.picIds.reel_e && tw.l === 1 && tw.p === 0 && tw.e === 0 && tw.picRows.earth && tw.keys.earth,
+       "a link's title is not found, or is counted as a picture or an encounter");
+  want(S.WORDS.found(tw.n, tw.g, tw.p, tw.s, tw.e, tw.l) === "1 link matches",
+       "the count line for a link found: " + S.WORDS.found(tw.n, tw.g, tw.p, tw.s, tw.e, tw.l));
+  const ear = S.searchHits(ROWS, "earth", NAMES, P.searchWords(P.foldsFrom({ visualizations: [
+    { id: "reel_earth", title: "Earth flybys (reel)", room: "solar_system", shape: "9:16", files: {},
+      live: "https://www.example.org/reel/e/", drawer_row: "earth" }] }, ROWS, true)));
+  want(ear && ear.keys.earth && ear.n === 1 && ear.l === 1 && ear.p === 0 && ear.picIds.reel_earth,
+       "a link whose title holds a body's name is not found beside the body");
+  want(S.WORDS.found(ear.n, ear.g, ear.p, ear.s, ear.e, ear.l) === "1 body and 1 link match" &&
+       S.WORDS.found(0, 0, 0, 0, 0, 2) === "2 links match" &&
+       S.WORDS.found(0, 0, 1, 1, 1, 1) === "1 saved picture, 1 scene, 1 encounter and 1 link match",
+       "the count line for links: " + S.WORDS.found(ear.n, ear.g, ear.p, ear.s, ear.e, ear.l));
   return f;
 }
 
@@ -345,16 +412,27 @@ const breaks = [
   ["a picture's words adding rows while a group matches",
    brokenSSD("const alone = n === 0 && all.length === 0;", "const alone = true;")],
   ["a scene listed among the saved pictures",
-   brokenPF("if (!v || isScene(v) || isEncounter(v) || !placesOf(v).length) { return; }", "if (!v || isEncounter(v) || !placesOf(v).length) { return; }")],
+   brokenPF("if (!v || isScene(v) || isEncounter(v) || isLink(v) || !placesOf(v).length) { return; }", "if (!v || isEncounter(v) || isLink(v) || !placesOf(v).length) { return; }")],
   // L-529: encounters.
   ["an encounter listed among the saved pictures",
-   brokenPF("if (!v || isScene(v) || isEncounter(v) || !placesOf(v).length) { return; }", "if (!v || isScene(v) || !placesOf(v).length) { return; }")],
+   brokenPF("if (!v || isScene(v) || isEncounter(v) || isLink(v) || !placesOf(v).length) { return; }", "if (!v || isScene(v) || isLink(v) || !placesOf(v).length) { return; }")],
   ["an encounter's fold after its row's saved pictures",
-   brokenPF('["scenes", "encounters", "pictures"]', '["scenes", "pictures", "encounters"]')],
+   brokenPF('["scenes", "encounters", "links", "pictures"]', '["scenes", "links", "pictures", "encounters"]')],
   ["an encounter hidden while a body matches",
-   brokenSSD("return e.scene || e.encounter; });", "return e.scene; });")],
+   brokenSSD("return e.scene || e.encounter || e.link; });", "return e.scene || e.link; });")],
   ["an encounter counted as a picture",
-   brokenSSD("if (e.scene) { s++; } else if (e.encounter) { en++; } else { p++; }", "if (e.scene) { s++; } else { p++; }")],
+   brokenSSD("if (e.scene) { s++; } else if (e.encounter) { en++; } else if (e.link) { l++; } else { p++; }",
+             "if (e.scene) { s++; } else if (e.link) { l++; } else { p++; }")],
+  // L-540: links.
+  ["a link listed among the saved pictures",
+   brokenPF("if (!v || isScene(v) || isEncounter(v) || isLink(v) || !placesOf(v).length) { return; }",
+            "if (!v || isScene(v) || isEncounter(v) || !placesOf(v).length) { return; }")],
+  ["a link's fold after its row's saved pictures",
+   brokenPF('["scenes", "encounters", "links", "pictures"]', '["scenes", "encounters", "pictures", "links"]')],
+  ["a link hidden while a body matches",
+   brokenSSD("return e.scene || e.encounter || e.link; });", "return e.scene || e.encounter; });")],
+  ["a link counted as a picture",
+   brokenSSD("} else if (e.link) { l++; } else { p++; }", "} else { p++; }")],
   ["a card shown in its first place only",
    brokenPF("    if (!out.length && isScene(v)) { out.push(SCENES_ROW); }\n    return out;", "    if (!out.length && isScene(v)) { out.push(SCENES_ROW); }\n    return out.slice(0, 1);")],
   ["a shell refused as a place",
@@ -364,7 +442,7 @@ const breaks = [
   ["a scene's own opening taking what was kept",
    brokenPF("if (back.to === openedHref) { return \"keep\"; }", "")],
   ["a scene hidden while a body matches",
-   brokenSSD("const shows = alone ? hit : hit.filter(function (e) { return e.scene || e.encounter; });", "const shows = alone ? hit : [];")]
+   brokenSSD("const shows = alone ? hit : hit.filter(function (e) { return e.scene || e.encounter || e.link; });", "const shows = alone ? hit : [];")]
 ];
 const caught = [];
 breaks.forEach(function (b) {
@@ -400,9 +478,15 @@ const cards = meta.visualizations || [];
 const byId = {};
 cards.forEach(function (v) { byId[v.id] = v; });
 const roomLive = /^interactive\.html\?exhibit=(solar-system|sun|earth)$/;
+// L-540: the link cards with no place, which the lobby's Featured carries.
+console.log("Link cards with no place in the drawer: " + ((meta.visualizations || []).filter(function (v) {
+  return PF.isLink(v) && !PF.isScene(v) && !PF.isEncounter(v) && !PF.placesOf(v).length; }).map(function (v) {
+  return v.id; }).join(", ") || "none"));
 cards.forEach(function (v) {
   const ss = typeof v.room === "string" && (v.room === "solar_system" || v.room.indexOf("solar_system/") === 0);
-  if (ss && !(v.live && roomLive.test(v.live)) && !PF.placesOf(v).length) {
+  // L-540: a link card (another website's address) may have no place; the
+  // lobby's Featured carries it.
+  if (ss && !(v.live && roomLive.test(v.live)) && !PF.isLink(v) && !PF.placesOf(v).length) {
     failures.push("Solar System card " + v.id + " has no place in the drawer (" + PF.FIELD + ")");
   }
   if (v[PF.FIELD] && !ss) { failures.push("card " + v.id + " outside the Solar System has a place in its drawer"); }
@@ -422,6 +506,7 @@ rows.forEach(function (r) { if (r.isShell || r.isDrawing) { label[r.key] = r.lab
 Object.keys(label).forEach(function (k) {
   label[PF.sceneFoldFor(k, "center")] = "Scenes, under " + label[k];
   label[PF.encounterFoldFor(k)] = "Encounters, under " + label[k];   // L-529
+  label[PF.linkFoldFor(k)] = "Links, under " + label[k];             // L-540
 });
 [true, false].forEach(function (phone) {
   const folds = PF.foldsFrom(meta, rows, phone);
@@ -435,6 +520,15 @@ Object.keys(label).forEach(function (k) {
       }
     });
   });
+  // L-540: every link card with a place sits in a Links fold at each place.
+  cards.filter(function (v) { return PF.isLink(v) && !PF.isScene(v) && !PF.isEncounter(v); }).forEach(function (v) {
+    PF.placesOf(v).forEach(function (p) {
+      const k = PF.rowKeyFor(p, rows);
+      if (!k || !(folds.byKey[PF.linkFoldFor(k)] || []).some(function (e) { return e.id === v.id; })) {
+        failures.push("on a " + screen + ", the link card " + v.id + " is not in a Links fold beside " + p);
+      }
+    });
+  });
   folds.unplaced.forEach(function (u) {
     failures.push("on a " + screen + ", " + u.id + "'s place " + u.place + " names no row the room serves");
   });
@@ -445,8 +539,8 @@ Object.keys(label).forEach(function (k) {
       });
     });
   }
-  console.log("On a " + screen + ", " + folds.count + " pictures, " + folds.scenes + " scenes and " +
-              folds.encounters + " encounter(s) in " +
+  console.log("On a " + screen + ", " + folds.count + " pictures, " + folds.scenes + " scenes, " +
+              folds.encounters + " encounter(s) and " + folds.links + " link(s) in " +
               folds.keys.length + " folds:");
   folds.keys.forEach(function (k) {
     console.log("  " + (label[k] || k) + " (" + folds.byKey[k].length + "): " +
@@ -460,7 +554,7 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
  ["window.PictureFolds.foldsFrom(meta, ssDrawer.rows,", "the room does not ask the file which pictures go where"],
  ["window.PictureFolds.isPhone(window)", "the room does not ask the file which screen it is on"],
  ["window.PictureFolds.searchWords(ssDrawer.pictures)", "Find is not handed the pictures' words"],
- ["SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s, hits.e)", "the count line does not count pictures, scenes and encounters found"],
+ ["SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s, hits.e, hits.l)", "the count line does not count pictures, scenes, encounters and links found"],
  ["shell_key: shellKeyOf[s.key] || null", "the root's shell rows do not carry their served shell key, so no card can name one as a place (L-519 part 2)"],
  ["ssPictureFold(list, entry.key, entry.depth || 0);\n            return;", "a group row's fold is not built after it"],
  ["ssWireRow(row, sunGroups[k], k, list);\n            // L-517: the body's saved pictures, in a fold under its row.\n            ssPictureFold(list, entry.key, entry.depth || 0);",
@@ -474,9 +568,12 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
  ["return window.Encounter ? window.Encounter.rowDates(card, cfgTree) : null;", "the room does not read an encounter's dates from the plan (L-529)"],
  ["if (e.encounter && e.dates) {", "an encounter's dates are not printed beside its name (L-529)"],
  ["PF.foldsAt(pics, rowKey).forEach(function (foldId) {", "a row's folds are not built in the file's order, Scenes first (L-519)"],
- ["head.querySelector(\".rname\").textContent = scenes ? PF.WORDS.scenes :\n        (encs ? PF.WORDS.encounters : PF.WORDS.fold);", "the Scenes and Encounters folds do not carry their own names (L-519, L-529)"],
- ["line.textContent = scenes ? PF.WORDS.scenesLine :\n        (encs ? PF.WORDS.encountersLine : PF.WORDS.line);", "the Scenes and Encounters folds do not carry their own lines (L-519, L-529)"],
- ["(scenes ? SCENE_MARK : (encs ? ENCOUNTER_MARK : PICTURE_MARK))", "the Scenes and Encounters folds do not carry their own marks (L-519, L-529)"],
+ ["head.querySelector(\".rname\").textContent = scenes ? PF.WORDS.scenes :\n        (encs ? PF.WORDS.encounters : (links ? PF.WORDS.links : PF.WORDS.fold));", "the Scenes, Encounters and Links folds do not carry their own names (L-519, L-529, L-540)"],
+ ["line.textContent = scenes ? PF.WORDS.scenesLine :\n        (encs ? PF.WORDS.encountersLine : (links ? PF.WORDS.linksLine : PF.WORDS.line));", "the Scenes, Encounters and Links folds do not carry their own lines (L-519, L-529, L-540)"],
+ ["(scenes ? SCENE_MARK : (encs ? ENCOUNTER_MARK : (links ? LINK_MARK : PICTURE_MARK)))", "the Scenes, Encounters and Links folds do not carry their own marks (L-519, L-529, L-540)"],
+ ["const LINK_MARK =\n    '<svg class=\"picmark\" viewBox=\"0 0 14 12\" aria-hidden=\"true\">'", "the Links fold has no mark of its own in the picture marks' style (L-540)"],
+ ["        if (e.link) {\n            a.target = \"_blank\";\n            a.rel = \"noopener\";\n        } else {\n            a.addEventListener(\"click\", function () { ssPicOpen(foldId, e); });\n        }",
+  "a link does not open in a new tab, or keeps the room for Back (L-540)"],
  ["const PAGE_OPENED_HREF = window.location.href;", "the page does not keep the address it was opened at (L-519)"],
  ["const does = PF.returnFor(PF.readReturn(text), PAGE_OPENED_HREF);\n        if (does === \"keep\") { return false; }",
   "a scene's own opening takes what was kept for Back (L-519)"],
@@ -529,4 +626,5 @@ console.log("=== PASS: a phone is offered the portrait twins and a desktop the l
             "place naming a row the room serves; Find finds a picture's words; and both " +
             "pages wire the folds and the way back; the Solar System's addresses open " +
             "its live room, and Back answers both of its signals; and every scene sits in " +
-            "the Scenes fold under the Sun, opens its own link, and Back returns to the room ===");
+            "the Scenes fold under the Sun, opens its own link, and Back returns to the room; " +
+            "and every link card with a place sits in a Links fold beside its row and opens in a new tab ===");

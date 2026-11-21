@@ -112,10 +112,9 @@ keep the hand-curated tree.
 New Link Card... (L-540; Tony, 2026-11-20, 22:27: "I would prefer a new
 link card command in the editor") makes a card that is only a link to
 another website, such as a reel on Instagram: the address cleaned of the
-sharing marks a site adds, a name, Featured on by default, in the
-Outside Links room (key outside_links) when it exists, else in Storage
-like any new card. The lobby opens it in a new tab. The logic is
-tools/link_card.py, checked by tools/test_link_card.py.
+sharing marks a site adds, a name, Featured on by default. The lobby
+opens it in a new tab. The logic is tools/link_card.py, checked by
+tools/test_link_card.py.
 Module updated: November 20, 2026, night, with Anthropic's Claude Opus 5.5 (L-540).
 
 THE SOLAR SYSTEM DOOR FOLLOWS THE WEBSITE (L-540; Tony, 2026-11-20,
@@ -129,6 +128,16 @@ in its order: Scenes, Encounters, Saved pictures; a fold with no card is
 not drawn. Selecting a fold shows its row.
 Module updated: November 20, 2026, late night, with Anthropic's Claude
 Opus 5.5 (L-540).
+
+THE LINKS FOLD (L-540, 2026-11-21). A link card sits beside a row of the
+drawer like any Solar System card, and the room shows it in that row's
+Links fold, after Encounters and before Saved pictures; the tree here
+draws the same fold. New Link Card... asks which row, from the drawer's
+rows as Add place... offers them, or "No row": with a row the card is
+saved in the Solar System room beside it; with none, in Storage, as any
+new card. There is no separate links room.
+Module updated: November 21, 2026 with Anthropic's Claude Opus 5.5
+(L-540, the Links fold).
 
 Role: devtool
 Domain: gallery_pipeline
@@ -155,13 +164,11 @@ METADATA_FILE = os.path.join(GALLERY_DIR, 'gallery_metadata.json')
 CONFIG_FILE = os.path.join(GALLERY_DIR, 'gallery_config.json')
 
 STORAGE_KEY = 'other'
-# L-540: the room a new link card goes in when it exists (made with New
-# Room... as "Outside Links"); without it, Storage.
-LINKS_ROOM = 'outside_links'
 # L-540: the folds of a row of the Solar System drawer, as the website
-# names them (gallery/picture_folds.js, WORDS), in its order.
+# names them (gallery/picture_folds.js, WORDS), in its order; the keys are
+# drawer_places.fold_kind's.
 DRAWER_FOLDS = (('scenes', 'Scenes'), ('encounters', 'Encounters'),
-                ('pictures', 'Saved pictures'))
+                ('links', 'Links'), ('pictures', 'Saved pictures'))
 DEPTH_CEILING = 4            # door = 1 ... encounter = 4 (L-286)
 SHAPES = ('16:9', '9:16', 'none')    # 'none': not on the phone (2026-09-22)
 SLOTS = ('landscape', 'portrait')
@@ -613,6 +620,8 @@ class GalleryEditor:
                 marks.append('scene')
             elif drawer_places.is_encounter(c):
                 marks.append('encounter')     # L-529
+            elif drawer_places.is_link(c):
+                marks.append('link')          # L-540
             elif c.get('live'):
                 marks.append('live')
             slots = [s for s in SLOTS if (c.get('files') or {}).get(s)]
@@ -672,15 +681,13 @@ class GalleryEditor:
                                  values=('  '.join(info),),
                                  tags=() if under or n.kind != 'heading' else ('storage',),
                                  open=open_state.get(iid, bool(here) and n.kind == 'body'))
-                # Scenes first, then encounters (L-529), then saved
-                # pictures, as the website shows them. L-540: each in a
-                # fold named as the website names it; a fold with no card
-                # is not drawn.
-                kinds = {'scenes': [], 'encounters': [], 'pictures': []}
+                # Scenes first, then encounters (L-529), then links, then
+                # saved pictures (L-540), as the website shows them: each
+                # in a fold named as the website names it; a fold with no
+                # card is not drawn.
+                kinds = dict((k, []) for k, _n in DRAWER_FOLDS)
                 for c in drawer_places.fold_order(here):
-                    kinds['scenes' if drawer_places.is_scene(c) else
-                          'encounters' if drawer_places.is_encounter(c) else
-                          'pictures'].append(c)
+                    kinds[drawer_places.fold_kind(c)].append(c)
                 for fkey, fname in DRAWER_FOLDS:
                     if not kinds[fkey]:
                         continue
@@ -870,8 +877,8 @@ class GalleryEditor:
                          "and remove that place, or add another.",
                 "#loose": "Lobby only: Solar System cards with no place in the "
                           "drawer. The lobby shows them and the room does not: "
-                          "the room cards, which open a room, and any picture "
-                          "taken out of the drawer.",
+                          "the room cards, which open a room, a link card given "
+                          "no row, and any picture taken out of the drawer.",
             }.get(ident, drawer_places.SHELLS_NOTE.capitalize() + ".")
         else:
             words = ("A row of the Solar System room's drawer, as the website lists it. "
@@ -923,6 +930,31 @@ class GalleryEditor:
             row=2, column=1, sticky='ew', padx=(6, 0), pady=(4, 0))
         pf.columnconfigure(0, weight=1)
 
+    def _fill_place_tree(self, tv, q, have=()):
+        """Fill a Treeview with the drawer's rows to pick a place from, for
+        Add place... and New Link Card... (L-540): the drawer as the website
+        lists it, or, with a Find word q, each row whose name holds it, by
+        its trail. A row's iid is 'p:<place>'; a heading's is 'h:<name>'."""
+        kind_word = {'group': 'group', 'drawing': 'drawing', 'shell': "Sun's shell"}
+
+        def add(parent, n, trail):
+            if q:
+                if n.place and q in n.label.lower():
+                    tv.insert('', 'end', iid='p:' + n.place, text=' > '.join(trail + [n.label]),
+                              values=('already here' if n.place in have else kind_word.get(n.kind, ''),),
+                              tags=('have',) if n.place in have else ())
+                for k in n.children:
+                    add('', k, trail + [n.label])
+                return
+            iid = ('p:' + n.place) if n.place else ('h:' + n.label)
+            tv.insert(parent, 'end', iid=iid, text=n.label,
+                      values=('already here' if n.place in have else kind_word.get(n.kind, ''),),
+                      tags=('have',) if n.place in have else (), open=False)
+            for k in n.children:
+                add(iid, k, trail + [n.label])
+        for n in self.drawer_nodes or []:
+            add('', n, [])
+
     def _add_place(self, c):
         """Pick a row of the drawer and put the card beside it as well."""
         self._apply_form()
@@ -951,29 +983,10 @@ class GalleryEditor:
         tv.pack(side='left', fill='both', expand=True)
         sb.pack(side='left', fill='y')
         tv.tag_configure('have', foreground='#999999')
-        kind_word = {'group': 'group', 'drawing': 'drawing', 'shell': "Sun's shell"}
 
         def fill(*_a):
             tv.delete(*tv.get_children())
-            q = find_var.get().strip().lower()
-
-            def add(parent, n, trail):
-                if q:
-                    if n.place and q in n.label.lower():
-                        tv.insert('', 'end', iid='p:' + n.place, text=' > '.join(trail + [n.label]),
-                                  values=('already here' if n.place in have else kind_word.get(n.kind, ''),),
-                                  tags=('have',) if n.place in have else ())
-                    for k in n.children:
-                        add('', k, trail + [n.label])
-                    return
-                iid = ('p:' + n.place) if n.place else ('h:' + n.label)
-                tv.insert(parent, 'end', iid=iid, text=n.label,
-                          values=('already here' if n.place in have else kind_word.get(n.kind, ''),),
-                          tags=('have',) if n.place in have else (), open=False)
-                for k in n.children:
-                    add(iid, k, trail + [n.label])
-            for n in self.drawer_nodes:
-                add('', n, [])
+            self._fill_place_tree(tv, find_var.get().strip().lower(), have)
 
         def ok(_e=None):
             sel = tv.selection()
@@ -1782,19 +1795,16 @@ class GalleryEditor:
         """The New Link Card window (L-540): a card that is only a link to
         another website, such as a reel on Instagram. Its logic is
         tools/link_card.py, checked by tools/test_link_card.py without a
-        window; this only shows it. The card goes in the Outside Links
-        room (LINKS_ROOM) when it exists, else in Storage, like any new
-        card (Tony, 2026-11-20, 23:23-23:32); Move to Room... moves it."""
+        window; this only shows it. It asks which row of the Solar System
+        drawer the card sits beside (L-540, the Links fold): with a row the
+        card is saved in the Solar System room beside it, in that row's
+        Links fold; with "No row", in Storage, like any new card (Tony,
+        2026-11-20, 23:23); Move to Room... moves it."""
         self._apply_form()
         cards = self.data['visualizations']
-        room = LINKS_ROOM if find_room(self.config, LINKS_ROOM)[0] else STORAGE_KEY
-        room_words = ("Outside Links" if room == LINKS_ROOM else
-                      "Storage, hidden from visitors until Move to Room... (make "
-                      "an Outside Links room with New Room... to put link cards "
-                      "there)")
         dlg = tk.Toplevel(self.root)
         dlg.title("New link card")
-        dlg.geometry("760x420")
+        dlg.geometry("760x700")
         dlg.transient(self.root)
         dlg.grab_set()
         pad = dict(anchor='w', padx=12)
@@ -1827,14 +1837,62 @@ class GalleryEditor:
         feat_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(dlg, text="Show on the gallery page's Featured",
                         variable=feat_var).pack(pady=4, **pad)
-        ttk.Label(dlg, text=f"Gallery room: {room_words}", wraplength=720
-                  ).pack(**pad)
+        # L-540: which row of the drawer, as Add place... offers them.
+        ttk.Label(dlg, text="Beside which row of the Solar System room's drawer? "
+                  "The room shows it in that row's Links fold.").pack(pady=(6, 2), **pad)
+        rf = ttk.Frame(dlg)
+        rf.pack(fill='x', padx=12)
+        ttk.Label(rf, text="Find:").pack(side='left')
+        row_find = tk.StringVar()
+        row_box = ttk.Entry(rf, textvariable=row_find)
+        row_box.pack(side='left', fill='x', expand=True, padx=(6, 0))
+        tf = ttk.Frame(dlg)
+        tf.pack(fill='both', expand=True, padx=12, pady=(4, 2))
+        rows = ttk.Treeview(tf, columns=('info',), show='tree', selectmode='browse', height=8)
+        rows.column('#0', width=520)
+        rows.column('info', width=140)
+        rsb = ttk.Scrollbar(tf, orient='vertical', command=rows.yview)
+        rows.configure(yscrollcommand=rsb.set)
+        rows.pack(side='left', fill='both', expand=True)
+        rsb.pack(side='left', fill='y')
+        NO_ROW = 'none:'
+        where_var = tk.StringVar()
+        ttk.Label(dlg, textvariable=where_var, wraplength=720,
+                  foreground='#555555').pack(**pad)
         bf = ttk.Frame(dlg)
         bf.pack(fill='x', padx=12, pady=(4, 12))
         save = ttk.Button(bf, text="Save card")
         save.pack(side='right', padx=2)
         ttk.Button(bf, text="Cancel", command=dlg.destroy).pack(side='right', padx=2)
-        state = {'cleaned': None, 'ok': False}
+        state = {'cleaned': None, 'ok': False, 'place': None}
+
+        def fill_rows(*_a):
+            keep = state['place']
+            rows.delete(*rows.get_children())
+            rows.insert('', 'end', iid=NO_ROW, text="No row (saved in Storage)",
+                        values=('Storage',))
+            self._fill_place_tree(rows, row_find.get().strip().lower())
+            want = ('p:' + keep) if keep else NO_ROW
+            if not rows.exists(want):
+                want = NO_ROW
+            rows.see(want)
+            rows.selection_set(want)
+
+        def row_picked(*_a):
+            sel = rows.selection()
+            if sel and sel[0].startswith('p:'):
+                state['place'] = sel[0][2:]
+                where_var.set("Saved in the Solar System room beside %s, in its Links "
+                              "fold; the lobby shows it too when Featured."
+                              % self.drawer_labels.get(state['place'], state['place']))
+            elif sel and sel[0] == NO_ROW:
+                state['place'] = None
+                where_var.set("Saved in Storage, hidden from visitors, as any new card. "
+                              "Move to Room... Solar System then shows it in the lobby "
+                              "only, and Add place... puts it beside a row.")
+            else:
+                return      # a heading is no row: keep the last choice
+            recheck()
 
         def recheck(*_a):
             c = link_card.clean(link_var.get())
@@ -1847,7 +1905,7 @@ class GalleryEditor:
             for kind, text in lines:
                 lines_box.insert('end', text + '\n', kind)
             lines_box.configure(state='disabled')
-            ready = ok and bool(name_var.get().strip())
+            ready = ok and bool(name_var.get().strip()) and bool(rows.selection())
             save.state(['!disabled'] if ready else ['disabled'])
             look.state(['!disabled'] if c.link else ['disabled'])
 
@@ -1866,7 +1924,9 @@ class GalleryEditor:
             name = name_var.get().strip()
             if not (state['ok'] and name and c):
                 return
-            entry = link_card.new_entry(name, c.link, feat_var.get(), room, cards)
+            place = state['place']
+            entry = link_card.new_entry(name, c.link, feat_var.get(), place, cards)
+            room = entry['room']
             # After the last card in its room, so the tree keeps them together.
             at = len(cards)
             for i, v in enumerate(cards):
@@ -1875,22 +1935,29 @@ class GalleryEditor:
             cards.insert(at, entry)
             self._mark_dirty()
             dlg.destroy()
-            # The refresh selects it wherever the tree lists it: in the
-            # Solar System door a card with no drawer place is under "Not in
-            # the drawer", as card:<id>|#loose.
-            self._refresh_tree(keep='card:' + entry['id'])
-            self.status_var.set(f"New link card '{name}' ({entry['id']}) -> {c.link}. "
-                                "Save All writes it.")
+            # The refresh selects it where the tree lists it: beside its row
+            # in the Solar System door (card:<id>|<place>), or in Storage.
+            if place:
+                self.selected_place = place
+            self._refresh_tree(keep='card:' + entry['id'] + ('|' + place if place else ''))
+            where = (f"beside {self.drawer_labels.get(place, place)}, in its Links fold"
+                     if place else "in Storage")
+            self.status_var.set(f"New link card '{name}' ({entry['id']}) -> {c.link}, "
+                                f"{where}. Save All writes it.")
 
         paste_var.trace_add('write', pasted)
         link_var.trace_add('write', recheck)
         name_var.trace_add('write', recheck)
         look.configure(command=do_look)
         save.configure(command=do_save)
+        row_find.trace_add('write', fill_rows)
+        rows.bind('<<TreeviewSelect>>', row_picked)
         dlg.bind('<Escape>', lambda e: dlg.destroy())
-        for box in (paste, link_box, name_box):
+        for box in (paste, link_box, name_box, row_box):
             add_edit_menu(box)
         add_edit_menu(lines_box, read_only=True)
+        fill_rows()
+        row_picked()
         recheck()
         paste.focus_set()
         self.root.wait_window(dlg)
