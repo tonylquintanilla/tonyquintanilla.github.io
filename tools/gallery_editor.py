@@ -113,9 +113,22 @@ New Link Card... (L-540; Tony, 2026-11-20, 22:27: "I would prefer a new
 link card command in the editor") makes a card that is only a link to
 another website, such as a reel on Instagram: the address cleaned of the
 sharing marks a site adds, a name, Featured on by default, in the
-selected card's gallery room. The lobby opens it in a new tab. The
-logic is tools/link_card.py, checked by tools/test_link_card.py.
+Outside Links room (key outside_links) when it exists, else in Storage
+like any new card. The lobby opens it in a new tab. The logic is
+tools/link_card.py, checked by tools/test_link_card.py.
 Module updated: November 20, 2026, night, with Anthropic's Claude Opus 5.5 (L-540).
+
+THE SOLAR SYSTEM DOOR FOLLOWS THE WEBSITE (L-540; Tony, 2026-11-20,
+23:28: "we should complete the editor so that it follows the structure
+of the website menu ... and yes 'not in a drawer' should be at the top as
+'Lobby only'"). Its first group is Lobby only, open: the Solar System
+cards with no place in the drawer, which the lobby shows and the room
+does not. Under each row of the drawer its cards sit in the folds the
+website gives them (gallery/picture_folds.js), named as it names them and
+in its order: Scenes, Encounters, Saved pictures; a fold with no card is
+not drawn. Selecting a fold shows its row.
+Module updated: November 20, 2026, late night, with Anthropic's Claude
+Opus 5.5 (L-540).
 
 Role: devtool
 Domain: gallery_pipeline
@@ -142,6 +155,13 @@ METADATA_FILE = os.path.join(GALLERY_DIR, 'gallery_metadata.json')
 CONFIG_FILE = os.path.join(GALLERY_DIR, 'gallery_config.json')
 
 STORAGE_KEY = 'other'
+# L-540: the room a new link card goes in when it exists (made with New
+# Room... as "Outside Links"); without it, Storage.
+LINKS_ROOM = 'outside_links'
+# L-540: the folds of a row of the Solar System drawer, as the website
+# names them (gallery/picture_folds.js, WORDS), in its order.
+DRAWER_FOLDS = (('scenes', 'Scenes'), ('encounters', 'Encounters'),
+                ('pictures', 'Saved pictures'))
 DEPTH_CEILING = 4            # door = 1 ... encounter = 4 (L-286)
 SHAPES = ('16:9', '9:16', 'none')    # 'none': not on the phone (2026-09-22)
 SLOTS = ('landscape', 'portrait')
@@ -653,11 +673,35 @@ class GalleryEditor:
                                  tags=() if under or n.kind != 'heading' else ('storage',),
                                  open=open_state.get(iid, bool(here) and n.kind == 'body'))
                 # Scenes first, then encounters (L-529), then saved
-                # pictures, as the website shows them.
+                # pictures, as the website shows them. L-540: each in a
+                # fold named as the website names it; a fold with no card
+                # is not drawn.
+                kinds = {'scenes': [], 'encounters': [], 'pictures': []}
                 for c in drawer_places.fold_order(here):
-                    add_card(iid, c, None, place=n.place)
+                    kinds['scenes' if drawer_places.is_scene(c) else
+                          'encounters' if drawer_places.is_encounter(c) else
+                          'pictures'].append(c)
+                for fkey, fname in DRAWER_FOLDS:
+                    if not kinds[fkey]:
+                        continue
+                    fid = 'dfold:' + n.place + '|' + fkey
+                    nf = len(kinds[fkey])
+                    self.tree.insert(iid, 'end', iid=fid, text=fname,
+                                     values=(f"{nf} card{'s' if nf != 1 else ''}",),
+                                     open=open_state.get(fid, True))
+                    for c in kinds[fkey]:
+                        add_card(fid, c, None, place=n.place)
                 for k in n.children:
                     add_node(iid, k, depth + 1)
+            # L-540: Lobby only first, open: these cards are live in the
+            # lobby, so they must not look put away.
+            if loose:
+                nid = 'drow:#loose'
+                self.tree.insert(door_iid, 'end', iid=nid, text="Lobby only",
+                                 values=(f"{len(loose)} card{'s' if len(loose) != 1 else ''}",),
+                                 open=open_state.get(nid, True))
+                for c in loose:
+                    add_card(nid, c, None, place='#loose')
             for n in self.drawer_nodes:
                 add_node(door_iid, n, 0)
             if lost:
@@ -667,13 +711,6 @@ class GalleryEditor:
                                  tags=('deep',), open=open_state.get(lid, True))
                 for c in lost:
                     add_card(lid, c, None, place='#lost')
-            if loose:
-                nid = 'drow:#loose'
-                self.tree.insert(door_iid, 'end', iid=nid, text="Not in the drawer",
-                                 values=(f"{len(loose)} card{'s' if len(loose) != 1 else ''}",),
-                                 tags=('storage',), open=open_state.get(nid, False))
-                for c in loose:
-                    add_card(nid, c, None, place='#loose')
 
         for d in self.config['doors']:
             if d['key'] == DRAWER_DOOR and self.drawer_nodes is not None:
@@ -735,6 +772,10 @@ class GalleryEditor:
         if kind == 'drow':
             self.selected = None
             self._show_drawer_row(ident)
+            return
+        if kind == 'dfold':             # L-540: a fold shows its row
+            self.selected = None
+            self._show_drawer_row(ident.partition('|')[0])
             return
         self.selected = (kind, ident)
         if kind == 'card':
@@ -827,8 +868,10 @@ class GalleryEditor:
             words = {
                 "#lost": "Cards whose place names no row the drawer lists. Select one "
                          "and remove that place, or add another.",
-                "#loose": "Solar System cards with no place in the drawer: the room "
-                          "cards, which open a room, and any picture taken out.",
+                "#loose": "Lobby only: Solar System cards with no place in the "
+                          "drawer. The lobby shows them and the room does not: "
+                          "the room cards, which open a room, and any picture "
+                          "taken out of the drawer.",
             }.get(ident, drawer_places.SHELLS_NOTE.capitalize() + ".")
         else:
             words = ("A row of the Solar System room's drawer, as the website lists it. "
@@ -1739,14 +1782,16 @@ class GalleryEditor:
         """The New Link Card window (L-540): a card that is only a link to
         another website, such as a reel on Instagram. Its logic is
         tools/link_card.py, checked by tools/test_link_card.py without a
-        window; this only shows it. The card goes in the selected card's
-        gallery room, or the Solar System's when none is selected; Move to
-        Room... moves it."""
+        window; this only shows it. The card goes in the Outside Links
+        room (LINKS_ROOM) when it exists, else in Storage, like any new
+        card (Tony, 2026-11-20, 23:23-23:32); Move to Room... moves it."""
         self._apply_form()
         cards = self.data['visualizations']
-        sel = (self._card_by_id(self.selected[1])
-               if self.selected and self.selected[0] == 'card' else None)
-        room = sel.get('room', STORAGE_KEY) if sel else 'solar_system'
+        room = LINKS_ROOM if find_room(self.config, LINKS_ROOM)[0] else STORAGE_KEY
+        room_words = ("Outside Links" if room == LINKS_ROOM else
+                      "Storage, hidden from visitors until Move to Room... (make "
+                      "an Outside Links room with New Room... to put link cards "
+                      "there)")
         dlg = tk.Toplevel(self.root)
         dlg.title("New link card")
         dlg.geometry("760x420")
@@ -1782,8 +1827,8 @@ class GalleryEditor:
         feat_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(dlg, text="Show on the gallery page's Featured",
                         variable=feat_var).pack(pady=4, **pad)
-        ttk.Label(dlg, text=f"Gallery room: {room} (Move to Room... moves it "
-                  "after)").pack(**pad)
+        ttk.Label(dlg, text=f"Gallery room: {room_words}", wraplength=720
+                  ).pack(**pad)
         bf = ttk.Frame(dlg)
         bf.pack(fill='x', padx=12, pady=(4, 12))
         save = ttk.Button(bf, text="Save card")
