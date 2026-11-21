@@ -284,6 +284,27 @@ def main():
         n_places += len(drawer_places.places_of(c))
         for p in drawer_places.unknown_places(c, labels):
             failures.append("card %s names the place %r, which the drawer does not list" % (c.get('id'), p))
+    # L-529 (guided encounters, 2026-11-20): an encounter card is told from
+    # a scene and a picture, and a place's cards are listed in the
+    # website's order: scenes, encounters, saved pictures. Worked by hand,
+    # then on the real cards: every encounter card is in the door's tree at
+    # a place the drawer lists.
+    sc = {'id': 's', 'scene': True}
+    en = {'id': 'e', 'encounter': {'id': 'x-earth'}}
+    pi = {'id': 'p'}
+    if [c['id'] for c in drawer_places.fold_order([pi, en, sc])] != ['s', 'e', 'p'] or \
+            not drawer_places.is_encounter(en) or drawer_places.is_encounter(sc) or \
+            drawer_places.is_encounter({'encounter': {}}):
+        failures.append("an encounter card is not told from a scene and a picture, or a place's "
+                        "cards are not in the website's order (scenes, encounters, pictures)")
+    encs = [c for c in cards if drawer_places.is_encounter(c)]
+    for c in encs:
+        if not drawer_places.in_drawer_door(c) or not drawer_places.places_of(c) or \
+                drawer_places.unknown_places(c, labels):
+            failures.append("encounter %s is not in the door's tree at a place the drawer lists"
+                            % c.get('id'))
+    print("Encounters in the tree: %s" % ("; ".join("%s beside %s" % (c.get('id'), ", ".join(
+        drawer_places.places_of(c))) for c in encs) or "none"))
     print("The tree: %d rows (%d top-level), %d of the Sun's shells, in the website's order; "
           "%d Solar System cards in %d places." % (len(mine), len(top), len(shells), n_cards, n_places))
 

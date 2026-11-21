@@ -513,6 +513,16 @@
         After Tony's phone look that evening: five steps, Halley's its
         own, and Take me there swings the view to look straight down on
         Halley's orbit, the whole ellipse in the picture (guideSwingTo).)
+     Updated: November 20, 2026 with Anthropic's Claude Opus 5.5
+       (L-529, guided encounters, slice 1: ?encounter=<id> opens an
+        encounter, a completed pass played from its own package under
+        data/encounters/ with no Pyodide -- ESCAPADE's Earth flybys first:
+        Earth, its Hill sphere, both twins, the Moon and Earth-Sun L2,
+        one frame an hour, each pass marked with its date, the date and
+        the twins' distances and speeds under the title, a player (Play,
+        Pause, a slider), "Back to Earth". Its logic is
+        gallery/encounter.js. In the room, an Encounters fold under
+        Earth's row opens it, its dates read from the plan.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -590,6 +600,11 @@
          that a check can require it (smoke_first_guide.js); the front page
          reads the same setting through it. -->
     <script src="gallery/first_guide.js"></script>
+    <!-- An encounter (L-529): a completed pass played from its own package,
+         at ?encounter=<id>; the room reads its fold's dates through it
+         too. Its own file so that the checks can require it
+         (smoke_typed_facts.js, smoke_hover_budget.js). -->
+    <script src="gallery/encounter.js"></script>
 
     <!-- Fonts -- match gallery viewer -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1013,6 +1028,29 @@
             transition: border-color 0.15s;
         }
         .drawer-btn:hover { border-color: var(--accent); }
+        /* L-529: an encounter's player, above the drawer button: Play and
+           Pause, and a slider a thumb can use on a phone held upright
+           (44 px tall). Page chrome, not scene text. */
+        .enc-player {
+            position: absolute; left: 12px; right: 12px; bottom: 64px;
+            z-index: 30; display: flex; align-items: center; gap: 10px;
+            background: rgba(17,24,39,0.94); border: 1px solid var(--border);
+            border-radius: 22px; padding: 4px 12px 4px 4px;
+        }
+        .enc-play {
+            flex-shrink: 0; min-width: 92px; height: 36px; border-radius: 18px;
+            border: 1px solid var(--border); background: rgba(255,255,255,0.06);
+            color: var(--text-primary); font: 500 13px 'DM Sans', system-ui, sans-serif;
+            cursor: pointer;
+        }
+        .enc-play:focus-visible { outline: 2px solid var(--interactive); outline-offset: 2px; }
+        .enc-slider { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: var(--interactive); }
+        /* L-529: the encounter's way back, in the top bar. */
+        .enc-back {
+            color: var(--interactive); text-decoration: none;
+            font: 500 13px 'DM Sans', system-ui, sans-serif; margin-left: 10px;
+        }
+        .enc-back:hover { text-decoration: underline; }
         .drawer-btn:focus-visible {
             outline: 2px solid var(--interactive); outline-offset: 2px;
         }
@@ -1293,6 +1331,8 @@
             color: var(--interactive); font-size: 15px; line-height: 1;
         }
         .sun-row.sun-pic .rname { grid-column: 1 / -1; }
+        /* L-529: an encounter's dates beside its name. */
+        .sun-row.sun-pic .pdates { color: var(--text-secondary); white-space: nowrap; }
         .sun-pics-line {
             padding: 2px 16px 8px 0; color: var(--text-dim);
             font: 400 12px 'DM Sans', system-ui, sans-serif;
@@ -2972,8 +3012,15 @@ const EXHIBIT_ADDRESSES = {
 };
 // L-535: the Sun's own opening on ?exhibit=sun, retired 2026-11-15.
 const openingOfSunObsolete = false;
-const EXHIBIT_ASKED = (new URLSearchParams(window.location.search)
-                     .get("exhibit") || "solar-system").toLowerCase();
+// L-529: ?encounter=<id> opens an encounter, a room of its own with no
+// Pyodide (EXHIBITS.encounter): its package is data/encounters/, named by
+// the card in gallery/gallery_metadata.json whose encounter id it is.
+const ENCOUNTER_ASKED = ((new URLSearchParams(window.location.search)
+                         .get("encounter") || "").toLowerCase()
+                         .match(/^[a-z0-9-]+$/) || [null])[0];
+const EXHIBIT_ASKED = ENCOUNTER_ASKED ? "encounter" :
+    (new URLSearchParams(window.location.search)
+     .get("exhibit") || "solar-system").toLowerCase();
 const EXHIBIT = EXHIBIT_ADDRESSES.hasOwnProperty(EXHIBIT_ASKED)
     ? EXHIBIT_ADDRESSES[EXHIBIT_ASKED] : EXHIBIT_ASKED;
 
@@ -4819,6 +4866,35 @@ const EXHIBITS = {
                                openings: centreOpenings,
                                centreShells: centreShells } };
         }
+    },
+    // L-529 (guided encounters), slice 1: an encounter, at
+    // ?encounter=<id>. A completed pass played from its own package
+    // (data/encounters/, written by tools/encounter_fetch.py from JPL), so
+    // it needs no Pyodide (noPyodide) and no driver: the page fetches the
+    // package, the card that names it, the served config and the centre's
+    // Hill sphere, and gallery/encounter.js builds the traces and one
+    // frame an hour. The room's own drawer, zoom, HUD, text box and
+    // i panel are used as they are; the player (Play, Pause, the slider)
+    // is encPlayer* below. Its title and i panel come from the card and
+    // the package (encOpen). It frames on what it draws, the centre's Hill
+    // sphere farthest, plus 10 percent, as the Sun and Earth rooms framed.
+    encounter: {
+        title: "Encounter",
+        sceneTitle: "Encounter",
+        pngName: "palomas_orrery_encounter",
+        halfRangeAu: 0,
+        driver: null,
+        infoHtml: "",
+        noPyodide: true,
+        compose: function (payload) {
+            const built = window.Encounter.compose(payload.pkg, {
+                kmPerAu: GalleryFeatures._KM_PER_AU,
+                cfg: payload.cfg,
+                hillTraces: payload.hillTraces
+            });
+            built.subtitle = built.subtitle0 || null;
+            return built;
+        }
     }
 };
 // The room this page is showing, or null for the Explorer.
@@ -4849,6 +4925,187 @@ async function fetchTextOrThrow(url) {
     const r = await fetch(url);
     if (!r.ok) { throw new Error(url + " -> HTTP " + r.status); }
     return await r.text();
+}
+
+// ====================================================================
+// L-529 (guided encounters), slice 1: AN ENCOUNTER, ?encounter=<id>.
+// encOpen reads what the scene is built from: the card in
+// gallery/gallery_metadata.json whose encounter id is the address's (its
+// name is the room's title; its encounter.package names the package), the
+// package under data/encounters/, and the centre's Hill sphere from the
+// served cache, drawn by the feature renderers as the centre's fold draws
+// it. The player (encPlayer*) plays the frames gallery/encounter.js builds,
+// one an hour, on an even clock: Play, Pause and a slider a thumb can use.
+// A frame is applied with Plotly.update: the moving traces' x, y, z and
+// text, and the line under the title, in one call. Not Plotly.animate:
+// measured 2026-11-20 in this room on a desktop, animate redrew the whole
+// 3D scene at every frame, 0.5 to 1.8 s a frame (639 frames, over ten
+// minutes), where update took 17 to 39 ms; and animate drew each frame
+// from the layout's camera, so a turn made during play was lost (Part A).
+// update leaves the camera and the zoom as the visitor set them. A frame
+// waits while a finger or the mouse is down on the picture. A tap on a
+// body pauses, so the box's figures stay the frame's. Nothing here is
+// called from inside a Plotly event handler (interactive-exhibit).
+// ====================================================================
+let encState = null;    // {card, pkg}
+async function encOpen(cfgObj) {
+    const meta = JSON.parse(await fetchTextOrThrow("gallery/gallery_metadata.json"));
+    const card = (meta.visualizations || []).filter(function (v) {
+        return v && v.encounter && v.encounter.id === ENCOUNTER_ASKED;
+    })[0];
+    if (!card) { throw new Error("no card in the gallery names the encounter " + ENCOUNTER_ASKED); }
+    const file = card.encounter.package;
+    if (typeof file !== "string" || !/^data\/encounters\/[a-z0-9_]+\.json$/.test(file)) {
+        throw new Error("the card names no package under data/encounters/");
+    }
+    const pkg = JSON.parse(await fetchTextOrThrow(file));
+    const problems = window.Encounter.validate(pkg);
+    if (problems.length) { throw new Error("the encounter's package: " + problems.join("; ")); }
+    const fc = JSON.parse(await fetchTextOrThrow("data/solar-system/feature_configs.json"));
+    const centre = pkg.centre.slug;
+    const hill = (((fc.features || {})[centre]) || {}).hill_sphere;
+    const features = hill ? [{ object: centre, feature: "hill_sphere", params: hill }] : [];
+    const bodies = {};
+    bodies[centre] = { name: pkg.centre.name, position: [0, 0, 0] };
+    const drawn = features.length
+        ? GalleryFeatures.buildFeatureTraces(features, bodies, { sceneHalfRangeAu: null })
+        : { traces: [], warnings: [centre + ": no Hill sphere is served, so none is drawn"] };
+    encState = { card: card, pkg: pkg };
+    // The room's names, from the card: the top bar, the tab, the scene's
+    // title, and the i panel, from the package.
+    EX.title = card.title;
+    EX.sceneTitle = card.title;
+    document.title = "Paloma's Orrery - " + card.title;
+    const top = document.getElementById("top-title");
+    if (top) { top.textContent = card.title; }
+    const info = document.getElementById("info-panel");
+    if (info) { info.innerHTML = window.Encounter.infoHtml(pkg, card.title); }
+    encBackMount(pkg.centre);
+    return { pkg: pkg, cfg: cfgObj, hillTraces: drawn.traces || [], features: features,
+             warnings: drawn.warnings || [], room: null };
+}
+
+// The way back, in the top bar: "Back to Earth". Opened from the room's
+// fold in this tab, it steps back through history, so the room opens at
+// the fold (the room kept it, PictureFolds.returnFor's "take"); opened any
+// other way, it opens the room centred on the encounter's centre.
+function encBackMount(centre) {
+    const chain = document.getElementById("top-chain");
+    if (!chain) { return; }
+    const a = document.createElement("a");
+    a.id = "enc-back";
+    a.className = "enc-back";
+    a.href = "interactive.html?exhibit=" + encodeURIComponent(centre.slug);
+    a.textContent = window.Encounter.WORDS.back(centre.name);
+    a.addEventListener("click", function (ev) {
+        let fromRoom = false;
+        try {
+            const kept = window.PictureFolds.readReturn(
+                window.sessionStorage.getItem(window.PictureFolds.RETURN_KEY));
+            fromRoom = !!kept && kept.to === PAGE_OPENED_HREF && window.history.length > 1;
+        } catch (e) { fromRoom = false; }
+        if (fromRoom) { ev.preventDefault(); window.history.back(); }
+    });
+    chain.innerHTML = "";
+    chain.appendChild(a);
+}
+
+// A Mode 5 knob: how long each hour stays on screen while it plays, in
+// milliseconds, before the next frame is asked for. A slow phone takes
+// longer to draw a frame; the clock is even in the data (one hour a
+// frame) and the date under the title says which hour is shown.
+const ENC_FRAME_MS = 120;
+let encPlayer = null;
+async function encPlayerMount(gd, built) {
+    if (!built.frames || built.frames.length < 2) { return; }
+    const W = window.Encounter.WORDS;
+    const host = document.getElementById("sun-drawer").parentNode;
+    const bar = document.createElement("div");
+    bar.id = "enc-player";
+    bar.className = "enc-player";
+    bar.innerHTML =
+        '<button type="button" id="enc-play" class="enc-play"></button>' +
+        '<input type="range" id="enc-slider" class="enc-slider" min="0" step="1" value="0">';
+    host.appendChild(bar);
+    const slider = bar.querySelector("#enc-slider");
+    slider.max = String(built.frameNames.length - 1);
+    slider.setAttribute("aria-label", W.frameLine);
+    encPlayer = { gd: gd, names: built.frameNames, frames: built.frames, i: 0, playing: false,
+                  timer: null, down: false, slider: slider,
+                  button: bar.querySelector("#enc-play") };
+    encPlayer.button.onclick = function () {
+        if (encPlayer.playing) { encPause(); } else { encPlay(); }
+    };
+    slider.addEventListener("input", function () {
+        encPause();
+        encGo(parseInt(slider.value, 10) || 0);
+    });
+    gd.addEventListener("pointerdown", function () { encPlayer.down = true; });
+    ["pointerup", "pointercancel"].forEach(function (ev) {
+        window.addEventListener(ev, function () { if (encPlayer) { encPlayer.down = false; } });
+    });
+    encPlayerLabel();
+    encPlayerPlace();
+    window.addEventListener("resize", function () { setTimeout(encPlayerPlace, 200); });
+}
+// The player sits just above the frame HUD (the axis triad and the ruler),
+// which sits just above the drawer button, so it covers neither; measured
+// from the page, not typed, at the start and whenever the screen turns.
+function encPlayerPlace() {
+    const bar = document.getElementById("enc-player");
+    const hud = document.getElementById("sun-hud");
+    if (!bar || !hud) { return; }
+    const hb = hud.getBoundingClientRect(), pb = bar.parentNode.getBoundingClientRect();
+    if (!hb.height || !pb.height) { return; }
+    bar.style.bottom = Math.max(12, Math.round(pb.bottom - hb.top + 6)) + "px";
+}
+function encPlayerLabel() {
+    const P = encPlayer, W = window.Encounter.WORDS;
+    if (!P) { return; }
+    P.button.innerHTML = (P.playing ? "\u275A\u275A " : "\u25B6 ") +
+        (P.playing ? W.pause : W.play);
+    P.button.setAttribute("aria-pressed", P.playing ? "true" : "false");
+}
+function encGo(i) {
+    const P = encPlayer;
+    if (!P || i < 0 || i >= P.names.length) { return Promise.resolve(); }
+    P.i = i;
+    P.slider.value = String(i);
+    const f = P.frames[i];
+    const upd = { x: [], y: [], z: [], text: [] };
+    f.data.forEach(function (d) {
+        upd.x.push(d.x); upd.y.push(d.y); upd.z.push(d.z); upd.text.push(d.text);
+    });
+    return Plotly.update(P.gd, upd,
+        { "title.subtitle.text": f.layout.title.subtitle.text }, f.traces);
+}
+function encTick() {
+    const P = encPlayer;
+    if (!P || !P.playing) { return; }
+    if (P.down) { P.timer = setTimeout(encTick, 60); return; }
+    if (P.i >= P.names.length - 1) { encPause(); return; }
+    encGo(P.i + 1).then(function () {
+        if (P.playing) { P.timer = setTimeout(encTick, ENC_FRAME_MS); }
+    });
+}
+function encPlay() {
+    const P = encPlayer;
+    if (!P || P.playing) { return; }
+    P.playing = true;
+    encPlayerLabel();
+    sunLabelClose();
+    if (P.i >= P.names.length - 1) {
+        encGo(0).then(function () { P.timer = setTimeout(encTick, ENC_FRAME_MS); });
+    } else {
+        encTick();
+    }
+}
+function encPause() {
+    const P = encPlayer;
+    if (!P) { return; }
+    P.playing = false;
+    if (P.timer) { clearTimeout(P.timer); P.timer = null; }
+    encPlayerLabel();
 }
 
 // L-443 build B: the positions files of the spacecraft among the Solar
@@ -6407,6 +6664,29 @@ async function initSunExhibit() {
     const status = document.getElementById("loading-status");
 
     try {
+      // L-529: an encounter needs no Pyodide and no driver. It reads the
+      // served cache for kilometres per AU and its centre's Hill sphere,
+      // the config for the bodies' words, and its own package (encOpen).
+      let cov, cfg, frameNotes, payload;
+      const positionNotes = [];
+      if (EX.noPyodide) {
+        // With no Pyodide to wait for, the scene would be drawn before the
+        // page has finished its layout, and the 3D picture kept the size it
+        // had then (seen 2026-11-20: a third of the screen). It waits for
+        // the page's load first.
+        if (document.readyState !== "complete") {
+            await new Promise(function (r) { window.addEventListener("load", r, { once: true }); });
+        }
+        status.textContent = "Reading the encounter\u2026";
+        bar.style.width = "40%";
+        cov = await fetchTextOrThrow("data/solar-system/coverage_index.json");
+        cfg = await fetchTextOrThrow("data/objects_config.json");
+        frameNotes = GalleryFeatures.setFrameConstants(
+            JSON.parse(cov).frame_constants);
+        payload = await encOpen(JSON.parse(cfg));
+        status.textContent = "Assembling the scene\u2026";
+        bar.style.width = "90%";
+      } else {
         status.textContent = "Loading Pyodide runtime\u2026";
         bar.style.width = "15%";
         pyodide = await loadPyodide({
@@ -6423,12 +6703,12 @@ async function initSunExhibit() {
 
         status.textContent = "Reading the served cache\u2026";
         bar.style.width = "70%";
-        const cov = await fetchTextOrThrow(
+        cov = await fetchTextOrThrow(
             "data/solar-system/coverage_index.json");
-        const cfg = await fetchTextOrThrow("data/objects_config.json");
+        cfg = await fetchTextOrThrow("data/objects_config.json");
         // L-322 Stage D, patch D7: kilometres per AU and the frame's
         // angle come from the served cache, before anything is drawn.
-        const frameNotes = GalleryFeatures.setFrameConstants(
+        frameNotes = GalleryFeatures.setFrameConstants(
             JSON.parse(cov).frame_constants);
         pyodide.globals.set("COV_JSON", cov);
         pyodide.globals.set("CFG_JSON", cfg);
@@ -6436,7 +6716,6 @@ async function initSunExhibit() {
         // fetches each one's positions file, for its own rows only, and
         // hands them to the driver. One that cannot be fetched is named
         // and that path is not drawn; the rest of the room is.
-        const positionNotes = [];
         if (EX.servedPositions) {
             const posFiles = await solarSystemPositionFiles(
                 JSON.parse(cov), JSON.parse(cfg), positionNotes);
@@ -6471,7 +6750,8 @@ async function initSunExhibit() {
 
         status.textContent = "Assembling the scene\u2026";
         bar.style.width = "90%";
-        const payload = JSON.parse(await pyodide.runPythonAsync(EX.driver));
+        payload = JSON.parse(await pyodide.runPythonAsync(EX.driver));
+      }
 
         // L-421 (2026-10-11, Tony's option A): a stored drawing a served
         // feature names -- the Hills cloud's dots, placed by the orrery --
@@ -6721,8 +7001,12 @@ async function initSunExhibit() {
                 const resp = await fetch("gallery/gallery_metadata.json");
                 const meta = resp.ok ? await resp.json() : null;
                 if (meta) {
+                    // L-529: an encounter's dates, from the plan's events
+                    // on its craft's entries in the served config.
                     ssDrawer.pictures = window.PictureFolds.foldsFrom(meta, ssDrawer.rows,
-                        window.PictureFolds.isPhone(window));
+                        window.PictureFolds.isPhone(window), function (card) {
+                            return window.Encounter ? window.Encounter.rowDates(card, cfgTree) : null;
+                        });
                     if (ssDrawer.pictures.unplaced.length) {
                         console.warn("Saved pictures whose drawer_row names no row here: " +
                             ssDrawer.pictures.unplaced.map(function (u) {
@@ -6815,6 +7099,8 @@ async function initSunExhibit() {
             if (named >= 0) { sunFocusIdx = named; }
         }
         renderSunDrawer();
+        // L-529: an encounter's frames and its player.
+        if (EX.noPyodide) { await encPlayerMount(gd, built); }
         // L-517: back from a saved picture opened here, the drawer opens at
         // its fold.
         if (ssDrawer) { ssPicReturn(); }
@@ -7519,6 +7805,9 @@ function sunLabelRelayout(sceneAnns, pageAnns) {
 // `ti` (L-497): the trace a tap or a resting pointer landed on, or none
 // for the drawer's name and Go To; `by` is "pointer" for a resting mouse.
 function sunLabelShow(k, ti, by) {
+    // L-529: in an encounter a box opened by any route (a tap, the
+    // drawer's Go To) pauses the player, so its figures stay the frame's.
+    if (encPlayer) { encPause(); }
     const grp = sunGroups[k];
     const was = [sunLabelTrace, sunLabelBy];
     sunLabelTrace = typeof ti === "number" ? ti : -1;
@@ -8517,7 +8806,7 @@ function ssRender() {
     }
     const findCount = document.getElementById("sun-find-count");
     if (findCount) {
-        findCount.textContent = hits ? SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s) : "";
+        findCount.textContent = hits ? SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s, hits.e) : "";
         findCount.hidden = !hits;
     }
     ssPicsRender(hits, seen);   // L-517: the saved pictures' folds
@@ -8939,31 +9228,45 @@ function ssPictureFold(list, rowKey, depth) {
     const pics = ssDrawer && ssDrawer.pictures;
     if (!PF || !pics) { return; }
     PF.foldsAt(pics, rowKey).forEach(function (foldId) {
-        ssPictureFoldOne(list, foldId, depth, pics.kind[foldId] === "scenes");
+        ssPictureFoldOne(list, foldId, depth, pics.kind[foldId]);
     });
 }
 
-function ssPictureFoldOne(list, foldId, depth, scenes) {
+// L-529: an encounter fold's mark, a path bending past a body, where a
+// scene fold has its bookmark.
+const ENCOUNTER_MARK =
+    '<svg class="picmark" viewBox="0 0 14 12" aria-hidden="true">' +
+    '<circle cx="7" cy="7" r="2.2" fill="currentColor"/>' +
+    '<path d="M0.8 1.5 C 6 3.5, 10.5 4.5, 13.2 11" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
+
+// kind: "scenes", "encounters" or "pictures" (PictureFolds.foldsFrom).
+function ssPictureFoldOne(list, foldId, depth, kind) {
     const PF = window.PictureFolds;
     const entries = ssDrawer.pictures.byKey[foldId];
     if (!entries || !entries.length) { return; }
+    const scenes = kind === "scenes", encs = kind === "encounters";
     const pf = "pf-" + Math.min(3, (depth || 0) + 1);
     const head = document.createElement("button");
     head.type = "button";
-    head.className = "sun-row sun-pics " + pf + (scenes ? " sun-scenes" : "");
+    head.className = "sun-row sun-pics " + pf + (scenes ? " sun-scenes" : "") +
+        (encs ? " sun-encounters" : "");
     head.setAttribute("data-pf", foldId);
     head.setAttribute("aria-expanded", "false");
     head.innerHTML =
-        '<span class="pick"><span class="fold"></span>' + (scenes ? SCENE_MARK : PICTURE_MARK) +
+        '<span class="pick"><span class="fold"></span>' +
+        (scenes ? SCENE_MARK : (encs ? ENCOUNTER_MARK : PICTURE_MARK)) +
         '</span><span class="rname"></span><span class="gcount"></span>';
-    head.querySelector(".rname").textContent = scenes ? PF.WORDS.scenes : PF.WORDS.fold;
+    head.querySelector(".rname").textContent = scenes ? PF.WORDS.scenes :
+        (encs ? PF.WORDS.encounters : PF.WORDS.fold);
     head.onclick = function () { ssPicFold(foldId); };
     list.appendChild(head);
     const line = document.createElement("div");
     line.className = "sun-pics-line " + pf;
     line.setAttribute("data-pf", foldId);
     line.hidden = true;
-    line.textContent = scenes ? PF.WORDS.scenesLine : PF.WORDS.line;
+    line.textContent = scenes ? PF.WORDS.scenesLine :
+        (encs ? PF.WORDS.encountersLine : PF.WORDS.line);
     list.appendChild(line);
     entries.forEach(function (e) {
         const a = document.createElement("a");
@@ -8975,6 +9278,14 @@ function ssPictureFoldOne(list, foldId, depth, scenes) {
         a.innerHTML = '<span class="pick"><span class="parrow">\u2192</span></span>' +
             '<span class="rname"></span>';
         a.querySelector(".rname").textContent = e.title;
+        // L-529: an encounter's dates beside its name, read from the plan.
+        if (e.encounter && e.dates) {
+            const d = document.createElement("span");
+            d.className = "pdates";
+            d.textContent = e.dates;
+            a.querySelector(".rname").appendChild(document.createTextNode(" "));
+            a.querySelector(".rname").appendChild(d);
+        }
         a.addEventListener("click", function () { ssPicOpen(foldId, e); });
         list.appendChild(a);
     });
@@ -9075,12 +9386,15 @@ function ssPicScroll(foldId) {
 // carries what was ticked (the shared scene link, L-518).
 function ssPicOpen(foldId, entry) {
     const PF = window.PictureFolds;
-    const to = entry.scene ? new URL(entry.href, window.location.href).href : null;
+    // L-529: an encounter opens another address of this page too, so the
+    // room keeps it as "to", and no ticks (its own address carries them).
+    const to = (entry.scene || entry.encounter)
+        ? new URL(entry.href, window.location.href).href : null;
     try {
         window.sessionStorage.setItem(PF.RETURN_KEY,
             PF.returnState(EXHIBIT_ASKED, foldId, entry.id, window.location.href, to));
     } catch (e) { /* nothing kept; Back opens the room as served */ }
-    if (EXHIBIT_ASKED === EXHIBIT && !entry.scene) { treeTickMemoryKeep(); }
+    if (EXHIBIT_ASKED === EXHIBIT && !entry.scene && !entry.encounter) { treeTickMemoryKeep(); }
 }
 
 // The address this page was opened at, before the room writes its own
@@ -9993,8 +10307,15 @@ mountNavCluster();
 // Every room's i panel ends with the About line (L-475).
 mountAboutLink();
 
-// Check for prior consent
-if (localStorage.getItem(CONSENT_KEY) === 'yes') {
+// L-529: an encounter loads no Pyodide, so it asks no consent for it.
+if (EX && EX.noPyodide) {
+    document.getElementById('consent-gate').classList.add('hidden');
+    // Its loading line names what it loads, not Pyodide.
+    const sub = document.querySelector('#loading-overlay .loading-sub');
+    if (sub) { sub.textContent = window.Encounter.WORDS.loading; }
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    initSunExhibit();
+} else if (localStorage.getItem(CONSENT_KEY) === 'yes') {
     // Returning user -- skip consent, go straight to loading
     loadPyodideRuntime();
 } else {

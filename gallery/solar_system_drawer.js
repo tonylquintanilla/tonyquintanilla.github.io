@@ -248,24 +248,37 @@
     // L-493: the search box's words (the approved mock-up).
     find: "Find a body",
     clear: "Clear the search",
-    found: function (n, g, p, s) {
+    found: function (n, g, p, s, e) {
+      // L-529: e counts the encounters found, as s counts the scenes. With
+      // none, every line below is as it was.
+      e = e || 0;
+      const encs = e === 1 ? "1 encounter" : e + " encounters";
       // L-517: found by a saved picture's words alone; L-519, or by a
       // scene's name.
-      if (n === 0 && !g && (p || s)) {
+      if (n === 0 && !g && (p || s || e)) {
         const pics = p === 1 ? "1 saved picture" : p + " saved pictures";
         const scenes = s === 1 ? "1 scene" : s + " scenes";
+        if (e) {
+          const cards = [];
+          if (p) { cards.push(pics); }
+          if (s) { cards.push(scenes); }
+          cards.push(encs);
+          if (cards.length === 1) { return e === 1 ? "1 encounter matches" : encs + " match"; }
+          return cards.slice(0, -1).join(", ") + " and " + cards[cards.length - 1] + " match";
+        }
         if (p && s) { return pics + " and " + scenes + " match"; }
         if (s) { return s === 1 ? "1 scene matches" : scenes + " match"; }
         return p === 1 ? "1 saved picture matches" : pics + " match";
       }
       const groups = g === 1 ? "1 group" : g + " groups";
       // L-519: scenes found beside bodies or groups: "1 body and 1 scene
-      // match".
-      if (s) {
+      // match". L-529: and encounters.
+      if (s || e) {
         const parts = [];
         if (n) { parts.push(n === 1 ? "1 body" : n + " bodies"); }
         if (g) { parts.push(groups); }
-        parts.push(s === 1 ? "1 scene" : s + " scenes");
+        if (s) { parts.push(s === 1 ? "1 scene" : s + " scenes"); }
+        if (e) { parts.push(encs); }
         return parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1] + " match";
       }
       if (g > 0) {
@@ -896,7 +909,7 @@
     }
     // L-517: the saved pictures.
     const picIds = {}, picRows = {}, picOpen = {};
-    let p = 0, s = 0;
+    let p = 0, s = 0, en = 0;
     const counted = {};
     const alone = n === 0 && all.length === 0;
     Object.keys(pictureWords || {}).forEach(function (rk) {
@@ -907,7 +920,9 @@
       // object not the scene"): a scene sits under the Sun, not beside the
       // bodies it names, so its name brings the Sun's row even when a body
       // or a group also matches. A saved picture still does only alone.
-      const shows = alone ? hit : hit.filter(function (e) { return e.scene; });
+      // L-529: an encounter sits by its places as a scene does, so its name
+      // brings its row too.
+      const shows = alone ? hit : hit.filter(function (e) { return e.scene || e.encounter; });
       if (!shows.length) { return; }
       const row = (rows || []).filter(function (r) { return r.key === rk; })[0];
       if (!row) { return; }
@@ -916,7 +931,7 @@
       shows.forEach(function (e) {
         if (counted[e.id]) { return; }
         counted[e.id] = true;
-        if (e.scene) { s++; } else { p++; }
+        if (e.scene) { s++; } else if (e.encounter) { en++; } else { p++; }
       });
       picRows[rk] = true;
       const up = isGroup(row) ? ancestors(rows, row.group)
@@ -939,7 +954,7 @@
     });
     return { keys: keys, groups: groups, via: via, n: n, heads: heads, kids: kids,
              listed: listed, opened: opened, g: matched.length, anc: anc,
-             picIds: picIds, picRows: picRows, picOpen: picOpen, p: p, s: s };
+             picIds: picIds, picRows: picRows, picOpen: picOpen, p: p, s: s, e: en };
   }
 
   // PARENT GROUPS: whether a group sits (at any depth) under the one group

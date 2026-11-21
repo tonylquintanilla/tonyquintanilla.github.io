@@ -69,6 +69,10 @@ KEEP_DAYS = 3
 KNOWN_FOLDERS = {
     'drawings': 'the stored drawings tools/pull_drawings.py pulls from '
                 'the orrery (L-421)',
+    # L-529 (2026-11-20): an encounter's package, written by hand with
+    # tools/encounter_fetch.py, never by the builder or the night.
+    'encounters': 'the encounters\' packages tools/encounter_fetch.py writes '
+                  'from JPL (L-529)',
 }
 RUNID_RE = re.compile(r'(\d{8}T\d{6})Z?$')
 

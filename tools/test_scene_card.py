@@ -202,6 +202,23 @@ def main():
         # 2026-11-10 this line refused a scene with any drawer_row, which
         # part 2 made the way a scene is placed, so it went red on Tony's
         # first placed scene (2026 ED138's, beside its body).
+    # L-529 (guided encounters, 2026-11-20): an ENCOUNTER card is not a
+    # scene. It carries an "encounter" block and opens
+    # interactive.html?encounter=<its id>, a page New Scene never makes; so
+    # it must not be marked a scene, and its address must be its own
+    # encounter's, never a shared room link a scene would also open. Its
+    # package and its plan are the Encounters row's
+    # (tools/check_encounters.py).
+    encounters = [v for v in cards if isinstance(v.get('encounter'), dict)]
+    for v in encounters:
+        if v.get(scene_card.SCENE_FIELD) is True:
+            failures.append("encounter %s is also marked a scene" % v['id'])
+        want = 'interactive.html?encounter=%s' % (v['encounter'].get('id') or '')
+        if v.get('live') != want:
+            failures.append("encounter %s opens %r, not its own address %r" % (v['id'], v.get('live'), want))
+    print("Encounters in the metadata: %d%s" % (len(encounters), (": " + "; ".join(
+        "%s [%s] -> %s" % (v.get('title'), v['id'], v.get('live')) for v in encounters))
+        if encounters else ''))
     print("Scenes in the metadata: %d%s" % (len(scenes), (": " + "; ".join(
         "%s [%s]%s" % (v.get('title'), v['id'], ' (Featured)' if v.get('featured') else '')
         for v in scenes)) if scenes else ''))

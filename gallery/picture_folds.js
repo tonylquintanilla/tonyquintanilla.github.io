@@ -81,6 +81,21 @@
 //              a Scenes fold under each row it names, ahead of that row's
 //              saved pictures; with no place, under the Sun, as before.
 //
+//   ENCOUNTERS (L-529, guided encounters; Tony's design of 2026-11-20: an
+//              encounter "opened from the fold of the body it is centred
+//              on"). A card carrying an "encounter" block ({id, package,
+//              centre, craft}) is an ENCOUNTER: its live address opens
+//              interactive.html?encounter=<id>, a completed pass played
+//              from its own package. It sits in a fold named Encounters
+//              under each row it names (ENCOUNTERS_FOLD + ":" + the row's
+//              key), after that row's scenes and ahead of its saved
+//              pictures, never among either, and never offered with no
+//              place. Beside its name, the dates of its passes, read from
+//              the plan's events on the craft's entries by the caller
+//              (foldsFrom's datesOf; gallery/encounter.js's rowDates),
+//              never typed in the card. Like a scene it opens another
+//              address of this page, so the room keeps "to" for Back.
+//
 // Written November 8, 2026 with Anthropic's Claude Opus 5.5.
 // Updated November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519: the
 // Scenes fold under the Sun's row; folds keyed by their own id). Updated
@@ -99,6 +114,9 @@
   const SCENE_FIELD = "scene";
   const SCENES_FOLD = "scenes";
   const SCENES_ROW = "sun";
+  // L-529: an encounter card, and its folds.
+  const ENCOUNTER_FIELD = "encounter";
+  const ENCOUNTERS_FOLD = "encounters";
 
   // The visitor's words (L-517, the brief's board F). Words for Tony's
   // phone look.
@@ -107,10 +125,18 @@
     line: "Saved pictures: each opens on its own page.",
     // L-519: words for Tony's phone look.
     scenes: "Scenes",
-    scenesLine: "Each scene opens with its bodies ticked, at today's date."
+    scenesLine: "Each scene opens with its bodies ticked, at today's date.",
+    // L-529: words for Tony's phone look.
+    encounters: "Encounters",
+    encountersLine: "Each encounter plays a completed pass, one hour to a frame."
   };
 
   function isScene(v) { return !!v && v[SCENE_FIELD] === true; }
+  function isEncounter(v) {
+    const e = v ? v[ENCOUNTER_FIELD] : null;
+    return !!e && typeof e === "object" && typeof e.id === "string" && !!e.id;
+  }
+  function encounterFoldFor(rowKey) { return ENCOUNTERS_FOLD + ":" + rowKey; }
 
   // A phone, by index.html's own test: narrower than 768 px, or a touch
   // screen whose short side is a phone's (a phone held sideways).
@@ -198,28 +224,37 @@
   // rowsFromServed list. Cards keep the metadata's order inside a fold.
   // A card whose place names no served row is reported, never dropped
   // quietly; a scene is never a saved picture, whatever it carries.
-  function foldsFrom(metadata, rows, phone) {
+  // L-529: datesOf(card), optional, gives an encounter's dates for its
+  // name's line (null when they cannot be read); the entry carries them as
+  // "dates". encounters counts each encounter once.
+  function foldsFrom(metadata, rows, phone, datesOf) {
     const cards = (metadata && Array.isArray(metadata.visualizations))
       ? metadata.visualizations : [];
     const byId = {};
     cards.forEach(function (v) { if (v && v.id) { byId[v.id] = v; } });
     const byKey = {}, keys = [], unplaced = [], rowOf = {}, kind = {};
     const sunKey = rowKeyFor(SCENES_ROW, rows);
-    let count = 0, scenes = 0;
+    let count = 0, scenes = 0, encounters = 0;
     // L-519 part 2: a card is one record, shown in each of its places.
-    function place(v, scene) {
+    // what: "scenes", "encounters" or "pictures".
+    function place(v, what) {
       let shown = false;
       placesOf(v).forEach(function (p) {
         const key = rowKeyFor(p, rows);
         if (!key) { unplaced.push({ id: v.id, place: p }); return; }
-        const fold = scene ? sceneFoldFor(key, sunKey) : key;
+        const fold = what === "scenes" ? sceneFoldFor(key, sunKey)
+          : (what === "encounters" ? encounterFoldFor(key) : key);
         if (!byKey[fold]) {
           byKey[fold] = []; keys.push(fold);
-          rowOf[fold] = key; kind[fold] = scene ? "scenes" : "pictures";
+          rowOf[fold] = key; kind[fold] = what;
         }
         if (byKey[fold].some(function (e) { return e.id === v.id; })) { return; }
         const e = { id: v.id, title: v.title || v.id, href: href(v), room: v.room || "" };
-        if (scene) { e.scene = true; }
+        if (what === "scenes") { e.scene = true; }
+        if (what === "encounters") {
+          e.encounter = true;
+          e.dates = (typeof datesOf === "function") ? (datesOf(v) || null) : null;
+        }
         byKey[fold].push(e);
         shown = true;
       });
@@ -227,26 +262,30 @@
     }
     cards.forEach(function (v) {
       if (!isScene(v) || !inMode(v, byId, phone)) { return; }
-      if (place(v, true)) { scenes++; }
+      if (place(v, "scenes")) { scenes++; }
     });
     cards.forEach(function (v) {
-      if (!v || isScene(v) || !placesOf(v).length) { return; }
+      if (!v || isScene(v) || !isEncounter(v) || !inMode(v, byId, phone)) { return; }
+      if (place(v, "encounters")) { encounters++; }
+    });
+    cards.forEach(function (v) {
+      if (!v || isScene(v) || isEncounter(v) || !placesOf(v).length) { return; }
       if (!inMode(v, byId, phone)) { return; }
-      if (place(v, false)) { count++; }
+      if (place(v, "pictures")) { count++; }
     });
     return { byKey: byKey, keys: keys, rowOf: rowOf, kind: kind,
-             unplaced: unplaced, count: count, scenes: scenes };
+             unplaced: unplaced, count: count, scenes: scenes,
+             encounters: encounters };
   }
 
   // The folds under one row, in the order they are drawn: its scenes first
-  // (the Sun's row), then its saved pictures.
+  // (the Sun's row), then its encounters (L-529), then its saved pictures.
   function foldsAt(folds, rowKey) {
     const out = [];
-    ((folds && folds.keys) || []).forEach(function (f) {
-      if (folds.rowOf[f] === rowKey && folds.kind[f] === "scenes") { out.push(f); }
-    });
-    ((folds && folds.keys) || []).forEach(function (f) {
-      if (folds.rowOf[f] === rowKey && folds.kind[f] !== "scenes") { out.push(f); }
+    ["scenes", "encounters", "pictures"].forEach(function (what) {
+      ((folds && folds.keys) || []).forEach(function (f) {
+        if (folds.rowOf[f] === rowKey && folds.kind[f] === what) { out.push(f); }
+      });
     });
     return out;
   }
@@ -270,7 +309,7 @@
     ((folds && folds.keys) || []).forEach(function (k) {
       const row = (folds.rowOf && folds.rowOf[k]) || k;
       out[row] = (out[row] || []).concat(folds.byKey[k].map(function (e) {
-        return { id: e.id, words: e.title, scene: !!e.scene }; }));
+        return { id: e.id, words: e.title, scene: !!e.scene, encounter: !!e.encounter }; }));
     });
     return out;
   }
@@ -311,10 +350,14 @@
     SCENE_FIELD: SCENE_FIELD,
     SCENES_FOLD: SCENES_FOLD,
     SCENES_ROW: SCENES_ROW,
+    ENCOUNTER_FIELD: ENCOUNTER_FIELD,
+    ENCOUNTERS_FOLD: ENCOUNTERS_FOLD,
     WORDS: WORDS,
     placesOf: placesOf,
     sceneFoldFor: sceneFoldFor,
+    encounterFoldFor: encounterFoldFor,
     isScene: isScene,
+    isEncounter: isEncounter,
     foldsAt: foldsAt,
     returnFor: returnFor,
     isPhone: isPhone,

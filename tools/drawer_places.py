@@ -269,6 +269,25 @@ def is_scene(card):
     return isinstance(card, dict) and card.get(SCENE_FIELD) is True
 
 
+# L-529 (guided encounters, 2026-11-20): an encounter card carries an
+# "encounter" block with its id (gallery/picture_folds.js, isEncounter).
+ENCOUNTER_FIELD = 'encounter'
+
+
+def is_encounter(card):
+    e = card.get(ENCOUNTER_FIELD) if isinstance(card, dict) else None
+    return isinstance(e, dict) and isinstance(e.get('id'), str) and bool(e.get('id'))
+
+
+def fold_order(cards):
+    """The cards at one place in the order the website shows them: its
+    scenes, then its encounters, then its saved pictures
+    (gallery/picture_folds.js, foldsAt)."""
+    scenes = [c for c in cards if is_scene(c)]
+    encs = [c for c in cards if not is_scene(c) and is_encounter(c)]
+    return scenes + encs + [c for c in cards if not is_scene(c) and not is_encounter(c)]
+
+
 def places_of(card):
     """A card's places, in the order written, each once; a scene with none
     sits beside the Sun (gallery/picture_folds.js, placesOf)."""

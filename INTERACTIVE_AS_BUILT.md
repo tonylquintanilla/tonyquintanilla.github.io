@@ -31,6 +31,7 @@ names" row) holds every code name below in backticks to the code.
 - Readability
 - The i panel, one sentence to a bullet
 - A first visit's guide
+- Encounters
 - The headless recipe
 
 ## The anatomy of an exhibit (the Sun, read at fc8d9fb3; two rows corrected at 1.1)
@@ -2144,6 +2145,121 @@ browser that keeps nothing opens the room as its front page showed it
   The walk taps again a little off, as a finger would; Tony's phone look
   is the test of a finger.
 
+## Encounters
+
+L-529 (guided encounters), slice 1, built 2026-11-20 on Tony's design of
+that day (the orrery's design record, DESIGN_encounters_20261120.md):
+an encounter is a completed pass of a craft by a body, kept as its own
+package, opened from the fold of the body it is centred on, and played
+with every body moving. ESCAPADE's Earth flybys are the first: both twins
+in one encounter, with the Moon and Earth-Sun L2, around Earth's centre.
+
+- **The package** is `data/encounters/escapade_earth_2026.json`, written
+  by `tools/encounter_fetch.py`, which Tony runs from VS Code's Run button
+  and nothing else runs (not the nightly builder, not the Daily Run). It
+  asks JPL's Horizons API directly (always fresh) for each body around
+  the centre's id, ecliptic of J2000, positions and velocities in km and
+  km/s as JPL prints them, every body at the same moments: every hour of
+  the window, and every minute of each twin's flyby window on its entry
+  (`path.events`). Every span is asked on JPL's clock (TDB); each
+  moment's UTC is worked back by astropy. The window is the one typed
+  thing, with Tony's ruling beside it (`ENCOUNTERS`): 18 October 2026,
+  20:00 UTC to 14 November 2026, 10:00 UTC, the hour before Blue's last
+  crossing inward of the Hill sphere the page draws to the hour after
+  Gold's first crossing outward, 639 hourly frames. The tool holds each
+  answer to the entry's `horizons_name` and the centre's id, refuses
+  bodies answered at other moments, and copies each twin's flyby event
+  into the package only when JPL's distance at the plan's own moment is
+  the plan's. Each body's speed is the one figure it works out, from
+  JPL's three components, stored with a line saying so. A second run
+  with nothing changed writes nothing at all; a changed answer is named
+  and written. `python tools/encounter_fetch.py --check` plants faults in
+  made-up answers. Colours, name sides and symbols come from
+  `gallery/assembler/presentation.py` and `render_spacecraft.py`.
+- **The address** is `interactive.html?encounter=escapade-earth-2026`
+  (`ENCOUNTER_ASKED`), the room `EXHIBITS.encounter`, marked `noPyodide`:
+  no consent gate and no Pyodide; the loading line says "Loading the
+  encounter...". `initSunExhibit` waits for the page's load (drawn
+  sooner, the 3D picture kept a third of the screen), then `encOpen`
+  fetches the card whose encounter id is the address's (its name is the
+  title, the top bar and the tab; `Encounter.infoHtml` fills the i
+  panel), its package, and the centre's Hill sphere from the served cache
+  (`feature_configs.json`), drawn by `GalleryFeatures.buildFeatureTraces`
+  as the centre's fold draws it.
+- **The scene** is built by `gallery/encounter.js` (`Encounter.compose`),
+  which works out no figure: Earth at the centre with its served words;
+  the Hill sphere with its served words; each body's whole path through
+  every moment in the package, minute points included, so a pass seen
+  close is a curve (Earth-Sun L2 a marker alone, L-297's rule); each
+  body's marker and name; each closest pass marked "Closest, 7 November
+  2026," with "10:00 UTC" under it (two lines, so the words stay on a
+  phone's screen), from the pass the package copied from the plan, its
+  words on the craft's own side. It frames on what it draws plus 10
+  percent across the narrow side, as the Sun and Earth rooms framed: the
+  Hill sphere, and the twins' paths where they reach past it. The drawer
+  is the shell drawer, one row a body; the count line counts them.
+- **The player** (`encPlayerMount`): Play and Pause and a slider 44 px
+  tall above the drawer button, page chrome. One frame an hour, applied
+  by `encGo` with `Plotly.update`: each moving marker's place and box
+  words, each name's place, and the line under the title (the frame's
+  date and time in UTC, then each twin's distance from Earth's centre in
+  whole kilometres and its speed to the metre per second), in one call.
+  Not `Plotly.animate`: measured 2026-11-20 on a desktop in this room,
+  animate redrew the whole 3D scene every frame, 0.5 to 1.8 s, and drew
+  it from the layout's camera, so a turn made during play was lost;
+  update took 17 to 39 ms and leaves the camera and the zoom as the
+  visitor set them. `ENC_FRAME_MS` (120 ms) is a Mode 5 knob; the whole
+  visit plays in about 90 s on a desktop. A frame waits while a finger
+  or the mouse is down on the picture. A box opened by any route pauses
+  it (`sunLabelShow`), so its figures stay the frame's; Play closes it.
+- **The box** (`Encounter.boxText`): the name; the body's served words;
+  "At <date, time> UTC: <km> from Earth's centre, moving at <km/s>.";
+  for a spacecraft and a Lagrange point, "JPL states no accuracy for this
+  position." (JPL's answer reads "n.a."); a source line with JPL's id and
+  name, around Earth's centre, and when the package was retrieved. The
+  digits: nothing drifts and nothing is worked out between points, so
+  the room's floor sets the distance, whole kilometres; the provenance
+  rule does not reach a speed, printed as the orrery's path plan prints
+  one, open for Tony's look (L-529).
+- **The row**: one card in `gallery/gallery_metadata.json` with an
+  `encounter` block (id, package, centre, craft) and `drawer_row` "earth".
+  `PictureFolds.foldsFrom` puts it in an Encounters fold under Earth's
+  row (`encounterFoldFor`), after the row's scenes and ahead of its saved
+  pictures (`foldsAt`), never among either; its mark is `ENCOUNTER_MARK`,
+  its line "Each encounter plays a completed pass, one hour to a frame.",
+  and beside its name the dates of its passes, "7 and 9 November 2026",
+  read from the plan's events on the craft's entries
+  (`Encounter.rowDates`; a moment within two minutes of midnight on JPL's
+  clock prints none rather than guess the UTC day). A tap keeps the fold
+  and the encounter's address as "to", and no ticks, as a scene does
+  (`ssPicOpen`). Find finds its name beside a body and counts it apart:
+  "1 encounter matches" (`searchHits`' `e`, the fifth argument of
+  `WORDS.found`). The gallery editor's tree lists a place's cards as the
+  website does, scenes, encounters, pictures (`drawer_places.fold_order`),
+  and marks the card "encounter".
+- **Back**: "Back to Earth" in the top bar (`encBackMount`). Opened from
+  the fold in this tab it steps back through history, and the room takes
+  what it kept and opens its drawer at the fold (`ssPicReturn`,
+  `returnFor`'s "take"); opened any other way it opens
+  `interactive.html?exhibit=earth`.
+- **The night** never runs the tool, never swaps the folder (it is not
+  under `data/solar-system/`) and never commits it (`night_allow_list`
+  holds nothing under it). `documentation/check_cache_siblings.py` knows
+  `data/encounters/` by name.
+- **Checked** by the gallery run's Encounters row
+  (`tools/check_encounters.py`, gates: the card's address, every body at
+  every moment, every hour of the window, every minute of each flyby
+  window, each pass the entry's event at the plan's moment and distance
+  with no minute nearer, the files in `SERVED_FILES`, the night's
+  allow-list, the sibling check's folders; seven faults planted first);
+  the Typed facts and Hover budget rows, which build the encounter from
+  its real package (`smoke_typed_facts.js`: served words masked, every
+  position, speed and moment moved, its typed sentences on `ALLOWED`);
+  the Picture folds row (section 8, four more breaks, the real card in
+  its fold, the page's wiring); the Scene cards row (an encounter is not
+  a scene, and opens its own address); the Drawer places row; and walked
+  (`tools/headless/walk_encounter.js`).
+
 ## The headless recipe
 
    **THE HEADLESS RECIPE** (v1.9, L-405; first used for L-363 step 3b).
@@ -2205,6 +2321,14 @@ browser that keeps nothing opens the room as its front page showed it
      (Edge 157 would not start that evening), in the browser's new
      headless mode, on
      a fresh profile of its own.
+   - `walk_encounter.js . <payload.json> [planted page]` (L-529,
+     2026-11-20): the room centred on Earth, its Encounters fold, its
+     words and dates, the tap keeping the fold; the encounter booted with
+     what the room kept (the harness's `selfStart`, as it starts itself);
+     Play moving both twins, the Moon, L2 and the date, Pause holding,
+     the slider, a tap pausing and opening the box; Back's link, and the
+     room opening at the fold. On a page planted with a player that never
+     advances it fails three checks of 26.
    - A CANDIDATE, not yet a file in either repository (v1.27, L-495):
      real pictures before a build. On the night of 2026-10-26 the
      direction arrows' styles and distances were rendered in the

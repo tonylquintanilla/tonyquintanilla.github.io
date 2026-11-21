@@ -116,6 +116,14 @@ const UNIT_WORDS = new Set([
 // Typed sentences allowed in the rooms' code, each with its reason. Digits
 // are written as # (a number the code computed, not a served one).
 const ALLOWED = [
+  // L-529 (guided encounters), 2026-11-20: the encounter's typed sentences
+  // (gallery/encounter.js, WORDS), for Tony's look at its words.
+  ["JPL states no accuracy for this position.",
+   "the page's own account of its data: JPL's uncertainty for a spacecraft's or a Lagrange point's position reads \"n.a.\" (L-484's sentence, provenance-discipline 2.36); the encounter's box (L-529)"],
+  ["Each frame is one hour.",
+   "the picture: how the encounter plays (L-529)"],
+  ["A speed is worked from JPL's three velocity components.",
+   "the page's own account of its data: how the one figure the tool works out was worked (L-529)"],
   ["Its warp and width are drawn to show the shape, not measured.",
    "the streamer belt's caveat, a drawing choice (manifest S4, 2026-10-06)"],
   ["North pole up the gold line; the ring is the equator on the crust.",
@@ -400,8 +408,79 @@ function moonTraces(mode) {
   return out;
 }
 
+// L-529 (guided encounters), 2026-11-20: the encounter, built by
+// gallery/encounter.js from its real package (named on its card in
+// gallery/gallery_metadata.json) and the served config, its Hill sphere by
+// the renderers from the served cache, as the page builds it. Served words
+// are masked: each body's and the centre's name and description on their
+// config entries, the names and JPL's names the package copied, JPL's
+// trajectory sentence, the card's name. In the scaled pass every position
+// and speed in the package is scaled, and every moment it holds (each
+// frame's, each pass's, the retrieval's) moved by ENC_SHIFT_MS, so a
+// date it prints moves with it. Read: every trace's words, the box words
+// and the line under the title of the first, a middle and the last frame,
+// and the i panel.
+eval(read("gallery/encounter.js"));
+const ENC = global.Encounter;
+const ENC_SHIFT_MS = (3 * 24 + 7) * 3600 * 1000;
+function encShift(iso) {
+  const s = String(iso).replace(" ", "T");
+  const t = Date.parse(/(Z|[+-]\d\d:\d\d)$/.test(s) ? s : s + "Z");
+  return isFinite(t) ? new Date(t + ENC_SHIFT_MS).toISOString().replace(/\.\d+Z$/, "Z") : iso;
+}
+function encounterTraces(mode) {
+  const meta = JSON.parse(read("gallery/gallery_metadata.json"));
+  const card = (meta.visualizations || []).find(v => v && v.encounter && v.encounter.package);
+  if (!card) { fail("gallery_metadata.json holds no encounter card, so no encounter was read"); return []; }
+  const pkg = JSON.parse(read(card.encounter.package));
+  let title = card.title;
+  let cfg = config;
+  let hill = ((JSON.parse(read("data/solar-system/feature_configs.json")).features || {})[pkg.centre.slug] || {}).hill_sphere;
+  if (!hill) { fail("the encounter's centre has no served Hill sphere"); return []; }
+  const slug = pkg.centre.slug;
+  if (mode) {
+    hill = masked(hill, mode === "scaled", false);
+    title = MARKER;
+    cfg = JSON.parse(JSON.stringify(config));
+    cfg.objects = cfg.objects.map(function (o) {
+      if (!o || !(o.slug === slug || Object.prototype.hasOwnProperty.call(pkg.bodies, o.slug))) { return o; }
+      return Object.assign({}, o, { name: MARKER, description: MARKER });
+    });
+    pkg.centre.name = MARKER;
+    Object.keys(pkg.bodies).forEach(function (s) {
+      const b = pkg.bodies[s];
+      b.name = MARKER; b.jpl_name = MARKER;
+      if (b.trajectory) { b.trajectory = MARKER; }
+      if (mode === "scaled") {
+        b.pos_km = b.pos_km.map(p => p.map(c => c * SCALE));
+        b.speed_kms = b.speed_kms.map(v => v * SCALE);
+      }
+    });
+    if (mode === "scaled") {
+      pkg.moments.utc = pkg.moments.utc.map(encShift);
+      pkg.passes.forEach(p => { p.closest_utc = encShift(p.closest_utc); });
+      pkg.retrieved = encShift(pkg.retrieved);
+    }
+  }
+  const bodies = {};
+  bodies[slug] = { name: pkg.centre.name, position: [0, 0, 0] };
+  const hillTraces = GF.buildFeatureTraces([{ object: slug, feature: "hill_sphere", params: hill }],
+                                           bodies, { sceneHalfRangeAu: null }).traces;
+  const built = ENC.compose(pkg, { kmPerAu: GF._KM_PER_AU, cfg: cfg, hillTraces: hillTraces });
+  const out = built.traces.slice();
+  const fr = built.frames;
+  [0, Math.floor(fr.length / 2), fr.length - 1].forEach(function (k) {
+    if (!fr[k]) { return; }
+    fr[k].data.forEach(function (d) { out.push({ legendgroup: "frame " + k, text: d.text }); });
+    out.push({ legendgroup: "frame " + k + " line", text: [fr[k].layout.title.subtitle.text] });
+  });
+  out.push({ legendgroup: "i panel", text: [ENC.infoHtml(pkg, title)] });
+  return out;
+}
+
 const ROOMS = {
   moons: moonTraces,
+  encounter: encounterTraces,
   sun: function (mode) {
     let f = sunFeatures();
     if (mode) { f = masked(f, mode === "scaled", false); }
@@ -487,6 +566,13 @@ function sentences(text) {
     });
   });
 })();
+// L-529: the encounter's i panel source line, in whichever month the
+// package was retrieved.
+global.SolarSystemFigures.SPAN_MONTHS.forEach(function (m) {
+  ALLOWED.push(["Positions and velocities: JPL Horizons, https://ssd.jpl.nasa.gov/horizons/, retrieved # " +
+    m + " #, #:# UTC.", "the page's own account of its data, with its source and address " +
+    "(L-481's form) and when the encounter's package was retrieved (L-529)"]);
+});
 const digits = s => s.replace(/-?\d+(\.\d+)?(e[+-]?\d+)?/gi, "#").replace(/#(,#)+/g, "#");
 const allowed = new Map(ALLOWED.map(([s, why]) => [s, why]));
 const openSet = new Map(OPEN.map(([kind, s]) => [kind + "|" + s, false]));
@@ -627,7 +713,7 @@ if (failures) {
               " description sentence(s) unread.");
   process.exit(1);
 }
-console.log("TYPED FACTS: PASS -- 0 typed facts in the Sun and Earth rooms; " +
+console.log("TYPED FACTS: PASS -- 0 typed facts in the Sun and Earth rooms, the moons and the encounter; " +
             labels.length + " number line(s), " + found.allowedSeen.size + " of " +
             ALLOWED.length + " allowed sentence(s) seen, " + OPEN.length +
             " held open (L-451); " + WORDS.size + " word field(s) masked.");

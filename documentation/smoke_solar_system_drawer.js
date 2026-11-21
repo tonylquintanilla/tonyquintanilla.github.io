@@ -1002,7 +1002,8 @@ if (page.indexOf("drawer: { rows: allRows,") < 0) {
   // L-515 step 2b, part 2: Center on moves the view in the page, so the
   // ticks stay in it; the keeper still serves a saved picture's return.
   ['if (at("a.enter")) { ev.preventDefault(); ssCentreOn(k); return; }', "Center on does not move the view in the page (L-515 step 2b)"],
-  ["if (EXHIBIT_ASKED === EXHIBIT && !entry.scene) { treeTickMemoryKeep(); }", "a saved picture opened from the root does not keep its ticks (L-515)"],
+  // L-529: a scene or an encounter keeps no ticks; a saved picture still does.
+  ["if (EXHIBIT_ASKED === EXHIBIT && !entry.scene && !entry.encounter) { treeTickMemoryKeep(); }", "a saved picture opened from the root does not keep its ticks (L-515)"],
   ["drawerTrailMount();", "the trail line is never mounted (L-515)"],
   ['<div class="sun-trail" id="sun-trail" hidden></div>', "the drawer has no trail line (L-515)"],
   ["{ centreKey: SSD0.SUN_KEY, children: SSD0.childrenOf(cfgTree, EXHIBIT) }",

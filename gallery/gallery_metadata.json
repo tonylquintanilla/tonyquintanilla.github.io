@@ -347,6 +347,31 @@
       "drawer_row": "tno_2026_ed138"
     },
     {
+      "id": "encounter_escapade_earth_2026",
+      "title": "ESCAPADE's Earth flybys",
+      "description": "ESCAPADE's Earth flybys",
+      "room": "solar_system",
+      "shape": "9:16",
+      "files": {},
+      "live": "interactive.html?encounter=escapade-earth-2026",
+      "featured": false,
+      "encounter": {
+        "id": "escapade-earth-2026",
+        "package": "data/encounters/escapade_earth_2026.json",
+        "centre": "earth",
+        "craft": [
+          "escapade_blue",
+          "escapade_gold"
+        ]
+      },
+      "sources": [
+        "JPL Horizons, https://ssd.jpl.nasa.gov/horizons/, in the encounter's package."
+      ],
+      "converted": "2026-11-20 19:30",
+      "size_kb": {},
+      "drawer_row": "earth"
+    },
+    {
       "id": "3iatlas_jupiter_20260316_1222",
       "title": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
       "description": "3I/ATLAS Closest Approach to Jupiter 3-16-2026",
@@ -2587,6 +2612,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-11-13 20:40",
-  "total_count": 136
+  "last_updated": "2026-11-20 20:30",
+  "total_count": 138
 }

@@ -289,6 +289,59 @@ if (sunObj && sunObj.features) {
     failures++;
 }
 
+// 4. L-529 (2026-11-20, guided encounters): the encounter, built by
+//    gallery/encounter.js from its real package (named on its card) and
+//    the served config, its Hill sphere by the renderers, as the page
+//    builds it. Each frame sets the moving bodies' box words, so the box
+//    words of the first, a middle and the last frame are counted too. A
+//    checker passes on what it does not look at: no encounter card, or a
+//    build with no traces, fails.
+eval(fs.readFileSync(path.join(__dirname, "..", "gallery", "encounter.js"), "utf8"));
+{
+    const ENC = global.Encounter;
+    const meta = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "gallery",
+        "gallery_metadata.json"), "utf8"));
+    const card = (meta.visualizations || []).find(v => v && v.encounter && v.encounter.package);
+    if (!card) {
+        console.log("  FAIL  no encounter card in gallery_metadata.json; no encounter was measured");
+        failures++;
+    } else {
+        const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "..",
+            card.encounter.package), "utf8"));
+        const cfg = { objects: storeObjects };
+        const fc = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data",
+            "solar-system", "feature_configs.json"), "utf8")).features || {};
+        const slug = pkg.centre.slug;
+        const bodies = {};
+        bodies[slug] = { name: pkg.centre.name, position: [0, 0, 0] };
+        const hill = (fc[slug] || {}).hill_sphere;
+        const hillTraces = hill ? GF.buildFeatureTraces(
+            [{ object: slug, feature: "hill_sphere", params: hill }], bodies,
+            { sceneHalfRangeAu: null }).traces : [];
+        const built = ENC.compose(pkg, { kmPerAu: GF._KM_PER_AU, cfg: cfg, hillTraces: hillTraces });
+        if (!built.traces.length) {
+            console.log("  FAIL  the encounter built no traces: " + built.warnings.join("; "));
+            failures++;
+        }
+        const before = hovers.length;
+        collect("encounter", built.traces);
+        const fr = built.frames;
+        [0, Math.floor(fr.length / 2), fr.length - 1].forEach(function (k) {
+            if (!fr[k]) { return; }
+            collect("encounter, frame " + k, fr[k].data.map(function (d, j) {
+                const t = built.traces[fr[k].traces[j]];
+                return { legendgroup: t.legendgroup, name: t.name, hoverinfo: t.hoverinfo,
+                         text: d.text };
+            }));
+        });
+        const mine = hovers.slice(before);
+        console.log("  encounter " + pkg.id + ": " + mine.length + " hovers measured (its " +
+                    "bodies' boxes and the Hill sphere's, and three frames' box words); " +
+                    "the longest " + Math.max.apply(null, mine.map(h => h.lines)) + " lines");
+        check("the encounter was measured", mine.length > 0);
+    }
+}
+
 // ---- the report ------------------------------------------------------
 hovers.sort((a, b) => b.lines - a.lines);
 

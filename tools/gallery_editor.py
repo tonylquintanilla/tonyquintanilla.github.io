@@ -581,6 +581,8 @@ class GalleryEditor:
                 marks.append(f"{n_places} places")
             if c.get(scene_card.SCENE_FIELD) is True:
                 marks.append('scene')
+            elif drawer_places.is_encounter(c):
+                marks.append('encounter')     # L-529
             elif c.get('live'):
                 marks.append('live')
             slots = [s for s in SLOTS if (c.get('files') or {}).get(s)]
@@ -640,9 +642,9 @@ class GalleryEditor:
                                  values=('  '.join(info),),
                                  tags=() if under or n.kind != 'heading' else ('storage',),
                                  open=open_state.get(iid, bool(here) and n.kind == 'body'))
-                # Scenes first, then saved pictures, as the website shows them.
-                for c in [c for c in here if drawer_places.is_scene(c)] + \
-                         [c for c in here if not drawer_places.is_scene(c)]:
+                # Scenes first, then encounters (L-529), then saved
+                # pictures, as the website shows them.
+                for c in drawer_places.fold_order(here):
                     add_card(iid, c, None, place=n.place)
                 for k in n.children:
                     add_node(iid, k, depth + 1)

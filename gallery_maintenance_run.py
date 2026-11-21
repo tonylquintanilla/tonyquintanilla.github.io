@@ -716,6 +716,21 @@ OFFLINE_CHECKERS = [
     ("Scene cards", "python",
      ["tools/test_scene_card.py"], ".", "===", False),
 
+    # L-529 (2026-11-20, guided encounters, slice 1): ENCOUNTERS. Every
+    # encounter card and its package under data/encounters/ (written by
+    # tools/encounter_fetch.py from JPL): the card's address is its
+    # encounter's; every body holds one position, velocity and speed for
+    # each moment; the frames are every hour of the window, none missing;
+    # every minute of each craft's flyby window (its entry's path.events)
+    # is there; each pass is its entry's event, at the plan's closest, at
+    # the plan's distance, and no minute nearer -- the alarm if the
+    # orrery's plan ever moves a completed pass; the page's files are in
+    # SERVED_FILES, the night's allow-list holds nothing under
+    # data/encounters/, and the sibling check knows the folder. Its
+    # self-test plants seven faults first and must catch each. Gates.
+    ("Encounters", "python",
+     ["tools/check_encounters.py"], ".", "===", False),
+
     # L-519 part 2 (2026-11-09, evening): PLACES. The gallery editor's
     # tree for the Solar System door is the room's own drawer, and a card
     # may sit beside one or several of its rows. It checks
@@ -934,6 +949,12 @@ SERVED_FILES = [
     # L-527: the page loads it with a script tag, a first visit's guide
     # (gallery/first_guide.js).
     "gallery/first_guide.js",
+    # L-529 (2026-11-20): the page loads it with a script tag, an
+    # encounter (gallery/encounter.js); and an encounter fetches its
+    # package, named on its card. tools/check_encounters.py fails if a
+    # card's package is not listed here.
+    "gallery/encounter.js",
+    "data/encounters/escapade_earth_2026.json",
     # The positions files are not typed here (L-423, 2026-11-06).
     # positions_files() below reads them from the config. The typed list
     # had kept piece C of C/2025 K1's file after the comet became an

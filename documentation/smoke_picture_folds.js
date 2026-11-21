@@ -78,6 +78,9 @@
 // section 6, the Scenes fold; two more breaks). Same day, after Tony's
 // phone look: a scene found beside a body; one more break. Same day,
 // evening (L-519 part 2): section 7, places; three more breaks.
+// Updated November 20, 2026 with Anthropic's Claude Opus 5.5 (L-529,
+// guided encounters: section 8, the Encounters fold; four more breaks; the
+// real encounter cards in their folds; the page's wiring for them).
 
 "use strict";
 const fs = require("fs");
@@ -260,6 +263,52 @@ function cases(P, S) {
        "a picture found in three places is not counted once, or does not bring each row: " + (two && two.p));
   const keptE = P.readReturn(P.returnState("solar-system", "scenes:earth", "scene_crust", "https://x/a", "https://x/b"));
   want(keptE && keptE.fold === "scenes:earth", "Back does not keep the fold a card was opened from");
+  // 8. L-529: encounters. A card with an encounter block beside Earth sits in
+  // an Encounters fold under Earth's row, after its scenes and ahead of its
+  // saved pictures, never among either; its dates come from the caller; its
+  // name is found beside a body and counted as an encounter; it keeps its
+  // own address for Back, as a scene does.
+  const META8 = { visualizations: [
+    { id: "enc_e", title: "Craft's Earth flybys", room: "solar_system", shape: "9:16", files: {},
+      live: "interactive.html?encounter=craft-earth", drawer_row: "earth",
+      encounter: { id: "craft-earth", package: "data/encounters/craft.json", centre: "earth", craft: ["craft"] } },
+    { id: "scene_e", title: "An Earth scene", room: "solar_system", shape: "9:16", files: {},
+      live: "interactive.html?exhibit=earth&show=moon", scene: true, drawer_row: "earth" },
+    { id: "pic_e", title: "An Earth picture", room: "solar_system", shape: "16:9",
+      files: { landscape: "p.json" }, drawer_row: "earth" }
+  ] };
+  const e8 = P.foldsFrom(META8, ROWS, false, function (v) { return v.id === "enc_e" ? "7 and 9 November 2026" : null; });
+  want(P.foldsAt(e8, "earth").join(",") === "scenes:earth,encounters:earth,earth",
+       "Earth's row does not hold its scenes, then its encounters, then its saved pictures: " + P.foldsAt(e8, "earth").join(","));
+  want(ids(e8.byKey["encounters:earth"]) === "enc_e" && e8.kind["encounters:earth"] === "encounters" &&
+       ids(e8.byKey.earth) === "pic_e" && ids(e8.byKey["scenes:earth"]) === "scene_e" &&
+       e8.encounters === 1 && e8.count === 1 && e8.scenes === 1,
+       "an encounter is listed among the saved pictures or the scenes, or not counted once");
+  const ee = (e8.byKey["encounters:earth"] || [])[0] || {};
+  want(ee.dates === "7 and 9 November 2026" && ee.encounter === true && ee.href === "interactive.html?encounter=craft-earth" &&
+       P.encounterFoldFor("earth") === "encounters:earth",
+       "an encounter does not carry its dates and its own address");
+  want(P.isEncounter(META8.visualizations[0]) && !P.isEncounter(META8.visualizations[1]) &&
+       !P.isEncounter({ encounter: {} }), "an encounter is not told from a scene, or a block with no id passes");
+  const w8 = P.searchWords(e8);
+  const fl = S.searchHits(ROWS, "flybys", NAMES, w8);
+  want(fl && fl.picIds.enc_e && fl.e === 1 && fl.p === 0 && fl.s === 0 && fl.picRows.earth,
+       "an encounter's name is not found, or is counted as a picture or a scene");
+  want(S.WORDS.found(fl.n, fl.g, fl.p, fl.s, fl.e) === "1 encounter matches",
+       "the count line for an encounter found: " + S.WORDS.found(fl.n, fl.g, fl.p, fl.s, fl.e));
+  const fe = S.searchHits(ROWS, "earth", NAMES, w8);
+  want(fe && fe.keys.earth && fe.e === 1 && fe.s === 1 && fe.p === 0,
+       "an encounter whose name holds a body's name is not found beside the body");
+  want(S.WORDS.found(fe.n, fe.g, fe.p, fe.s, fe.e) === "1 body, 1 scene and 1 encounter match",
+       "the count line for a body, a scene and an encounter: " + S.WORDS.found(fe.n, fe.g, fe.p, fe.s, fe.e));
+  want(S.WORDS.found(0, 0, 2, 1, 1) === "2 saved pictures, 1 scene and 1 encounter match" &&
+       S.WORDS.found(0, 0, 2, 1) === "2 saved pictures and 1 scene match",
+       "the count line for pictures, a scene and an encounter, or without one: " + S.WORDS.found(0, 0, 2, 1, 1));
+  const encTo = "https://x/interactive.html?encounter=craft-earth";
+  const keptEnc = P.readReturn(P.returnState("earth", "encounters:earth", "enc_e", "https://x/interactive.html?exhibit=earth", encTo));
+  want(keptEnc && P.returnFor(keptEnc, encTo) === "keep" &&
+       P.returnFor(keptEnc, "https://x/interactive.html?exhibit=earth") === "take",
+       "an encounter's own opening takes what was kept for Back, or the room does not");
   return f;
 }
 
@@ -296,7 +345,16 @@ const breaks = [
   ["a picture's words adding rows while a group matches",
    brokenSSD("const alone = n === 0 && all.length === 0;", "const alone = true;")],
   ["a scene listed among the saved pictures",
-   brokenPF("if (!v || isScene(v) || !placesOf(v).length) { return; }", "if (!v || !placesOf(v).length) { return; }")],
+   brokenPF("if (!v || isScene(v) || isEncounter(v) || !placesOf(v).length) { return; }", "if (!v || isEncounter(v) || !placesOf(v).length) { return; }")],
+  // L-529: encounters.
+  ["an encounter listed among the saved pictures",
+   brokenPF("if (!v || isScene(v) || isEncounter(v) || !placesOf(v).length) { return; }", "if (!v || isScene(v) || !placesOf(v).length) { return; }")],
+  ["an encounter's fold after its row's saved pictures",
+   brokenPF('["scenes", "encounters", "pictures"]', '["scenes", "pictures", "encounters"]')],
+  ["an encounter hidden while a body matches",
+   brokenSSD("return e.scene || e.encounter; });", "return e.scene; });")],
+  ["an encounter counted as a picture",
+   brokenSSD("if (e.scene) { s++; } else if (e.encounter) { en++; } else { p++; }", "if (e.scene) { s++; } else { p++; }")],
   ["a card shown in its first place only",
    brokenPF("    if (!out.length && isScene(v)) { out.push(SCENES_ROW); }\n    return out;", "    if (!out.length && isScene(v)) { out.push(SCENES_ROW); }\n    return out.slice(0, 1);")],
   ["a shell refused as a place",
@@ -306,7 +364,7 @@ const breaks = [
   ["a scene's own opening taking what was kept",
    brokenPF("if (back.to === openedHref) { return \"keep\"; }", "")],
   ["a scene hidden while a body matches",
-   brokenSSD("const shows = alone ? hit : hit.filter(function (e) { return e.scene; });", "const shows = alone ? hit : [];")]
+   brokenSSD("const shows = alone ? hit : hit.filter(function (e) { return e.scene || e.encounter; });", "const shows = alone ? hit : [];")]
 ];
 const caught = [];
 breaks.forEach(function (b) {
@@ -361,10 +419,22 @@ const label = {};
 rows.forEach(function (r) { label[r.key] = r.isGroup ? r.label : (r.slug === "sun" ? "Sun" : r.slug); });
 cfg.rooms["solar-system"].drawer.rows.forEach(function (r) { if (r.slug && r.label) { label[r.slug] = r.label; } });
 rows.forEach(function (r) { if (r.isShell || r.isDrawing) { label[r.key] = r.label; } });
-Object.keys(label).forEach(function (k) { label[PF.sceneFoldFor(k, "center")] = "Scenes, under " + label[k]; });
+Object.keys(label).forEach(function (k) {
+  label[PF.sceneFoldFor(k, "center")] = "Scenes, under " + label[k];
+  label[PF.encounterFoldFor(k)] = "Encounters, under " + label[k];   // L-529
+});
 [true, false].forEach(function (phone) {
   const folds = PF.foldsFrom(meta, rows, phone);
   const screen = phone ? "phone" : "desktop";
+  // L-529: every encounter card sits in an Encounters fold at each place.
+  cards.filter(PF.isEncounter).forEach(function (v) {
+    PF.placesOf(v).forEach(function (p) {
+      const k = PF.rowKeyFor(p, rows);
+      if (!k || !(folds.byKey[PF.encounterFoldFor(k)] || []).some(function (e) { return e.id === v.id; })) {
+        failures.push("on a " + screen + ", the encounter " + v.id + " is not in an Encounters fold beside " + p);
+      }
+    });
+  });
   folds.unplaced.forEach(function (u) {
     failures.push("on a " + screen + ", " + u.id + "'s place " + u.place + " names no row the room serves");
   });
@@ -375,7 +445,8 @@ Object.keys(label).forEach(function (k) { label[PF.sceneFoldFor(k, "center")] = 
       });
     });
   }
-  console.log("On a " + screen + ", " + folds.count + " pictures and " + folds.scenes + " scenes in " +
+  console.log("On a " + screen + ", " + folds.count + " pictures, " + folds.scenes + " scenes and " +
+              folds.encounters + " encounter(s) in " +
               folds.keys.length + " folds:");
   folds.keys.forEach(function (k) {
     console.log("  " + (label[k] || k) + " (" + folds.byKey[k].length + "): " +
@@ -389,7 +460,7 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
  ["window.PictureFolds.foldsFrom(meta, ssDrawer.rows,", "the room does not ask the file which pictures go where"],
  ["window.PictureFolds.isPhone(window)", "the room does not ask the file which screen it is on"],
  ["window.PictureFolds.searchWords(ssDrawer.pictures)", "Find is not handed the pictures' words"],
- ["SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s)", "the count line does not count pictures and scenes found"],
+ ["SSD.WORDS.found(hits.n, hits.g, hits.p, hits.s, hits.e)", "the count line does not count pictures, scenes and encounters found"],
  ["shell_key: shellKeyOf[s.key] || null", "the root's shell rows do not carry their served shell key, so no card can name one as a place (L-519 part 2)"],
  ["ssPictureFold(list, entry.key, entry.depth || 0);\n            return;", "a group row's fold is not built after it"],
  ["ssWireRow(row, sunGroups[k], k, list);\n            // L-517: the body's saved pictures, in a fold under its row.\n            ssPictureFold(list, entry.key, entry.depth || 0);",
@@ -397,12 +468,15 @@ const page = fs.readFileSync(path.join(root, "interactive.html"), "utf8");
  ["if (reset) { ssDrawer.picFolds = {}; }", "Reset does not fold every picture fold shut"],
  ["picFolds: {}", "the room does not open with every picture fold closed"],
  ["PF.returnState(EXHIBIT_ASKED, foldId, entry.id, window.location.href, to)", "opening a picture or a scene does not keep its fold for Back"],
- ["if (EXHIBIT_ASKED === EXHIBIT && !entry.scene) { treeTickMemoryKeep(); }", "opening a picture does not keep the room's ticks, or a scene keeps them"],
- ["const to = entry.scene ? new URL(entry.href, window.location.href).href : null;", "opening a scene does not keep the scene's address (L-519)"],
+ ["if (EXHIBIT_ASKED === EXHIBIT && !entry.scene && !entry.encounter) { treeTickMemoryKeep(); }", "opening a picture does not keep the room's ticks, or a scene or an encounter keeps them"],
+ ["const to = (entry.scene || entry.encounter)\n        ? new URL(entry.href, window.location.href).href : null;", "opening a scene or an encounter does not keep its address (L-519, L-529)"],
+ ["<script src=\"gallery/encounter.js\"></script>", "interactive.html does not load gallery/encounter.js (L-529)"],
+ ["return window.Encounter ? window.Encounter.rowDates(card, cfgTree) : null;", "the room does not read an encounter's dates from the plan (L-529)"],
+ ["if (e.encounter && e.dates) {", "an encounter's dates are not printed beside its name (L-529)"],
  ["PF.foldsAt(pics, rowKey).forEach(function (foldId) {", "a row's folds are not built in the file's order, Scenes first (L-519)"],
- ["head.querySelector(\".rname\").textContent = scenes ? PF.WORDS.scenes : PF.WORDS.fold;", "the Scenes fold does not carry its own name (L-519)"],
- ["line.textContent = scenes ? PF.WORDS.scenesLine : PF.WORDS.line;", "the Scenes fold does not carry its own line (L-519)"],
- ["(scenes ? SCENE_MARK : PICTURE_MARK)", "the Scenes fold does not carry its own mark (L-519)"],
+ ["head.querySelector(\".rname\").textContent = scenes ? PF.WORDS.scenes :\n        (encs ? PF.WORDS.encounters : PF.WORDS.fold);", "the Scenes and Encounters folds do not carry their own names (L-519, L-529)"],
+ ["line.textContent = scenes ? PF.WORDS.scenesLine :\n        (encs ? PF.WORDS.encountersLine : PF.WORDS.line);", "the Scenes and Encounters folds do not carry their own lines (L-519, L-529)"],
+ ["(scenes ? SCENE_MARK : (encs ? ENCOUNTER_MARK : PICTURE_MARK))", "the Scenes and Encounters folds do not carry their own marks (L-519, L-529)"],
  ["const PAGE_OPENED_HREF = window.location.href;", "the page does not keep the address it was opened at (L-519)"],
  ["const does = PF.returnFor(PF.readReturn(text), PAGE_OPENED_HREF);\n        if (does === \"keep\") { return false; }",
   "a scene's own opening takes what was kept for Back (L-519)"],

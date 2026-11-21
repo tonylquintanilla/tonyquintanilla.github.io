@@ -27,6 +27,9 @@
 // Updated November 9, 2026 with Anthropic's Claude Opus 5.5 (L-519:
 // boot's {serve} hands the page another file for a path it fetches,
 // {"gallery/gallery_metadata.json": "<a copy holding scenes>"}.)
+// Updated November 20, 2026 with Anthropic's Claude Opus 5.5 (L-529:
+// boot's {selfStart} waits for a page that starts itself, an encounter,
+// and the stand-in Plotly answers update.)
 const fs = require("fs"), path = require("path");
 const { JSDOM, ResourceLoader, VirtualConsole } = require("jsdom");
 
@@ -55,6 +58,12 @@ window.Plotly = {
     __calls.push(["relayout", Object.keys(upd)]);
     (gd._ev && gd._ev.plotly_relayout || []).forEach(function (fn) { fn(upd); });
     return Promise.resolve(gd);
+  },
+  // L-529: an encounter applies each frame with one update (restyle and
+  // relayout together).
+  update: function (gd, upd, lay, idx) {
+    window.Plotly.restyle(gd, upd || {}, idx);
+    return window.Plotly.relayout(gd, lay || {});
   },
   addTraces: function (gd, t) { gd.data = gd.data.concat(t); __calls.push(["addTraces"]); return Promise.resolve(gd); },
   deleteTraces: function (gd) { return Promise.resolve(gd); },
@@ -124,7 +133,17 @@ w.requestAnimationFrame = function () { return 0; };
 
   await new Promise(function (res) { w.addEventListener("load", res); });
   if (errors.length) { throw new Error("page script failed on load"); }
-  await w.eval("initSunExhibit()");
+  // L-529: an encounter starts itself (no consent gate, no Pyodide), so
+  // the harness waits for it to say Ready instead of starting it again.
+  if (OPTS && OPTS.selfStart) {
+    for (let k = 0; k < 200; k++) {
+      const s = w.document.getElementById("loading-status").textContent;
+      if (s === "Ready" || /^Failed/.test(s)) { break; }
+      await new Promise(function (r) { setTimeout(r, 25); });
+    }
+  } else {
+    await w.eval("initSunExhibit()");
+  }
   await done();
   return w;
 }
