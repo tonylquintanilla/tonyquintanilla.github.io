@@ -354,7 +354,7 @@
       "shape": "9:16",
       "files": {},
       "live": "interactive.html?encounter=escapade-earth-2026",
-      "featured": false,
+      "featured": true,
       "encounter": {
         "id": "escapade-earth-2026",
         "package": "data/encounters/escapade_earth_2026.json",
@@ -2625,6 +2625,6 @@
       "size_kb": {}
     }
   ],
-  "last_updated": "2026-11-20 22:20",
+  "last_updated": "2026-11-20 23:15",
   "total_count": 139
 }
