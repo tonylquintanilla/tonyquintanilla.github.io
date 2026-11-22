@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated": "2026-11-22T02:36:52.418504+00:00",
+  "generated": "2026-11-22T03:45:04.723933+00:00",
   "generator": "gallery_cache_builder/1.0",
   "attribution": "Data: JPL/NASA Horizons",
   "serving_base": "data/solar-system",
   "served_window": {
-    "start_jd": 2461278.6400717967,
-    "end_jd": 2461454.5778082595
+    "start_jd": 2461278.687436443,
+    "end_jd": 2461454.6251729056
   },
   "feature_configs": "feature_configs.json",
   "scene_features": [
@@ -2067,7 +2067,7 @@
           "query_target": "399",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:21.967060+00:00"
+          "retrieved": "2026-11-22T03:43:25.605565+00:00"
         }
       },
       "positions": null,
@@ -4655,14 +4655,14 @@
           "observer": "@sun",
           "quantity": "32",
           "epoch_jd_ut": 2461366.5,
-          "retrieved": "2026-11-22T02:36:27.383800+00:00"
+          "retrieved": "2026-11-22T03:44:46.923411+00:00"
         },
         "orbit_source": {
           "query_target": "3",
           "center": "@sun",
           "refplane": "ecliptic",
           "epoch_jd": 2461366.5,
-          "retrieved": "2026-11-22T02:36:27.383800+00:00"
+          "retrieved": "2026-11-22T03:44:46.923411+00:00"
         }
       }
     },
@@ -4689,7 +4689,7 @@
           "query_target": "599",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:22.929282+00:00"
+          "retrieved": "2026-11-22T03:43:26.114386+00:00"
         }
       },
       "positions": null,
@@ -4806,7 +4806,7 @@
           "query_target": "699",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:24.247009+00:00"
+          "retrieved": "2026-11-22T03:43:26.789766+00:00"
         }
       },
       "positions": null,
@@ -4907,7 +4907,7 @@
           "query_target": "699",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:24.576912+00:00"
+          "retrieved": "2026-11-22T03:43:26.956470+00:00"
         }
       }
     },
@@ -4934,7 +4934,7 @@
           "query_target": "199",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:25.243054+00:00"
+          "retrieved": "2026-11-22T03:43:27.300419+00:00"
         }
       },
       "positions": null,
@@ -4997,7 +4997,7 @@
           "query_target": "299",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:26.240200+00:00"
+          "retrieved": "2026-11-22T03:43:27.806108+00:00"
         }
       },
       "positions": null,
@@ -5060,7 +5060,7 @@
           "query_target": "499",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:27.304694+00:00"
+          "retrieved": "2026-11-22T03:43:28.322552+00:00"
         }
       },
       "positions": null,
@@ -5123,7 +5123,7 @@
           "query_target": "799",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:28.660129+00:00"
+          "retrieved": "2026-11-22T03:43:29.023938+00:00"
         }
       },
       "positions": null,
@@ -5178,7 +5178,7 @@
           "query_target": "799",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:28.971432+00:00"
+          "retrieved": "2026-11-22T03:43:29.186157+00:00"
         }
       }
     },
@@ -5205,7 +5205,7 @@
           "query_target": "899",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:29.947560+00:00"
+          "retrieved": "2026-11-22T03:43:29.700677+00:00"
         }
       },
       "positions": null,
@@ -5260,7 +5260,7 @@
           "query_target": "899",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:30.259108+00:00"
+          "retrieved": "2026-11-22T03:43:29.865166+00:00"
         }
       }
     },
@@ -5287,7 +5287,7 @@
           "query_target": "301",
           "center": "@399",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:30.991575+00:00"
+          "retrieved": "2026-11-22T03:43:30.216962+00:00"
         }
       },
       "positions": null,
@@ -5365,8 +5365,8 @@
         "edge_days": 1,
         "jpl_name": "EM-L1",
         "window": {
-          "start_jd": 2461278.6396821286,
-          "end_jd": 2461454.5774185914
+          "start_jd": 2461278.68718205,
+          "end_jd": 2461454.624918513
         },
         "near": {
           "step": "1h",
@@ -5414,8 +5414,8 @@
         "edge_days": 1,
         "jpl_name": "EM-L2",
         "window": {
-          "start_jd": 2461278.6396821286,
-          "end_jd": 2461454.5774185914
+          "start_jd": 2461278.68718205,
+          "end_jd": 2461454.624918513
         },
         "near": {
           "step": "1h",
@@ -5463,8 +5463,8 @@
         "edge_days": 1,
         "jpl_name": "EM-L4",
         "window": {
-          "start_jd": 2461278.6396821286,
-          "end_jd": 2461454.5774185914
+          "start_jd": 2461278.68718205,
+          "end_jd": 2461454.624918513
         },
         "near": {
           "step": "1h",
@@ -5512,8 +5512,8 @@
         "edge_days": 1,
         "jpl_name": "EM-L5",
         "window": {
-          "start_jd": 2461278.6396821286,
-          "end_jd": 2461454.5774185914
+          "start_jd": 2461278.68718205,
+          "end_jd": 2461454.624918513
         },
         "near": {
           "step": "1h",
@@ -5561,8 +5561,8 @@
         "edge_days": 1,
         "jpl_name": "SEMB-L1",
         "window": {
-          "start_jd": 2461278.6396821286,
-          "end_jd": 2461454.5774185914
+          "start_jd": 2461278.68718205,
+          "end_jd": 2461454.624918513
         },
         "near": {
           "step": "1h",
@@ -5610,8 +5610,8 @@
         "edge_days": 1,
         "jpl_name": "SEMB-L2",
         "window": {
-          "start_jd": 2461278.6396821286,
-          "end_jd": 2461454.5774185914
+          "start_jd": 2461278.68718205,
+          "end_jd": 2461454.624918513
         },
         "near": {
           "step": "1h",
@@ -5659,8 +5659,8 @@
         "edge_days": 1,
         "jpl_name": "SEMB-L4",
         "window": {
-          "start_jd": 2461278.6396821286,
-          "end_jd": 2461454.5774185914
+          "start_jd": 2461278.68718205,
+          "end_jd": 2461454.624918513
         },
         "near": {
           "step": "1h",
@@ -5708,8 +5708,8 @@
         "edge_days": 1,
         "jpl_name": "SEMB-L5",
         "window": {
-          "start_jd": 2461278.6396821286,
-          "end_jd": 2461454.5774185914
+          "start_jd": 2461278.68718205,
+          "end_jd": 2461454.624918513
         },
         "near": {
           "step": "1h",
@@ -5742,7 +5742,7 @@
           "query_target": "401",
           "center": "@499",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:32.052573+00:00"
+          "retrieved": "2026-11-22T03:43:30.721153+00:00"
         }
       },
       "positions": null,
@@ -5805,7 +5805,7 @@
           "query_target": "402",
           "center": "@499",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:33.055952+00:00"
+          "retrieved": "2026-11-22T03:43:31.230515+00:00"
         }
       },
       "positions": null,
@@ -5868,7 +5868,7 @@
           "query_target": "501",
           "center": "@599",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:34.163802+00:00"
+          "retrieved": "2026-11-22T03:43:31.738402+00:00"
         }
       },
       "positions": null,
@@ -5931,7 +5931,7 @@
           "query_target": "606",
           "center": "@699",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:35.222147+00:00"
+          "retrieved": "2026-11-22T03:43:32.260866+00:00"
         }
       },
       "positions": null,
@@ -5953,14 +5953,14 @@
         "samples": [
           {
             "offset_days": -1.9934547635819746,
-            "error_deg": 0.0008589238360388518
+            "error_deg": 0.0008589238360388947
           },
           {
             "offset_days": 1.9934547635819746,
-            "error_deg": 6.605287595519039e-05
+            "error_deg": 6.605287595523598e-05
           }
         ],
-        "error_rate_deg_per_day": 0.00043087199756440883,
+        "error_rate_deg_per_day": 0.0004308719975644304,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
         "window_days": 1.9934547635819746,
@@ -5994,7 +5994,7 @@
           "query_target": "9",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:36.559158+00:00"
+          "retrieved": "2026-11-22T03:43:32.930863+00:00"
         }
       },
       "positions": null,
@@ -6049,7 +6049,7 @@
           "query_target": "9",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:36.873600+00:00"
+          "retrieved": "2026-11-22T03:43:33.093939+00:00"
         }
       }
     },
@@ -6076,7 +6076,7 @@
           "query_target": "999",
           "center": "@9",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:37.512828+00:00"
+          "retrieved": "2026-11-22T03:43:33.453691+00:00"
         }
       },
       "positions": null,
@@ -6139,7 +6139,7 @@
           "query_target": "901",
           "center": "@9",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:38.516578+00:00"
+          "retrieved": "2026-11-22T03:43:33.960714+00:00"
         }
       },
       "positions": null,
@@ -6202,7 +6202,7 @@
           "query_target": "2004 MN4",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:39.816172+00:00"
+          "retrieved": "2026-11-22T03:43:34.766456+00:00"
         }
       },
       "positions": null,
@@ -6251,7 +6251,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2004 MN4",
-          "retrieved": "2026-11-22T02:36:27.833356+00:00"
+          "retrieved": "2026-11-22T03:44:47.257341+00:00"
         }
       }
     },
@@ -6957,7 +6957,7 @@
           "query_target": "90000091",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:47.073263+00:00"
+          "retrieved": "2026-11-22T03:43:39.031443+00:00"
         }
       },
       "positions": null,
@@ -7006,7 +7006,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "90000091",
-          "retrieved": "2026-11-22T02:36:28.144012+00:00"
+          "retrieved": "2026-11-22T03:44:47.423303+00:00"
         }
       }
     },
@@ -7033,7 +7033,7 @@
           "query_target": "90000030",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:48.190608+00:00"
+          "retrieved": "2026-11-22T03:43:39.657050+00:00"
         }
       },
       "positions": null,
@@ -7096,7 +7096,7 @@
           "query_target": "90000214",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:49.247254+00:00"
+          "retrieved": "2026-11-22T03:43:40.222700+00:00"
         }
       },
       "positions": null,
@@ -7122,7 +7122,7 @@
           },
           {
             "offset_days": 30.0,
-            "error_deg": 6.517359459088591e-05
+            "error_deg": 6.51735945909431e-05
           }
         ],
         "error_rate_deg_per_day": 2.7344834837484897e-06,
@@ -7145,7 +7145,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "90000214",
-          "retrieved": "2026-11-22T02:36:28.794395+00:00"
+          "retrieved": "2026-11-22T03:44:47.807716+00:00"
         }
       }
     },
@@ -7172,7 +7172,7 @@
           "query_target": "90000356",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:50.252193+00:00"
+          "retrieved": "2026-11-22T03:43:40.749166+00:00"
         }
       },
       "positions": null,
@@ -7221,7 +7221,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "90000356",
-          "retrieved": "2026-11-22T02:36:29.110203+00:00"
+          "retrieved": "2026-11-22T03:44:47.968915+00:00"
         }
       }
     },
@@ -7248,7 +7248,7 @@
           "query_target": "C/1965 S1-A",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:51.618959+00:00"
+          "retrieved": "2026-11-22T03:43:41.648890+00:00"
         }
       },
       "positions": null,
@@ -7311,7 +7311,7 @@
           "query_target": "90000703",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:52.738126+00:00"
+          "retrieved": "2026-11-22T03:43:42.362966+00:00"
         }
       },
       "positions": null,
@@ -7360,7 +7360,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "90000703",
-          "retrieved": "2026-11-22T02:36:29.957300+00:00"
+          "retrieved": "2026-11-22T03:44:48.513770+00:00"
         }
       }
     },
@@ -7387,7 +7387,7 @@
           "query_target": "90000901",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:53.677812+00:00"
+          "retrieved": "2026-11-22T03:43:42.896124+00:00"
         }
       },
       "positions": null,
@@ -7436,7 +7436,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "90000901",
-          "retrieved": "2026-11-22T02:36:30.274704+00:00"
+          "retrieved": "2026-11-22T03:44:48.690662+00:00"
         }
       }
     },
@@ -7463,7 +7463,7 @@
           "query_target": "C/1995 O1",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:54.891101+00:00"
+          "retrieved": "2026-11-22T03:43:43.685793+00:00"
         }
       },
       "positions": null,
@@ -7512,7 +7512,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "C/1995 O1",
-          "retrieved": "2026-11-22T02:36:30.711128+00:00"
+          "retrieved": "2026-11-22T03:44:48.988495+00:00"
         }
       }
     },
@@ -7539,7 +7539,7 @@
           "query_target": "C/1996 B2",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:56.281372+00:00"
+          "retrieved": "2026-11-22T03:43:44.661077+00:00"
         }
       },
       "positions": null,
@@ -7561,7 +7561,7 @@
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 4.8629308662693315e-06
+            "error_deg": 4.862930870750472e-06
           },
           {
             "offset_days": 30.0,
@@ -7588,7 +7588,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "C/1996 B2",
-          "retrieved": "2026-11-22T02:36:31.181308+00:00"
+          "retrieved": "2026-11-22T03:44:49.327462+00:00"
         }
       }
     },
@@ -7615,7 +7615,7 @@
           "query_target": "C/2020 F3",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:57.661245+00:00"
+          "retrieved": "2026-11-22T03:43:45.643326+00:00"
         }
       },
       "positions": null,
@@ -7637,21 +7637,21 @@
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 1.3729288065146595e-05
+            "error_deg": 1.3729288042637873e-05
           },
           {
             "offset_days": 30.0,
-            "error_deg": 1.4668710593472782e-05
+            "error_deg": 1.4668710563311975e-05
           }
         ],
-        "error_rate_deg_per_day": 4.889570197824261e-07,
+        "error_rate_deg_per_day": 4.889570187770658e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 511292.3833494484,
+        "window_days": 511292.38440073305,
         "cap_applied": null,
         "window": {
-          "start_jd": 1950074.1166505516,
-          "end_jd": 2972658.8833494484
+          "start_jd": 1950074.115599267,
+          "end_jd": 2972658.884400733
         }
       },
       "position_uncertainty": {
@@ -7664,7 +7664,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "C/2020 F3",
-          "retrieved": "2026-11-22T02:36:31.644604+00:00"
+          "retrieved": "2026-11-22T03:44:49.637328+00:00"
         }
       }
     },
@@ -7691,7 +7691,7 @@
           "query_target": "C/2025 A6",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:34:59.000927+00:00"
+          "retrieved": "2026-11-22T03:43:46.594704+00:00"
         }
       },
       "positions": null,
@@ -7713,14 +7713,14 @@
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 1.6820516119941925e-05
+            "error_deg": 1.682051611994191e-05
           },
           {
             "offset_days": 30.0,
             "error_deg": 1.346523181766469e-05
           }
         ],
-        "error_rate_deg_per_day": 5.606838706647308e-07,
+        "error_rate_deg_per_day": 5.606838706647304e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
         "window_days": 240907.61766895858,
@@ -7740,7 +7740,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "C/2025 A6",
-          "retrieved": "2026-11-22T02:36:32.082531+00:00"
+          "retrieved": "2026-11-22T03:44:49.940428+00:00"
         }
       }
     },
@@ -7767,7 +7767,7 @@
           "query_target": "C/2025 R2",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:00.376408+00:00"
+          "retrieved": "2026-11-22T03:43:47.536997+00:00"
         }
       },
       "positions": null,
@@ -7816,7 +7816,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "C/2025 R2",
-          "retrieved": "2026-11-22T02:36:32.526071+00:00"
+          "retrieved": "2026-11-22T03:44:50.259860+00:00"
         }
       }
     },
@@ -7843,7 +7843,7 @@
           "query_target": "C/2026 A1",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:01.770085+00:00"
+          "retrieved": "2026-11-22T03:43:48.484285+00:00"
         }
       },
       "positions": null,
@@ -7892,7 +7892,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "C/2026 A1",
-          "retrieved": "2026-11-22T02:36:32.969320+00:00"
+          "retrieved": "2026-11-22T03:44:50.563624+00:00"
         }
       }
     },
@@ -7919,7 +7919,7 @@
           "query_target": "A898 PA",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:03.195858+00:00"
+          "retrieved": "2026-11-22T03:43:49.454878+00:00"
         }
       },
       "positions": null,
@@ -7941,14 +7941,14 @@
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 2.5136074970848734e-05
+            "error_deg": 2.513607497367986e-05
           },
           {
             "offset_days": 30.0,
             "error_deg": 1.4005857732058182e-05
           }
         ],
-        "error_rate_deg_per_day": 8.378691656949578e-07,
+        "error_rate_deg_per_day": 8.378691657893286e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
         "window_days": 643.2202843436969,
@@ -7968,7 +7968,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "A898 PA",
-          "retrieved": "2026-11-22T02:36:33.427915+00:00"
+          "retrieved": "2026-11-22T03:44:50.893251+00:00"
         }
       }
     },
@@ -7995,7 +7995,7 @@
           "query_target": "1999 RQ36",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:06.623958+00:00"
+          "retrieved": "2026-11-22T03:43:52.436505+00:00"
         }
       },
       "positions": null,
@@ -8058,7 +8058,7 @@
           "query_target": "1999 JU3",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:09.061904+00:00"
+          "retrieved": "2026-11-22T03:43:54.349637+00:00"
         }
       },
       "positions": null,
@@ -8107,7 +8107,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "1999 JU3",
-          "retrieved": "2026-11-22T02:36:35.319623+00:00"
+          "retrieved": "2026-11-22T03:44:52.513949+00:00"
         }
       }
     },
@@ -8134,7 +8134,7 @@
           "query_target": "1998 SF36",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:10.466041+00:00"
+          "retrieved": "2026-11-22T03:43:55.306309+00:00"
         }
       },
       "positions": null,
@@ -8183,7 +8183,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "1998 SF36",
-          "retrieved": "2026-11-22T02:36:35.789398+00:00"
+          "retrieved": "2026-11-22T03:44:52.840910+00:00"
         }
       }
     },
@@ -8210,7 +8210,7 @@
           "query_target": "2016 HO3",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:11.925277+00:00"
+          "retrieved": "2026-11-22T03:43:56.308691+00:00"
         }
       },
       "positions": null,
@@ -8236,7 +8236,7 @@
           },
           {
             "offset_days": 30.0,
-            "error_deg": 0.0010386366724276694
+            "error_deg": 0.0010386366724246332
           }
         ],
         "error_rate_deg_per_day": 3.6982289423904635e-05,
@@ -8259,7 +8259,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2016 HO3",
-          "retrieved": "2026-11-22T02:36:36.252100+00:00"
+          "retrieved": "2026-11-22T03:44:53.176802+00:00"
         }
       }
     },
@@ -8286,7 +8286,7 @@
           "query_target": "2025 PN7",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:13.305701+00:00"
+          "retrieved": "2026-11-22T03:43:57.271019+00:00"
         }
       },
       "positions": null,
@@ -8335,7 +8335,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2025 PN7",
-          "retrieved": "2026-11-22T02:36:36.714632+00:00"
+          "retrieved": "2026-11-22T03:44:53.486116+00:00"
         }
       }
     },
@@ -8362,7 +8362,7 @@
           "query_target": "2024 PT5",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:14.664158+00:00"
+          "retrieved": "2026-11-22T03:43:58.257320+00:00"
         }
       },
       "positions": null,
@@ -8411,7 +8411,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2024 PT5",
-          "retrieved": "2026-11-22T02:36:37.152088+00:00"
+          "retrieved": "2026-11-22T03:44:53.790942+00:00"
         }
       }
     },
@@ -8438,7 +8438,7 @@
           "query_target": "2025 PY1",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:16.037551+00:00"
+          "retrieved": "2026-11-22T03:43:59.234272+00:00"
         }
       },
       "positions": null,
@@ -8487,7 +8487,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2025 PY1",
-          "retrieved": "2026-11-22T02:36:37.596748+00:00"
+          "retrieved": "2026-11-22T03:44:54.128025+00:00"
         }
       }
     },
@@ -8514,7 +8514,7 @@
           "query_target": "2023 JF",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:17.432882+00:00"
+          "retrieved": "2026-11-22T03:44:00.192159+00:00"
         }
       },
       "positions": null,
@@ -8536,14 +8536,14 @@
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.00014182981860242605
+            "error_deg": 0.00014182981860102258
           },
           {
             "offset_days": 30.0,
             "error_deg": 0.00013165812439181238
           }
         ],
-        "error_rate_deg_per_day": 4.727660620080868e-06,
+        "error_rate_deg_per_day": 4.727660620034086e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
         "window_days": 756.6735056255674,
@@ -8563,7 +8563,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2023 JF",
-          "retrieved": "2026-11-22T02:36:38.043339+00:00"
+          "retrieved": "2026-11-22T03:44:54.439307+00:00"
         }
       }
     },
@@ -8590,7 +8590,7 @@
           "query_target": "2024 DW",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:18.792529+00:00"
+          "retrieved": "2026-11-22T03:44:01.156907+00:00"
         }
       },
       "positions": null,
@@ -8639,7 +8639,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2024 DW",
-          "retrieved": "2026-11-22T02:36:38.483902+00:00"
+          "retrieved": "2026-11-22T03:44:54.746071+00:00"
         }
       }
     },
@@ -8666,7 +8666,7 @@
           "query_target": "2024 YR4",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:20.169706+00:00"
+          "retrieved": "2026-11-22T03:44:02.128000+00:00"
         }
       },
       "positions": null,
@@ -8692,10 +8692,10 @@
           },
           {
             "offset_days": 30.0,
-            "error_deg": 3.984496117123239e-05
+            "error_deg": 3.984496117122697e-05
           }
         ],
-        "error_rate_deg_per_day": 1.328165372374413e-06,
+        "error_rate_deg_per_day": 1.3281653723742323e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
         "window_days": 1457.7764956674441,
@@ -8715,7 +8715,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2024 YR4",
-          "retrieved": "2026-11-22T02:36:38.927652+00:00"
+          "retrieved": "2026-11-22T03:44:55.050874+00:00"
         }
       }
     },
@@ -8742,7 +8742,7 @@
           "query_target": "A801 AA",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:21.604047+00:00"
+          "retrieved": "2026-11-22T03:44:03.123619+00:00"
         }
       },
       "positions": null,
@@ -8791,7 +8791,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "A801 AA",
-          "retrieved": "2026-11-22T02:36:39.388479+00:00"
+          "retrieved": "2026-11-22T03:44:55.383894+00:00"
         }
       }
     },
@@ -8818,7 +8818,7 @@
           "query_target": "A807 FA",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:23.031715+00:00"
+          "retrieved": "2026-11-22T03:44:04.134323+00:00"
         }
       },
       "positions": null,
@@ -8867,7 +8867,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "A807 FA",
-          "retrieved": "2026-11-22T02:36:39.845355+00:00"
+          "retrieved": "2026-11-22T03:44:55.711972+00:00"
         }
       }
     },
@@ -8894,7 +8894,7 @@
           "query_target": "A852 FA",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:24.877305+00:00"
+          "retrieved": "2026-11-22T03:44:05.458066+00:00"
         }
       },
       "positions": null,
@@ -8916,14 +8916,14 @@
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 0.00011202029672572589
+            "error_deg": 0.00011202029672572135
           },
           {
             "offset_days": 30.0,
-            "error_deg": 0.00017266967975927876
+            "error_deg": 0.0001726696797541681
           }
         ],
-        "error_rate_deg_per_day": 5.755655991975959e-06,
+        "error_rate_deg_per_day": 5.755655991805604e-06,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
         "window_days": 1828.039297562299,
@@ -8949,7 +8949,7 @@
           "query_target": "A852 FA",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:25.362614+00:00"
+          "retrieved": "2026-11-22T03:44:05.789113+00:00"
         }
       },
       "position_uncertainty": {
@@ -8962,7 +8962,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "A852 FA",
-          "retrieved": "2026-11-22T02:36:40.304724+00:00"
+          "retrieved": "2026-11-22T03:44:56.029656+00:00"
         }
       }
     },
@@ -8989,7 +8989,7 @@
           "query_target": "A852 VA",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:26.325859+00:00"
+          "retrieved": "2026-11-22T03:44:06.443758+00:00"
         }
       },
       "positions": null,
@@ -9038,7 +9038,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "A852 VA",
-          "retrieved": "2026-11-22T02:36:40.744056+00:00"
+          "retrieved": "2026-11-22T03:44:56.345103+00:00"
         }
       }
     },
@@ -9065,7 +9065,7 @@
           "query_target": "1969 VC",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:27.673059+00:00"
+          "retrieved": "2026-11-22T03:44:07.399706+00:00"
         }
       },
       "positions": null,
@@ -9114,7 +9114,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "1969 VC",
-          "retrieved": "2026-11-22T02:36:41.174661+00:00"
+          "retrieved": "2026-11-22T03:44:56.654016+00:00"
         }
       }
     },
@@ -9141,7 +9141,7 @@
           "query_target": "1981 EQ5",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:29.023026+00:00"
+          "retrieved": "2026-11-22T03:44:08.331356+00:00"
         }
       },
       "positions": null,
@@ -9167,10 +9167,10 @@
           },
           {
             "offset_days": 30.0,
-            "error_deg": 6.4299700142319745e-06
+            "error_deg": 6.429970011294806e-06
           }
         ],
-        "error_rate_deg_per_day": 2.1433233380773248e-07,
+        "error_rate_deg_per_day": 2.1433233370982685e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
         "window_days": 1344.4397094973547,
@@ -9190,7 +9190,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "1981 EQ5",
-          "retrieved": "2026-11-22T02:36:41.617153+00:00"
+          "retrieved": "2026-11-22T03:44:56.955398+00:00"
         }
       }
     },
@@ -9217,7 +9217,7 @@
           "query_target": "1999 VD57",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:30.363074+00:00"
+          "retrieved": "2026-11-22T03:44:09.275675+00:00"
         }
       },
       "positions": null,
@@ -9266,7 +9266,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "1999 VD57",
-          "retrieved": "2026-11-22T02:36:42.040833+00:00"
+          "retrieved": "2026-11-22T03:44:57.252711+00:00"
         }
       }
     },
@@ -9293,7 +9293,7 @@
           "query_target": "1973 SO",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:32.140969+00:00"
+          "retrieved": "2026-11-22T03:44:10.533658+00:00"
         }
       },
       "positions": null,
@@ -9348,7 +9348,7 @@
           "query_target": "1973 SO",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:32.585494+00:00"
+          "retrieved": "2026-11-22T03:44:10.849772+00:00"
         }
       },
       "position_uncertainty": {
@@ -9361,7 +9361,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "1973 SO",
-          "retrieved": "2026-11-22T02:36:42.473625+00:00"
+          "retrieved": "2026-11-22T03:44:57.563632+00:00"
         }
       }
     },
@@ -9388,7 +9388,7 @@
           "query_target": "A906 UL",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:33.531808+00:00"
+          "retrieved": "2026-11-22T03:44:11.517420+00:00"
         }
       },
       "positions": null,
@@ -9437,7 +9437,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "A906 UL",
-          "retrieved": "2026-11-22T02:36:42.926254+00:00"
+          "retrieved": "2026-11-22T03:44:57.902296+00:00"
         }
       }
     },
@@ -9464,7 +9464,7 @@
           "query_target": "1999 WB2",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:35.342885+00:00"
+          "retrieved": "2026-11-22T03:44:12.786617+00:00"
         }
       },
       "positions": null,
@@ -9519,7 +9519,7 @@
           "query_target": "1999 WB2",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:35.777951+00:00"
+          "retrieved": "2026-11-22T03:44:13.095240+00:00"
         }
       },
       "position_uncertainty": {
@@ -9532,7 +9532,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "1999 WB2",
-          "retrieved": "2026-11-22T02:36:43.368041+00:00"
+          "retrieved": "2026-11-22T03:44:58.217684+00:00"
         }
       }
     },
@@ -9559,7 +9559,7 @@
           "query_target": "1997 TS25",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:37.125926+00:00"
+          "retrieved": "2026-11-22T03:44:14.056246+00:00"
         }
       },
       "positions": null,
@@ -9614,7 +9614,7 @@
           "query_target": "1997 TS25",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:37.566418+00:00"
+          "retrieved": "2026-11-22T03:44:14.360709+00:00"
         }
       },
       "position_uncertainty": {
@@ -9627,7 +9627,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "1997 TS25",
-          "retrieved": "2026-11-22T02:36:43.844761+00:00"
+          "retrieved": "2026-11-22T03:44:58.539587+00:00"
         }
       }
     },
@@ -9654,7 +9654,7 @@
           "query_target": "1999 VQ10",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:38.919486+00:00"
+          "retrieved": "2026-11-22T03:44:15.294868+00:00"
         }
       },
       "positions": null,
@@ -9709,7 +9709,7 @@
           "query_target": "1999 VQ10",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:39.372555+00:00"
+          "retrieved": "2026-11-22T03:44:15.605642+00:00"
         }
       },
       "position_uncertainty": {
@@ -9722,7 +9722,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "1999 VQ10",
-          "retrieved": "2026-11-22T02:36:44.271673+00:00"
+          "retrieved": "2026-11-22T03:44:58.838700+00:00"
         }
       }
     },
@@ -9749,7 +9749,7 @@
           "query_target": "1997 CU26",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:40.766934+00:00"
+          "retrieved": "2026-11-22T03:44:16.550353+00:00"
         }
       },
       "positions": null,
@@ -9804,7 +9804,7 @@
           "query_target": "1997 CU26",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:41.214784+00:00"
+          "retrieved": "2026-11-22T03:44:16.861445+00:00"
         }
       },
       "position_uncertainty": {
@@ -9817,7 +9817,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "1997 CU26",
-          "retrieved": "2026-11-22T02:36:44.718036+00:00"
+          "retrieved": "2026-11-22T03:44:59.148145+00:00"
         }
       }
     },
@@ -9844,7 +9844,7 @@
           "query_target": "2004 DW",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:42.643574+00:00"
+          "retrieved": "2026-11-22T03:44:17.829961+00:00"
         }
       },
       "positions": null,
@@ -9866,14 +9866,14 @@
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 4.68345718098489e-06
+            "error_deg": 4.683457181256385e-06
           },
           {
             "offset_days": 30.0,
             "error_deg": 4.506175690553655e-06
           }
         ],
-        "error_rate_deg_per_day": 1.56115239366163e-07,
+        "error_rate_deg_per_day": 1.5611523937521282e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
         "window_days": 90339.74630615709,
@@ -9899,7 +9899,7 @@
           "query_target": "2004 DW",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:43.105631+00:00"
+          "retrieved": "2026-11-22T03:44:18.152763+00:00"
         }
       },
       "position_uncertainty": {
@@ -9912,7 +9912,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2004 DW",
-          "retrieved": "2026-11-22T02:36:45.166085+00:00"
+          "retrieved": "2026-11-22T03:44:59.471992+00:00"
         }
       }
     },
@@ -9939,7 +9939,7 @@
           "query_target": "2003 EL61",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:44.495637+00:00"
+          "retrieved": "2026-11-22T03:44:19.173239+00:00"
         }
       },
       "positions": null,
@@ -9994,7 +9994,7 @@
           "query_target": "2003 EL61",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:44.959782+00:00"
+          "retrieved": "2026-11-22T03:44:19.499938+00:00"
         }
       },
       "position_uncertainty": {
@@ -10007,7 +10007,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2003 EL61",
-          "retrieved": "2026-11-22T02:36:45.618899+00:00"
+          "retrieved": "2026-11-22T03:44:59.802453+00:00"
         }
       }
     },
@@ -10034,7 +10034,7 @@
           "query_target": "2003 UB313",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:46.378721+00:00"
+          "retrieved": "2026-11-22T03:44:20.480671+00:00"
         }
       },
       "positions": null,
@@ -10089,7 +10089,7 @@
           "query_target": "2003 UB313",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:46.840763+00:00"
+          "retrieved": "2026-11-22T03:44:20.802334+00:00"
         }
       },
       "position_uncertainty": {
@@ -10102,7 +10102,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2003 UB313",
-          "retrieved": "2026-11-22T02:36:46.096260+00:00"
+          "retrieved": "2026-11-22T03:45:00.140515+00:00"
         }
       }
     },
@@ -10129,7 +10129,7 @@
           "query_target": "2005 FY9",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:48.251901+00:00"
+          "retrieved": "2026-11-22T03:44:21.782692+00:00"
         }
       },
       "positions": null,
@@ -10151,7 +10151,7 @@
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 5.116209849407352e-06
+            "error_deg": 5.1162097546389126e-06
           },
           {
             "offset_days": 30.0,
@@ -10184,7 +10184,7 @@
           "query_target": "2005 FY9",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:48.719804+00:00"
+          "retrieved": "2026-11-22T03:44:22.104560+00:00"
         }
       },
       "position_uncertainty": {
@@ -10197,7 +10197,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2005 FY9",
-          "retrieved": "2026-11-22T02:36:46.562623+00:00"
+          "retrieved": "2026-11-22T03:45:00.468530+00:00"
         }
       }
     },
@@ -10224,7 +10224,7 @@
           "query_target": "2007 OR10",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:50.177157+00:00"
+          "retrieved": "2026-11-22T03:44:23.085531+00:00"
         }
       },
       "positions": null,
@@ -10279,7 +10279,7 @@
           "query_target": "2007 OR10",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:50.669976+00:00"
+          "retrieved": "2026-11-22T03:44:23.400888+00:00"
         }
       },
       "position_uncertainty": {
@@ -10292,7 +10292,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2007 OR10",
-          "retrieved": "2026-11-22T02:36:47.009998+00:00"
+          "retrieved": "2026-11-22T03:45:00.786220+00:00"
         }
       }
     },
@@ -10319,7 +10319,7 @@
           "query_target": "2002 LM60",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:52.212455+00:00"
+          "retrieved": "2026-11-22T03:44:24.355993+00:00"
         }
       },
       "positions": null,
@@ -10374,7 +10374,7 @@
           "query_target": "2002 LM60",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:52.674762+00:00"
+          "retrieved": "2026-11-22T03:44:24.678842+00:00"
         }
       },
       "position_uncertainty": {
@@ -10387,7 +10387,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2002 LM60",
-          "retrieved": "2026-11-22T02:36:47.451293+00:00"
+          "retrieved": "2026-11-22T03:45:01.106328+00:00"
         }
       }
     },
@@ -10414,7 +10414,7 @@
           "query_target": "2003 VB12",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:54.075083+00:00"
+          "retrieved": "2026-11-22T03:44:25.672684+00:00"
         }
       },
       "positions": null,
@@ -10469,7 +10469,7 @@
           "query_target": "2003 VB12",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:54.534853+00:00"
+          "retrieved": "2026-11-22T03:44:25.989293+00:00"
         }
       },
       "position_uncertainty": {
@@ -10482,7 +10482,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2003 VB12",
-          "retrieved": "2026-11-22T02:36:47.901413+00:00"
+          "retrieved": "2026-11-22T03:45:01.424611+00:00"
         }
       }
     },
@@ -10509,7 +10509,7 @@
           "query_target": "2002 MS4",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:55.910556+00:00"
+          "retrieved": "2026-11-22T03:44:26.926084+00:00"
         }
       },
       "positions": null,
@@ -10564,7 +10564,7 @@
           "query_target": "2002 MS4",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:56.389062+00:00"
+          "retrieved": "2026-11-22T03:44:27.235441+00:00"
         }
       },
       "position_uncertainty": {
@@ -10577,7 +10577,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2002 MS4",
-          "retrieved": "2026-11-22T02:36:48.342453+00:00"
+          "retrieved": "2026-11-22T03:45:01.768103+00:00"
         }
       }
     },
@@ -10604,7 +10604,7 @@
           "query_target": "2001 KX76",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:57.797649+00:00"
+          "retrieved": "2026-11-22T03:44:28.215695+00:00"
         }
       },
       "positions": null,
@@ -10659,7 +10659,7 @@
           "query_target": "2001 KX76",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:58.266426+00:00"
+          "retrieved": "2026-11-22T03:44:28.537651+00:00"
         }
       },
       "position_uncertainty": {
@@ -10672,7 +10672,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2001 KX76",
-          "retrieved": "2026-11-22T02:36:48.811342+00:00"
+          "retrieved": "2026-11-22T03:45:02.107661+00:00"
         }
       }
     },
@@ -10699,7 +10699,7 @@
           "query_target": "2000 WR106",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:35:59.621219+00:00"
+          "retrieved": "2026-11-22T03:44:29.503647+00:00"
         }
       },
       "positions": null,
@@ -10754,7 +10754,7 @@
           "query_target": "2000 WR106",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:00.085399+00:00"
+          "retrieved": "2026-11-22T03:44:29.827767+00:00"
         }
       },
       "position_uncertainty": {
@@ -10767,7 +10767,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2000 WR106",
-          "retrieved": "2026-11-22T02:36:49.244810+00:00"
+          "retrieved": "2026-11-22T03:45:02.448565+00:00"
         }
       }
     },
@@ -10794,7 +10794,7 @@
           "query_target": "2004 GV9",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:01.468026+00:00"
+          "retrieved": "2026-11-22T03:44:30.806365+00:00"
         }
       },
       "positions": null,
@@ -10849,7 +10849,7 @@
           "query_target": "2004 GV9",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:01.933146+00:00"
+          "retrieved": "2026-11-22T03:44:31.136907+00:00"
         }
       },
       "position_uncertainty": {
@@ -10862,7 +10862,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2004 GV9",
-          "retrieved": "2026-11-22T02:36:49.719409+00:00"
+          "retrieved": "2026-11-22T03:45:02.773989+00:00"
         }
       }
     },
@@ -10889,7 +10889,7 @@
           "query_target": "2015 TG387",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:03.355430+00:00"
+          "retrieved": "2026-11-22T03:44:32.129000+00:00"
         }
       },
       "positions": null,
@@ -10915,17 +10915,17 @@
           },
           {
             "offset_days": 30.0,
-            "error_deg": 3.6477104212639734e-06
+            "error_deg": 3.6477104095002045e-06
           }
         ],
-        "error_rate_deg_per_day": 1.2159034737546578e-07,
+        "error_rate_deg_per_day": 1.2159034698334014e-07,
         "tolerance_deg": 0.5,
         "guard_k": 2.0,
-        "window_days": 2056084.2648800954,
+        "window_days": 2056084.2715109126,
         "cap_applied": null,
         "window": {
-          "start_jd": 405282.2351199046,
-          "end_jd": 4517450.764880096
+          "start_jd": 405282.2284890874,
+          "end_jd": 4517450.771510912
         }
       },
       "drawn_orbit": {
@@ -10944,7 +10944,7 @@
           "query_target": "2015 TG387",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:03.817264+00:00"
+          "retrieved": "2026-11-22T03:44:32.448434+00:00"
         }
       },
       "position_uncertainty": {
@@ -10957,7 +10957,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2015 TG387",
-          "retrieved": "2026-11-22T02:36:50.201564+00:00"
+          "retrieved": "2026-11-22T03:45:03.110613+00:00"
         }
       }
     },
@@ -10984,7 +10984,7 @@
           "query_target": "2017 OF201",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:05.252214+00:00"
+          "retrieved": "2026-11-22T03:44:33.423060+00:00"
         }
       },
       "positions": null,
@@ -11039,7 +11039,7 @@
           "query_target": "2017 OF201",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:05.735938+00:00"
+          "retrieved": "2026-11-22T03:44:33.744464+00:00"
         }
       },
       "position_uncertainty": {
@@ -11052,7 +11052,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2017 OF201",
-          "retrieved": "2026-11-22T02:36:50.654853+00:00"
+          "retrieved": "2026-11-22T03:45:03.453801+00:00"
         }
       }
     },
@@ -11079,7 +11079,7 @@
           "query_target": "2023 KQ14",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:07.088448+00:00"
+          "retrieved": "2026-11-22T03:44:34.675526+00:00"
         }
       },
       "positions": null,
@@ -11101,7 +11101,7 @@
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 3.2942258846298592e-06
+            "error_deg": 3.294225884647445e-06
           },
           {
             "offset_days": 30.0,
@@ -11134,7 +11134,7 @@
           "query_target": "2023 KQ14",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:07.545547+00:00"
+          "retrieved": "2026-11-22T03:44:34.995554+00:00"
         }
       },
       "position_uncertainty": {
@@ -11147,7 +11147,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2023 KQ14",
-          "retrieved": "2026-11-22T02:36:51.081655+00:00"
+          "retrieved": "2026-11-22T03:45:03.761718+00:00"
         }
       }
     },
@@ -11174,7 +11174,7 @@
           "query_target": "2014 MU69",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:08.977960+00:00"
+          "retrieved": "2026-11-22T03:44:36.003717+00:00"
         }
       },
       "positions": null,
@@ -11229,7 +11229,7 @@
           "query_target": "2014 MU69",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:09.447658+00:00"
+          "retrieved": "2026-11-22T03:44:36.332635+00:00"
         }
       },
       "position_uncertainty": {
@@ -11242,7 +11242,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2014 MU69",
-          "retrieved": "2026-11-22T02:36:51.546580+00:00"
+          "retrieved": "2026-11-22T03:45:04.096599+00:00"
         }
       }
     },
@@ -11269,7 +11269,7 @@
           "query_target": "2026 ED138",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:10.805570+00:00"
+          "retrieved": "2026-11-22T03:44:37.258524+00:00"
         }
       },
       "positions": null,
@@ -11291,7 +11291,7 @@
         "samples": [
           {
             "offset_days": -30.0,
-            "error_deg": 2.8716279980979364e-06
+            "error_deg": 2.8716279927913927e-06
           },
           {
             "offset_days": 30.0,
@@ -11324,7 +11324,7 @@
           "query_target": "2026 ED138",
           "center": "@0",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:11.256283+00:00"
+          "retrieved": "2026-11-22T03:44:37.572920+00:00"
         }
       },
       "position_uncertainty": {
@@ -11337,7 +11337,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "2026 ED138",
-          "retrieved": "2026-11-22T02:36:51.983940+00:00"
+          "retrieved": "2026-11-22T03:45:04.402359+00:00"
         }
       }
     },
@@ -11609,7 +11609,7 @@
           "query_target": "C/2025 K1-C",
           "center": "@sun",
           "epoch": 2461366.5,
-          "retrieved": "2026-11-22T02:36:15.456619+00:00"
+          "retrieved": "2026-11-22T03:44:40.493676+00:00"
         }
       },
       "positions": null,
@@ -11658,7 +11658,7 @@
           "service": "JPL Horizons vector table 2xr",
           "column": "R_s, 1-sigma, times 3",
           "query_target": "C/2025 K1-C",
-          "retrieved": "2026-11-22T02:36:52.418124+00:00"
+          "retrieved": "2026-11-22T03:45:04.723174+00:00"
         }
       }
     },
@@ -11875,7 +11875,7 @@
   },
   "frame_constants": {
     "export": "data/constants_export.json",
-    "orrery_sha": "ae9ec0f922991681df1ded138acce7d26734c8ea",
+    "orrery_sha": "e8cc7f116a7a283d5b1262b65f8c1c99315e58d9",
     "rows": {
       "KM_PER_AU": {
         "value": 149597870.7,
@@ -11965,57 +11965,57 @@
     }
   },
   "clock": {
-    "tdb_minus_utc_s": 69.18289,
+    "tdb_minus_utc_s": 69.182891,
     "figure_from": "jpl",
     "minutes_utc_jd": {
-      "start": 2461278.6400717967,
-      "at": 2461366.6083333334,
-      "end": 2461454.5778082595
+      "start": 2461278.687436443,
+      "at": 2461366.65625,
+      "end": 2461454.6251729056
     },
     "jpl": {
       "tdb_minus_utc_s": {
-        "start": 69.182747,
-        "at": 69.18289,
-        "end": 69.185168
+        "start": 69.182746,
+        "at": 69.182891,
+        "end": 69.185169
       },
       "source": "JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), the vector table's TDB-UT, asked for Mercury (Horizons id 199) at each minute; the Horizons manual, Specification of Time: \"After 1962, UT means UTC\" (https://ssd.jpl.nasa.gov/horizons/manual.html, read 2026-11-21)",
-      "retrieved": "2026-11-22T02:36:52.792965+00:00"
+      "retrieved": "2026-11-22T03:45:04.909040+00:00"
     },
     "astropy": {
       "tdb_minus_utc_s": {
-        "start": 69.18274283234922,
-        "at": 69.18288985141174,
-        "end": 69.18516621848738
+        "start": 69.18274197838272,
+        "at": 69.18289083853892,
+        "end": 69.18516715691432
       },
-      "source": "astropy 7.0.1 (https://www.astropy.org/), Time, TDB minus UTC; leap seconds from its table (erfa), which expires 2027-06-28"
+      "source": "astropy 8.0.3 (https://www.astropy.org/), Time, TDB minus UTC; leap seconds from its table (erfa), which expires 2027-05-21"
     },
     "agree_tolerance_s": 0.001,
     "window_tolerance_s": 0.004
   },
   "witness": {
-    "minute_utc_jd": 2461366.6083333334,
-    "minute_tdb_jd": 2461366.609134061,
+    "minute_utc_jd": 2461366.65625,
+    "minute_tdb_jd": 2461366.657050728,
     "bodies": {
       "mercury": {
-        "x_km": -42648327.38869145,
-        "y_km": 28402819.478618722,
-        "z_km": 6232740.082873033,
-        "jd": 2461366.609134061,
+        "x_km": -42801017.564742774,
+        "y_km": 28243116.31537834,
+        "z_km": 6233692.618172816,
+        "jd": 2461366.657050728,
         "targetname": "Mercury (199)",
         "horizons_id": "199",
         "center": "@sun"
       },
       "atlas_3i": {
-        "x_km": -408230480.0394944,
-        "y_km": 1989249965.242337,
-        "z_km": -111879620.53006816,
-        "jd": 2461366.609134061,
+        "x_km": -408251722.40176904,
+        "y_km": 1989493226.2359476,
+        "z_km": -111894738.37019862,
+        "jd": 2461366.657050728,
         "targetname": "ATLAS (C/2025 N1)",
         "horizons_id": "C/2025 N1",
         "center": "@sun"
       }
     },
     "source": "JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), vector table, ecliptic, measured from the Sun's centre, asked at the build's own UTC minute turned to JPL's clock (TDB) by astropy",
-    "retrieved": "2026-11-22T02:36:53.250962+00:00"
+    "retrieved": "2026-11-22T03:45:05.220605+00:00"
   }
 }
