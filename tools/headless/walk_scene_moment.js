@@ -20,6 +20,11 @@
 // Run once against a deliberately broken copy to show it can fail.
 //
 // Written November 7, 2026, night, with Anthropic's Claude Opus 5.5.
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+// rooms' clock: the date line and the frozen minute are read from the
+// payload's moment_utc_jd, the minute on UTC; the old epoch_jd and
+// epochJd are gone.)
+
 "use strict";
 const fs = require("fs"), path = require("path");
 const h = require("./page_harness.js");
@@ -62,7 +67,7 @@ function rows(w) {
   const okNow = [before, after].map((ms) => new Date(ms).toISOString().slice(0, 16) + ":00Z");
   expect(okNow.indexOf(g.EPOCH_ISO) >= 0, "plain: EPOCH_ISO " + g.EPOCH_ISO + " is not the current minute " + okNow[0]);
   const payNow = JSON.parse(fs.readFileSync(P_NOW, "utf8"));
-  const jdNow = payNow.epoch_jd || payNow.epochJd;
+  const jdNow = payNow.moment_utc_jd;
   let gd = w.document.getElementById("plotly-container");
   let sub = (((gd.layout || {}).title || {}).subtitle || {}).text;
   expect(sub === stampOf(jdNow), "plain: the subtitle reads \"" + sub + "\", not \"" + stampOf(jdNow) + "\"");
@@ -83,7 +88,7 @@ function rows(w) {
   expect(isoJd <= END && END - isoJd < 1 / 1440 + 1 / 86400,
          "frozen: EPOCH_ISO " + iso + " is not the window's last minute (end JD " + END + ")");
   const payF = JSON.parse(fs.readFileSync(P_FROZEN, "utf8"));
-  const jdF = payF.epoch_jd || payF.epochJd;
+  const jdF = payF.moment_utc_jd;
   expect(Math.abs(jdF - isoJd) < 1e-6, "frozen: the payload was not built at " + iso + " -- rebuild it at that minute");
   gd = w.document.getElementById("plotly-container");
   sub = (((gd.layout || {}).title || {}).subtitle || {}).text;

@@ -121,6 +121,11 @@
  * 2b, part 1, by L-514 ruling 4: the Moon's marker is marked label_target,
  * so Go To on the Moon's row opens the Moon's own box, not its orbit's
  * short label.)
+ * Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+ * rooms' clock, the least change: the Moon's box reads the payload's
+ * moment_tdb_jd, the minute on JPL's clock; the Sun line's elements date
+ * and the Moon's arc say they are on JPL's clock, TDB. The rest waits for
+ * L-509's talk.)
  */
 (function (global) {
   "use strict";
@@ -145,8 +150,9 @@
 
   function isNum(v) { return typeof v === "number" && isFinite(v); }
 
-  // Julian date -> calendar date, UTC, to the hour. JD 2440587.5 is the
-  // Unix epoch (1970-01-01T00:00Z), the standard conversion.
+  // Julian date -> calendar date, to the hour, on the clock the Julian date
+  // is on (L-541: the Moon's arc is dated on JPL's clock, and says so). JD
+  // 2440587.5 is the Unix epoch (1970-01-01T00:00Z).
   function jdToDate(jd) {
     var d = new Date((jd - 2440587.5) * 86400000);
     return d.toISOString().slice(0, 13).replace("T", " ") + ":00";
@@ -537,12 +543,12 @@
         sun_line: sunLineMeta,
         info_url: guideLink("subsolar"),
         source: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons (" + HORIZONS_URL + ")" +
-          (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +
+          (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + " on JPL's clock, TDB)" : "") +
           ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py)." +
           " The subsolar point: " + guideSource("subsolar"),
         source_items: [
           { label: null, text: "Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons (" + HORIZONS_URL + ")" +
-            (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + ")" : "") +
+            (isNum(opts.sun.elementsEpochJd) ? " (elements at JD " + opts.sun.elementsEpochJd.toFixed(1) + " on JPL's clock, TDB)" : "") +
             ", propagated to the epoch by the assembler's Kepler solver (render_orbits.py)." },
           { label: "The subsolar point", text: guideSource("subsolar") }
         ]
@@ -612,7 +618,7 @@
         (isNum(arc.windowDays) ? ": " + arc.windowDays.toFixed(2) + " days either side of the" + SB + "elements' epoch" : "") +
         ".<br>" +
         (isNum(arc.startJd) && isNum(arc.endJd)
-          ? "The arc runs from " + jdToDate(arc.startJd) + " to " + jdToDate(arc.endJd) + " (UTC).<br>" : "") +
+          ? "The arc runs from " + jdToDate(arc.startJd) + " to " + jdToDate(arc.endJd) + " (JPL's clock, TDB).<br>" : "") +
         "There is no longer span to choose: this scene is one epoch, and the" + SB +
         "arc is the stretch of orbit the served elements are trusted for.<br>" +
         guideWords("moon_arc") + "<br><br>" +
@@ -636,7 +642,9 @@
    * composeScene(payload, ctx) -- everything the Earth room draws, in order.
    *
    * payload is what the page's Python driver returns: {figure, features,
-   * warnings, sun, moonArc, epochJd}. ctx is {GF: GalleryFeatures,
+   * warnings, sun, moonArc, moment_tdb_jd}. L-541: moment_tdb_jd is the
+   * minute drawn on JPL's clock (TDB), the resolver's; the hovers' date is
+   * ctx.epochIso, the date line's, on UTC. ctx is {GF: GalleryFeatures,
    * halfRangeAu, epochIso}. Returns {traces, warnings, absent}.
    *
    * ARRIVAL IS NOW DECIDED BY THE PAGE, NOT HERE (Tony's ruling,
@@ -959,7 +967,7 @@
                      ((mp && mp.center_label) || "Earth")];
         } else if (tr.mode === "markers" && Array.isArray(tr.x) && tr.x.length === 1) {
           var box = moonBox(payload.moon, [tr.x[0], tr.y[0], tr.z[0]],
-                            payload.epochJd, K, "Earth");
+                            payload.moment_tdb_jd, K, "Earth");
           warnings = warnings.concat(box.warnings);
           if (box.lines) {
             tr.text = [box.lines.join("<br>")];

@@ -160,6 +160,18 @@
 // entry; holdKnob reads the ?hold= test address. Written with Anthropic's
 // Claude Opus 5.5.
 
+// THE ROOMS' CLOCK (L-541, November 21, 2026). The room hands each function
+// here the minute it drew on JPL's clock (TDB), so distanceLine's drift and
+// pastSpan's checked span subtract two dates on one clock: the elements'
+// date is JPL's. The date line's minute, on UTC, never reaches this file.
+// planDay and loiterLine take the served difference between JPL's clock and
+// UTC and print a plan's day on UTC; with no difference served they print
+// no loiter line, and say why. servedDay prints a day from one of JPL's
+// dates on a served point: taken back to UTC, then to the nearest minute
+// (the coordinating session's ruling of the same night), since the builder
+// asks its daily points 9 seconds before UTC midnight. Updated with
+// Anthropic's Claude Opus 5.5.
+
 (function (global) {
   "use strict";
 
@@ -316,6 +328,9 @@
                               : withCommas(au.value);
     return {
       line: auText + " AU from " + from + " (" + withCommas(km.value) + " km)",
+      // L-541: the error the figures were placed by, for the Room clock
+      // check, which holds the room's place to JPL's within it.
+      errKm: errKm,
       note: (src.km === null) ? noSourceSentence(missingWhy) : null,
       missingKind: (src.km === null) ? missingKind(missingWhy) : null,
       accuracyWhy: src.why,
@@ -739,17 +754,51 @@
     var n = loiter && loiter.point_name;
     return (typeof n === "string" && n) ? n : null;
   }
-  // "YYYY-MM-DD HH:MM", a plan's moment on JPL's clock, as the box prints
-  // a day ("14 November 2025"); null if it is not one.
-  function planDay(s) {
-    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ""));
+  // "YYYY-MM-DD HH:MM", a plan's moment on JPL's clock (TDB), as the box
+  // prints a day ("14 November 2025"), the day on UTC: L-541 (the rooms'
+  // clock; Tony's ruling of 2026-11-21, a plan's moment printed to a
+  // visitor is UTC, converted). clockS is the seconds JPL's clock runs
+  // ahead of UTC, as served (the index's clock block); the moment is taken
+  // back by it before its day is read. Null if it is not a moment, or if
+  // no difference is given: a day on the wrong clock is not printed.
+  function planDay(s, clockS) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/.exec(String(s || ""));
     if (!m || +m[2] < 1 || +m[2] > 12) { return null; }
-    return (+m[3]) + " " + SPAN_MONTHS[+m[2] - 1] + " " + m[1];
+    if (!(typeof clockS === "number" && isFinite(clockS))) { return null; }
+    var ms = Date.UTC(+m[1], +m[2] - 1, +m[3], m[4] ? +m[4] : 0, m[5] ? +m[5] : 0) -
+      clockS * 1000;
+    var d = new Date(ms);
+    if (isNaN(d.getTime())) { return null; }
+    return d.getUTCDate() + " " + SPAN_MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear();
+  }
+  // L-541 (the rooms' clock; the coordinating session's ruling of
+  // 2026-11-21): A DAY FROM A SERVED POINT'S DATE IS TAKEN FROM THE
+  // NEAREST MINUTE. jd is one of JPL's dates on a served point (a path's
+  // first or last served point, a point's served days); clockS the seconds
+  // JPL's clock runs ahead of UTC, as served. The date is taken back to UTC,
+  // rounded to the nearest minute, and its day read. The builder asks its
+  // daily points at 00:01:00 on JPL's clock, 9 seconds before UTC midnight,
+  // and a printed day claims nothing finer than a minute, so a point asked
+  // for a UTC day prints that day. With no difference served the date is
+  // read as it stands, also to the nearest minute. Not for a plan's moments:
+  // planDay above prints those as they are taken back.
+  function servedUtcMs(jd, clockS) {
+    if (!(typeof jd === "number" && isFinite(jd))) { return null; }
+    var utc = (typeof clockS === "number" && isFinite(clockS)) ? jd - clockS / 86400 : jd;
+    return Math.round((utc - 2440587.5) * 1440) * 60000;
+  }
+  function servedDay(jd, clockS) {
+    var ms = servedUtcMs(jd, clockS);
+    if (ms === null) { return null; }
+    var d = new Date(ms);
+    if (isNaN(d.getTime())) { return null; }
+    return d.getUTCDate() + " " + SPAN_MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear();
   }
   // {line, why}: the loiter's sentence from what the page hands it,
-  // {point, start, end, launch, flyby_of}; no line and no why for a path
-  // with no loiter, a why for one the box cannot say.
-  function loiterLine(loiter) {
+  // {point, start, end, launch, flyby_of}, and the served difference
+  // between JPL's clock and UTC (clockS, L-541); no line and no why for a
+  // path with no loiter, a why for one the box cannot say.
+  function loiterLine(loiter, clockS) {
     if (!loiter) { return { line: null, why: null }; }
     var point = loiterPoint(loiter);
     if (!point) {
@@ -757,8 +806,12 @@
                JSON.stringify(loiter.point) + ", and no point of that JPL " +
                "name is served, so the box cannot name it" };
     }
-    var launch = loiter.launch ? planDay(loiter.launch) : null;
-    var from = launch || planDay(loiter.start), to = planDay(loiter.end);
+    if (!(typeof clockS === "number" && isFinite(clockS))) {
+      return { line: null, why: "the difference between JPL's clock and " +
+               "UTC is not served, so its loiter's days cannot be printed as UTC" };
+    }
+    var launch = loiter.launch ? planDay(loiter.launch, clockS) : null;
+    var from = launch || planDay(loiter.start, clockS), to = planDay(loiter.end, clockS);
     if (!from || !to) {
       return { line: null, why: "its loiter's days are not served" };
     }
@@ -818,6 +871,8 @@
     LOITER_WORDS: LOITER_WORDS,
     loiterPoint: loiterPoint,
     planDay: planDay,
+    servedUtcMs: servedUtcMs,
+    servedDay: servedDay,
     loiterLine: loiterLine,
     spanText: spanText,
     pastSpan: pastSpan,

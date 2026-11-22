@@ -23,6 +23,9 @@ Module updated: October 25, 2026 with Anthropic's Claude Opus 5.5 (L-443,
 build B: the caller may also hand it the spacecraft position files it has
 fetched, {slug: parsed positions/<slug>.json}, read by position_file(); it
 still opens nothing itself.)
+Module updated: November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541,
+the rooms' clock: clock() returns the served difference between JPL's
+clock and UTC, the index's clock block, for the resolver's one seam.)
 
 Role: cache
 Domain: assembler
@@ -54,6 +57,12 @@ class CacheReader:
 
     def served_window(self) -> Optional[Any]:
         return self._raw.get("served_window")
+
+    def clock(self) -> Optional[Any]:
+        """L-541: the served clock block -- the difference between JPL's
+        clock (TDB) and UTC, with its sources -- or None where the cache
+        carries none (one built before the builder served it)."""
+        return self._raw.get("clock")
 
     def scene_features(self):
         return tuple(self._raw.get("scene_features") or ())

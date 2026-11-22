@@ -57,6 +57,12 @@ Domain: gallery
 
 Module created: October 14, 2026 with Anthropic's Claude Opus 5.5
 (L-431, build 3).
+Module updated: November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541,
+the rooms' clock: the scene asks the UTC second that is the elements'
+date on JPL's clock, by the served difference (utc_iso_of), and the room
+is checked to draw at that date, where the marker sits on the drawn
+ellipse; the ellipse is placed by the barycentre at that date, so only
+there does the marker lie on it.)
 """
 
 import copy
@@ -128,8 +134,20 @@ def scene(osc_sun, drawn):
     return assemble_scene({"spec_version": "1.0", "domain": "solar_system",
                            "content_type": "static", "objects": ["neptune"],
                            "center": "sun",
-                           "epoch": "2026-10-13T08:30:00Z"},
+                           "epoch": utc_iso_of(EPOCH_JD, cov.get("clock"))},
                           Catalog(cfg), CacheReader(cov))
+
+
+def utc_iso_of(tdb_jd, clock):
+    """L-541: the UTC second whose date on JPL's clock is tdb_jd, by the
+    served difference (the index's clock block); with none served, the
+    date as it stands, as the room then draws it."""
+    import datetime
+    d = (clock or {}).get("tdb_minus_utc_s")
+    utc_jd = tdb_jd - (d / 86400.0 if isinstance(d, (int, float)) else 0.0)
+    t = (datetime.datetime(2000, 1, 1, 12) +
+         datetime.timedelta(days=utc_jd - 2451545.0))
+    return t.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def orbit_line(result):
@@ -218,7 +236,15 @@ def main():
             "the offset (worst point %.1e AU)" % worst)
     m = marker(result)
     body = (m["x"][0], m["y"][0], m["z"][0])
-    on = render_orbits.propagate_marker(drawn, EPOCH_JD)
+    # L-541 (the rooms' clock): the scene asks the UTC second that is the
+    # elements' date on JPL's clock (utc_iso_of), so the room draws at
+    # that date, to the whole second a scene's minute carries; the marker
+    # is held to the drawn ellipse at the date the room drew, where the
+    # barycentre is within a second's motion of its place at that date.
+    t.check(abs(result.context.resolved_epoch_jd - EPOCH_JD) * 86400 < 1.0,
+            "the room draws at the elements' date on JPL's clock (%.3f s "
+            "from it)" % ((result.context.resolved_epoch_jd - EPOCH_JD) * 86400))
+    on = render_orbits.propagate_marker(drawn, result.context.resolved_epoch_jd)
     gap = math.sqrt(sum((body[k] - (on[k] + offset[k])) ** 2
                         for k in range(3)))
     t.check(gap < 1e-9, "the body's marker sits on the drawn ellipse at its "

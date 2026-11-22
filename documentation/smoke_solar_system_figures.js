@@ -130,6 +130,17 @@
 // Updated November 15, 2026 with Anthropic's Claude Opus 5.5 (L-535): the
 // period's worked cases gain one with its served reason, which prints
 // after the period as served.
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+// rooms' clock): the loiter's worked cases pass the served difference
+// between JPL's clock and UTC, because the box now prints a plan's day on
+// UTC; a midnight on JPL's clock prints the day before; ESCAPADE's start
+// with no launch prints 13 November 2025, the case L-541 found printed a
+// day late; with no difference served there is no line, and a why. One
+// more planted fault: the moment not taken back to UTC. The launch
+// fault's anchor follows planDay's new second argument. Part 7c: a day
+// from a served point's date, by the nearest minute (the coordinating
+// session's ruling of the same night): 00:01:00 on JPL's clock prints the
+// day it was asked for; a planted fault cuts the minute instead.
 
 "use strict";
 const fs = require("fs");
@@ -364,7 +375,40 @@ function pathWorked(lib) {
   return out;
 }
 
+// ---- 7c. worked cases: a day from a served point's date (L-541) -----
+// The coordinating session's ruling of 2026-11-21: taken back to UTC, then
+// to the nearest minute, then the day. The builder asks its daily points
+// at 00:01:00 on JPL's clock, 9 s before UTC midnight; that point prints
+// the day it was asked for. CLOCK is the worked-case figure below.
+function servedDayWorked(lib) {
+  const out = [];
+  // Juno's last served point, 2028-08-26 00:01:00 on JPL's clock.
+  const juno = lib.servedDay(2462009.5 + 60 / 86400, 69.183);
+  if (juno !== "26 August 2028") {
+    out.push("a served point at 00:01:00 on JPL's clock printed " + JSON.stringify(juno) +
+             ", not the day it was asked for, 26 August 2028");
+  }
+  // 00:00:30 on JPL's clock is 23:59:21 UTC the day before: that day.
+  const early = lib.servedDay(2462009.5 + 30 / 86400, 69.183);
+  if (early !== "25 August 2028") {
+    out.push("a served point at 23:59:21 UTC printed " + JSON.stringify(early) +
+             ", not 25 August 2028");
+  }
+  // No difference served: the date as it stands, to the nearest minute.
+  const bare = lib.servedDay(2462009.5 + 60 / 86400, null);
+  if (bare !== "26 August 2028") {
+    out.push("a served point with no difference served printed " + JSON.stringify(bare));
+  }
+  if (lib.servedDay(null, 69.183) !== null) { out.push("no date printed a day"); }
+  return out;
+}
+
 // ---- 7b. worked cases: a spacecraft's loiter (L-533) ---------------
+// L-541 (the rooms' clock): a plan's moments are on JPL's clock (TDB), and
+// the box prints their day on UTC, taken back by the served difference.
+// CLOCK is a worked-case figure only, the served difference of 2026-11-21
+// (69.18289 s) to the millisecond; the room reads the served one.
+const CLOCK = 69.183;
 function loiterWorked(lib) {
   const out = [];
   // L-297 (Tony, 2026-11-19): the point is named as the room names it,
@@ -372,21 +416,44 @@ function loiterWorked(lib) {
   const blue = lib.loiterLine({ point: "SEMB-L2", point_name: "Earth-Sun L2",
                                 start: "2025-11-14 00:00",
                                 end: "2026-11-07 10:01", launch: "2025-11-13 21:33",
-                                flyby_of: "Earth" });
+                                flyby_of: "Earth" }, CLOCK);
   if (blue.line !== "From its launch on 13 November 2025 until its flyby of Earth on " +
       "7 November 2026, it flew wide loops near Earth, around the point " +
       "called Earth-Sun L2.") {
     out.push("a loiter ending at its flyby printed " + JSON.stringify(blue.line));
   }
+  // L-541: midnight on JPL's clock is 23:58:51 the day before on UTC, so
+  // a loiter from 1 January 2025, 00:00 TDB began on 31 December 2024.
   const drift = lib.loiterLine({ point: "SEMB-L1", point_name: "Earth-Sun L1",
                                  start: "2025-01-01 00:00",
-                                 end: "2025-07-02 00:00", flyby_of: null });
-  if (drift.line !== "From 1 January 2025 to 2 July 2025, it flew wide " +
+                                 end: "2025-07-02 00:02", flyby_of: null }, CLOCK);
+  if (drift.line !== "From 31 December 2024 to 2 July 2025, it flew wide " +
       "loops near Earth, around the point called Earth-Sun L1.") {
-    out.push("a loiter with no flyby printed " + JSON.stringify(drift.line));
+    out.push("a loiter with no flyby printed " + JSON.stringify(drift.line) +
+             " (a plan's midnight on JPL's clock is the day before on UTC)");
+  }
+  // L-541: ESCAPADE's loiter with no launch served starts on its start,
+  // 14 November 2025 00:00 on JPL's clock, which is 13 November on UTC --
+  // the case L-541 found printed a day late.
+  const nolaunch = lib.loiterLine({ point: "SEMB-L2", point_name: "Earth-Sun L2",
+                                    start: "2025-11-14 00:00",
+                                    end: "2026-11-07 10:01", flyby_of: "Earth" }, CLOCK);
+  if (nolaunch.line !== "From 13 November 2025 until its flyby of Earth on " +
+      "7 November 2026, it flew wide loops near Earth, around the point " +
+      "called Earth-Sun L2.") {
+    out.push("a loiter from 2025-11-14 00:00 on JPL's clock printed " +
+             JSON.stringify(nolaunch.line));
+  }
+  // L-541: with no difference served, no line, and the box says why.
+  const unclocked = lib.loiterLine({ point: "SEMB-L2", point_name: "Earth-Sun L2",
+                                     start: "2025-11-14 00:00",
+                                     end: "2026-11-07 10:01", flyby_of: "Earth" });
+  if (unclocked.line !== null || !unclocked.why) {
+    out.push("a loiter with no clock difference served printed " +
+             JSON.stringify(unclocked.line));
   }
   const odd = lib.loiterLine({ point: "Earth", start: "2025-01-01 00:00",
-                               end: "2025-07-02 00:00" });
+                               end: "2025-07-02 00:00" }, CLOCK);
   if (odd.line !== null || !odd.why) {
     out.push("a loiter at a point no served entry names printed " +
              JSON.stringify(odd.line));
@@ -679,20 +746,32 @@ const selfFailures = [];
     selfFailures.push(fault[0] + " passed the spacecraft's worked cases");
   }
 });
-// L-533: a spacecraft's loiter, two breaks.
+// L-533: a spacecraft's loiter, four breaks (L-541 added the clock's).
 [
   ["the flyby that ends a loiter left out",
    "LOITER_WORDS(point, from, to, loiter.flyby_of || null,",
    "LOITER_WORDS(point, from, to, null,"],
   ["the launch ignored",
-   "var launch = loiter.launch ? planDay(loiter.launch) : null;",
+   "var launch = loiter.launch ? planDay(loiter.launch, clockS) : null;",
    "var launch = null;"],
+  ["a plan's moment printed on JPL's clock, not taken back to UTC (L-541)",
+   "      clockS * 1000;", "      0;"],
   ["JPL's name for the point printed, not the room's",
    "var n = loiter && loiter.point_name;",
    "var n = loiter && loiter.point;"]
 ].forEach(function (fault) {
   if (loiterWorked(loadWith(fault[1], fault[2])).length === 0) {
     selfFailures.push(fault[0] + " passed the loiter's worked cases");
+  }
+});
+// L-541: a day from a served point's date, one break.
+[
+  ["a served point's minute cut instead of rounded, so 00:01:00 on JPL's clock prints the day before",
+   "return Math.round((utc - 2440587.5) * 1440) * 60000;",
+   "return Math.floor((utc - 2440587.5) * 1440) * 60000;"]
+].forEach(function (fault) {
+  if (servedDayWorked(loadWith(fault[1], fault[2])).length === 0) {
+    selfFailures.push(fault[0] + " passed the served day's worked cases");
   }
 });
 // L-297: a Lagrange point's box, two breaks.
@@ -764,14 +843,17 @@ console.log("Self-test: the worked cases fail on a Report test one place " +
             "body's sentence on a hold never printed, on a failed test given " +
             "the unanswered words, on the ?hold= address ignored, and on a " +
             "held moon's box silent; and a spacecraft's loiter on the " +
-            "flyby that ends it left out, on its launch ignored, and on any " +
-            "served body named as its point.");
+            "flyby that ends it left out, on its launch ignored, on its " +
+            "moments left on JPL's clock, and on any served body named as " +
+            "its point; and a served point's day on its minute cut instead " +
+            "of rounded.");
 
 // ---- 1. worked cases ----------------------------------------------
 const failures = worked(SSF).concat(periodWorked(SSF), orbitWorked(SSF),
                                     pathWorked(SSF), uncertaintyWorked(SSF),
                                     childWorked(SSF), heldWorked(SSF),
-                                    loiterWorked(SSF), pointWorked(SSF));
+                                    loiterWorked(SSF), pointWorked(SSF),
+                                    servedDayWorked(SSF));
 
 // ---- 2. the real config -------------------------------------------
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "data",

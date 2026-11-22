@@ -538,6 +538,17 @@
         a new tab.", and each link opens in a new tab with nothing kept
         for Back, since the room stays open in its own tab. Find finds
         its name and counts it as a link.)
+     Updated: November 21, 2026 with Anthropic's Claude Opus 5.5
+       (L-541, the rooms' clock: a body is drawn where JPL puts it at the
+        UTC minute the date line shows. The resolver adds the served
+        difference between JPL's clock (TDB) and UTC once; the drivers
+        hand back moment_utc_jd, the date line's, and moment_tdb_jd, the
+        lookups' and the drift's, and the old epoch_jd and epochJd are
+        gone. A day printed from one of JPL's dates on a served point as
+        UTC is taken back by the served difference and read at the
+        nearest minute (solarSystemTdbDay, SolarSystemFigures.servedDay);
+        the source line's seconds are read from it; the loiter's days
+        are UTC.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -3179,7 +3190,6 @@ from assembler.catalog import Catalog
 from assembler.cache_reader import CacheReader
 from assembler.assemble import assemble_scene
 from assembler.render_orbits import propagate_marker
-from assembler.resolver import _iso_to_jd
 
 _cfg = json.loads(CFG_JSON)
 _cov = json.loads(COV_JSON)
@@ -3202,7 +3212,9 @@ result = assemble_scene(
     _cache,
 )
 
-_jd = _iso_to_jd(EPOCH_ISO)
+# L-541 (the rooms' clock): the minute on JPL's clock, from the resolver's
+# one seam; this driver converts nothing itself.
+_jd = result.context.resolved_epoch_jd
 _notes = []
 
 # Direction to the Sun, from Earth's own heliocentric osculating
@@ -3308,7 +3320,8 @@ json.dumps({
     "sun": _sun,
     "moonArc": _arc,
     "moon": _moon,
-    "epochJd": _jd,
+    "moment_utc_jd": result.context.asked_utc_jd,
+    "moment_tdb_jd": _jd,
     "poleOfDate": _pod,
 })
 `;
@@ -3722,7 +3735,13 @@ json.dumps({
                     if (_cache.record(_s) or {}).get("category")
                     == "lagrange_point" else None),
     } for _s, _p in _children.items()},
-    "epoch_jd": result.context.resolved_epoch_jd,
+    # L-541 (the rooms' clock): the minute asked, on UTC (the date line),
+    # and the same minute on JPL's clock (every lookup and every
+    # subtraction from one of JPL's dates), both from the resolver's one
+    # seam, with the served difference for the dates the page prints.
+    "moment_utc_jd": result.context.asked_utc_jd,
+    "moment_tdb_jd": result.context.resolved_epoch_jd,
+    "clock": {"tdb_minus_utc_s": result.context.tdb_minus_utc_s},
     "warnings": result.report["warnings"] + [
         "%s: in the room's rows but not in the served cache yet (the cache "
         "builder has not served it)" % _s for _s in _unserved] + _kid_notes,
@@ -3736,7 +3755,9 @@ json.dumps({
 // a time yet; UTC only; every room has the line, short enough to sit at
 // the top of an upright phone. It is converted from the epoch the driver
 // returns (a Julian date), so it states what was drawn, not what the page
-// meant to ask for.
+// meant to ask for. L-541 (the rooms' clock): that Julian date is the
+// driver's moment_utc_jd, the minute on UTC, never moment_tdb_jd, the same
+// minute on JPL's clock.
 const SCENE_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
     "Aug", "Sep", "Oct", "Nov", "Dec"];
 function sceneMomentStamp(jd) {
@@ -3769,11 +3790,11 @@ const SUN_DATE_LINE = "Long-term averages \u00b7 no date";
 // are dated, and that stays so on purpose. Tony's ruling of 2026-10-29
 // (L-504): do not convert it, print it on JPL's clock, once, in the
 // same sentence -- "dated 29 October 2026, midnight on JPL's ephemeris
-// clock (TDB, 69 seconds ahead of UTC; Julian date 2461342.5)". The 69
-// seconds is the figure the builder's utc_to_tdb uses, copied from the
-// orrery's orbit_data_manager.py (37 leap seconds and TT's 32.184 s); it
-// is typed here, in the page's own account of its data, and not yet a
-// row in the orrery's store (recorded on L-504).
+// clock (TDB, 69 seconds ahead of UTC; Julian date 2461342.5)". Since
+// L-541 (2026-11-21) the seconds are read from the served difference, the
+// index's clock block (tools/gallery_cache_builder.py, build_clock: JPL's
+// TDB-UT, checked against astropy's), to the whole second; until then 69
+// was typed here.
 const SOLAR_SYSTEM_MONTHS = ["January", "February", "March", "April",
     "May", "June", "July", "August", "September", "October", "November",
     "December"];
@@ -3798,6 +3819,13 @@ const SOLAR_SYSTEM_CENTRE_WORDS = "Another reference that measures this " +
 // L-515 step 2b: centreName, for a moon drawn in the root, names what its
 // elements are measured from ("Jupiter's centre", "the Pluto-Charon
 // barycenter").
+// L-541: how far JPL's clock runs ahead of UTC, in the source line's words,
+// read from the served difference to the whole second the line prints;
+// nothing where none is served.
+function solarSystemClockWords() {
+    return (typeof sceneClockS === "number")
+        ? ", " + Math.round(sceneClockS) + " seconds ahead of UTC" : "";
+}
 function solarSystemSourceLine(src, sourceNote, centreName) {
     if (!src) { return null; }
     // Julian date 2440587.5 is 1970-01-01 00:00, the Unix epoch.
@@ -3819,7 +3847,7 @@ function solarSystemSourceLine(src, sourceNote, centreName) {
         ". Osculating orbital elements " + centre +
         (dated ? ", dated " + dated + ", " +
                  (midnight ? "midnight on" : "on") + " JPL's ephemeris clock" +
-                 " (TDB, 69 seconds ahead of UTC; Julian date " + src.epoch + ")"
+                 " (TDB" + solarSystemClockWords() + "; Julian date " + src.epoch + ")"
                : " (Julian date " + src.epoch + ")") +
         (got ? ", retrieved " + got + " UTC" : "") + "." +
         (src.center === "@sun" ? " " + SOLAR_SYSTEM_CENTRE_WORDS : "") +
@@ -3832,6 +3860,16 @@ function solarSystemJdDay(jd) {
     if (typeof jd !== "number" || !isFinite(jd)) { return null; }
     // Julian date 2440587.5 is 1970-01-01 00:00, the Unix epoch.
     return solarSystemDay(new Date(Math.round((jd - 2440587.5) * 86400000)));
+}
+// L-541 (the rooms' clock): a day from one of JPL's dates on a served
+// point, taken back to UTC by the served difference (sceneClockS) and read
+// at the nearest minute (SolarSystemFigures.servedDay, where a check can
+// reach it): the builder asks its daily points 9 seconds before UTC
+// midnight, and a day claims nothing finer than a minute.
+// solarSystemJdDay above is for a date made on UTC (a point's hourly
+// stretch). With no difference served, the date as it stands.
+function solarSystemTdbDay(jd) {
+    return SolarSystemFigures.servedDay(jd, sceneClockS);
 }
 
 // L-443 build B: a spacecraft's path line, about the picture (solid and
@@ -3900,7 +3938,9 @@ function solarSystemEndedEarly(b, meta) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String((b || {}).mission_end || ""));
     const jd = (meta || {}).path_end_jd;
     if (!m || typeof jd !== "number" || !isFinite(jd)) { return false; }
-    const last = new Date(Math.round((jd - 2440587.5) * 86400000));
+    // L-541: JPL's last date (TDB), as the UTC day the box prints, from
+    // the nearest minute (SolarSystemFigures.servedUtcMs).
+    const last = new Date(SolarSystemFigures.servedUtcMs(jd, sceneClockS));
     const lastDay = Date.UTC(last.getUTCFullYear(), last.getUTCMonth(),
                              last.getUTCDate());
     return Date.UTC(+m[1], +m[2] - 1, +m[3]) > lastDay;
@@ -3927,8 +3967,10 @@ function pointSourceLine(b, meta, centreWords) {
     const src = b.path_source || {};
     if (!src.query_target) { return null; }
     const pt = b.point || {};
-    const from = solarSystemJdDay(meta.path_start_jd);
-    const to = solarSystemJdDay(meta.path_end_jd);
+    // L-541: the served points' first and last dates are JPL's (TDB),
+    // printed as UTC days; the hourly stretch's ends are made on UTC.
+    const from = solarSystemTdbDay(meta.path_start_jd);
+    const to = solarSystemTdbDay(meta.path_end_jd);
     const got = solarSystemDay(new Date(String(src.retrieved)));
     const near = pt.near || {};
     const n0 = solarSystemJdDay(near.start_jd), n1 = solarSystemJdDay(near.end_jd);
@@ -3947,8 +3989,9 @@ function pointSourceLine(b, meta, centreWords) {
 function spacecraftSourceLine(b, meta) {
     const src = b.path_source || {};
     if (!src.query_target) { return null; }
-    const from = solarSystemJdDay(meta.path_start_jd);
-    const to = solarSystemJdDay(meta.path_end_jd);
+    // L-541: the served path's dates are JPL's (TDB), printed as UTC days.
+    const from = solarSystemTdbDay(meta.path_start_jd);
+    const to = solarSystemTdbDay(meta.path_end_jd);
     const got = solarSystemDay(new Date(String(src.retrieved)));
     const centre = (src.center === "@sun")
         ? "measured from the Sun's centre"
@@ -4141,7 +4184,9 @@ const EXHIBITS = {
             // The moment drawn, from the Julian date the driver used; the
             // hovers that say which moment (the Sun line, the frozen
             // terminator) print the same line as the title.
-            const stamp = sceneMomentStamp(payload.epochJd);
+            // L-541: the minute asked, on UTC; the date the driver looked
+            // JPL's data up at is moment_tdb_jd.
+            const stamp = sceneMomentStamp(payload.moment_utc_jd);
             const built = EarthGeometry.composeScene(payload, {
                 GF: GalleryFeatures,
                 halfRangeAu: EARTH_HALF_RANGE_AU,
@@ -4349,7 +4394,16 @@ const EXHIBITS = {
             if (!ownOpening) {
                 ((restored ? restored.ticked : arrival.drawn) || []).forEach(function (s) { drawn[s] = true; });
             }
-            const epochJd = payload.epoch_jd;
+            // L-541 (the rooms' clock): the minute shown, on UTC, for the
+            // date line; the same minute on JPL's clock for every
+            // subtraction from one of JPL's dates (the drift, the checked
+            // span); and the served difference, for the days the boxes
+            // print from JPL's dates (sceneClockS).
+            const utcJd = payload.moment_utc_jd;
+            const tdbJd = payload.moment_tdb_jd;
+            sceneClockS = (payload.clock && typeof payload.clock.tdb_minus_utc_s === "number" &&
+                           isFinite(payload.clock.tdb_minus_utc_s))
+                ? payload.clock.tdb_minus_utc_s : null;
             // L-525: the Mode 5 knob ?hold=<slug>[,<slug>], read once as the
             // room is built: those bodies are drawn as held, so the held
             // sentence can be seen when nothing is held (as ?freeze=1).
@@ -4411,7 +4465,7 @@ const EXHIBITS = {
                         }
                         // L-525: a moon JPL did not answer is held; its box
                         // says so (childBox), and ?hold=<slug> shows it.
-                        const box = SolarSystemFigures.childBox(b, t.meta.rel_au, epochJd,
+                        const box = SolarSystemFigures.childBox(b, t.meta.rel_au, tdbJd,
                             GalleryFeatures._KM_PER_AU, parentLabel,
                             SolarSystemFigures.holdFor(b.hold, slug, holdKnob));
                         box.warnings.forEach(function (w) { warnings.push(w); });
@@ -4524,7 +4578,7 @@ const EXHIBITS = {
                         // uncertainty for it is not served, which the text
                         // box says; it has no period and no orbit line.
                         const sc = t.meta || {};
-                        const ends = solarSystemJdDay(sc.path_end_jd);
+                        const ends = solarSystemTdbDay(sc.path_end_jd);
                         const comet = b.kind === "comet_path";
                         // L-507: a mission whose served path ended before
                         // the minute shown (render_spacecraft marks it).
@@ -4557,14 +4611,14 @@ const EXHIBITS = {
                             warnings.push(label + ": no distance shown -- " + dist.why);
                         }
                         if (ends) {
-                            const starts = solarSystemJdDay(sc.path_start_jd);
+                            const starts = solarSystemTdbDay(sc.path_start_jd);
                             lines.push(bullet(solarSystemSoftWrap(
                                 ended ? ENDED_PATH_WORDS + starts + " to " + ends + "." :
                                 (comet ? COMET_PATH_WORDS : SPACECRAFT_PATH_WORDS) +
                                 ends + ".", 60)));
                             // L-533: a loiter near Earth, named in words only,
                             // the point being drawn in no room yet (L-297).
-                            const loiter = SolarSystemFigures.loiterLine(b.path_loiter);
+                            const loiter = SolarSystemFigures.loiterLine(b.path_loiter, sceneClockS);
                             if (loiter.line) {
                                 lines.push(bullet(solarSystemSoftWrap(loiter.line, 60)));
                             } else if (loiter.why) {
@@ -4594,13 +4648,13 @@ const EXHIBITS = {
                     } else {
                         const dist = SolarSystemFigures.distanceLine(
                             { x: t.x[0], y: t.y[0], z: t.z[0] }, b.trust,
-                            epochJd, b.accuracy, GalleryFeatures._KM_PER_AU,
+                            tdbJd, b.accuracy, GalleryFeatures._KM_PER_AU,
                             b.uncertainty_missing);
                         if (dist.line) {
                             lines.push(bullet(dist.line));
                             // L-525: a held body past its own checked span
                             // says so, as a moon does (SPAN_WORDS).
-                            if (hold && SolarSystemFigures.pastSpan(b.trust, epochJd)) {
+                            if (hold && SolarSystemFigures.pastSpan(b.trust, tdbJd)) {
                                 const span = SolarSystemFigures.spanText(b.trust.delta_days);
                                 const dated = SolarSystemFigures.epochText(b.trust.element_epoch_jd);
                                 if (span && dated) {
@@ -4829,7 +4883,7 @@ const EXHIBITS = {
                 }
             }
             // The date under the title. Missing is reported, not hidden.
-            const stamp = sceneMomentStamp(epochJd);
+            const stamp = sceneMomentStamp(utcJd);
             if (!stamp) {
                 warnings.push("the scene's date was not reported by the assembler");
             }
@@ -4924,6 +4978,11 @@ let sunAbsent = [];   // named absences for the drawer, set by init
 // L-515 part 4: the moment the page asked the driver for, and whether it
 // is the served window's last minute (SceneMoment.askFor), set by init.
 let sceneMomentAsked = null;
+// L-541 (the rooms' clock): the seconds JPL's clock runs ahead of UTC, as
+// the driver hands them from the served clock block, for the days the
+// boxes print from JPL's dates; null where none is served. Set by the
+// root's compose.
+let sceneClockS = null;
 
 // Chrome changes that do not need Pyodide, so they run immediately.
 function applySunChrome() {
@@ -9015,14 +9074,15 @@ function ssFoldTraces(key, at, data, kids) {
     const fp = ssFoldPayload.fold_features[key];
     const b = (ssFoldPayload.bodies || {})[key] || {};
     const d = Math.sqrt(at[0] * at[0] + at[1] * at[1] + at[2] * at[2]);
-    const stamp = sceneMomentStamp(ssFoldPayload.epoch_jd);
+    // L-541: the date line's minute, on UTC; the lookups' on JPL's clock.
+    const stamp = sceneMomentStamp(ssFoldPayload.moment_utc_jd);
     const p = {
         figure: { data: [] }, features: fp.features, poleOfDate: fp.pole_of_date,
         sun: d > 0 ? { dir: [-at[0] / d, -at[1] / d, -at[2] / d], distAu: d,
                        elementsEpochJd: (b.source || {}).epoch } : null,
         earthPeriod: b.period,
         earth: { name: b.name, description: b.description, info_url: b.info_url },
-        moon: null, moonArc: null, epochJd: ssFoldPayload.epoch_jd
+        moon: null, moonArc: null, moment_tdb_jd: ssFoldPayload.moment_tdb_jd
     };
     const built = EarthGeometry.composeScene(p, {
         GF: GalleryFeatures, halfRangeAu: EARTH_HALF_RANGE_AU,

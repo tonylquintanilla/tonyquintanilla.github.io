@@ -92,6 +92,16 @@
 // phone look: the Sun line's length sentence on ALLOWED follows the line,
 // which now reaches a little past the farthest shell or orbit shown.)
 
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+// rooms' clock: two ALLOWED sentences follow Earth's guides, which now
+// name JPL's clock (the Sun line's elements date and the Moon's arc);
+// and Earth's period, served words since L-535, is masked in both passes,
+// so its reason sentence, in the re-recorded scene, is not read as typed.)
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+// rooms' clock: the recorded Earth scene's date is the driver's
+// moment_utc_jd, the date line's minute on UTC, since the old epochJd is
+// gone.)
+
 "use strict";
 
 const fs = require("fs");
@@ -142,14 +152,14 @@ const ALLOWED = [
    "the picture: the Sun line's drawn length"],
   ["The brighter arc is the part of the Moon's orbit where this page's propagation is trusted to within # deg: # days either side of the elements' epoch.",
    "the page's own account of its data: the Moon arc's trust window"],
-  ["The arc runs from ### #:# to ### #:# (UTC).",
-   "the scene: the arc's dates"],
+  ["The arc runs from ### #:# to ### #:# (JPL's clock, TDB).",
+   "the scene: the arc's dates, on JPL's clock (L-541)"],
   ["There is no longer span to choose: this scene is one epoch, and the arc is the stretch of orbit the served elements are trusted for.",
    "the picture: why the arc has this length"],
   ["r = # AU (# km)", "the scene: the Moon's propagated distance"],
   ["x = # AU, y = # AU, z = # AU", "the scene: the Moon's propagated position"],
   // L-481 (Tony, 2026-10-24): the three Horizons source lines carry its address.
-  ["Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons (https://ssd.jpl.nasa.gov/horizons/) (elements at JD #), propagated to the epoch by the assembler's Kepler solver (render_orbits.py).",
+  ["Direction from Earth's heliocentric osculating elements in the served cache, JPL Horizons (https://ssd.jpl.nasa.gov/horizons/) (elements at JD # on JPL's clock, TDB), propagated to the epoch by the assembler's Kepler solver (render_orbits.py).",
    "the page's own account of its data, with its source (interactive-exhibit: claims about itself)"],
   ["JPL Horizons (https://ssd.jpl.nasa.gov/horizons/) osculating elements for the Moon about Earth, served in coverage_index.json with its measured trust window (two-body rate check against Horizons, gallery-cache-builder).",
    "the page's own account of its data, with its source"],
@@ -493,8 +503,12 @@ const ROOMS = {
       p.features = masked(p.features, mode === "scaled", false);
       if (mode === "scaled") {
         if (p.poleOfDate) { p.poleOfDate = masked(p.poleOfDate, true, false); }
-        if (p.earthPeriod) { p.earthPeriod = masked(p.earthPeriod, true, false); }
       }
+      // L-541: Earth's period is served words too -- since L-535 its
+      // reason sentence, which reached the recorded scene when it was
+      // re-recorded on 2026-11-21 -- so it is masked in both passes, as
+      // the Moon's period is, its numbers scaled in the scaled pass.
+      if (p.earthPeriod) { p.earthPeriod = masked(p.earthPeriod, mode === "scaled", false); }
       // L-513: the Moon's text box words, served on its config entry --
       // its name, description and link (the objects mirror), its period,
       // and its accuracy's citation (the constants mirror) -- masked by
@@ -505,7 +519,7 @@ const ROOMS = {
       if (p.earth) { p.earth = masked(p.earth, mode === "scaled", false); }
     }
     return EG.composeScene(p, { GF: GF, halfRangeAu: 6.155e-5,
-      epochIso: new Date((p.epochJd - 2440587.5) * 86400000).toISOString().slice(0, 10)
+      epochIso: new Date((p.moment_utc_jd - 2440587.5) * 86400000).toISOString().slice(0, 10)
     }).traces;
   }
 };

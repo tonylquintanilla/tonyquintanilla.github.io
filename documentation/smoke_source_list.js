@@ -51,6 +51,11 @@
 // Role: devtool
 // Domain: dev_tools
 
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+// rooms' clock: the recorded Earth scene's date is the driver's
+// moment_utc_jd, the date line's minute on UTC, since the old epochJd is
+// gone.)
+
 "use strict";
 const fs = require("fs");
 const path = require("path");
@@ -207,7 +212,7 @@ const sunTraces = GF.buildFeatureTraces(
   { sun: { name: "Sun", position: [0, 0, 0] } }, { sceneHalfRangeAu: 1.1 }).traces;
 const p = JSON.parse(read("documentation/payload_earth_scene.json"));
 const earthTraces = EG.composeScene(p, { GF: GF, halfRangeAu: 6.155e-5,
-  epochIso: new Date((p.epochJd - 2440587.5) * 86400000).toISOString().slice(0, 10) }).traces;
+  epochIso: new Date((p.moment_utc_jd - 2440587.5) * 86400000).toISOString().slice(0, 10) }).traces;
 
 function room(name, traces) {
   // One entry per legend group, the legend trace's meta winning, as the

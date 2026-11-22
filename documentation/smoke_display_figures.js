@@ -340,9 +340,18 @@ const SOFT_BR = "<br soft>";
 // beyond it." The old fixture failed on exactly that one, by name, before
 // the re-record; every other hover is byte for byte. The 9c6093af one is
 // left in place, unreferenced.
-const FIXTURE_AT = "49d1bae1";
+// L-541 (the rooms' clock), November 21, 2026: re-recorded as
+// fixture_hovers_L541_on_7d1e2e16.json, from the Earth scene re-recorded
+// after the build that serves the clock (tools/record_earth_scene.py).
+// Three hovers moved, each on purpose: "scene/Earth: Sun Direction" and
+// "scene/moon#2" follow the re-recorded scene's date and positions, and
+// "scene/moon#4", the Moon's arc, also says its dates are on JPL's clock.
+// The old fixture failed on exactly these three, by name, before the
+// re-record; every other hover is byte for byte. The 49d1bae1 one is left
+// in place, unreferenced. Updated with Anthropic's Claude Opus 5.5.
+const FIXTURE_AT = "7d1e2e16";
 const FIXTURE = path.join(root, "documentation",
-                          "fixture_hovers_L515b_on_49d1bae1.json");
+                          "fixture_hovers_L541_on_7d1e2e16.json");
 
 const failures = [];
 function fail(msg) { failures.push(msg); }

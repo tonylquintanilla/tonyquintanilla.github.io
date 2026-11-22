@@ -139,6 +139,15 @@ window's frame, each planted; a build aborting on a short file; JPL
 answering a number as an asteroid refused by name; a failed fetch served
 last-good; the nightly's shrink gate passing; and no point's number read
 as a centre, with a planted lookup that reads 31 as 3.)
+Module updated: November 21, 2026 with Anthropic's Claude Opus 5.5
+(L-541, the rooms' clock: stand-ins for the clock question and the witness
+(fake_clock_rows) and for astropy's clock, so the suite asks JPL nothing
+and reads no leap-second table; the first build serves the clock block and
+the witness; clock_checks stops the build by name on JPL a second off
+astropy, a leap second inside the window with both agreeing (the window
+check alone), JPL naming another body, JPL not answering, a witness
+answered late and a witness not in the config; the fresh-answer check
+holds the clock question to cache=False.)
 """
 import contextlib
 import io
@@ -496,7 +505,35 @@ def stand_in_plans(cfg):
 # a recorder in place of astroquery.
 _REAL_FETCHES = {n: getattr(b, n) for n in (
     'fetch_vectors_range', 'fetch_elements', 'fetch_solution_tp',
-    'fetch_pole_radec', 'fetch_orbit_plane', 'fetch_point_vectors')}
+    'fetch_pole_radec', 'fetch_orbit_plane', 'fetch_point_vectors',
+    'fetch_clock_rows')}
+
+
+# L-541 (the rooms' clock): stand-ins for the clock question and the
+# witness, so the suite asks JPL nothing, and for astropy's clock, so it
+# reads no leap-second table either. FAKE_CLOCK_S is a stand-in figure,
+# not the served one; the real answer is read live at every build.
+FAKE_CLOCK_S = 69.183
+
+
+def fake_utc_jd_to_tdb_jd(utc_jd):
+    return utc_jd + FAKE_CLOCK_S / 86400.0
+
+
+def fake_astropy_tdb_minus_utc_s(utc_jd):
+    return FAKE_CLOCK_S + 0.000004
+
+
+def fake_astropy_clock_source():
+    return "astropy (stand-in), Time, TDB minus UTC"
+
+
+def fake_clock_rows(obj, tdb_jds, hkwargs=None):
+    hid = str(obj['horizons_id'])
+    return [{'jd': t, 'tdb_minus_ut_s': FAKE_CLOCK_S,
+             'x': 1.0e7 + i, 'y': 2.0e7, 'z': 3.0e3,
+             'targetname': 'Stand-in (%s)' % hid}
+            for i, t in enumerate(tdb_jds)]
 
 
 def install_mocks():
@@ -508,6 +545,10 @@ def install_mocks():
     b.fetch_point_vectors = fake_point_vectors      # L-297
     b.fetch_solution_tp = fake_solution_tp
     b.fetch_small_body_2xr = fake_2xr
+    b.fetch_clock_rows = fake_clock_rows                    # L-541
+    b.utc_jd_to_tdb_jd = fake_utc_jd_to_tdb_jd
+    b.astropy_tdb_minus_utc_s = fake_astropy_tdb_minus_utc_s
+    b.astropy_clock_source = fake_astropy_clock_source
     b._NOW_OVERRIDE = FIXED_NOW
 
 
@@ -594,6 +635,22 @@ def main():
               "every configured object served (%d of %d)" % (len(objs), n_cfg))
         check(idx['attribution'] == 'Data: JPL/NASA Horizons', "attribution present")
         check('served_window' in idx, "served_window field present")
+        # L-541: the index serves the clock and the witness, read from the
+        # stand-in JPL, so a room converts its UTC minute once.
+        _ck, _wt = idx.get('clock') or {}, idx.get('witness') or {}
+        check(_ck.get('tdb_minus_utc_s') == FAKE_CLOCK_S
+              and _ck.get('figure_from') == 'jpl'
+              and set(_ck.get('minutes_utc_jd') or {}) == {'start', 'at', 'end'}
+              and bool((_ck.get('jpl') or {}).get('source'))
+              and bool((_ck.get('astropy') or {}).get('source')),
+              "L-541: the index serves the clock block, JPL's figure at the "
+              "build's minute with both figures' sources (%r)"
+              % _ck.get('tdb_minus_utc_s'))
+        check(sorted((_wt.get('bodies') or {})) == sorted(b.WITNESS_BODIES)
+              and abs((_wt.get('minute_tdb_jd', 0) - _wt.get('minute_utc_jd', 0))
+                      * 86400 - FAKE_CLOCK_S) < 1e-3,
+              "L-541: the index serves the witness, %s at the build's minute "
+              "on JPL's clock" % ' and '.join(sorted(_wt.get('bodies') or {})))
 
         # schema parity fields present on a planet
         e = objs['earth']
@@ -1793,6 +1850,7 @@ def main():
     hold_checks(cfg, check)
     spacecraft_id_checks(cfg, check)
     point_checks(cfg, check)
+    clock_checks(cfg, check)
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
@@ -2309,6 +2367,10 @@ def fresh_answer_checks(check):
         ('orbit plane', lambda: _REAL_FETCHES['fetch_orbit_plane'](2461342.5)),
         ('a Lagrange point', lambda: _REAL_FETCHES['fetch_point_vectors'](
             '3012', 'id', '@399', day, day + timedelta(days=1))),
+        # L-541: the clock question and the witness.
+        ('the clock and the witness', lambda: _REAL_FETCHES['fetch_clock_rows'](
+            {'horizons_id': '199', 'id_type': 'majorbody',
+             'canonical_center': '@sun'}, [2461342.5])),
     ]
     real_h, real_req = b.Horizons, b._require_astro
 
@@ -2340,6 +2402,84 @@ def fresh_answer_checks(check):
     check(len(planted) == len(calls) and all(c is True for _n, c in planted),
           "L-399: planted fault caught -- with the setting turned on, every "
           "question would read astroquery's saved answers")
+
+
+def clock_checks(cfg, check):
+    """L-541 (the rooms' clock): build_clock and build_witness on the
+    stand-in JPL. The figure served is JPL's at the build's minute; each
+    fault stops the build by name -- JPL a second off astropy, a leap
+    second inside the window with JPL and astropy agreeing (the window
+    check alone), JPL naming another body, JPL not answering, a witness
+    answered at another moment, and a witness not in the config."""
+    win = {'start_jd': 2461278.4, 'end_jd': 2461454.4}
+    now = 2461366.5 + 7.5 / 1440.0
+
+    def stopped(fetch=None, astro=None, objs=None, witness_fetch=None):
+        real = b.astropy_tdb_minus_utc_s
+        if astro:
+            b.astropy_tdb_minus_utc_s = astro
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                blk, rows = b.build_clock(objs or cfg['objects'], win, now, fetch=fetch)
+                b.build_witness(objs or cfg['objects'], blk, rows, fetch=witness_fetch)
+            return None
+        except b.ValidationAbort as exc:
+            return str(exc)
+        finally:
+            b.astropy_tdb_minus_utc_s = real
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        blk, rows = b.build_clock(cfg['objects'], win, now)
+        wit = b.build_witness(cfg['objects'], blk, rows)
+    check(blk['tdb_minus_utc_s'] == FAKE_CLOCK_S
+          and blk['minutes_utc_jd']['at'] == math.floor(now * 1440) / 1440
+          and wit['bodies']['mercury']['x_km'] == rows[1]['x'],
+          "L-541: the clock is JPL's figure at the build's whole minute, and "
+          "Mercury's witness is the clock question's own answer there")
+
+    def shifted(start=0.0, end=0.0, name=None, gone=False):
+        def f(obj, tdb_jds, hkwargs=None):
+            if gone:
+                raise RuntimeError("no answer")
+            r = fake_clock_rows(obj, tdb_jds, hkwargs)
+            r[0]['tdb_minus_ut_s'] += start
+            r[-1]['tdb_minus_ut_s'] += end
+            if name:
+                for x in r:
+                    x['targetname'] = name
+            return r
+        return f
+
+    why = stopped(fetch=shifted(start=1.0))
+    check(why is not None and 'apart' in why,
+          "L-541: JPL a second off astropy at the window's start stops the "
+          "build by name (%s)" % (why or 'NOT stopped')[:80])
+    def astro_leap(utc_jd):
+        return FAKE_CLOCK_S + (1.0 if utc_jd >= win['end_jd'] - 1e-9 else 0.0)
+    why = stopped(fetch=shifted(end=1.0), astro=astro_leap)
+    check(why is not None and 'moves' in why and 'leap second' in why,
+          "L-541: a leap second inside the window, JPL and astropy agreeing, "
+          "stops the build by the window check alone (%s)" % (why or 'NOT stopped')[:80])
+    why = stopped(fetch=shifted(name='Venus (299)'))
+    check(why is not None and 'named' in why,
+          "L-541: JPL naming another body for the clock stops the build (%s)"
+          % (why or 'NOT stopped')[:70])
+    why = stopped(fetch=shifted(gone=True))
+    check(why is not None and 'did not answer' in why,
+          "L-541: JPL not answering the clock question stops the build (%s)"
+          % (why or 'NOT stopped')[:70])
+
+    def late(obj, tdb_jds, hkwargs=None):
+        return fake_clock_rows(obj, [t + 120.0 / 86400.0 for t in tdb_jds], hkwargs)
+    why = stopped(witness_fetch=late)
+    check(why is not None and 'answered JD' in why,
+          "L-541: a witness answered two minutes late stops the build (%s)"
+          % (why or 'NOT stopped')[:70])
+    without = [o for o in cfg['objects'] if o.get('slug') != 'atlas_3i']
+    why = stopped(objs=without)
+    check(why is not None and 'atlas_3i' in why and 'not in the config' in why,
+          "L-541: a witness not in the config stops the build (%s)"
+          % (why or 'NOT stopped')[:70])
 
 
 def hold_checks(cfg, check):

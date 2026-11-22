@@ -14,6 +14,10 @@ Trace roles are a closed vocabulary so the L-080 harness can fingerprint
 Plotly trace internals.
 
 Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
+Module updated: November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541,
+the rooms' clock: AssemblyContext carries the minute asked on UTC,
+asked_utc_jd, beside resolved_epoch_jd, which is now that minute on JPL's
+clock, and the served difference between them, tdb_minus_utc_s.)
 
 Role: data
 Domain: assembler
@@ -105,7 +109,17 @@ class FeatureRequest:
 
 @dataclass(frozen=True)
 class AssemblyContext:
-    """Frozen truth for one assembly. Nothing downstream reinterprets it."""
+    """Frozen truth for one assembly. Nothing downstream reinterprets it.
+
+    L-541 (the rooms' clock): two Julian dates, one per clock.
+    asked_utc_jd is the minute asked, on UTC, the visitor's clock: the
+    date line prints it, and the served window is checked against it.
+    resolved_epoch_jd is that minute on JPL's clock (TDB), the asked
+    minute plus the served difference (tdb_minus_utc_s, from the cache's
+    clock block): every lookup of JPL's data and every subtraction from
+    one of JPL's dates uses it. None of the difference is ever added
+    again downstream. tdb_minus_utc_s is None where the cache serves no
+    clock block, and the two dates are then equal and a warning says so."""
     scene_spec: SceneSpec
     resolved_epoch_jd: float
     center: str
@@ -114,6 +128,8 @@ class AssemblyContext:
     feature_requests: Tuple[FeatureRequest, ...]
     cache_snapshot_id: str
     warnings: Tuple[str, ...] = ()
+    asked_utc_jd: Optional[float] = None
+    tdb_minus_utc_s: Optional[float] = None
 
 
 @dataclass

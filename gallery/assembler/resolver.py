@@ -27,6 +27,13 @@ Module created: July 2026 with Anthropic's Claude Opus 4.8 (Phase 2 artifact 1).
 Module updated: August 2026 with Anthropic's Claude Opus 5 (L-234: the
 scene CENTER's features are dispatched too -- a center body is not in
 scene_spec.objects, so its shells were unreachable by construction).
+Module updated: November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541,
+the rooms' clock: the one seam. The minute asked is UTC and is checked
+against the served window, which is on UTC; the served difference between
+JPL's clock and UTC is then added once, and resolved_epoch_jd is the date on
+JPL's clock that every served date is on. The context also carries
+asked_utc_jd for the date line. No clock block served: drawn as before,
+with a warning.)
 
 Role: computation
 Domain: assembler
@@ -81,6 +88,20 @@ def _iso_to_jd(iso: str) -> float:
     return jdn + frac
 
 
+def _served_difference_s(clock) -> Any:
+    """L-541: the seconds JPL's clock (TDB) runs ahead of UTC, as the
+    builder serves them on the index's clock block, or None where no
+    usable block is served. Read, never typed: the page and the assembler
+    hold no figure of their own."""
+    if not isinstance(clock, dict):
+        return None
+    v = clock.get("tdb_minus_utc_s")
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return None
+    v = float(v)
+    return v if v == v and v not in (float("inf"), float("-inf")) else None
+
+
 def _norm_center(s: str) -> str:
     return (s or "").lstrip("@").strip().lower()
 
@@ -127,7 +148,15 @@ def resolve(scene_spec: SceneSpec, catalog: Catalog,
             warnings.append("Unrecognized scene-spec field '%s' ignored." % f)
 
     # 3. Date resolution + served_window bound.
-    resolved_jd = _iso_to_jd(scene_spec.epoch)
+    # L-541 (the rooms' clock), THE ONE SEAM. The minute asked is UTC, the
+    # visitor's clock. The served window is made on UTC too (the builder's
+    # served_window_from: the build's UTC minute, plus or minus its span),
+    # so the minute is checked against it BEFORE anything is converted:
+    # the last minute allowed, and the refusal past it, are as they were.
+    # Then the served difference is added once, here, and the result is
+    # the date on JPL's clock (TDB) that every one of JPL's dates is on.
+    # Nothing downstream converts again.
+    asked_utc_jd = _iso_to_jd(scene_spec.epoch)
     served_window = cache.served_window()
     if served_window is None:
         warnings.append(
@@ -136,12 +165,25 @@ def resolve(scene_spec: SceneSpec, catalog: Catalog,
         )
     else:
         lo, hi = served_window.get("start_jd"), served_window.get("end_jd")
-        if lo is not None and hi is not None and not (lo <= resolved_jd <= hi):
+        if lo is not None and hi is not None and not (lo <= asked_utc_jd <= hi):
             from .errors import OutOfServedWindowError
             raise OutOfServedWindowError(
                 "Requested epoch (JD %.4f) is outside the served_window "
-                "[%.4f, %.4f]." % (resolved_jd, lo, hi)
+                "[%.4f, %.4f]." % (asked_utc_jd, lo, hi)
             )
+    tdb_minus_utc_s = _served_difference_s(cache.clock())
+    if tdb_minus_utc_s is None:
+        # The coordinating session's go-ahead for L-541's Part B
+        # (2026-11-21), change 3: with no clock block the room draws as it
+        # did before, and says so by name; it does not refuse.
+        warnings.append(
+            "the served cache carries no clock block (L-541), so the minute "
+            "shown is used on JPL's own clock without the difference to UTC "
+            "being added; the cache builder serves it at its next run."
+        )
+        resolved_jd = asked_utc_jd
+    else:
+        resolved_jd = asked_utc_jd + tdb_minus_utc_s / 86400.0
 
     center = _norm_center(scene_spec.center)
     frame_labels = set()
@@ -241,4 +283,6 @@ def resolve(scene_spec: SceneSpec, catalog: Catalog,
         feature_requests=tuple(feature_reqs),
         cache_snapshot_id=cache.snapshot_id(),
         warnings=tuple(warnings),
+        asked_utc_jd=asked_utc_jd,
+        tdb_minus_utc_s=tdb_minus_utc_s,
     )

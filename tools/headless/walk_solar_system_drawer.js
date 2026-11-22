@@ -189,6 +189,10 @@
 // by its distance now (L-297); Earth's folds come in the website's order,
 // its Saved pictures last, and an encounter, a scene or a link is never
 // counted among its pictures (L-529, L-540).
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+// rooms' clock): a moon's past-span test subtracts the payload's
+// moment_tdb_jd, the minute on JPL's clock, from its elements' date, as
+// the page does; the old epoch_jd is gone.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -1887,7 +1891,7 @@ async function linksFold(root, payload, page) {
     const printedKm = Number((/\(([\d,]+) km\)/.exec(distLine) || [0, "0"])[1].replace(/,/g, ""));
     ok(ioText[0] === "Io" && printedKm > 0 && Math.abs(printedKm - km) <= Math.max(1, km * 0.01),
        "Io's box does not open on its name and its distance from Jupiter: " + ioText.slice(0, 3).join(" | ") + " against " + km + " km");
-    const past = Math.abs(data.epoch_jd - cb.io.trust.element_epoch_jd) > cb.io.trust.delta_days;
+    const past = Math.abs(data.moment_tdb_jd - cb.io.trust.element_epoch_jd) > cb.io.trust.delta_days;
     // Tony's words of 2026-11-10, the orbit's date on JPL's clock.
     const spanSaid = ioText.join(" ").indexOf("but is outside that orbit's best-accuracy window of") >= 0;
     ok(spanSaid === past, "Io's box " + (spanSaid ? "says" : "does not say") + " it is past its checked span; " +
@@ -2262,7 +2266,7 @@ async function linksFold(root, payload, page) {
       const printed = (/\(([\d,]+) km\)/.exec(distLine) || [0, ""])[1];
       const printedKm = Number(printed.replace(/,/g, ""));
       const acc = ((cbM[moon] || {}).accuracy || {}).value;
-      const past = Math.abs(data.epoch_jd - cbM[moon].trust.element_epoch_jd) > cbM[moon].trust.delta_days;
+      const past = Math.abs(data.moment_tdb_jd - cbM[moon].trust.element_epoch_jd) > cbM[moon].trust.delta_days;
       const accWords = "This distance is rounded to JPL's published accuracy for " + name + "'s orbit around Mars.";
       const all = lines.join(" ");
       ok(EM("sunLabelGroup") === idxM(moon) && lines[0] === name && acc === 10 &&

@@ -61,6 +61,11 @@
 //
 // Written October 18, 2026 with Anthropic's Claude Opus 5.5 (L-455).
 
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+// rooms' clock: the recorded Earth scene's date is the driver's
+// moment_utc_jd, the date line's minute on UTC, since the old epochJd is
+// gone; it only dates the hovers.)
+
 "use strict";
 
 const fs = require("fs");
@@ -239,7 +244,7 @@ function buildRooms(config) {
         if (p.poleOfDate) { p.poleOfDate = prepare(p.poleOfDate, mode, false); }
         if (p.earthPeriod) { p.earthPeriod = prepare(p.earthPeriod, mode, false); }
       }
-      const jd = p.epochJd + (mode === "scaled" ? SHIFT_DAYS : 0);
+      const jd = p.moment_utc_jd + (mode === "scaled" ? SHIFT_DAYS : 0);
       return EG.composeScene(p, { GF: GF, halfRangeAu: 6.155e-5,
         epochIso: new Date((jd - 2440587.5) * 86400000).toISOString().slice(0, 10)
       }).traces;

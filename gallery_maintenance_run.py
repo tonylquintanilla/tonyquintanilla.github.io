@@ -276,6 +276,14 @@ Module updated: November 20, 2026, night, with Anthropic's Claude Opus 5.5
 (L-540: the "Link cards" checker runs tools/test_link_card.py, the logic
 behind the gallery editor's New Link Card window, and gates, its
 self-test breaking the real file two ways.)
+Module updated: November 21, 2026 with Anthropic's Claude Opus 5.5
+(L-541, the rooms' clock: the "Room clock" checker runs
+documentation/smoke_room_clock.js and gates, in the night pass too -- the
+room's places of the builder's two witnesses, Mercury and 3I/ATLAS, held
+within their boxes' error of JPL's places at the minute shown, the same
+with the clock block taken out shown red every run, and every body from
+served points keeping its place at the window's last minute, a planted
+case named.)
 """
 
 import hashlib
@@ -836,6 +844,18 @@ OFFLINE_CHECKERS = [
     # three ways first. Gates.
     ("Scene address", "node",
      ["documentation/smoke_scene_address.js"], ".", "===", False),
+
+    # L-541 (2026-11-21, the rooms' clock): a body is drawn where JPL
+    # puts it at the UTC minute the date line shows. It reads the served
+    # clock block and witness (JPL's places of Mercury and 3I/ATLAS at the
+    # build's minute), works the two places out with the real assembler
+    # and prints each against the error its box prints by, the real
+    # gallery/solar_system_figures.js's; the same with the clock block
+    # taken out must be red, by about 69 seconds of motion, every run; and
+    # at the window's last minute every body from served points keeps its
+    # place, a planted case named. Gates.
+    ("Room clock", "node",
+     ["documentation/smoke_room_clock.js"], ".", "===", False),
 
     # L-281 (2026-09-26): the lobby's guest book. It renders the real
     # data/guestbook.json with the real gallery/guestbook.js and fails

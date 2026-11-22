@@ -364,8 +364,10 @@ page:
   (`SOLAR_SYSTEM_CENTRE_WORDS`): another reference measuring the orbit
   from the solar system's centre of mass, or on another date, gives
   slightly different numbers, because the Sun itself moves around that
-  centre. The 69 seconds is typed in the page; a row for it is a
-  candidate on L-504.
+  centre. The seconds are read from the served difference between JPL's
+  clock and UTC (`solarSystemClockWords`, from `sceneClockS`; L-541), to
+  the whole second, and the bracket reads "(TDB; Julian date <JD>)" where
+  none is served.
 - **The orbit is drawn around the period's centre** (v1.15, L-431 build
   3). Where a body's period is around the solar system's barycentre,
   the served cache carries `drawn_orbit`, the body's elements around it
@@ -511,6 +513,83 @@ silently.
   (`walk_scene_moment.js`, each room opened plainly and with
   `&freeze=1`; the harness's `boot` takes `{query}`, and keeps what the
   page hands Pyodide on `window.__pyGlobals`).
+
+**THE ROOMS' CLOCK: A BODY IS DRAWN WHERE JPL PUTS IT AT THE MINUTE SHOWN**
+(L-541; Tony's ruling of 2026-11-21, 16:18 to 16:21: visitors see UTC;
+the date line is the visitor's own UTC minute and does not change; the
+room adds the difference before it looks up JPL's data; a body's source
+line keeps naming JPL's clock for the date of its orbit; a plan's moment
+printed to a visitor is UTC, converted. "Yes".) Every date the builder
+serves from JPL is on JPL's clock, TDB; the minute a room asks is UTC.
+Until this build nothing converted between them, and every body was
+drawn where it was 69 seconds before the minute shown.
+- ONE SEAM, in `gallery/assembler/resolver.py` (`resolve`). The minute
+  asked is read as UTC (`asked_utc_jd`) and checked against the served
+  window, which the builder makes on UTC too (`served_window_from`, the
+  build's UTC minute plus or minus its span): the last minute allowed,
+  and the refusal past it, do not move. Then the served difference
+  (`_served_difference_s`, from the index's clock block through
+  `gallery/assembler/cache_reader.py`'s `clock`) is added once, and
+  `resolved_epoch_jd` is that minute on JPL's clock; the context keeps
+  both and `tdb_minus_utc_s` (`gallery/assembler/models.py`). Nothing
+  below it converts again: the orbits, the served points, the moons,
+  the Lagrange points and a comet's reach all take `resolved_epoch_jd`.
+  With no clock block served the room draws as before and the
+  resolver's warning names it; it never refuses.
+- TWO NUMBERS, NAMED BY CLOCK. The drivers in `interactive.html` hand
+  the page `moment_utc_jd`, the date line's, and `moment_tdb_jd`, the
+  lookups' and the subtractions', and the root's adds the served
+  difference; the old `epoch_jd` and `epochJd` are gone, so a place
+  still reading them prints no date and is named in the warnings
+  rather than using the wrong clock. `sceneMomentStamp` is given only
+  the UTC number. The drift and the checked span
+  (`SolarSystemFigures.distanceLine`, `pastSpan`, `childBox`, and
+  `gallery/earth_geometry.js`'s Moon box) subtract the minute on JPL's
+  clock from the elements' date, which is JPL's. The unused Earth
+  driver reads the resolver's two numbers and converts nothing.
+- A DAY FROM A SERVED POINT'S DATE IS TAKEN FROM THE NEAREST MINUTE
+  (the coordinating session's ruling of 2026-11-21): a craft's or a
+  point's served days in its source line, its path sentence and its
+  ended day (`solarSystemEndedEarly`) are taken back to UTC by the
+  served difference, rounded to the nearest minute, and then read as a
+  day (`solarSystemTdbDay`, from `sceneClockS`, through
+  `SolarSystemFigures.servedDay` and `servedUtcMs`). Its reason: the
+  builder asks its daily points at 00:01:00 on JPL's clock, 9 seconds
+  before UTC midnight, and a printed day claims nothing finer than a
+  minute, so a point asked for a UTC day prints that day (Juno's path
+  ends 26 August 2028). It holds unchanged once the builder asks at true
+  UTC midnight. A plan's moments are not served points: the loiter's
+  days are taken back and read as they are (`planDay`). A date made on
+  UTC (a point's hourly stretch) is printed as it is
+  (`solarSystemJdDay`). The served difference is today's: TDB minus UTC
+  was 48.183 s at the Voyagers' first served days in 1977 and 56.182 s
+  at Galileo's in 1989 (astropy), so an old date taken back by today's
+  figure is up to 27 s early; at every first served day the nearest
+  minute still gives the right UTC day. Earth's Sun line names its elements' date as
+  JPL's clock, and the Moon's arc (the unused Earth driver's) says its
+  dates are on JPL's clock.
+- THE DIFFERENCE IS SERVED, never typed: the index's clock block,
+  written by `tools/gallery_cache_builder.py`'s `build_clock` at every
+  build. JPL's TDB-UT is asked on a vectors query for Mercury at the
+  served window's first and last minute and the build's own (the
+  Horizons manual: "After 1962, UT means UTC"), and astropy's TDB minus
+  UTC is worked out at the same minutes. The build stops, by name, if
+  the two differ by more than `CLOCK_AGREE_S` (a thousandth of a
+  second, under 0.2 km of the fastest served body's motion) or JPL's
+  moves by more than `CLOCK_ENDS_S` across the window (a leap second
+  inside it). The figure the room adds is JPL's at the build's minute;
+  each figure carries its source.
+- THE WITNESS, at every build (`build_witness`): JPL's places of Mercury,
+  worked out by the room from its orbit, and 3I/ATLAS, from served
+  points, at the build's own UTC minute on JPL's clock; Mercury's is the
+  clock question's own answer. CHECKED by the gallery run's Room clock
+  row (`documentation/smoke_room_clock.js`, gates, the night pass too):
+  the real assembler works both places out at that minute and each must
+  lie within the error its box prints of JPL's place, the separation of
+  the two places, never their distances from the Sun; with the clock
+  block taken out the same must be red, by about the 69 seconds of
+  motion, every run; and at the window's last minute every body from
+  served points keeps its place, a planted case named.
 
 **THE SHARED SCENE LINK: THE ADDRESS CARRIES THE ROWS AND THE MINUTE**
 (v1.37, L-518; Tony's rulings of 2026-10-29, 13:07 to 13:27, in the
@@ -1366,7 +1445,10 @@ Plotly.
   launch day is the event's `launch`, JPL's first position, which the
   orrery's plan reads where a loiter begins on the path's first day and
   the mirror copies; without one the sentence starts on the loiter's
-  first day. L2 is named in words only: no room draws it (L-297, the
+  first day. The plan's moments are on JPL's clock: `planDay` takes
+  each back by the served difference and prints its UTC day (L-541),
+  and with no difference served `loiterLine` prints no line and says
+  why. L2 is named in words only: no room draws it (L-297, the
   ten Lagrange points, next). A point the box cannot name is a room
   note, not a line. A loiter is no companion: `path_events` names only
   flyby, arrival and departure bodies, so ticking a craft ticks Earth

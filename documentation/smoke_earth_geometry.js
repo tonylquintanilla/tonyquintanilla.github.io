@@ -50,6 +50,12 @@
 // ground, symmetric about the equator, shaded by its weight, the
 // brightest near the served peak, the marker at the peak on the equator,
 // the hover saying what the dots are -- where the rings were).
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+// rooms' clock: the recorded Earth scene's date is the driver's
+// moment_utc_jd, the date line's minute on UTC, since the old epochJd is
+// gone; and the Moon's arc says its dates are on JPL's clock, TDB, as
+// they are (its window is the trust window around the elements' date),
+// where it said UTC.)
 
 const fs = require("fs");
 const path = require("path");
@@ -133,7 +139,7 @@ if (!POD || !POD.tilt) {
 const fallbackPayload = JSON.parse(JSON.stringify(payload));
 delete fallbackPayload.poleOfDate;
 // The scene's date, for the hovers that print it: the recording's own.
-const EPOCH_DAY = new Date((payload.epochJd - 2440587.5) * 86400000)
+const EPOCH_DAY = new Date((payload.moment_utc_jd - 2440587.5) * 86400000)
   .toISOString().slice(0, 10);
 // L-379 (2026-10-06): the magnetotail and the rotation period are in the
 // recording too. Until it was remade they were laid over it from the
@@ -356,7 +362,7 @@ const moonMarker = moonG.find(t => t.name === "Moon");
 check("Moon: ellipse faint by rgba (no trace opacity), arc white and wide, dates in the hover",
       !!arc && !!ellipse && !!moonMarker && ellipse.line.width === 1.5 && arc.line.width === 6 &&
       ellipse.opacity === undefined && /^rgba\(/.test(ellipse.line.color) && arc.line.color === "rgb(255, 255, 255)" &&
-      /The arc runs from \d{4}-\d\d-\d\d \d\d:00 to \d{4}-\d\d-\d\d \d\d:00 \(UTC\)/.test(
+      /The arc runs from \d{4}-\d\d-\d\d \d\d:00 to \d{4}-\d\d-\d\d \d\d:00 \(JPL's clock, TDB\)/.test(
         moonG.find(t => /trusted arc of the orbit/.test((t.text || [""])[0])).text[0]) &&
       moonG.some(t => t.showlegend === false && /trusted arc of the orbit/.test((t.text || [""])[0])));
 check("arc is the served trust window: " + payload.moonArc.windowDays.toFixed(2) + " days either side",

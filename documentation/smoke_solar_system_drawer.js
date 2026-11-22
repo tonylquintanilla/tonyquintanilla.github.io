@@ -131,6 +131,10 @@
 //      Find with the planet's row; four breaks; and the page's wiring.
 //      Updated November 10, 2026 with Anthropic's Claude Opus 5.5.
 
+// Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+// rooms' clock: the page hands a moon's box the minute on JPL's clock,
+// tdbJd, so the wiring point it looks for names it.)
+
 "use strict";
 const fs = require("fs");
 const path = require("path");
@@ -1073,7 +1077,7 @@ if (/\n    sun: \{/.test(page.slice(page.indexOf("const EXHIBITS = {")))) {
  ["!r.in && !r.under && bodies[r.slug]", "a moon's row can be a spacecraft's companion"],
  ['if (at(".bfold")) { ssBodyFold(grp.key); return; }', "a parent row's arrow does not fold its moons"],
  ["SSD.searchFoldOpen(key, hits)", "a parent's arrow does not show open for a found moon"],
- ["SolarSystemFigures.childBox(b, t.meta.rel_au, epochJd,", "a moon's box is not the Moon's pattern, from its own position around its parent"],
+ ["SolarSystemFigures.childBox(b, t.meta.rel_au, tdbJd,", "a moon's box is not the Moon's pattern, from its own position around its parent"],
  [".sun-row .bfold {", "the page has no style for a parent row's fold arrow"]
 ].forEach(function (c) {
   if (page.indexOf(c[0]) < 0) { failures.push(c[1] + " (L-515 step 2b)"); }

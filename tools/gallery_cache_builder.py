@@ -175,6 +175,21 @@ window, today's point nulled (serve_last_good_point); the validator's #L
 (point_problems) refuses elements, a frame that would join the window, a
 fresh point with no today's point, a gap over a day, or days that stop
 short of either edge.)
+
+Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
+rooms' clock): the index serves a clock block, the seconds JPL's clock (TDB)
+runs ahead of UTC, which the resolver adds once to a room's UTC minute.
+build_clock asks JPL its TDB-UT (a vectors query for Mercury with delta_T)
+at the served window's first and last minute and at the build's own, works
+out astropy's TDB minus UTC at the same minutes, and stops the build, by
+name, if they differ by more than CLOCK_AGREE_S or JPL's moves by more than
+CLOCK_ENDS_S across the window (a leap second inside it). The figure served
+is JPL's at the build's minute; each figure carries its source. The keys
+built from Time(jd).datetime, the plan windows read as UTC and utc_to_tdb's
+whole 69 seconds are named on L-541 and not changed here. The index also
+serves a witness (build_witness): JPL's places of Mercury and 3I/ATLAS at
+the build's own minute, which the gallery run's Room clock row compares
+with the room's working-out; Mercury's is the clock question's answer.
 """
 
 import argparse
@@ -1814,6 +1829,257 @@ POINT_NEAR_STEP = '1h'
 POINT_NEAR_STEP_DAYS = 1.0 / 24.0
 POINT_NEAR_FROM_DAYS = 1   # yesterday, 00:00 UTC
 POINT_NEAR_TO_DAYS = 3     # the end of the day after tomorrow
+
+
+# ===========================================================================
+# L-541 (the rooms' clock): the difference between JPL's clock and UTC
+# ===========================================================================
+# Every date this builder serves from JPL is on JPL's clock, TDB (a point's
+# jd is JPL's datetime_jd; an orbit's epoch_jd is the Julian date asked,
+# which JPL reads as TDB). A room's minute is UTC. So the index serves the
+# difference, worked out twice and compared, and the resolver
+# (gallery/assembler/resolver.py) adds it once to the minute asked. Nothing
+# in the page or the assembler types it.
+#
+# JPL'S FIGURE: Horizons' TDB-UT, asked on a vectors query (astroquery's
+# delta_T, its docstring: "time-varying difference between TDB and UT").
+# The Horizons manual, Specification of Time (read 2026-11-21): "After 1962,
+# UT means UTC". It is the figure the room adds, because JPL's dates are
+# JPL's.
+# ASTROPY'S FIGURE: astropy's Time, TDB minus UTC, from its own leap-second
+# table. A cross-check that cannot share JPL's mistakes, as JPL's figure is
+# the cross-check of astropy's (a stale table on a machine).
+#
+# Both are worked out at the served window's first and last minute and at
+# the build's own minute.
+CLOCK_BODY = 'mercury'
+# The two figures must agree to a thousandth of a second. In a thousandth
+# the fastest served body (Parker Solar Probe, under 200 km/s) moves under
+# 0.2 km, below the whole kilometre that is the finest place any box prints,
+# so a disagreement under it changes nothing a visitor reads; and they
+# agreed to a few millionths on 2026-11-21 (69.182751 s against 69.182747 s
+# at the window's start). A stale leap-second table is off by a whole second.
+CLOCK_AGREE_S = 0.001
+# Across the window JPL's figure may move only by TDB's own periodic swing.
+# The Horizons manual, Specification of Time: "TT periodically differs from
+# TDB by, at most, 0.002 seconds", so TDB-UTC moves by at most twice that
+# between two minutes with no leap second between them. More is a leap
+# second inside the window, and one served figure would be wrong across it.
+CLOCK_ENDS_S = 0.004
+CLOCK_JPL_SOURCE = (
+    "JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), the vector table's "
+    "TDB-UT, asked for Mercury (Horizons id 199) at each minute; the "
+    "Horizons manual, Specification of Time: \"After 1962, UT means UTC\" "
+    "(https://ssd.jpl.nasa.gov/horizons/manual.html, read 2026-11-21)")
+
+
+def utc_jd_to_tdb_jd(utc_jd):
+    """L-541: a UTC Julian date as the Julian date on JPL's clock (TDB),
+    by astropy, so JPL can be asked about a UTC minute exactly."""
+    _require_astro()
+    t = Time(utc_jd, format='jd', scale='utc').tdb
+    return t.jd1 + t.jd2
+
+
+def astropy_tdb_minus_utc_s(utc_jd):
+    """L-541: seconds TDB runs ahead of UTC at a UTC Julian date, by
+    astropy's Time and its leap-second table (the two parts of each Julian
+    date subtracted separately, so the seconds keep their digits)."""
+    _require_astro()
+    u = Time(utc_jd, format='jd', scale='utc')
+    b = u.tdb
+    return ((b.jd1 - u.jd1) + (b.jd2 - u.jd2)) * 86400.0
+
+
+def astropy_clock_source():
+    """L-541: astropy's version and its leap-second table, as the source
+    line of astropy's figure names them."""
+    _require_astro()
+    import astropy
+    try:
+        from astropy.utils.iers import LeapSeconds
+        table = LeapSeconds.auto_open()
+        from_ = table.meta.get('data_url') or 'unnamed'
+        expires = str(table.expires).split(' ')[0]
+    except Exception as exc:  # reported, not swallowed: it is the source line
+        from_, expires = 'not read (%s)' % exc, 'not read'
+    return ("astropy %s (https://www.astropy.org/), Time, TDB minus UTC; "
+            "leap seconds from its table (%s), which expires %s"
+            % (astropy.__version__, from_, expires))
+
+
+def fetch_clock_rows(obj, tdb_jds, hkwargs=None):
+    """L-541: JPL's answer for one body at exact Julian dates on its own
+    clock, with TDB-UT: [{'jd', 'tdb_minus_ut_s', 'x', 'y', 'z',
+    'targetname'}] in request order, km where the room's served points
+    are km. Asked fresh (HORIZONS_CACHE), around the body's own centre,
+    ecliptic, as every served position is; hkwargs, a comet's apparition
+    options (_comet_hkwargs), as its positions are asked."""
+    _require_astro()
+    h = Horizons(id=obj['horizons_id'], id_type=_norm_id_type(obj['id_type']),
+                 location=_normalize_center(obj['canonical_center']),
+                 epochs=list(tdb_jds))
+    eph = h.vectors(refplane='ecliptic', cache=HORIZONS_CACHE, delta_T=True,
+                    **(hkwargs or {}))
+    return [{'jd': float(r['datetime_jd']),
+             'tdb_minus_ut_s': float(r['delta_T']),
+             'x': float(r['x']) * KM_PER_AU, 'y': float(r['y']) * KM_PER_AU,
+             'z': float(r['z']) * KM_PER_AU,
+             'targetname': str(r['targetname'])} for r in eph]
+
+
+def build_clock(config_objects, served_window, now_utc_jd, fetch=None):
+    """L-541: (clock block, JPL's rows) for the index, or ValidationAbort.
+
+    The minutes: the served window's first and last, and the build's own
+    (its UTC minute, rounded down), all UTC. Each is turned to JPL's clock
+    by astropy and asked of JPL, with TDB-UT; astropy works out its own
+    TDB minus UTC at the same minutes. The build stops, by name, when JPL
+    does not answer, when JPL names another body, when the two figures
+    differ by more than CLOCK_AGREE_S at any minute, or when JPL's moves by
+    more than CLOCK_ENDS_S across the window. The figure the room adds is
+    JPL's at the build's minute."""
+    fetch = fetch or fetch_clock_rows
+    body = next((o for o in (config_objects or [])
+                 if isinstance(o, dict) and o.get('slug') == CLOCK_BODY), None)
+    if body is None:
+        raise ValidationAbort("clock: %s is not in the config, so JPL's clock "
+                              "difference cannot be asked" % CLOCK_BODY)
+    at = math.floor(now_utc_jd * 1440.0) / 1440.0
+    names = ['at']
+    minutes = [at]
+    if served_window and served_window.get('start_jd') is not None:
+        names = ['start', 'at', 'end']
+        minutes = [served_window['start_jd'], at, served_window['end_jd']]
+    tdb = [utc_jd_to_tdb_jd(m) for m in minutes]
+    try:
+        rows = fetch(body, tdb)
+    except Exception as exc:
+        raise ValidationAbort("clock: JPL did not answer the clock question "
+                              "for %s (%s)" % (CLOCK_BODY, exc))
+    if len(rows) != len(minutes):
+        raise ValidationAbort("clock: JPL answered %d of %d minutes"
+                              % (len(rows), len(minutes)))
+    want = str(body.get('horizons_id'))
+    for r, t in zip(rows, tdb):
+        if ('(%s)' % want) not in r['targetname']:
+            raise ValidationAbort("clock: JPL named %r, not Horizons id %s"
+                                  % (r['targetname'], want))
+        if abs(r['jd'] - t) * 86400.0 > 1.0:
+            raise ValidationAbort("clock: JPL answered JD %.6f for JD %.6f"
+                                  % (r['jd'], t))
+    jpl = [r['tdb_minus_ut_s'] for r in rows]
+    ast = [astropy_tdb_minus_utc_s(m) for m in minutes]
+    for n, j, a in zip(names, jpl, ast):
+        if abs(j - a) > CLOCK_AGREE_S:
+            raise ValidationAbort(
+                "clock: at the %s minute JPL's TDB-UT is %.6f s and astropy's "
+                "TDB minus UTC is %.6f s, %.6f s apart, more than %.3f s -- a "
+                "stale leap-second table, or a JPL change; nothing is served"
+                % (n, j, a, abs(j - a), CLOCK_AGREE_S))
+    if max(jpl) - min(jpl) > CLOCK_ENDS_S:
+        raise ValidationAbort(
+            "clock: JPL's TDB-UT moves %.6f s across the served window, more "
+            "than %.3f s -- a leap second inside the window, so one figure "
+            "cannot serve it" % (max(jpl) - min(jpl), CLOCK_ENDS_S))
+    i = names.index('at')
+    block = {
+        'tdb_minus_utc_s': jpl[i],
+        'figure_from': 'jpl',
+        'minutes_utc_jd': dict(zip(names, minutes)),
+        'jpl': {'tdb_minus_utc_s': dict(zip(names, jpl)),
+                'source': CLOCK_JPL_SOURCE,
+                'retrieved': _utcnow().isoformat()},
+        'astropy': {'tdb_minus_utc_s': dict(zip(names, ast)),
+                    'source': astropy_clock_source()},
+        'agree_tolerance_s': CLOCK_AGREE_S,
+        'window_tolerance_s': CLOCK_ENDS_S,
+    }
+    print("[CLOCK] JPL's clock runs %.6f s ahead of UTC at %s (JPL); astropy "
+          "agrees to %.6f s at worst over %s"
+          % (jpl[i], datetime.fromtimestamp(round((at - 2440587.5) * 86400.0),
+                                            timezone.utc).strftime('%Y-%m-%d %H:%M UTC'),
+             max(abs(j - a) for j, a in zip(jpl, ast)), ', '.join(names)),
+          flush=True)
+    return block, rows
+
+
+# L-541 (the rooms' clock), THE WITNESS. At each build JPL is asked where two
+# bodies are at one stated UTC minute -- the build's own, turned to JPL's
+# clock by astropy -- and the answers are served on the index. The gallery
+# run's Room clock row (documentation/smoke_room_clock.js) works the same
+# two places out the way the room does and compares the POSITIONS (the
+# go-ahead for Part C, change 2: a distance from the Sun barely changes in
+# 69 s near perihelion or aphelion; a place always moves). The two bodies
+# are the survey's (documentation/SURVEY_L541_clock_69s_20261121.md in the
+# orrery): Mercury, worked out from its orbit, whose 69 s of motion is
+# about 3,700 km against a 1 km box; and 3I/ATLAS, worked out from served
+# points, about 4,100 km against 1 km. Mercury's place is the clock
+# question's own answer at the build's minute, so the night asks JPL one
+# extra question.
+WITNESS_BODIES = (CLOCK_BODY, 'atlas_3i')
+WITNESS_SOURCE = (
+    "JPL Horizons (https://ssd.jpl.nasa.gov/horizons/), vector table, "
+    "ecliptic, measured from the Sun's centre, asked at the build's own "
+    "UTC minute turned to JPL's clock (TDB) by astropy")
+
+
+def build_witness(config_objects, clock, clock_rows, fetch=None):
+    """L-541: the witness block, or ValidationAbort, by name.
+
+    Mercury's place is build_clock's answer at the build's minute; each
+    other witness is asked of JPL at the same Julian date on its clock,
+    with its comet options. The build stops when a witness is not in the
+    config, JPL does not answer, names another body, or answers another
+    moment -- a red night, as a missing witness would make the Room clock
+    row red in any case."""
+    fetch = fetch or fetch_clock_rows
+    names = list((clock.get('minutes_utc_jd') or {}).keys())
+    i = names.index('at')
+    at_row = clock_rows[i]
+    by_slug = {o.get('slug'): o for o in (config_objects or [])
+               if isinstance(o, dict)}
+    bodies = {}
+    for slug in WITNESS_BODIES:
+        obj = by_slug.get(slug)
+        if obj is None:
+            raise ValidationAbort("witness: %s is not in the config" % slug)
+        if slug == CLOCK_BODY:
+            row = at_row
+        else:
+            try:
+                rows = fetch(obj, [at_row['jd']], _comet_hkwargs(obj))
+            except Exception as exc:
+                raise ValidationAbort("witness: JPL did not answer for %s (%s)"
+                                      % (slug, exc))
+            if len(rows) != 1:
+                raise ValidationAbort("witness: JPL answered %d rows for %s"
+                                      % (len(rows), slug))
+            row = rows[0]
+        if str(obj.get('horizons_id')) not in row['targetname']:
+            raise ValidationAbort("witness: JPL named %r for %s, not Horizons "
+                                  "id %s" % (row['targetname'], slug,
+                                             obj.get('horizons_id')))
+        if abs(row['jd'] - at_row['jd']) * 86400.0 > 1.0:
+            raise ValidationAbort("witness: JPL answered JD %.6f for %s, not "
+                                  "JD %.6f" % (row['jd'], slug, at_row['jd']))
+        bodies[slug] = {'x_km': row['x'], 'y_km': row['y'], 'z_km': row['z'],
+                        'jd': row['jd'], 'targetname': row['targetname'],
+                        'horizons_id': obj.get('horizons_id'),
+                        'center': obj.get('canonical_center')}
+    print("[WITNESS] JPL's places of %s served at the build's minute"
+          % ' and '.join(WITNESS_BODIES), flush=True)
+    return {'minute_utc_jd': clock['minutes_utc_jd']['at'],
+            'minute_tdb_jd': at_row['jd'],
+            'bodies': bodies,
+            'source': WITNESS_SOURCE,
+            'retrieved': _utcnow().isoformat()}
+
+
+def write_index(staging, index):
+    """The served index, written as derive_served writes it."""
+    with open(staging / 'coverage_index.json', 'w') as f:
+        json.dump(index, f, indent=2)
 
 
 def served_window_from(results, as_of_jd):
@@ -3463,6 +3729,24 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
 
     index = derive_served(staging, results, defaults, warn, frame=frame,
                           uncertainty=unc, holds=holds)
+
+    # L-541 (the rooms' clock): the difference between JPL's clock and UTC,
+    # JPL's and astropy's, at the served window's first and last minute and
+    # at the build's own. A disagreement or a leap second inside the window
+    # stops the build here, before anything is swapped in.
+    try:
+        index['clock'], _clock_rows = build_clock(
+            config['objects'], index.get('served_window'), _dt_to_jd(_utcnow()))
+        index['witness'] = build_witness(config['objects'], index['clock'],
+                                         _clock_rows)
+    except ValidationAbort as e:
+        run_manifest['structural_validation'] = 'fail: %s' % e
+        _write_run_manifest(staging, run_manifest)
+        print("[ABORT] %s -- no swap, no commit; staging kept at %s"
+              % (e, staging), flush=True)
+        return run_manifest
+    run_manifest['clock'] = {'tdb_minus_utc_s': index['clock']['tdb_minus_utc_s']}
+    write_index(staging, index)
 
     # N3: object-set continuity -- a run must not silently DROP an object the
     # prior generation served (a first appearance on first-build is fine). This
