@@ -549,6 +549,12 @@
         nearest minute (solarSystemTdbDay, SolarSystemFigures.servedDay);
         the source line's seconds are read from it; the loiter's days
         are UTC.)
+     Updated: November 22, 2026 with Anthropic's Claude Fable 5.2
+       (L-544, L4 and L5 tie: in a body's fold two children whose
+        distances differ by less than half a kilometre, the finest a
+        text box prints, are listed by name (DrawerOrder.settleTies), so
+        Earth-Moon L4 is always above L5. They are equally far from
+        Earth, and their figures differ only in the 17th decimal place.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -4297,6 +4303,11 @@ const EXHIBITS = {
             // tree -- is a row folded under its parent's row, right after it,
             // the children by distance: where each one's orbit comes nearest
             // its parent, a(1 - e) (the strict-distance rule of 2026-11-07).
+            // L-544: two children nearer each other than half a kilometre,
+            // the finest a box prints, are listed by name
+            // (DrawerOrder.settleTies): Earth-Moon L4 and L5 are equally
+            // far from Earth, and distance alone changed their order from
+            // minute to minute.
             const kids = payload.children || {};
             const kidBodies = payload.child_bodies || {};
             const nearest = function (s) {
@@ -4313,8 +4324,11 @@ const EXHIBITS = {
             for (let i = allRows.length - 1; i >= 0; i--) {
                 const p = allRows[i];
                 if (typeof p.slug !== "string") { continue; }
-                const mine = Object.keys(kids).filter(function (s) { return kids[s] === p.slug; })
-                    .sort(function (a, b) { return nearest(a) - nearest(b); });
+                const mine = DrawerOrder.settleTies(
+                    Object.keys(kids).filter(function (s) { return kids[s] === p.slug; })
+                        .sort(function (a, b) { return nearest(a) - nearest(b); }),
+                    GalleryFeatures._KM_PER_AU, nearest,
+                    function (s) { return (kidBodies[s] || {}).name || s; });
                 if (!mine.length) { continue; }
                 allRows.splice.apply(allRows, [i + 1, 0].concat(mine.map(function (s) {
                     return { slug: s, under: p.slug };

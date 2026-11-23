@@ -48,6 +48,14 @@
 //     shell drawn at the surface or inside it.
 //   - Two shells that begin at the same distance keep their present
 //     order (the order the renderers emit them, which is the config's).
+//   - Two CHILDREN whose distances differ by less than half a kilometre
+//     are listed by name (settleTies, L-544). Earth-Moon L4 and L5 are
+//     each as far from Earth as the Moon is, and their figures differ
+//     only in the 17th decimal place, so which came first changed from
+//     minute to minute. Half a kilometre is the finest a text box
+//     prints (solar_system_figures.js, FINEST_KM; the Drawer order
+//     check holds TIE_KM equal to it), so no visitor can read the
+//     difference the order would otherwise rest on.
 //   - A row that is not a shell -- the axis, the Sun direction, the
 //     terminator, a frame shape -- keeps its place in the list, and the
 //     shells fill the other places in order. Since L-515 step 2a two do
@@ -82,6 +90,12 @@
 // nearest the centre; placeCentreAndChildren became placeCentre. Earth's
 // Moon moves from after the Hill sphere to between the magnetotail and
 // the Hill sphere.)
+//
+// Module updated: November 22, 2026 with Anthropic's Claude Fable 5.2
+// (L-544, L4 and L5 tie: settleTies and TIE_KM. Two children whose
+// distances differ by less than half a kilometre are listed by name, in
+// plan() and, called by the page, in the root's fold. The shells' order
+// is unchanged.)
 //
 // Role: renderer
 // Domain: gallery
@@ -232,6 +246,50 @@
     return out;
   }
 
+  // L-544 (L4 and L5 tie). Distance cannot order two children that are
+  // equally far from their centre: Earth-Moon L4 and L5 differ only in
+  // the 17th decimal place, by rounding, and the nearer one changed from
+  // minute to minute. So children whose distances differ by less than
+  // TIE_KM are listed by name. TIE_KM is the finest a text box prints,
+  // whole kilometres (solar_system_figures.js, FINEST_KM): nearer than
+  // that no visitor can read which is nearer.
+  // list: already in order of distance. kmPerAu: the served figure; with
+  // none, nothing moves. auOf(x): its distance in AU; one with no finite
+  // distance is never part of a tie. nameOf(x): the name a visitor reads.
+  // eligible(x), if given: false for a row the rule does not reach (a
+  // shell). A tie is a run of neighbours each within TIE_KM of the run's
+  // FIRST, so a long chain of near neighbours cannot drift into one tie.
+  // Two with the same name keep the order they came in.
+  var TIE_KM = 0.5;
+  function settleTies(list, kmPerAu, auOf, nameOf, eligible) {
+    var out = (list || []).slice();
+    if (!(typeof kmPerAu === "number" && kmPerAu > 0)) { return out; }
+    var tieAu = TIE_KM / kmPerAu;
+    var can = function (x) {
+      var v = auOf(x);
+      return (!eligible || eligible(x)) && typeof v === "number" && isFinite(v);
+    };
+    var i = 0;
+    while (i < out.length) {
+      if (!can(out[i])) { i++; continue; }
+      var j = i + 1;
+      while (j < out.length && can(out[j]) &&
+             Math.abs(auOf(out[j]) - auOf(out[i])) < tieAu) { j++; }
+      if (j - i > 1) {
+        var run = out.slice(i, j).map(function (x, n) {
+          return { x: x, n: n, name: String(nameOf(x)) };
+        });
+        run.sort(function (p, q) {
+          if (p.name !== q.name) { return p.name < q.name ? -1 : 1; }
+          return p.n - q.n;
+        });
+        for (var k = 0; k < run.length; k++) { out[i + k] = run[k].x; }
+      }
+      i = j;
+    }
+    return out;
+  }
+
   // The plan for one room. traces: as the room composed them, before any
   // are cut to the view. features: the payload's served features.
   // Returns:
@@ -326,6 +384,12 @@
       if (a.at_surface !== b.at_surface) { return a.at_surface ? 1 : -1; }
       return a.present - b.present;
     });
+    // L-544: two children at one distance, by name. Shells are not
+    // eligible and keep the order above.
+    shells = settleTies(shells, kmPerAu,
+                        function (r) { return r.au; },
+                        function (r) { return r.name || r.key; },
+                        function (r) { return r.child === true; });
     var ordered = [], s = 0;
     for (var i = 0; i < rows.length; i++) {
       ordered.push(rows[i].keeps_place ? rows[i] : shells[s++]);
@@ -340,6 +404,8 @@
 
   global.DrawerOrder = {
     plan: plan,
+    settleTies: settleTies,
+    TIE_KM: TIE_KM,
     FRAME_SHAPES: FRAME_SHAPES,
     // For the check: the same reading of a row, so it does not keep a
     // second copy of which field says where a shell begins.

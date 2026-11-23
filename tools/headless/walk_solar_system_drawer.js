@@ -193,6 +193,10 @@
 // rooms' clock): a moon's past-span test subtracts the payload's
 // moment_tdb_jd, the minute on JPL's clock, from its elements' date, as
 // the page does; the old epoch_jd is gone.
+// Updated November 22, 2026 with Anthropic's Claude Fable 5.2 (L-544, L4
+// and L5 tie): two children nearer each other than half a kilometre are
+// wanted by name, as the page now lists them; until then the walk kept
+// the served order on a tie and went red at the minutes the page did not.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -1833,12 +1837,18 @@ async function linksFold(root, payload, page) {
     // distance from its parent now sets its place among the moons.
     const nearestOf = (s) => (cb[s].kind === "point" && typeof cb[s].dist_au === "number")
       ? cb[s].dist_au : cb[s].a_au * (1 - cb[s].e);
-    // Two at the same distance keep the served order: Earth-Moon L4 and L5
+    // Two nearer each other than half a kilometre, the finest a box
+    // prints, are listed by name (L-544, 2026-11-22): Earth-Moon L4 and L5
     // are equally far from Earth by their geometry, and their served
-    // figures differ only in the 17th place (L-521, 2026-11-21).
+    // figures differ only in the 17th place (L-521, 2026-11-21). Worked
+    // out here, not by the page's settleTies.
+    const kmPerAu = E("GalleryFeatures._KM_PER_AU");
     const byNearest = (a, b) => {
       const dd = nearestOf(a) - nearestOf(b);
-      return Math.abs(dd) < 1e-12 ? 0 : dd;
+      if (Math.abs(dd) * kmPerAu < 0.5) {
+        return cb[a].name < cb[b].name ? -1 : (cb[a].name > cb[b].name ? 1 : 0);
+      }
+      return dd;
     };
     const bf = (p) => row(p).querySelector(".bfold");
     const marker = (k) => E("sunPlotDiv.data").find(t => t.legendgroup === k && t.meta && t.meta.label_target === true);

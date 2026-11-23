@@ -28,7 +28,10 @@
 //          case measured from the drawn traces, as the page measures it;
 //        - a drawing reaching the body's surface begins at the surface and
 //          sorts after what is drawn there; equal distances keep their
-//          present order; a row that is not a shell keeps its place.
+//          present order; a row that is not a shell keeps its place;
+//        - two children of the centre whose distances differ by less
+//          than half a kilometre are listed by name (L-544), by this
+//          check's own pass over its own order.
 //      It fails, naming the room and the first row that differs, on any
 //      difference, and on any warning the plan returns.
 //   3. interactive.html loads the file, plans the order for every room
@@ -41,6 +44,12 @@
 //   Sun's Roche limit put out at 25 solar radii, past the Alfven surface),
 //   which must be named; once with the real file broken so it ignores
 //   distance. A green run has shown it can fail.
+//   L-544 adds a worked case and a fourth break. Two children 3.5e-17 AU
+//   apart, the real Earth-Moon L4 and L5's difference, must be listed L4
+//   then L5 whichever is the nearer, and two a kilometre apart must be
+//   listed by distance; with the real file broken so it settles no tie,
+//   the case must go red. TIE_KM must equal the finest a text box prints
+//   (FINEST_KM), and the page must call settleTies for the root's fold.
 //
 // Module written: October 21, 2026 with Anthropic's Claude Opus 5.5 (new,
 // L-460).
@@ -63,6 +72,10 @@
 // rooms' clock: the recorded Earth scene's date is the driver's
 // moment_utc_jd, the date line's minute on UTC, since the old epochJd is
 // gone.)
+// Updated November 22, 2026 with Anthropic's Claude Fable 5.2 (L-544, L4
+// and L5 tie: two children at one distance are listed by name. The order
+// wanted follows the rule by its own pass; a worked case, TIE_KM against
+// FINEST_KM, the page's call and a fourth self-test are new.)
 
 "use strict";
 const fs = require("fs");
@@ -79,6 +92,9 @@ eval(read("gallery/feature_renderers.js"));
 eval(read("gallery/earth_geometry.js"));
 const GF = global.GalleryFeatures;
 const EG = global.EarthGeometry;
+// L-544: the finest a text box prints, read from the file that prints.
+eval(read("gallery/solar_system_figures.js"));
+const SSF = global.SolarSystemFigures;
 const coverage = JSON.parse(read("data/solar-system/coverage_index.json"));
 const frameNotes = GF.setFrameConstants(coverage.frame_constants);
 if (frameNotes.length) fail("frame constants not served: " + frameNotes.join("; "));
@@ -198,7 +214,7 @@ function expected(DO, traces, features, opts) {
       const v = drawnNearestAu(traces, g.idx);
       if (!isFinite(v)) { r.how = "a child, nearest point drawn (not readable)"; return r; }
       r.how = "a child of the centre, nearest point drawn";
-      r.fixed = false; r.au = v;
+      r.fixed = false; r.au = v; r.child = true;
       return r;
     }
     if (!g.shell) { r.how = "not a shell, keeps its place"; return r; }
@@ -227,6 +243,18 @@ function expected(DO, traces, features, opts) {
   });
   const shells = rows.filter(r => !r.fixed).sort((a, b) =>
     (a.au - b.au) || ((a.surface ? 1 : 0) - (b.surface ? 1 : 0)) || (a.present - b.present));
+  // L-544: two children nearer each other than half a kilometre, by name.
+  // This check's own pass, not the file's: neighbours are swapped until
+  // none is out of order.
+  for (let again = true; again;) {
+    again = false;
+    for (let i = 0; i + 1 < shells.length; i++) {
+      const p = shells[i], q = shells[i + 1];
+      if (p.child && q.child && Math.abs(p.au - q.au) * KM_PER_AU < 0.5 && p.name > q.name) {
+        shells[i] = q; shells[i + 1] = p; again = true;
+      }
+    }
+  }
   let s = 0;
   const ordered = rows.map(r => r.fixed ? r : shells[s++]);
   // L-515 step 2a: the centre's row first, every other row in its place.
@@ -254,6 +282,45 @@ function compare(room, DO, built, features) {
     }
   }
   return { bad: bad, want: want, got: got };
+}
+
+// --- L-544: two children at one distance ----------------------------------
+// Earth-Moon L4 and L5 are each as far from Earth as the Moon is. The two
+// distances below are the Solar System room's own, from its driver run on
+// the served cache at 2026-11-23 04:10 UTC (tools/headless/
+// run_room_driver.py): 3.5e-17 AU apart, L5 the nearer at that minute and
+// L4 at others. They are a worked example, not a served fact. Each child
+// is one marker on the x axis, as a point is drawn; the Moon is put
+// clearly nearer, so it is in no tie.
+function tieCase(DO) {
+  const bad = [];
+  const FAR = 0.0024446728224581265, NEAR = 0.0024446728224580914;
+  const mark = (key, name, au) => ({ type: "scatter3d", mode: "markers", legendgroup: key,
+                                     name: name, showlegend: true, x: [au], y: [0], z: [0] });
+  const opts = { centreKey: "center", children: ["em_l4", "em_l5", "moon"] };
+  const run = (l4, l5) => DO.plan(
+    [mark("center", "Earth", 0), mark("em_l5", "Earth-Moon L5", l5),
+     mark("moon", "Moon", 0.002389), mark("em_l4", "Earth-Moon L4", l4)],
+    [], KM_PER_AU, opts);
+  const auOf = (got, key) => (got.rows.find(r => r.key === key) || {}).au;
+  const want = "center,moon,em_l4,em_l5";
+  [["L5 the nearer by 3.5e-17 AU", FAR, NEAR], ["L4 the nearer by 3.5e-17 AU", NEAR, FAR],
+   ["the two exactly equal", NEAR, NEAR]].forEach(function (c) {
+    const got = run(c[1], c[2]);
+    // The case is real only if the plan read the two distances it was given.
+    if (auOf(got, "em_l4") !== c[1] || auOf(got, "em_l5") !== c[2]) {
+      bad.push("tie, " + c[0] + ": the plan did not read the two distances given");
+    }
+    if (got.order.join(",") !== want) {
+      bad.push("tie, " + c[0] + ": should be " + want + " but the drawer lists " + got.order.join(","));
+    }
+  });
+  // A kilometre apart is no tie: distance orders them, whatever their names.
+  const apart = run(NEAR + 1 / KM_PER_AU, NEAR).order.join(",");
+  if (apart !== "center,moon,em_l5,em_l4") {
+    bad.push("tie: L5 a kilometre nearer than L4 should be listed first, but the drawer lists " + apart);
+  }
+  return bad;
 }
 
 // When required by tools/headless/walk_drawer_order.js, this file hands
@@ -291,6 +358,14 @@ if (require.main === module) {
   const r3 = compare("earth", loadOrder(SRC.replace(tree, "if (false) {")), ROOMS.earth());
   if (!r3.bad.length) fail("self-test: the check stayed green with the Moon not placed by distance");
   else console.log("  self-test: the Moon not placed by distance -- red: " + r3.bad[0]);
+
+  // 4. L-544: the real file broken so it settles no tie. With L5 the
+  // nearer by 3.5e-17 AU the drawer then lists L5 first, and must be named.
+  const tie = "if (j - i > 1) {";
+  if (SRC.split(tie).length !== 2) { fail("self-test could not break drawer_order.js: the tie line moved"); return; }
+  const r4 = tieCase(loadOrder(SRC.replace(tie, "if (false) {")));
+  if (!r4.length) fail("self-test: the check stayed green with no tie settled");
+  else console.log("  self-test: no tie settled -- red: " + r4[0]);
 })();
 
 // --- 1 and 2: the rooms ---------------------------------------------------
@@ -323,6 +398,20 @@ if (html.indexOf("{ centreKey: SSD0.SUN_KEY, children: SSD0.childrenOf(cfgTree, 
   fail("interactive.html does not hand the plan the centre's row and its children (L-515)");
 }
 
+// --- 4: two children at one distance (L-544) -------------------------------
+tieCase(DO).forEach(fail);
+if (DO.TIE_KM !== SSF.FINEST_KM) {
+  fail("a tie is " + DO.TIE_KM + " km in drawer_order.js but the finest a box prints is " +
+       SSF.FINEST_KM + " km (solar_system_figures.js)");
+}
+if (html.indexOf("const mine = DrawerOrder.settleTies(") < 0) {
+  fail("interactive.html does not settle ties among a body's children in the root's fold (L-544)");
+}
+console.log("");
+console.log("  two children at one distance: Earth-Moon L4 then L5, whichever is nearer by " +
+            "3.5e-17 AU; a kilometre apart, by distance; a tie is under " + DO.TIE_KM +
+            " km, the finest a box prints (" + SSF.FINEST_KM + " km)");
+
 console.log("");
 if (failures.length) {
   console.log("=== DRAWER ORDER: " + failures.length + " FAILURE(S)");
@@ -330,5 +419,6 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("=== DRAWER ORDER: both rooms list their shells and the centre's children " +
-            "where each begins, the centre first; self-test red three times");
+            "where each begins, the centre first; two children at one distance " +
+            "by name; self-test red four times");
 }

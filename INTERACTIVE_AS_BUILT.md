@@ -1051,7 +1051,14 @@ fetched centre rules), which replaced ruling 4's listing by pair.
   points are children of Earth (their `center_slug`), folded under Earth
   by their distance from it now (`dist_au`, a point having no orbit), and
   drawn at Earth's place by ADDING Earth's position to their own
-  (`build_point_child_traces`), never a difference.
+  (`build_point_child_traces`), never a difference. L4 and L5 are each
+  as far from Earth as the Moon is, and their figures differ only in the
+  17th decimal place, so distance cannot order them: children whose
+  distances differ by less than half a kilometre, the finest a box
+  prints (`TIE_KM`, held equal to `FINEST_KM` by the Drawer order
+  check), are listed by name (`settleTies`, in gallery/drawer_order.js;
+  L-544, 2026-11-22), so L4 is always above L5, before and after Earth's
+  fold is drawn.
 - **The page fetches** every point's positions file, rows and children
   alike (`solarSystemPositionFiles`, by the served category).
 - **The box** (`pointBox`): its name; the orrery's words (NASA's, as
