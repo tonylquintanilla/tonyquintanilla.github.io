@@ -284,6 +284,12 @@ within their boxes' error of JPL's places at the minute shown, the same
 with the clock block taken out shown red every run, and every body from
 served points keeping its place at the window's last minute, a planted
 case named.)
+Module updated: November 24, 2026 with Anthropic's Claude Opus 5.5
+(L-538, the orbiters' printed error: the night's pass hands the "Curve
+error" row --night (NIGHT_ARGS), so the night's own run, where tonight's
+build has just written JPL's check points, is red on a capture craft with
+none, and every other run names the craft it could not hold. The check
+points are not committed, by Tony's ruling of Nov 24, 14:00.)
 """
 
 import hashlib
@@ -365,6 +371,15 @@ NIGHT_SKIPS = {
     "Module atlas": ("writes MODULE_ATLAS.md and MODULE_INDEX.md, which are "
                      "documents; the night commits no page or word (Tony's "
                      "R1, 2026-10-25)"),
+}
+
+# L-538 (the orbiters' printed error): arguments the night's pass adds to a
+# row, by its label. The night is told by this flag, never guessed from
+# the computer it runs on: JPL's check points are written by the night's
+# own build and are not committed (Tony's ruling of Nov 24, 14:00), so only
+# the night's run can require them.
+NIGHT_ARGS = {
+    "Curve error": ["--night"],
 }
 
 # ---- offline checkers ------------------------------------------------
@@ -1972,13 +1987,22 @@ def summarize(results, root=None):
     return 1 if (failed or generators_failed) else 0
 
 
+def night_checkers():
+    """OFFLINE_CHECKERS as the night runs them: each row's arguments with
+    NIGHT_ARGS added (L-538)."""
+    return [(label, runner, list(tail) + NIGHT_ARGS.get(label, []), cwd,
+             hint, report_only)
+            for label, runner, tail, cwd, hint, report_only
+            in OFFLINE_CHECKERS]
+
+
 def night_pass(root):
     """L-485: the offline pass for the night. (exit code, results,
     skipped): the Module atlas skipped by name (NIGHT_SKIPS), every
     checker run, and an UNREACHABLE row counted red."""
     results = []
     run_generators(root, results, skip=NIGHT_SKIPS)
-    run_checkers(root, OFFLINE_CHECKERS, results)
+    run_checkers(root, night_checkers(), results)
     code = summarize(results, root)
     unreachable = [row[1] for row in results if row[6] and row[0] == "N-A"]
     if unreachable:

@@ -190,6 +190,38 @@ whole 69 seconds are named on L-541 and not changed here. The index also
 serves a witness (build_witness): JPL's places of Mercury and 3I/ATLAS at
 the build's own minute, which the gallery run's Room clock row compares
 with the room's working-out; Mercury's is the clock question's answer.
+
+Updated November 24, 2026 with Anthropic's Claude Opus 5.5 (L-538, the
+orbiters' printed error): a spacecraft whose plan carries an arrival that
+stays (capture_of) and meets the window (capture_span) is served a fine
+layer, fetched after the window is known and before the Lagrange points
+(process_capture): a point a day across the window and a day past each
+edge from the arrival's day, an hour apart from yesterday to the day after
+tomorrow, each day asked again down CAPTURE_LADDER wherever either test
+finds its figure under its miss -- every served point held out, and JPL's
+own check points every 37 minutes from an offset moved each night
+(build_capture_layer). A craft whose fine points across the window would
+pass CAPTURE_FINE_LIMIT is served them in the band only, with its loop's
+reach around its planet measured from JPL each day (Tony's ruling of Nov
+24). The layer is kept apart in the raw archive and replaced whole each
+night; the check points are saved beside it (raw/checks/); the served
+entry carries a capture block; the validator's #O (capture_problems)
+refuses a missing day or hour, a coarser step, yesterday's hours, a plan
+point inside the span, a block missing or misplaced; a craft at the floor
+or the question limit is served its saved layer, last_good, named. A path
+body never takes part in the window (served_window_from). JPL's header
+for the path, its revision and fit, is read (fetch_path_revised).
+Updated the same day, Part B's second half (the coordinating session's
+second go-ahead): the loop's reach is served in a band-only craft's
+positions file for each day a point a day apart (data.reach_t,
+data.reach_km), which render_spacecraft.position_at adds to the figure as
+R x (1 + L); the night's tests use that figure and count every case, with
+the count without it kept as the floor's witness; #O refuses a day without
+its reach, a reach inside the band, or one served for a craft served
+whole; every fourth check point is saved (CAPTURE_CHECK_SAVE_EVERY), both
+counts served, never committed (.gitignore, Tony's ruling of Nov 24,
+14:00); and capture_of takes every capture a plan carries (captures_of)
+and uses the one whose stretch meets the window.
 """
 
 import argparse
@@ -216,6 +248,11 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 from gallery.assembler.render_orbits import solve_kepler, _elements_to_xyz_au
+# L-538 (the orbiters' printed error): the room's own working-out between
+# served points, so a capture craft's fine layer is tested exactly as the
+# box works it out. A pure function; render_spacecraft imports nothing but
+# math and typing.
+from gallery.assembler.render_spacecraft import position_at as _position_at
 
 # L-322 Stage D: the tilt geometry, the gallery's copy of the orrery's
 # earth_pole_of_date.py. A same-repo import from this script's own folder,
@@ -1348,11 +1385,15 @@ def build_osculating_block(els, expected_center_slug, obj, warn):
     }
 
 
-def build_position_file(root, slug, obj, raw_points):
+def build_position_file(root, slug, obj, raw_points, reach=None):
     """Spacecraft position file, km/JD. Source (schema parity):
     export_orbit_cache.py:write_position_file (orrery 4e2629c). The 0.5 AU frame
     guard there is skipped: it applies only to non-heliocentric/non-arc-natural
-    frames, and spacecraft are arc-natural (exempt)."""
+    frames, and spacecraft are arc-natural (exempt). reach {day: km} (L-538):
+    a band-only capture craft's loop reach, served beside t, x, y, z as
+    data.reach_t (each day's 00:00 UTC, JD) and data.reach_km, which
+    render_spacecraft.position_at adds to the figure; a file without one
+    carries neither key, so every other file is as before."""
     dates = sorted(raw_points.keys())
     if not dates:
         return None
@@ -1371,6 +1412,10 @@ def build_position_file(root, slug, obj, raw_points):
                    'retrieved': datetime.now(timezone.utc).isoformat()},
         'data': {'t': t, 'x': xs, 'y': ys, 'z': zs},
     }
+    if reach:
+        rr = reach_rows(reach)
+        payload['data']['reach_t'] = [d for d, _k in rr]
+        payload['data']['reach_km'] = [k for _d, k in rr]
     outp = root / 'positions' / ("%s.json" % slug)
     outp.parent.mkdir(parents=True, exist_ok=True)
     with open(outp, 'w') as f:
@@ -2099,6 +2144,11 @@ def served_window_from(results, as_of_jd):
             continue
         if is_point(obj):
             continue
+        # L-538: nor does a path body, a capture craft among them, whatever
+        # its frame: it has no trusted span (a spacecraft is arc-natural,
+        # and the suite plants one in the window's frame).
+        if is_path_body(obj):
+            continue
         if r.get('hold') is not None:
             held_out.append(r['slug'])
             continue
@@ -2327,6 +2377,751 @@ def point_problems(o, served_window, staging):
                        "window's last minute, JD %.4f"
                        % (t[-1], served_window['end_jd']))
     return out
+
+
+# ===========================================================================
+# THE ORBITERS (L-538) -- a craft inside a capture is served fine points
+# ===========================================================================
+#
+# A craft that orbits a planet loops between its plan's points (a week
+# apart, thinned), and the box worked its error out between them smaller
+# than its real miss. Tony's rulings: no stopgap (2026-11-19); a point a
+# day across the window and an hour apart near today, each made finer
+# where too coarse, down to a floor (2026-11-23, 23:39, "Yes"); and for a
+# craft whose fine points across the window would not stay small, fine
+# points around today only (2026-11-24, 09:38: "I agree with your
+# recommendation. Fine points around today."). Which craft gets which is
+# decided by a measured size, never by a name (CAPTURE_FINE_LIMIT).
+#
+# Two tests decide a day's step, both each round (the Part A report of
+# 2026-11-24): every served point held out and worked out from the rest
+# as the box works it out; and JPL's own points between the served ones
+# (the check points, every CAPTURE_CHECK_STEP_MIN minutes from an offset
+# moved each night by the date). BepiColombo passed the first with a point
+# a day while its box was wrong at real minutes by up to twice its figure.
+#
+# The fine layer is kept in the raw archive apart from the plan's points
+# and replaced whole each night, never merged, so an hour that left the
+# band and a day that left the window are simply not asked again; inside
+# its span the served file holds only the fine layer (the plan's older
+# points there were a prediction JPL has since revised).
+#
+# Fetched after the window is known and after every path body, like the
+# Lagrange points; a spacecraft is arc-natural and never takes part in
+# the window (served_window_from skips every path body by name).
+
+# The steps a day can be asked at, in minutes; each divides the one above,
+# so a day asked again falls on the minutes it already had.
+CAPTURE_LADDER = (1440, 720, 360, 180, 90, 45, 15, 5, 1)
+# The band near today starts an hour apart (Tony, 2026-11-23).
+CAPTURE_BAND_LADDER = (60, 30, 15, 5, 1)
+# The finest step: the minute, as fine as the archive's keys (MINUTE_KEY).
+CAPTURE_FLOOR_MIN = 1
+# JPL's check points: one every 37 minutes, a step no served step
+# divides, from an offset worked from the build's date (capture_check_offset).
+CAPTURE_CHECK_STEP_MIN = 37
+# A craft whose fine points across the window would pass this many is
+# served fine points in the band only (Tony, 2026-11-24). Measured
+# 2026-11-24 against JPL: Juno's fine layer is 71 to 614 points for every
+# week from now to the end of JPL's data (2028-09-02); BepiColombo's would
+# be 13,138 tonight and 17,650 by January (Part B report). Proposed there
+# and accepted by the coordinating session's second go-ahead, Nov 24.
+CAPTURE_FINE_LIMIT = 3000
+# A night's questions to JPL for one craft (measured: Juno 35); past it the
+# craft fails by name and is served its saved fine layer. Accepted with
+# the limit above.
+CAPTURE_QUESTION_LIMIT = 80
+CAPTURE_ROUNDS = 12
+# Failing days this close share one question, and no question asks for
+# more rows than this (Horizons limits an answer's length; a list of
+# moments is refused past a few hundred, measured 2026-11-24).
+CAPTURE_RUN_GAP_DAYS = 7
+CAPTURE_ROWS_PER_QUESTION = 40000
+# The reach of a band-only craft's loop: JPL's points around its planet's
+# centre, every 10 minutes, the farthest each UTC day (outcome 4 of the
+# go-ahead of 2026-11-24: measured each night, served, never typed). These
+# are not the check points, which test what is worked from them.
+CAPTURE_REACH_STEP = '10m'
+CAPTURE_SCHEMA_VERSION = 1
+# Every fourth check point is saved for the gallery run's Curve error row
+# (the coordinating session's go-ahead of 2026-11-24, as the Part B report
+# recommended: the build tests all of them each night; the saved ones are
+# the row's witness, not its census). Both counts are served. They are
+# never committed (.gitignore; Tony's ruling of 2026-11-24, 14:00): the
+# night's own run holds them where this build writes them, and any other
+# run names the craft it could not hold (tools/test_curve_error.py).
+CAPTURE_CHECK_SAVE_EVERY = 4
+_TDB_UTC_DAYS = 69.184 / 86400.0   # to key a TDB jd to its UTC minute only
+
+
+class CaptureFailed(Exception):
+    """A capture craft's fine layer could not be made: at the floor, past
+    the question limit, or JPL did not answer. The craft is served its
+    saved fine layer, named."""
+
+
+def captures_of(obj):
+    """Every capture a path's plan carries, in time order (L-538): each
+    arrival (the orbiter rule's first nearest approach of a capture,
+    horizons-orbital-mechanics), with its departure, the first one after
+    it from the same body, if any. [{'body', 'arrival', 'departure',
+    'start', 'end'}]: start is the arrival's moment; end is the
+    departure's, or the next arrival's (at another body: JUICE's plan
+    should one day carry Jupiter and then Ganymede), or the end of the
+    plan's span, whichever is first. Read from the plan the entry carries,
+    never a typed list of names. A comet on an open path has none."""
+    if obj.get('category') != 'spacecraft':
+        return []
+    plan = obj.get('path') or {}
+    if not plan.get('span'):
+        return []
+    evs = [e for e in (plan.get('events') or []) if isinstance(e, dict)
+           and e.get('closest')]
+    arrivals = sorted((e for e in evs if e.get('kind') == 'arrival'),
+                      key=lambda e: _parse_calendar(e['closest']))
+    _s0, s1 = _plan_span(plan)
+    out = []
+    for i, arr in enumerate(arrivals):
+        t_arr = _parse_calendar(arr['closest'])
+        deps = sorted((e for e in evs if e.get('kind') == 'departure'
+                       and e.get('body') == arr.get('body')
+                       and _parse_calendar(e['closest']) > t_arr),
+                      key=lambda e: _parse_calendar(e['closest']))
+        ends = [s1]
+        if deps:
+            ends.append(_parse_calendar(deps[0]['closest']))
+        if i + 1 < len(arrivals):
+            ends.append(_parse_calendar(arrivals[i + 1]['closest']))
+        out.append({'body': arr.get('body'), 'arrival': arr['closest'],
+                    'departure': deps[0]['closest'] if deps else None,
+                    'start': t_arr, 'end': min(ends)})
+    return out
+
+
+def capture_of(obj, window=None):
+    """The capture a path's plan carries that matters tonight, or None
+    (L-538): with a window, the one whose stretch meets it (capture_span),
+    else the last; without one, the last. Before Nov 24 only the last
+    arrival was read, so a craft orbiting one body with a later arrival in
+    its plan was not seen as captured (the coordinating session's second
+    go-ahead, fault B)."""
+    caps = captures_of(obj)
+    if not caps:
+        return None
+    if window is not None:
+        for c in reversed(caps):
+            if capture_span(c, window) is not None:
+                return c
+    return caps[-1]
+
+
+def capture_span(cap, window):
+    """(first, last) UTC datetimes at 00:00 of a capture craft's fine
+    layer: from a day before the window's first day (point_span), or the
+    arrival's day, whichever is later, to a day after the window's last
+    day, or the last whole day before the capture ends, whichever is
+    earlier. None when they do not meet: an ended mission, or an arrival
+    after the window."""
+    if cap is None or window is None:
+        return None
+    s0, s1 = point_span(window)
+    day0 = lambda d: d.replace(hour=0, minute=0, second=0, microsecond=0)
+    a = max(s0, day0(cap['start']))
+    z = min(s1, day0(cap['end']))
+    if z - a < timedelta(days=1):
+        return None
+    return a, z
+
+
+def capture_check_offset(today):
+    """Minutes past each span's first minute where the check points begin:
+    worked from the build's date, so the points meet a loop at other places
+    each night (a loop whose period is a multiple of 37 minutes met them
+    at the same few places every night), and a night can be run again."""
+    return 3 + (int(_dt_to_jd(today)) * 11) % CAPTURE_CHECK_STEP_MIN
+
+
+def _step_word(minutes):
+    return {1440: '1d', 60: '1h'}.get(minutes, '%dm' % minutes)
+
+
+def _capture_next(step):
+    ladder = CAPTURE_BAND_LADDER if step in (60, 30) else CAPTURE_LADDER
+    i = ladder.index(step)
+    return ladder[i + 1] if i + 1 < len(ladder) else None
+
+
+def _utc_day(tdb_jd):
+    """The UTC day ('YYYY-MM-DD') a JPL point falls in."""
+    return _jd_to_dt(tdb_jd - _TDB_UTC_DAYS).strftime(DAY_KEY)
+
+
+def _km_rows(points):
+    return sorted((p['jd'], p['x'] * KM_PER_AU, p['y'] * KM_PER_AU,
+                   p['z'] * KM_PER_AU) for p in points.values())
+
+
+def reach_rows(reach):
+    """[(day_start_jd, km)] from a reach {day: km}, as the positions file
+    serves it (data.reach_t, data.reach_km) and position_at takes it, or
+    None for none."""
+    if not reach:
+        return None
+    return [(_dt_to_jd(_parse_calendar(k)), float(v))
+            for k, v in sorted(reach.items())]
+
+
+def capture_held_out(rows, lo_jd, hi_jd, reach=None):
+    """[(jd, miss_km, err_km)] for each served point in [lo, hi] with a
+    point on each side, held out and worked out from the rest by
+    position_at with the figure the box prints (the chord's; curve=False;
+    with the loop's term where a reach is served), as
+    tools/test_curve_error.py does. Only the eight points nearest each
+    are handed over: position_at reads no farther."""
+    out = []
+    n = len(rows)
+    for k in range(1, n - 1):
+        if not (lo_jd <= rows[k][0] <= hi_jd):
+            continue
+        rest = rows[max(0, k - 4):k] + rows[k + 1:min(n, k + 5)]
+        at = _position_at(rest, rows[k][0], reach=reach)
+        if at is None:
+            continue
+        miss = math.sqrt(sum((at['km'][i] - rows[k][i + 1]) ** 2
+                             for i in range(3)))
+        out.append((rows[k][0], miss, at['err_km']))
+    return out
+
+
+def capture_check_misses(rows, checks, reach=None):
+    """[(jd, miss_km, err_km)] for each of JPL's check points inside the
+    served span, the box's figure worked out from the served rows at the
+    check point's minute against JPL's own point there."""
+    out = []
+    for c in checks:
+        at = _position_at(rows, c[0], reach=reach)
+        if at is None:
+            continue
+        miss = math.sqrt(sum((at['km'][i] - c[i + 1]) ** 2 for i in range(3)))
+        out.append((c[0], miss, at['err_km']))
+    return out
+
+
+# Room for arithmetic in kilometres about the Sun: a working-out at 160 AU
+# carries about 0.00002 km of rounding, over test_curve_error's millimetre
+# where the figure is zero (a straight path). A metre is a thousandth of
+# the whole kilometre the box prints at finest, so it moves no digit.
+CAPTURE_MISS_ROOM_KM = 1e-3
+
+
+def _over(found):
+    """The cases whose miss is larger than the figure, with a metre of
+    room for the arithmetic (CAPTURE_MISS_ROOM_KM)."""
+    return [f for f in found if f[1] > f[2] + CAPTURE_MISS_ROOM_KM]
+
+
+def _centre_of_body(name, config_objects):
+    """JPL's centre for a capture's body, the body's own centre ('@<id>',
+    as _normalize_center asks it), from its config entry, or None."""
+    for o in config_objects or []:
+        if o.get('name') == name and o.get('horizons_id'):
+            return '@%s' % o['horizons_id']
+    return None
+
+
+def fetch_path_revised(obj):
+    """JPL's own header for a path, read by read_path_revised: what it
+    says of the trajectory it answers from, printed in the build's record
+    and served on the capture block (the go-ahead of 2026-11-24: how fresh
+    JPL's path is). One question, a day's vector asked with its text."""
+    _require_astro()
+    now = _utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    h = Horizons(id=obj['horizons_id'], id_type=_norm_id_type(obj['id_type']),
+                 location=_normalize_center(obj['canonical_center']),
+                 epochs={'start': now.strftime('%Y-%m-%d'),
+                         'stop': (now + timedelta(days=1)).strftime('%Y-%m-%d'),
+                         'step': '1d'})
+    raw = h.vectors(refplane='ecliptic', cache=HORIZONS_CACHE,
+                    get_raw_response=True)
+    return read_path_revised(raw)
+
+
+def read_path_revised(raw):
+    """{'target', 'revised', 'fit', 'file'} from JPL's header text: the
+    name and 'Revised:' date, the 'Data fit through ...' sentence where JPL
+    prints one (BepiColombo's, 2026-11-24: "Data fit through 2026-Nov-17,
+    prediction thereafter"), and the first trajectory file named; None
+    for each it does not print."""
+    out = {'target': None, 'revised': None, 'fit': None, 'file': None}
+    m = re.search(r'Revised:\s*([A-Za-z]{3} \d{1,2}, \d{4})\s+(.+?)\s{2,}',
+                  raw or '')
+    if m:
+        out['revised'], out['target'] = m.group(1), m.group(2).strip()
+    m = re.search(r'(Data fit through [^.]{0,120}\.)', raw or '')
+    if m:
+        out['fit'] = ' '.join(m.group(1).split())
+    m = re.search(r'^\s*(\S+)\s+\d{4}-[A-Za-z]{3}-\d{2} \d{2}:\d{2}\s+'
+                  r'\d{4}-[A-Za-z]{3}-\d{2} \d{2}:\d{2}\s*$', raw or '', re.M)
+    if m:
+        out['file'] = m.group(1)
+    return out
+
+
+def build_capture_layer(obj, cap, window, today, config_objects, warn,
+                        stats=None):
+    """One capture craft's fine layer for tonight (L-538). Returns a dict:
+    span (a, z), shape ('whole' or 'band'), steps {day: minutes}, points
+    {minute key: {jd,x,y,z AU}}, checks [(jd, x, y, z km)], check_offset,
+    held_out / check counts and the worst ratio, reach {day: km} for a
+    band-only craft, questions, seconds, why. Raises CaptureFailed at the
+    floor or past the question limit."""
+    t_start = time.time()
+    span = capture_span(cap, window)
+    if span is None:
+        raise CaptureFailed("no fine span: the capture does not meet the "
+                            "window")
+    a, z = span
+    hid, ity, ctr = obj['horizons_id'], obj['id_type'], obj['canonical_center']
+    asked = [0]
+
+    def ask(t0, t1, minutes, centre=ctr):
+        if asked[0] >= CAPTURE_QUESTION_LIMIT:
+            raise CaptureFailed("past the limit of %d questions to JPL in one "
+                                "night" % CAPTURE_QUESTION_LIMIT)
+        asked[0] += 1
+        return fetch_vectors_range(hid, ity, centre, t0, t1, _step_word(minutes),
+                                   key_fmt=MINUTE_KEY)
+
+    days = []
+    d = a
+    while d < z:
+        days.append(d)
+        d += timedelta(days=1)
+    near0, near1 = point_near_span(today)
+    band = set(x.strftime(DAY_KEY) for x in days if near0 <= x < near1)
+    steps = dict((x.strftime(DAY_KEY), 60 if x.strftime(DAY_KEY) in band
+                  else 1440) for x in days)
+    pts = {}
+    pts.update(ask(a, z, 1440))
+    if band:
+        pts.update(ask(max(near0, a), min(near1, z), 60))
+    off = capture_check_offset(today)
+    checks_raw = ask(a + timedelta(minutes=off), z, CAPTURE_CHECK_STEP_MIN)
+    checks = _km_rows(checks_raw)
+    lo, hi = _dt_to_jd(a) - 1e-4, _dt_to_jd(z) + 1e-4
+    shape, why = 'whole', None
+
+    def fine_days():
+        return [k for k in steps if shape == 'whole' or k in band]
+
+    for rnd in range(CAPTURE_ROUNDS + 1):
+        rows = _km_rows(pts)
+        held = _over(capture_held_out(rows, lo, hi))
+        chk = _over(capture_check_misses(rows, checks))
+        failing = set()
+        for jd, _m, _e in held:
+            # a held-out point's bracket spans the days either side of it
+            failing.add(_utc_day(jd - 1e-6))
+            failing.add(_utc_day(jd + 1e-6))
+        for jd, _m, _e in chk:
+            failing.add(_utc_day(jd))
+        failing = sorted(k for k in failing if k in steps
+                         and k in fine_days())
+        if not failing:
+            break
+        if rnd == CAPTURE_ROUNDS:
+            raise CaptureFailed("still too coarse after %d rounds on %s"
+                                % (rnd, ", ".join(failing[:5])))
+        new = {}
+        floor = []
+        for k in failing:
+            s = _capture_next(steps[k])
+            if s is None or s < CAPTURE_FLOOR_MIN:
+                floor.append(k)
+            else:
+                new[k] = s
+        if floor:
+            raise CaptureFailed("too coarse at the floor of %d minute(s) on %s"
+                                % (CAPTURE_FLOOR_MIN, ", ".join(floor[:5])))
+        projected = sum(1440 // (new.get(k) or steps[k]) for k in fine_days())
+        if shape == 'whole' and projected > CAPTURE_FINE_LIMIT:
+            # The fine layer across the window would not stay small: fine
+            # points in the band only, a point a day elsewhere (Tony's
+            # ruling of 2026-11-24).
+            shape = 'band'
+            why = ("its fine points across the window would pass %d (%d "
+                   "projected this round); served fine points in the band "
+                   "only" % (CAPTURE_FINE_LIMIT, projected))
+            for k in steps:
+                if k not in band:
+                    steps[k] = 1440
+            pts = dict((kk, p) for kk, p in pts.items()
+                       if _utc_day(p['jd']) in band
+                       or (p['jd'] - _TDB_UTC_DAYS - 0.5) % 1.0 < 1e-3
+                       or (p['jd'] - _TDB_UTC_DAYS - 0.5) % 1.0 > 1 - 1e-3)
+            continue
+        for k in sorted(new):
+            steps[k] = new[k]
+        # One question per run of consecutive days, at the finest step any
+        # of them now needs; each day keeps only the points on its own
+        # grid, found by their order in the answer (JPL answers the times
+        # asked, start + i x step, in order), never by their clock.
+        # Days up to CAPTURE_RUN_GAP_DAYS apart share a question (the days
+        # between keep only their own grid), while the answer stays under
+        # CAPTURE_ROWS_PER_QUESTION rows.
+        runs = []
+        for k in sorted(new):
+            day = _parse_calendar(k)
+            if runs and day - runs[-1][1] <= timedelta(days=CAPTURE_RUN_GAP_DAYS):
+                s = min(runs[-1][2], new[k])
+                n_days = (day - runs[-1][0]).days + 1
+                if n_days * 1440 // s <= CAPTURE_ROWS_PER_QUESTION:
+                    runs[-1][1] = day
+                    runs[-1][2] = s
+                    continue
+            runs.append([day, day, new[k]])
+        for r0, r1, s in runs:
+            got = ask(r0, min(z, r1 + timedelta(days=1)), s)
+            for i, (kk, p) in enumerate(sorted(got.items(),
+                                               key=lambda kv: kv[1]['jd'])):
+                t_utc = r0 + timedelta(minutes=i * s)
+                k = t_utc.strftime(DAY_KEY)
+                mins = t_utc.hour * 60 + t_utc.minute
+                if k not in steps or mins % steps[k] == 0:
+                    pts[kk] = p
+
+    rows = _km_rows(pts)
+    band_lo = _dt_to_jd(max(near0, a)) - 1e-4
+    band_hi = _dt_to_jd(min(near1, z)) + 1e-4
+    inside = (lambda jd: True) if shape == 'whole' else \
+        (lambda jd: band_lo <= jd <= band_hi)
+    reach = None
+    if shape == 'band':
+        centre = _centre_of_body(cap['body'], config_objects)
+        if centre is None:
+            raise CaptureFailed("no config entry named %s to measure its loop "
+                                "around" % cap['body'])
+        around = {}
+        t0 = a
+        while t0 < z:
+            t1 = min(z, t0 + timedelta(days=50))
+            around.update(ask(t0, t1, 10, centre=centre))
+            t0 = t1
+        reach = {}
+        for p in around.values():
+            r = math.sqrt(p['x'] ** 2 + p['y'] ** 2 + p['z'] ** 2) * KM_PER_AU
+            k = _utc_day(p['jd'])
+            reach[k] = max(reach.get(k, 0.0), r)
+        # Served for the days a point a day apart only: inside the band the
+        # fine points are held as they are (the room adds the loop's term
+        # to a trio that spans a day carrying a reach, _position_at).
+        # Rounded UP to the metre, so rounding never makes it smaller.
+        reach = dict((k, math.ceil(v * 1000.0) / 1000.0)
+                     for k, v in sorted(reach.items())
+                     if k in steps and k not in band)
+    floor = reach_rows(reach)
+    # The night's tests, with the figure the box will print: the chord's,
+    # plus the loop's term on the days that carry a reach. Every case
+    # counts, in the band and outside it; the counts without the floor are
+    # kept for the record, as the floor's witness.
+    held_all = capture_held_out(rows, lo, hi, floor)
+    chk_all = capture_check_misses(rows, checks, floor)
+    bare = (_over(capture_held_out(rows, lo, hi))
+            + _over(capture_check_misses(rows, checks))) if floor else []
+    ratios = [m / e for jd, m, e in held_all + chk_all if e > 0]
+    out = {'span': (a, z), 'shape': shape, 'why': why, 'steps': steps,
+           'band': sorted(band), 'points': pts, 'checks': checks,
+           'check_offset': off,
+           'held_out': {'count': len(held_all),
+                        'over': len(_over(held_all))},
+           'check': {'count': len(chk_all),
+                     'over': len(_over(chk_all)),
+                     'over_without_floor': len([x for x in bare
+                                                if not inside(x[0])])},
+           'worst': round(max(ratios), 3) if ratios else None,
+           'reach': reach, 'questions': asked[0],
+           'seconds': round(time.time() - t_start, 1)}
+    if stats is not None:
+        stats.update(out)
+    return out
+
+
+def capture_block(cap, layer, window, near, last_good=False, why=None,
+                  jpl=None):
+    """The served `capture` block (L-538): what the craft was served by,
+    so the validator can refuse a missing day or hour by name."""
+    a, z = layer['span']
+    return {
+        'schema_version': CAPTURE_SCHEMA_VERSION,
+        'body': cap['body'], 'arrival': cap['arrival'],
+        'departure': cap['departure'],
+        'shape': layer['shape'], 'why': layer.get('why'),
+        'span': {'start_jd': _dt_to_jd(a), 'end_jd': _dt_to_jd(z)},
+        'window': {'start_jd': window['start_jd'], 'end_jd': window['end_jd']},
+        'band': {'start_jd': _dt_to_jd(near[0]), 'end_jd': _dt_to_jd(near[1]),
+                 'step': '1h'},
+        'steps': layer['steps'],
+        'checks': {'step_min': CAPTURE_CHECK_STEP_MIN,
+                   'offset_min': layer.get('check_offset'),
+                   'count': layer['check']['count'],
+                   'saved': layer['check'].get('saved', 0),
+                   'saved_every': CAPTURE_CHECK_SAVE_EVERY,
+                   'over': layer['check']['over'],
+                   'over_without_floor': layer['check'].get('over_without_floor', 0)},
+        'held_out': layer['held_out'],
+        'worst': layer.get('worst'),
+        # the loop's reach itself is served in the positions file
+        # (data.reach_t, data.reach_km); here, how much of it
+        'reach': ({'days': len(layer['reach']),
+                   'min_km': min(layer['reach'].values()),
+                   'max_km': max(layer['reach'].values())}
+                  if layer.get('reach') else None),
+        'questions': layer.get('questions'), 'seconds': layer.get('seconds'),
+        'limits': {'fine_points': CAPTURE_FINE_LIMIT,
+                   'questions': CAPTURE_QUESTION_LIMIT,
+                   'floor_min': CAPTURE_FLOOR_MIN},
+        'jpl': jpl,
+        'last_good': last_good, 'last_good_why': why,
+    }
+
+
+def capture_checks_path(root, slug):
+    return root / 'raw' / 'checks' / ('%s.json' % slug)
+
+
+def save_capture_checks(root, slug, checks, offset):
+    """JPL's check points, every CAPTURE_CHECK_SAVE_EVERY-th, saved beside
+    the raw archive, not served and never committed (.gitignore), so the
+    night's own gallery run can hold the box to them. Returns how many
+    were saved."""
+    checks = list(checks)[::CAPTURE_CHECK_SAVE_EVERY]
+    p = capture_checks_path(root, slug)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    payload = {'object': slug, 'unit': 'km', 'epoch_type': 'JD',
+               'step_min': CAPTURE_CHECK_STEP_MIN, 'offset_min': offset,
+               'saved_every': CAPTURE_CHECK_SAVE_EVERY,
+               'source': 'JPL Horizons, vectors about the Sun, ecliptic',
+               'data': {'t': [c[0] for c in checks],
+                        'x': [round(c[1], 3) for c in checks],
+                        'y': [round(c[2], 3) for c in checks],
+                        'z': [round(c[3], 3) for c in checks]}}
+    with open(p, 'w', newline='') as f:
+        json.dump(payload, f)
+    return len(checks)
+
+
+def process_capture(root, r, window, today, config_objects, warn,
+                    run_manifest):
+    """Give one capture craft's result its fine layer (L-538): replace the
+    archive's fine layer whole, rebuild the positions file from the plan's
+    points outside the fine span and the fine layer inside it, save the
+    check points, and attach the served block. A craft whose layer cannot
+    be made is served its saved one, clipped to the window, last_good."""
+    obj, slug = r['obj'], r['slug']
+    cap = capture_of(obj, window)
+    span = capture_span(cap, window)
+    if span is None:
+        return None
+    near = point_near_span(today)
+    raw = load_raw_vectors(root, slug) or {'points': {}}
+    jpl = None
+    try:
+        if r.get('stale'):
+            raise CaptureFailed("its plan's points were served last-good "
+                                "tonight")
+        layer = build_capture_layer(obj, cap, window, today, config_objects,
+                                    warn)
+        try:
+            jpl = fetch_path_revised(obj)
+        except Exception as e:      # the record says so; never the layer's
+            jpl = {'target': None, 'revised': None,
+                   'why': 'not read (%s)' % e}
+        a, z = layer['span']
+        raw['fine'] = {'made': _utcnow().isoformat(),
+                       'span': [_dt_to_jd(a), _dt_to_jd(z)],
+                       'shape': layer['shape'], 'steps': layer['steps'],
+                       'band': layer['band'],
+                       'reach': layer['reach'], 'points': layer['points']}
+        save_raw_vectors(root, slug, raw)
+        layer['check']['saved'] = save_capture_checks(
+            root, slug, layer['checks'], layer['check_offset'])
+        block = capture_block(cap, layer, window, near, jpl=jpl)
+        fine = layer['points']
+        said = ("capture by %s: %s, %d fine points, %d questions, %.1f s; "
+                "check points %d tested from %d min, %d saved, %d over; "
+                "held out %d, %d over%s; JPL %s, revised %s, %s, %s"
+                % (cap['body'], layer['shape'], len(fine), layer['questions'],
+                   layer['seconds'], layer['check']['count'],
+                   layer['check_offset'], layer['check']['saved'],
+                   layer['check']['over'], layer['held_out']['count'],
+                   layer['held_out']['over'],
+                   ("; the loop's reach on %d days, %.0f to %.0f km, and "
+                    "without it %d check points over" % (
+                        len(layer['reach']), min(layer['reach'].values()),
+                        max(layer['reach'].values()),
+                        layer['check']['over_without_floor']))
+                   if layer.get('reach') else '',
+                   (jpl or {}).get('target'),
+                   (jpl or {}).get('revised'),
+                   (jpl or {}).get('fit') or 'no fit date printed',
+                   (jpl or {}).get('file') or 'no file named'))
+    except Exception as e:
+        saved = raw.get('fine') or {}
+        lo, hi = _dt_to_jd(span[0]) - 1e-4, _dt_to_jd(span[1]) + 1e-4
+        fine = dict((k, p) for k, p in (saved.get('points') or {}).items()
+                    if lo <= p['jd'] <= hi)
+        warn("%s: CAPTURE FAILED (%s); %s" % (
+            slug, e, "served its saved fine layer, last-good" if fine
+            else "no saved fine layer to serve"))
+        if not fine:
+            run_manifest['objects'][slug] += '; capture FAILED, none saved: %s' % e
+            r['capture'] = {'schema_version': CAPTURE_SCHEMA_VERSION,
+                            'body': cap['body'], 'arrival': cap['arrival'],
+                            'departure': cap['departure'], 'missing': str(e),
+                            'last_good': False}
+            return r
+        layer = {'span': span, 'shape': saved.get('shape', 'whole'),
+                 'why': None, 'steps': saved.get('steps') or {},
+                 'reach': saved.get('reach'),
+                 'check': {'count': 0, 'over': 0}, 'held_out': {'count': 0,
+                                                               'over': 0}}
+        block = capture_block(cap, layer, window, near, last_good=True,
+                              why=str(e))
+        said = 'capture FAILED (%s); served its saved fine layer' % e
+    a_jd, z_jd = _dt_to_jd(span[0]) - 1e-4, _dt_to_jd(span[1]) + 1e-4
+    merged = dict((k, p) for k, p in (raw.get('points') or {}).items()
+                  if not (a_jd <= p['jd'] <= z_jd))
+    merged.update(fine)
+    r['positions'] = build_position_file(root, slug, obj, merged,
+                                         reach=layer.get('reach'))
+    r['capture'] = block
+    run_manifest['objects'][slug] += '; ' + said
+    run_manifest.setdefault('captures', {})[slug] = said
+    return r
+
+
+def capture_problems(o, served_window, staging, captured=None):
+    """Each way a capture craft's served entry is wrong, in words (L-538);
+    empty when it is right. captured: whether the plan rule (capture_of,
+    capture_span) says the craft is in a capture inside the window, or None
+    when the config is not at hand."""
+    out = []
+    cb = o.get('capture')
+    if captured is False:
+        if cb is not None:
+            out.append("served a capture block, but its plan puts it in no "
+                       "capture inside the window (past its departure?)")
+        return out
+    if cb is None:
+        if captured:
+            out.append("in a capture inside the window by its plan, and "
+                       "served no capture block")
+        return out
+    if cb.get('missing'):
+        out.append("no fine points served: %s" % cb['missing'])
+        return out
+    if cb.get('last_good'):
+        return out
+    pos = o.get('positions')
+    if not pos or not (staging / pos['file']).exists():
+        out.append("no positions file")
+        return out
+    with open(staging / pos['file']) as f:
+        pdata = json.load(f).get('data') or {}
+    t = sorted(pdata.get('t') or [])
+    s0, s1 = cb['span']['start_jd'], cb['span']['end_jd']
+    # Points are on JPL's clock, about 69 s ahead of the UTC grid they were
+    # asked on (the suite's stand-in answers on UTC itself), so a day's
+    # points are judged by the gaps between them, each gap by the steps of
+    # the days its middle can fall in, never by an exact midnight.
+    slack = 2.0 / 1440.0
+    inside = [v for v in t if s0 - slack <= v <= s1 + slack]
+    steps = cb.get('steps') or {}
+    b0, b1 = cb['band']['start_jd'], cb['band']['end_jd']
+
+    def day_steps(mid):
+        ks = set(_jd_to_dt(mid + d).strftime(DAY_KEY)
+                 for d in (-slack, 0.0, slack))
+        return [int(steps[k]) for k in ks if k in steps]
+
+    if not inside or inside[0] > s0 + slack or inside[-1] < s1 - slack:
+        out.append("its fine points do not cover the span (JD %.4f to %.4f, "
+                   "served %s)" % (s0, s1, ('JD %.4f to %.4f' % (
+                       inside[0], inside[-1])) if inside else 'none'))
+    early = 0
+    for i in range(len(inside) - 1):
+        gap = inside[i + 1] - inside[i]
+        mid = (inside[i] + inside[i + 1]) / 2.0
+        ss = day_steps(mid)
+        if not ss:
+            continue
+        if gap > max(ss) / 1440.0 + slack:
+            day = _jd_to_dt(mid).strftime(DAY_KEY)
+            if b0 - slack <= mid <= b1 + slack and gap > POINT_NEAR_STEP_DAYS + slack:
+                out.append("an hour missing near today: a gap of %.1f hours "
+                           "on %s" % (gap * 24, day))
+            elif gap > 1.0 + slack:
+                out.append("a day missing: a gap of %.2f days at %s"
+                           % (gap, day))
+            else:
+                out.append("%s served coarser than its step of %d minutes (a "
+                           "gap of %.0f)" % (day, max(ss), gap * 1440))
+        elif gap < min(ss) / 1440.0 - slack:
+            # the day just before the band was last night's band
+            if b0 - 1.0 - slack <= mid < b0 - slack:
+                early += 1
+            else:
+                out.append("a point off its day's grid near JD %.5f (a plan "
+                           "point inside the fine span?)" % inside[i + 1])
+    if early:
+        out.append("yesterday's hours still served: %d gap(s) finer than a "
+                   "day before the band" % early)
+    # The loop floor (L-538): a craft served fine points in the band only
+    # carries its loop's reach for every day of its span outside the band,
+    # each more than nothing, and a craft served whole carries none (its
+    # fine points hold the figure as they are; a reach would only blur it).
+    rt, rk = pdata.get('reach_t') or [], pdata.get('reach_km') or []
+    if cb.get('shape') == 'band':
+        have = dict((_jd_to_dt(d + slack).strftime(DAY_KEY), k)
+                    for d, k in zip(rt, rk))
+        lack = sorted(k for k, v in steps.items()
+                      if int(v) >= 1440 and not (
+                          b0 - slack <= _dt_to_jd(_parse_calendar(k)) < b1 - slack)
+                      and not (have.get(k) or 0) > 0)
+        if lack or len(rt) != len(rk):
+            out.append("a day without its loop's reach: %s (%d of %d days "
+                       "outside the band)" % (", ".join(lack[:3]) or
+                                              "reach_t and reach_km differ",
+                                              len(lack), len([
+                                                  k for k, v in steps.items()
+                                                  if int(v) >= 1440])))
+        inband = [d for d in rt if b0 - slack <= d < b1 - slack]
+        if inband:
+            out.append("a reach served inside the band (%d days), where the "
+                       "fine points hold the figure" % len(inband))
+    elif rt or rk:
+        out.append("a loop's reach served for a craft served whole (%d days)"
+                   % len(rt))
+    if s0 <= b0 <= s1 and not [v for v in inside if b0 - slack <= v <= b1 + slack]:
+        out.append("no hours near today")
+    if (cb.get('held_out') or {}).get('over') or (cb.get('checks') or {}).get('over'):
+        out.append("its fine points miss by more than the figure: %s held "
+                   "out, %s check points" % (cb['held_out'].get('over'),
+                                             cb['checks'].get('over')))
+    if served_window and (abs(cb['window']['start_jd'] - served_window['start_jd']) > 1.0
+                          or abs(cb['window']['end_jd'] - served_window['end_jd']) > 1.0):
+        out.append("fetched across another window (JD %.2f to %.2f, served "
+                   "%.2f to %.2f)" % (cb['window']['start_jd'],
+                                      cb['window']['end_jd'],
+                                      served_window['start_jd'],
+                                      served_window['end_jd']))
+    said = []
+    for x in out:
+        if x not in said:
+            said.append(x)
+    if len(said) > 6:
+        said = said[:6] + ["and %d more" % (len(said) - 6)]
+    return said
 
 
 def _iso_to_jd(iso_str):
@@ -2619,6 +3414,8 @@ def derive_served(staging, results, defaults, warn=None, frame=None,
             block['hold'] = r['hold']
         if r.get('point') is not None:                  # L-297
             block['point'] = r['point']
+        if r.get('capture') is not None:                # L-538
+            block['capture'] = r['capture']
         objects[slug] = block
 
     # M2 sec 5.5, corrected L-149: global served_window. Participants are
@@ -2782,9 +3579,20 @@ class ValidationAbort(Exception):
     pass
 
 
-def assert_structural(index, staging):
-    """Structural invariants (builder-correctness gates): abort on failure."""
+def assert_structural(index, staging, config_objects=None):
+    """Structural invariants (builder-correctness gates): abort on failure.
+    config_objects (L-538, optional): the config's entries, so #O can say
+    which spacecraft the plan rule puts in a capture inside the window and
+    refuse one served without its fine layer, or with one it should not
+    have; without them #O holds only the blocks that are served."""
     gen_jd = _iso_to_jd(index['generated'])
+    expect = {}
+    if config_objects is not None:
+        for c in config_objects:
+            if c.get('category') == 'spacecraft':
+                expect[c['slug']] = capture_span(
+                    capture_of(c, index.get('served_window')),
+                    index.get('served_window')) is not None
     for slug, o in index['objects'].items():
         # #P (L-322 Stage D): a served pole of date is whole, names the
         # queries the tilt rests on, and its tilt is what its own inputs
@@ -2816,6 +3624,12 @@ def assert_structural(index, staging):
         elif o['category'] == 'spacecraft' or o.get('open_path'):
             if o['osculating'] is not None or o['positions'] is None:
                 raise ValidationAbort("#2 %s: a path (a spacecraft, or a comet on an open path) must have positions, no osculating" % slug)
+            # #O (L-538): a craft inside a capture is served its fine
+            # layer, day by day and hour by hour; one outside is not.
+            problems = capture_problems(o, index.get('served_window'),
+                                        staging, expect.get(slug))
+            if problems:
+                raise ValidationAbort("#O %s: %s" % (slug, '; '.join(problems)))
         else:
             if o['osculating'] is None:
                 raise ValidationAbort("#3 %s: non-spacecraft missing osculating" % slug)
@@ -3632,9 +4446,27 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     # L-297: the Lagrange points, after every other body, because each is
     # fetched across the served window, and the window is set by the
     # bodies above. Each is served in its config place.
-    if points_pending:
+    # L-538: a craft inside a capture likewise, its fine layer fetched
+    # across the window once it is known, before the points.
+    captures = [r for r in results if capture_of(r['obj']) is not None]
+    if points_pending or captures:
         window, said = point_window(results, prior_index, warn)
         run_manifest['point_window'] = said
+    found = []
+    cap_today = _utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    for r in captures:
+        cap = capture_of(r['obj'], window)
+        if capture_span(cap, window) is None:
+            continue
+        found.append("%s by %s since %s" % (r['obj']['name'], cap['body'],
+                                            cap['arrival'][:10]))
+        process_capture(staging, r, window, cap_today, config['objects'],
+                        warn, run_manifest)
+    run_manifest['capture'] = found
+    print("[CAPTURE] %s" % ("; ".join(found) if found else
+                            "no craft is in a capture inside the window"),
+          flush=True)
+    if points_pending:
         for obj in points_pending:
             try:
                 r = process_point(staging, obj, window, run_manifest, warn)
@@ -3785,7 +4617,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
         run_manifest['drawings'] = serve_drawings(
             staging, index, out_dir.parent / 'drawings',
             rooms=config.get('rooms'))
-        assert_structural(index, staging)
+        assert_structural(index, staging, config['objects'])
         shrink_gate(staging, out_dir if (out_dir / 'raw').exists() else None, warn,
                     replanned=run_manifest.get('replanned', ()))
         run_manifest['structural_validation'] = 'pass'

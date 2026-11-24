@@ -148,6 +148,27 @@ astropy, a leap second inside the window with both agreeing (the window
 check alone), JPL naming another body, JPL not answering, a witness
 answered late and a witness not in the config; the fresh-answer check
 holds the clock question to cache=False.)
+Module updated: November 24, 2026 with Anthropic's Claude Opus 5.5
+(L-538, the orbiters' printed error: capture_checks builds two stand-in
+craft captured by Earth, a slow loop served its fine layer across the
+window and a fast one served fine points in the band only past the limit,
+the stand-in answering on JPL's clock at any step; checks the capture
+line, both tests, the loop's reach, the check points' moving start,
+Curve error's capture half with a planted thinning, the window left as it
+is with a craft let into its frame, #O refusing a day missing, an hour
+missing, yesterday's hours, a plan point inside the fine span, a figure
+under its miss, a captured craft with no block and one past its
+departure, the next night's layer made whole, and a craft at the question
+limit served its saved layer or, with none, the night stopped by name.
+Part B's second half, the same day: the room's floor worked by hand, the
+reach served in the positions file and placed, Curve error's self-test per
+craft with three planted faults, #O on the floor, a later arrival in the
+plan (fault B), every fourth check point saved; and the check points kept
+out of git, held on the night's own run (--night) and red there without
+them, named as not held on any other run.
+The spacecraft stand-in's arc now runs on within a day (FAKE_SC_R), so
+the hourly band can be worked out on it; the fresh-answer check holds the
+path's revision question to cache=False.)
 """
 import contextlib
 import io
@@ -347,7 +368,11 @@ _SC_T0 = datetime(1977, 9, 6, tzinfo=timezone.utc)
 
 
 def FAKE_SC_R(d):
-    return 1.0 + 3.25 * max((d - _SC_T0).days, 0) / 365.25
+    # L-538: the arc runs on within a day too (it climbed in whole days,
+    # a staircase no hourly point could be worked out on); at 00:00 it is
+    # where it always was.
+    return 1.0 + 3.25 * max((d - _SC_T0).total_seconds() / 86400.0,
+                            0) / 365.25
 
 
 # L-443 build B part 2: a comet on an open path, a straight line past the
@@ -506,7 +531,7 @@ def stand_in_plans(cfg):
 _REAL_FETCHES = {n: getattr(b, n) for n in (
     'fetch_vectors_range', 'fetch_elements', 'fetch_solution_tp',
     'fetch_pole_radec', 'fetch_orbit_plane', 'fetch_point_vectors',
-    'fetch_clock_rows')}
+    'fetch_clock_rows', 'fetch_path_revised')}
 
 
 # L-541 (the rooms' clock): stand-ins for the clock question and the
@@ -536,6 +561,12 @@ def fake_clock_rows(obj, tdb_jds, hkwargs=None):
             for i, t in enumerate(tdb_jds)]
 
 
+def fake_path_revised(obj):
+    """L-538: JPL's header line for a path, a stand-in."""
+    return {'target': 'stand-in %s' % obj.get('horizons_id'),
+            'revised': 'Nov 24, 2026', 'fit': None, 'file': None}
+
+
 def install_mocks():
     b.run_build = run_build_with_stand_ins
     b.fetch_pole_radec = fake_pole_radec
@@ -546,6 +577,7 @@ def install_mocks():
     b.fetch_solution_tp = fake_solution_tp
     b.fetch_small_body_2xr = fake_2xr
     b.fetch_clock_rows = fake_clock_rows                    # L-541
+    b.fetch_path_revised = fake_path_revised                # L-538
     b.utc_jd_to_tdb_jd = fake_utc_jd_to_tdb_jd
     b.astropy_tdb_minus_utc_s = fake_astropy_tdb_minus_utc_s
     b.astropy_clock_source = fake_astropy_clock_source
@@ -1851,6 +1883,7 @@ def main():
     spacecraft_id_checks(cfg, check)
     point_checks(cfg, check)
     clock_checks(cfg, check)
+    capture_checks(cfg, check)
 
     print("\n%s (%d checks, %d failures)"
           % ("PASS" if not failures else "FAIL", total[0], len(failures)))
@@ -2371,6 +2404,10 @@ def fresh_answer_checks(check):
         ('the clock and the witness', lambda: _REAL_FETCHES['fetch_clock_rows'](
             {'horizons_id': '199', 'id_type': 'majorbody',
              'canonical_center': '@sun'}, [2461342.5])),
+        # L-538: a capture craft's path, its header read for its revision.
+        ("a path's revision", lambda: _REAL_FETCHES['fetch_path_revised'](
+            {'horizons_id': '-121', 'id_type': 'id',
+             'canonical_center': '@sun'})),
     ]
     real_h, real_req = b.Horizons, b._require_astro
 
@@ -2877,6 +2914,502 @@ def point_checks(cfg, check):
           "digit takes %s as the Earth-Moon barycentre"
           % (len(pts), read or "none read",
              caught[0][1] if caught else "none"))
+
+
+# L-538 (the orbiters' printed error): two stand-in craft captured by
+# Earth on 2026-01-01, each looping around it as the planet goes round the
+# Sun. The slow one's loop (5 days, 30,000 km) is too fast for a point a
+# day and slow enough for a fine layer across the whole window; the fast
+# one's (4 hours, 4,500 km) would need more fine points across the window
+# than the limit, so it is served fine points in the band only. The
+# stand-in answers on JPL's clock, 69 s ahead of the UTC asked, and for
+# any step in minutes, hours or days.
+LOOPS = {'-901': (5.0, 2e-4), '-902': (4.0 / 24.0, 3e-5)}
+_LOOP_J0 = 2461041.5          # 2026-01-01 00:00
+_LOOP_TDB = 69.184 / 86400.0
+
+
+def _loop_stride_min(step):
+    s = str(step).strip().lower()
+    for unit, mult in (('d', 1440), ('h', 60), ('m', 1)):
+        if s.endswith(unit):
+            return mult * int(s[:-1])
+    return 1440
+
+
+def loop_position(hid, jd, around_planet=False):
+    period, rad = LOOPS[hid]
+    th = 2 * math.pi * (jd - _LOOP_J0) / 365.25
+    ph = 2 * math.pi * (jd - _LOOP_J0) / period
+    loop = (rad * math.cos(ph), rad * math.sin(ph), 0.3 * rad * math.sin(ph))
+    if around_planet:
+        return loop
+    return (math.cos(th) + loop[0], math.sin(th) + loop[1], loop[2])
+
+
+def capture_cfg(cfg, departure=None):
+    """Every body but the paths and the points, and the two stand-in
+    craft, each with a plan whose arrival at Earth stays (or leaves on
+    `departure`)."""
+    c = json.loads(json.dumps(cfg))
+    base = next(o for o in c['objects'] if o.get('category') == 'spacecraft')
+    keep = [o for o in c['objects']
+            if o.get('category') not in ('spacecraft', b.POINT_CATEGORY)]
+    events = [{'body': 'Earth', 'kind': 'arrival', 'stays': departure is None,
+               'closest': '2026-01-01 00:00', 'dist_km': 30000.0,
+               'window': ['2025-12-31 00:00', '2026-01-02 00:00'],
+               'step': '1d'}]
+    if departure:
+        events.append({'body': 'Earth', 'kind': 'departure', 'stays': False,
+                       'closest': departure, 'dist_km': 30000.0,
+                       'window': [departure, departure], 'step': '1d'})
+    for slug, hid in (('orbiter_slow', '-901'), ('orbiter_fast', '-902')):
+        o = json.loads(json.dumps(base))
+        o.update(slug=slug, name=slug, horizons_id=hid, horizons_name=slug)
+        o.pop('overrides', None)
+        o['path'] = {'made': '2026-07-01',
+                     'span': {'start': '2025-01-01', 'end': '2028-01-01'},
+                     'backbone': {'step': '7d', 'thin_tol_au': 0.02},
+                     'events': json.loads(json.dumps(events))}
+        keep.append(o)
+    c['objects'] = keep
+    return c
+
+
+def capture_checks(cfg, check):
+    """L-538: a craft inside a capture is served a fine layer across the
+    window, day by day, by both tests, or in the band only past the limit;
+    the validator's #O refuses each way it can be wrong, planted."""
+    import test_curve_error as tce
+    stand_in = b.fetch_vectors_range
+
+    def loop_vectors(horizons_id, id_type, center, start_dt, stop_dt,
+                     step='1d', hkwargs=None, epoch_jds=None,
+                     key_fmt='%Y-%m-%d'):
+        if str(horizons_id) not in LOOPS or epoch_jds is not None:
+            return stand_in(horizons_id, id_type, center, start_dt, stop_dt,
+                            step, hkwargs, epoch_jds, key_fmt)
+        around = str(center).lstrip('@') not in ('sun', '10', '0')
+        stride = timedelta(minutes=_loop_stride_min(step))
+        out = {}
+        d = start_dt
+        while d <= stop_dt:
+            jd = b._dt_to_jd(d) + _LOOP_TDB
+            x, y, z = loop_position(str(horizons_id), jd, around)
+            key = (d + timedelta(seconds=69.184)).strftime(key_fmt)
+            out[key] = {'jd': jd, 'x': x, 'y': y, 'z': z}
+            d += stride
+        return out
+
+    cc = capture_cfg(cfg)
+    b.fetch_vectors_range = loop_vectors
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / 'data' / 'solar-system'
+            out.mkdir(parents=True)
+            with contextlib.redirect_stdout(io.StringIO()) as said:
+                rm = b.run_build(cc, out, mode='first-build', do_commit=False)
+            idx = json.load(open(out / 'coverage_index.json'))
+            objs, sw = idx['objects'], idx['served_window']
+            slow, fast = objs.get('orbiter_slow', {}), objs.get('orbiter_fast', {})
+            cs, cf = slow.get('capture') or {}, fast.get('capture') or {}
+            fine_steps = sorted(set(cs.get('steps', {}).values()))
+            check(rm['structural_validation'] == 'pass'
+                  and cs.get('shape') == 'whole' and cf.get('shape') == 'band'
+                  and min(fine_steps or [1440]) < 1440
+                  and '[CAPTURE] orbiter_slow by Earth since 2026-01-01; '
+                      'orbiter_fast by Earth since 2026-01-01' in said.getvalue(),
+                  "L-538: each craft in a capture found by its plan and named; "
+                  "the slow loop served whole across the window, refined to "
+                  "steps %s; the fast loop served in the band only (%s); %s"
+                  % (fine_steps, (cf.get('why') or 'no reason')[:70],
+                     rm['structural_validation']))
+            check(cs.get('held_out', {}).get('over') == 0
+                  and cs.get('checks', {}).get('over') == 0
+                  and cs.get('checks', {}).get('count', 0) > 1000
+                  and cf.get('held_out', {}).get('over') == 0
+                  and cf.get('checks', {}).get('over') == 0
+                  and cf.get('checks', {}).get('over_without_floor', 0) > 0,
+                  "L-538: the slow craft's figure is never under its miss, by "
+                  "%d held out and %d of JPL's check points; the fast craft's "
+                  "neither, by %d and %d, with the loop's floor outside the "
+                  "band, and without it %d check points there are over the "
+                  "chord's figure, which the floor is for"
+                  % (cs.get('held_out', {}).get('count', 0),
+                     cs.get('checks', {}).get('count', 0),
+                     cf.get('held_out', {}).get('count', 0),
+                     cf.get('checks', {}).get('count', 0),
+                     cf.get('checks', {}).get('over_without_floor', 0)))
+            ff = json.load(open(out / fast['positions']['file']))
+            rt, rk = ff['data'].get('reach_t') or [], ff['data'].get('reach_km') or []
+            band_days = set(k for k, v in (cf.get('steps') or {}).items()
+                            if v <= 60)
+            daily_days = set(k for k, v in (cf.get('steps') or {}).items()
+                             if v == 1440)
+            served_days = set(b._jd_to_dt(d + 1e-3).strftime(b.DAY_KEY)
+                              for d in rt)
+            pf = json.load(open(out / slow['positions']['file']))
+            t = pf['data']['t']
+            check(rk and all(v > 0 for v in rk) and len(rt) == len(rk)
+                  and served_days == daily_days and not (served_days & band_days)
+                  and abs(max(rk) - 3e-5 * b.KM_PER_AU * 1.044) < 300
+                  and (cf.get('reach') or {}).get('days') == len(rt)
+                  and 'reach_t' not in pf['data'] and cs.get('reach') is None
+                  and len(band_days) == 4,
+                  "L-538: the fast craft's loop reach served in its positions "
+                  "file for each of its %d days a point a day apart and none "
+                  "of its 4 band days, %.0f km at most (its loop, 4,488 km and "
+                  "a little out of plane), the block saying how many; none "
+                  "for the slow craft" % (len(rt), max(rk) if rk else -1))
+            chk = json.load(open(out / 'raw' / 'checks' / 'orbiter_slow.json'))
+            n_tested = cs.get('checks', {}).get('count', 0)
+            check(chk['data']['t'] and chk['offset_min']
+                  == b.capture_check_offset(FIXED_NOW)
+                  and b.capture_check_offset(FIXED_NOW)
+                  != b.capture_check_offset(FIXED_NOW + timedelta(days=1))
+                  and len(chk['data']['t']) == (n_tested + 3) // 4
+                  == cs['checks'].get('saved') and chk.get('saved_every') == 4,
+                  "L-538: JPL's check points, %d tested, every fourth saved "
+                  "beside the archive (%d), the block saying both; from %d "
+                  "minutes past the span's start, a start that moves each "
+                  "night (%d tomorrow)"
+                  % (n_tested, len(chk['data']['t']), chk['offset_min'],
+                     b.capture_check_offset(FIXED_NOW + timedelta(days=1))))
+
+            # The room's floor: position_at adds R x (1 + L) on a day that
+            # carries a reach, says 'loop' where it is the larger part, and
+            # a point at a day's first minute does not pull in the day
+            # before.
+            rows_ = [(2461000.5 + i, 0.0, 0.0, 0.0) for i in range(5)]
+            rows_[2] = (2461002.5, 100.0, 0.0, 0.0)
+            bare_at = tce.rs.position_at(rows_, 2461002.0)
+            day_r = [(2461001.5, 1000.0)]
+            floor_at = tce.rs.position_at(rows_, 2461002.0, reach=day_r)
+            lsum = 0.125 + 0.75 + 0.375
+            before = tce.rs.position_at(rows_[2:], 2461003.0,
+                                        reach=[(2461001.5, 1000.0)])
+            check(bare_at['err_from'] == 'chord'
+                  and abs(floor_at['err_km'] - (bare_at['err_km']
+                                                + 1000.0 * (1 + lsum))) < 1e-6
+                  and floor_at['err_from'] == 'loop'
+                  and floor_at['km'] == bare_at['km']
+                  and before['err_from'] == 'chord',
+                  "L-538: the room's figure is the chord's %.1f km plus the "
+                  "loop's term R x (1 + L) = %.1f km, said 'loop', the marker "
+                  "unmoved; a trio starting at the next day's first minute "
+                  "takes no reach from the day before (%s)"
+                  % (bare_at['err_km'], floor_at['err_km'] - bare_at['err_km'],
+                     before['err_from']))
+
+            # The gallery run's Curve error row holds the same craft.
+            rows = tce.rs._series(pf)
+            cases = tce.capture_cases(rows, tce.check_rows(chk), cs)
+            daily = [r for r in rows if not (cs['span']['start_jd'] - 1e-3
+                     <= r[0] <= cs['span']['end_jd'] + 1e-3)
+                     or abs(((r[0] - _LOOP_TDB) - 0.5) % 1.0) < 1e-3
+                     or abs(((r[0] - _LOOP_TDB) - 0.5) % 1.0 - 1) < 1e-3]
+            thin = tce.capture_cases(daily, tce.check_rows(chk), cs)
+            check(cases and not tce.capture_over(cases)
+                  and len(tce.capture_over(thin)) > 0,
+                  "L-538: Curve error holds the slow craft, %d cases, none "
+                  "over; planted fault caught -- thinned to a point a day, "
+                  "%d of its figures are smaller than their miss"
+                  % (len(cases), len(tce.capture_over(thin))))
+            # Its self-test, craft by craft (fault A of the second go-ahead).
+            frows, freach = tce.rs._series(ff), tce.rs.reach_of(ff)
+            fchk = tce.check_rows(json.load(open(out / 'raw' / 'checks' /
+                                                 'orbiter_fast.json')))
+            fcases = tce.capture_cases(frows, fchk, cf, freach)
+            st_s = tce.capture_self_test('orbiter_slow', rows,
+                                         tce.check_rows(chk), cs, None)
+            st_f = tce.capture_self_test('orbiter_fast', frows, fchk, cf,
+                                         freach)
+            planted_a = tce.capture_self_test('orbiter_fast', frows, fchk, cf,
+                                              None)
+            planted_b = tce.capture_self_test(
+                'orbiter_slow', rows, tce.check_rows(chk),
+                dict(cs, shape='band'), [(cs['span']['start_jd'], 1.0)])
+            real_room = tce.CAPTURE_ROOM_KM
+            tce.CAPTURE_ROOM_KM = 1e12
+            try:
+                planted_c = tce.capture_self_test('orbiter_slow', rows,
+                                                  tce.check_rows(chk), cs, None)
+            finally:
+                tce.CAPTURE_ROOM_KM = real_room
+            check(fcases and not tce.capture_over(fcases)
+                  and not st_s[1] and not st_f[1]
+                  and 'outside the band' in st_f[0][0]
+                  and any('carries no loop' in x for x in planted_a[1])
+                  and any('floor is what holds it' in x for x in planted_b[1])
+                  and any('not all read' in x for x in planted_c[1]),
+                  "L-538: Curve error holds the fast craft with its reach, %d "
+                  "cases, none over, and its self-test is its own (%s); "
+                  "planted faults caught by name -- its reach gone, a band "
+                  "craft whose point a day never misses, check points not "
+                  "compared"
+                  % (len(fcases), st_f[0][0].strip()[:150]))
+
+            # The check points are never committed (Tony's ruling of Nov
+            # 24, 14:00): the night's own run holds them where the build
+            # wrote them, and is red by name without them; any other run
+            # names the craft whose JPL half it could not hold, with the
+            # night's own test as served, never counted as held.
+            groot = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            if groot not in sys.path:
+                sys.path.insert(0, groot)
+            import gallery_maintenance_run as gmr
+            l_n, bad_n, held_n = tce.hold_captures(idx, cc, night=True,
+                                                   served=str(out))
+            chk_dir = out / 'raw' / 'checks'
+            away = out / 'raw' / 'checks_away'
+            chk_dir.rename(away)
+            try:
+                l_gone, bad_gone, held_gone = tce.hold_captures(
+                    idx, cc, night=True, served=str(out))
+                l_day, bad_day, held_day = tce.hold_captures(
+                    idx, cc, night=False, served=str(out))
+            finally:
+                away.rename(chk_dir)
+            ignore = open(os.path.join(groot, '.gitignore')).read().split()
+            cv = [r for r in gmr.night_checkers() if r[0] == 'Curve error']
+            cv_day = [r for r in gmr.OFFLINE_CHECKERS if r[0] == 'Curve error']
+            not_here = [x for x in l_day if 'NOT HELD HERE' in x]
+            check(sorted(held_n) == ['orbiter_fast', 'orbiter_slow']
+                  and not bad_n
+                  and all(any(c in x for x in bad_gone)
+                          for c in ('orbiter_fast', 'orbiter_slow'))
+                  and not held_gone and not held_day and not bad_day
+                  and all(any(c in x for x in not_here)
+                          for c in ('orbiter_fast', 'orbiter_slow'))
+                  and all("the night's own test, as served" in x
+                          for x in not_here)
+                  and 'data/solar-system/raw/checks/' in ignore
+                  and cv and cv[0][2][-1] == '--night'
+                  and cv_day and '--night' not in cv_day[0][2],
+                  "L-538: the check points are kept out of git (.gitignore) "
+                  "and held on the night's own run, told by --night, which "
+                  "only the night's pass hands Curve error; planted -- the "
+                  "folder gone, the night is red naming both craft (%s), and "
+                  "any other run names both as not held here, with the "
+                  "night's own test as served, none counted as held"
+                  % ('; '.join(bad_gone)[:120]))
+
+            # The window is the same with a capture craft let into its frame.
+            results = [{'slug': s, 'obj': next(o for o in cc['objects']
+                                               if o['slug'] == s),
+                        'trust': objs[s].get('trust'), 'hold': objs[s].get('hold')}
+                       for s in objs]
+            leak = dict(next(o for o in cc['objects']
+                             if o['slug'] == 'orbiter_slow'),
+                        canonical_frame='heliocentric')
+            results.append({'slug': 'leak', 'obj': leak,
+                            'trust': {'window_days': 0.5}})
+            kept, _f = b.served_window_from(results, 2461000.0)
+            real_path = b.is_path_body
+            b.is_path_body = lambda o: False
+            try:
+                narrowed, _f2 = b.served_window_from(results, 2461000.0)
+            finally:
+                b.is_path_body = real_path
+            half = (sw['end_jd'] - sw['start_jd']) / 2.0
+            check(kept and abs(kept['end_jd'] - 2461000.0 - half) < 1e-6
+                  and narrowed and abs(narrowed['end_jd'] - 2461000.5) < 1e-9,
+                  "L-538: a capture craft in the window's frame with a "
+                  "half-day span leaves the window as it is (%.2f days); "
+                  "planted fault caught -- let in, it narrows it to %.1f"
+                  % ((kept['end_jd'] - 2461000.0) if kept else -1,
+                     (narrowed['end_jd'] - 2461000.0) if narrowed else -1))
+
+            # #O, each way a capture craft's entry can be wrong, planted.
+            path = out / slow['positions']['file']
+            whole = path.read_bytes()
+            t = sorted(t)
+
+            def with_times(keep=None, add=()):
+                d = json.loads(whole.decode('ascii'))
+                rows_ = sorted(zip(d['data']['t'], d['data']['x'],
+                                   d['data']['y'], d['data']['z']))
+                if keep:
+                    rows_ = [r for r in rows_ if keep(r[0])]
+                rows_ = sorted(rows_ + [(j, 1.0, 0.0, 0.0) for j in add])
+                for i, ax in enumerate(('t', 'x', 'y', 'z')):
+                    d['data'][ax] = [r[i] for r in rows_]
+                path.write_bytes(json.dumps(d).encode('ascii'))
+
+            day_in = [v for v in t if cs['span']['start_jd'] + 20 < v
+                      < cs['span']['start_jd'] + 22]
+            gone_day = (day_in[0], day_in[-1] + 1e-6)
+            b0 = cs['band']['start_jd']
+            band_t = [v for v in t if b0 + 0.3 < v < b0 + 0.5]
+            before_band = [b0 - 1 + h / 24.0 + _LOOP_TDB for h in range(1, 5)]
+            plants = [
+                ("a day missing in the window", slow,
+                 lambda v: not (gone_day[0] <= v <= gone_day[1]), (), "a day missing"),
+                ("an hour missing in the band", slow,
+                 lambda v: v not in band_t[:2], (), "an hour missing near today"),
+                ("yesterday's hours still served", slow, None, before_band,
+                 "yesterday's hours"),
+                ("a plan point inside the fine span", slow, None,
+                 [cs['span']['start_jd'] + 40.3], "off its day's grid"),
+                ("a figure smaller than its miss", dict(slow, capture=dict(
+                    cs, checks=dict(cs['checks'], over=3))), None, (),
+                 "more than the figure"),
+                ("captured by its plan, served no block",
+                 dict(slow, capture=None), None, (), "no capture block"),
+            ]
+            caught = []
+            for label, block, keep, add, word in plants:
+                if keep or add:
+                    with_times(keep, add)
+                got = b.capture_problems(block, sw, out, captured=True)
+                path.write_bytes(whole)
+                caught.append((label, any(word in g for g in got), got))
+            got = b.capture_problems(slow, sw, out, captured=False)
+            caught.append(("past its departure, served a block",
+                           any('past its departure' in g for g in got), got))
+            clean = b.capture_problems(slow, sw, out, captured=True)
+            check(not clean and all(c for _l, c, _g in caught),
+                  "L-538: #O passes the served craft (%s) and refuses each "
+                  "planted fault (%s)"
+                  % ('; '.join(clean) or 'clean',
+                     ", ".join("%s %s" % (l, "caught" if c else "MISSED: %s" % g)
+                               for l, c, g in caught)))
+            # The floor, planted in the served files: the fast craft's
+            # reach gone, or a reach served for the slow craft.
+            fpath = out / fast['positions']['file']
+            fwhole = fpath.read_bytes()
+            d = json.loads(fwhole.decode('ascii'))
+            d['data'].pop('reach_t')
+            d['data'].pop('reach_km')
+            fpath.write_bytes(json.dumps(d).encode('ascii'))
+            got_f = b.capture_problems(fast, sw, out, captured=True)
+            fpath.write_bytes(fwhole)
+            d = json.loads(whole.decode('ascii'))
+            d['data']['reach_t'] = [cs['span']['start_jd']]
+            d['data']['reach_km'] = [10.0]
+            path.write_bytes(json.dumps(d).encode('ascii'))
+            got_s = b.capture_problems(slow, sw, out, captured=True)
+            path.write_bytes(whole)
+            clean_f = b.capture_problems(fast, sw, out, captured=True)
+            check(not clean_f
+                  and any("without its loop's reach" in g for g in got_f)
+                  and any('served whole' in g for g in got_s),
+                  "L-538: #O passes the fast craft with its reach (%s) and "
+                  "refuses it with its reach gone (%s) and the slow craft "
+                  "served one (%s)" % ('; '.join(clean_f) or 'clean',
+                                       '; '.join(got_f)[:80],
+                                       '; '.join(got_s)[:80]))
+
+            # Fault B of the second go-ahead: a craft orbiting one body with
+            # a later arrival in its plan is still in its first capture.
+            two = capture_cfg(cfg)
+            for o in two['objects']:
+                if o.get('slug') == 'orbiter_slow':
+                    o['path']['events'].append(
+                        {'body': 'Mars', 'kind': 'arrival', 'stays': True,
+                         'closest': '2027-09-01 00:00', 'dist_km': 5000.0,
+                         'window': ['2027-08-31 00:00', '2027-09-02 00:00'],
+                         'step': '1d'})
+                    two_o = o
+            cap2 = b.capture_of(two_o, sw)
+            try:
+                b.assert_structural(idx, out, two['objects'])
+                why2 = 'passed'
+            except b.ValidationAbort as e:
+                why2 = str(e)
+            real_of = b.capture_of
+            b.capture_of = lambda o, w=None: (b.captures_of(o) or [None])[-1]
+            try:
+                try:
+                    b.assert_structural(idx, out, two['objects'])
+                    old2 = 'passed'
+                except b.ValidationAbort as e:
+                    old2 = str(e)
+            finally:
+                b.capture_of = real_of
+            check(cap2 and cap2['body'] == 'Earth'
+                  and cap2['end'] == datetime(2027, 9, 1, tzinfo=timezone.utc)
+                  and b.capture_of(two_o)['body'] == 'Mars'
+                  and why2 == 'passed' and old2.startswith('#O orbiter_slow'),
+                  "L-538: a craft with a later arrival in its plan is still in "
+                  "its first capture tonight (by %s, to %s); planted fault "
+                  "caught -- read by its last arrival, the served craft "
+                  "ABORTs (%s)"
+                  % (cap2 and cap2['body'], cap2 and cap2['end'], old2[:70]))
+
+            # The plan rule, by the config: a departure before the window
+            # puts the craft in no capture; with the block served, ABORT.
+            gone = capture_cfg(cfg, departure='2026-03-01 00:00')
+            try:
+                b.assert_structural(idx, out, gone['objects'])
+                why = 'passed'
+            except b.ValidationAbort as e:
+                why = str(e)
+            check(why.startswith('#O orbiter_') and 'departure' in why,
+                  "L-538: a craft past its departure served as captured "
+                  "ABORTs by name (%s)" % why[:90])
+
+            # The next night: yesterday's hours are not asked again and
+            # the archive does not grow by them.
+            n_before = len(t)
+            fine0 = json.load(open(out / 'raw' / 'vectors' /
+                                   'orbiter_slow.json'))['fine']
+            b._NOW_OVERRIDE = FIXED_NOW + timedelta(days=1)
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    rm2 = b.run_build(cc, out, mode='nightly', do_commit=False)
+            finally:
+                b._NOW_OVERRIDE = FIXED_NOW
+            o2 = json.load(open(out / 'coverage_index.json'))['objects']['orbiter_slow']
+            fine1 = json.load(open(out / 'raw' / 'vectors' /
+                                   'orbiter_slow.json'))['fine']
+            old_band0 = b0
+            left = [p for p in fine1['points'].values()
+                    if old_band0 - 0.01 < p['jd'] - _LOOP_TDB < old_band0 + 0.99
+                    and abs(((p['jd'] - _LOOP_TDB) - 0.5) % 1.0) > 1e-3]
+            n_after = o2['positions']['n_points']
+            check(rm2['structural_validation'] == 'pass' and not left
+                  and abs(n_after - n_before) < 24
+                  and fine1['made'] != fine0['made'],
+                  "L-538: the next night's fine layer is made again whole: "
+                  "the hours of the day that left the band are gone (%d "
+                  "left), the file %d points against %d the night before"
+                  % (len(left), n_after, n_before))
+
+            # At the limit: the craft fails by name and is served the
+            # fine layer saved the night before, last_good.
+            real_limit = b.CAPTURE_QUESTION_LIMIT
+            b.CAPTURE_QUESTION_LIMIT = 2
+            try:
+                with contextlib.redirect_stdout(io.StringIO()) as said3:
+                    rm3 = b.run_build(cc, out, mode='nightly', do_commit=False)
+            finally:
+                b.CAPTURE_QUESTION_LIMIT = real_limit
+            o3 = json.load(open(out / 'coverage_index.json'))['objects']['orbiter_slow']
+            check(rm3['structural_validation'] == 'pass'
+                  and (o3.get('capture') or {}).get('last_good') is True
+                  and 'past the limit of 2 questions' in
+                  (o3['capture'].get('last_good_why') or '')
+                  and 'orbiter_slow: CAPTURE FAILED' in said3.getvalue(),
+                  "L-538: a craft at the question limit is named and served "
+                  "its saved fine layer, last_good (%s)"
+                  % (o3.get('capture') or {}).get('last_good_why'))
+        # With none saved, the night ABORTs by name.
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / 'data' / 'solar-system'
+            out.mkdir(parents=True)
+            b.CAPTURE_QUESTION_LIMIT = 2
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    rm4 = b.run_build(cc, out, mode='first-build', do_commit=False)
+            finally:
+                b.CAPTURE_QUESTION_LIMIT = real_limit
+            check(str(rm4['structural_validation']).startswith('fail: #O orbiter_')
+                  and 'no fine points served' in rm4['structural_validation'],
+                  "L-538: a craft at the limit with no saved fine layer stops "
+                  "the night by name (%s)" % str(rm4['structural_validation'])[:100])
+    finally:
+        b.fetch_vectors_range = stand_in
 
 
 if __name__ == '__main__':

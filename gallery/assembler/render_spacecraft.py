@@ -72,6 +72,11 @@ Module updated: November 20, 2026 with Anthropic's Claude Opus 5.5 (L-533,
 the ESCAPADE reel: a spacecraft's open diamond is drawn with a 2-pixel
 outline in its own colour, MARKER_OUTLINE_PX, by Tony's ruling of
 2026-11-20; a comet's filled diamond keeps none.)
+Module updated: November 24, 2026 with Anthropic's Claude Opus 5.5 (L-538,
+the orbiters' printed error: position_at takes a craft's served loop reach,
+reach_of, and adds the loop's term R x (1 + L) to the figure on the days
+that carry one, err_from 'loop' where it is the larger part. No line of interactive.html
+changes: the reach rides in the positions file the page already fetches.)
 
 Role: rendering
 Domain: assembler
@@ -166,13 +171,56 @@ CURVE_FACTOR = 2.0
 CURVE_KINDS = ("lagrange_point", "comet")
 
 
-def position_at(rows, jd, curve=False) -> Optional[Dict[str, Any]]:
+# L-538 (the orbiters' printed error): a craft whose loop around its
+# planet is too fast for a point a day is served, outside the band near
+# today, its loop's REACH for each UTC day -- the farthest it goes from its
+# planet's centre that day, measured from JPL every 10 minutes by the cache
+# builder -- in its positions file beside t, x, y, z (data.reach_t, the
+# JD of each day's 00:00 UTC, and data.reach_km). The craft is its planet
+# plus an offset of at most R; the parabola carries the planet's part to
+# within about the chord figure and moves the three offsets by at most
+# L x R, L the sum of the sizes of its three weights at the minute; the
+# craft's own offset is at most R more. So the figure is the chord's PLUS
+# R x (1 + L) (the coordinating session's ruling of 2026-11-24, the sum,
+# not the larger). Measured 2026-11-24 on BepiColombo from its arrival to
+# the end of JPL's data: 0 of 5,547 tests over, worst 0.80 of the figure;
+# the chord alone was over 540 times. A day's reach applies to a trio
+# whose span overlaps that day by more than REACH_EDGE_DAYS at either
+# end, so a point at a day's first minute, on JPL's clock or the UTC one,
+# does not pull in the day before.
+REACH_EDGE_DAYS = 2.0 / 1440.0
+
+
+def reach_of(payload):
+    """[(day_start_jd, km)] in time order from a served positions file's
+    reach (L-538), or None when it serves none."""
+    d = (payload or {}).get("data") or {}
+    t, km = d.get("reach_t") or [], d.get("reach_km") or []
+    if not t:
+        return None
+    return sorted((float(t[i]), float(km[i])) for i in range(min(len(t), len(km))))
+
+
+def _loop_term(t0, t2, weights, reach):
+    """R x (1 + L) for a trio spanning t0..t2 with these weights, or 0.0
+    where no day it spans carries a reach."""
+    if not reach:
+        return 0.0
+    r = 0.0
+    for day, km in reach:
+        if day + 1.0 > t0 + REACH_EDGE_DAYS and day < t2 - REACH_EDGE_DAYS:
+            r = max(r, km)
+    return r * (1.0 + sum(abs(w) for w in weights)) if r > 0 else 0.0
+
+
+def position_at(rows, jd, curve=False, reach=None) -> Optional[Dict[str, Any]]:
     """{'km': (x, y, z), 'err_km', 'err_from', 'index'} at jd, or None when
     jd is outside the served span. 'index' is the last served point at or
     before jd, so the path splits after it. 'err_from' says how the error
     was worked out: 'chord' (the parabola against the chord), 'curve' with
     curve=True where a fourth point is served (L-297), 'half_chord' where
-    only two points are."""
+    only two points are, 'loop' where the loop's term, R x (1 + L) from
+    the served reach (L-538), is the larger part of the figure."""
     if len(rows) < 2 or jd < rows[0][0] or jd > rows[-1][0]:
         return None
     lo, hi = 0, len(rows) - 1
@@ -195,10 +243,17 @@ def position_at(rows, jd, curve=False) -> Optional[Dict[str, Any]]:
         third = hi + 1
     if third is None:
         chord = math.sqrt(sum((b[k] - a[k]) ** 2 for k in (1, 2, 3)))
-        return {"km": lin, "err_km": chord / 2.0, "index": lo,
-                "err_from": "half_chord"}
+        f = (jd - a[0]) / (b[0] - a[0]) if b[0] != a[0] else 0.0
+        loop = _loop_term(a[0], b[0], (1.0 - f, f), reach)
+        return {"km": lin, "err_km": chord / 2.0 + loop, "index": lo,
+                "err_from": "loop" if loop > chord / 2.0 else "half_chord"}
     trio = sorted([a, b, rows[third]], key=lambda r: r[0])
     q = _quad(trio[0], trio[1], trio[2], jd)
+    t0, t1, t2 = trio[0][0], trio[1][0], trio[2][0]
+    loop = _loop_term(t0, t2, ((jd - t1) * (jd - t2) / ((t0 - t1) * (t0 - t2)),
+                               (jd - t0) * (jd - t2) / ((t1 - t0) * (t1 - t2)),
+                               (jd - t0) * (jd - t1) / ((t2 - t0) * (t2 - t1))),
+                      reach)
     # L-297 (Tony's ruling of 2026-11-18, 18:56: "Yes, the straight path is
     # not what is happening"): the error is the curve's, twice the larger
     # of the gaps between this parabola and the cubic through its three
@@ -212,10 +267,15 @@ def position_at(rows, jd, curve=False) -> Optional[Dict[str, Any]]:
                               key=lambda r: r[0]), jd)
             gaps.append(math.sqrt(sum((c[k] - q[k]) ** 2 for k in range(3))))
     if gaps:
-        return {"km": q, "err_km": CURVE_FACTOR * max(gaps), "index": lo,
-                "err_from": "curve"}
-    err = math.sqrt(sum((q[k] - lin[k]) ** 2 for k in range(3)))
-    return {"km": q, "err_km": err, "index": lo, "err_from": "chord"}
+        err, said = CURVE_FACTOR * max(gaps), "curve"
+    else:
+        err = math.sqrt(sum((q[k] - lin[k]) ** 2 for k in range(3)))
+        said = "chord"
+    if loop > 0:
+        # L-538: the sum, the curve's or chord's figure plus the loop's term.
+        said = "loop" if loop > err else said
+        err = err + loop
+    return {"km": q, "err_km": err, "index": lo, "err_from": said}
 
 
 def _line(name, xs, ys, zs, color, legendgroup, dash, part):
@@ -253,7 +313,8 @@ def build_spacecraft_traces(name: str, payload: Dict[str, Any],
         return [], ["%s: its served path has fewer than two points, so it "
                     "is not drawn" % name]
     au = [(r[0], r[1] / AU_KM, r[2] / AU_KM, r[3] / AU_KM) for r in rows]
-    at = position_at(rows, epoch_jd, curve=category in CURVE_KINDS)
+    at = position_at(rows, epoch_jd, curve=category in CURVE_KINDS,
+                     reach=reach_of(payload))
     out: List[Tuple[str, Dict[str, Any]]] = []
     ended = at is None and epoch_jd > rows[-1][0]
     if at is None and not ended:

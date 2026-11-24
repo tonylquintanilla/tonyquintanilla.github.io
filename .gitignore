@@ -20,6 +20,12 @@ data/solar-system.prev*/
 data/solar-system.quarantine_*/
 data/_backup/
 
+# JPL's check points for the craft inside a capture (L-538, the orbiters'
+# printed error). The night's build writes them and the night's own run
+# holds the box to them; they are never committed, by Tony's ruling of
+# 2026-11-24, 14:00 (about 64 KB a night that changes whole).
+data/solar-system/raw/checks/
+
 # OneDrive conflict copies of the served cache (L-216). OneDrive forks the
 # whole directory when it cannot reconcile it and names the copy itself --
 # "solar-system (1)" or a numeric prefix. Four of them appeared between
