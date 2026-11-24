@@ -1,10 +1,10 @@
 {
   "_comment": "Written by daily_run.py --night on a clean night only (L-485), so this is the website's last clean run. A red night writes nothing: its record is the run's log on GitHub.",
   "schema": 1,
-  "clean_run_utc": "2026-11-23T20:19:22.785883+00:00",
-  "started_utc": "2026-11-23T20:16:31.663000+00:00",
+  "clean_run_utc": "2026-11-24T00:02:25.207069+00:00",
+  "started_utc": "2026-11-23T23:59:35.915442+00:00",
   "where": "GitHub Actions",
-  "orrery_pulled": "e88771c54817979e543a8670c18ff17448a95e52",
+  "orrery_pulled": "ff461cf170751166389903b5c2dd4180837f0637",
   "pulls_asked": "with the run's GITHUB_TOKEN",
   "swap_log_line": {
     "attempts": {
@@ -15,11 +15,11 @@
     "mode": "nightly",
     "outcome": "ok",
     "reached": "staging_to_live",
-    "run_id": "20261123T201636Z",
-    "time": "2026-11-23T20:18:16.452013+00:00"
+    "run_id": "20261123T235940Z",
+    "time": "2026-11-24T00:01:21.172882+00:00"
   },
-  "run_records": "Run records: carried 169 of 169, plus tonight's: 20261123T201636Z.json.",
-  "served_files_changed": 221,
+  "run_records": "Run records: carried 170 of 170, plus tonight's: 20261123T235940Z.json.",
+  "served_files_changed": 180,
   "holds": [],
   "steps": [
     {
@@ -30,7 +30,7 @@
     {
       "step": "Pulls from the orrery",
       "result": "ok",
-      "seconds": 3.4
+      "seconds": 2.8
     },
     {
       "step": "Pull matches push (runner)",
@@ -40,7 +40,7 @@
     {
       "step": "Cache builder",
       "result": "exit 0",
-      "seconds": 101.1
+      "seconds": 102.2
     },
     {
       "step": "Run records",
@@ -50,7 +50,7 @@
     {
       "step": "Maintenance run, night pass",
       "result": "exit 0",
-      "seconds": 64.5
+      "seconds": 62.2
     }
   ],
   "rows": [
@@ -87,14 +87,14 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/drawings/hills_cloud.json, data/drawings/van_allen_belts.json, data/drawings/earth_exosphere.json, data/drawings/pulled_at.sha",
-      "seconds": 0.8
+      "seconds": 0.6
     },
     {
       "row": "Cache builder suite",
       "kind": "checker",
       "verdict": "PASS",
       "note": "PASS (588 checks, 0 failures)",
-      "seconds": 23.1
+      "seconds": 23.0
     },
     {
       "row": "Pole of date",
@@ -163,7 +163,7 @@
       "row": "Pointer join",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "Every link is accounted for: 190 link(s) against orrery e88771c5, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
+      "note": "Every link is accounted for: 190 link(s) against orrery ff461cf1, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
       "seconds": 0.1
     },
     {
@@ -198,7 +198,7 @@
       "row": "Curve error",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "CURVE ERROR: ok -- 3030 points held out across 21 served files, none missed by more than its printed error",
+      "note": "CURVE ERROR: ok -- 3035 points held out across 21 served files, none missed by more than its printed error",
       "seconds": 0.1
     },
     {
@@ -212,7 +212,7 @@
       "row": "Drawings",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery e88771c5; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
+      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery ff461cf1; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
       "seconds": 0.4
     },
     {
@@ -227,7 +227,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 4.5
+      "seconds": 2.3
     },
     {
       "row": "Page framing",
@@ -332,7 +332,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== FIRST GUIDE: ok -- each card ends only on its own action; the setting and the address decide; the ring's sum is Plotly 2.35.2's own and the page loads 2.35.2; no card covers its target; the front page offers the ways in from the one setting",
-      "seconds": 0.2
+      "seconds": 0.3
     },
     {
       "row": "Picture folds",
@@ -346,7 +346,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: a shared link is cleaned to a scene's address, each thing taken off named; a link that cannot be a scene is refused; a key no row has is named; a link already on a card is refused; and every scene in the metadata is clean ===",
-      "seconds": 0.3
+      "seconds": 0.4
     },
     {
       "row": "Link cards",
@@ -402,7 +402,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== LABEL WORDS: all 34 shell rows in both rooms open their own feature's words; 5 stored drawings' crosses stand off the axis lines; Earth's fixed row opens its own words; self-test red three times",
-      "seconds": 0.2
+      "seconds": 0.1
     },
     {
       "row": "Scene moment",
@@ -478,5 +478,5 @@
       "why": "writes MODULE_ATLAS.md and MODULE_INDEX.md, which are documents; the night commits no page or word (Tony's R1, 2026-10-25)"
     }
   ],
-  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/45257508579"
+  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/45293316262"
 }
