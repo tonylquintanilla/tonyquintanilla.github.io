@@ -26,19 +26,19 @@ in plain words before asking him to do it.
 ## The skills
 
 They live in the orrery folder at
-`..\palomas_orrery_for_github\skills\<name>\SKILL.md`. The Skill
-Manifest in the protocol says which fires on which work; for this
+`..\palomas_orrery_for_github\skills\<name>\SKILL.md`. Each skill's
+own header says which work fires it (the table of versions and
+triggers is the orrery's `skills/SKILL_MANIFEST.md`); for this
 repository that is usually interactive-exhibit, gallery-cache-builder,
 gallery-assembler, gallery-pipeline, ledger-and-session-records,
 safe-file-editing and agentic-pre-test. Read each one the job fires
 before the work: in full when its rules govern the work; in the parts
-its read plan names when it is loaded for its version line or one
-section (the protocol's Token Economy). Open your first report by
-naming the skills you read and the version line each carries. Compare
-that version with the manifest's row; if they disagree, stop and say
-so. The repository's copy is the one read. Claude Code also offers the
-copy installed in Tony's account; an installed skill of the same name
-is not invoked (L-522).
+its read plan names when it is loaded for one section (the
+protocol's Token Economy). Open your first report by naming the skills
+you read and the version line each carries. The repository's copy is
+the one read, so a Code session has nothing to compare it with.
+Claude Code also offers the copy installed in Tony's account; an
+installed skill of the same name is not invoked (L-522).
 
 What `interactive.html` does now, room by room and part by part, is
 `INTERACTIVE_AS_BUILT.md` at this folder's root; the interactive-exhibit
