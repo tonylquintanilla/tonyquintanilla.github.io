@@ -555,6 +555,15 @@
         text box prints, are listed by name (DrawerOrder.settleTies), so
         Earth-Moon L4 is always above L5. They are equally far from
         Earth, and their figures differ only in the 17th decimal place.)
+     Updated: November 25, 2026 with Anthropic's Claude Opus 5.5
+       (L-533, ESCAPADE: a craft whose entry has no mission_end, shown
+        after its path's last point, no longer says its mission ended.
+        Its box says JPL's published path stops on that day, its
+        distance is on the last day of JPL's path, its path is solid
+        since the day shown is past the end of JPL's path, and its
+        source line ends "as far as JPL's data runs": Tony's approved
+        words of that day (PAST_PATH_OPENING). An ended mission's box,
+        a path cut early (Akatsuki) and every comet keep their words.)
      Architecture: Option C viewer (master plan v8 Section 2a)
        - index.html serves curated gallery cards (unchanged)
        - interactive.html serves all interactive exhibits via ?exhibit= parameter
@@ -3953,6 +3962,20 @@ function solarSystemEndedEarly(b, meta) {
 }
 const ENDED_PATH_WORDS = "Its path is solid all the way, since all of it " +
     "was flown, from ";
+// L-533 (ESCAPADE): a craft whose entry has no mission_end, shown after
+// its path's last point -- real time past the end of the path JPL has
+// published, before the site has more. Nothing in the data says it ended,
+// so its box does not say so. Tony's approved words of 2026-11-25, 09:57
+// (documentation/WORDS_L533_path_end_20261125.md in the orrery); its
+// source line says "as far as JPL's data runs", as for a craft flying.
+// An ended mission (a mission_end) keeps its words above.
+const PAST_PATH_OPENING = function (day) {
+    return "JPL's published path for this craft stops on " + day +
+        ". The marker is where that path ends.";
+};
+const PAST_PATH_DISTANCE_WORDS = " on the last day of JPL's path";
+const PAST_PATH_WORDS = "Its path is solid all the way, since the day " +
+    "shown is past the end of JPL's path, from ";
 const SPACECRAFT_DATES_WORDS = "Its path covers the mission's own dates, " +
     "but the planets are drawn where they are today, so a flyby bends the " +
     "line where the planet was then, not where it is now.";
@@ -4014,8 +4037,10 @@ function spacecraftSourceLine(b, meta) {
         // (mission_end), which for Galileo is before JPL's data stops.
         // Akatsuki's path stops before its mission did, so its line says
         // only that it is the last day drawn.
+        // L-533: a craft with no mission_end, past its path's last
+        // point, is not an ended mission; its line reads as a flying one's.
         (from && to ? ", from " + from + " UTC to " + to + " UTC" +
-                      (comet ? "" : meta.ended !== true
+                      (comet ? "" : meta.ended !== true || !solarSystemMissionEndDay(b)
                           ? ", as far as JPL's data runs"
                           : solarSystemEndedEarly(b, meta)
                           ? ", to the last day drawn"
@@ -4604,8 +4629,14 @@ const EXHIBITS = {
                         // (solarSystemEndedEarly).
                         const early = ended && solarSystemEndedEarly(b, sc);
                         const endDay = (ended && solarSystemMissionEndDay(b)) || ends;
+                        // L-533: past its path's last point with no
+                        // mission_end -- a craft still flying, past the
+                        // end of JPL's published path; Tony's words of
+                        // 2026-11-25 (PAST_PATH_OPENING).
+                        const pastPath = ended && !solarSystemMissionEndDay(b);
                         if (ended && ends) {
                             lines.push(bullet(solarSystemSoftWrap(
+                                pastPath ? PAST_PATH_OPENING(ends) :
                                 early ? ENDED_EARLY_OPENING(endDay, ends,
                                             typeof b.cutoff_note === "string" ? b.cutoff_note : "")
                                       : ENDED_OPENING(endDay), 60)));
@@ -4619,6 +4650,7 @@ const EXHIBITS = {
                         if (dist.line) {
                             lines.push(bullet(solarSystemSoftWrap(
                                 dist.line + (early ? ENDED_EARLY_DISTANCE_WORDS :
+                                             pastPath ? PAST_PATH_DISTANCE_WORDS :
                                              ended ? ENDED_DISTANCE_WORDS : ""), 60)));
                             lines.push(bullet(solarSystemSoftWrap(dist.note, 60)));
                         } else {
@@ -4627,6 +4659,7 @@ const EXHIBITS = {
                         if (ends) {
                             const starts = solarSystemTdbDay(sc.path_start_jd);
                             lines.push(bullet(solarSystemSoftWrap(
+                                pastPath ? PAST_PATH_WORDS + starts + " to " + ends + "." :
                                 ended ? ENDED_PATH_WORDS + starts + " to " + ends + "." :
                                 (comet ? COMET_PATH_WORDS : SPACECRAFT_PATH_WORDS) +
                                 ends + ".", 60)));

@@ -1840,7 +1840,7 @@
     },
     {
       "slug": "bepicolombo", "name": "BepiColombo", "horizons_id": "-121", "id_type": "id",
-      "horizons_name": "BepiColombo (Spacecraft)",
+      "horizons_name": "MPO-BepiColombo (Spacecraft)",
       "description": "BepiColombo, led by ESA with Japan's space agency JAXA, launched in October 2018 to study Mercury from orbit.",
       "info_url": "https://www.esa.int/Science_Exploration/Space_Science/BepiColombo",
       "path": {"made": "2026-11-04", "span": {"end": "2027-04-10", "start": "2018-10-21"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2019-01-01 17:46", "dist_km": 132819135.4, "window": ["2018-04-02 23:04", "2019-10-02 12:27"], "step": "4d"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2020-01-28 00:36", "dist_km": 131729915.7, "window": ["2019-05-04 09:04", "2020-10-22 16:07"], "step": "4d"}, {"body": "Earth", "kind": "flyby", "stays": false, "closest": "2020-04-10 04:26", "dist_km": 19064.1, "window": ["2020-04-10 00:14", "2020-04-10 08:37"], "step": "5m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2020-09-09 18:00", "dist_km": 93644605.1, "window": ["2020-04-07 09:03", "2021-02-12 02:56"], "step": "2d"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2020-10-15 04:00", "dist_km": 16774.6, "window": ["2020-10-15 01:13", "2020-10-15 06:46"], "step": "5m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2021-03-14 16:40", "dist_km": 77748071.5, "window": ["2020-11-16 22:21", "2021-07-10 10:58"], "step": "2d"}, {"body": "Venus", "kind": "flyby", "stays": false, "closest": "2021-08-10 13:53", "dist_km": 6604.4, "window": ["2021-08-10 13:01", "2021-08-10 14:44"], "step": "1m"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2021-10-01 23:36", "dist_km": 2640.2, "window": ["2021-10-01 23:02", "2021-10-02 00:09"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2021-10-13 15:14", "dist_km": 47996539.9, "window": ["2021-08-20 10:37", "2021-12-06 19:50"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-02-23 00:14", "dist_km": 48180017.2, "window": ["2021-12-30 10:32", "2022-04-18 13:55"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2022-06-23 09:46", "dist_km": 2646.2, "window": ["2022-06-23 09:10", "2022-06-23 10:21"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-07-06 09:04", "dist_km": 45424435.8, "window": ["2022-05-17 03:41", "2022-08-25 14:26"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2022-10-31 06:17", "dist_km": 45615851.1, "window": ["2022-09-10 16:29", "2022-12-20 20:04"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-02-25 18:26", "dist_km": 46304888.4, "window": ["2023-01-04 22:05", "2023-04-18 14:46"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2023-06-19 19:36", "dist_km": 2678.0, "window": ["2023-06-19 18:46", "2023-06-19 20:25"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-06-26 08:33", "dist_km": 45784207.1, "window": ["2023-05-05 23:14", "2023-08-16 17:51"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2023-10-15 04:38", "dist_km": 46421185.3, "window": ["2023-08-23 14:35", "2023-12-06 18:40"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-02-03 13:29", "dist_km": 46345978.2, "window": ["2023-12-13 01:19", "2024-03-27 01:38"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-05-23 12:27", "dist_km": 46285866.6, "window": ["2024-04-01 00:45", "2024-07-15 00:08"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2024-09-04 21:50", "dist_km": 2603.9, "window": ["2024-09-04 20:57", "2024-09-04 22:42"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-09-09 23:24", "dist_km": 45802208.5, "window": ["2024-07-18 06:55", "2024-11-02 15:52"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2024-12-01 14:25", "dist_km": 40066.1, "window": ["2024-11-30 15:04", "2024-12-02 13:45"], "step": "30m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-12-06 13:37", "dist_km": 45969821.4, "window": ["2024-10-13 11:04", "2025-01-29 16:09"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2025-01-08 06:00", "dist_km": 2735.5, "window": ["2025-01-08 04:58", "2025-01-08 07:01"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-02-27 18:39", "dist_km": 45783775.4, "window": ["2025-01-04 18:27", "2025-04-22 18:50"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-05-25 10:35", "dist_km": 45780744.8, "window": ["2025-04-01 11:12", "2025-07-18 09:57"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-08-19 19:59", "dist_km": 46236999.1, "window": ["2025-06-26 00:12", "2025-10-13 15:45"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-11-15 19:31", "dist_km": 46706033.9, "window": ["2025-09-21 02:51", "2026-01-10 12:10"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-02-12 17:57", "dist_km": 47010403.7, "window": ["2025-12-18 13:20", "2026-04-09 22:33"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-05-14 01:45", "dist_km": 47195951.7, "window": ["2026-03-18 13:18", "2026-07-09 14:11"], "step": "6h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-08-12 09:03", "dist_km": 47330152.9, "window": ["2026-06-16 14:55", "2026-10-08 03:10"], "step": "6h"}, {"body": "Mercury", "kind": "flyby", "stays": false, "closest": "2026-10-26 12:57", "dist_km": 88204.6, "window": ["2026-10-16 19:02", "2026-11-05 06:51"], "step": "3h"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-11-10 10:00", "dist_km": 45808049.8, "window": ["2026-09-17 13:42", "2027-01-03 06:17"], "step": "6h"}, {"body": "Mercury", "kind": "arrival", "stays": true, "closest": "2026-11-21 18:48", "dist_km": 3073.0, "window": ["2026-11-21 17:25", "2026-11-21 20:10"], "step": "1m"}, {"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2027-02-06 06:29", "dist_km": 45993833.5, "window": ["2026-12-14 03:04", "2027-04-01 09:53"], "step": "6h"}]},
@@ -2559,7 +2559,7 @@
     {
       "slug": "west", "name": "West", "horizons_id": "C/1975 V1-A", "id_type": "smallbody",
       "horizons_name": "West (C/1975 V1-A)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "1975-02-25"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "1976-02-25 05:19", "dist_km": 29411034.0, "window": ["1976-02-03 17:19", "1976-03-17 17:18"], "step": "6h"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "1975-02-25"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "1976-02-25 05:19", "dist_km": 29411034.0, "window": ["1976-02-03 17:19", "1976-03-17 17:18"], "step": "6h"}]},
       "description": "One of the brightest objects to pass through the inner solar system in 1976. As it passed close to the Sun its nucleus split into four pieces; the path drawn is piece A's, the one JPL tracks. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun.",
       "info_url": "https://en.wikipedia.org/wiki/Comet_West",
       "open_path": true,
@@ -2571,7 +2571,7 @@
     {
       "slug": "mcnaught", "name": "McNaught", "horizons_id": "C/2006 P1", "id_type": "smallbody",
       "horizons_name": "McNaught (C/2006 P1)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2006-01-12"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2007-01-12 19:10", "dist_km": 25541227.7, "window": ["2006-12-26 09:35", "2007-01-30 04:44"], "step": "6h"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2006-01-12"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2007-01-12 19:10", "dist_km": 25541227.7, "window": ["2006-12-26 09:35", "2007-01-30 04:44"], "step": "6h"}]},
       "description": "Discovered in August 2006 by Robert McNaught and called the Great Comet of 2007, it was the brightest comet in over 40 years, easily seen with the naked eye from the Southern Hemisphere in January and February 2007. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun.",
       "info_url": "https://en.wikipedia.org/wiki/C/2006_P1_(McNaught)",
       "open_path": true,
@@ -2583,7 +2583,7 @@
     {
       "slug": "tsuchinshan_atlas", "name": "Tsuchinshan", "horizons_id": "C/2023 A3", "id_type": "smallbody",
       "horizons_name": "Tsuchinshan-ATLAS (C/2023 A3)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2023-09-28"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-09-27 17:49", "dist_km": 58556036.5, "window": ["2024-07-29 08:16", "2024-11-27 03:21"], "step": "1d"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2023-09-28"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2024-09-27 17:49", "dist_km": 58556036.5, "window": ["2024-07-29 08:16", "2024-11-27 03:21"], "step": "1d"}]},
       "description": "Discovered in January 2023, it became known as the Great Comet of 2024, visible to the naked eye around its perihelion, its closest pass by the Sun, in late September 2024. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://en.wikipedia.org/wiki/C/2023_A3_(Tsuchinshan-ATLAS)",
       "open_path": true,
@@ -2595,7 +2595,7 @@
     {
       "slug": "wierzchos", "name": "Wierzchos", "horizons_id": "C/2024 E1", "id_type": "smallbody",
       "horizons_name": "Wierzchos (C/2024 E1)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2025-01-20"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-01-20 18:27", "dist_km": 84689248.4, "window": ["2025-10-07 17:04", "2026-05-05 19:49"], "step": "1d"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2025-01-20"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-01-20 18:27", "dist_km": 84689248.4, "window": ["2025-10-07 17:04", "2026-05-05 19:49"], "step": "1d"}]},
       "description": "A comet from the Oort cloud, the far-off cloud of icy bodies thought to surround the solar system, discovered in March 2024 by Kacper Wierzchos. Its activity has been driven by carbon dioxide. After its perihelion, its closest pass by the Sun, it showed three dust tails. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun.",
       "info_url": "https://en.wikipedia.org/wiki/C/2024_E1_(Wierzchos)",
       "open_path": true,
@@ -2607,7 +2607,7 @@
     {
       "slug": "atlas_2024_g3", "name": "ATLAS", "horizons_id": "C/2024 G3", "id_type": "smallbody",
       "horizons_name": "ATLAS (C/2024 G3)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-01-14"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-01-13 10:18", "dist_km": 13993412.4, "window": ["2025-01-06 08:57", "2025-01-20 11:38"], "step": "2h"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2024-01-14"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-01-13 10:18", "dist_km": 13993412.4, "window": ["2025-01-06 08:57", "2025-01-20 11:38"], "step": "2h"}]},
       "description": "Discovered in April 2024 and called the Great Comet of 2025, the brightest comet of that year. After its perihelion, its closest pass by the Sun, it was clearly visible to the naked eye from the Southern Hemisphere. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://en.wikipedia.org/wiki/C/2024_G3_(ATLAS)",
       "open_path": true,
@@ -2619,7 +2619,7 @@
     {
       "slug": "c2025_k1", "name": "C/2025_K1", "horizons_id": "1004075", "id_type": "designation",
       "horizons_name": "ATLAS (C/2025 K1)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:33", "dist_km": 49997834.6, "window": ["2025-08-21 18:55", "2025-11-25 02:10"], "step": "6h"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:33", "dist_km": 49997834.6, "window": ["2025-08-21 18:55", "2025-11-25 02:10"], "step": "6h"}]},
       "description": "A comet that broke apart about a month after its perihelion, its closest pass by the Sun: in November 2025 NASA's Hubble Space Telescope caught it splitting into at least four pieces. This path is the comet's own, worked out from sightings before and after the break-up. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://science.nasa.gov/asset/hubble/fragmenting-comet-c-2025-k1/",
       "open_path": true,
@@ -2631,7 +2631,7 @@
     {
       "slug": "c2025_k1_b", "name": "C/2025_K1-B", "horizons_id": "C/2025 K1-B", "id_type": "smallbody",
       "horizons_name": "ATLAS (C/2025 K1-B)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:52", "dist_km": 50234650.0, "window": ["2025-08-21 11:38", "2025-11-25 10:05"], "step": "6h"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:52", "dist_km": 50234650.0, "window": ["2025-08-21 11:38", "2025-11-25 10:05"], "step": "6h"}]},
       "description": "Piece B of comet C/2025 K1 (ATLAS), one of at least four pieces Hubble saw in November 2025. Its path is worked out from sightings after the break-up, so the part drawn before then is traced backwards. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://science.nasa.gov/asset/hubble/fragmenting-comet-c-2025-k1/",
       "open_path": true,
@@ -2654,7 +2654,7 @@
     {
       "slug": "c2025_k1_d", "name": "C/2025_K1-D", "horizons_id": "C/2025 K1-D", "id_type": "smallbody",
       "horizons_name": "ATLAS (C/2025 K1-D)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:55", "dist_km": 50308609.2, "window": ["2025-08-21 09:15", "2025-11-25 12:34"], "step": "6h"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2024-10-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-08 10:55", "dist_km": 50308609.2, "window": ["2025-08-21 09:15", "2025-11-25 12:34"], "step": "6h"}]},
       "description": "Piece D of comet C/2025 K1 (ATLAS), one of at least four pieces Hubble saw in November 2025. It was followed for only 33 days, the shortest of the four, so the part drawn before the break-up is traced backwards. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://science.nasa.gov/asset/hubble/fragmenting-comet-c-2025-k1/",
       "open_path": true,
@@ -2666,7 +2666,7 @@
     {
       "slug": "panstarrs_2025_r3", "name": "PANSTARRS", "horizons_id": "C/2025 R3", "id_type": "smallbody",
       "horizons_name": "PANSTARRS (C/2025 R3)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2025-04-19"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-04-19 21:27", "dist_km": 74592011.3, "window": ["2026-01-23 01:32", "2026-07-15 17:21"], "step": "1d"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2025-04-19"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2026-04-19 21:27", "dist_km": 74592011.3, "window": ["2026-01-23 01:32", "2026-07-15 17:21"], "step": "1d"}]},
       "description": "A comet from the Oort cloud, the far-off cloud of icy bodies thought to surround the solar system, discovered in September 2025. On April 11, 2026 it was seen with the naked eye. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://en.wikipedia.org/wiki/C/2025_R3_(PanSTARRS)",
       "open_path": true,
@@ -2678,7 +2678,7 @@
     {
       "slug": "borisov_2025_v1", "name": "Borisov", "horizons_id": "C/2025 V1", "id_type": "smallbody",
       "horizons_name": "Borisov (C/2025 V1)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-11-16"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-11-16 13:02", "dist_km": 69215655.5, "window": ["2025-08-31 01:44", "2026-02-02 00:19"], "step": "1d"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2024-11-16"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-11-16 13:02", "dist_km": 69215655.5, "window": ["2025-08-31 01:44", "2026-02-02 00:19"], "step": "1d"}]},
       "description": "A comet discovered in 2025. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=C%2F2025%20V1",
       "open_path": true,
@@ -2690,7 +2690,7 @@
     {
       "slug": "oumuamua", "name": "1I/Oumuamua", "horizons_id": "A/2017 U1", "id_type": "smallbody",
       "horizons_name": "'Oumuamua",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2016-09-09"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2017-09-09 11:52", "dist_km": 38304585.9, "window": ["2017-08-10 00:32", "2017-10-09 23:11"], "step": "6h"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2016-09-09"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2017-09-09 11:52", "dist_km": 38304585.9, "window": ["2017-08-10 00:32", "2017-10-09 23:11"], "step": "6h"}]},
       "description": "The first known interstellar object, one that came from another star system, seen passing through ours; discovered in October 2017 by the University of Hawaii's Pan-STARRS1 telescope. JPL lists it as an asteroid. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://www.jpl.nasa.gov/news/solar-systems-first-interstellar-visitor-dazzles-scientists/",
       "open_path": true,
@@ -2702,7 +2702,7 @@
     {
       "slug": "borisov_2i", "name": "2I/Borisov", "horizons_id": "C/2019 Q4", "id_type": "smallbody",
       "horizons_name": "Borisov (C/2019 Q4)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2018-12-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2019-12-08 13:17", "dist_km": 300171607.2, "window": ["2018-08-20 13:56", "2021-03-27 12:37"], "step": "8d"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2018-12-08"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2019-12-08 13:17", "dist_km": 300171607.2, "window": ["2018-08-20 13:56", "2021-03-27 12:37"], "step": "8d"}]},
       "description": "The first confirmed interstellar comet, one that came from another star system, and only the second interstellar visitor of any kind, after 'Oumuamua. Discovered by Gennady Borisov in August 2019. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun.",
       "info_url": "https://science.nasa.gov/solar-system/comets/2i-borisov/",
       "open_path": true,
@@ -2714,7 +2714,7 @@
     {
       "slug": "atlas_3i", "name": "3I/ATLAS", "horizons_id": "C/2025 N1", "id_type": "smallbody",
       "horizons_name": "ATLAS (C/2025 N1)",
-      "path": {"made": "2026-10-26", "span": {"end": "2027-10-26", "start": "2024-10-29"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-29 11:35", "dist_km": 202921926.6, "window": ["2025-04-06 06:07", "2026-05-23 17:02"], "step": "3d"}]},
+      "path": {"made": "2026-11-25", "span": {"end": "2027-11-25", "start": "2024-10-29"}, "backbone": {"step": "7d", "thin_tol_au": 0.02}, "events": [{"body": "Sun", "kind": "perihelion", "stays": false, "closest": "2025-10-29 11:35", "dist_km": 202921926.6, "window": ["2025-04-06 06:07", "2026-05-23 17:02"], "step": "3d"}]},
       "description": "The third known interstellar object, one from outside our solar system, first reported on July 1, 2025 by the NASA-funded ATLAS survey telescope in Chile. Hyperbolic: its orbit is an open curve, not an ellipse like a planet's, so on its present path it does not loop back around the Sun. Retrograde: it moves around the Sun in the opposite direction to the planets.",
       "info_url": "https://science.nasa.gov/blogs/planetary-defense/2025/07/02/nasa-discovers-interstellar-comet-moving-through-solar-system/",
       "open_path": true,

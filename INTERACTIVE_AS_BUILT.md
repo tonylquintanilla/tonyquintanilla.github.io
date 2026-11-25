@@ -1421,6 +1421,27 @@ Plotly.
     launch order, Pioneer 10's six bullets, Akatsuki's six and its
     source line, each one's companion by its plan; both shown failing on
     a page planted without the two sentences).
+  - A CRAFT STILL FLYING, PAST JPL'S PATH (L-533, ESCAPADE; Tony's
+    approved words of 2026-11-25, 09:57, in the orrery's
+    documentation/WORDS_L533_path_end_20261125.md). The renderer's
+    `ended` says only that the minute shown is after the path's last
+    served point. Where the entry has no `mission_end` (the fourteen
+    still flying; all seven ended missions carry one) the box does not
+    say the mission ended (`pastPath`). It opens "JPL's published path
+    for this craft stops on <last day>. The marker is where that path
+    ends." (`PAST_PATH_OPENING`); its distance ends "on the last day of
+    JPL's path"; then the note on JPL's uncertainty; "Its path is solid
+    all the way, since the day shown is past the end of JPL's path, from
+    <first day> to <last day>."; the dates sentence: five bullets. Its
+    source line ends "as far as JPL's data runs", a flying craft's. The
+    words say only what the data supports: no end is recorded, not that
+    the mission goes on. A visitor first meets them when real time
+    passes the end of BepiColombo's published path (10 April 2027)
+    before the site has more. Checked by the walk's section 42 (a copy
+    of the payload planted as the renderer marks a minute past a path's
+    last point; shown failing on the page before the change and on a
+    page planted with the words on every ended mission) and by the
+    figures check's list of the page's lines.
   - Its companions by the same logic, unchanged: Galileo's plan names
     flybys of Venus and Earth and its arrival at Jupiter; Cassini's,
     Venus, Earth and Jupiter flybys and its arrival at Saturn.

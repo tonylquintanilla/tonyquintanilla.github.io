@@ -163,6 +163,11 @@
 // served last-good is accepted by its named hold; three more planted
 // cases (ESCAPADE-Gold three days short, a point a day past the span, and
 // the Voyager's last instant, 2100-01-01 00:00, which passes).
+// Later that day (L-533, the words for a craft past the end of JPL's
+// path): the page's list also holds that a craft with no mission_end, past
+// its path's last point, opens with Tony's approved words and its distance
+// is on the last day of JPL's path; the headless walk's section 42 reads
+// the words in its box.
 
 "use strict";
 const fs = require("fs");
@@ -1389,6 +1394,12 @@ crafts.forEach(function (slug) {
    "the page does not give an ended mission its own text box (L-507)"],
   ["ended ? ENDED_DISTANCE_WORDS : \"\"), 60)));",
    "the page does not say an ended mission's distance is on its last day (L-507)"],
+  ["const pastPath = ended && !solarSystemMissionEndDay(b);",
+   "the page does not tell a craft with no mission_end, past its path's end, from an ended mission (L-533)"],
+  ["pastPath ? PAST_PATH_OPENING(ends) :",
+   "the page does not open such a craft's box with the end of JPL's published path (L-533)"],
+  ["pastPath ? PAST_PATH_DISTANCE_WORDS :",
+   "the page does not say such a craft's distance is on the last day of JPL's path (L-533)"],
   ["const early = ended && solarSystemEndedEarly(b, sc);",
    "the page does not tell a mission that ended after JPL's data stops (L-507, more voyages)"],
   ["early ? ENDED_EARLY_OPENING(endDay, ends,",

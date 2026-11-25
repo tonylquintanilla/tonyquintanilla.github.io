@@ -197,6 +197,15 @@
 // and L5 tie): two children nearer each other than half a kilometre are
 // wanted by name, as the page now lists them; until then the walk kept
 // the served order on a tie and went red at the minutes the page did not.
+// Updated November 25, 2026 with Anthropic's Claude Opus 5.5 (L-533,
+// ESCAPADE): section 42 plants a copy of the payload with one craft still
+// flying (no mission_end) past its path's last point, as render_spacecraft
+// marks it, and wants Tony's approved words of that day in its box and its
+// source line, none of an ended mission's; and every ended mission's box as
+// it was, Akatsuki's cut path among them. Shown failing on the page before
+// the change (42a: "This mission ended on 4 April 2027" for BepiColombo)
+// and on a page planted with the words on every ended mission (42b, all
+// seven). A planted page walks it too.
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -606,6 +615,104 @@ async function linksFold(root, payload, page) {
               "; Find '" + word + "': " + count);
 }
 
+// 42. L-533 (ESCAPADE): a craft still flying, past its path's last point,
+// in Tony's approved words of 2026-11-25
+// (documentation/WORDS_L533_path_end_20261125.md in the orrery); and every
+// ended mission's box as it was. No served moment is past a flying
+// craft's path yet (the room's window ends before the first, BepiColombo's),
+// so a copy of the payload is planted as render_spacecraft marks a minute
+// past a path's last served point: one craft with no mission_end,
+// BepiColombo where served, its whole path solid, its marker and name on
+// its last point, its meta ended with no error. The days are worked out
+// here from the payload's clock, not by the page's helpers. With a planted
+// page as the walk's third argument this section runs too, and must fail.
+async function pastPathEnd(root, payload, page) {
+  const fs = require("fs"), os = require("os"), path = require("path");
+  const data = JSON.parse(fs.readFileSync(payload, "utf8"));
+  const clockS = (data.clock || {}).tdb_minus_utc_s;
+  const day = (jd) => solarDay(2440587.5 +
+    Math.round(((jd - 2440587.5) * 86400 - clockS) / 60) * 60 / 86400);
+  const craft = (s) => (data.bodies[s] || {}).kind === "spacecraft";
+  const flying = Object.keys(data.bodies).filter(s => craft(s) && !data.bodies[s].mission_end);
+  const ended = Object.keys(data.bodies).filter(s => craft(s) && !!data.bodies[s].mission_end);
+  const slug = flying.indexOf("bepicolombo") >= 0 ? "bepicolombo" : flying[0];
+  ok(!!slug && typeof clockS === "number" && ended.length > 0,
+     "42: the payload serves no craft still flying, no ended mission, or no clock");
+  if (!slug) { return; }
+  const tr = data.figure.data;
+  const part = (p) => tr.find(t => t.legendgroup === slug && t.meta && t.meta.path_part === p);
+  const flown = part("flown"), ahead = part("predicted");
+  const mk = tr.find(t => t.legendgroup === slug && t.meta && t.meta.spacecraft === true);
+  const label = tr.find(t => t.legendgroup === slug && t.mode === "text");
+  if (flown && ahead) {
+    ["x", "y", "z"].forEach(a => { flown[a] = flown[a].slice(0, -1).concat(ahead[a].slice(1)); });
+    data.figure.data = tr.filter(t => t !== ahead);
+  }
+  const k = flown ? flown.x.length - 1 : -1;
+  [mk, label].forEach(t => { if (t && k >= 0) { ["x", "y", "z"].forEach(a => { t[a] = [flown[a][k]]; }); } });
+  ok(!!(flown && ahead && mk && label), "42: " + slug + "'s path, marker or name is not in the payload to plant");
+  if (!(flown && mk)) { return; }
+  mk.meta = Object.assign({}, mk.meta, { ended: true, interp_err_km: 0.0 });
+  const copy = path.join(os.tmpdir(), "walk_past_path_payload.json");
+  fs.writeFileSync(copy, JSON.stringify(data));
+  const w = await h.boot(root, "solar-system", copy, page ? { page: page } : undefined);
+  const box = function (s) {
+    const m = w.eval("sunPlotDiv.data").find(t => t.legendgroup === s && t.meta && t.meta.label_target === true);
+    if (!m) { return null; }
+    const ls = m.text[0].split(/<br[^>]*>/);
+    return { joined: ls.join(" ").replace(/<br soft>/g, " "), source: m.meta.source || "",
+             bullets: ls.filter(l => l.indexOf("&#8226; ") === 0).length,
+             ends: day(m.meta.path_end_jd), starts: day(m.meta.path_start_jd) };
+  };
+  // The new words, none of which an ended mission's box may carry.
+  const NEW_WORDS = ["JPL's published path for this craft stops on", "The marker is where that path ends.",
+                     " on the last day of JPL's path", "since the day shown is past the end of JPL's path"];
+  // 42a. The craft still flying: its five bullets, the four sentences in
+  // their places, and none of an ended mission's words.
+  const f = box(slug);
+  ok(f && f.bullets === 5 &&
+     f.joined.indexOf("&#8226; JPL's published path for this craft stops on " + f.ends +
+                      ". The marker is where that path ends. &#8226; ") >= 0 &&
+     / AU from the Sun \([0-9,]+ km\) on the last day of JPL's path &#8226; /.test(f.joined) &&
+     f.joined.indexOf("JPL's own uncertainty for this position is not yet included.") >= 0 &&
+     f.joined.indexOf("&#8226; Its path is solid all the way, since the day shown is past the end of " +
+                      "JPL's path, from " + f.starts + " to " + f.ends + ".") >= 0 &&
+     f.joined.indexOf(DATES_WORDS) >= 0 &&
+     f.joined.indexOf("This mission ended") < 0 && f.joined.indexOf(" on its last day") < 0 &&
+     f.joined.indexOf("all of it was flown") < 0 && f.joined.indexOf("dashed") < 0,
+     "42a: " + slug + ", still flying past its path's last point, does not carry the approved words: " +
+     (f ? f.joined.slice(0, 520) : "no marker"));
+  ok(f && f.source.indexOf(" UTC to " + f.ends + " UTC, as far as JPL's data runs, retrieved ") > 0 &&
+     f.source.indexOf("to the day the mission ended") < 0 && f.source.indexOf("to the last day drawn") < 0,
+     "42a: " + slug + "'s source line does not end its dates \"as far as JPL's data runs\": " +
+     (f ? f.source.slice(0, 260) : "no marker"));
+  // 42b. Every ended mission served keeps its words: its own end day
+  // first, then either its last day (its path ends on that day) or the
+  // last day drawn (its path stops before the mission did, Akatsuki).
+  const kept = [];
+  ended.forEach(function (s) {
+    const b = box(s), me = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data.bodies[s].mission_end);
+    const endDay = me ? solarDay(Date.UTC(+me[1], +me[2] - 1, +me[3]) / 86400000 + 2440587.5) : "?";
+    const early = !!b && endDay !== b.ends;
+    const good = !!b && b.joined.indexOf("&#8226; This mission ended on " + endDay + ". ") >= 0 &&
+      (early ? / on the last day drawn &#8226; /.test(b.joined) &&
+               b.source.indexOf(", to the last day drawn, retrieved ") > 0
+             : / on its last day &#8226; /.test(b.joined) &&
+               b.joined.indexOf("&#8226; This mission ended on " + endDay +
+                                ". The marker is where it was that day.") >= 0 &&
+               b.joined.indexOf("Its path is solid all the way, since all of it was flown, from " +
+                                b.starts + " to " + b.ends + ".") >= 0 &&
+               b.source.indexOf(", to the day the mission ended, retrieved ") > 0) &&
+      b.source.indexOf("as far as JPL's data runs") < 0 &&
+      NEW_WORDS.every(p => b.joined.indexOf(p) < 0);
+    ok(good, "42b: " + s + "'s box, an ended mission's, is not as it was: " +
+       (b ? b.joined.slice(0, 420) + " | " + b.source.slice(0, 220) : "no marker"));
+    if (good) { kept.push(s + (early ? " (drawn to " + b.ends + ")" : "")); }
+  });
+  console.log("  42: " + slug + " planted past its path's last point, " + (f ? f.ends : "?") +
+              "; ended missions' words kept, " + kept.length + " of " + ended.length + ": " + kept.join(", "));
+}
+
 (async () => {
   const [root, given, planted] = process.argv.slice(2);
   const fs = require("fs"), os = require("os"), path = require("path");
@@ -620,6 +727,7 @@ async function linksFold(root, payload, page) {
     await scenes(root, payload, planted);
     await places(root, payload, planted);
     await linksFold(root, payload, planted);   // L-540
+    await pastPathEnd(root, payload, planted); // L-533
     console.log(fails.length ? "FAIL " + fails.length + " of " + n + " (planted " + planted + "):\n  " + fails.join("\n  ")
                              : "PASS: " + n + " checks on the planted page -- it should have failed");
     process.exit(fails.length ? 1 : 0);
@@ -2434,6 +2542,9 @@ async function linksFold(root, payload, page) {
   await places(root, payload, null);
   // 41. L-540: the Links fold, on a copy of the metadata.
   await linksFold(root, payload, null);
+  // 42. L-533: a craft still flying past its path's end, on a planted copy
+  // of the payload, and every ended mission's box as it was.
+  await pastPathEnd(root, payload, null);
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);
 })();
