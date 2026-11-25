@@ -168,6 +168,13 @@
 // its path's last point, opens with Tony's approved words and its distance
 // is on the last day of JPL's path; the headless walk's section 42 reads
 // the words in its box.
+// That evening (L-554, BepiColombo's path cut at JPL's fit date): part 7
+// holds a craft still flying whose path the orrery cuts -- a cutoff_note
+// and no mission_end -- as it holds Akatsuki's: its cutoff_note names its
+// path's last day as the room prints it, and an end_note comes only beside
+// a cutoff_note. Shown failing on an end_note alone and on a cutoff_note
+// naming another day; the page's list holds the cut's branch, and the
+// headless walk's section 43 reads its seven sentences in its box.
 
 "use strict";
 const fs = require("fs");
@@ -1221,8 +1228,24 @@ function printedDay(ymd) {
 function missionEndIssue(o, span) {
   const me = o.mission_end;
   if (me === undefined) {
+    // L-554: a craft still flying whose path the orrery cuts (its entry's
+    // path_cutoff; BepiColombo's at JPL's fit date, 17 November 2026): its
+    // cutoff_note names its path's last day as the room prints it, and its
+    // end_note, if any, is a sentence. Read as "cut".
+    if (o.cutoff_note !== undefined) {
+      if (typeof o.cutoff_note !== "string" || !o.cutoff_note.trim()) {
+        return ["its cutoff_note is not a sentence", false];
+      }
+      if (o.cutoff_note.indexOf(printedDay(span.end)) < 0) {
+        return ["its cutoff_note does not name its path's last day, " + printedDay(span.end), false];
+      }
+      if (o.end_note !== undefined && (typeof o.end_note !== "string" || !o.end_note.trim())) {
+        return ["its end_note is not a sentence", false];
+      }
+      return [null, "cut"];
+    }
     return [o.end_note === undefined ? null :
-            "it serves an end_note with no mission_end", false];
+            "it serves an end_note with no mission_end and no cutoff_note", false];
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(me))) {
     return ["its mission_end " + JSON.stringify(me) + " is not YYYY-MM-DD", false];
@@ -1259,7 +1282,14 @@ if (!missionEndIssue({ mission_end: "2003-09-21" }, { end: "2003-09-30" })[0] ||
                     { end: "2024-04-26" }).join() !== ",true" ||
     missionEndIssue({ mission_end: "2003-09-21" }, { end: "2003-09-21" }).join() !== ",false" ||
     missionEndIssue({ mission_end: "2025-09-18", end_note: "Lost." },
-                    { end: "2025-08-23" }).join() !== ",true") {
+                    { end: "2025-08-23" }).join() !== ",true" ||
+    // L-554: a cut on a craft still flying, naming another day, fails;
+    // BepiColombo's, naming its path's last day, is read as cut.
+    !missionEndIssue({ cutoff_note: "The path is drawn to 18 November 2026." },
+                     { end: "2026-11-17" })[0] ||
+    missionEndIssue({ cutoff_note: "The path is drawn to 17 November 2026.",
+                      end_note: "It entered orbit around Mercury on 21 November 2026." },
+                    { end: "2026-11-17" }).join() !== ",cut") {
   failures.push("the mission_end check cannot fail, or fails a right one (L-507)");
 }
 // ---- 7b. the Lagrange points (L-297) --------------------------------
@@ -1357,7 +1387,9 @@ crafts.forEach(function (slug) {
     if (!r.line) { failures.push(slug + ": no line -- " + r.why); return; }
     const me = missionEndIssue(o, span);
     if (me[0]) { failures.push(slug + ": " + me[0]); return; }
-    craftTable.push([slug, r.line + (me[1]
+    craftTable.push([slug, r.line + (me[1] === "cut"
+      ? " on the last day drawn, " + span.end + " (cut, still flying)"
+      : me[1]
       ? " on the last day drawn, " + span.end + " (ended " + o.mission_end + ")"
       : " on its last day, " + span.end + " (ended)") +
       (o.end_note ? "; then: " + o.end_note : "")]);
@@ -1400,6 +1432,14 @@ crafts.forEach(function (slug) {
    "the page does not open such a craft's box with the end of JPL's published path (L-533)"],
   ["pastPath ? PAST_PATH_DISTANCE_WORDS :",
    "the page does not say such a craft's distance is on the last day of JPL's path (L-533)"],
+  ["const cut = pastPath && solarSystemPathCut(b, sc);",
+   "the page does not tell a craft still flying whose path the orrery cut (L-554)"],
+  ["cut ? b.cutoff_note :",
+   "the page does not open a cut craft's box with its cutoff_note (L-554)"],
+  ["early || cut ? ENDED_EARLY_DISTANCE_WORDS :",
+   "the page does not say a cut craft's distance is on the last day drawn (L-554)"],
+  ["solarSystemPathCut(b, meta) ? CUT_SOURCE_WORDS",
+   "the page's source line does not say a cut craft is drawn as far as JPL's data is fitted (L-554)"],
   ["const early = ended && solarSystemEndedEarly(b, sc);",
    "the page does not tell a mission that ended after JPL's data stops (L-507, more voyages)"],
   ["early ? ENDED_EARLY_OPENING(endDay, ends,",

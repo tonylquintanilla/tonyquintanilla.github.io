@@ -1421,27 +1421,63 @@ Plotly.
     launch order, Pioneer 10's six bullets, Akatsuki's six and its
     source line, each one's companion by its plan; both shown failing on
     a page planted without the two sentences).
-  - A CRAFT STILL FLYING, PAST JPL'S PATH (L-533, ESCAPADE; Tony's
-    approved words of 2026-11-25, 09:57, in the orrery's
-    documentation/WORDS_L533_path_end_20261125.md). The renderer's
-    `ended` says only that the minute shown is after the path's last
-    served point. Where the entry has no `mission_end` (the fourteen
-    still flying; all seven ended missions carry one) the box does not
-    say the mission ended (`pastPath`). It opens "JPL's published path
-    for this craft stops on <last day>. The marker is where that path
-    ends." (`PAST_PATH_OPENING`); its distance ends "on the last day of
-    JPL's path"; then the note on JPL's uncertainty; "Its path is solid
-    all the way, since the day shown is past the end of JPL's path, from
-    <first day> to <last day>."; the dates sentence: five bullets. Its
-    source line ends "as far as JPL's data runs", a flying craft's. The
-    words say only what the data supports: no end is recorded, not that
-    the mission goes on. A visitor first meets them when real time
-    passes the end of BepiColombo's published path (10 April 2027)
-    before the site has more. Checked by the walk's section 42 (a copy
-    of the payload planted as the renderer marks a minute past a path's
-    last point; shown failing on the page before the change and on a
-    page planted with the words on every ended mission) and by the
-    figures check's list of the page's lines.
+  - A CRAFT STILL FLYING, PAST ITS PATH'S LAST POINT: two cases, told
+    apart by the orrery's `cutoff_note`. The renderer's `ended` says only
+    that the minute shown is after the path's last served point. Where
+    the entry has no `mission_end` (the fourteen still flying; all seven
+    ended missions carry one) the box does not say the mission ended
+    (`pastPath`).
+    - NO CUT (L-533, ESCAPADE; Tony's approved words of 2026-11-25,
+      09:57, in the orrery's documentation/WORDS_L533_path_end_20261125.md).
+      JPL's published path has simply run out. The box opens "JPL's
+      published path for this craft stops on <last day>. The marker is
+      where that path ends." (`PAST_PATH_OPENING`); its distance ends "on
+      the last day of JPL's path"; then the note on JPL's uncertainty;
+      "Its path is solid all the way, since the day shown is past the end
+      of JPL's path, from <first day> to <last day>."; the dates sentence:
+      five bullets. Its source line ends "as far as JPL's data runs", a
+      flying craft's. The words say only what the data supports: no end
+      is recorded, not that the mission goes on. No craft meets them
+      before real time passes the end of some flying craft's path.
+    - CUT BY THE ORRERY (L-554, JPL's sentence when a path is a
+      prediction; Tony's seven approved sentences of 2026-11-25, in the
+      orrery's documentation/WORDS_L554_path_cut_20261125.md). The entry's
+      `path_cutoff` stops the plan's span before JPL's data does, and the
+      mirror copies its `cutoff_note` and `end_note`
+      (`solarSystemPathCut`: ended, no `mission_end`, a `cutoff_note`).
+      BepiColombo's is cut at 17 November 2026, the last day JPL's path
+      is fitted to data (Tony, 14:41: "Stay with JPL and 11/17 until
+      refit."), so every visit after that day meets it. The box opens
+      with the `cutoff_note` as one bullet ("The path is drawn to 17
+      November 2026, the last day JPL's path is fitted to data, and the
+      marker is where it was that day. JPL calls its path after that day
+      a prediction, and it is not drawn. ESA reports that the entry burn
+      ended early and the craft is in a 75-hour orbit, not the planned
+      58-hour one; JPL's prediction still shows the planned orbit."); then
+      the `end_note` ("It entered orbit around Mercury on 21 November
+      2026."); its distance ends "on the last day drawn"
+      (`ENDED_EARLY_DISTANCE_WORDS`, Akatsuki's); then the note on JPL's
+      uncertainty; "Its path is solid all the way, since the day shown is
+      past the last day drawn, from <first day> to <last day>."
+      (`CUT_PATH_WORDS`); the dates sentence: six bullets. Its source line
+      ends "as far as JPL's data is fitted" (`CUT_SOURCE_WORDS`). The cut
+      and its words come off together, by a session, when JPL fits its
+      path past the arrival; the orrery's night says when. A day shown
+      before the cut (a shared minute from the served window) keeps a
+      flying craft's box, its dashed part ending on the cut day: words
+      not yet ruled (L-554).
+    - Checked by the walk's section 42 (no cut: a flying craft with no
+      `cutoff_note`, planted past its path's last point, and every ended
+      mission's box as it was), section 43 (the cut: BepiColombo planted
+      as the night will serve it, or read as served, its seven sentences
+      in order, word for word), and the figures check (part 7's
+      `missionEndIssue` reads a `cutoff_note` with no `mission_end` as a
+      cut that must name its path's last day, an `end_note` only beside
+      one; the page's list holds both branches). Shown failing on the page
+      before each change (42a; 43), on a page planted to give every flying
+      craft the cut (42a), on one planted to read a `cutoff_note` before a
+      `mission_end` (42b, Akatsuki), on the page's list read against the
+      page before L-554, and on the check's own rule planted as before.
   - Its companions by the same logic, unchanged: Galileo's plan names
     flybys of Venus and Earth and its arrival at Jupiter; Cassini's,
     Venus, Earth and Jupiter flybys and its arrival at Saturn.

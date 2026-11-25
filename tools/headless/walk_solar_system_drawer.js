@@ -206,6 +206,17 @@
 // the change (42a: "This mission ended on 4 April 2027" for BepiColombo)
 // and on a page planted with the words on every ended mission (42b, all
 // seven). A planted page walks it too.
+// Updated November 25, 2026, evening, with Anthropic's Claude Opus 5.5
+// (L-554, JPL's sentence when a path is a prediction): section 43 plants
+// BepiColombo's path cut at JPL's fit date, 17 November 2026 (a
+// cutoff_note and end_note, no mission_end), shown past that day, and
+// wants Tony's seven approved sentences of that day in order, word for
+// word (documentation/WORDS_L554_path_cut_20261125.md in the orrery).
+// Section 42 now picks a craft still flying with no cut, so its words stay
+// this morning's; 42b also wants none of the cut's words on an ended
+// mission. Shown failing on the page before the change (43), on a page
+// planted to give every flying craft the cut (42a) and on one planted to
+// read a cutoff_note before a mission_end (42b, Akatsuki).
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));
@@ -633,7 +644,10 @@ async function pastPathEnd(root, payload, page) {
   const day = (jd) => solarDay(2440587.5 +
     Math.round(((jd - 2440587.5) * 86400 - clockS) / 60) * 60 / 86400);
   const craft = (s) => (data.bodies[s] || {}).kind === "spacecraft";
-  const flying = Object.keys(data.bodies).filter(s => craft(s) && !data.bodies[s].mission_end);
+  // L-554: a craft with a cut (a cutoff_note and no mission_end) is
+  // section 43's; this one is still flying with no cut.
+  const flying = Object.keys(data.bodies).filter(s => craft(s) && !data.bodies[s].mission_end &&
+                                                      !data.bodies[s].cutoff_note);
   const ended = Object.keys(data.bodies).filter(s => craft(s) && !!data.bodies[s].mission_end);
   const slug = flying.indexOf("bepicolombo") >= 0 ? "bepicolombo" : flying[0];
   ok(!!slug && typeof clockS === "number" && ended.length > 0,
@@ -666,7 +680,10 @@ async function pastPathEnd(root, payload, page) {
   };
   // The new words, none of which an ended mission's box may carry.
   const NEW_WORDS = ["JPL's published path for this craft stops on", "The marker is where that path ends.",
-                     " on the last day of JPL's path", "since the day shown is past the end of JPL's path"];
+                     " on the last day of JPL's path", "since the day shown is past the end of JPL's path",
+                     // L-554: the cut's own words, likewise.
+                     "since the day shown is past the last day drawn", "as far as JPL's data is fitted",
+                     "the last day JPL's path is fitted to data"];
   // 42a. The craft still flying: its five bullets, the four sentences in
   // their places, and none of an ended mission's words.
   const f = box(slug);
@@ -679,7 +696,8 @@ async function pastPathEnd(root, payload, page) {
                       "JPL's path, from " + f.starts + " to " + f.ends + ".") >= 0 &&
      f.joined.indexOf(DATES_WORDS) >= 0 &&
      f.joined.indexOf("This mission ended") < 0 && f.joined.indexOf(" on its last day") < 0 &&
-     f.joined.indexOf("all of it was flown") < 0 && f.joined.indexOf("dashed") < 0,
+     f.joined.indexOf("all of it was flown") < 0 && f.joined.indexOf("dashed") < 0 &&
+     f.joined.indexOf("past the last day drawn") < 0 && f.joined.indexOf(" on the last day drawn") < 0,
      "42a: " + slug + ", still flying past its path's last point, does not carry the approved words: " +
      (f ? f.joined.slice(0, 520) : "no marker"));
   ok(f && f.source.indexOf(" UTC to " + f.ends + " UTC, as far as JPL's data runs, retrieved ") > 0 &&
@@ -713,6 +731,100 @@ async function pastPathEnd(root, payload, page) {
               "; ended missions' words kept, " + kept.length + " of " + ended.length + ": " + kept.join(", "));
 }
 
+// 43. L-554 (JPL's sentence when a path is a prediction): BepiColombo's
+// path cut at JPL's fit date, 17 November 2026, shown past that day, in
+// Tony's seven approved sentences of 2026-11-25
+// (documentation/WORDS_L554_path_cut_20261125.md in the orrery), in their
+// order, word for word. Where the served payload already carries the cut
+// (a craft with a cutoff_note and no mission_end, its marker past its
+// last point) it is read as served. Until the night serves it, a copy is
+// planted: BepiColombo given the entry's two sentences as the mirror
+// copies them, its marker's path dates those of a path ending on 17
+// November 2026 at 00:01 UTC (the builder's last-day pair, on JPL's clock
+// from the payload's own), its whole line solid, its marker on its last
+// point, its meta ended with no error. The planted line keeps its uncut
+// shape: this section holds the words, not the geometry. With a planted
+// page as the walk's third argument this section runs too, and must fail.
+const CUT_SENTENCES = [
+  "The path is drawn to 17 November 2026, the last day JPL's path is fitted to data, and " +
+    "the marker is where it was that day.",
+  "JPL calls its path after that day a prediction, and it is not drawn.",
+  "ESA reports that the entry burn ended early and the craft is in a 75-hour orbit, not the " +
+    "planned 58-hour one; JPL's prediction still shows the planned orbit.",
+  "It entered orbit around Mercury on 21 November 2026.",
+  " on the last day drawn",
+  "Its path is solid all the way, since the day shown is past the last day drawn, from " +
+    "21 October 2018 to 17 November 2026.",
+  ", as far as JPL's data is fitted"];
+async function pathCut(root, payload, page) {
+  const fs = require("fs"), os = require("os"), path = require("path");
+  const data = JSON.parse(fs.readFileSync(payload, "utf8"));
+  const clockS = (data.clock || {}).tdb_minus_utc_s;
+  const day = (jd) => solarDay(2440587.5 +
+    Math.round(((jd - 2440587.5) * 86400 - clockS) / 60) * 60 / 86400);
+  const tr = data.figure.data;
+  const marker = (s) => tr.find(t => t.legendgroup === s && t.meta && t.meta.spacecraft === true);
+  const servedCut = Object.keys(data.bodies).find(s => (data.bodies[s] || {}).kind === "spacecraft" &&
+    !data.bodies[s].mission_end && !!data.bodies[s].cutoff_note &&
+    (marker(s) || {}).meta && marker(s).meta.ended === true);
+  const slug = servedCut || "bepicolombo";
+  let how = "as served";
+  if (!servedCut) {
+    how = "planted";
+    const b = data.bodies[slug];
+    ok(!!b && typeof clockS === "number", "43: the payload serves no BepiColombo or no clock to plant");
+    if (!b) { return; }
+    b.cutoff_note = CUT_SENTENCES.slice(0, 3).join(" ");
+    b.end_note = CUT_SENTENCES[3];
+    b.mission_end = null;
+    const part = (p) => tr.find(t => t.legendgroup === slug && t.meta && t.meta.path_part === p);
+    const flown = part("flown"), ahead = part("predicted");
+    const mk = marker(slug);
+    const label = tr.find(t => t.legendgroup === slug && t.mode === "text");
+    if (flown && ahead) {
+      ["x", "y", "z"].forEach(a => { flown[a] = flown[a].slice(0, -1).concat(ahead[a].slice(1)); });
+      data.figure.data = tr.filter(t => t !== ahead);
+    }
+    const k = flown ? flown.x.length - 1 : -1;
+    [mk, label].forEach(t => { if (t && k >= 0) { ["x", "y", "z"].forEach(a => { t[a] = [flown[a][k]]; }); } });
+    ok(!!(flown && mk && label), "43: " + slug + "'s path, marker or name is not in the payload to plant");
+    if (!(flown && mk)) { return; }
+    // 17 November 2026, 00:01 UTC, on JPL's clock (TDB), as a Julian date.
+    const endJd = 2440587.5 + (Date.UTC(2026, 10, 17, 0, 1) / 1000 + clockS) / 86400;
+    mk.meta = Object.assign({}, mk.meta, { ended: true, interp_err_km: 0.0, path_end_jd: endJd });
+  }
+  const copy = path.join(os.tmpdir(), "walk_path_cut_payload.json");
+  fs.writeFileSync(copy, JSON.stringify(data));
+  const w = await h.boot(root, "solar-system", copy, page ? { page: page } : undefined);
+  const m = w.eval("sunPlotDiv.data").find(t => t.legendgroup === slug && t.meta && t.meta.label_target === true);
+  const ls = m ? m.text[0].split(/<br[^>]*>/) : [];
+  const joined = ls.join(" ").replace(/<br soft>/g, " ");
+  const source = m ? (m.meta.source || "") : "";
+  const bullets = ls.filter(l => l.indexOf("&#8226; ") === 0).length;
+  const ends = m ? day(m.meta.path_end_jd) : "?", starts = m ? day(m.meta.path_start_jd) : "?";
+  const S = CUT_SENTENCES, before = fails.length;
+  // In order: sentences 1 to 3 one bullet, 4 the next, the distance with
+  // 5, then 6, then the mission's dates.
+  const at = [joined.indexOf("&#8226; " + S[0] + " " + S[1] + " " + S[2] + " &#8226; " + S[3] + " &#8226; "),
+              joined.search(/ AU from the Sun \([0-9,]+ km\) on the last day drawn &#8226; /),
+              joined.indexOf("&#8226; " + S[5]), joined.indexOf(DATES_WORDS)];
+  const inOrder = at.every(i => i >= 0) && at.every((i, j) => j === 0 || i > at[j - 1]);
+  ok(!!m && bullets === 6 && inOrder && ends === "17 November 2026" && starts === "21 October 2018" &&
+     joined.indexOf("JPL's own uncertainty for this position is not yet included.") >= 0 &&
+     ["This mission ended", "JPL's published path for this craft stops on", "The marker is where that path ends.",
+      " on the last day of JPL's path", "past the end of JPL's path", "all of it was flown", " on its last day",
+      "dashed"].every(p => joined.indexOf(p) < 0),
+     "43: " + slug + ", cut at JPL's fit date and shown past it (" + how + "), does not read the seven " +
+     "approved sentences in order: " + joined.slice(0, 760));
+  ok(source.indexOf(" UTC to 17 November 2026 UTC" + S[6] + ", retrieved ") > 0 &&
+     source.indexOf("as far as JPL's data runs") < 0 && source.indexOf("to the last day drawn") < 0 &&
+     source.indexOf("to the day the mission ended") < 0,
+     "43: " + slug + "'s source line does not end its dates \"" + S[6].slice(2) + "\": " + source.slice(0, 300));
+  console.log("  43: " + slug + " cut at " + ends + " (" + how + "), from " + starts +
+              "; its box reads the seven sentences in order: " +
+              (fails.length > before ? "no, see below" : "yes"));
+}
+
 (async () => {
   const [root, given, planted] = process.argv.slice(2);
   const fs = require("fs"), os = require("os"), path = require("path");
@@ -728,6 +840,7 @@ async function pastPathEnd(root, payload, page) {
     await places(root, payload, planted);
     await linksFold(root, payload, planted);   // L-540
     await pastPathEnd(root, payload, planted); // L-533
+    await pathCut(root, payload, planted);     // L-554
     console.log(fails.length ? "FAIL " + fails.length + " of " + n + " (planted " + planted + "):\n  " + fails.join("\n  ")
                              : "PASS: " + n + " checks on the planted page -- it should have failed");
     process.exit(fails.length ? 1 : 0);
@@ -2545,6 +2658,8 @@ async function pastPathEnd(root, payload, page) {
   // 42. L-533: a craft still flying past its path's end, on a planted copy
   // of the payload, and every ended mission's box as it was.
   await pastPathEnd(root, payload, null);
+  // 43. L-554: BepiColombo's path cut at JPL's fit date, shown past it.
+  await pathCut(root, payload, null);
   console.log(fails.length ? "FAIL " + fails.length + " of " + n + ":\n  " + fails.join("\n  ") : "PASS: " + n + " checks on the stand-in scene");
   process.exit(fails.length ? 1 : 0);
 })();

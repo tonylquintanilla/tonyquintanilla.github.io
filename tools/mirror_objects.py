@@ -76,7 +76,13 @@ WHAT IT WRITES, PER LINKED OBJECT
                   (Akatsuki: cut on 2024-04-26, the last day JPL's
                   solution is fitted to tracking), the words after the
                   box's end day saying where the path is drawn to and why
-                  (L-507). Absent likewise; inserted likewise
+                  (L-507). Absent likewise; inserted likewise.
+                  L-554 (2026-11-25): also a craft still flying whose path
+                  the orrery cuts (BepiColombo at JPL's fit date, 17
+                  November 2026, no mission_end): its cutoff_note opens
+                  the box past that day, and its end_note (the day it
+                  entered orbit) follows. Copied as before; only the page
+                  reads them differently
 
     Every change is printed, field by field, with the old and the new
     value, so a fix is reported and not only made (Tony's ruling,
@@ -174,6 +180,9 @@ are copied.)
 Module updated: November 18, 2026 with Anthropic's Claude Opus 5.5 (L-533,
 ESCAPADE's path: a loiter's launch, JPL's first position, is copied with
 its event, for the box's "From its launch on".)
+Module updated: November 25, 2026 with Anthropic's Claude Opus 5.5 (L-554:
+the docstring says a cutoff_note and end_note may come on a craft still
+flying whose path the orrery cuts; the code is unchanged.)
 """
 
 import json
