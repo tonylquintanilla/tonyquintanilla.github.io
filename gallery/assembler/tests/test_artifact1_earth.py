@@ -29,6 +29,11 @@ fixed 2026-07-13 the served window moved past on 2026-10-09).
 
 Role: devtool
 Domain: dev_tools
+Module updated: November 24, 2026 with Anthropic's Claude Opus 5.5 (L-553,
+one body JPL does not answer no longer stops the night): Earth held, served
+with no "you are here" point, is accepted in T1 by the hold its entry names
+and the index's list of held bodies (t1_line), never by what is missing;
+the scene's date is then the served window's middle.)
 """
 
 import json
@@ -83,28 +88,58 @@ def _load():
     return Catalog(cfg), CacheReader(cov), cov
 
 
+def t1_line(earth_rec, cov):
+    """(T1's verdict line, a failure or None, the scene's JD). The stored
+    "you are here" point is reproduced by propagation. L-553: Earth held is
+    served with none; it is accepted ONLY by the hold its entry names and
+    the index's list of held bodies, and the scene is then dated at the
+    served window's middle. Missing with no hold named is a FAIL."""
+    aot = earth_rec.get("as_of_today")
+    if aot is None:
+        h = earth_rec.get("hold") or {}
+        listed = set(x.get("slug") for x in
+                     ((cov.get("holds") or {}).get("held") or [])
+                     if x.get("served") is not False)
+        sw = cov.get("served_window") or {}
+        mid = ((sw["start_jd"] + sw["end_jd"]) / 2.0
+               if sw.get("start_jd") is not None else
+               (earth_rec.get("osculating") or {}).get("epoch_jd"))
+        if h.get("kind") and h.get("since") and h.get("why") and "earth" in listed:
+            return ("T1 as_of_today cross-check: Earth is HELD (%s since %s: %s), "
+                    "served with no today's point to cross-check; accepted by "
+                    "its named hold  OK" % (h["kind"], h["since"], h["why"]),
+                    None, mid)
+        return ("T1 as_of_today cross-check: Earth serves no as_of_today and "
+                "names no hold on the index's list  FAIL",
+                "T1 no as_of_today and no hold named", mid)
+    osc = earth_rec["osculating"]
+    x, y, z = render_orbits.propagate_marker(osc, aot["t"])
+    err_km = math.sqrt((x * AU_KM - aot["x"]) ** 2
+                       + (y * AU_KM - aot["y"]) ** 2
+                       + (z * AU_KM - aot["z"]) ** 2)
+    r_km = math.sqrt(aot["x"] ** 2 + aot["y"] ** 2 + aot["z"] ** 2)
+    failure = (None if err_km / r_km <= 1e-6 else
+               "T1 as_of_today cross-check drift %.3e" % (err_km / r_km))
+    return ("T1 as_of_today cross-check: %.1f km (%.2e of r)  %s"
+            % (err_km, err_km / r_km, "OK" if failure is None else "FAIL"),
+            failure, aot["t"])
+
+
 def main():
     catalog, cache, cov = _load()
     earth_rec = cov["objects"]["earth"]
     failures = []
 
     # T1 -- ground-truth cross-check.
-    osc = earth_rec["osculating"]
-    aot = earth_rec["as_of_today"]
-    x, y, z = render_orbits.propagate_marker(osc, aot["t"])
-    err_km = math.sqrt((x * AU_KM - aot["x"]) ** 2
-                       + (y * AU_KM - aot["y"]) ** 2
-                       + (z * AU_KM - aot["z"]) ** 2)
-    r_km = math.sqrt(aot["x"] ** 2 + aot["y"] ** 2 + aot["z"] ** 2)
-    if err_km / r_km > 1e-6:
-        failures.append("T1 as_of_today cross-check drift %.3e" % (err_km / r_km))
-    print("T1 as_of_today cross-check: %.1f km (%.2e of r)  %s"
-          % (err_km, err_km / r_km, "OK" if err_km / r_km <= 1e-6 else "FAIL"))
+    line, failure, scene_jd = t1_line(earth_rec, cov)
+    if failure:
+        failures.append(failure)
+    print(line)
 
     # T2 -- assemble Earth alone.
     scene = {"spec_version": "1.0", "domain": "solar_system",
              "content_type": "static", "objects": ["earth"], "center": "sun",
-             "epoch": _iso_from_jd(aot["t"])}
+             "epoch": _iso_from_jd(scene_jd)}
     result = assemble_scene(scene, catalog, cache)
     have = set(result.trace_roles)
     need = {"orbit", "orbit_info", "object_marker", "label"}

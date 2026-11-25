@@ -256,26 +256,70 @@ two came to disagree. The offline suite holds every call to the
 setting. The orrery made the same choice the same night (L-504,
 `utc_clock.HORIZONS_CACHE`; horizons-orbital-mechanics).
 
+A REQUEST JPL DID NOT ANSWER GETS ONE SECOND TRY (L-553, 2026-11-24).
+Every JPL question the builder asks goes through `ask_jpl`. When
+`jpl_did_not_answer` says the request got no answer -- a connection
+that failed or timed out, or JPL's own 503, "Service Temporarily
+Unavailable" -- it is asked once more after `SECOND_TRY_PAUSE_S`
+(10 seconds: long enough for a passing blip, short beside a build of
+about three minutes). An answer JPL gave, of any kind (no data, an
+unknown id, an error in its reply), is never asked again. `SECOND_TRY_CAP`
+(10) bounds the second tries of one build: on a night JPL is down, the
+build waits at most about 7 minutes more (10 times the pause plus
+astroquery's 30-second timeout), then every further miss raises at once,
+as before, and more than `HOLD_LIMIT` held stops the build. A normal
+night costs nothing. Before, every question had one try: run #58 of
+2026-11-24 lost its night to one connect timeout for Deimos. The
+build's summary prints `second_try_line` every build, zero included:
+"[SECOND TRY] 0 second tries made, 0 answered (cap 10 a build)", and
+"the cap refused N more" when it did; the run record keeps the counts
+(`second_tries`). The clock's questions ride it like any other.
+
 ## A Body That Fails Its Test Is Held
 
 Built 2026-11-11 (L-525; Tony: "Hold the bad data and report, then
 continue."). Before, one failed test cut the site's window to 0.3 days.
 
-- WHO. A Sun-centred body drawn from its elements (`held_by_test`) when
-  either test sample is more than `TRUST_TOLERANCE_DEG` (0.5) from JPL,
-  or the test could not be made (`trust_verdict`); and any body but a
-  path that JPL does not answer. A moon, or any body with its own span,
-  is NOT held for a number over the limit: the Moon runs 0.10 to 0.18
-  degrees on ordinary nights from the Sun's pull, so over it is likely
-  physics, and an older orbit draws it worse. Replayed on the 186
-  committed indexes of Jul 11 to Nov 11: Halley on Nov 10 and 11, only.
+- WHO (`trust_held`). A Sun-centred body drawn from its elements
+  (`held_by_test`) when either test sample is more than
+  `TRUST_TOLERANCE_DEG` (0.5) from JPL, or the test could not be made
+  (`trust_verdict`). Any other body when JPL did not answer its test's
+  question: worked out by that same rule at each build, never from a
+  list (on 2026-11-24 they were the Moon, Phobos, Deimos, Io, Titan,
+  Pluto and Charon; a moon added later joins them with no edit here)
+  (`measure_trust` marks the null block `unanswered`; L-553, run #58's
+  Deimos). A moon, or any body with its own span, is NOT held for a
+  number over the limit: the Moon runs 0.10 to 0.18 degrees on ordinary
+  nights from the Sun's pull, so over it is likely physics, and an older
+  orbit draws it worse; and a test that cannot apply (no mean motion, an
+  open orbit) keeps its own treatment, served with a null window.
+  Replayed on the 186 committed indexes of Jul 11 to Nov 11: Halley on
+  Nov 10 and 11, only. And any body JPL does not answer at all.
 - HOW (`hold_from_prior`). Served from its entry in the replaced cache,
   whole, `as_of_today` cleared as A-3 does, with a `hold` block (since,
   kind, why, from_generated, passed_before), copied forward each build
   while it lasts, so it outlives any number of swaps; `.prev` is never
   the store. It leaves the served window, which the bodies that passed
   set. Tested every build, it ends when it passes. No entry to hold at:
-  not served, named.
+  not served, named -- also for a body JPL did not answer (L-553; until
+  then such a body was served its last elements from the raw archive
+  with no measured error, which no box could print).
+- WHAT IS SERVED LAST-GOOD FROM ITS OWN ARCHIVE IS HELD TOO (L-553,
+  `last_good_hold`): a path JPL did not answer ("drawn from the last path
+  JPL gave it"), a Lagrange point served its saved days ("placed from
+  its saved days"), a capture craft on its saved layer or with none
+  (`capture_hold`, kind 'capture'). Each is on the index's `holds`, so the
+  night's title names it and `HOLD_LIMIT` counts it. Their boxes read as
+  before: the page prints no held sentence for a path or a point.
+- THE HOLD RUNS TO THE NIGHT'S GATE (L-553). No row after the build is
+  red because a body is held. The Solar System figures check accepts a
+  drawer body, a path, a point or a moon with something missing only by
+  the hold its entry names and the index's list (`heldIssue`), the held
+  sentence printable and a measured error served for the orbit held at,
+  and prints "Held bodies accepted by their named hold (N): ...";
+  Curve error accepts a capture craft served last-good the same way
+  (`hold_captures`); Artifact 1's T1 accepts Earth held (`t1_line`).
+  Something missing and no hold named stays red, by name.
 - REPORTED, NOT RED. The index's `holds` gives each body's line, "HELD
   Halley since 2026-11-11: its accuracy test was 21.6 degrees from JPL
   at 30 days (the limit is 0.5); drawn from the build of 2026-11-10",
@@ -286,9 +330,13 @@ continue."). Before, one failed test cut the site's window to 0.3 days.
   Before, JPL answering nothing still swapped, 94 of 102 last-good.
 - A fault in the maths, not the data, is held while drawn wrong; the
   title is then the only signal.
-- CHECKED: the suite's `hold_checks` (11; 1 of 10 on the old builder)
-  and `daily_run.py --check`. The page: interactive-exhibit. NOT BUILT:
-  L-508's quiet half (a ledger handle on the line); it stays loud.
+- CHECKED: the suite's `hold_checks` (11; 1 of 10 on the old builder),
+  `night_hold_checks` (15, L-553: planted nights with the night's rows
+  run on the planted folder; 13 of 15 red on the old code, the other two
+  guards) and `daily_run.py --check`. The page: interactive-exhibit. NOT
+  BUILT: L-508's quiet half (a ledger handle on the line); it stays loud.
+- THE CLOCK IS NOT A BODY: JPL not answering the clock or its witness
+  still stops the build (L-541), after its second try.
 
 ## A Capture Craft's Box Never Claims Less Than Its Miss
 
@@ -344,18 +392,29 @@ at 727ebf79. The builder's part is the block headed THE ORBITERS in
 - WHEN THE FLOOR STILL FAILS. A failing day already at
   `CAPTURE_FLOOR_MIN` (1 minute), a twelfth round still failing, or the
   question limit raises `CaptureFailed`; JPL not answering ends the
-  layer the same way. `process_capture` then serves the craft's saved fine layer from the
-  raw archive, clipped to tonight's span, its block marked `last_good`
-  with the reason in `last_good_why`, and the build's warnings name it:
-  "<slug>: CAPTURE FAILED (too coarse at the floor of 1 minute(s) on
-  <days>); served its saved fine layer, last-good"; the run record's line
-  for the craft says the same. Tonight's check points are not written.
-  With no saved layer, the block names what is missing and the pre-swap
-  check #O aborts the build, naming the craft. Nothing else turns red
-  of itself: on the night the Curve error row is red because tonight's
-  build wrote no check points for the craft, so the night commits
-  nothing, but that line names the missing check points, not the floor.
-  By day the warning is the only signal.
+  layer the same way (after its second try, `ask_jpl`). `process_capture`
+  then serves the craft's saved fine layer from the raw archive, clipped
+  to tonight's span, its block marked `last_good` with the reason in
+  `last_good_why`, `saved_layer` true; with none saved, the plan's own
+  points, `saved_layer` false. A DAY WITH NO FINE POINTS PRINTS NO
+  DISTANCE (L-553; Tony, 2026-11-24: "with the no-distance option"):
+  `no_figure_days` lists each UTC day of the span that no fine points
+  cover whole and that carries no loop's reach -- every day with no
+  saved layer, and the window's last day with a saved layer a night old
+  -- served as the block's `no_figure_days` and in the positions file as
+  `data.nofig_t` (each day's 00:00 UTC, JD), the plan's points kept on
+  those days. The room's `position_at` (`nofig_of`) then gives no
+  figure on a trio that reaches into such a day, `err_from`
+  'no_figure', and the box prints no distance there: a missing figure
+  never claims less than the miss. So #O no longer aborts the build for
+  one craft (it still refuses a `missing` block, which nothing makes
+  now). The build's warnings name it: "<slug>: CAPTURE FAILED (...);
+  served its saved fine layer, last-good; no distance on <days>", or "no
+  saved fine layer: served its plan's points, no distance on N day(s)";
+  the run record's line says the same. The craft is HELD by name
+  (`capture_hold`, kind 'capture'), so the night's title names it and
+  `HOLD_LIMIT` counts it, and the hold ends, by name, on the night its
+  layer is made. Tonight's check points are not written.
 - THE LOOP'S REACH, for a craft served in the band only. After the
   rounds, JPL is asked for the craft around its planet's own centre
   (`_centre_of_body`, from the planet's config entry; none fails the
@@ -408,7 +467,14 @@ at 727ebf79. The builder's part is the block headed THE ORBITERS in
   moved by ten times the figure and a kilometre must each be caught;
   and for a band-only craft, its reach taken away, its point a day must
   miss somewhere outside the band. "Thinned to a point a day" is
-  printed, not gated. WITHOUT THE CHECK POINTS: with --night, which only
+  printed, not gated. A CRAFT SERVED LAST-GOOD (L-553) has no check
+  points from tonight: it is accepted only by the hold its entry names
+  and the index's list, its line saying "HELD since ..., served
+  last-good (...); its JPL half not held tonight; no distance on N
+  day(s)", its held-out half still gating on every day that prints a
+  figure; the row prints "capture craft accepted by their named hold
+  (N): ..."; with no hold named it is red, by name. WITHOUT THE CHECK
+  POINTS, for a craft served fresh: with --night, which only
   the night's pass hands this row (`NIGHT_ARGS`, `night_checkers` in
   `gallery_maintenance_run.py`), the craft is red by name; anywhere else
   its line says its JPL half is NOT HELD HERE, with the night's own test

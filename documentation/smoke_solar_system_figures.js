@@ -2,6 +2,20 @@
 // distance to the figures its errors earn (L-398).
 //
 // RUN:  node documentation/smoke_solar_system_figures.js   (gallery root)
+//       [--served <folder>]  read the served cache from another folder (the
+//       builder's offline suite, on its planted nights, L-553)
+//
+// L-553 (one body JPL does not answer no longer stops the night; Tony,
+// 2026-11-24: "i thought that our rule was that if one body fails, we
+// continue and report not turn the whole night red"): a drawer body, a
+// path, a Lagrange point or a moon served with something missing -- no
+// "you are here" point, no today's point -- is accepted ONLY by the hold
+// its served entry names (kind, day, reason) and the cache's list of held
+// bodies (`holds`), with its held sentence printable and, for an orbit, a
+// measured error served for the orbit it is held at. Each one accepted is
+// printed by name, with the count. Something missing and no hold named is
+// red, as before. Updated November 24, 2026 with Anthropic's Claude Opus
+// 5.5.
 //
 // WHAT IT CHECKS
 //   It requires the real gallery/solar_system_figures.js and:
@@ -146,6 +160,11 @@
 const fs = require("fs");
 const path = require("path");
 const root = path.dirname(__dirname);
+// L-553: --served <folder> reads the served cache from there; the real one
+// (data/solar-system) otherwise.
+const servedAt = process.argv.indexOf("--served");
+const SERVED = (servedAt > 1 && process.argv[servedAt + 1])
+  ? path.resolve(process.argv[servedAt + 1]) : path.join(root, "data", "solar-system");
 
 global.window = global;
 require(path.join(root, "gallery", "solar_system_figures.js"));
@@ -916,8 +935,24 @@ rows.forEach(function (slug) {
 });
 
 // ---- 3. the served cache ------------------------------------------
-const cov = JSON.parse(fs.readFileSync(path.join(root, "data", "solar-system",
-                                                  "coverage_index.json"), "utf8"));
+const cov = JSON.parse(fs.readFileSync(path.join(SERVED, "coverage_index.json"), "utf8"));
+// L-553: the bodies the cache lists as held and served, and each body this
+// check accepted by its hold, printed by name with the count.
+const heldListed = {};
+(((cov.holds || {}).held) || []).forEach(function (h) {
+  if (h && typeof h.slug === "string" && h.served !== false) { heldListed[h.slug] = h; }
+});
+const heldAccepted = [];
+function heldIssue(slug, rec) {
+  const h = rec && rec.hold;
+  if (!h || typeof h !== "object") { return "no hold is named in its served entry"; }
+  if (!h.kind || !h.since || !h.why) { return "its hold names no kind, day or reason"; }
+  if (!heldListed[slug]) { return "its hold is not on the cache's list of held bodies"; }
+  return null;
+}
+function heldWords(slug, rec) {
+  return slug + " (" + rec.hold.kind + " since " + rec.hold.since + ")";
+}
 const kmRow = ((cov.frame_constants || {}).rows || {}).KM_PER_AU;
 const kmPerAu = kmRow && kmRow.value;
 if (!(kmPerAu > 0)) { failures.push("the served cache serves no KM_PER_AU"); }
@@ -939,6 +974,24 @@ SSF.MISSING_KINDS.forEach(function (k) {
 rows.forEach(function (slug) {
   if (slug === "sun") { return; }
   const rec = (cov.objects || {})[slug];
+  if (rec && rec.trust && !rec.as_of_today) {
+    // L-553: held, it is drawn from the orbit it is held at, its box
+    // opening with the held sentence; accepted by its named hold only.
+    const why = heldIssue(slug, rec);
+    if (why) {
+      failures.push(slug + ": the served cache has no as_of_today, and " + why);
+      return;
+    }
+    const hl = SSF.heldLine(rec.hold, rec.trust, rec.name || slug);
+    if (!hl.line) {
+      failures.push(slug + ": held, but its box cannot print the held sentence -- " + hl.why);
+    } else if (typeof rec.trust.error_rate_deg_per_day !== "number") {
+      failures.push(slug + ": held, but no measured error is served for the orbit it is held at");
+    } else {
+      heldAccepted.push(heldWords(slug, rec));
+    }
+    return;
+  }
   if (!rec || !rec.as_of_today || !rec.trust) {
     failures.push(slug + ": the served cache has no as_of_today or trust");
     return;
@@ -1193,11 +1246,17 @@ points.forEach(function (slug) {
     return;
   }
   const file = (rec.positions || {}).file;
-  if (!file || !fs.existsSync(path.join(root, "data", "solar-system", file))) {
+  if (!file || !fs.existsSync(path.join(SERVED, file))) {
     failures.push(slug + ": the served cache names no positions file on disk");
   }
   const p = rec.as_of_today;
-  if (!p) { failures.push(slug + ": the served cache has no as_of_today for it"); return; }
+  if (!p) {
+    // L-553: a point served its saved days is accepted by its named hold.
+    const why = heldIssue(slug, rec);
+    if (why) { failures.push(slug + ": the served cache has no as_of_today for it, and " + why); }
+    else { heldAccepted.push(heldWords(slug, rec)); }
+    return;
+  }
   const box = SSF.pointBox(o, [p.x / kmPerAu, p.y / kmPerAu, p.z / kmPerAu], 0,
                            kmPerAu, o.center_slug === "earth" ? "Earth" : "the Sun");
   if (!box.lines || box.lines.indexOf(SSF.JPL_STATES_NONE) < 0) {
@@ -1224,7 +1283,7 @@ crafts.forEach(function (slug) {
     return;
   }
   const file = (rec.positions || {}).file;
-  if (!file || !fs.existsSync(path.join(root, "data", "solar-system", file))) {
+  if (!file || !fs.existsSync(path.join(SERVED, file))) {
     failures.push(slug + ": the served cache names no positions file on disk");
   }
   const p = rec.as_of_today;
@@ -1235,7 +1294,7 @@ crafts.forEach(function (slug) {
   if (!p && span.end && span.end < built) {
     const why = endedIssue(rec.positions || {}, span);
     if (why) { failures.push(slug + ": " + why); return; }
-    const served = JSON.parse(fs.readFileSync(path.join(root, "data", "solar-system", file), "utf8"));
+    const served = JSON.parse(fs.readFileSync(path.join(SERVED, file), "utf8"));
     const d = served.data || {}, k = (d.t || []).length - 1;
     // The file itself, read beside the index's end: its last point's day
     // (a TDB Julian date, printed as the page prints a served day).
@@ -1258,7 +1317,13 @@ crafts.forEach(function (slug) {
   if (o.mission_end !== undefined || o.end_note !== undefined || o.cutoff_note !== undefined) {
     failures.push(slug + ": serves a mission_end, end_note or cutoff_note but its path has not ended");
   }
-  if (!p) { failures.push(slug + ": the served cache has no as_of_today for it"); return; }
+  if (!p) {
+    // L-553: a path served last-good is accepted by its named hold.
+    const why = heldIssue(slug, rec);
+    if (why) { failures.push(slug + ": the served cache has no as_of_today for it, and " + why); }
+    else { heldAccepted.push(heldWords(slug, rec)); }
+    return;
+  }
   // At a served point the working-out has nothing to bridge.
   const r = SSF.pathDistanceLine({ x: p.x / kmPerAu, y: p.y / kmPerAu,
                                    z: p.z / kmPerAu }, 0, kmPerAu);
@@ -1511,9 +1576,17 @@ craftTable.forEach(function (t) {
                                trust: { rate_deg_per_day: t.error_rate_deg_per_day,
                                         element_epoch_jd: t.element_epoch_jd,
                                         delta_days: t.delta_days } },
-                             [rec.osculating.a_au, 0, 0], t.element_epoch_jd + 1, kmPerAu, o.center_slug);
+                             [rec.osculating.a_au, 0, 0], t.element_epoch_jd + 1, kmPerAu, o.center_slug,
+                             rec.hold);
     if (!box.lines || box.warnings.length) {
       failures.push(o.slug + "'s box cannot be built: " + box.warnings.join("; "));
+    }
+    // L-553: a held moon is drawn with its held sentence, accepted by its
+    // named hold only.
+    if (rec.hold) {
+      const why = heldIssue(o.slug, rec);
+      if (why) { failures.push(o.slug + ": held, but " + why); }
+      else { heldAccepted.push(heldWords(o.slug, rec)); }
     }
     console.log("  " + (o.slug + " around " + o.center_slug + "                    ").slice(0, 36) +
                 "checked " + SSF.spanText(t.delta_days) + " either side; " +
@@ -1521,6 +1594,10 @@ craftTable.forEach(function (t) {
                                      : "the orrery's words, link and period served"));
   });
 })();
+console.log("");
+// L-553: every body accepted by its named hold, by name, with the count.
+console.log("Held bodies accepted by their named hold (" + heldAccepted.length + "): " +
+            (heldAccepted.join(", ") || "none") + ".");
 console.log("");
 if (failures.length) {
   console.log("=== FAIL: " + failures.length + " problem(s)");

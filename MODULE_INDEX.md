@@ -11,8 +11,8 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 66  
-**Total Lines of Code (non-blank):** 38,161  
-**Total Public Functions/Classes:** 665
+**Total Lines of Code (non-blank):** 38,987  
+**Total Public Functions/Classes:** 677
 
 ## Classification Coverage
 
@@ -56,7 +56,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `render_events.py` | Perihelion and event_link markers. (20 lines) |
 | `render_objects.py` | Object markers, center marker, and labels. (63 lines) |
 | `render_orbits.py` | Osculating (and mean-elements) conics. (250 lines) |
-| `render_spacecraft.py` | A spacecraft's path, or a comet's on an open path, drawn from its served positions. (408 lines) |
+| `render_spacecraft.py` | A spacecraft's path, or a comet's on an open path, drawn from its served positions. (435 lines) |
 
 ---
 
@@ -84,7 +84,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `cache_reader.py` | Reads the served gallery cache. (81 lines) |
-| `gallery_cache_builder.py` | - standalone nightly builder for the Paloma's Orrery web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool. (4,402 lines) |
+| `gallery_cache_builder.py` | - standalone nightly builder for the Paloma's Orrery web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool. (4,630 lines) |
 
 ---
 
@@ -135,10 +135,10 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `scene_card.py` | - a SCENE: a shared link from the Solar System room kept as a card, made by the gallery editor's New Scene window (L-519, Featured's rethink). (337 lines) |
 | `serve_gallery.py` | - serve this repo over http://localhost and open the assembler dev page in a browser. (107 lines) |
 | `sweep_report.py` | Which cards sweep on a phone in portrait, and why. (152 lines) |
-| `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (131 lines) |
+| `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (164 lines) |
 | `test_drawer_places.py` | - checks tools/drawer_places.py, the logic behind the gallery editor's drawer tree and its Places list (L-519 part 2, Featured's rethink), without opening the editor. (333 lines) |
 | `test_drawn_orbit.py` | - an orbit whose period is taken around the solar system's barycentre is drawn around the barycentre, moved to where the barycentre sits seen from the Sun; and every way of getting that wrong is caught (L-431, build 3). (268 lines) |
-| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (3,136 lines) |
+| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (3,558 lines) |
 | `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (315 lines) |
 | `test_link_card.py` | - checks tools/link_card.py, the logic behind the gallery editor's New Link Card window (L-540), without opening the window. (145 lines) |
 | `test_mirror_objects.py` | - tools/mirror_objects.py does what it says, on fixtures where each refusal and each kind of write must happen, and then on the real config. (483 lines) |
@@ -152,7 +152,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `check_as_built_names.py` | - every code name the as-built pages give in backticks is found in the code it belongs to: INTERACTIVE_AS_BUILT.md and CACHE_BUILDER_AS_BUILT.md (PAGES). (475 lines) |
+| `check_as_built_names.py` | - every code name the as-built pages give in backticks is found in the code it belongs to: INTERACTIVE_AS_BUILT.md and CACHE_BUILDER_AS_BUILT.md (PAGES). (545 lines) |
 | `check_encounters.py` | - the gallery run's Encounters row: every encounter card, its package under data/encounters/, and the plan it must agree with. (368 lines) |
 | `check_tree_parents.py` | - every object's parent in data/objects_config.json is the centre JPL is asked around for it. (195 lines) |
 | `encounter_fetch.py` | - ask JPL Horizons, fresh, for an encounter's bodies around its centre, and write the encounter's package under data/encounters/. (634 lines) |
@@ -161,7 +161,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (880 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_compose_children.py` | - the moons in the Solar System room are drawn where their planets are, by ADDING, and their distance is their own. (281 lines) |
-| `test_curve_error.py` | - a marker placed between served points prints an error never smaller than its real miss. (418 lines) |
+| `test_curve_error.py` | - a marker placed between served points prints an error never smaller than its real miss. (464 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (412 lines) |
 | `test_kepler_solver.py` | - the assembler's Kepler solver gives the right answer for every eccentricity and every mean anomaly, or it says so. (204 lines) |
 | `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (735 lines) |

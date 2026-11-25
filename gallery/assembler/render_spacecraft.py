@@ -78,6 +78,13 @@ reach_of, and adds the loop's term R x (1 + L) to the figure on the days
 that carry one, err_from 'loop' where it is the larger part. No line of interactive.html
 changes: the reach rides in the positions file the page already fetches.)
 
+Module updated: November 24, 2026 with Anthropic's Claude Opus 5.5 (L-553,
+one body JPL does not answer no longer stops the night; Tony, 2026-11-24:
+"with the no-distance option"): a capture craft's positions file may serve
+the days no fine points and no reach cover (data.nofig_t, nofig_of); on a
+trio that reaches into one, position_at gives no figure, err_km None and
+err_from 'no_figure', so the box prints no distance there.)
+
 Role: rendering
 Domain: assembler
 """
@@ -201,6 +208,22 @@ def reach_of(payload):
     return sorted((float(t[i]), float(km[i])) for i in range(min(len(t), len(km))))
 
 
+def nofig_of(payload):
+    """[day_start_jd] in time order from a served positions file's days
+    with no figure (L-553), or None when it serves none."""
+    t = ((payload or {}).get("data") or {}).get("nofig_t") or []
+    return sorted(float(v) for v in t) or None
+
+
+def _no_figure(t0, t2, nofig):
+    """L-553: whether a stretch t0..t2 reaches into a day served with no
+    figure, by the reach's own edge rule."""
+    for day in nofig or ():
+        if day + 1.0 > t0 + REACH_EDGE_DAYS and day < t2 - REACH_EDGE_DAYS:
+            return True
+    return False
+
+
 def _loop_term(t0, t2, weights, reach):
     """R x (1 + L) for a trio spanning t0..t2 with these weights, or 0.0
     where no day it spans carries a reach."""
@@ -213,14 +236,18 @@ def _loop_term(t0, t2, weights, reach):
     return r * (1.0 + sum(abs(w) for w in weights)) if r > 0 else 0.0
 
 
-def position_at(rows, jd, curve=False, reach=None) -> Optional[Dict[str, Any]]:
+def position_at(rows, jd, curve=False, reach=None,
+                nofig=None) -> Optional[Dict[str, Any]]:
     """{'km': (x, y, z), 'err_km', 'err_from', 'index'} at jd, or None when
     jd is outside the served span. 'index' is the last served point at or
     before jd, so the path splits after it. 'err_from' says how the error
     was worked out: 'chord' (the parabola against the chord), 'curve' with
     curve=True where a fourth point is served (L-297), 'half_chord' where
     only two points are, 'loop' where the loop's term, R x (1 + L) from
-    the served reach (L-538), is the larger part of the figure."""
+    the served reach (L-538), is the larger part of the figure. nofig
+    (L-553): the days served with no figure; where the points used reach
+    into one, the place is worked out as ever and err_km is None,
+    err_from 'no_figure': nothing honest bounds it there."""
     if len(rows) < 2 or jd < rows[0][0] or jd > rows[-1][0]:
         return None
     lo, hi = 0, len(rows) - 1
@@ -245,6 +272,9 @@ def position_at(rows, jd, curve=False, reach=None) -> Optional[Dict[str, Any]]:
         chord = math.sqrt(sum((b[k] - a[k]) ** 2 for k in (1, 2, 3)))
         f = (jd - a[0]) / (b[0] - a[0]) if b[0] != a[0] else 0.0
         loop = _loop_term(a[0], b[0], (1.0 - f, f), reach)
+        if _no_figure(a[0], b[0], nofig):
+            return {"km": lin, "err_km": None, "index": lo,
+                    "err_from": "no_figure"}
         return {"km": lin, "err_km": chord / 2.0 + loop, "index": lo,
                 "err_from": "loop" if loop > chord / 2.0 else "half_chord"}
     trio = sorted([a, b, rows[third]], key=lambda r: r[0])
@@ -275,6 +305,8 @@ def position_at(rows, jd, curve=False, reach=None) -> Optional[Dict[str, Any]]:
         # L-538: the sum, the curve's or chord's figure plus the loop's term.
         said = "loop" if loop > err else said
         err = err + loop
+    if _no_figure(t0, t2, nofig):
+        return {"km": q, "err_km": None, "index": lo, "err_from": "no_figure"}
     return {"km": q, "err_km": err, "index": lo, "err_from": said}
 
 
@@ -314,7 +346,7 @@ def build_spacecraft_traces(name: str, payload: Dict[str, Any],
                     "is not drawn" % name]
     au = [(r[0], r[1] / AU_KM, r[2] / AU_KM, r[3] / AU_KM) for r in rows]
     at = position_at(rows, epoch_jd, curve=category in CURVE_KINDS,
-                     reach=reach_of(payload))
+                     reach=reach_of(payload), nofig=nofig_of(payload))
     out: List[Tuple[str, Dict[str, Any]]] = []
     ended = at is None and epoch_jd > rows[-1][0]
     if at is None and not ended:

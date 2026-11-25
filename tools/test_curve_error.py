@@ -73,6 +73,15 @@ WHAT MAKES IT FAIL
   span with the figure its box prints: the chord's, plus the loop's term
   R x (1 + L) on the days its positions file carries a reach.
 
+  L-553 (one body JPL does not answer no longer stops the night): a craft
+  served LAST-GOOD -- its saved fine layer, or its plan's points with no
+  distance on the days nothing covers (data.nofig_t, Tony, 2026-11-24:
+  "with the no-distance option") -- has no check points from tonight, so
+  its JPL half is not held tonight; it is ACCEPTED ONLY by the hold its
+  served entry names and the index's list of held bodies, printed by name,
+  and its held-out half still gates on every day that prints a figure. A
+  craft served last-good with no hold named is red, by name, as before.
+
 RUN (from the gallery root):  python tools/test_curve_error.py [--night]
 The gallery maintenance run runs it as the gating checker "Curve error";
 its last line starts "CURVE ERROR:".
@@ -93,6 +102,9 @@ B's second half): held with the loop's reach the positions file serves
 independent of its orbit (capture_self_test). The same day, the check
 points left the repository: held where they are written, red only on the
 night's run (--night), named as not held anywhere else (hold_captures).
+Updated November 24, 2026 with Anthropic's Claude Opus 5.5 (L-553): a craft
+served last-good is accepted by its named hold, its held-out half gating
+on the days that print a figure; position_at is handed the no-figure days.
 """
 
 import glob
@@ -164,7 +176,7 @@ def check_rows(payload):
     return rs._series(payload)
 
 
-def capture_cases(rows, checks, cb, reach=None):
+def capture_cases(rows, checks, cb, reach=None, nofig=None):
     """[(kind, jd, miss_km, err_km)] for a capture craft across its fine
     span (the served block's): each served point held out, and each check
     point, the box's figure worked out from the served rows, with the
@@ -176,8 +188,9 @@ def capture_cases(rows, checks, cb, reach=None):
         if not (s0 <= rows[k][0] <= s1):
             continue
         rest = rows[max(0, k - 4):k] + rows[k + 1:min(n, k + 5)]
-        at = rs.position_at(rest, rows[k][0], curve=False, reach=reach)
-        if at is None:
+        at = rs.position_at(rest, rows[k][0], curve=False, reach=reach,
+                            nofig=nofig)
+        if at is None or at["err_km"] is None:     # L-553: no figure printed
             continue
         miss = math.sqrt(sum((at["km"][i] - rows[k][i + 1]) ** 2
                              for i in range(3)))
@@ -185,8 +198,9 @@ def capture_cases(rows, checks, cb, reach=None):
     for c in checks:
         if not (s0 <= c[0] <= s1):
             continue
-        at = rs.position_at(rows, c[0], curve=False, reach=reach)
-        if at is None:
+        at = rs.position_at(rows, c[0], curve=False, reach=reach,
+                            nofig=nofig)
+        if at is None or at["err_km"] is None:     # L-553: no figure printed
             continue
         miss = math.sqrt(sum((at["km"][i] - c[i + 1]) ** 2 for i in range(3)))
         out.append(("JPL check", c[0], miss, at["err_km"]))
@@ -295,6 +309,7 @@ def hold_captures(index, cfg, night=False, served=None):
     JPL half was held."""
     served = served or os.path.join(ROOT, "data", "solar-system")
     lines, bad, held_craft = [], [], []
+    accepted = []     # L-553: craft accepted by their named hold
     craft = capture_craft(index, cfg)
     if not craft:
         lines.append("  capture craft: none inside the window")
@@ -310,6 +325,33 @@ def hold_captures(index, cfg, night=False, served=None):
                   "rb") as handle:
             payload = json.loads(handle.read().decode("utf-8"))
         rows, reach = rs._series(payload), rs.reach_of(payload)
+        nofig = rs.nofig_of(payload)
+        if cb.get("last_good"):
+            # L-553: served last-good, so no check points from tonight; its
+            # JPL half is not held tonight, and it is accepted only by its
+            # named hold. Its held-out half still gates.
+            h = (o or {}).get("hold") or {}
+            listed = set(x.get("slug") for x in
+                         ((index or {}).get("holds") or {}).get("held") or [])
+            if not (h.get("kind") and h.get("since") and h.get("why"))                     or slug not in listed:
+                bad.append("%s: served last-good (%s) with no hold named in "
+                           "its entry and the index's list of held bodies"
+                           % (slug, cb.get("last_good_why")))
+                continue
+            cases = capture_cases(rows, [], cb, reach, nofig)
+            accepted.append(slug)
+            lines.append("  capture: %-14s %5d points held out; HELD since %s, "
+                         "served last-good (%s); its JPL half not held "
+                         "tonight; no distance on %d day(s)%s"
+                         % (slug, len(cases), h.get("since"),
+                            cb.get("last_good_why"),
+                            len(cb.get("no_figure_days") or []),
+                            (": " + ", ".join(cb.get("no_figure_days")))
+                            if cb.get("no_figure_days") else ""))
+            for kind, jd, miss, err in capture_over(cases)[:10]:
+                bad.append("%s at JD %.4f (%s): missed by %.4g km, printed by "
+                           "%.4g km" % (slug, jd, kind, miss, err))
+            continue
         cpath = os.path.join(served, "raw", "checks", "%s.json" % slug)
         if not os.path.exists(cpath):
             if night:
@@ -353,6 +395,9 @@ def hold_captures(index, cfg, night=False, served=None):
         n_over = len(capture_over(cases))
         if n_over > 10:
             bad.append("%s: and %d more" % (slug, n_over - 10))
+    # L-553: each craft accepted by its hold, by name, with the count.
+    lines.append("  capture craft accepted by their named hold (%d): %s"
+                 % (len(accepted), ", ".join(accepted) or "none"))
     return lines, bad, held_craft
 
 
@@ -436,8 +481,10 @@ def main():
     for line in cap_lines:
         print(line)
     n_craft = len(held_craft)
-    not_here = sorted(slug for slug, _o in capture_craft(index, cfg)
-                      if slug not in held_craft)
+    # L-553: a craft served last-good is named above as held, not here.
+    not_here = sorted(slug for slug, o in capture_craft(index, cfg)
+                      if slug not in held_craft and
+                      not ((o or {}).get("capture") or {}).get("last_good"))
     bad.extend(cap_bad)
     if bad:
         for line in bad[:20]:

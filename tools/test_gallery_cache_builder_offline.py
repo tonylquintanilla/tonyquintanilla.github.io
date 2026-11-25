@@ -169,6 +169,19 @@ them, named as not held on any other run.
 The spacecraft stand-in's arc now runs on within a day (FAKE_SC_R), so
 the hourly band can be worked out on it; the fresh-answer check holds the
 path's revision question to cache=False.)
+Module updated: November 24, 2026 with Anthropic's Claude Opus 5.5
+(L-553, one body JPL does not answer no longer stops the night:
+night_hold_checks, planted nights on real builds, each fault sent through
+the builder's own ask_jpl -- a moon's test, a Sun-centred body's fetch at
+JPL's 503, a capture craft's questions, a path, a point, Earth -- with the
+night's rows run on the planted folder: the Solar System figures check
+whole (--served), Curve error's capture half at night, Artifact 1's T1;
+each hold taken off, red by name; the second try answered, the cap
+reached; a test that cannot apply not held; one more than HOLD_LIMIT a
+failed build. --l553-only runs them alone. Two older pins moved on
+purpose: L-149's Pluto, now held and not served on a first build, and
+L-538's craft with no saved layer, now held with no distance instead of
+the night stopped.)
 """
 import contextlib
 import io
@@ -633,6 +646,14 @@ def main():
         if not cond:
             failures.append(msg)
 
+    # L-553: --l553-only runs the planted nights alone (each must be red at
+    # the base and green after; the whole suite is the gate).
+    if '--l553-only' in sys.argv[1:]:
+        night_hold_checks(cfg, check)
+        print("L-553 planted nights: %d checks, %d failures"
+              % (total[0], len(failures)))
+        return 1 if failures else 0
+
     with tempfile.TemporaryDirectory() as td:
         out = Path(td) / 'data' / 'solar-system'
         out.mkdir(parents=True)
@@ -1078,8 +1099,20 @@ def main():
             finally:
                 b.fetch_vectors_range = _fv_current2
             idx_l149 = json.load(open(out_l149 / 'coverage_index.json'))
-            check('error' in idx_l149['objects']['pluto']['trust'],
-                  "L-149: forced pluto check-vector failure -> pluto trust carries 'error'")
+            # L-553 moved this pin on purpose: a test JPL did not answer
+            # now holds Pluto too ("a moon is not held" is for a test that
+            # ran over the limit); on a first build there is no good build
+            # to hold at, so it is not served, and named (L-525's rule).
+            # Before L-553 it was served with a null window, 'error' in its
+            # trust, which no box could print a distance from.
+            pl_named = [h for h in (idx_l149.get('holds') or {}).get('held', [])
+                        if h.get('slug') == 'pluto']
+            check('pluto' not in idx_l149['objects'] and pl_named
+                  and pl_named[0].get('served') is False
+                  and 'accuracy test' in pl_named[0].get('why', ''),
+                  "L-149, moved by L-553: forced pluto check-vector failure -> "
+                  "pluto HELD, not served, named (%s)"
+                  % (pl_named[0].get('line') if pl_named else 'not named'))
             check(idx_l149['served_window'] is not None,
                   "L-149: forced pluto check-vector failure -> served_window STAYS non-null "
                   "(pluto excluded from participation, so its failure can't gate the site)")
@@ -1880,6 +1913,7 @@ def main():
     fresh_answer_checks(check)
     side_change_checks(cfg_path, check)
     hold_checks(cfg, check)
+    night_hold_checks(cfg, check)        # L-553
     spacecraft_id_checks(cfg, check)
     point_checks(cfg, check)
     clock_checks(cfg, check)
@@ -2679,6 +2713,365 @@ def hold_checks(cfg, check):
               "named (%s)" % (named[0].get('line') if named else 'not named'))
 
 
+def _no_answer(what):
+    """L-553: the error a request that got no answer raises, the shape run
+    #58's Deimos met: a connection that timed out."""
+    import requests
+    return requests.exceptions.ConnectTimeout(
+        "HTTPSConnectionPool(host='ssd.jpl.nasa.gov', port=443): Max retries "
+        "exceeded (simulated for %s: connect timeout=30)" % what)
+
+
+def _jpl_503():
+    """L-553: JPL's own "temporarily unavailable", as Chariklo met it."""
+    import requests
+    resp = requests.models.Response()
+    resp.status_code = 503
+    resp.reason = 'Service Temporarily Unavailable'
+    return requests.exceptions.HTTPError(
+        "503 Server Error: Service Temporarily Unavailable for url: "
+        "https://ssd.jpl.nasa.gov/api/horizons.api (simulated)", response=resp)
+
+
+def _raise(exc):
+    raise exc
+
+
+def night_hold_checks(cfg, check):
+    """L-553 (one body JPL does not answer no longer stops the night;
+    Tony, 2026-11-24: "i thought that our rule was that if one body fails,
+    we continue and report not turn the whole night red"). Planted nights
+    on real builds with the stand-in JPL; each planted fault goes through
+    the builder's own ask_jpl, as every real request does, so the second
+    try is the builder's. The night's own rows are run on the planted
+    folder: the Solar System figures check whole (node, --served), Curve
+    error's capture half (hold_captures, night=True), and Artifact 1's
+    first test (t1_line).
+    1. a moon's test timed out, twice: held (path A);
+    2. a moon's test that cannot apply: not held (a guard);
+    3. a Sun-centred body's fetch met JPL's 503, twice: held, accepted by
+       the figures check by name (path B);
+    4. the same with its hold taken off the served entry: red, by name;
+    5. a capture craft's questions timed out: held, on its saved layer a
+       night old, no distance on the day it does not reach, in the title,
+       accepted by Curve error at night; and with no saved layer, the
+       build goes on (path C);
+    6. the same with its hold taken off: red, by name;
+    7. a spacecraft's fetch failed: held, accepted (path D);
+    8. a Lagrange point's fetch failed: held, accepted (path E);
+    9. Earth held: Artifact 1's T1 names the hold; with it taken off, FAIL;
+    10. THE PLANTED NIGHT, 1, 3 and 5 at once: the figures check green
+        whole, Curve error's capture half green, the title "HELD Deimos,
+        Chariklo, Juno -- ";
+    11. one more held than HOLD_LIMIT: a failed build, no swap, as today;
+    and the second try: a first try timed out and a second answered, the
+    body not held, the count printed; the cap reached, no more second tries.
+    """
+    import subprocess
+    import test_curve_error as tce
+    groot = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    gallery_dir = os.path.join(groot, 'gallery')
+    if gallery_dir not in sys.path:
+        sys.path.insert(0, gallery_dir)
+    ask = getattr(b, 'ask_jpl', None) or (lambda call, what=None: call())
+    _fv, _fe = b.fetch_vectors_range, b.fetch_elements
+    _fp, _bcl = b.fetch_point_vectors, b.build_capture_layer
+    saved = dict((n, getattr(b, n, None)) for n in
+                 ('SECOND_TRY_PAUSE_S', 'SECOND_TRY_CAP'))
+    if hasattr(b, 'SECOND_TRY_PAUSE_S'):
+        b.SECOND_TRY_PAUSE_S = 0.0
+    tries = getattr(b, 'SECOND_TRIES', {})
+
+    def plant(tests=(), test_once=(), elements=(), paths=(), points=(),
+              captures=(), no_n=()):
+        """Install a planted JPL: `tests` -- hids whose accuracy test times
+        out on every try; `test_once` -- on the first try only; `elements`
+        -- hids whose elements fetch meets JPL's 503; `paths` -- path hids
+        whose fetch fails; `points` -- point hids; `captures` -- slugs
+        whose capture questions time out; `no_n` -- hids served no mean
+        motion (a test that cannot apply)."""
+        first = set()
+
+        def fv(hid, *a, **k):
+            hid = str(hid)
+            if k.get('epoch_jds') is not None and hid in tests:
+                return ask(lambda: _raise(_no_answer(hid)), 'the test of %s' % hid)
+            if k.get('epoch_jds') is not None and hid in test_once:
+                def once():
+                    if hid not in first:
+                        first.add(hid)
+                        raise _no_answer(hid)
+                    return _fv(hid, *a, **k)
+                return ask(once, 'the test of %s' % hid)
+            if k.get('epoch_jds') is None and hid in paths:
+                return ask(lambda: _raise(_no_answer(hid)), 'the path of %s' % hid)
+            return _fv(hid, *a, **k)
+
+        def fe(hid, *a, **k):
+            hid = str(hid)
+            if hid in elements:
+                return ask(lambda: _raise(_jpl_503()), 'the elements of %s' % hid)
+            got = _fe(hid, *a, **k)
+            if hid in no_n:
+                got = dict(got, n=None)
+            return got
+
+        def fp(hid, *a, **k):
+            if str(hid) in points:
+                return ask(lambda: _raise(_no_answer(hid)), 'the point %s' % hid)
+            return _fp(hid, *a, **k)
+
+        def bcl(obj, *a, **k):
+            if obj['slug'] in captures:
+                return ask(lambda: _raise(_no_answer(obj['slug'])),
+                           "%s's capture questions" % obj['slug'])
+            return _bcl(obj, *a, **k)
+        b.fetch_vectors_range, b.fetch_elements = fv, fe
+        b.fetch_point_vectors, b.build_capture_layer = fp, bcl
+
+    def unplant():
+        b.fetch_vectors_range, b.fetch_elements = _fv, _fe
+        b.fetch_point_vectors, b.build_capture_layer = _fp, _bcl
+
+    def build(out, mode, day=0, **planted):
+        plant(**planted)
+        b._NOW_OVERRIDE = FIXED_NOW + timedelta(days=day)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()) as said:
+                rm = b.run_build(cfg, out, mode=mode, do_commit=False)
+        finally:
+            unplant()
+            b._NOW_OVERRIDE = FIXED_NOW
+        return rm, said.getvalue()
+
+    def index(out):
+        with open(out / 'coverage_index.json') as f:
+            return json.load(f)
+
+    def figures(out):
+        """The Solar System figures check, whole, on the planted folder:
+        (exit, its accepted line, its FAIL lines)."""
+        try:
+            r = subprocess.run(['node', os.path.join(groot, 'documentation',
+                                                     'smoke_solar_system_figures.js'),
+                                '--served', str(out)],
+                               capture_output=True, text=True, cwd=groot)
+        except OSError as e:
+            return -1, 'node could not run (%s)' % e, []
+        acc = [x for x in r.stdout.splitlines()
+               if x.startswith('Held bodies accepted')]
+        fails = [x.strip() for x in r.stdout.splitlines() if x.startswith('  ')
+                 and r.returncode != 0]
+        return r.returncode, (acc[0] if acc else 'no accepted line'), fails
+
+    def held_of(idx):
+        return [h.get('slug') for h in (idx.get('holds') or {}).get('held', [])]
+
+    def title(out):
+        held, ended, err = dr.served_holds(str(out.parent.parent))
+        return err or dr.held_title(held, ended)
+
+    def strip_hold(out, slug):
+        p = out / 'coverage_index.json'
+        whole = p.read_bytes()
+        d = json.loads(whole.decode('ascii'))
+        d['objects'][slug].pop('hold', None)
+        p.write_bytes(json.dumps(d).encode('ascii'))
+        return lambda: p.write_bytes(whole)
+
+    try:
+        # ---- the planted night: Deimos's test, Chariklo's fetch, Juno's
+        # capture questions, a day after the last good build.
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / 'data' / 'solar-system'
+            out.mkdir(parents=True)
+            build(out, 'first-build')
+            build(out, 'nightly')
+            good = index(out)
+            rm, said = build(out, 'nightly', day=1, tests={'402'},
+                             elements={'1997 CU26'}, captures={'juno'})
+            n = index(out)
+            o = n['objects']
+            de, ch, ju = o.get('deimos') or {}, o.get('chariklo') or {}, o.get('juno') or {}
+            jc = ju.get('capture') or {}
+            check(rm['structural_validation'] == 'pass'
+                  and (de.get('hold') or {}).get('kind') == 'untested'
+                  and 'did not answer its accuracy test' in (de.get('hold') or {}).get('why', '')
+                  and de.get('trust') == good['objects']['deimos']['trust']
+                  and de.get('osculating') == good['objects']['deimos']['osculating'],
+                  "L-553 (1, path A): Deimos's test timed out twice; Deimos HELD "
+                  "at its last good build, its measured error kept (%s)"
+                  % (de.get('hold') or {}).get('why', 'not held'))
+            check((ch.get('hold') or {}).get('kind') == 'unanswered'
+                  and '503' in (ch.get('hold') or {}).get('why', '')
+                  and ch.get('as_of_today') is None,
+                  "L-553 (3, path B): Chariklo's fetch met JPL's 503 twice; held, "
+                  "served with no 'you are here' point (%s)"
+                  % (ch.get('hold') or {}).get('why', 'not held'))
+            nf = jc.get('no_figure_days') or []
+            jp = json.load(open(out / ju['positions']['file'])) if ju.get('positions') else {}
+            nfj = tce.rs.nofig_of(jp) if hasattr(tce.rs, 'nofig_of') else None
+            at = tce.rs.position_at(tce.rs._series(jp), nfj[0] + 0.5, nofig=nfj) \
+                if nfj else None
+            check(jc.get('last_good') is True and jc.get('saved_layer') is True
+                  and len(nf) == 1 and nf[0] == b._jd_to_dt(
+                      jc['span']['end_jd'] - 0.5).strftime(b.DAY_KEY)
+                  and (ju.get('hold') or {}).get('kind') == 'capture'
+                  and at is not None and at['err_km'] is None,
+                  "L-553 (5, path C): Juno's capture questions timed out; held "
+                  "on its saved layer a night old, no distance on the one day "
+                  "it does not reach (%s), the room giving no figure there (%s)"
+                  % (', '.join(nf) or 'none', (at or {}).get('err_from')))
+            listed = held_of(n)
+            check(sorted(listed) == ['chariklo', 'deimos', 'juno']
+                  and title(out) == "HELD Deimos, Chariklo, Juno -- "
+                  and tries.get('made') == 3 and tries.get('answered') == 0
+                  and '[SECOND TRY] 3 second tries made, 0 answered' in said,
+                  "L-553 (10): the planted night's title names all three (%r); "
+                  "three second tries made, none answered, said in the summary"
+                  % title(out))
+            code, acc, fails = figures(out)
+            check(code == 0 and 'accepted by their named hold (2)' in acc
+                  and 'deimos (untested' in acc and 'chariklo (unanswered' in acc,
+                  "L-553 (10): the Solar System figures check, whole, is GREEN "
+                  "on the planted night (exit %d): %s%s"
+                  % (code, acc, ('; ' + '; '.join(fails[:3])) if fails else ''))
+            lines, bad, _held = tce.hold_captures(n, cfg, night=True, served=str(out))
+            acc_c = [x for x in lines if 'accepted by their named hold' in x]
+            check(not bad and acc_c and '(1): juno' in acc_c[0],
+                  "L-553 (10): Curve error's capture half, at night, is GREEN "
+                  "on the planted night: %s%s"
+                  % ((acc_c[0].strip() if acc_c else 'no accepted line'),
+                     ('; ' + '; '.join(bad[:2])) if bad else ''))
+            undo = strip_hold(out, 'chariklo')
+            try:
+                code4, _a4, fails4 = figures(out)
+            finally:
+                undo()
+            check(code4 == 1 and any('chariklo' in f and 'no hold is named' in f
+                                     for f in fails4),
+                  "L-553 (4): planted -- Chariklo's hold taken off, the figures "
+                  "check is RED by name (%s)"
+                  % ('; '.join(f for f in fails4 if 'no hold is named' in f)[:110]
+                     or code4))
+            n_strip = json.loads(json.dumps(n))
+            n_strip['objects']['juno'].pop('hold', None)
+            _l6, bad6, _h6 = tce.hold_captures(n_strip, cfg, night=True,
+                                               served=str(out))
+            check(any('juno' in x and 'no hold named' in x for x in bad6),
+                  "L-553 (6): planted -- Juno's hold taken off, Curve error is "
+                  "RED by name (%s)" % ('; '.join(bad6)[:110] or 'not red'))
+
+        # ---- a capture craft with no saved layer: its first night.
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / 'data' / 'solar-system'
+            out.mkdir(parents=True)
+            rm, _s = build(out, 'first-build', captures={'juno'})
+            n = index(out) if (out / 'coverage_index.json').exists() else {}
+            ju = (n.get('objects') or {}).get('juno') or {}
+            jc = ju.get('capture') or {}
+            days = int(round(jc['span']['end_jd'] - jc['span']['start_jd'])) \
+                if jc.get('span') else -1
+            lines, bad, _h = tce.hold_captures(n, cfg, night=True, served=str(out)) \
+                if n else ([], ['no cache built'], [])
+            check(rm['structural_validation'] == 'pass'
+                  and jc.get('saved_layer') is False
+                  and len(jc.get('no_figure_days') or []) == days
+                  and 'juno' in held_of(n) and not bad,
+                  "L-553 (5): a capture craft with no saved layer no longer "
+                  "stops the build at #O (%s): held, no distance on all %d "
+                  "day(s), Curve error green at night%s"
+                  % (str(rm['structural_validation'])[:40], days,
+                     ('; ' + '; '.join(bad[:2])) if bad else ''))
+
+        # ---- a path and a point JPL does not answer; Earth held.
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / 'data' / 'solar-system'
+            out.mkdir(parents=True)
+            build(out, 'first-build')
+            build(out, 'nightly')
+            rm, _s = build(out, 'nightly', day=1, paths={'-31'}, points={'3012'},
+                           elements={'399'})
+            n = index(out)
+            o = n['objects']
+            v1, l2, ea = o.get('voyager_1') or {}, o.get('em_l2') or {}, o.get('earth') or {}
+            code, acc, fails = figures(out)
+            check(rm['structural_validation'] == 'pass'
+                  and (v1.get('hold') or {}).get('kind') == 'unanswered'
+                  and (l2.get('hold') or {}).get('kind') == 'unanswered'
+                  and code == 0 and 'voyager_1 (unanswered' in acc
+                  and 'em_l2 (unanswered' in acc,
+                  "L-553 (7, 8, paths D and E): Voyager 1's path and EM-L2's "
+                  "days unanswered; both held, the figures check green and "
+                  "naming both (exit %d): %s%s"
+                  % (code, acc, ('; ' + '; '.join(fails[:3])) if fails else ''))
+            why_a1 = None
+            try:
+                from assembler.tests import test_artifact1_earth as a1
+                t1 = getattr(a1, 't1_line', None)
+            except Exception as e:      # the check fails, by name
+                t1, why_a1 = None, str(e)
+            if t1 is not None:
+                line9 = t1(ea, n)[0]
+                n9 = json.loads(json.dumps(n))
+                n9['objects']['earth'].pop('hold', None)
+                line9b = t1(n9['objects']['earth'], n9)[0]
+            else:
+                line9 = line9b = 'no t1_line (%s)' % (why_a1 or 'not in the test')
+            check((ea.get('hold') or {}).get('kind') == 'unanswered'
+                  and line9.endswith('OK') and 'HELD' in line9
+                  and line9b.endswith('FAIL'),
+                  "L-553 (9, path F): Earth held; Artifact 1's T1 names the "
+                  "hold (%s); planted -- its hold taken off, T1 FAILs"
+                  % line9[:110])
+
+        # ---- the second try, the cap, a test that cannot apply, the limit.
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / 'data' / 'solar-system'
+            out.mkdir(parents=True)
+            build(out, 'first-build')
+            rm, said = build(out, 'nightly', test_once={'402'})
+            de = index(out)['objects'].get('deimos') or {}
+            check('hold' not in de and (de.get('trust') or {}).get('window_days')
+                  and tries.get('made') == 1 and tries.get('answered') == 1
+                  and '[SECOND TRY] 1 second tries made, 1 answered' in said,
+                  "L-553: the second try -- Deimos's test timed out once and "
+                  "was answered the second time; not held, the count said")
+            if hasattr(b, 'SECOND_TRY_CAP'):
+                b.SECOND_TRY_CAP = 2
+            try:
+                rm, said = build(out, 'nightly', tests={'401', '402', '501', '606'})
+            finally:
+                if hasattr(b, 'SECOND_TRY_CAP'):
+                    b.SECOND_TRY_CAP = saved['SECOND_TRY_CAP']
+            held = held_of(index(out))
+            check(tries.get('made') == 2 and tries.get('refused_by_cap') == 2
+                  and sorted(held) == ['deimos', 'io', 'phobos', 'titan']
+                  and 'the cap refused 2 more' in said,
+                  "L-553: the cap -- four tests timed out, two second tries "
+                  "made, the cap refused two more; all four held (%s)"
+                  % ', '.join(held))
+            rm, _s = build(out, 'nightly', no_n={'402'})
+            de = index(out)['objects'].get('deimos') or {}
+            check('hold' not in de and (de.get('trust') or {}).get('window_days') is None,
+                  "L-553 (2): a guard -- a moon's test that cannot apply (no "
+                  "mean motion) is NOT held; it keeps its own treatment")
+            before = (out / 'coverage_index.json').read_bytes()
+            rm, _s = build(out, 'nightly', tests={'301', '401', '402', '501', '606'},
+                           elements={'1997 CU26'})
+            check(str(rm['structural_validation']).startswith('fail')
+                  and 'more than %d' % b.HOLD_LIMIT in rm['structural_validation']
+                  and (out / 'coverage_index.json').read_bytes() == before,
+                  "L-553 (11): a guard -- six held, one more than HOLD_LIMIT: a "
+                  "failed build, no swap, as today (%s)"
+                  % str(rm['structural_validation'])[:90])
+    finally:
+        unplant()
+        for k, v in saved.items():
+            if v is not None:
+                setattr(b, k, v)
+
+
 # L-297: the stand-in entries for the points, used when the config has none
 # yet (the objects mirror fills a point's words from the orrery's export);
 # the config's own when it has them.
@@ -2847,25 +3240,52 @@ def point_checks(cfg, check):
               "by name (%s)" % why[:100])
 
         # A failed fetch: served last-good, today's point nulled.
+        # L-553 moved this pin on purpose: a point served its saved days is
+        # now HELD and counts against HOLD_LIMIT, so JPL failing every
+        # point at once (eight here) is a failed build, as any outage of
+        # more than five bodies is; the case plants one point.
         real_fp = b.fetch_point_vectors
+        one = next(o for o in pts if o['slug'] == slugs[0])['horizons_id']
+
+        def dead_one(hid, *a, **k):
+            if str(hid) == str(one):
+                raise RuntimeError("simulated: JPL did not answer this point")
+            return real_fp(hid, *a, **k)
 
         def dead(*a, **k):
             raise RuntimeError("simulated: JPL down")
-        b.fetch_point_vectors = dead
+        b.fetch_point_vectors = dead_one
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 rm2 = b.run_build(pc, out, mode='nightly', do_commit=False)
         finally:
             b.fetch_point_vectors = real_fp
-        o2 = json.load(open(out / 'coverage_index.json'))['objects'].get(
-            slugs[0], {})
+        idx2 = json.load(open(out / 'coverage_index.json'))
+        o2 = idx2['objects'].get(slugs[0], {})
+        held2 = [h.get('slug') for h in (idx2.get('holds') or {}).get('held', [])]
         check(rm2['structural_validation'] == 'pass'
               and o2.get('as_of_today') is None
               and (o2.get('point') or {}).get('last_good') is True
-              and o2.get('positions'),
-              "L-297: a point JPL does not answer is served its archived "
-              "days, last_good, today's point nulled (%s)"
-              % rm2['structural_validation'])
+              and o2.get('positions')
+              and (o2.get('hold') or {}).get('kind') == 'unanswered'
+              and held2 == [slugs[0]],
+              "L-297, moved by L-553: a point JPL does not answer is served "
+              "its archived days, last_good, today's point nulled, and HELD "
+              "by name (%s; held %s)"
+              % (rm2['structural_validation'], ', '.join(held2) or 'none'))
+        if len(slugs) > b.HOLD_LIMIT:
+            before2 = (out / 'coverage_index.json').read_bytes()
+            b.fetch_point_vectors = dead
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    rm2b = b.run_build(pc, out, mode='nightly', do_commit=False)
+            finally:
+                b.fetch_point_vectors = real_fp
+            check(str(rm2b['structural_validation']).startswith('fail')
+                  and (out / 'coverage_index.json').read_bytes() == before2,
+                  "L-553: JPL answering none of the %d points is more than "
+                  "HOLD_LIMIT held: a failed build, no swap (%s)"
+                  % (len(slugs), str(rm2b['structural_validation'])[:80]))
         with contextlib.redirect_stdout(io.StringIO()):
             rm3 = b.run_build(pc, out, mode='nightly', do_commit=False)
         check(rm3['structural_validation'] == 'pass',
@@ -3394,7 +3814,11 @@ def capture_checks(cfg, check):
                   "L-538: a craft at the question limit is named and served "
                   "its saved fine layer, last_good (%s)"
                   % (o3.get('capture') or {}).get('last_good_why'))
-        # With none saved, the night ABORTs by name.
+        # With none saved: until L-553 the night ABORTed by name (#O). Now,
+        # by Tony's "with the no-distance option" (2026-11-24), the build
+        # goes on, the craft is HELD by name, and every day of its capture
+        # prints no distance (no_figure_days); the room's position_at gives
+        # no figure there.
         with tempfile.TemporaryDirectory() as td:
             out = Path(td) / 'data' / 'solar-system'
             out.mkdir(parents=True)
@@ -3404,10 +3828,34 @@ def capture_checks(cfg, check):
                     rm4 = b.run_build(cc, out, mode='first-build', do_commit=False)
             finally:
                 b.CAPTURE_QUESTION_LIMIT = real_limit
-            check(str(rm4['structural_validation']).startswith('fail: #O orbiter_')
-                  and 'no fine points served' in rm4['structural_validation'],
-                  "L-538: a craft at the limit with no saved fine layer stops "
-                  "the night by name (%s)" % str(rm4['structural_validation'])[:100])
+            idx4 = json.load(open(out / 'coverage_index.json')) \
+                if (out / 'coverage_index.json').exists() else {}
+            o4 = (idx4.get('objects') or {}).get('orbiter_slow') or {}
+            c4 = o4.get('capture') or {}
+            p4 = json.load(open(out / o4['positions']['file'])) \
+                if o4.get('positions') else {}
+            nf4 = tce.rs.nofig_of(p4) if hasattr(tce.rs, 'nofig_of') else None
+            span_days = int(round(c4['span']['end_jd'] - c4['span']['start_jd'])) \
+                if c4.get('span') else -1
+            mid4 = (c4['span']['start_jd'] + c4['span']['end_jd']) / 2.0 \
+                if c4.get('span') else 0.0
+            at4 = tce.rs.position_at(tce.rs._series(p4), mid4, nofig=nf4) \
+                if nf4 else None
+            listed4 = [h.get('slug') for h in (idx4.get('holds') or {}).get('held', [])]
+            check(rm4['structural_validation'] == 'pass'
+                  and c4.get('last_good') is True and c4.get('saved_layer') is False
+                  and len(c4.get('no_figure_days') or []) == span_days
+                  and nf4 and len(nf4) == span_days
+                  and at4 is not None and at4['err_km'] is None
+                  and at4['err_from'] == 'no_figure'
+                  and (o4.get('hold') or {}).get('kind') == 'capture'
+                  and 'orbiter_slow' in listed4,
+                  "L-553: a craft at the limit with no saved fine layer no "
+                  "longer stops the night: built (%s), held by name, its plan's "
+                  "points served with no distance on all %d day(s) of its "
+                  "capture, the room giving no figure there (%s)"
+                  % (str(rm4['structural_validation'])[:60], span_days,
+                     (at4 or {}).get('err_from')))
     finally:
         b.fetch_vectors_range = stand_in
 

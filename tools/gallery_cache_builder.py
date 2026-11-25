@@ -534,6 +534,80 @@ def _require_astro():
 HORIZONS_CACHE = False
 
 
+# L-553 (one body JPL does not answer no longer stops the night): a
+# request that got NO ANSWER -- a connection that failed or timed out, or
+# JPL's own "503 Service Temporarily Unavailable" -- is asked once more,
+# after SECOND_TRY_PAUSE_S. An answer JPL gave (no data, an unknown id, an
+# error in its reply) is never asked again. Before, every question had one
+# try: run #58 of 2026-11-24 lost the night to one connect timeout for
+# Deimos. SECOND_TRY_CAP bounds the second tries of one build, so a night
+# JPL is down waits at most CAP x (pause + astroquery's 30-second timeout)
+# more, about 7 minutes, then every further miss raises at once, as
+# before. A normal night costs nothing. The build's summary prints how
+# many were made and answered, zero too (second_try_line). The clock's
+# questions ride this as any other; the clock still stops the build when
+# the second try fails too (L-541).
+SECOND_TRY_PAUSE_S = 10.0
+SECOND_TRY_CAP = 10
+SECOND_TRIES = {'made': 0, 'answered': 0, 'refused_by_cap': 0, 'asked': []}
+
+
+def reset_second_tries():
+    """A build's count starts at nothing (run_build)."""
+    SECOND_TRIES.update({'made': 0, 'answered': 0, 'refused_by_cap': 0,
+                         'asked': []})
+
+
+def jpl_did_not_answer(exc):
+    """L-553: whether a request got no answer at all, the only kind that
+    earns a second try: a connection that failed or timed out, or JPL's
+    503. An answer JPL gave, of any kind, is not this."""
+    try:
+        import requests
+        if isinstance(exc, (requests.exceptions.ConnectionError,
+                            requests.exceptions.Timeout)):
+            return True
+        if isinstance(exc, requests.exceptions.HTTPError):
+            return getattr(getattr(exc, 'response', None), 'status_code',
+                           None) == 503
+    except ImportError:
+        pass
+    return isinstance(exc, (TimeoutError, ConnectionError))
+
+
+def ask_jpl(call, what='a question'):
+    """L-553: call() once; if JPL gave no answer, once more after the
+    pause, while the build's cap allows. A second miss raises as the first
+    would have. Every JPL question the builder asks goes through here."""
+    try:
+        return call()
+    except Exception as exc:
+        if not jpl_did_not_answer(exc):
+            raise
+        if SECOND_TRIES['made'] >= SECOND_TRY_CAP:
+            SECOND_TRIES['refused_by_cap'] += 1
+            raise
+        SECOND_TRIES['made'] += 1
+        print("[SECOND TRY] JPL did not answer %s (%s); asked once more "
+              "after %g s" % (what, exc, SECOND_TRY_PAUSE_S), flush=True)
+        if SECOND_TRY_PAUSE_S > 0:
+            time.sleep(SECOND_TRY_PAUSE_S)
+        result = call()
+        SECOND_TRIES['answered'] += 1
+        SECOND_TRIES['asked'].append(what)
+        return result
+
+
+def second_try_line():
+    """The build summary's line on second tries (L-553), printed every
+    build, zero included."""
+    s = SECOND_TRIES
+    return ("[SECOND TRY] %d second tries made, %d answered (cap %d a build)%s"
+            % (s['made'], s['answered'], SECOND_TRY_CAP,
+               ('; the cap refused %d more' % s['refused_by_cap'])
+               if s['refused_by_cap'] else ''))
+
+
 # L-443 build B: a path fetched by its plan holds points closer together
 # than a day (an event window's step can be a minute), so its points are
 # keyed to the minute; every other range keeps the day.
@@ -567,8 +641,10 @@ def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1
     if epoch_jds is not None:
         obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type),
                        location=location, epochs=list(epoch_jds))
-        eph = obj.vectors(refplane='ecliptic', cache=HORIZONS_CACHE,
-                          **(hkwargs or {}))
+        eph = ask_jpl(lambda: obj.vectors(refplane='ecliptic',
+                                          cache=HORIZONS_CACHE,
+                                          **(hkwargs or {})),
+                      'for %s at %d epochs' % (horizons_id, len(epoch_jds)))
         return {i: {'jd': float(row['datetime_jd']), 'x': float(row['x']),
                     'y': float(row['y']), 'z': float(row['z'])}
                 for i, row in enumerate(eph)}
@@ -578,8 +654,9 @@ def fetch_vectors_range(horizons_id, id_type, center, start_dt, stop_dt, step='1
         'step': step,
     }
     obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type), location=location, epochs=epochs)
-    eph = obj.vectors(refplane='ecliptic', cache=HORIZONS_CACHE,
-                      **(hkwargs or {}))
+    eph = ask_jpl(lambda: obj.vectors(refplane='ecliptic', cache=HORIZONS_CACHE,
+                                      **(hkwargs or {})),
+                  'for %s, %s to %s' % (horizons_id, epochs['start'], epochs['stop']))
     out = {}
     for row in eph:
         jd = float(row['datetime_jd'])
@@ -599,7 +676,8 @@ def fetch_elements(horizons_id, id_type, center, epoch_jd, hkwargs=None):
     _require_astro()
     location = _normalize_center(center)
     obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type), location=location, epochs=epoch_jd)
-    el = obj.elements(cache=HORIZONS_CACHE, **(hkwargs or {}))
+    el = ask_jpl(lambda: obj.elements(cache=HORIZONS_CACHE, **(hkwargs or {})),
+                 'for the elements of %s' % horizons_id)
     if len(el) == 0:
         raise ValueError("No elements returned for %s" % horizons_id)
     row = el[0]
@@ -655,7 +733,9 @@ def fetch_solution_tp(name, horizons_id=None, id_type='smallbody', hkwargs=None)
     try:
         epoch_jd = Time('2025-01-01').jd
         obj = Horizons(id=query_id, id_type=_norm_id_type(id_type), location='@sun', epochs=epoch_jd)
-        raw = obj.vectors_async(cache=HORIZONS_CACHE, **(hkwargs or {})).text
+        raw = ask_jpl(lambda: obj.vectors_async(cache=HORIZONS_CACHE,
+                                                **(hkwargs or {})).text,
+                      'for the solution TP of %s' % name)
     except Exception as e:
         print("[SOLUTION TP] request failed for %s: %s" % (name, e), flush=True)
         return ('request_failed', None)
@@ -794,8 +874,11 @@ def fetch_small_body_2xr(horizons_id, id_type, center, jd, hkwargs=None,
                         **(hkwargs or {}))
     payload['VEC_TABLE'] = "'2xr'"
     payload['OBJ_DATA'] = 'NO'
-    resp = requests.get(conf.horizons_server, params=payload, timeout=timeout)
-    resp.raise_for_status()
+    def _get():
+        r = requests.get(conf.horizons_server, params=payload, timeout=timeout)
+        r.raise_for_status()
+        return r
+    resp = ask_jpl(_get, 'for the 2xr of %s' % horizons_id)
     rows = parse_vectors_2xr(resp.text)
     if not rows:
         raise ValueError('Horizons returned an empty vector table')
@@ -994,6 +1077,9 @@ def measure_trust(obj, osc, warn):
     minimum, or nulls the whole served_window per the pinned rule)."""
     slug = obj['slug']
     category = obj['category']
+    # L-553: whether the failure, if any, was JPL not answering the test's
+    # question, as against a test that cannot apply (the guards below).
+    asked = {'unanswered': False}
     try:
         e = float(osc['e'])
         if e >= 1.0:
@@ -1009,7 +1095,11 @@ def measure_trust(obj, osc, warn):
         delta_days = min(abs(period_days) / 8.0, 30.0)
         epoch_jd = float(osc['epoch_jd'])
 
-        pt_minus, pt_plus = _fetch_check_vectors(obj, epoch_jd, delta_days)
+        try:
+            pt_minus, pt_plus = _fetch_check_vectors(obj, epoch_jd, delta_days)
+        except Exception:
+            asked['unanswered'] = True
+            raise
         samples = []
         for sign, pt in ((-1.0, pt_minus), (+1.0, pt_plus)):
             t_jd = epoch_jd + sign * delta_days
@@ -1049,6 +1139,9 @@ def measure_trust(obj, osc, warn):
             'tolerance_deg': TRUST_TOLERANCE_DEG, 'guard_k': TRUST_GUARD_K,
             'window_days': None, 'cap_applied': None, 'window': None,
             'error': str(exc),
+            # L-553: True only when JPL did not answer the test's question;
+            # such a test holds the body whatever it orbits (trust_held).
+            'unanswered': asked['unanswered'],
         }
 
 
@@ -1130,6 +1223,22 @@ def trust_verdict(trust):
     return None
 
 
+def trust_held(obj, trust):
+    """L-553: the hold a body's accuracy test puts it under, (kind, words),
+    or None. A Sun-centred body drawn from its elements as before
+    (trust_verdict). Any other body -- a moon, Pluto around its barycentre
+    -- only when JPL did not answer the test's question: "a moon is not
+    held" is for a test that ran and came back over the limit, and a test
+    that cannot apply keeps its own treatment (served, its window null)."""
+    if held_by_test(obj):
+        return trust_verdict(trust)
+    if (trust or {}).get('method') == 'two_body_rate_v1' and \
+            (trust or {}).get('window_days') is None and trust.get('unanswered'):
+        return ('untested', 'JPL did not answer its accuracy test (%s)'
+                % (trust.get('error') or 'no measurement'))
+    return None
+
+
 def prior_hold(prior_index, slug):
     """The hold block the replaced cache served for this body, or None."""
     entry = ((prior_index or {}).get('objects') or {}).get(slug) or {}
@@ -1169,7 +1278,10 @@ def hold_from_prior(obj, prior_index, kind, why, today):
 
 
 def hold_source_words(hold):
-    """Where a held body is drawn from, in words."""
+    """Where a held body is drawn from, in words. A path, a point or a
+    capture craft held since L-553 carries its own words (`source`)."""
+    if hold.get('source'):
+        return hold['source']
     if hold.get('from_generated'):
         return 'drawn from the build of %s%s' % (
             hold['from_generated'][:10],
@@ -1193,10 +1305,26 @@ def hold_entry(obj, hold, served=True):
 def ended_entry(obj, ended):
     """L-525: a hold this build ended, as the index lists it."""
     how = ('JPL answered its fetch' if ended.get('kind') == 'unanswered'
+           else 'its fine layer was built' if ended.get('kind') == 'capture'
            else 'its accuracy test passed')
     return {'slug': obj['slug'], 'name': obj['name'], 'since': ended.get('since'),
             'line': 'HOLD ENDED %s: held since %s; %s in this build'
                     % (obj['name'], ended.get('since'), how)}
+
+
+def last_good_hold(obj, prior_index, kind, why, today, source):
+    """L-553: the hold block for a body served last-good from its own
+    archive -- a path, a Lagrange point, a capture craft on its saved layer
+    -- so it is on the cache's list like any held body: the night's title
+    names it and HOLD_LIMIT counts it. Its first day is kept while the hold
+    lasts."""
+    ph = prior_hold(prior_index, obj['slug'])
+    return {'schema_version': HOLD_SCHEMA_VERSION,
+            'since': ph['since'] if ph else today,
+            'kind': kind, 'why': why,
+            'first_why': (ph.get('first_why') or ph.get('why')) if ph else why,
+            'from_generated': (prior_index or {}).get('generated'),
+            'passed_before': True, 'source': source}
 
 
 def print_holds(holds):
@@ -1385,7 +1513,7 @@ def build_osculating_block(els, expected_center_slug, obj, warn):
     }
 
 
-def build_position_file(root, slug, obj, raw_points, reach=None):
+def build_position_file(root, slug, obj, raw_points, reach=None, nofig=None):
     """Spacecraft position file, km/JD. Source (schema parity):
     export_orbit_cache.py:write_position_file (orrery 4e2629c). The 0.5 AU frame
     guard there is skipped: it applies only to non-heliocentric/non-arc-natural
@@ -1393,7 +1521,10 @@ def build_position_file(root, slug, obj, raw_points, reach=None):
     a band-only capture craft's loop reach, served beside t, x, y, z as
     data.reach_t (each day's 00:00 UTC, JD) and data.reach_km, which
     render_spacecraft.position_at adds to the figure; a file without one
-    carries neither key, so every other file is as before."""
+    carries neither key, so every other file is as before. nofig [day]
+    (L-553): the days of a capture craft's span with no fine points and no
+    reach, served as data.nofig_t (each day's 00:00 UTC, JD), on which
+    position_at gives no figure, so the box prints no distance."""
     dates = sorted(raw_points.keys())
     if not dates:
         return None
@@ -1416,6 +1547,9 @@ def build_position_file(root, slug, obj, raw_points, reach=None):
         rr = reach_rows(reach)
         payload['data']['reach_t'] = [d for d, _k in rr]
         payload['data']['reach_km'] = [k for _d, k in rr]
+    if nofig:
+        payload['data']['nofig_t'] = [_dt_to_jd(_parse_calendar(k))
+                                      for k in sorted(nofig)]
     outp = root / 'positions' / ("%s.json" % slug)
     outp.parent.mkdir(parents=True, exist_ok=True)
     with open(outp, 'w') as f:
@@ -1964,8 +2098,9 @@ def fetch_clock_rows(obj, tdb_jds, hkwargs=None):
     h = Horizons(id=obj['horizons_id'], id_type=_norm_id_type(obj['id_type']),
                  location=_normalize_center(obj['canonical_center']),
                  epochs=list(tdb_jds))
-    eph = h.vectors(refplane='ecliptic', cache=HORIZONS_CACHE, delta_T=True,
-                    **(hkwargs or {}))
+    eph = ask_jpl(lambda: h.vectors(refplane='ecliptic', cache=HORIZONS_CACHE,
+                                    delta_T=True, **(hkwargs or {})),
+                  "for %s's clock rows" % (obj.get('slug') or obj['horizons_id']))
     return [{'jd': float(r['datetime_jd']),
              'tdb_minus_ut_s': float(r['delta_T']),
              'x': float(r['x']) * KM_PER_AU, 'y': float(r['y']) * KM_PER_AU,
@@ -2214,7 +2349,8 @@ def fetch_point_vectors(horizons_id, id_type, center, start_dt, stop_dt,
               'step': step}
     obj = Horizons(id=horizons_id, id_type=_norm_id_type(id_type),
                    location=_normalize_center(center), epochs=epochs)
-    eph = obj.vectors(refplane='ecliptic', cache=HORIZONS_CACHE)
+    eph = ask_jpl(lambda: obj.vectors(refplane='ecliptic', cache=HORIZONS_CACHE),
+                  'for the point %s' % horizons_id)
     out = {}
     for row in eph:
         jd = float(row['datetime_jd'])
@@ -2641,8 +2777,9 @@ def fetch_path_revised(obj):
                  epochs={'start': now.strftime('%Y-%m-%d'),
                          'stop': (now + timedelta(days=1)).strftime('%Y-%m-%d'),
                          'step': '1d'})
-    raw = h.vectors(refplane='ecliptic', cache=HORIZONS_CACHE,
-                    get_raw_response=True)
+    raw = ask_jpl(lambda: h.vectors(refplane='ecliptic', cache=HORIZONS_CACHE,
+                                    get_raw_response=True),
+                  "for %s's path header" % (obj.get('slug') or obj['horizons_id']))
     return read_path_revised(raw)
 
 
@@ -2910,6 +3047,60 @@ def save_capture_checks(root, slug, checks, offset):
     return len(checks)
 
 
+def no_figure_days(span, fine_span_jd, reach):
+    """L-553 (Tony, 2026-11-24: "with the no-distance option"): the UTC
+    days of a capture span ('YYYY-MM-DD') that no fine points cover whole
+    and that carry no loop's reach, so nothing honest bounds the box's
+    figure there: a craft whose layer could not be made and has no saved
+    one, or the days its saved layer does not reach (one, the window's
+    last, when the saved layer is a night old). On such a day the room
+    prints no distance; a missing figure never claims less than the miss."""
+    a, z = span
+    lo, hi = (fine_span_jd or (None, None))
+    out = []
+    d = a
+    while d < z:
+        d0, d1 = _dt_to_jd(d), _dt_to_jd(d + timedelta(days=1))
+        covered = lo is not None and lo - 1e-4 <= d0 and d1 <= hi + 1e-4
+        key = d.strftime(DAY_KEY)
+        if not covered and not (reach or {}).get(key):
+            out.append(key)
+        d += timedelta(days=1)
+    return out
+
+
+def capture_hold(r, prior_index, today, holds):
+    """L-553: a capture craft served last-good -- its saved fine layer,
+    or its plan's points with no distance on the days nothing covers -- is
+    HELD by name, on the cache's list, so the night's title names it and
+    HOLD_LIMIT counts it; a craft held so last night whose layer was made
+    tonight ends its hold. A craft already held (its path unanswered)
+    keeps that one hold."""
+    cb = r.get('capture')
+    if not cb:
+        return
+    ph = prior_hold(prior_index, r['slug'])
+    if not cb.get('last_good'):
+        if ph is not None and ph.get('kind') == 'capture':
+            holds['ended'].append(ended_entry(r['obj'], ph))
+        return
+    if r.get('hold') is not None:
+        return
+    nofig = cb.get('no_figure_days') or []
+    if cb.get('saved_layer'):
+        source = 'served its saved fine layer'
+        if nofig:
+            source += ', no distance on %d day(s) it does not reach' % len(nofig)
+    else:
+        source = ("served its plan's points, no distance on the %d day(s) of "
+                  "its capture with no fine points" % len(nofig))
+    r['hold'] = last_good_hold(
+        r['obj'], prior_index, 'capture',
+        'its fine layer could not be made (%s)' % cb.get('last_good_why'),
+        today, source)
+    holds['held'].append(hold_entry(r['obj'], r['hold']))
+
+
 def process_capture(root, r, window, today, config_objects, warn,
                     run_manifest):
     """Give one capture craft's result its fine layer (L-538): replace the
@@ -2970,30 +3161,43 @@ def process_capture(root, r, window, today, config_objects, warn,
         lo, hi = _dt_to_jd(span[0]) - 1e-4, _dt_to_jd(span[1]) + 1e-4
         fine = dict((k, p) for k, p in (saved.get('points') or {}).items()
                     if lo <= p['jd'] <= hi)
+        # L-553 (Tony, 2026-11-24: "with the no-distance option"): the days
+        # of the span neither the saved layer nor its reach covers print no
+        # distance (no_figure_days), so one craft no longer stops the build
+        # at #O, and a saved layer a night old claims nothing on the day it
+        # does not reach. The craft is held by name (capture_hold).
+        fspan = saved.get('span') if fine else None
+        reach = dict((k, v) for k, v in (saved.get('reach') or {}).items()
+                     if span[0].strftime(DAY_KEY) <= k < span[1].strftime(DAY_KEY))             if fine else None
+        nofig = no_figure_days(span, fspan, reach)
         warn("%s: CAPTURE FAILED (%s); %s" % (
-            slug, e, "served its saved fine layer, last-good" if fine
-            else "no saved fine layer to serve"))
-        if not fine:
-            run_manifest['objects'][slug] += '; capture FAILED, none saved: %s' % e
-            r['capture'] = {'schema_version': CAPTURE_SCHEMA_VERSION,
-                            'body': cap['body'], 'arrival': cap['arrival'],
-                            'departure': cap['departure'], 'missing': str(e),
-                            'last_good': False}
-            return r
-        layer = {'span': span, 'shape': saved.get('shape', 'whole'),
-                 'why': None, 'steps': saved.get('steps') or {},
-                 'reach': saved.get('reach'),
+            slug, e, ("served its saved fine layer, last-good%s" % (
+                      "; no distance on %s" % ", ".join(nofig) if nofig else ""))
+            if fine else ("no saved fine layer: served its plan's points, no "
+                          "distance on %d day(s)" % len(nofig))))
+        layer = {'span': span, 'shape': saved.get('shape', 'whole') if fine
+                 else 'none', 'why': None,
+                 'steps': (saved.get('steps') or {}) if fine else {},
+                 'reach': reach or None,
                  'check': {'count': 0, 'over': 0}, 'held_out': {'count': 0,
                                                                'over': 0}}
         block = capture_block(cap, layer, window, near, last_good=True,
                               why=str(e))
-        said = 'capture FAILED (%s); served its saved fine layer' % e
+        block['saved_layer'] = bool(fine)
+        block['no_figure_days'] = nofig
+        said = ('capture FAILED (%s); served %s%s' % (
+            e, 'its saved fine layer' if fine else "its plan's points",
+            '; no distance on %d day(s)' % len(nofig) if nofig else ''))
     a_jd, z_jd = _dt_to_jd(span[0]) - 1e-4, _dt_to_jd(span[1]) + 1e-4
+    # L-553: a day no fine points cover keeps the plan's own points, so it
+    # is drawn as before and only its figure is withheld.
+    bare = set(block.get('no_figure_days') or [])
     merged = dict((k, p) for k, p in (raw.get('points') or {}).items()
-                  if not (a_jd <= p['jd'] <= z_jd))
+                  if not (a_jd <= p['jd'] <= z_jd) or _utc_day(p['jd']) in bare)
     merged.update(fine)
     r['positions'] = build_position_file(root, slug, obj, merged,
-                                         reach=layer.get('reach'))
+                                         reach=layer.get('reach'),
+                                         nofig=block.get('no_figure_days'))
     r['capture'] = block
     run_manifest['objects'][slug] += '; ' + said
     run_manifest.setdefault('captures', {})[slug] = said
@@ -3281,8 +3485,9 @@ def fetch_pole_radec(jd):
     _require_astro()
     obj = Horizons(id=POLE_QUERY['target'], location=POLE_QUERY['observer'],
                    epochs=jd)
-    table = obj.ephemerides(quantities=POLE_QUERY['quantity'],
-                            cache=HORIZONS_CACHE)
+    table = ask_jpl(lambda: obj.ephemerides(quantities=POLE_QUERY['quantity'],
+                                            cache=HORIZONS_CACHE),
+                    "for Earth's pole")
     return float(table['NPole_RA'][0]), float(table['NPole_DEC'][0])
 
 
@@ -3299,7 +3504,9 @@ def fetch_orbit_plane(jd):
     _require_astro()
     obj = Horizons(id=ORBIT_QUERY['target'], location=ORBIT_QUERY['center'],
                    epochs=jd)
-    table = obj.elements(refplane=ORBIT_QUERY['refplane'], cache=HORIZONS_CACHE)
+    table = ask_jpl(lambda: obj.elements(refplane=ORBIT_QUERY['refplane'],
+                                         cache=HORIZONS_CACHE),
+                    "for the Earth-Moon barycentre's orbit")
     return float(table['incl'][0]), float(table['Omega'][0])
 
 
@@ -4288,6 +4495,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     out_dir = Path(out_dir)
     defaults = config['defaults']
     run_id = _utcnow().strftime('%Y%m%dT%H%M%SZ')
+    reset_second_tries()                     # L-553: this build's count
     run_manifest = {'run_id': run_id, 'started': _utcnow().isoformat(), 'mode': mode,
                     'objects': {}, 'guard_warnings': [], 'structural_validation': None,
                     'committed': False}
@@ -4381,7 +4589,9 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
             # could not be made, is HELD at its last good build; one with
             # none to hold at is not served, and named. Anything else
             # that was held and is served fresh now ends its hold.
-            verdict = trust_verdict(r['trust']) if held_by_test(obj) else None
+            # L-553: and any body, a moon included, whose test JPL did not
+            # answer (trust_held) -- run #58's Deimos.
+            verdict = trust_held(obj, r['trust'])
             if verdict is not None:
                 held = hold_from_prior(obj, prior_index, verdict[0], verdict[1], today)
                 if held is None:
@@ -4397,7 +4607,9 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                     '; HELD, %s: %s' % (hold_source_words(held['hold']), verdict[1]))
             else:
                 ended = prior_hold(prior_index, obj['slug'])
-                if ended is not None:
+                # L-553: a capture craft's hold on its saved layer is ended,
+                # or kept, by its capture, below.
+                if ended is not None and ended.get('kind') != 'capture':
                     holds['ended'].append(ended_entry(obj, ended))
             results.append(r)
         except Exception as e:
@@ -4419,23 +4631,33 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                     'failed: %s (served last-good: HELD, %s)'
                     % (e, hold_source_words(held['hold'])))
                 continue
-            # A-3: serve the orbit from last-good (as_of_today NULLED -- never a
+            if not is_path_body(obj):
+                # L-553 (G): a body JPL did not answer with no good build to
+                # hold at is NOT SERVED, and named, as L-525 rules. Until
+                # L-553 it was served its last elements from the raw
+                # archive with no measured error, which no box could print.
+                ph = prior_hold(prior_index, obj['slug'])
+                holds['held'].append(hold_entry(obj, {
+                    'since': ph['since'] if ph else today, 'kind': 'unanswered',
+                    'why': 'JPL did not answer its fetch (%s)' % e},
+                    served=False))
+                warn("%s: FETCH FAILED (%s); HELD, not served: no good build "
+                     "to hold at" % (obj['slug'], e))
+                run_manifest['objects'][obj['slug']] = (
+                    'failed: %s (HELD, not served: no good build to hold at)' % e)
+                continue
+            # A-3: serve a path from last-good (as_of_today NULLED -- never a
             # stale marker) rather than let the object vanish; drop only if there
             # is no last-good to serve.
             stale = serve_last_good(staging, obj, warn, prior_index=prior_index)
             if stale is not None:
-                if not is_path_body(obj):
-                    # L-525: no build to hold at, but its last elements
-                    # are served: held all the same, so a Sun-centred
-                    # body leaves the site's window rather than null it.
-                    ph = prior_hold(prior_index, obj['slug'])
-                    stale['hold'] = {
-                        'schema_version': HOLD_SCHEMA_VERSION,
-                        'since': ph['since'] if ph else today,
-                        'kind': 'unanswered',
-                        'why': 'JPL did not answer its fetch (%s)' % e,
-                        'from_generated': None, 'passed_before': False}
-                    holds['held'].append(hold_entry(obj, stale['hold']))
+                # L-553 (D): a path served last-good is HELD by name, so the
+                # night's title names it and HOLD_LIMIT counts it.
+                stale['hold'] = last_good_hold(
+                    obj, prior_index, 'unanswered',
+                    'JPL did not answer its fetch (%s)' % e, today,
+                    'drawn from the last path JPL gave it')
+                holds['held'].append(hold_entry(obj, stale['hold']))
                 results.append(stale)
                 warn("%s: FETCH FAILED (%s); served last-good orbit, as_of_today nulled" % (obj['slug'], e))
                 run_manifest['objects'][obj['slug']] = 'failed: %s (served last-good)' % e
@@ -4462,6 +4684,14 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                                             cap['arrival'][:10]))
         process_capture(staging, r, window, cap_today, config['objects'],
                         warn, run_manifest)
+        capture_hold(r, prior_index, today, holds)
+    # L-553: a craft held on its saved layer last night that is in no
+    # capture inside the window tonight ends its hold.
+    for r in results:
+        ph = prior_hold(prior_index, r['slug'])
+        if (ph is not None and ph.get('kind') == 'capture'
+                and r.get('capture') is None and r.get('hold') is None):
+            holds['ended'].append(ended_entry(r['obj'], ph))
     run_manifest['capture'] = found
     print("[CAPTURE] %s" % ("; ".join(found) if found else
                             "no craft is in a capture inside the window"),
@@ -4482,6 +4712,16 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                      "as_of_today nulled" % (obj['slug'], e))
                 run_manifest['objects'][obj['slug']] = (
                     'failed: %s (served last-good)' % e)
+                # L-553 (E): a point served its saved days is HELD by name.
+                r['hold'] = last_good_hold(
+                    obj, prior_index, 'unanswered',
+                    'JPL did not answer its fetch (%s)' % e, today,
+                    'placed from its saved days')
+                holds['held'].append(hold_entry(obj, r['hold']))
+            else:
+                ended = prior_hold(prior_index, obj['slug'])
+                if ended is not None:
+                    holds['ended'].append(ended_entry(obj, ended))
             results.append(r)
         place = dict((o['slug'], i) for i, o in enumerate(objects))
         results.sort(key=lambda r: place.get(r['slug'], len(place)))
@@ -4548,7 +4788,9 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     run_manifest['holds'] = {
         'held': ['%s (%s)' % (h['slug'], h['kind']) for h in holds['held']],
         'ended': [e['slug'] for e in holds['ended']]}
+    run_manifest['second_tries'] = dict(SECOND_TRIES, cap=SECOND_TRY_CAP)
     if held_count > HOLD_LIMIT and not only_slug:
+        print(second_try_line(), flush=True)
         run_manifest['structural_validation'] = (
             'fail: %d bodies held in one build, more than %d -- a failed build, '
             'not holds (is JPL answering?): %s' % (
@@ -4573,10 +4815,13 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
                                          _clock_rows)
     except ValidationAbort as e:
         run_manifest['structural_validation'] = 'fail: %s' % e
+        run_manifest['second_tries'] = dict(SECOND_TRIES, cap=SECOND_TRY_CAP)
         _write_run_manifest(staging, run_manifest)
+        print(second_try_line(), flush=True)
         print("[ABORT] %s -- no swap, no commit; staging kept at %s"
               % (e, staging), flush=True)
         return run_manifest
+    run_manifest['second_tries'] = dict(SECOND_TRIES, cap=SECOND_TRY_CAP)
     run_manifest['clock'] = {'tdb_minus_utc_s': index['clock']['tdb_minus_utc_s']}
     write_index(staging, index)
 
@@ -4707,6 +4952,7 @@ def run_build(config, out_dir, mode, only_slug=None, dry_run=False, do_commit=Fa
     for wmsg in warnings_log:
         print("[warn]", wmsg, flush=True)
     print_holds(index.get('holds'))
+    print(second_try_line(), flush=True)
     print("[done] run %s (%s): %d objects" % (run_id, mode, len(results)), flush=True)
     return run_manifest
 
