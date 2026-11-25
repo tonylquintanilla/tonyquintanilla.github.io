@@ -95,27 +95,47 @@ the orrery's."
 - OTHERWISE, ONLY THE TAIL (`fetch_path_tail`): daily from the freeze
   window before today to two days after (`PATH_TAIL_AHEAD_DAYS`), inside
   the span, so the room, drawing the minute it is opened, finds a point
-  either side of it until the next build.
-- AN ENDED MISSION'S LAST DAY IS ASKED FOR ITSELF (`fetch_path_last_day`,
-  v1.17, L-507). A path whose span ended before today also gets the
-  first two minutes of its last day, asked as 00:00 and 00:01 UTC (they
-  come back a minute later on JPL's clock, which labels them), merged
-  with the rest, whole fetch and tail alike. The room puts an ended
-  mission's marker on the path's last served point and its text box
-  says the mission ended that day, but the 7-day backbone from the
-  launch can stop up to six days short of it: Galileo's would have
-  stopped on a day the box would then print as its end. The span's end
-  is a day, inside JPL's data by path_plan's own clipping
-  (horizons-orbital-mechanics, An Ended Mission Ends on Its
-  mission_end), so the two minutes are too. Where the path stops
-  before the mission ended (Akatsuki: cut on 2024-04-26, the last day
-  JPL's solution is fitted to tracking, its `path_cutoff`; JAXA's end
-  2025-09-18; v1.18, L-507 more voyages), the span ends on that day, the
-  same two minutes are its last served point, and the room's box says
-  the path is drawn to it. `{}` for a path
-  still running. Such a path serves no `as_of_today`. The offline suite holds
-  it (the last point on the span's last day; planted fault, the last
-  day not asked, leaving 2003-09-23 for an end of 2003-09-29).
+  either side of it until the next build. A path whose saved points hold
+  none on its span's last day (`path_has_last_day`, read on JPL's clock
+  as the points are) is asked its last day too, that night only: the
+  saved points keep it until the plan is new. The run record names each
+  (`last_day_asked`); the first night after L-533, the 27 paths still
+  flying, 29 questions with the Voyagers' refusals.
+- EVERY PATH'S LAST DAY IS ASKED FOR ITSELF (`fetch_path_last_day`;
+  ended missions since L-507, every path since L-533, 2026-11-25). The
+  first two minutes of the span's last day, asked as 00:00 and 00:01 UTC
+  (they come back a minute later on JPL's clock, which labels them),
+  merged after the backbone's thinning, so the path's last served point
+  is on that day: the end of its dashed line and the day its text box
+  names ("as far as 10 September 2027" for ESCAPADE-Gold, whose 7-day
+  backbone stopped at its Mars arrival's window on 7 September), or, for
+  an ended mission, where its marker sits and the day the box says it
+  ended. The backbone alone, at its 7-day step from the launch, stops up
+  to seven days short. The span's end is a day inside JPL's data by
+  path_plan's own clipping (horizons-orbital-mechanics, An Ended Mission
+  Ends on Its mission_end), so the two minutes are too, with one
+  exception: the orrery's far stop, 2100-01-01, which the Voyagers' data
+  meets to the minute (2100-01-01 00:00 TDB). JPL refuses the two
+  minutes there in its own words (`JPL_DATA_ENDS`: 'No ephemeris for
+  target "Voyager 1 (spacecraft)" after A.D. 2100-JAN-01 00:00:00.0000
+  TD', read 2026-11-25), and the builder asks the one instant JPL holds,
+  the span's end as `_plan_span` gives it, with the minute before; the
+  box prints that instant as 31 December 2099, on UTC. Any other refusal
+  raises, and the path is held. Where the path stops before the mission
+  ended (Akatsuki: cut on 2024-04-26, the last day JPL's solution is
+  fitted to tracking, its `path_cutoff`; JAXA's end 2025-09-18; v1.18,
+  L-507 more voyages), the span ends on that day, the same two minutes
+  are its last served point, and the room's box says the path is drawn
+  to it. An ended path serves no `as_of_today`. The offline suite holds
+  it: the last point on the span's last day, flying and ended, each with
+  its planted fault (the old rule for a flying path; the last day not
+  asked, leaving 2003-09-23 for an end of 2003-09-29); the night's ask,
+  once, and not the next night, for a path and for a Voyager healed by
+  its last instant (planted: the ask off; the day read on UTC, which
+  asks the Voyager every night); the Voyager's refusal (planted: not
+  read, and the path fails). The gallery run's Solar System figures
+  check holds every path's last served point, index and file, on its
+  span's last day, each named with the day its box prints.
 - EVERY POINT IS KEYED TO THE MINUTE (`MINUTE_KEY`), since a window's
   step can be a minute; every other object keeps day keys.
 - AS_OF_TODAY IS TODAY'S POINT, the latest at or before today, not the
@@ -406,7 +426,13 @@ at 727ebf79. The builder's part is the block headed THE ORBITERS in
   those days. The room's `position_at` (`nofig_of`) then gives no
   figure on a trio that reaches into such a day, `err_from`
   'no_figure', and the box prints no distance there: a missing figure
-  never claims less than the miss. So #O no longer aborts the build for
+  never claims less than the miss. The same holds where the window
+  reaches the end of the capture's span (L-533; BepiColombo's from about
+  2027-01-12): the fine layer stops at the last whole day before the end
+  and the path's last-day pair is a day later, so `capture_end_days`
+  adds those days, the one before the span's last and the last, to
+  `no_figure_days`, whether the layer was made or not, and the run
+  record's line names them. So #O no longer aborts the build for
   one craft (it still refuses a `missing` block, which nothing makes
   now). The build's warnings name it: "<slug>: CAPTURE FAILED (...);
   served its saved fine layer, last-good; no distance on <days>", or "no

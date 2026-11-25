@@ -1909,6 +1909,7 @@ def main():
               "name (%s)" % why330[:90])
 
     path_by_plan_checks(cfg, check)
+    last_day_checks(cfg, check)          # L-533
     uncertainty_checks(cfg, check)
     fresh_answer_checks(check)
     side_change_checks(cfg_path, check)
@@ -2050,13 +2051,28 @@ def path_by_plan_checks(cfg, check):
             # FIXED 2026-10-25: JPL refuses a stop past the end of its data,
             # and its span's end is in its own time, so no stop asked, once
             # utc_to_tdb has added its 69 s, may pass the span's end
+            # L-533 (every path to its span's last day), restated: the
+            # backbone, event and tail questions (every one but the last
+            # day's, at '1m') never stop past the span's end instant; the
+            # last day's question asks into that day, its first two UTC
+            # minutes, and never past them.
             span_end = b._parse_calendar('2099-12-31')
-            past = [c_ for c_ in calls if c_[0] == '-31'
+            past = [c_ for c_ in calls if c_[0] == '-31' and c_[3] != '1m'
                     and b.utc_to_tdb(c_[2]) > span_end]
+            lastq = [c_ for c_ in calls if c_[0] == '-31' and c_[3] == '1m']
+            lastq_past = [c_ for c_ in lastq
+                          if c_[2] > span_end + timedelta(minutes=1)
+                          or c_[1] < span_end - timedelta(minutes=2)]
             check(not past and any(b.utc_to_tdb(c_[2]) == span_end
-                                   for c_ in calls if c_[0] == '-31'),
-                  "L-443 build B: the stop JPL is asked for is the span's "
-                  "end exactly, never past it (%d stop(s) past it)" % len(past))
+                                   for c_ in calls if c_[0] == '-31'
+                                   and c_[3] != '1m')
+                  and len(lastq) == 1 and not lastq_past,
+                  "L-443 build B, restated by L-533: no backbone, event or "
+                  "tail stop passes the span's end, one is the end exactly, "
+                  "and the one last-day question stays in the day's first two "
+                  "UTC minutes (%d stop(s) past it; %d last-day question(s), "
+                  "%d outside those minutes)"
+                  % (len(past), len(lastq), len(lastq_past)))
             real_span = b._plan_span
             b._plan_span = lambda p: (b._parse_calendar(p['span']['start']),
                                       b._parse_calendar(p['span']['end']))
@@ -2072,7 +2088,8 @@ def path_by_plan_checks(cfg, check):
                     FIXED_NOW, 7, lambda m: None)
             finally:
                 b._plan_span = real_span
-            check(any(b.utc_to_tdb(c_[2]) > span_end for c_ in calls),
+            check(any(b.utc_to_tdb(c_[2]) > span_end for c_ in calls
+                      if c_[3] != '1m'),
                   "L-443 build B: planted fault caught -- the span's end "
                   "taken as it stands asks JPL past the end of its data, as "
                   "the Voyagers' first build did")
@@ -3856,8 +3873,277 @@ def capture_checks(cfg, check):
                   "capture, the room giving no figure there (%s)"
                   % (str(rm4['structural_validation'])[:60], span_days,
                      (at4 or {}).get('err_from')))
+        capture_last_day_checks(cfg, check, tce)
     finally:
         b.fetch_vectors_range = stand_in
+
+
+def capture_last_day_checks(cfg, check, tce):
+    """L-533 (every path to its span's last day): a capture craft whose
+    window reaches its span's end. The fine layer stops at the last whole
+    day before the end; the path's last-day pair is a day later; the days
+    between print no distance (capture_end_days, folded into
+    no_figure_days). Planted fault: the days not marked, and the room then
+    works a figure out along a chord across a day of loops. Runs with
+    capture_checks' loop stand-in installed."""
+    end = (FIXED_NOW + timedelta(days=30)).strftime(b.DAY_KEY)
+    cc = capture_cfg(cfg)
+    for o in cc['objects']:
+        if o.get('slug') == 'orbiter_slow':
+            o['path']['span']['end'] = end
+    day_before = (b._parse_calendar(end) - timedelta(days=1)).strftime(b.DAY_KEY)
+
+    def build(td):
+        out = Path(td) / 'data' / 'solar-system'
+        out.mkdir(parents=True)
+        with contextlib.redirect_stdout(io.StringIO()):
+            rm = b.run_build(cc, out, mode='first-build', do_commit=False)
+        idx = json.load(open(out / 'coverage_index.json'))
+        o = idx['objects'].get('orbiter_slow') or {}
+        cb = o.get('capture') or {}
+        p = json.load(open(out / o['positions']['file'])) if o.get('positions') else {}
+        rows = tce.rs._series(p)
+        z = (cb.get('span') or {}).get('end_jd') or 0.0
+        after = [r[0] for r in rows if r[0] > z + 1e-3]
+        mid = (z + after[0]) / 2.0 if after else z
+        at = tce.rs.position_at(rows, mid, reach=tce.rs.reach_of(p),
+                                nofig=tce.rs.nofig_of(p)) if after else None
+        return rm, cb, rows, after, at
+
+    with tempfile.TemporaryDirectory() as td:
+        rm, cb, rows, after, at = build(td)
+    nf = cb.get('no_figure_days') or []
+    check(rm['structural_validation'] == 'pass'
+          and day_before in nf and end in nf
+          and after and b._utc_day(after[-1]) == end
+          and at is not None and at['err_km'] is None
+          and at['err_from'] == 'no_figure',
+          "L-533: a capture craft whose window reaches its span's end ends on "
+          "that day (%s), and the days between its fine layer and it print no "
+          "distance (%s; the room at the gap's middle: %s)"
+          % (b._utc_day(after[-1]) if after else 'no point after the layer',
+             ", ".join(d for d in nf if d >= day_before) or 'none',
+             (at or {}).get('err_from')))
+    real_end_days = b.capture_end_days
+    b.capture_end_days = lambda cap, span, plan: []
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            rm8, cb8, rows8, after8, at8 = build(td)
+    finally:
+        b.capture_end_days = real_end_days
+    check(at8 is not None and at8['err_km'] is not None
+          and end not in (cb8.get('no_figure_days') or []),
+          "L-533: planted fault caught -- without those days marked, the room "
+          "works out a figure of %s km along a chord across a day of loops "
+          "(%s)" % ((at8 or {}).get('err_km'), (at8 or {}).get('err_from')))
+    # the rule's two edges: a window that stops short of the end, and a
+    # capture that ends at a departure, mark nothing
+    plan = next(o for o in cc['objects'] if o.get('slug') == 'orbiter_slow')['path']
+    cap = b.captures_of({'category': 'spacecraft', 'path': plan})[-1]
+    near = {'start_jd': b._dt_to_jd(FIXED_NOW - timedelta(days=60)),
+            'end_jd': b._dt_to_jd(FIXED_NOW + timedelta(days=10))}
+    dep = dict(cap, end=cap['end'] - timedelta(days=3))
+    far = {'start_jd': near['start_jd'],
+           'end_jd': b._dt_to_jd(FIXED_NOW + timedelta(days=60))}
+    short = b.capture_end_days(cap, b.capture_span(cap, near), plan)
+    left = b.capture_end_days(dep, b.capture_span(dep, far), plan)
+    whole = b.capture_end_days(cap, b.capture_span(cap, far), plan)
+    check(short == [] and left == [] and whole == [day_before, end],
+          "L-533: the end days are marked only where the window reaches the "
+          "span's end and the capture runs to it (window short: %s; ended at "
+          "a departure: %s; reaching it: %s)" % (short, left, whole))
+
+
+def last_day_checks(cfg, check):
+    """L-533 (every path to its span's last day). A path still flying is
+    asked its span's last day, as an ended mission is; a night that fetches
+    only the tail asks it of a path saved without it, once; where JPL's data
+    ends at that day's first instant (the Voyagers), JPL's refusal turns the
+    question to that instant, and a night does not ask it again. Each with
+    its planted fault."""
+    span_end = '2099-12-31'
+    limit = b._parse_calendar(span_end)          # JPL's end, on its clock
+    stand_in = b.fetch_vectors_range
+    real_has = b.path_has_last_day
+    asked = []
+
+    def jpl_like(horizons_id, id_type, center, start_dt, stop_dt, step='1d',
+                 hkwargs=None, epoch_jds=None, key_fmt='%Y-%m-%d'):
+        """Voyager 1 as JPL serves it: asked on UTC, answered on JPL's
+        clock to the minute (utc_to_tdb's 69 s, the seconds dropped as the
+        builder's strftime drops them), and refused past the end of its
+        data in JPL's own words."""
+        if str(horizons_id) != '-31' or epoch_jds is not None:
+            return stand_in(horizons_id, id_type, center, start_dt, stop_dt,
+                            step, hkwargs, epoch_jds, key_fmt)
+        t0 = b.utc_to_tdb(start_dt).replace(second=0, microsecond=0)
+        t1 = b.utc_to_tdb(stop_dt).replace(second=0, microsecond=0)
+        asked.append((start_dt, stop_dt, step, t1 > limit))
+        if t1 > limit:
+            raise ValueError(
+                'Horizons Error: No ephemeris for target "Voyager 1 '
+                '(spacecraft)" after A.D. %s TD'
+                % limit.strftime('%Y-%b-%d %H:%M:%S.0000').upper())
+        stride = timedelta(minutes=_loop_stride_min(step))
+        out = {}
+        d = t0
+        while d <= t1:
+            r = FAKE_SC_R(d)
+            out[d.strftime(key_fmt)] = {'jd': b._dt_to_jd(d), 'x': r,
+                                        'y': 0.0, 'z': 0.0}
+            d += stride
+        return out
+
+    def counting(fv):
+        def spy(*a, **k):
+            if a[0] == '-31':
+                asked.append((a[3], a[4], a[5] if len(a) > 5 else k.get('step'),
+                              None))
+            return fv(*a, **k)
+        return spy
+
+    def night(out, c):
+        del asked[:]
+        with contextlib.redirect_stdout(io.StringIO()) as said:
+            rm = b.run_build(c, out, mode='nightly', do_commit=False)
+        pts = b.load_raw_vectors(out, 'voyager_1')['points']
+        return rm, pts, list(asked), said.getvalue()
+
+    def strip_last_day(out):
+        raw = b.load_raw_vectors(out, 'voyager_1')
+        first = b._dt_to_jd(limit) - 2.0 / 1440.0
+        raw['points'] = dict((k, p) for k, p in raw['points'].items()
+                             if p['jd'] < first)
+        b.save_raw_vectors(out, 'voyager_1', raw)
+        return max(p['jd'] for p in raw['points'].values())
+
+    last_jd = lambda pts: max(p['jd'] for p in pts.values())
+    on_day = lambda pts: max(pts, key=lambda k: pts[k]['jd'])[:10]
+    try:
+        # (1) a path still flying ends on its span's last day
+        b.fetch_vectors_range = counting(stand_in)
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td) / 'data').mkdir(parents=True)
+            out = Path(td) / 'data' / 'solar-system'
+            c1 = _plan_cfg(cfg, '2026-07-01', events=False, end=span_end)
+            with contextlib.redirect_stdout(io.StringIO()):
+                rm1 = b.run_build(c1, out, mode='first-build', do_commit=False)
+            p1 = b.load_raw_vectors(out, 'voyager_1')['points']
+            check(rm1['structural_validation'] == 'pass' and on_day(p1) == span_end
+                  and b.path_has_last_day(p1, c1['objects'][[
+                      o.get('slug') for o in c1['objects']].index('voyager_1')]['path']),
+                  "L-533: a path still flying ends on its span's last day "
+                  "(its last point %s, its span's end %s)"
+                  % (max(p1, key=lambda k: p1[k]['jd']), span_end))
+            real_last = b.fetch_path_last_day
+
+            def old_rule(obj, plan, today):
+                day = b._parse_calendar(plan['span']['end'])
+                if day + timedelta(days=1) > today:
+                    return {}
+                return real_last(obj, plan, today)
+            b.fetch_path_last_day = old_rule
+            try:
+                c1b = _plan_cfg(cfg, '2026-07-02', events=False, end=span_end)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    b.run_build(c1b, out, mode='nightly', do_commit=False)
+                p1b = b.load_raw_vectors(out, 'voyager_1')['points']
+            finally:
+                b.fetch_path_last_day = real_last
+            check(on_day(p1b) < span_end,
+                  "L-533: planted fault caught -- with the last day asked only "
+                  "for an ended mission, the 7-day backbone stops short (%s)"
+                  % max(p1b, key=lambda k: p1b[k]['jd']))
+
+            # (2) a night asks a missing last day once
+            with contextlib.redirect_stdout(io.StringIO()):
+                b.run_build(c1, out, mode='nightly', do_commit=False)
+            strip_last_day(out)
+            rm2, p2, q2, _s2 = night(out, c1)
+            rm3, p3, q3, _s3 = night(out, c1)
+            check(on_day(p2) == span_end and len(q2) == 2
+                  and sorted(q[2] for q in q2) == ['1d', '1m']
+                  and 'voyager_1' in rm2.get('last_day_asked', [])
+                  and len(q3) == 1 and q3[0][2] == '1d'
+                  and not rm3.get('last_day_asked'),
+                  "L-533: a night asks a path saved without its last day for it "
+                  "once (%d question(s): %s), and the next night the tail alone "
+                  "(%d)" % (len(q2), ", ".join(str(q[2]) for q in q2), len(q3)))
+            strip_last_day(out)
+            b.path_has_last_day = lambda points, plan: True
+            try:
+                _r, p4, _q, _s = night(out, c1)
+            finally:
+                b.path_has_last_day = real_has
+            check(on_day(p4) < span_end,
+                  "L-533: planted fault caught -- with the night's ask off, a "
+                  "path saved without its last day stays short (%s)"
+                  % max(p4, key=lambda k: p4[k]['jd']))
+
+        # (3) JPL's data ending at the day's first instant (the Voyagers)
+        b.fetch_vectors_range = jpl_like
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td) / 'data').mkdir(parents=True)
+            out = Path(td) / 'data' / 'solar-system'
+            del asked[:]
+            c5 = _plan_cfg(cfg, '2026-07-01', events=False, end=span_end)
+            with contextlib.redirect_stdout(io.StringIO()) as said5:
+                rm5 = b.run_build(c5, out, mode='first-build', do_commit=False)
+            p5 = b.load_raw_vectors(out, 'voyager_1')['points']
+            refused5 = [q for q in asked if q[3]]
+            check(rm5['structural_validation'] == 'pass'
+                  and abs(last_jd(p5) - b._dt_to_jd(limit)) < 1e-6
+                  and len(refused5) == 1 and '[LAST DAY] voyager_1' in said5.getvalue(),
+                  "L-533: where JPL's data ends at the span's last day's first "
+                  "instant, the last point is that instant (%s, JD %.6f), nothing "
+                  "past it, one question refused (%d)"
+                  % (max(p5, key=lambda k: p5[k]['jd']), last_jd(p5), len(refused5)))
+            real_ends = b.JPL_DATA_ENDS
+            b.JPL_DATA_ENDS = __import__('re').compile(r'(?!x)x')
+            try:
+                vo = [o for o in c5['objects'] if o.get('slug') == 'voyager_1'][0]
+                b.fetch_path_last_day(dict(vo, horizons_id='-31', id_type='id',
+                                           canonical_center='@10'),
+                                      vo['path'], FIXED_NOW)
+                why6 = 'answered'
+            except ValueError as e:
+                why6 = str(e)
+            finally:
+                b.JPL_DATA_ENDS = real_ends
+            check('No ephemeris' in why6,
+                  "L-533: planted fault caught -- without reading JPL's refusal, "
+                  "the Voyager's last day is not served and the path fails (%s)"
+                  % why6[:70])
+
+            # (2, the coordinating session's addition) a Voyager healed by
+            # its last instant, and not asked again the next night
+            strip_last_day(out)
+            rm7, p7, q7, s7 = night(out, c5)
+            rm8, p8, q8, _s8 = night(out, c5)
+            check(abs(last_jd(p7) - b._dt_to_jd(limit)) < 1e-6
+                  and [q[2] for q in q7] == ['1d', '1m', '1m']
+                  and [q[3] for q in q7] == [False, True, False]
+                  and 'voyager_1' in rm7.get('last_day_asked', [])
+                  and len(q8) == 1 and q8[0][2] == '1d'
+                  and not rm8.get('last_day_asked'),
+                  "L-533: a Voyager saved without its last day is healed by its "
+                  "last instant (%s; questions %s, the second refused), and the "
+                  "next night asks its tail alone (%d question(s))"
+                  % (max(p7, key=lambda k: p7[k]['jd']),
+                     ", ".join(str(q[2]) for q in q7), len(q8)))
+            b.path_has_last_day = lambda points, plan: any(
+                b._utc_day(p['jd']) == plan['span']['end'] for p in points.values())
+            try:
+                _r9, _p9, q9, _s9 = night(out, c5)
+            finally:
+                b.path_has_last_day = real_has
+            check(len(q9) == 3,
+                  "L-533: planted fault caught -- judged by the UTC day the box "
+                  "prints (31 December 2099), the Voyager's last instant is "
+                  "asked again every night (%d question(s))" % len(q9))
+    finally:
+        b.fetch_vectors_range = stand_in
+        b.path_has_last_day = real_has
 
 
 if __name__ == '__main__':

@@ -155,6 +155,14 @@
 // from a served point's date, by the nearest minute (the coordinating
 // session's ruling of the same night): 00:01:00 on JPL's clock prints the
 // day it was asked for; a planted fault cuts the minute instead.
+// Updated November 25, 2026 with Anthropic's Claude Opus 5.5 (L-533, every
+// path to its span's last day): part 7 holds every path's last served
+// point, flying or ended, in the index and in its file, on its span's last
+// day by JPL's clock, and prints each by name with the day its box prints
+// and the count ("Paths at their span's last day (34 of 34)"); a path
+// served last-good is accepted by its named hold; three more planted
+// cases (ESCAPADE-Gold three days short, a point a day past the span, and
+// the Voyager's last instant, 2100-01-01 00:00, which passes).
 
 "use strict";
 const fs = require("fs");
@@ -1159,22 +1167,40 @@ if (page.indexOf("inventor's") >= 0) {
 
 // ---- 7. the spacecraft (L-443 build B) ------------------------------
 // L-507: an ended mission's last served point (the served cache's
-// positions end) on its span's last day, or what is wrong.
+// positions end) on its span's last day, or what is wrong. L-533: every
+// path's, flying or ended. The day is read on JPL's clock, as the cache
+// keys it, so the Voyagers' last point, 2100-01-01 00:00 (JPL's data ends
+// there to the minute), is on its span's last day, though the box prints
+// it as 31 December 2099 on UTC.
 function endedIssue(pos, span) {
   if (!pos.end) { return "the served cache names no end for its positions"; }
   if (String(pos.end).slice(0, 10) !== span.end) {
-    return "its last served point is " + pos.end + ", not its last day, " + span.end +
+    return "its last served point is " + pos.end + ", not its span's last day, " + span.end +
            " (the builder's fetch_path_last_day)";
   }
   return null;
 }
 // Shown failing once: Galileo's path as JPL serves it, nine days past its
-// impact, and one stopped short at the backbone's 7-day step.
+// impact, and one stopped short at the backbone's 7-day step. L-533:
+// ESCAPADE-Gold as it was served until Nov 25, 2026, stopped at its Mars
+// arrival's window three days short; a path served a day past its span;
+// and the Voyager's last instant, which passes.
 if (!endedIssue({ end: "2003-09-30 12:00" }, { end: "2003-09-21" }) ||
     !endedIssue({ end: "2003-09-17 00:00" }, { end: "2003-09-21" }) ||
-    endedIssue({ end: "2003-09-21 00:01" }, { end: "2003-09-21" })) {
-  failures.push("the ended mission's check cannot fail, or fails a right one");
+    endedIssue({ end: "2003-09-21 00:01" }, { end: "2003-09-21" }) ||
+    !endedIssue({ end: "2027-09-07 01:49" }, { end: "2027-09-10" }) ||
+    !endedIssue({ end: "2027-09-11 00:01" }, { end: "2027-09-10" }) ||
+    endedIssue({ end: "2100-01-01 00:00" }, { end: "2100-01-01" })) {
+  failures.push("the last day's check cannot fail, or fails a right one");
 }
+// L-533: each path's last served point, the positions file's own, read
+// as a served day is (a TDB Julian date, keyed as the cache keys it).
+function fileLastKey(t) {
+  return new Date((t - 2440587.5) * 86400000).toISOString().slice(0, 16).replace("T", " ");
+}
+const lastDayTable = [];
+const lastDayHeld = [];
+const lastDayShort = [];
 // L-507, more voyages: an ended mission's mission_end and end_note, as
 // the mirror copies them. The path never runs past mission_end; where it
 // stops short (JPL's positions stop sooner: Akatsuki) the box must say so,
@@ -1285,6 +1311,25 @@ crafts.forEach(function (slug) {
   const file = (rec.positions || {}).file;
   if (!file || !fs.existsSync(path.join(SERVED, file))) {
     failures.push(slug + ": the served cache names no positions file on disk");
+  }
+  // L-533 (every path to its span's last day): its last served point,
+  // in the index and in its file, on its span's last day; a path served
+  // last-good is accepted by its named hold only.
+  const span0 = (o.path || {}).span || {};
+  if (span0.end && file && fs.existsSync(path.join(SERVED, file))) {
+    const t0 = ((JSON.parse(fs.readFileSync(path.join(SERVED, file), "utf8")).data || {}).t) || [];
+    const tl = t0.length ? Math.max.apply(null, t0) : null;
+    const fileWhy = tl === null ? "its positions file is empty" :
+      endedIssue({ end: fileLastKey(tl) }, span0);
+    const lastWhy = endedIssue(rec.positions || {}, span0) ||
+      (fileWhy ? "its positions file: " + fileWhy : null);
+    if (lastWhy) {
+      if (!heldIssue(slug, rec)) { lastDayHeld.push(heldWords(slug, rec)); }
+      else { lastDayShort.push(slug); failures.push(slug + ": " + lastWhy); return; }
+    } else {
+      lastDayTable.push(slug + " " + span0.end + " (its box: " +
+                        SSF.servedDay(tl, (cov.clock || {}).tdb_minus_utc_s) + ")");
+    }
   }
   const p = rec.as_of_today;
   // L-507: an ended mission serves no as_of_today; its marker is its last
@@ -1556,6 +1601,17 @@ console.log("Path distances at each one's served minute, " +
 craftTable.forEach(function (t) {
   console.log("  " + (t[0] + "                  ").slice(0, 18) + t[1]);
 });
+// L-533: every path's last served point on its span's last day, by name,
+// with the day its box prints (UTC), and any accepted by its hold.
+console.log("Paths at their span's last day (" + lastDayTable.length + " of " +
+            crafts.length + "): " + (lastDayTable.join("; ") || "none") + "." +
+            (lastDayHeld.length ? " Short, accepted by their named hold (" +
+             lastDayHeld.length + "): " + lastDayHeld.join(", ") + "." : ""));
+const lastDaySeen = lastDayTable.length + lastDayHeld.length + lastDayShort.length;
+if (lastDaySeen !== crafts.length) {
+  failures.push("the last day's check examined " + lastDaySeen +
+                " of " + crafts.length + " paths");
+}
 // L-515 step 2b, part 1: the moons the root draws at their parents'
 // places, each with its checked span and what the orrery serves no words
 // for yet, printed every run so the gap is seen (L-514's session 1 keys

@@ -222,6 +222,18 @@ whole; every fourth check point is saved (CAPTURE_CHECK_SAVE_EVERY), both
 counts served, never committed (.gitignore, Tony's ruling of Nov 24,
 14:00); and capture_of takes every capture a plan carries (captures_of)
 and uses the one whose stretch meets the window.
+
+Updated November 25, 2026 with Anthropic's Claude Opus 5.5 (L-533, every
+path to its span's last day): every path, flying or ended, is asked the
+first two minutes of its span's last day (fetch_path_last_day), so its
+dashed line and its box reach that day, not its last 7-day point; where
+JPL's data ends at that day's first instant (the Voyagers, at the
+orrery's far stop 2100-01-01 00:00 TDB) JPL's refusal (JPL_DATA_ENDS)
+turns the question to that instant. A night that fetches only the tail
+asks the last day of a path saved without it (path_has_last_day, on
+JPL's clock), once. A capture craft whose window reaches its span's end
+prints no distance on the days between its fine layer and that last day
+(capture_end_days, folded into no_figure_days).
 """
 
 import argparse
@@ -1676,6 +1688,16 @@ def process_object(root, obj, defaults, mode, run_manifest, warn, refresh_spacec
         else:
             new = fetch_path_tail(obj, plan, today, freeze)
             run_manifest['objects'].setdefault(slug, 'nightly(%d)' % len(new))
+            # L-533: a path saved without its span's last day (every path
+            # still flying, before Nov 25, 2026) is asked it once, on a
+            # night that fetches only its tail; the saved points then hold
+            # it until the plan is new, whose whole fetch asks it again.
+            if not path_has_last_day(points, plan):
+                got = fetch_path_last_day(obj, plan, today)
+                new.update(got)
+                run_manifest['objects'][slug] += (
+                    '; its span\'s last day asked (%d point(s))' % len(got))
+                run_manifest.setdefault('last_day_asked', []).append(slug)
         points.update(new)
     elif is_spacecraft:
         sc = obj.get('overrides', {}).get('spacecraft', {})
@@ -1827,8 +1849,10 @@ def fetch_path_by_plan(obj, plan, today, freeze, warn):
     event's own step, thinned at the event's own scale (WINDOW_THIN_FRACTION
     of its passing distance) and merged after the backbone's thinning, so a
     flyby is never thinned away; then the daily tail, unthinned, so the
-    room's marker has a point each side of today. Nothing is extended past
-    the span. Every point is keyed to the minute (MINUTE_KEY)."""
+    room's marker has a point each side of today; then the span's last day
+    (fetch_path_last_day, L-533), so the path ends there. Nothing is
+    extended past the span. Every point is keyed to the minute
+    (MINUTE_KEY)."""
     start, end = _plan_span(plan)
     bb = plan.get('backbone') or {}
     hid, ity, ctr = obj['horizons_id'], obj['id_type'], obj['canonical_center']
@@ -1858,26 +1882,66 @@ def fetch_path_by_plan(obj, plan, today, freeze, warn):
     return new
 
 
+# L-533 (every path to its span's last day): JPL's own words when a stop is
+# past the end of its data, as Voyager 1's refusal of 2100-01-01 00:01
+# printed them on 2026-11-25: 'No ephemeris for target "Voyager 1
+# (spacecraft)" after A.D. 2100-JAN-01 00:00:00.0000 TD'.
+JPL_DATA_ENDS = re.compile(r'No ephemeris for target "[^"]*" after A\.D\. ')
+
+
+def path_last_day_jd(plan):
+    """The Julian date on JPL's clock (TDB) where a plan's span's last day
+    begins: the span's end as _plan_span asks it. A served point at or
+    after it is on the span's last day by JPL's clock (L-533)."""
+    return _dt_to_jd(_parse_calendar((plan.get('span') or {})['end']))
+
+
+def path_has_last_day(points, plan):
+    """Whether a path's saved points hold one on its span's last day, read
+    on JPL's clock as the points are (L-533): the Voyagers' last point is
+    that day's first instant, 2100-01-01 00:00 TDB, which is 31 December
+    2099 on UTC, so the UTC day would ask them again every night."""
+    first = path_last_day_jd(plan) - 1e-6
+    return any(p.get('jd', 0.0) >= first for p in (points or {}).values())
+
+
 def fetch_path_last_day(obj, plan, today):
-    """An ended mission's last point (L-507): a path whose span ended
-    before today gets the first two minutes of its last day by UTC, 00:00
-    and 00:01, so its last served point -- where the room puts an ended
-    mission's marker, and the day its text box says it ended -- is on that
-    day. The span's end is a day: the orrery's path plan ends an ended
-    mission's path on the day NASA says it ended (mission_end), and JPL
-    has positions into that day (path_plan.jpl_limit takes a whole day
-    inside JPL's data, never one ending in its first five minutes). The
-    backbone alone, at its 7-day step from the launch, can stop up to six
-    days short of that day. Asked as 00:00 and 00:01 UTC, the points come
-    back a minute later on JPL's clock (TDB), which labels them, so both
-    are inside the day. {} for a path still running."""
+    """A path's last point (L-507; every path since L-533): the first two
+    minutes of its span's last day by UTC, 00:00 and 00:01, so its last
+    served point -- the end of its dashed line and the day its text box
+    names, or, for an ended mission, where the room puts its marker and
+    the day the box says it ended -- is on that day. The span's end is a
+    day inside JPL's data: path_plan.jpl_limit takes a whole day inside it,
+    never one ending in its first five minutes, and an ended mission's
+    path ends on the day NASA says it ended (mission_end). The backbone
+    alone, at its 7-day step from the launch, stops up to seven days short
+    of that day. Asked as 00:00 and 00:01 UTC, the points come back a
+    minute later on JPL's clock (TDB), which labels them, so both are
+    inside the day.
+
+    One span's end is not from JPL's limit: the orrery's far stop,
+    2100-01-01, which the Voyagers' data meets to the minute (2100-01-01
+    00:00 TDB). JPL refuses the two minutes (JPL_DATA_ENDS); the path is
+    then asked the one instant it holds, the span's end as _plan_span asks
+    it, with the minute before, so its last served point is that instant,
+    which the room prints as 31 December 2099 (UTC). Any other refusal
+    raises. today is not read: every path is asked, flying or ended."""
     last_day = _parse_calendar((plan.get('span') or {})['end'])
-    if last_day + timedelta(days=1) > today:
-        return {}
-    return fetch_vectors_range(obj['horizons_id'], obj['id_type'],
-                               obj['canonical_center'], last_day,
-                               last_day + timedelta(minutes=1), '1m',
-                               key_fmt=MINUTE_KEY)
+    hid, ity, ctr = obj['horizons_id'], obj['id_type'], obj['canonical_center']
+    try:
+        return fetch_vectors_range(hid, ity, ctr, last_day,
+                                   last_day + timedelta(minutes=1), '1m',
+                                   key_fmt=MINUTE_KEY)
+    except Exception as exc:
+        if not JPL_DATA_ENDS.search(str(exc)):
+            raise
+        print("[LAST DAY] %s: JPL's data ends at its span's last day's first "
+              "instant (%s); asked that instant" % (obj.get('slug', hid),
+                                                    str(exc).strip()[:120]),
+              flush=True)
+    _s0, end = _plan_span(plan)
+    return fetch_vectors_range(hid, ity, ctr, end - timedelta(minutes=1), end,
+                               '1m', key_fmt=MINUTE_KEY)
 
 
 def douglas_peucker(points_dict, tol_au):
@@ -3069,6 +3133,34 @@ def no_figure_days(span, fine_span_jd, reach):
     return out
 
 
+def capture_end_days(cap, span, plan):
+    """L-533 (every path to its span's last day): the UTC days
+    ('YYYY-MM-DD') from a capture's fine span's end to the end of its
+    plan's span, when the window reaches that end. The fine layer stops at
+    the last whole day before the capture ends (capture_span), and the
+    path's last served point is the pair on the span's last day
+    (fetch_path_last_day), so about a day lies between with no fine points
+    and no loop's reach: a figure worked out along that chord, across a day
+    of loops, would claim less than the craft's miss. Empty when the
+    capture ends before the span does (a departure, another arrival) or
+    the window stops short of the end."""
+    if cap is None or span is None or not (plan or {}).get('span'):
+        return []
+    _s0, s1 = _plan_span(plan)
+    if cap['end'] != s1:
+        return []
+    z = span[1]
+    if z != s1.replace(hour=0, minute=0, second=0, microsecond=0):
+        return []
+    stop = _parse_calendar(plan['span']['end']) + timedelta(days=1)
+    out = []
+    d = z
+    while d < stop:
+        out.append(d.strftime(DAY_KEY))
+        d += timedelta(days=1)
+    return out
+
+
 def capture_hold(r, prior_index, today, holds):
     """L-553: a capture craft served last-good -- its saved fine layer,
     or its plan's points with no distance on the days nothing covers -- is
@@ -3188,6 +3280,16 @@ def process_capture(root, r, window, today, config_objects, warn,
         said = ('capture FAILED (%s); served %s%s' % (
             e, 'its saved fine layer' if fine else "its plan's points",
             '; no distance on %d day(s)' % len(nofig) if nofig else ''))
+    # L-533 (every path to its span's last day): where the window reaches
+    # the end of the capture's span, the day between the fine layer's last
+    # point and the path's last-day pair has no fine points and no reach,
+    # so it prints no distance, as a day the layer does not cover does.
+    tail = capture_end_days(cap, span, obj.get('path'))
+    if tail:
+        block['no_figure_days'] = sorted(
+            set(block.get('no_figure_days') or []) | set(tail))
+        said += ('; no distance on %s, between its fine points and its '
+                 'span\'s last day' % ", ".join(tail))
     a_jd, z_jd = _dt_to_jd(span[0]) - 1e-4, _dt_to_jd(span[1]) + 1e-4
     # L-553: a day no fine points cover keeps the plan's own points, so it
     # is drawn as before and only its figure is withheld.
