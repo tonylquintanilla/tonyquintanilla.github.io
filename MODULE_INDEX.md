@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** November 21, 2026 by `module_atlas.py`  
+**Generated:** November 24, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -11,8 +11,8 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 66  
-**Total Lines of Code (non-blank):** 36,505  
-**Total Public Functions/Classes:** 635
+**Total Lines of Code (non-blank):** 38,161  
+**Total Public Functions/Classes:** 665
 
 ## Classification Coverage
 
@@ -56,7 +56,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `render_events.py` | Perihelion and event_link markers. (20 lines) |
 | `render_objects.py` | Object markers, center marker, and labels. (63 lines) |
 | `render_orbits.py` | Osculating (and mean-elements) conics. (250 lines) |
-| `render_spacecraft.py` | A spacecraft's path, or a comet's on an open path, drawn from its served positions. (353 lines) |
+| `render_spacecraft.py` | A spacecraft's path, or a comet's on an open path, drawn from its served positions. (408 lines) |
 
 ---
 
@@ -84,7 +84,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | Module | Description |
 |--------|-------------|
 | `cache_reader.py` | Reads the served gallery cache. (81 lines) |
-| `gallery_cache_builder.py` | - standalone nightly builder for the Paloma's Orrery web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool. (3,627 lines) |
+| `gallery_cache_builder.py` | - standalone nightly builder for the Paloma's Orrery web gallery cache (Phase 1b, ledger L-098). GALLERY repo tool. (4,402 lines) |
 
 ---
 
@@ -120,7 +120,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,918 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,832 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,853 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (555 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |
@@ -138,7 +138,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `test_artifact1_earth.py` | Artifact 1 (Earth alone) end-to-end, CPython side. (131 lines) |
 | `test_drawer_places.py` | - checks tools/drawer_places.py, the logic behind the gallery editor's drawer tree and its Places list (L-519 part 2, Featured's rethink), without opening the editor. (333 lines) |
 | `test_drawn_orbit.py` | - an orbit whose period is taken around the solar system's barycentre is drawn around the barycentre, moved to where the barycentre sits seen from the Sun; and every way of getting that wrong is caught (L-431, build 3). (268 lines) |
-| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (2,628 lines) |
+| `test_gallery_cache_builder_offline.py` | Offline smoke test for gallery_cache_builder.py. Mocks the Horizons fetch layer (no network) and exercises the pipeline: first-build -> derive -> structural validation -> atomic swap, a nightly re-run (shrink gate), and the Guard v2 MONITOR path (warn + keep, never reject). Run: python3 this_file.py (3,136 lines) |
 | `test_guestbook_updater.py` | - the guest book updater, checked offline (L-281). (315 lines) |
 | `test_link_card.py` | - checks tools/link_card.py, the logic behind the gallery editor's New Link Card window (L-540), without opening the window. (145 lines) |
 | `test_mirror_objects.py` | - tools/mirror_objects.py does what it says, on fixtures where each refusal and each kind of write must happen, and then on the real config. (483 lines) |
@@ -152,7 +152,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 
 | Module | Description |
 |--------|-------------|
-| `check_as_built_names.py` | - every code name INTERACTIVE_AS_BUILT.md gives in backticks is found in the code it belongs to. (434 lines) |
+| `check_as_built_names.py` | - every code name the as-built pages give in backticks is found in the code it belongs to: INTERACTIVE_AS_BUILT.md and CACHE_BUILDER_AS_BUILT.md (PAGES). (475 lines) |
 | `check_encounters.py` | - the gallery run's Encounters row: every encounter card, its package under data/encounters/, and the plan it must agree with. (368 lines) |
 | `check_tree_parents.py` | - every object's parent in data/objects_config.json is the centre JPL is asked around for it. (195 lines) |
 | `encounter_fetch.py` | - ask JPL Horizons, fresh, for an encounter's bodies around its centre, and write the encounter's package under data/encounters/. (634 lines) |
@@ -161,7 +161,7 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `store_writer.py` | - change the WORDS in data/objects_config.json without disturbing anything else. L-334 piece 2. (880 lines) |
 | `sweep_collapsed_features.py` | DISCOVERY ONLY. Finds every drawable thing in the gallery whose own identity -- its name, its colour, and therefore its link -- is not stored with it in data/objects_config.json. Fixes nothing. Prints a list. (228 lines) |
 | `test_compose_children.py` | - the moons in the Solar System room are drawn where their planets are, by ADDING, and their distance is their own. (281 lines) |
-| `test_curve_error.py` | - a marker placed between served points prints an error never smaller than its real miss. (162 lines) |
+| `test_curve_error.py` | - a marker placed between served points prints an error never smaller than its real miss. (418 lines) |
 | `test_exhibit_store_editor.py` | - the editor's logic, checked without opening a window. L-334 piece 5, the editor's half. (412 lines) |
 | `test_kepler_solver.py` | - the assembler's Kepler solver gives the right answer for every eccentricity and every mean anomaly, or it says so. (204 lines) |
 | `test_mirror_constants.py` | - the mirror writes what it should, refuses what it must, and leaves everything else alone. (735 lines) |

@@ -44,8 +44,13 @@ What `interactive.html` does now, room by room and part by part, is
 `INTERACTIVE_AS_BUILT.md` at this folder's root; the interactive-exhibit
 skill keeps the rules. A session reads the section for the part it
 changes, and changes that page in the commit that changes the page's
-code. The gallery run's "As-built names" row holds its code names to the
-code (L-522).
+code. What the cache builder and the Daily Run do now
+(`tools/gallery_cache_builder.py`, `daily_run.py`) is
+`CACHE_BUILDER_AS_BUILT.md` beside it; the gallery-cache-builder skill
+keeps the rules. A session reads the section for the part it changes,
+and changes that page in the commit that changes the builder or the
+Daily Run. The gallery run's "As-built names" row holds both pages' code
+names to the code (L-522; the second page, Nov 24, 2026).
 
 ## At the start of a session
 

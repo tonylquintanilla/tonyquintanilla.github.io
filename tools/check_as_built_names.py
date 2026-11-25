@@ -1,6 +1,7 @@
 """
-check_as_built_names.py -- every code name INTERACTIVE_AS_BUILT.md gives
-in backticks is found in the code it belongs to.
+check_as_built_names.py -- every code name the as-built pages give in
+backticks is found in the code it belongs to: INTERACTIVE_AS_BUILT.md and
+CACHE_BUILDER_AS_BUILT.md (PAGES).
 
 WHY THIS EXISTS
 
@@ -10,7 +11,10 @@ WHY THIS EXISTS
     that page in the same commit. A sentence that names a function, a file
     or an object's member which the code no longer has is a claim the
     code has quietly stopped making. Nothing read the old skill's names
-    against the code; this does, every run.
+    against the code; this does, every run. On 2026-11-24 the
+    gallery-cache-builder skill was split the same way, into
+    CACHE_BUILDER_AS_BUILT.md, and this check reads both pages, each with
+    its own counts, its own self-test and its own ORRERY_NAMES.
 
 RUN COMMAND
 
@@ -21,7 +25,7 @@ RUN COMMAND
 
 WHAT IT READS
 
-    Each backticked thing on the page, sorted into one of two piles. A
+    Each backticked thing on each page, sorted into one of two piles. A
     backticked thing may wrap one line; its line break and indent are
     read as one space.
     NAMES, each looked for in the code:
@@ -42,7 +46,8 @@ WHAT IT READS
     NOT NAMES, set aside and counted by kind: words or a snippet with
     spaces, an object's shape (`{group, label}`), a page address or
     parameter (`?exhibit=`), a pattern with a placeholder
-    (`positions/<slug>.json`), an HTML entity, a date.
+    (`positions/<slug>.json`), an HTML entity, a date, a folder in a
+    computer's home (`~/.astropy/...`), which no repository holds.
     THE CODE: this repository's .py .js .html .css .yml files (not
     documentation/patch_* or the fixtures, which are not code), its
     data/*.json and gallery/gallery_metadata.json, but not this file,
@@ -51,18 +56,29 @@ WHAT IT READS
     files outside its documentation/, in the sibling folder
     ..\\palomas_orrery_for_github.
     NOT THE CODE: the served cache, data/solar-system/, and the folders
-    the cache builder leaves beside it on Tony's computer
-    (data/.staging_*, data/solar-system.prev,
-    data/solar-system.quarantine_*), which GitHub never has. A bare
-    file name is not looked for there, so the check reads on Tony's
+    the cache builder leaves beside it (data/.staging_*,
+    data/solar-system.prev, data/solar-system.quarantine_*), which a
+    clean checkout never has and a workspace has once a build has run
+    in it: Tony's folder, and GitHub's night after its build's swap. A
+    bare file name is not looked for there, so the check reads on Tony's
     computer what it reads on GitHub's night; the page gives a served
     file by its path (`data/solar-system/feature_configs.json`), and a
     path is found where it is.
+    A PATH UNDER ONE OF THE BUILDER'S LEFTOVER FOLDERS
+    (`data/solar-system.prev/raw/runs/`) is never looked for on disk,
+    since whether that folder is there depends on whether a build ran
+    (L-522, Nov 24: such a path was green in Tony's folder and red on a
+    clean checkout). It is held to the code instead: the folder's mark
+    as the builder makes it (".prev", ".staging_", ".quarantine_") is in
+    the code's text, and the path beneath the folder is in the live
+    cache, which the leftover folder copies whole. Each is printed by
+    name, as held so.
 
     Two named lists, printed every run:
       - PLOTLY_NAMES: names the page gives from plotly.js 2.35.2, which
         is fetched from its CDN and is in neither repository. Set aside.
-      - ORRERY_NAMES: the names found only in the orrery. On GitHub's
+      - ORRERY_NAMES, page by page: the names found only in the
+        orrery. On GitHub's
         nightly run the orrery is not checked out, so these are printed
         as not examined that night and every other name is checked; on
         Tony's computer each is looked for in the orrery, and the list
@@ -82,17 +98,22 @@ WHAT MAKES IT FAIL
     - a marked name the code has
     - on Tony's computer, ORRERY_NAMES not equal to the names found only
       in the orrery, each difference named
-    - the page not found, or the self-test below not going red
+    - a page not found, or the self-test below not going red
 
-    Before reading the real page it plants, on a throwaway copy, a name
+    Before reading each real page it plants, on a throwaway copy of that
+    page, a name
     no code has, a file no repository has, a mark on a name the code
     does have, a call wrapped across a line, a name after it on the same
-    closing line, and a backticked thing beginning with a space, and each
+    closing line, a backticked thing beginning with a space, and a path
+    under a leftover folder that the live cache does not have, and each
     must be reported. It also plants, in a throwaway folder, a file in
     the served cache, one in each of the three folders the builder
     leaves behind, and one outside them: the first four must not be
     read, the fifth must be, and with nothing left out all five must be
-    read, which shows the test can fail.
+    read, which shows the test can fail. And in that folder a path only
+    in a leftover folder must not be found, and one whose path beneath
+    is in the live cache must be: the leftover folder is never looked
+    at.
 
 HOW TO FIX A FAILURE
 
@@ -109,6 +130,14 @@ Module updated: November 21, 2026 with Anthropic's Claude Fable 5.2
 for it. The page named `feature_configs.json` with no folder; nine
 folders a build of Nov 19 left on Tony's computer each held one, so the
 check was green there and red on GitHub, and two nights went red.
+Module updated: November 24, 2026 with Anthropic's Claude Opus 5.5
+(L-522, gallery-cache-builder's split): reads both as-built pages by a
+list (PAGES), each with its own counts, self-test and ORRERY_NAMES; a
+folder in a computer's home is set aside by kind. The same day, after
+the coordinating session's review: a path under one of the builder's
+leftover folders is held to the code by the folder's mark and the live
+cache beneath it, never looked for on disk (red on a clean checkout,
+green in Tony's folder, before).
 """
 
 import os
@@ -120,7 +149,10 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 ORRERY = os.path.join(os.path.dirname(ROOT), "palomas_orrery_for_github")
-PAGE = os.path.join(ROOT, "INTERACTIVE_AS_BUILT.md")
+# The as-built pages, each read and counted on its own (L-522: the
+# interactive-exhibit skill's split, Nov 11; gallery-cache-builder's, Nov
+# 24). A new page is added here, with its ORRERY_NAMES below.
+PAGES = ("INTERACTIVE_AS_BUILT.md", "CACHE_BUILDER_AS_BUILT.md")
 
 MARK = " [not in the code, L-522]"
 FILE_EXT = (".js", ".py", ".json", ".html", ".md", ".css", ".bat", ".yml")
@@ -131,14 +163,44 @@ CODE_EXT = (".py", ".js", ".html", ".css", ".yml", ".bat")
 PLOTLY_NAMES = {"Fx.loneHover", "annotation-text-g", "clipToBounds",
                 "src/plots/gl3d/scene.js"}
 
-# The names found only in the orrery's code. Checked against the orrery
-# on Tony's computer; not examined on GitHub's night, which has no orrery.
+# The names found only in the orrery's code, page by page. Checked against
+# the orrery on Tony's computer; not examined on GitHub's night, which has
+# no orrery.
 ORRERY_NAMES = {
-    "celestial_objects.py", "constants_new.py", "export_drawings.py",
-    "galactic_tide_sampler.py", "main_belt_sampler.py",
-    "outer_oort_sampler.py", "skills/interactive-exhibit/SKILL.md",
-    "van_allen_belt_sampler.py",
+    "INTERACTIVE_AS_BUILT.md": {
+        "celestial_objects.py", "constants_new.py", "export_drawings.py",
+        "galactic_tide_sampler.py", "main_belt_sampler.py",
+        "outer_oort_sampler.py", "skills/interactive-exhibit/SKILL.md",
+        "van_allen_belt_sampler.py",
+    },
+    "CACHE_BUILDER_AS_BUILT.md": {
+        "documentation/DESIGN_L443_slice2_rulings_20261023.md",
+        "path_plan.py", "skills/gallery-cache-builder/SKILL.md",
+    },
 }
+
+# The builder's leftover folders beside the served cache, each by the
+# mark the code makes its name with (gallery_cache_builder.py: live.name
+# + '.prev', '.staging_%s_%s', '%s.quarantine_%s'); the folder each
+# copies whole is the live cache, data/solar-system.
+LIVE = "data/solar-system"
+LEFTOVER_MARKS = ((lambda d: d == "solar-system.prev", ".prev"),
+                  (lambda d: d.startswith(".staging_"), ".staging_"),
+                  (lambda d: d.startswith("solar-system.quarantine_"),
+                   ".quarantine_"))
+
+
+def leftover(what):
+    """(mark, path beneath) for a path under a leftover folder, or
+    None."""
+    parts = what.strip("/").split("/")
+    if len(parts) < 2 or parts[0] != "data":
+        return None
+    for test, mark in LEFTOVER_MARKS:
+        if test(parts[1]):
+            return mark, "/".join(parts[2:])
+    return None
+
 
 IDENT = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
 HYPH = re.compile(r"[A-Za-z_][A-Za-z0-9_-]*")
@@ -164,6 +226,10 @@ def classify(s):
         return ("a pattern with a placeholder", None)
     if s.startswith("&#"):
         return ("an HTML entity", None)
+    if s.startswith("~/"):
+        # a folder in a person's home on their own computer (astroquery's
+        # saved answers): in neither repository by its nature (L-522, Nov 24)
+        return ("a folder in a computer's home, not a repository's", None)
     if s[0] in "?&" or s.endswith("="):
         return ("a page address or parameter", None)
     if re.fullmatch(r"\d{4}-\d\d-\d\d(T[\d:]+Z)?", s):
@@ -232,6 +298,7 @@ class Code:
         self.top = top
         self.idents, self.hyph, self.basenames = set(), set(), set()
         self.paths, self.dirs = set(), set()
+        self.marks = set()
         self.files = 0
         for rel, full in walk(top, skip):
             self.paths.add(rel)
@@ -247,12 +314,21 @@ class Code:
             except OSError:
                 continue
             self.files += 1
+            self.marks.update(m for _t, m in LEFTOVER_MARKS if m in text)
             self.idents.update(IDENT.findall(text))
             self.hyph.update(HYPH.findall(text))
         self.prefixes = sorted(self.idents | self.hyph)
 
     def has(self, kind, what):
         if kind == "file":
+            left = leftover(what) if "/" in what else None
+            if left:
+                # never on disk: the mark in the code, the rest in the
+                # live cache (LEFTOVER_MARKS)
+                mark, beneath = left
+                return mark in self.marks and (
+                    not beneath or os.path.exists(
+                        os.path.join(self.top, LIVE, beneath)))
             if "/" in what:
                 return any(os.path.exists(os.path.join(self.top, base, what))
                            for base in ("", "gallery"))
@@ -301,8 +377,11 @@ def read_page(path):
     return found
 
 
-def check(path, gallery, orrery, quiet=False):
-    """Return (failures, report lines)."""
+def check(path, gallery, orrery, quiet=False, orrery_names=None):
+    """Return (failures, report lines). orrery_names: the page's own list
+    of the names found only in the orrery."""
+    if orrery_names is None:
+        orrery_names = ORRERY_NAMES.get(os.path.basename(path), set())
     lines, failures = [], []
     spans = read_page(path)
     kinds, set_aside, plotly = {}, {}, set()
@@ -326,11 +405,13 @@ def check(path, gallery, orrery, quiet=False):
         seen[text] = (kind, what, marked or (prev[2] if prev else False))
     in_gallery = in_orrery = 0
     missing, marked_ok, only_orrery, not_tonight = [], [], set(), []
+    by_mark = sorted(t for t, (k, w, _m) in seen.items()
+                     if k == "file" and "/" in w and leftover(w))
     for text in sorted(seen):
         kind, what, marked = seen[text]
         g = gallery.has(kind, what)
         o = orrery.has(kind, what) if orrery else None
-        if orrery is None and not g and text in ORRERY_NAMES:
+        if orrery is None and not g and text in orrery_names:
             not_tonight.append(text)
             continue
         found = g or bool(o)
@@ -348,10 +429,10 @@ def check(path, gallery, orrery, quiet=False):
             missing.append(text)
             failures.append("%s: not found in the code (%s)" % (text, kind))
     if orrery is not None:
-        for name in sorted(only_orrery - ORRERY_NAMES):
+        for name in sorted(only_orrery - orrery_names):
             failures.append("%s: found only in the orrery; add it to "
                             "ORRERY_NAMES" % name)
-        for name in sorted(ORRERY_NAMES - only_orrery):
+        for name in sorted(orrery_names - only_orrery):
             failures.append("%s: on ORRERY_NAMES but not found only in the "
                             "orrery; take it off" % name)
     n_aside = sum(len(v) for v in set_aside.values())
@@ -379,22 +460,27 @@ def check(path, gallery, orrery, quiet=False):
     elif orrery is not None:
         lines.append("  found only in the orrery (ORRERY_NAMES, %d): %s"
                      % (len(only_orrery), ", ".join(sorted(only_orrery))))
+    if by_mark:
+        lines.append("  held by the builder's folder marks and the live "
+                     "cache, never looked for on disk (%d): %s"
+                     % (len(by_mark), ", ".join(by_mark)))
     for text in marked_ok:
         lines.append("  marked, not in the code: %s" % text)
     return failures, lines
 
 
-def self_test(gallery, orrery):
-    """Plant three faults on a throwaway copy; each must be reported."""
-    with open(PAGE, "rb") as handle:
+def self_test(page, gallery, orrery):
+    """Plant seven faults on a throwaway copy of one page; each must be
+    reported."""
+    with open(page, "rb") as handle:
         text = handle.read().decode("ascii")
     planted = text + (
         "\nPlanted: `zzPlantedNameL522`, `gallery/zz_planted_l522.js`,"
-        " and `EXHIBITS`%s.\n"
+        " and `EXHIBITS`%s, and `data/solar-system.prev/zz_planted_l522/`.\n"
         "A wrapped one, `zzWrappedL522(a,\n  b)` and `zzAfterWrapL522`;"
         " and ` zzEdgeL522`.\n" % MARK)
     folder = tempfile.mkdtemp(prefix="as_built_selftest_")
-    copy = os.path.join(folder, "INTERACTIVE_AS_BUILT.md")
+    copy = os.path.join(folder, os.path.basename(page))
     with open(copy, "wb") as handle:
         handle.write(planted.encode("ascii"))
     try:
@@ -403,6 +489,7 @@ def self_test(gallery, orrery):
         os.remove(copy)
         os.rmdir(folder)
     wanted = ["zzPlantedNameL522:", "gallery/zz_planted_l522.js:",
+              "data/solar-system.prev/zz_planted_l522/:",
               "EXHIBITS: marked", "zzWrappedL522(a, b):",
               "zzAfterWrapL522:", "' zzEdgeL522':"]
     return [w for w in wanted if not any(f.startswith(w) for f in failures)]
@@ -413,6 +500,11 @@ LEFT_OUT = ("data/solar-system/zz_served_l529.json",
             "data/solar-system.quarantine_zz/zz_quarantine_l529.json",
             "data/.staging_solar-system_zz/zz_staging_l529.json")
 KEPT = "tools/zz_kept_l529.py"
+# L-522, Nov 24: a path under a leftover folder is held by the live cache
+# beneath it, never by the leftover folder on disk.
+PREV_ONLY = ("data/solar-system.prev/zz_prev_only_l522",)
+BOTH = ("data/solar-system/zz_both_l522",
+        "data/solar-system.prev/zz_both_l522")
 
 
 def leftover_test():
@@ -425,8 +517,17 @@ def leftover_test():
             full = os.path.join(top, *rel.split("/"))
             os.makedirs(os.path.dirname(full))
             with open(full, "wb") as handle:
-                handle.write(b"{}\n")
+                handle.write(b"x = '.prev'\n" if rel == KEPT else b"{}\n")
+        for rel in PREV_ONLY + BOTH:
+            full = os.path.join(top, *rel.split("/"))
+            os.makedirs(full)
         code = Code(top, gallery_skip, gallery_is_code)
+        if code.has("file", PREV_ONLY[0]):
+            wrong.append("%s, only in a leftover folder on disk, was found: "
+                         "the leftover folder was looked at" % PREV_ONLY[0])
+        if not code.has("file", BOTH[1]):
+            wrong.append("%s, whose path beneath is in the live cache, was "
+                         "not found" % BOTH[1])
         for rel in LEFT_OUT:
             if code.has("file", rel.split("/")[-1]):
                 wrong.append("%s was read, and GitHub's night would not "
@@ -444,21 +545,11 @@ def leftover_test():
 
 
 def main():
-    print("AS-BUILT NAMES -- every code name INTERACTIVE_AS_BUILT.md gives "
-          "in backticks is in the code")
-    if not os.path.isfile(PAGE):
-        print("AS-BUILT NAMES: FAIL -- %s not found" % PAGE)
-        return 1
+    print("AS-BUILT NAMES -- every code name the as-built pages give in "
+          "backticks is in the code (%s)" % ", ".join(PAGES))
     gallery = Code(ROOT, gallery_skip, gallery_is_code)
     orrery = (Code(ORRERY, orrery_skip, orrery_is_code)
               if os.path.isdir(ORRERY) else None)
-    unreported = self_test(gallery, orrery)
-    if unreported:
-        for name in unreported:
-            print("  self-test: the planted fault was NOT reported: %s" % name)
-        print("AS-BUILT NAMES: FAIL -- the check could not show it can fail")
-        return 1
-    print("  self-test: 6 planted faults on a throwaway copy, each reported")
     wrong = leftover_test()
     if wrong:
         for line in wrong:
@@ -468,17 +559,41 @@ def main():
         return 1
     print("  self-test: 4 files planted in the served cache and the "
           "builder's leftover folders, none read; 1 outside them, read; "
-          "with nothing left out, all 4 read")
-    failures, lines = check(PAGE, gallery, orrery)
-    for line in lines:
-        print(line)
-    if failures:
+          "with nothing left out, all 4 read; a path only in a leftover "
+          "folder on disk, not found; one whose path beneath is in the "
+          "live cache, found")
+    findings, missing_pages = 0, []
+    for name in PAGES:
+        page = os.path.join(ROOT, name)
+        print("%s:" % name)
+        if not os.path.isfile(page):
+            print("  NOT FOUND: the page itself, %s" % page)
+            missing_pages.append(name)
+            continue
+        unreported = self_test(page, gallery, orrery)
+        if unreported:
+            for what in unreported:
+                print("  self-test: the planted fault was NOT reported: %s"
+                      % what)
+            print("AS-BUILT NAMES: FAIL -- the check could not show it can "
+                  "fail on %s" % name)
+            return 1
+        print("  self-test: 7 planted faults on a throwaway copy of this "
+              "page, each reported")
+        failures, lines = check(page, gallery, orrery)
+        for line in lines:
+            print(line)
         for failure in failures:
             print("  NOT FOUND: " + failure if "not found in the code" in
                   failure else "  " + failure)
-        print("AS-BUILT NAMES: FAIL -- %d finding(s)" % len(failures))
+        findings += len(failures)
+    if findings or missing_pages:
+        print("AS-BUILT NAMES: FAIL -- %d finding(s)%s" % (
+            findings, ("; page(s) not found: " + ", ".join(missing_pages))
+            if missing_pages else ""))
         return 1
-    print("AS-BUILT NAMES: ok -- every name examined is in the code")
+    print("AS-BUILT NAMES: ok -- every name examined on the %d pages is in "
+          "the code" % len(PAGES))
     return 0
 
 
