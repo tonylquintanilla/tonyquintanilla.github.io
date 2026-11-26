@@ -1417,8 +1417,12 @@ Plotly.
     7 (`missionEndIssue`: no path past its mission_end, the early case
     read as early, a cutoff_note only on a path cut short and naming its
     last day as printed, a still-flying mission serving none of the
-    three, five planted cases) and the walk's section 20b (the seven in
-    launch order, Pioneer 10's six bullets, Akatsuki's six and its
+    three, five planted cases; L-554, Nov 26: `endsAfterWindow` excuses
+    the three on a craft whose last day, its mission_end or its cut
+    path's last day, lies after the served window's last day, still
+    flying in that folder and printed by name, as on the cache builder's
+    suite's nights of 2026-07-09; shown both ways) and the walk's
+    section 20b (the seven in launch order, Pioneer 10's six bullets, Akatsuki's six and its
     source line, each one's companion by its plan; both shown failing on
     a page planted without the two sentences).
   - A CRAFT STILL FLYING, PAST ITS PATH'S LAST POINT: two cases, told

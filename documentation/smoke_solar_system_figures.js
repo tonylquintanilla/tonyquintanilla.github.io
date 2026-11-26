@@ -175,6 +175,13 @@
 // a cutoff_note. Shown failing on an end_note alone and on a cutoff_note
 // naming another day; the page's list holds the cut's branch, and the
 // headless walk's section 43 reads its seven sentences in its box.
+// November 26 (L-554, the cut in the suite's pretend nights; the website's
+// night #62 red): a craft whose last day (its mission_end, or its cut
+// path's last day) lies after the served window's last day is still
+// flying in that folder, and its notes are no fault; it is printed by
+// name. Inside the window, with its path not ended, it is the fault it
+// was. Shown both ways (endsAfterWindow). Updated November 26, 2026 with
+// Anthropic's Claude Opus 5.5.
 
 "use strict";
 const fs = require("fs");
@@ -1292,6 +1299,40 @@ if (!missionEndIssue({ mission_end: "2003-09-21" }, { end: "2003-09-30" })[0] ||
                     { end: "2026-11-17" }).join() !== ",cut") {
   failures.push("the mission_end check cannot fail, or fails a right one (L-507)");
 }
+// L-554 (the cut in the suite's pretend nights): a craft's last day is its
+// mission_end, or, for a craft still flying whose path the orrery cuts,
+// its path's last day. Where that day lies after the last day the served
+// folder covers (its served_window's end, as a served day is keyed), the
+// craft is still flying in that folder, and its notes are no fault.
+// Returns the sentence that says so, or null: no window, no dated last
+// day, or a last day inside the window, and the notes are the fault they
+// were. (The cache builder's suite builds its nights at 2026-07-09 from
+// the live list, where BepiColombo is cut at 17 November 2026.)
+function endsAfterWindow(o, span, windowLast) {
+  const last = o.mission_end !== undefined ? o.mission_end :
+               o.cutoff_note !== undefined ? span.end : undefined;
+  if (!windowLast || !/^\d{4}-\d{2}-\d{2}$/.test(String(last))) { return null; }
+  return last > windowLast ? "its last day, " + last + ", lies after the served window's, " +
+                             windowLast + ": still flying here" : null;
+}
+// Shown both ways: BepiColombo's cut on a night whose window ends before
+// it (green), and on one whose window holds it (red); a mission_end after
+// the window (green) and inside it (red); an end_note alone, and a folder
+// with no window, never excused.
+if (!endsAfterWindow({ cutoff_note: "The path is drawn to 17 November 2026." },
+                     { end: "2026-11-17" }, "2026-10-05") ||
+    endsAfterWindow({ cutoff_note: "The path is drawn to 17 November 2026." },
+                    { end: "2026-11-17" }, "2027-02-21") ||
+    !endsAfterWindow({ mission_end: "2017-09-15" }, { end: "2017-09-15" }, "2017-06-30") ||
+    endsAfterWindow({ mission_end: "2017-09-15" }, { end: "2017-09-15" }, "2017-12-31") ||
+    endsAfterWindow({ end_note: "Still flying." }, { end: "2026-11-17" }, "2026-10-05") ||
+    endsAfterWindow({ cutoff_note: "The path is drawn to 17 November 2026." },
+                    { end: "2026-11-17" }, null)) {
+  failures.push("the still-flying check cannot fail, or fails a right one (L-554)");
+}
+const servedWindowLast = (cov.served_window || {}).end_jd ?
+  fileLastKey(cov.served_window.end_jd).slice(0, 10) : null;
+const flyingAhead = [];
 // ---- 7b. the Lagrange points (L-297) --------------------------------
 // Each served its positions, today's point, and a box that prints its
 // distance from its own centre and JPL's word on its accuracy; no
@@ -1395,9 +1436,13 @@ crafts.forEach(function (slug) {
       (o.end_note ? "; then: " + o.end_note : "")]);
     return;
   }
-  // A mission still flying serves no mission_end or end_note.
+  // A mission still flying serves no mission_end or end_note, unless its
+  // last day lies after the served window's (L-554): then it is still
+  // flying in this folder, and is named.
   if (o.mission_end !== undefined || o.end_note !== undefined || o.cutoff_note !== undefined) {
-    failures.push(slug + ": serves a mission_end, end_note or cutoff_note but its path has not ended");
+    const ahead = endsAfterWindow(o, span, servedWindowLast);
+    if (ahead) { flyingAhead.push(slug + " (" + ahead + ")"); }
+    else { failures.push(slug + ": serves a mission_end, end_note or cutoff_note but its path has not ended"); }
   }
   if (!p) {
     // L-553: a path served last-good is accepted by its named hold.
@@ -1705,6 +1750,10 @@ console.log("");
 // L-553: every body accepted by its named hold, by name, with the count.
 console.log("Held bodies accepted by their named hold (" + heldAccepted.length + "): " +
             (heldAccepted.join(", ") || "none") + ".");
+// L-554: every craft whose notes are excused because its last day lies
+// after the served window's, by name, with the count.
+console.log("Craft still flying in this folder, their last day after its window (" +
+            flyingAhead.length + "): " + (flyingAhead.join(", ") || "none") + ".");
 console.log("");
 if (failures.length) {
   console.log("=== FAIL: " + failures.length + " problem(s)");
