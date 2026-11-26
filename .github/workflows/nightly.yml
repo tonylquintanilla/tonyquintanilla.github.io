@@ -40,6 +40,10 @@
 # Updated November 1, 2026 with Anthropic's Claude Opus 5.5 (L-485: the
 # second scheduled line, 12:17 UTC, the backstop for a night GitHub
 # drops).
+# Updated November 26, 2026 with Anthropic's Claude Opus 5.5 (L-545, the
+# walks in the website's maintenance run: the step that installs their
+# library, allowed to fail, and its outcome handed to the night; Tony's
+# ruling B of Nov 26.)
 
 name: Nightly run
 
@@ -119,6 +123,23 @@ jobs:
       - name: Install the builder's libraries
         run: python -m pip install -r requirements.txt
 
+      # L-545: the library the two walks need (jsdom 24.1.3 and the 62
+      # packages it asks for), every version pinned by
+      # tools/headless/walks_library/package-lock.json, installed by
+      # `npm ci` into the folder palomas_orrery_walks in the runner's home
+      # folder, outside the checkout, so nothing of it can be committed and
+      # the lock is never rewritten. The image's Node 22 carries npm.
+      # Allowed to fail (Tony's ruling B, 2026-11-26; L-485's R4, an
+      # outside failure is reported and never halts the night): the night's
+      # step is told the outcome, the two walk rows then print NOT RUN
+      # TONIGHT with npm's last line and are not red, and the commit title
+      # starts "WALKS NOT RUN: library did not install".
+      - name: Install the walks' library (L-545)
+        id: walks
+        continue-on-error: true
+        run: python tools/headless/run_walk.py --install
+
+
       # The pulls ask GitHub's interface for the orrery's newest commit.
       # Unsigned, that is limited by an address GitHub's runners share;
       # with the run's own token it is not ("The rate limit for
@@ -128,6 +149,7 @@ jobs:
       - name: The night (python daily_run.py --night)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PO_WALKS_INSTALL: ${{ steps.walks.outcome }}
         run: python daily_run.py --night
 
       - name: Commit and push the night's files
@@ -161,6 +183,8 @@ jobs:
           named=$(git diff --cached --name-only | grep -v '^data/solar-system/' | tr '\n' ' ')
           served=$(git diff --cached --name-only | grep -c '^data/solar-system/' || true)
           day=$(date -u +%Y-%m-%d)
+          # L-545: and "WALKS NOT RUN: library did not install" ahead of
+          # it, on a night whose record says the walks did not run.
           # L-525 (hold the bad data): a held body is named at the START of
           # the title, every night the hold lasts, and "HOLD ENDED" the
           # night it ends -- a hold is not red, and the title of the

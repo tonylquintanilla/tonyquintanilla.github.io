@@ -1,0 +1,10 @@
+{
+  "name": "palomas-orrery-walks",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The library the website maintenance run's two walks need (L-545). Installed by tools/headless/run_walk.py --install into a folder outside the repository; never installed here.",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "jsdom": "24.1.3"
+  }
+}

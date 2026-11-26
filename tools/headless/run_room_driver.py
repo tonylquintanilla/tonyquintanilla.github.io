@@ -2,10 +2,12 @@
 run_room_driver.py -- run one interactive room's Python driver in plain
 CPython, on the served cache, and save the payload the browser would get.
 
-Claude-only tooling (L-405). Tony never needs to run this. It exists so a
-session can test a room's chrome headlessly: Pyodide's CDN is blocked in
-Claude's sandbox, so the room itself cannot start there, but its driver
-is ordinary Python over gallery/assembler/ and runs as it is.
+Tony never needs to run this by hand. It exists so a room's chrome can be
+tested headlessly: Pyodide's CDN is blocked in Claude's sandbox, so the
+room itself cannot start there, but its driver is ordinary Python over
+gallery/assembler/ and runs as it is. Since L-545 (2026-11-26)
+tools/headless/run_walk.py calls it at every gallery run, to make the two
+walks' scenes fresh at the run's minute.
 
 Run from the gallery root:
     python3 tools/headless/run_room_driver.py SOLAR_SYSTEM_DRIVER \\
@@ -31,6 +33,8 @@ part 2: and each comet on an open path's, which the room fetches the same
 way.)
 Updated November 19, 2026 with Anthropic's Claude Opus 5.5 (L-297: and each
 Lagrange point's, the room's rows and the children drawn at Earth's place.)
+Updated November 26, 2026 with Anthropic's Claude Opus 5.5 (L-545: the
+header says the gallery run's walks call it; the code is unchanged.)
 """
 
 import json

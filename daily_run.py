@@ -141,6 +141,19 @@ bad data and report, then continue.")
     builder. --check runs the title on six made-up nights and two planted
     faults, and reads the served index's holds, as the commit step will.
 
+THE WALKS NOT RUN ARE NAMED, NOT RED (L-545; Tony's ruling B, Nov 26)
+    The night's workflow installs the walks' library (jsdom, pinned by
+    tools/headless/walks_library/package-lock.json) before the night's
+    step. When that install fails -- npm cannot be reached, say -- the
+    two walk rows print NOT RUN TONIGHT and are reported, not red, and
+    the night's record carries their verdict "NOT RUN". The commit
+    title then starts "WALKS NOT RUN: library did not install", read
+    from that record by --held-title, ahead of any HELD words: "WALKS
+    NOT RUN: library did not install; HELD Halley -- Nightly run ...".
+    The workflow knows that the step failed, not why, so the words say
+    no more. --check runs the title on two more made-up nights and a
+    planted fault that leaves the walks out.
+
 HOW TO RUN IT
     From the dashboard: Daily Run, at the top of the Daily Run group.
     From VS Code: open this file and press Run. Answer questions in the
@@ -153,7 +166,9 @@ HOW TO RUN IT
                                   workflow's commit step.
     python daily_run.py --held-title   the words the night's commit title
                                   starts with ("HELD Halley -- "), empty
-                                  when nothing is held (L-525).
+                                  when nothing is held (L-525); "WALKS NOT
+                                  RUN: library did not install" first
+                                  when the night's record says so (L-545).
     python daily_run.py --held-lines   the HELD lines, one a body, for the
                                   commit's second paragraph (L-525).
     python daily_run.py --check   lists the four steps and fails if a
@@ -200,6 +215,12 @@ Module updated: November 11, 2026 with Anthropic's Claude Opus 5.5 (L-525,
 hold the bad data: the HELD lines in both summaries and the night's
 record, --held-title and --held-lines for the workflow's commit title,
 and --check's held-title fixtures with two planted faults.)
+Module updated: November 26, 2026 with Anthropic's Claude Opus 5.5 (L-545,
+the walks in the website's maintenance run, Tony's ruling B: a walk the
+night could not install is NOT RUN, reported and not red; --held-title
+starts "WALKS NOT RUN: library did not install" when the night's record
+carries one, read by walks_not_run(); the CLEAN line names them; --check
+has two more title fixtures and a planted fault.)
 """
 
 import datetime
@@ -420,14 +441,34 @@ def served_holds(root):
     return list(holds.get("held") or []), list(holds.get("ended") or []), None
 
 
-def held_title(held, ended):
+WALKS_NOT_RUN_WORDS = "WALKS NOT RUN: library did not install"
+
+
+def walks_not_run(root):
+    """L-545: (rows, None), the night's walk rows that did not run because
+    their library did not install (verdict "NOT RUN" in the night's record,
+    which a clean night has just written); (None, why) when the record
+    cannot be read, never "they ran"."""
+    path = os.path.join(root, NIGHT_RECORD)
+    try:
+        with open(path, encoding="utf-8") as f:
+            record = json.load(f)
+    except (OSError, ValueError) as exc:
+        return None, "could not read %s (%s)" % (_slash(NIGHT_RECORD), exc)
+    return [r.get("row") for r in (record.get("rows") or [])
+            if r.get("verdict") == "NOT RUN"], None
+
+
+def held_title(held, ended, walks=False):
     """L-525: the words the night's commit title starts with, empty when
     nothing is held and no hold ended. A hold is not red; it is announced
     where Tony reads without being asked to, the title of the night's
     commit (his words, Nov 11, 15:43: "I do look at pull titles"). HELD
     comes first, so a title cut short on screen still shows it, and every
-    held body is named; past three, the count comes first too."""
-    parts = []
+    held body is named; past three, the count comes first too.
+    L-545: walks true (a walk NOT RUN tonight) puts WALKS_NOT_RUN_WORDS
+    ahead of them all, as Tony's ruling B has the title start."""
+    parts = [WALKS_NOT_RUN_WORDS] if walks else []
     if held:
         names = ", ".join(h["name"] for h in held)
         parts.append("HELD %d bodies: %s" % (len(held), names)
@@ -464,18 +505,22 @@ def held_fixtures():
     def e(name):
         return {"name": name, "line": "HOLD ENDED %s: ..." % name}
     cases = [
-        ([], [], ""),
-        ([h("Halley")], [], "HELD Halley -- "),
+        ([], [], "", False),
+        ([h("Halley")], [], "HELD Halley -- ", False),
         ([h("Halley"), h("Encke"), h("Apophis")], [],
-         "HELD Halley, Encke, Apophis -- "),
+         "HELD Halley, Encke, Apophis -- ", False),
         ([h("Halley"), h("Encke"), h("Apophis"), h("Ceres")], [],
-         "HELD 4 bodies: Halley, Encke, Apophis, Ceres -- "),
-        ([], [e("Halley")], "HOLD ENDED Halley -- "),
-        ([h("Encke")], [e("Halley")], "HELD Encke; HOLD ENDED Halley -- "),
+         "HELD 4 bodies: Halley, Encke, Apophis, Ceres -- ", False),
+        ([], [e("Halley")], "HOLD ENDED Halley -- ", False),
+        ([h("Encke")], [e("Halley")], "HELD Encke; HOLD ENDED Halley -- ", False),
+        # L-545: the walks not run, alone and ahead of a hold.
+        ([], [], "WALKS NOT RUN: library did not install -- ", True),
+        ([h("Halley")], [],
+         "WALKS NOT RUN: library did not install; HELD Halley -- ", True),
     ]
 
     def wrong(fn):
-        return [c for c in cases if fn(c[0], c[1]) != c[2]]
+        return [c for c in cases if fn(c[0], c[1], c[3]) != c[2]]
     lines = []
     passed = total = 0
     real = wrong(held_title)
@@ -484,10 +529,13 @@ def held_fixtures():
         passed += 1
     lines.append("  held title: %d of %d made-up nights read as they should%s"
                  % (len(cases) - len(real), len(cases),
-                    "" if not real else " -- WRONG: %r" % [held_title(c[0], c[1]) for c in real]))
-    for label, fault in (("leaves the held bodies out", lambda held, ended: ""),
+                    "" if not real else " -- WRONG: %r" % [held_title(c[0], c[1], c[3]) for c in real]))
+    for label, fault in (("leaves the held bodies out",
+                          lambda held, ended, walks: held_title([], [], walks)),
                          ("forgets an ended hold",
-                          lambda held, ended: held_title(held, []))):
+                          lambda held, ended, walks: held_title(held, [], walks)),
+                         ("leaves the walks not run out",
+                          lambda held, ended, walks: held_title(held, ended))):
         caught = wrong(fault)
         total += 1
         if caught:
@@ -1198,13 +1246,16 @@ def night_main():
           % _slash(NIGHT_RECORD))
     print(LINE)
     gated = [row for row in mrows if row[6] and not row[5]]
+    not_run = [row[1] for row in gated if row[0] == gmr.NOT_RUN]
     print("%s CLEAN -- orrery %s pulled and matched, swap %s ok, run records "
           "%s, %d of %d gating checkers passed, %d served files changed, "
           "skipped by name: Guest book updater, %s (%.0f seconds)"
           % (NIGHT_LINE, held_sha[:8], swap_line.get("run_id"),
              report[0].replace("Run records: ", "", 1).rstrip("."),
              sum(1 for row in gated if row[0] == "PASS"), len(gated),
-             len(served), ", ".join(label for label, _w in skipped),
+             len(served), ", ".join(label for label, _w in skipped)
+             + ("; NOT RUN, the walks' library did not install: %s"
+                % ", ".join(not_run) if not_run else ""),
              (finished - started).total_seconds()))
     return 0
 
@@ -1390,7 +1441,13 @@ if __name__ == "__main__":
             print("HELD LINE: %s" % _err, file=sys.stderr)
             sys.exit(1)
         if "--held-title" in sys.argv[1:]:
-            sys.stdout.write(held_title(_held, _ended))
+            # L-545: and the walks the night's record says did not run. A
+            # record that cannot be read stops the commit step, as above.
+            _walks, _werr = walks_not_run(ROOT)
+            if _werr:
+                print("HELD LINE: %s" % _werr, file=sys.stderr)
+                sys.exit(1)
+            sys.stdout.write(held_title(_held, _ended, bool(_walks)))
         else:
             print("\n".join(held_lines(_held, _ended)))
         sys.exit(0)

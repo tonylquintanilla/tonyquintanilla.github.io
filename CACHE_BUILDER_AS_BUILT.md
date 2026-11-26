@@ -606,6 +606,12 @@ THE NIGHT FORM (v1.15, L-485; `python daily_run.py --night`, run by the
 gallery's workflow at 08:17 UTC). The same steps with no keyboard,
 ending in one gate:
 
+- Before the night's step, the workflow installs the walks' library
+  (`python tools/headless/run_walk.py --install`, L-545): `npm ci` into
+  the folder palomas_orrery_walks in the runner's home folder, outside
+  the checkout, every version pinned by
+  `tools/headless/walks_library/package-lock.json`. The step is allowed
+  to fail, and the night is told its outcome (`PO_WALKS_INSTALL`).
 - The guest book is SKIPPED, by name: it needs Tony's answers and stays
   his morning's (Tony's ruling of 2026-10-31, 10:20). Nothing is read
   from Google on the runner.
@@ -620,7 +626,10 @@ ending in one gate:
   the swap log as tonight's, outcome ok. The run records check: a loss,
   or "could not compare", is red at night.
 - The maintenance run's night pass (`gallery_maintenance_run.py
-  --night`), an UNREACHABLE row red.
+  --night`), an UNREACHABLE row red. A walk row whose library did not
+  install tonight is NOT RUN instead: reported, not red (Tony's ruling
+  B of 2026-11-26, L-485's R4), its line carrying npm's first error
+  line (npm's last line only points at its log file).
 - THE GATE (`night_gate`), exit 0 only when ALL hold, each failure named
   on the last line, "NIGHT RUN: RED -- ...": the pulls passed and match
   the orrery's GitHub copy, and did not move after the build; the
@@ -630,7 +639,11 @@ ending in one gate:
   every changed file is ASCII; and the change under
   `data/solar-system/` is not deletions only.
 - The commit title starts with every held body, "HELD Halley -- "
-  (`--held-title`, v1.19, L-525); a hold is not red.
+  (`--held-title`, v1.19, L-525); a hold is not red. On a night whose
+  record carries a walk NOT RUN (`walks_not_run`), "WALKS NOT RUN:
+  library did not install" comes first: "WALKS NOT RUN: library did not
+  install; HELD Halley -- Nightly run ..." (L-545). The workflow knows
+  that the install step failed, not why, so the words say no more.
 - A clean night writes `data/nightly_run_record.json`; a red night
   writes nothing, and its record is the run's log. `python daily_run.py
   --check` judges made-up nights and planted faults for the gate and

@@ -2461,9 +2461,17 @@ in one encounter, with the Moon and Earth-Sun L2, around Earth's centre.
 
    **THE HEADLESS RECIPE** (v1.9, L-405; first used for L-363 step 3b).
    The stand-in scene above, made concrete, in `tools/headless/` in the
-   gallery repo. Claude-only: Tony never runs it and the maintenance run
-   does not. jsdom is not in the gallery; `npm install jsdom@24` in a
-   scratch folder and run with `NODE_PATH=<scratch>/node_modules`.
+   gallery repo. Two of its walks are checks of the gallery run since
+   L-545 (2026-11-26, Tony: "Option 3 and add it to the dashboard"), at
+   night on GitHub and on Tony's computer, each with its dashboard button
+   (the walk bullet below); the rest are a session's to run when its work
+   touches them. jsdom is not in the gallery. Its one place is the folder
+   `palomas_orrery_walks` in the home folder (`WALKS_LIBRARY` in
+   `run_walk.py`), outside OneDrive and both repositories on Tony's
+   computer and outside the checkout on GitHub; `run_walk.py --install`
+   puts jsdom 24.1.3 and the 62 packages it needs there with `npm ci`, each
+   version pinned by `tools/headless/walks_library/package-lock.json`. A
+   walk run by hand takes `NODE_PATH=<home>/palomas_orrery_walks/node_modules`.
    - `run_room_driver.py <DRIVER> <EPOCH> <out.json>` runs a room's REAL
      driver in plain CPython on the served cache, handing it the Solar
      System room's spacecraft positions files as the page does (v1.24). The driver is ordinary
@@ -2486,9 +2494,32 @@ in one encounter, with the Moon and Earth-Sun L2, around Earth's centre.
      each room.
    - A walk per room (`walk_solar_system_drawer.js`) checks each step
      against values worked out in the walk itself, not by the page's own
-     helpers, and is run once against a deliberately broken copy to show
-     it can fail. It fixes its own opening, so a change to what the room
+     helpers. It fixes its own opening, so a change to what the room
      opens on does not break it.
+   - THE WALKS IN THE GALLERY RUN (L-545). The rows "Drawer walk" and
+     "Clock walk", of the runner kind "walk", run `run_walk.py drawer` and
+     `run_walk.py clock`. Each run reads the library against the lock,
+     package by package; makes its scenes fresh with `run_room_driver.py`
+     in a temporary folder outside the repository, at the run's own
+     minute (the clock walk also at the served window's last whole
+     minute, in the solar-system and earth rooms); walks the real page,
+     which must pass; then walks a planted copy of the page with one line
+     changed, which must fail on the check named: for the drawer walk an
+     ended mission's last day one day early (`solarSystemMissionEndDay`,
+     section 42b, 7 of 66 red), for the clock walk the freeze that never
+     answers (`?freeze=1` read as "0", 7 of 13 red, all in the frozen
+     step; `walk_scene_moment.js` takes the planted page as its fifth
+     argument). Its last line is the row's. Exit 3, the library missing
+     or not the lock's, or Node missing, is UNREACHABLE, naming the
+     command that installs it. Exit 4 is NOT RUN, at night only, when the
+     workflow's install step failed: reported and not red (Tony's ruling
+     B, 2026-11-26), and the night's commit title starts "WALKS NOT RUN:
+     library did not install". Measured on Nov 26 on Tony's computer:
+     the drawer walk holds from 42 days before a build to 80 days after
+     it and fails on Io's printed distance at 88 (the walk's 1 percent
+     against the page's two figures, recorded on L-545); the run's minute
+     is a day or two after the night's build. The two add about 75
+     seconds to a run.
    - A walk in a REAL browser (L-527, 2026-11-12):
      `walk_first_guide.js . <payload.json> [planted page]`, with Playwright
      and the npm package `plotly.js-dist-min@2.35.2` in the scratch folder.

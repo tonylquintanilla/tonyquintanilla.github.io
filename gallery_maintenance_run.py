@@ -70,7 +70,9 @@ could not run, UNREACHABLE, turns the night red: node missing on a
 runner is a setup fault, not an outside failure, and a night that did
 not check is not a clean night. By day an UNREACHABLE row still neither
 passes nor fails. daily_run.py --night calls night_pass() in-process, so
-the night's record carries each row's verdict.
+the night's record carries each row's verdict. One exception, NOT RUN,
+below: a walk whose library the night could not install is reported,
+not red.
 
 THREE STATES, NOT TWO
 =====================
@@ -81,6 +83,21 @@ Not Passing. Node missing is UNREACHABLE. No network is UNREACHABLE. A
 site serving different bytes than your working copy is UNREACHABLE, not
 a pass, because the thing you meant to check is not the thing that
 answered.
+
+THE WALKS (L-545). Two rows, "Drawer walk" and "Clock walk", are of the
+runner kind "walk": tools/headless/run_walk.py, run under this Python,
+which walks the real interactive.html under jsdom and then a planted
+copy that must fail. Exit 3 is UNREACHABLE: Node or the library (jsdom
+24.1.3 and the packages tools/headless/walks_library/package-lock.json
+pins, in the folder palomas_orrery_walks in the home folder) is missing
+or is not the lock's, and its line names the command that installs it.
+Exit 4 is NOT RUN, which only the night can print: the workflow's step
+that installs the library failed (Tony's ruling B, 2026-11-26). A NOT
+RUN row did not run, so it is never a pass; it is listed apart and is
+not red, since an outside failure is reported and never halts the night
+(L-485's R4), and the night's commit title starts "WALKS NOT RUN:
+library did not install". A walk's library missing on any other night
+is UNREACHABLE, and red.
 
 REPORT-ONLY ROWS
 ================
@@ -290,6 +307,11 @@ error" row --night (NIGHT_ARGS), so the night's own run, where tonight's
 build has just written JPL's check points, is red on a capture craft with
 none, and every other run names the craft it could not hold. The check
 points are not committed, by Tony's ruling of Nov 24, 14:00.)
+Module updated: November 26, 2026 with Anthropic's Claude Opus 5.5
+(L-545, the walks in the website's maintenance run: the "Drawer walk"
+and "Clock walk" checkers run tools/headless/run_walk.py and gate, by
+day and at night; the runner kind "walk", whose exit 3 is UNREACHABLE
+and exit 4 NOT RUN, reported and not red at night, Tony's ruling B.)
 """
 
 import hashlib
@@ -314,6 +336,12 @@ ORRERY_REPO = "tonylquintanilla/palomas_orrery"
 ORRERY_BRANCH = "main"
 
 TOOL_TIMEOUT_SECONDS = 900
+
+# L-545: a "walk" row's exit codes (tools/headless/run_walk.py), and the
+# state a walk prints when the night could not install its library.
+WALK_UNREACHABLE_EXIT = 3
+WALK_NOT_RUN_EXIT = 4
+NOT_RUN = "NOT RUN"
 HTTP_TIMEOUT_SECONDS = 30
 
 NOTE_INDENT = 36
@@ -385,8 +413,10 @@ NIGHT_ARGS = {
 # ---- offline checkers ------------------------------------------------
 # (label, runner, argv-tail, cwd, verdict hint, report_only)
 #
-# runner is "python" or "node". A node row whose interpreter is missing
-# reports UNREACHABLE; it is never skipped and never counted as a pass.
+# runner is "python", "node" or "walk". A node row whose interpreter is
+# missing reports UNREACHABLE; it is never skipped and never counted as a
+# pass. A walk row is Python whose exit 3 is UNREACHABLE and exit 4 NOT RUN
+# (L-545; the header's THE WALKS).
 OFFLINE_CHECKERS = [
     ("Cache builder suite", "python",
      ["test_gallery_cache_builder_offline.py"], "tools", None, False),
@@ -872,6 +902,20 @@ OFFLINE_CHECKERS = [
     ("Room clock", "node",
      ["documentation/smoke_room_clock.js"], ".", "===", False),
 
+    # L-545 (2026-11-26, Tony: "Option 3 and add it to the dashboard"):
+    # the two walks of the real page, under jsdom, each with its scenes
+    # made fresh at the run's minute and a planted page that must fail.
+    # The drawer walk: the Solar System room's drawer, step by step, 383
+    # checks today; its planted fault, an ended mission's last day one day
+    # early. The clock walk: both rooms, opened plainly and frozen at the
+    # served window's last minute; its planted fault, the freeze that
+    # never answers. Gate.
+    ("Drawer walk", "walk",
+     ["tools/headless/run_walk.py", "drawer"], ".", "DRAWER WALK:", False),
+
+    ("Clock walk", "walk",
+     ["tools/headless/run_walk.py", "clock"], ".", "CLOCK WALK:", False),
+
     # L-281 (2026-09-26): the lobby's guest book. It renders the real
     # data/guestbook.json with the real gallery/guestbook.js and fails
     # on a missing time, name or text, or a link the page would drop;
@@ -1133,7 +1177,7 @@ def run_tool(root, runner, argv_tail, cwd):
                     "node is not installed, so this suite did not run. "
                     "It is not passing and it is not failing.")
         argv = [interpreter] + argv_tail
-    else:
+    else:                                   # "python", and "walk" (L-545)
         argv = [sys.executable] + argv_tail
 
     workdir = os.path.join(root, cwd)
@@ -1156,6 +1200,10 @@ def run_tool(root, runner, argv_tail, cwd):
 
     output = completed.stdout.decode("utf-8", "replace")
     state = "PASS" if completed.returncode == 0 else "FAIL"
+    if runner == "walk" and completed.returncode == WALK_UNREACHABLE_EXIT:
+        state = "N-A"
+    elif runner == "walk" and completed.returncode == WALK_NOT_RUN_EXIT:
+        state = NOT_RUN
     return (state, time.time() - started, output)
 
 
@@ -1839,7 +1887,7 @@ def run_checkers(root, checkers, results):
     print("CHECKERS -- the verdict informs the push call")
     for label, runner, argv_tail, cwd, hint, report_only in checkers:
         state, seconds, output = run_tool(root, runner, argv_tail, cwd)
-        if state == "N-A":
+        if state == "N-A" and runner != "walk":
             note = output
         elif hint:
             note = line_containing(output, hint)
@@ -1928,7 +1976,8 @@ def summarize(results, root=None):
     # learns to wave the run off.
     failed = [row for row in gating if row[0] == "FAIL"]
     unreachable = [row for row in checkers if row[0] == "N-A"]
-    gating_ran = [row for row in gating if row[0] != "N-A"]
+    not_run = [row for row in checkers if row[0] == NOT_RUN]
+    gating_ran = [row for row in gating if row[0] not in ("N-A", NOT_RUN)]
 
     print("=" * 70)
     # L-388: a generator that failed fails the run, by name. Generators
@@ -1957,6 +2006,12 @@ def summarize(results, root=None):
         print("  %d UNREACHABLE -- did not run, so they neither passed nor "
               "failed:" % len(unreachable))
         for row in unreachable:
+            print("    %-22s %s" % (row[1], wrapped(row[3], 40)[0]))
+    # L-545, Tony's ruling B: only at night, and never a pass.
+    if not_run:
+        print("  %d NOT RUN TONIGHT -- the walks' library did not install, so "
+              "they did not run; reported, not red (L-485's R4):" % len(not_run))
+        for row in not_run:
             print("    %-22s %s" % (row[1], wrapped(row[3], 40)[0]))
 
     # Anything already named above is not repeated here. A row that is
@@ -2010,6 +2065,11 @@ def night_pass(root):
               "that could not run on this computer is a setup fault, not a "
               "pass: %s" % (len(unreachable), ", ".join(unreachable)))
         code = 1
+    not_run = [row[1] for row in results if row[6] and row[0] == NOT_RUN]
+    if not_run:
+        print("  NIGHT: REPORTED, not red -- %s did not run: the walks' "
+              "library did not install tonight (Tony's ruling B, L-545); "
+              "the night's commit title says so" % ", ".join(not_run))
     print("  NIGHT: skipped by name -- %s"
           % "; ".join("%s (%s)" % kv for kv in sorted(NIGHT_SKIPS.items())))
     return code, results, sorted(NIGHT_SKIPS.items())

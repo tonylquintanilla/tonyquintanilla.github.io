@@ -10,8 +10,13 @@
 // the body's distance worked out here, not by the page's own helpers,
 // times Tony's 20% (2026-10-02).
 //
-// Claude-only tooling (L-405); needs jsdom (see page_harness.js).
-//   node tools/headless/walk_solar_system_drawer.js . /tmp/payload.json
+// Since L-545 (2026-11-26) it is a check of the website's maintenance
+// run, the row "Drawer walk", at night on GitHub and on Tony's computer, and
+// the dashboard's Drawer Walk button: tools/headless/run_walk.py drawer makes the
+// scene fresh, finds the library (jsdom, every package pinned by
+// tools/headless/walks_library/package-lock.json) and hands it over with
+// NODE_PATH.
+//   node tools/headless/walk_solar_system_drawer.js . /tmp/payload.json [planted page]
 // It sets the opening to Earth alone in a copy of the payload before
 // booting, so the walk does not depend on what the room is set to open
 // on in data/objects_config.json.
@@ -217,6 +222,9 @@
 // mission. Shown failing on the page before the change (43), on a page
 // planted to give every flying craft the cut (42a) and on one planted to
 // read a cutoff_note before a mission_end (42b, Akatsuki).
+// Updated November 26, 2026 with Anthropic's Claude Opus 5.5 (L-545, the
+// walks in the website's maintenance run: the header says who runs it now;
+// what it checks is unchanged.)
 const h = require("./page_harness.js");
 function solarDay(jd) {
   const dd = new Date(Math.round((jd - 2440587.5) * 86400000));

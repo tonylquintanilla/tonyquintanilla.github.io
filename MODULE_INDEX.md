@@ -1,6 +1,6 @@
 # Paloma's Orrery - Module Index
 
-**Generated:** November 25, 2026 by `module_atlas.py`  
+**Generated:** November 26, 2026 by `module_atlas.py`  
 **Repository:** Paloma's Orrery - Solar System Visualization Suite  
 **Philosophy:** Data Preservation is Climate Action
 
@@ -11,8 +11,8 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 (functions, dependencies, consumers) meant for AI-assisted queries.
 
 **Total Python Files:** 66  
-**Total Lines of Code (non-blank):** 39,359  
-**Total Public Functions/Classes:** 682
+**Total Lines of Code (non-blank):** 39,467  
+**Total Public Functions/Classes:** 683
 
 ## Classification Coverage
 
@@ -113,14 +113,14 @@ human-browsable view; `MODULE_ATLAS.md` is the deep reference
 | `check_constants_links.py` | - two checks over the gallery's links into the orrery's store, sharing the mirror's own reading so one cause prints one explanation. (310 lines) |
 | `check_drawings.py` | - every stored drawing the served config names is pulled, served, and the drawing it claims to be. (667 lines) |
 | `check_horizons_confirmations.py` | - every object the website takes from the orrery's list has been confirmed against JPL Horizons, recently, and has not changed since; and each period it prints from JPL too (L-395, L-431). (259 lines) |
-| `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (1,271 lines) |
+| `daily_run.py` | - the gallery's Daily Run (L-281, Tony's design of 2026-09-27). (1,323 lines) |
 | `debug_encke_tp.py` | - run the EXACT same live Horizons query gallery_cache_builder.py's fetch_solution_tp() makes for Encke, and print the complete raw response text. (61 lines) |
 | `drawer_places.py` | - where a card sits in the Solar System room's drawer. (326 lines) |
 | `fingerprint.py` | L-080 semantic fingerprint. (98 lines) |
 | `gallery_cleanup.py` | Remove orphan gallery files not in gallery_metadata.json. (184 lines) |
 | `gallery_editor.py` | Gallery Editor for Paloma's Orrery -- schema version 2 (L-287). (1,918 lines) |
 | `gallery_json_fixer.py` | Gallery JSON Fixer - Update older gallery JSON files for current viewer. (485 lines) |
-| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,853 lines) |
+| `gallery_maintenance_run.py` | One pass over the gallery's generators and checkers. (1,909 lines) |
 | `gallery_studio.py` | Gallery Studio - Interactive HTML Export Tool for Paloma's Orrery (5,545 lines) |
 | `guestbook_updater.py` | - look after the lobby's guest book (L-281). (555 lines) |
 | `inspect_staging.py` | - read the results of a gallery_cache_builder.py dry-run and print a plain-language summary (real dates, TP values, point counts), so you can check them without opening the raw JSON files by hand. (131 lines) |

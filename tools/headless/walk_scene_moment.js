@@ -1,8 +1,11 @@
 // walk_scene_moment.js -- the freeze past the served window, walked on the
-// real page (L-515 part 4, L-165). Claude-only (L-405): jsdom from a
-// scratch folder, NODE_PATH=<scratch>/node_modules.
+// real page (L-515 part 4, L-165). Since L-545 (2026-11-26) the gallery
+// run's "Clock walk" row and the dashboard's Clock Walk button run it,
+// through tools/headless/run_walk.py, which makes both scenes fresh, finds
+// its library (jsdom, pinned by tools/headless/walks_library/) and hands
+// it over with NODE_PATH.
 //
-//   node tools/headless/walk_scene_moment.js <root> <room> <payload_now> <payload_frozen>
+//   node tools/headless/walk_scene_moment.js <root> <room> <payload_now> <payload_frozen> [planted page]
 //
 // <room> is solar-system or earth. The two payloads come from
 // run_room_driver.py: one at a minute inside the window, one at the
@@ -17,18 +20,26 @@
 //      followed by ", the last day our data covers"; the i panel opens,
 //      under its heading, with a note naming that moment; no box says
 //      "today" in the Solar System room; the drawer is built as in step 1.
-// Run once against a deliberately broken copy to show it can fail.
+// With a planted copy of interactive.html as the fifth argument, both steps
+// boot that copy in place of the real page (the harness's {page}), so
+// run_walk.py shows the walk failing on it at every run; what is checked
+// does not change.
 //
 // Written November 7, 2026, night, with Anthropic's Claude Opus 5.5.
 // Updated November 21, 2026 with Anthropic's Claude Opus 5.5 (L-541, the
 // rooms' clock: the date line and the frozen minute are read from the
 // payload's moment_utc_jd, the minute on UTC; the old epoch_jd and
 // epochJd are gone.)
+// Updated November 26, 2026 with Anthropic's Claude Opus 5.5 (L-545, the
+// walks in the website's maintenance run: the optional fifth argument, a
+// planted page, and the header's words on who runs it.)
 
 "use strict";
 const fs = require("fs"), path = require("path");
 const h = require("./page_harness.js");
-const [ROOT, ROOM, P_NOW, P_FROZEN] = process.argv.slice(2);
+const [ROOT, ROOM, P_NOW, P_FROZEN, PLANTED] = process.argv.slice(2);
+// L-545: a planted page, booted in place of the real one in both steps.
+const page = (opts) => Object.assign({}, opts || {}, PLANTED ? { page: PLANTED } : {});
 
 const UNIX_JD = 2440587.5;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -61,7 +72,7 @@ function rows(w) {
 (async function () {
   // 1. Plain.
   const before = Date.now();
-  let w = await h.boot(ROOT, ROOM, P_NOW);
+  let w = await h.boot(ROOT, ROOM, P_NOW, page());
   const after = Date.now();
   let g = w.__pyGlobals || {};
   const okNow = [before, after].map((ms) => new Date(ms).toISOString().slice(0, 16) + ":00Z");
@@ -80,7 +91,7 @@ function rows(w) {
   console.log("plain:  EPOCH_ISO " + g.EPOCH_ISO + ", subtitle \"" + sub + "\", " + plainRows.length + " drawer rows");
 
   // 2. Frozen.
-  w = await h.boot(ROOT, ROOM, P_FROZEN, { query: "&freeze=1" });
+  w = await h.boot(ROOT, ROOM, P_FROZEN, page({ query: "&freeze=1" }));
   g = w.__pyGlobals || {};
   const iso = g.EPOCH_ISO || "";
   const isoJd = Date.parse(iso) / 86400000 + UNIX_JD;

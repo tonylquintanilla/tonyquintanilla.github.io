@@ -5,12 +5,18 @@
 // chrome's MECHANISM -- drawer rows, ticks, focus, frames, Home -- never
 // what a visitor sees. Tony's phone is that test.
 //
-// Claude-only tooling (L-405). It needs jsdom, which the gallery does not
-// carry: in a scratch folder, `npm install jsdom@24`, then run with
-// NODE_PATH=<scratch>/node_modules. From the gallery root:
+// It needs jsdom, which the gallery does not carry. Since L-545
+// (2026-11-26) the two walks the gallery run carries ("Drawer walk",
+// "Clock walk") run through tools/headless/run_walk.py, which installs the
+// library once, every package pinned by
+// tools/headless/walks_library/package-lock.json, into the folder
+// palomas_orrery_walks in the home folder (`run_walk.py --install`), and
+// hands it over with NODE_PATH. A session running another walk by hand
+// uses the same: NODE_PATH=<home>/palomas_orrery_walks/node_modules. From
+// the gallery root:
 //   node tools/headless/page_harness.js . solar-system /tmp/payload.json
-// prints the drawer as the room opens. compare_rooms.js and
-// walk_solar_system_drawer.js require it.
+// prints the drawer as the room opens. compare_rooms.js and every walk
+// require it.
 //
 // Written October 2, 2026 with Anthropic's Claude Opus 5.5.
 // Updated November 7, 2026 with Anthropic's Claude Opus 5.5 (L-515 step
@@ -30,6 +36,8 @@
 // Updated November 20, 2026 with Anthropic's Claude Opus 5.5 (L-529:
 // boot's {selfStart} waits for a page that starts itself, an encounter,
 // and the stand-in Plotly answers update.)
+// Updated November 26, 2026 with Anthropic's Claude Opus 5.5 (L-545: the
+// header says where the library lives and who runs the walks now.)
 const fs = require("fs"), path = require("path");
 const { JSDOM, ResourceLoader, VirtualConsole } = require("jsdom");
 
