@@ -1022,7 +1022,11 @@ v1.40, L-515 (one nested tree), step 2b; Tony's rulings 13 to 20 of
   adding, its orbit about the planet's marker, its distance its own; three
   breaks), View centre row (`documentation/smoke_view_centre.js`: the
   trail, Center on's ticks, the shift keeping its gaps, the 32-bit error
-  measured on every moon and printed, the page's wiring; four breaks), the
+  measured on every moon and printed, the page's wiring; four breaks;
+  L-515, Nov 26: the error with the planet at the middle held under
+  `SolarSystemFigures.FINEST_KM` alone, with no ratio to the error from
+  the Sun, which falls by the luck of the date; worked cases both ways
+  and the shift left out as a planted fault), the
   Solar System drawer check's section 13 (a body that folds; four breaks),
   the Solar System figures check (`childWorked`, three breaks; every moon's
   span and missing words printed), Typed facts (the moons' boxes built),

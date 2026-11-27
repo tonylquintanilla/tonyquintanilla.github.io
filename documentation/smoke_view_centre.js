@@ -24,7 +24,11 @@
 //      root draws, from the Sun and from each moon's planet, printed by
 //      name every run. Fails if the shift does not take every moon's
 //      32-bit error under half a kilometre, the finest a distance in the
-//      room prints (SolarSystemFigures.FINEST_KM).
+//      room prints (SolarSystemFigures.FINEST_KM, read from its file).
+//      That alone is the rule; the error from the Sun is printed beside
+//      it and ruled on no more (November 26, below). Worked cases hold the
+//      rule both ways, and the served positions measured again with the
+//      shift left out must fail it, by name.
 //   3. interactive.html loads the file and every reader agrees on the
 //      shift: Go To, Center on, Home and Reset move the middle; the arrows
 //      and the far lines are handed the box in absolute points; the axis
@@ -63,6 +67,12 @@
 // Updated November 15, 2026 with Anthropic's Claude Opus 5.5 (L-514
 // session 2: the fit across the narrow side, in every place a frame is
 // set).
+// Updated November 26, 2026 with Anthropic's Claude Opus 5.5 (L-515, the
+// website's night #64 red: the precision rule also asked for a hundredth
+// of each moon's error from the Sun, which the header never stated. Both
+// are float32 rounding errors whose sizes fall by the luck of the date,
+// so the ratio failed by chance, on the Moon, every run on 27 November
+// UTC. Dropped; the rule is FINEST_KM alone, shown both ways.)
 
 "use strict";
 const fs = require("fs");
@@ -229,8 +239,42 @@ failures = failures.concat(cases(REAL));
 
 // 2. The precision, on the served positions the root draws.
 const KM = 149597870.7;
-let measured = [];
-(function () {
+// The finest a distance in the room prints, read from the file that
+// prints it.
+global.window = global;
+require(path.join(root, "gallery", "solar_system_figures.js"));
+const FINEST_KM = (global.SolarSystemFigures || {}).FINEST_KM;
+if (!(typeof FINEST_KM === "number" && FINEST_KM > 0)) {
+  failures.push("SolarSystemFigures.FINEST_KM is not read from gallery/solar_system_figures.js: " + FINEST_KM);
+}
+// The rule the header states, and only that: with its planet at the
+// middle, a moon's 32-bit error is under FINEST_KM. Until November 26 it
+// also asked for a hundredth of the moon's error from the Sun. Both are
+// float32 rounding errors, whose sizes fall by the luck of the date, so
+// that ratio failed by chance: the Moon on 27 November 2026 UTC, shifted
+// 0.0149 km against 0.9 km from the Sun (night #64). The error from the
+// Sun is printed beside it, by name, and is no rule.
+function shiftFault(slug, centre, shifted, finest) {
+  if (typeof finest === "number" && finest > 0 && shifted < finest) { return null; }
+  return slug + ": with " + centre + " at the middle its 32-bit error is " + shifted +
+         " km, not under " + finest + " km, the finest a distance in the room prints " +
+         "(SolarSystemFigures.FINEST_KM)";
+}
+// Worked cases: the night that went red is green, and the rule still
+// fails where it should.
+const preciseCases = [];
+[["the Moon of night #64, shifted 0.0149 km (0.9 km from the Sun)", 0.014916876744076638, 0.5, true],
+ ["the Moon with the shift left out, 0.9 km", 0.9, 0.5, false],
+ ["an error of exactly half a kilometre", 0.5, 0.5, false],
+ ["an error that is not a number", NaN, 0.5, false],
+ ["no finest figure read", 0.0149, undefined, false]].forEach(function (c) {
+  if ((shiftFault("moon", "earth", c[1], c[2]) === null) !== c[3]) {
+    failures.push("the precision rule's worked case is wrong: " + c[0] + " should be " + (c[3] ? "green" : "red"));
+  } else { preciseCases.push(c[0] + (c[3] ? " green" : " red")); }
+});
+console.log("The precision rule's worked cases (" + preciseCases.length + " of 5 hold): " + preciseCases.join("; ") + ".");
+function measure(shiftLeftOut) {
+  const out = [];
   const cov = JSON.parse(fs.readFileSync(path.join(root, "data", "solar-system", "coverage_index.json"), "utf8"));
   const cfg = JSON.parse(fs.readFileSync(path.join(root, "data", "objects_config.json"), "utf8"));
   // The positions, worked out here by Kepler's equation from the served
@@ -259,15 +303,28 @@ let measured = [];
     const P = kep(prec.osculating, jd), C = kep(rec.osculating, jd);
     const sum = [P[0] + C[0], P[1] + C[1], P[2] + C[2]];
     const fromSun = REAL.float32ErrorKm(sum, KM);
-    const shifted = REAL.float32ErrorKm(C, KM);
-    measured.push([o.slug, o.center_slug, Math.hypot.apply(null, sum), fromSun, shifted]);
-    if (!(shifted < 0.5) || !(shifted < fromSun / 100)) {
-      failures.push(o.slug + ": with " + o.center_slug + " at the middle its 32-bit error is " +
-                    shifted + " km, not under half a kilometre and a hundredth of its error from the Sun");
-    }
+    // shiftLeftOut is the planted fault: the moon measured where it was,
+    // its planet never taken off.
+    const shifted = REAL.float32ErrorKm(shiftLeftOut ? sum : C, KM);
+    out.push([o.slug, o.center_slug, Math.hypot.apply(null, sum), fromSun, shifted]);
   });
-  if (!measured.length) { failures.push("no moon was measured, so the shift's gain was not shown"); }
-})();
+  return out;
+}
+const measured = measure(false);
+if (!measured.length) { failures.push("no moon was measured, so the shift's gain was not shown"); }
+measured.forEach(function (m) {
+  const f = shiftFault(m[0], m[1], m[4], FINEST_KM);
+  if (f) { failures.push(f); }
+});
+// The planted fault, on the same served data: with the shift left out,
+// the rule must catch a moon, by name.
+const plantedCaught = measure(true).filter(function (m) { return shiftFault(m[0], m[1], m[4], FINEST_KM); })
+                                   .map(function (m) { return m[0]; });
+if (measured.length && !plantedCaught.length) {
+  failures.push("SELF-TEST: the precision rule stayed green with the shift left out (L-515, night #64)");
+}
+console.log("Self-test: with the shift left out, the precision rule fails on " +
+            (plantedCaught.join(", ") || "no moon") + ".");
 console.log("The 32-bit error (Math.fround) on each moon the root draws, from the Sun, and with its planet at the middle:");
 measured.forEach(function (m) {
   console.log("  " + (m[0] + " around " + m[1] + "                         ").slice(0, 34) +
