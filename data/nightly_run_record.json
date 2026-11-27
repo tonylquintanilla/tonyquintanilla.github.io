@@ -1,10 +1,10 @@
 {
   "_comment": "Written by daily_run.py --night on a clean night only (L-485), so this is the website's last clean run. A red night writes nothing: its record is the run's log on GitHub.",
   "schema": 1,
-  "clean_run_utc": "2026-11-27T18:19:43.621365+00:00",
-  "started_utc": "2026-11-27T18:14:21.023895+00:00",
+  "clean_run_utc": "2026-11-27T21:29:28.981370+00:00",
+  "started_utc": "2026-11-27T21:25:26.217691+00:00",
   "where": "GitHub Actions",
-  "orrery_pulled": "8678143278ab5c3872776f236d69cfb468e2eee2",
+  "orrery_pulled": "4ae9068cc89ac8d9002dae537ff3f89405c2810b",
   "pulls_asked": "with the run's GITHUB_TOKEN",
   "swap_log_line": {
     "attempts": {
@@ -15,10 +15,10 @@
     "mode": "nightly",
     "outcome": "ok",
     "reached": "staging_to_live",
-    "run_id": "20261127T181424Z",
-    "time": "2026-11-27T18:17:06.984882+00:00"
+    "run_id": "20261127T212530Z",
+    "time": "2026-11-27T21:27:16.908789+00:00"
   },
-  "run_records": "Run records: carried 176 of 176, plus tonight's: 20261127T181424Z.json.",
+  "run_records": "Run records: carried 177 of 177, plus tonight's: 20261127T212530Z.json.",
   "served_files_changed": 116,
   "holds": [],
   "steps": [
@@ -30,7 +30,7 @@
     {
       "step": "Pulls from the orrery",
       "result": "ok",
-      "seconds": 2.4
+      "seconds": 2.9
     },
     {
       "step": "Pull matches push (runner)",
@@ -40,7 +40,7 @@
     {
       "step": "Cache builder",
       "result": "exit 0",
-      "seconds": 163.5
+      "seconds": 107.6
     },
     {
       "step": "Run records",
@@ -50,7 +50,7 @@
     {
       "step": "Maintenance run, night pass",
       "result": "exit 0",
-      "seconds": 154.6
+      "seconds": 130.9
     }
   ],
   "rows": [
@@ -73,7 +73,7 @@
       "kind": "generator",
       "verdict": "PASS",
       "note": "no change to data/objects_export.json, data/objects_export.sha",
-      "seconds": 0.3
+      "seconds": 0.4
     },
     {
       "row": "Objects mirror",
@@ -94,7 +94,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "PASS (631 checks, 0 failures)",
-      "seconds": 49.7
+      "seconds": 39.8
     },
     {
       "row": "Pole of date",
@@ -115,7 +115,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "All 494 store-writer checks passed: an allow list that lets through only a shell's words, a belt's words and the arrival settings, the rooms section's included; a no-edit round trip; one line per change; empty words handled; a refused batch writing nothing; awkward text; and the shell list matching the cache check's rule.",
-      "seconds": 31.7
+      "seconds": 25.5
     },
     {
       "row": "Store editor suite",
@@ -129,7 +129,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "MIRROR OBJECTS SUITE: pass",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "Objects mirror check",
@@ -150,7 +150,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "PULL FAILURES: all 16 checks passed (3 pulls x 3 ways to fail, the run after a failed pull, the run's token to GitHub's interface only, and 5 planted faults caught)",
-      "seconds": 0.2
+      "seconds": 0.1
     },
     {
       "row": "Horizons confirmations",
@@ -163,7 +163,7 @@
       "row": "Pointer join",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "Every link is accounted for: 190 link(s) against orrery 86781432, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
+      "note": "Every link is accounted for: 190 link(s) against orrery 4ae9068c, 1 fallback named; read check: 66 of 66 measured rows reached carry a read.",
       "seconds": 0.1
     },
     {
@@ -171,49 +171,49 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "TREE PARENTS: ok -- 114 objects, each parent its fetched centre",
-      "seconds": 0.1
+      "seconds": 0.0
     },
     {
       "row": "Cache in step",
       "kind": "checker",
       "verdict": "PASS",
       "note": "The served cache holds the config's 114 object(s) and their features exactly: 4 object(s) with 34 named shell(s), in both cache files.",
-      "seconds": 0.6
+      "seconds": 0.5
     },
     {
       "row": "Drawn orbit",
       "kind": "checker",
       "verdict": "PASS",
       "note": "DRAWN ORBIT: pass -- 19 checks, every planted fault caught",
-      "seconds": 0.6
+      "seconds": 0.5
     },
     {
       "row": "Compose children",
       "kind": "checker",
       "verdict": "PASS",
       "note": "COMPOSE CHILDREN: pass -- each moon is drawn at its planet's place by adding, its orbit around its planet's marker, its distance its own",
-      "seconds": 0.1
+      "seconds": 0.0
     },
     {
       "row": "Curve error",
       "kind": "checker",
       "verdict": "PASS",
       "note": "CURVE ERROR: ok -- 2728 points held out across 21 served files, and 1 capture craft held to JPL's own points, none missed by more than its printed error",
-      "seconds": 0.7
+      "seconds": 0.6
     },
     {
       "row": "Kepler solver",
       "kind": "checker",
       "verdict": "PASS",
       "note": "KEPLER SOLVER: pass -- every e below 1 and every M solved to 1e-09 rad, a solve that cannot finish raises",
-      "seconds": 4.1
+      "seconds": 3.3
     },
     {
       "row": "Drawings",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery 86781432; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
-      "seconds": 0.5
+      "note": "DRAWINGS: PASS -- 34 of 34 planted faults caught; pulled at orrery 4ae9068c; earth_exosphere 1500 dots, round, sha256 6112639fb2cd; galactic_tide 5000 dots, about the galactic pole, sha256 950a7511f0b5; hills_cloud 3600 dots, tilt 31.0 deg, sha256 4d3e85616645; main_belt 6000 dots, tilt 0.2 deg, sha256 712caffec391; outer_oort_cloud 2736 dots, between its edges, sha256 2f7ab88ee113; sun_corona 2500 dots, round, sha256 e2b57ccbc8a4; van_allen_belts 3200 dots, tilt 0.4 deg, sha256 75274e84f840; zodiacal_dust 3000 dots, tilt 2.8 deg, sha256 995f13a056e8",
+      "seconds": 0.4
     },
     {
       "row": "Collapsed features",
@@ -255,21 +255,21 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== ALL CHECKS PASSED ===",
-      "seconds": 0.2
+      "seconds": 0.1
     },
     {
       "row": "Typed facts",
       "kind": "checker",
       "verdict": "PASS",
       "note": "TYPED FACTS: PASS -- 0 typed facts in the Sun and Earth rooms, the moons and the encounter; 25 number line(s), 38 of 148 allowed sentence(s) seen, 0 held open (L-451); 27 word field(s) masked.",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "Typed numbers",
       "kind": "checker",
       "verdict": "PASS",
       "note": "TYPED NUMBERS: PASS -- 0 typed numbers in the Sun and Earth rooms' served words; 325 number(s) masked, 0 held.",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "Arrival",
@@ -360,21 +360,21 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== Encounters (L-529): the cards, their packages, the plan, the night ===",
-      "seconds": 0.4
+      "seconds": 0.3
     },
     {
       "row": "Drawer places",
       "kind": "checker",
       "verdict": "PASS",
       "note": "=== PASS: the editor's tree is the Solar System room's drawer, in the website's order, the Sun's shells under the Sun; a card's places are one or several, written as the website reads them, twins together; every card's places are rows the drawer lists ===",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "As-built names",
       "kind": "checker",
       "verdict": "PASS",
       "note": "AS-BUILT NAMES: ok -- every name examined on the 2 pages is in the code",
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "row": "Source list",
@@ -429,15 +429,15 @@
       "row": "Drawer walk",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "DRAWER WALK: PASS -- 381 checks on the real page, the scene at 2026-11-27 18:18 UTC; planted fault (an ended mission's last day one day early) caught, 7 of 64 red (53 s)",
-      "seconds": 52.7
+      "note": "DRAWER WALK: PASS -- 381 checks on the real page, the scene at 2026-11-27 21:28 UTC; planted fault (an ended mission's last day one day early) caught, 7 of 64 red (48 s)",
+      "seconds": 47.9
     },
     {
       "row": "Clock walk",
       "kind": "checker",
       "verdict": "PASS",
-      "note": "CLOCK WALK: PASS -- solar-system 13 of 13, earth 10 of 10 checks on the real page, at 2026-11-27 18:19 UTC and the window's last minute 2027-02-23 17:32 UTC; planted fault (the freeze that never answers) caught in solar-system, 7 of 13 red, all in the frozen step (6 s)",
-      "seconds": 5.6
+      "note": "CLOCK WALK: PASS -- solar-system 13 of 13, earth 10 of 10 checks on the real page, at 2026-11-27 21:29 UTC and the window's last minute 2027-02-23 20:42 UTC; planted fault (the freeze that never answers) caught in solar-system, 7 of 13 red, all in the frozen step (5 s)",
+      "seconds": 4.9
     },
     {
       "row": "Guest book",
@@ -465,7 +465,7 @@
       "kind": "checker",
       "verdict": "PASS",
       "note": "SERVED LIST: all 8 checks passed (the real list, the typed list free of positions files, and 6 planted faults caught)",
-      "seconds": 0.6
+      "seconds": 0.5
     },
     {
       "row": "Artifact 1 assembler",
@@ -492,5 +492,5 @@
       "why": "writes MODULE_ATLAS.md and MODULE_INDEX.md, which are documents; the night commits no page or word (Tony's R1, 2026-10-25)"
     }
   ],
-  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/46047816582"
+  "run_log": "https://github.com/tonylquintanilla/tonyquintanilla.github.io/actions/runs/46070097911"
 }
