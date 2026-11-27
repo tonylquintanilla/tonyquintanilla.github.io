@@ -136,3 +136,4 @@
 {"attempts": {"live_to_prev": 1, "staging_to_live": 1}, "error": null, "mode": "nightly", "outcome": "ok", "reached": "staging_to_live", "run_id": "20261125T184042Z", "time": "2026-11-25T18:42:56.981330+00:00"}
 {"attempts": {"live_to_prev": 1, "staging_to_live": 1}, "error": null, "mode": "nightly", "outcome": "ok", "reached": "staging_to_live", "run_id": "20261125T214734Z", "time": "2026-11-25T21:50:40.564407+00:00"}
 {"attempts": {"live_to_prev": 1, "staging_to_live": 1}, "error": null, "mode": "nightly", "outcome": "ok", "reached": "staging_to_live", "run_id": "20261127T052249Z", "time": "2026-11-27T05:24:48.304251+00:00"}
+{"attempts": {"live_to_prev": 1, "staging_to_live": 1}, "error": null, "mode": "nightly", "outcome": "ok", "reached": "staging_to_live", "run_id": "20261127T181424Z", "time": "2026-11-27T18:17:06.984882+00:00"}
